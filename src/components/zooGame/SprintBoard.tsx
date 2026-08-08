@@ -247,10 +247,9 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
-              {/* On mobile: a 2x2 grid (unchanged). At sm+: a flex row where the still-empty
-                  Deploy/Done columns yield width, so the columns holding cards read wider. */}
-              <div className="grid grid-cols-2 gap-3 sm:flex sm:items-start">
-                <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('todo'))} style={{ flexGrow: 1 }}>
+              {/* Four equal columns at sm+ (a 2x2 grid on mobile) - uniform, whatever each holds. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:items-start">
+                <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it) => {
                     // You build the habitat before its animals: an animal can't start until
@@ -273,7 +272,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                   })}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('doing'))} style={{ flexGrow: 1 }}>
+                <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow', dropClass('doing'))}>
                 <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
@@ -298,7 +297,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                   })}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('deploy')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('deploy'))} style={{ flexGrow: deploy.length ? 1 : 0.55 }}>
+                <div {...dropProps('deploy')} className={cn('min-w-0 transition-shadow', dropClass('deploy'))}>
                 <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
@@ -309,7 +308,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                   ))}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('done')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('done'))} style={{ flexGrow: done.length ? 1 : 0.55 }}>
+                <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
                 <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
                   {done.map((it) => (
                     <ItemCard key={it.id} item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
