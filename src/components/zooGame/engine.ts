@@ -820,3 +820,29 @@ export function productGoalProgress(state: ZooGameState): number {
   if (h == null) return 0;
   return Math.max(0, Math.min(1, (h - GOAL_HAPPINESS_FLOOR) / (GOAL_HAPPINESS_TARGET - GOAL_HAPPINESS_FLOOR)));
 }
+
+/** Open coaching questions for the Retrospective, chosen from what actually happened this
+ *  Sprint. Deliberately open (What / How / When) and non-judgemental - a facilitator evoking
+ *  reflection, not a scorecard - so "why" (which invites justification) is avoided. Returns up
+ *  to three: the specific ones that fit, topped up with general ones so there is always a prompt. */
+export function retroQuestions(state: ZooGameState): string[] {
+  const qs: string[] = [];
+  const delivered = state.velocity[state.velocity.length - 1] ?? 0;
+  const previous = state.velocity[state.velocity.length - 2];
+  const happiness = state.lastReview?.overallHappiness ?? null;
+
+  if (state.sprintGoalMet === false) qs.push('What got in the way of the Sprint Goal, and what is within your control to change next Sprint?');
+  if (state.sprintForecast > delivered) qs.push('How will you decide what to pull into the next Sprint, having forecast more than you finished?');
+  if (previous != null && delivered < previous) qs.push('What is the story behind your delivery falling this Sprint?');
+  if (happiness != null && happiness < 50) qs.push('What did the visitors tell you, and what is the smallest change that would lift how they felt?');
+  if (state.signals.length > 0) qs.push('How will you choose which of your visitors’ signals to act on?');
+
+  // Always leave the team with something to build on.
+  const general = [
+    'What went well this Sprint that you want to keep doing?',
+    'What would make the biggest difference to how the team works next Sprint?',
+    'When did you first sense how this Sprint would go?',
+  ];
+  for (const g of general) { if (qs.length >= 3) break; qs.push(g); }
+  return qs.slice(0, 3);
+}
