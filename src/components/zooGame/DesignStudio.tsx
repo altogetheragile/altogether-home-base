@@ -90,17 +90,6 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const setColor = (key: string, hex: string) => commit({ ...design, colors: { ...design.colors, [key]: hex } });
   const copyFrom = (src: CopySource) => commit({ parts: { ...src.design.parts }, colors: { ...src.design.colors } });
 
-  // Tick the plan off automatically as the design work is done - setting the footprint,
-  // colouring the fence, laying the ground, etc. - so it isn't a second set of boxes to
-  // check for work you just did. Only ticks forward; a custom task with no design match
-  // stays a manual tick. Idempotent, so it can't loop.
-  useEffect(() => {
-    if (!onToggleTask) return;
-    for (const t of item.tasks ?? []) {
-      if (t.label.trim() && !t.done && designSatisfiesTask(item, design, t.label)) onToggleTask(item.id, t.id);
-    }
-  }, [design, item, onToggleTask]);
-
   // Acceptance criteria are the Product Owner's, carried on the PBI. Building is you
   // accepting the work against them, so you confirm each (a judgement, like a lion
   // being "recognisable"). Already-built items being refined start fully confirmed.
@@ -113,6 +102,23 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   });
   const built = isDesignDone(item, design);
   const acAll = acceptance.every((_, i) => confirmed.has(i));
+
+  // Tick the plan off automatically as the work is done, so it isn't a second set of boxes to
+  // check for what you just did: build steps tick as you design; "get the PO's sign-off" ticks
+  // once every acceptance criterion is met (accepting the ACs IS the PO's sign-off). Peer review
+  // stays a manual tick. Only ticks forward; a custom task with no match stays manual.
+  useEffect(() => {
+    if (!onToggleTask) return;
+    for (const t of item.tasks ?? []) {
+      if (!t.label.trim()) continue;
+      if (/sign[- ]?off/i.test(t.label)) {
+        // The PO's sign-off IS accepting the acceptance criteria, so mirror them both ways.
+        if (acAll !== t.done) onToggleTask(item.id, t.id);
+      } else if (!t.done && designSatisfiesTask(item, design, t.label)) {
+        onToggleTask(item.id, t.id);
+      }
+    }
+  }, [design, item, onToggleTask, acAll]);
 
   // The plan reflects the Definition of Done - the work to take this item to Done: build it to
   // its acceptance criteria, then the standing workflow steps (peer review, PO sign-off). So
