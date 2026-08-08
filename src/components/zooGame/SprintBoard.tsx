@@ -331,7 +331,6 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
           <div className="m-auto w-full max-w-3xl">
             <DesignStudio
               item={designItem}
-              dod={state.definitionOfDone}
               editing={editing}
               copySources={copySources}
               onToggleTask={onToggleTask}

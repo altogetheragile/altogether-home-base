@@ -14,9 +14,6 @@ export interface CopySource { id: string; name: string; design: ItemDesign }
 
 interface DesignStudioProps {
   item: BacklogItem;
-  /** The product-wide Definition of Done - confirmed here to make an item Done, and
-   *  refined at the Retro so an edit changes the bar for every later item. */
-  dod: string[];
   /** True when refining an already-built item rather than building a new one. */
   editing?: boolean;
   onFinish: (design: ItemDesign) => void;
@@ -81,7 +78,7 @@ function ColourPickerRow({ label, value, onChange, disabled }: { label: string; 
 /** Build (or refine) one item: an exhibit's animal or an amenity's building. Every
  *  animal is its own PBI; to save time you can copy an existing built animal and
  *  tweak it. It is Done when it meets its acceptance criteria. */
-export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, onChange, copySources = [], onSetEnclosure, onToggleTask }: DesignStudioProps) {
+export function DesignStudio({ item, editing, onFinish, onCancel, initial, onChange, copySources = [], onSetEnclosure, onToggleTask }: DesignStudioProps) {
   const isExhibit = item.category === 'exhibit';
   const isEnclosure = item.category === 'enclosure';
   const isFlora = item.category === 'flora';
@@ -117,25 +114,13 @@ export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, 
   const built = isDesignDone(item, design);
   const acAll = acceptance.every((_, i) => confirmed.has(i));
 
-  // The product-wide Definition of Done also gates Done. Criteria that just restate the
-  // acceptance criteria or "fully finished" auto-satisfy from what is already checked; the
-  // genuinely new ones (safe, signposted, peer-reviewed, ...) are self-certified. Reading
-  // the live DoD means an edit at the Retro changes the bar for every later item.
-  // 'deploy' criteria (positioned/accessible/placed) can only be true once the item is placed
-  // and opened in the park - a step AFTER the build - so they are satisfied at place & open, not
-  // here, and must not block finishing the build.
-  const dodAuto = (c: string): 'ac' | 'build' | 'deploy' | null => {
-    const s = c.toLowerCase();
-    if (/acceptance crit/.test(s)) return 'ac';
-    if (/position|accessible|placed|reachable|signpost/.test(s)) return 'deploy';
-    if (/finish|built|gap|patch|complete|no gaps/.test(s)) return 'build';
-    return null;
-  };
-  const [dodConfirmed, setDodConfirmed] = useState<Set<number>>(() => new Set(editing ? dod.map((_, i) => i) : []));
-  const toggleDod = (i: number) => setDodConfirmed((prev) => { const n = new Set(prev); if (n.has(i)) n.delete(i); else n.add(i); return n; });
-  const dodMet = (c: string, i: number) => { const a = dodAuto(c); return a === 'ac' ? acAll : a === 'build' ? built : a === 'deploy' ? false : dodConfirmed.has(i); };
-  // 'deploy' criteria don't gate the build - they're met when you place & open it in the park.
-  const done = built && acAll && dod.every((c, i) => (dodAuto(c) === 'deploy' ? true : dodMet(c, i)));
+  // The plan reflects the Definition of Done - the work to take this item to Done: build it to
+  // its acceptance criteria, then the standing workflow steps (peer review, PO sign-off). So
+  // finishing means it is built, it meets the acceptance criteria, and its whole plan is ticked.
+  // The DoD itself lives in the header as the standing reference; the plan is how you meet it.
+  const planTasks = (item.tasks ?? []).filter((t) => t.label.trim());
+  const planDone = planTasks.every((t) => t.done);
+  const done = built && acAll && planDone;
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -241,12 +226,13 @@ export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, 
 
       {/* Acceptance criteria: the PBI's own, confirmed by you as you accept the work. */}
       <div className="mt-4 space-y-3">
-        {/* The plan: tick tasks off here as you build, so it isn't a separate, fiddly step on
-            the board. Same tasks as the Sprint Backlog - toggling updates the item live. */}
+        {/* The plan reflects the Definition of Done: build steps tick themselves as you design;
+            the workflow steps (peer review, PO sign-off) you tick when you have done them. The
+            item is Done when the whole plan is ticked. */}
         {onToggleTask && (item.tasks ?? []).some((t) => t.label.trim()) && (
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Plan <span className="font-normal normal-case tracking-normal text-muted-foreground/70">tick each task as you build it</span>
+              Plan <span className="font-normal normal-case tracking-normal text-muted-foreground/70">how this item meets the Definition of Done</span>
             </div>
             <TaskChecklist item={item} onToggle={onToggleTask} />
           </div>
@@ -271,32 +257,6 @@ export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, 
               })}
             </ul>
             <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it - this is you accepting the work against the Product Owner's criteria.</p>
-          </div>
-        )}
-
-        {/* Definition of Done: the product-wide bar, confirmed to make the item Done. */}
-        {dod.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Definition of Done <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the team&rsquo;s standing bar for every item</span>
-            </div>
-            <ul className="space-y-1">
-              {dod.map((c, i) => {
-                const auto = dodAuto(c);
-                const on = dodMet(c, i);
-                return (
-                  <li key={i}>
-                    <button type="button" disabled={!!auto} onClick={() => toggleDod(i)}
-                      className={cn('flex w-full items-center gap-2 text-left text-sm', auto && 'cursor-default')}>
-                      <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-3 w-3" />}</span>
-                      <span className={cn(on ? 'text-foreground' : 'text-muted-foreground')}>{c}</span>
-                      {auto && <span className="text-[10px] text-muted-foreground/60">· {auto === 'ac' ? 'from acceptance criteria' : auto === 'deploy' ? 'when you place & open it' : 'built above'}</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="text-[11px] text-muted-foreground/70">Confirm the product-wide bar too - it applies to every item and is refined at the Retrospective.</p>
           </div>
         )}
 
