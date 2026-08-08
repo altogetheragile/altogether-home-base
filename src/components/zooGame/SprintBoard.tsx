@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
 import { enclosureReady, enclosureOf } from './engine';
@@ -119,6 +121,58 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = doing.length >= state.wipLimit;
 
+  // Drag a card to the next column, as an alternative to its button. The columns are the
+  // workflow, but a card's column is derived from its real state, so a drag runs the same
+  // gated transition the button would: To Do -> Build starts it (needs the enclosure + WIP
+  // room); Deploy -> Done places & opens it. Build -> Deploy stays in the studio - you can't
+  // drag your way through building an animal - so that drop points you there. Buttons still work.
+  const COLS = ['todo', 'doing', 'deploy', 'done'];
+  const [drag, setDrag] = useState<{ id: string; from: string } | null>(null);
+  const [dropCol, setDropCol] = useState<string | null>(null);
+  const dropOutcome = (from: string, to: string): 'start' | 'open' | 'studio' | 'far' | 'none' => {
+    const fi = COLS.indexOf(from), ti = COLS.indexOf(to);
+    if (ti <= fi) return 'none';
+    if (ti > fi + 1) return 'far';
+    if (from === 'todo') return 'start';
+    if (from === 'deploy') return 'open';
+    return 'studio';
+  };
+  const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
+  const willSucceed = (from: string, to: string, id: string) => {
+    const o = dropOutcome(from, to);
+    return o === 'open' || (o === 'start' && canStart(id));
+  };
+  const handleDrop = (to: string) => {
+    if (!drag) return;
+    const { id, from } = drag;
+    const o = dropOutcome(from, to);
+    setDrag(null); setDropCol(null);
+    if (o === 'start') {
+      const it = todo.find((x) => x.id === id);
+      if (!it) return;
+      if (!enclosureReady(state, it)) { toast.error(`Build ${enclosureOf(state, it)?.name ?? 'its enclosure'} first - the animal goes in once its habitat is ready.`); return; }
+      if (atWipLimit) { toast.error(`WIP limit ${state.wipLimit} reached - finish something in Build first.`); return; }
+      onStartItem(id);
+    } else if (o === 'open') {
+      onOpen(id);
+    } else if (o === 'studio') {
+      toast('Open "Design & build" to finish it - it moves to Deploy once it is built and the plan is ticked off.');
+    } else if (o === 'far') {
+      toast('One column at a time - a card moves to the next stage, not past it.');
+    }
+  };
+  const dragProps = (id: string, from: string) => ({
+    draggable: true,
+    onDragStart: (e: DragEvent) => { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', id); } catch { /* some browsers */ } setDrag({ id, from }); },
+    onDragEnd: () => { setDrag(null); setDropCol(null); },
+  });
+  const dropProps = (to: string) => ({
+    onDragOver: (e: DragEvent) => { if (drag && drag.from !== to) { e.preventDefault(); if (dropCol !== to) setDropCol(to); } },
+    onDragLeave: () => setDropCol((c) => (c === to ? null : c)),
+    onDrop: (e: DragEvent) => { e.preventDefault(); handleDrop(to); },
+  });
+  const dropClass = (to: string) => (!drag || dropCol !== to ? '' : willSucceed(drag.from, to, drag.id) ? 'rounded-lg ring-2 ring-emerald-400' : 'rounded-lg ring-2 ring-amber-400');
+
   // Built animals you can copy from when designing another of the same kind.
   const copySources: CopySource[] = designItem
     ? state.backlog.filter((it) => it.id !== designItem.id && it.category === designItem.category && it.design).map((it) => ({ id: it.id, name: it.name, design: it.design! }))
@@ -196,7 +250,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               {/* On mobile: a 2x2 grid (unchanged). At sm+: a flex row where the still-empty
                   Deploy/Done columns yield width, so the columns holding cards read wider. */}
               <div className="grid grid-cols-2 gap-3 sm:flex sm:items-start">
-                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: 1 }}>
+                <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('todo'))} style={{ flexGrow: 1 }}>
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it) => {
                     // You build the habitat before its animals: an animal can't start until
@@ -207,22 +261,25 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                     const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
                       : atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Build first` : undefined;
                     return (
-                      <ItemCard key={it.id} item={it}
+                      <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
+                      <ItemCard item={it}
                         subtitle={<>
                           {needsEnc && <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">Needs {encName} built first</div>}
                           <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
                         </>}
                         actions={<Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
+                      </div>
                     );
                   })}
                 </BoardColumn>
                 </div>
-                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: 1 }}>
+                <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('doing'))} style={{ flexGrow: 1 }}>
                 <BoardColumn title="Build" sub="design · build · test" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
-                      <ItemCard key={it.id} item={it}
+                      <div key={it.id} {...dragProps(it.id, 'doing')} className="cursor-grab active:cursor-grabbing">
+                      <ItemCard item={it}
                         badge={it.design
                           ? <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">built{left ? ` · ${left} task${left === 1 ? '' : 's'} left` : ''}</span>
                           : <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
@@ -236,20 +293,23 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                           </div>
                         </>}
                         actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : 'Design & build'}</Button>} />
+                      </div>
                     );
                   })}
                 </BoardColumn>
                 </div>
-                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: deploy.length ? 1 : 0.55 }}>
+                <div {...dropProps('deploy')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('deploy'))} style={{ flexGrow: deploy.length ? 1 : 0.55 }}>
                 <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
                   {deploy.map((it) => (
-                    <ItemCard key={it.id} item={it}
+                    <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
+                    <ItemCard item={it}
                       subtitle={<CardDetail item={it} interactive defaultOpen showAcceptance built onToggleTask={onToggleTask} />}
                       actions={deployActions(it)} />
+                    </div>
                   ))}
                 </BoardColumn>
                 </div>
-                <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: done.length ? 1 : 0.55 }}>
+                <div {...dropProps('done')} className={cn('min-w-0 transition-shadow sm:min-w-[7.5rem] sm:basis-0', dropClass('done'))} style={{ flexGrow: done.length ? 1 : 0.55 }}>
                 <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
                   {done.map((it) => (
                     <ItemCard key={it.id} item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
