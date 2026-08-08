@@ -239,7 +239,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           by planning poker). Only when refining an existing PBI. */}
       {editing && onEstimate && (
         <div className="space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Story points <span className="font-normal normal-case">- estimate as you refine</span></span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Story points <span className="font-normal normal-case">- a common estimation practice; Scrum doesn&rsquo;t mandate it</span></span>
           <div className="flex flex-wrap gap-1.5">
             <button type="button" onClick={() => setPoints(null)}
               className={cn('rounded-full border px-3 py-1 text-xs', points === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>? unsized</button>
