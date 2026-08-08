@@ -188,7 +188,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                       actions={<span className="flex items-center gap-1 text-[11px] text-muted-foreground"><X className="h-3.5 w-3.5" /> remove</span>} />
                   ))}
                 </BoardColumn>
-                <BoardColumn title="Doing" count={0} hint="Starts once the Sprint begins" />
+                <BoardColumn title="Build" count={0} hint="Starts once the Sprint begins" />
                 <BoardColumn title="Done ✓" count={0} hint="Nothing built yet" tone="done" />
               </div>
             </div>

@@ -205,7 +205,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                     const encName = enclosureOf(state, it)?.name ?? 'its enclosure';
                     const blocked = atWipLimit || needsEnc;
                     const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
-                      : atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Doing first` : undefined;
+                      : atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Build first` : undefined;
                     return (
                       <ItemCard key={it.id} item={it}
                         subtitle={<>
@@ -218,7 +218,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                 </BoardColumn>
                 </div>
                 <div className="min-w-0 sm:min-w-[7.5rem] sm:basis-0" style={{ flexGrow: 1 }}>
-                <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
+                <BoardColumn title="Build" sub="design · build · test" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
@@ -227,8 +227,9 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                           ? <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">built{left ? ` · ${left} task${left === 1 ? '' : 's'} left` : ''}</span>
                           : <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
                         subtitle={<>
-                          {/* Doing is the active card, so its plan stays open by default. */}
-                          <CardDetail item={it} interactive defaultOpen onToggleTask={onToggleTask} />
+                          {/* Build is the active card - design, build and check the ACs happen here, so
+                              its plan and criteria stay open by default. Criteria go green once built. */}
+                          <CardDetail item={it} interactive defaultOpen showAcceptance built={!!it.design} onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
@@ -243,7 +244,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                 <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
                   {deploy.map((it) => (
                     <ItemCard key={it.id} item={it}
-                      subtitle={<CardDetail item={it} interactive defaultOpen onToggleTask={onToggleTask} />}
+                      subtitle={<CardDetail item={it} interactive defaultOpen showAcceptance built onToggleTask={onToggleTask} />}
                       actions={deployActions(it)} />
                   ))}
                 </BoardColumn>
@@ -252,7 +253,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                 <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
                   {done.map((it) => (
                     <ItemCard key={it.id} item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
-                      subtitle={<CardDetail item={it} onToggleTask={onToggleTask} />}
+                      subtitle={<CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />}
                       actions={doneActions(it)} />
                   ))}
                 </BoardColumn>
