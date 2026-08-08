@@ -106,8 +106,13 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onEndDay, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void; onAddPath?: (points: { x: number; y: number }[]) => void; onDeletePath?: (id: string) => void; onClearPaths?: () => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
-  const [tab, setTab] = useState<'work' | 'park'>('work');
+export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onEndDay, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void; onAddPath?: (points: { x: number; y: number }[]) => void; onDeletePath?: (id: string) => void; onClearPaths?: () => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
+  // `tab` is controlled from above when provided, so an event (place & open) can switch to
+  // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
+  // position the released item there.
+  const [localTab, setLocalTab] = useState<'work' | 'park'>('work');
+  const tab = parkTab ?? localTab;
+  const setTab = onSetTab ?? setLocalTab;
   const open = state.backlog.filter((it) => it.status === 'open').length;
 
   return (

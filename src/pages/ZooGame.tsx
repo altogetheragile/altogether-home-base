@@ -55,6 +55,9 @@ export default function ZooGame() {
   const [saveOpen, setSaveOpen] = useState(false);
   const [savesOpen, setSavesOpen] = useState(false);
   const [poNote, setPoNote] = useState<string | null>(null);
+  // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
+  const [parkTab, setParkTab] = useState<'work' | 'park'>('work');
+  const placeAndOpen = (id: string) => { open(id); setParkTab('park'); };
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
@@ -92,7 +95,7 @@ export default function ZooGame() {
     }
   };
 
-  const shellProps = { onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onSetPathRoute: setPathRoute, onAddPath: addPath, onDeletePath: deletePath, onClearPaths: clearPaths, onEndDay: closeDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onSetPathRoute: setPathRoute, onAddPath: addPath, onDeletePath: deletePath, onClearPaths: clearPaths, onEndDay: closeDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {
@@ -103,7 +106,7 @@ export default function ZooGame() {
       case 'planning':
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onNavigateStep={() => setPoNote(null)} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onEstimate={estimate} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={open} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onAssignDev={assignDev} onRenameMember={renameMember} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onEstimate={estimate} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={placeAndOpen} onEndDay={closeDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onAssignDev={assignDev} onRenameMember={renameMember} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
       case 'retro':

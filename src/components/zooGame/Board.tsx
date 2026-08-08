@@ -284,10 +284,10 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
       ) : mode === 'plan' ? (
         <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 shrink-0 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
-          {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Add</>}
+          {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</>}
         </Button>
       ) : (
-        <Button size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Add</Button>
+        <Button size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</Button>
       );
     return (
       <div key={it.id}
@@ -372,7 +372,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         {mode === 'refine'
           ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. Refining now is free; later it happens on the board and costs the Sprint a little time.'
           : mode === 'plan'
-            ? 'Ordered by you (the PO). Select the Ready ones to forecast into the Sprint (estimate any that are still unsized).'
+            ? 'Ordered by you (the PO). The Developers pull the Ready ones they will commit to into the Sprint (estimate any that are still unsized).'
             : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk. Refining here (estimating, splitting, adding) is ongoing work - it takes time from the day’s build.'}
       </p>
 
