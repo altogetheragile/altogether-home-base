@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -836,6 +836,28 @@ describe('zoo game: the Definition of Done is the completion gate, not a happine
     const full = reviewSprint(buildAndOpen(flat(initialZooState(1)), NICE));
     const trimmed = reviewSprint(buildAndOpen(setDefinitionOfDone(flat(initialZooState(1)), ['Meets its acceptance criteria']), NICE));
     expect(trimmed.lastReview!.overallHappiness).toBe(full.lastReview!.overallHappiness);
+  });
+});
+
+describe('zoo game: Retrospective coaching questions', () => {
+  const NICE = ['lion', 'tiger', 'kiosk', 'penguins', 'reef', 'wc'];
+
+  it('are open (what/how/when), never "why", and there is always at least one', () => {
+    // A Sprint where the Goal is missed (only the lion of two goal items delivered).
+    let s = planSprint(flat(initialZooState(1)), ['lion', 'tiger']);
+    s = reviewSprint(openItem(finish(s, 'lion'), 'lion'));
+    const qs = retroQuestions(s);
+    expect(qs.length).toBeGreaterThan(0);
+    expect(qs.length).toBeLessThanOrEqual(3);
+    expect(qs.every((q) => /^(what|how|when|who|where)\b/i.test(q))).toBe(true);
+    expect(qs.some((q) => /\bwhy\b/i.test(q))).toBe(false);
+  });
+
+  it('falls back to general prompts on a clean Sprint', () => {
+    const s = reviewSprint(buildAndOpen(flat(initialZooState(1)), NICE));
+    const qs = retroQuestions(s);
+    expect(qs.length).toBeGreaterThan(0);
+    expect(qs.every((q) => /^(what|how|when|who|where)\b/i.test(q))).toBe(true);
   });
 });
 

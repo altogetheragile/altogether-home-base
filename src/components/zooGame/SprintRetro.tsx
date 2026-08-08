@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
-import { productGoalProgress } from './engine';
+import { productGoalProgress, retroQuestions } from './engine';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Zap } from 'lucide-react';
+import { Zap, MessageCircleQuestion } from 'lucide-react';
 
 interface SprintRetroProps {
   state: ZooGameState;
@@ -27,6 +27,7 @@ const IMPROVEMENTS: { text: string; effect?: string }[] = [
 export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const canWrap = productGoalProgress(state) >= 0.8;
+  const questions = retroQuestions(state);
 
   return (
     <div className="space-y-5">
@@ -34,6 +35,18 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintR
         <h2 className="text-lg font-bold">Sprint {state.sprintNumber} Retrospective</h2>
         <p className="text-xs text-muted-foreground">How did the team work this Sprint? Refine the Definition of Done and pick one improvement to carry into the next one.</p>
       </div>
+
+      {/* Coaching questions: open prompts drawn from what happened, to inspect before adapting.
+          Reflective and unscored - the point is the thinking, not a right answer. */}
+      <section className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-center gap-1.5 text-sm font-semibold text-primary"><MessageCircleQuestion className="h-4 w-4" /> Reflect on the Sprint</div>
+        <p className="text-[11px] text-muted-foreground">Open questions, no right answers and no score - this is the inspect in inspect-and-adapt. Talk them through as a team.</p>
+        <ul className="space-y-1.5">
+          {questions.map((q, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground"><span className="mt-0.5 shrink-0 text-primary/70">&bull;</span><span>{q}</span></li>
+          ))}
+        </ul>
+      </section>
 
       {/* The Retrospective is where the team inspects and adapts the Definition of Done. */}
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
