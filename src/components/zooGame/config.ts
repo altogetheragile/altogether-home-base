@@ -44,13 +44,14 @@ export const MISSED_SCRUM_TIP =
   'A Daily Scrum yesterday would have surfaced this a day earlier, while it was still small - the sync is where blockers become visible, so they can be removed before they grow. The Scrum Master makes sure it happens.';
 
 /** The product-wide Definition of Done: the bar every item clears to be shippable. */
+// The Definition of Done reads top-to-bottom as the workflow every item follows to be Done:
+// build it to its acceptance criteria, review it, get the PO's sign-off (all in Doing), then
+// place & open it (Deploy). It is the team's standing bar, editable and refined at the Retro.
 export const DEFAULT_DOD: string[] = [
   'Meets its acceptance criteria',
-  'Fully finished - every part built, no gaps',
-  'Safe and accessible to all visitors',
-  'Signposted so visitors can find it',
   'Peer-reviewed by another Developer',
-  'Nothing already open is broken by it',
+  'Approved by the PO',
+  'Placed and opened',
 ];
 
 /** Coached suggestions for the Definition of Done: general, product-wide criteria the
