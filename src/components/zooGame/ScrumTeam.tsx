@@ -95,16 +95,17 @@ function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRenam
   );
 }
 
-/** Assign / swarm control for a Sprint item: shows who has picked it up, and toggles Developers
- *  on it. Self-managed - the Developers choose; more than one is swarming. */
+/** Pick-up / swarm control for a Sprint item: shows who has picked it up, and toggles Developers
+ *  on it. Self-organising - the Developers choose to pick work up; no one assigns it. More than
+ *  one on an item is swarming. */
 export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assigned: string[]; onToggle: (devId: string) => void }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" title="Who is working this? (Developers self-organise)"
+        <button type="button" title="Who has picked this up? (the Developers self-organise)"
           className="flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
           {assigned.length === 0
-            ? <span>+ assign</span>
+            ? <span>+ pick up</span>
             : <span className="flex -space-x-1">{team.developers.filter((d) => assigned.includes(d.id)).map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}</span>}
         </button>
       </PopoverTrigger>

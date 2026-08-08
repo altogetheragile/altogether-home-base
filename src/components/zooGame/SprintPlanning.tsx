@@ -122,8 +122,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       {step === 'what' && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Forecast Ready items from the Product Backlog into the Sprint - what you believe you can build to the Definition
-            of Done, guided by the Sprint Goal and your capacity. Finishing fewer things well beats starting many.
+            The Developers pull Ready items from the Product Backlog into the Sprint - what they believe they can build to the
+            Definition of Done, guided by the Sprint Goal and their capacity. Finishing fewer things well beats starting many.
           </p>
 
           {/* The Sprint Goal you agreed in Why - shown here to guide selection, and editable so
@@ -184,7 +184,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               {/* The same board you play the Sprint on, so it doesn't change shape when the
                   Sprint starts: your forecast sits in To Do, the rest fill as work flows. */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <BoardColumn title="To Do" count={chosen.length} hint="Add items from the Product Backlog">
+                <BoardColumn title="To Do" count={chosen.length} hint="Pull items from the Product Backlog">
                   {chosen.map((it) => (
                     <ItemCard key={it.id} item={it} onClick={() => toggle(it.id)}
                       actions={<span className="flex items-center gap-1 text-[11px] text-muted-foreground"><X className="h-3.5 w-3.5" /> remove</span>} />
