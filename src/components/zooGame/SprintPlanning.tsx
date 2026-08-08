@@ -26,6 +26,9 @@ interface SprintPlanningProps {
   onSplitEpic: (id: string, memberIds: string[]) => void;
   onDeletePbi: (id: string) => void;
   onDuplicatePbi: (id: string) => void;
+  /** Called when the player moves between planning topics - used to clear the transient
+   *  "Ask the PO" note so it doesn't linger onto the next topic. */
+  onNavigateStep?: () => void;
 }
 
 type Step = 'why' | 'what' | 'how';
@@ -39,8 +42,10 @@ const STEPS: { key: Step; label: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi }: SprintPlanningProps) {
-  const [step, setStep] = useState<Step>('why');
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
+  const [step, setStepState] = useState<Step>('why');
+  // Moving between topics clears the transient "Ask the PO" note so it doesn't follow you.
+  const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));

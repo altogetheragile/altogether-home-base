@@ -302,7 +302,25 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         </div>
         {isOpen && (
           <div className="mt-1.5 space-y-1.5 border-t border-border/60 pt-1.5 pl-5">
+            {/* Read-only view of the PBI: story, acceptance criteria and where it lives - so you
+                can inspect an item without opening the editor (Refine). */}
             {it.story && <div className="text-[11px] italic text-muted-foreground">{it.story}</div>}
+            {it.acceptance && it.acceptance.length > 0 && (
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Acceptance criteria</div>
+                <ul className="mt-0.5 space-y-0.5">
+                  {it.acceptance.map((c, i) => (
+                    <li key={i} className="flex gap-1.5 text-[11px] text-muted-foreground"><span className="text-muted-foreground/50">&bull;</span><span>{c}</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {it.category === 'exhibit' && (
+              <div className="text-[11px] text-muted-foreground">Lives in: <span className="font-medium text-foreground">{enclosures.find((e) => e.id === it.enclosureId)?.name ?? 'an enclosure (set when refining)'}</span></div>
+            )}
+            {(() => { const t = (it.tasks ?? []).filter((x) => x.label.trim()); return t.length > 0 ? (
+              <div className="text-[11px] text-muted-foreground">Plan: <span className="font-medium text-foreground">{t.filter((x) => x.done).length}/{t.length}</span> task{t.length === 1 ? '' : 's'}</div>
+            ) : null; })()}
             <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
               <button type="button" onClick={() => setEditingPbi(it)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /> Refine</button>
               {onDuplicatePbi && (
