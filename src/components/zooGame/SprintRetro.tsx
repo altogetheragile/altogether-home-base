@@ -19,7 +19,7 @@ const IMPROVEMENTS: { text: string; effect?: string }[] = [
   { text: 'Finish fewer things properly, rather than starting more', effect: 'Tightens the WIP limit by 1' },
   { text: 'Hold the Daily Scrum every day and catch issues early', effect: 'Daily Scrums become efficient - they cost no build time' },
   { text: 'Serve each zone before adding the next exhibit' },
-  { text: 'Read the visitor feedback before re-planning' },
+  { text: 'Read the visitor feedback before adapting the plan' },
 ];
 
 /** Retrospective: inspect how the team worked and pick one improvement to carry

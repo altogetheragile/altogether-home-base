@@ -14,10 +14,10 @@ interface DailyScrumProps {
 }
 
 /** The Daily Scrum: the Developers' short, TIMEBOXED daily event to inspect progress toward
- *  the Sprint Goal (the burndown + essentials) and re-plan the next day. It always happens.
+ *  the Sprint Goal (the burndown + essentials) and adapt the plan for the next day. It always happens.
  *  Blockers are surfaced here, not solved here - the Scrum Master removes them outside it. The
  *  real choice is whether you ADAPT to what it surfaced or carry on regardless (letting a
- *  blocker grow overnight). The timebox counts down; on expiry it re-plans (the disciplined
+ *  blocker grow overnight). The timebox counts down; on expiry it adapts (the disciplined
  *  default), so you decide within the box. In learn mode the timebox is paused. */
 export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
   const prog = sprintProgress(state);
@@ -55,15 +55,15 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         </div>
         <h1 className="text-2xl font-bold">Day {state.dayNumber} Daily Scrum</h1>
         <p className="text-sm text-muted-foreground">
-          A short, timeboxed check: inspect progress toward the Sprint Goal and re-plan the next day. It always
-          happens. Blockers are surfaced here and removed by the Scrum Master outside it.
+          A short, timeboxed check: inspect progress toward the Sprint Goal and adapt the plan for the next day. It
+          always happens. Blockers are surfaced here and removed by the Scrum Master outside it.
         </p>
       </div>
 
       {/* The timebox: a real countdown, so the event stays short. */}
       {state.learnMode ? (
         <div className="mx-auto flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
-          <Clock className="h-3 w-3" /> Learn mode - timebox paused, re-plan when ready
+          <Clock className="h-3 w-3" /> Learn mode - timebox paused, adapt when ready
         </div>
       ) : (
         <div className="mx-auto max-w-xs">
@@ -131,11 +131,11 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
           <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
             {prog.essentialsTotal && prog.essentialsDone < prog.essentialsTotal
-              ? 'Nothing blocking today - but essentials are still open. Re-plan to finish those first.'
+              ? 'Nothing blocking today - but essentials are still open. Adapt the plan to finish those first.'
               : 'On track for the Sprint Goal - nothing blocking today. The Daily Scrum is how you know that.'}
           </div>
           <div className="flex flex-col items-center gap-1">
-            <Button size="lg" onClick={onHold}>Re-plan and continue &rarr;</Button>
+            <Button size="lg" onClick={onHold}>Adapt and continue &rarr;</Button>
             <span className="text-[11px] text-muted-foreground">{state.scrumDiscipline ? 'efficient - no time lost' : 'the event takes ~10% of tomorrow'}</span>
           </div>
         </>
