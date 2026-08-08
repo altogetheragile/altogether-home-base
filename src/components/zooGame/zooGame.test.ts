@@ -608,10 +608,13 @@ describe('zoo game: product goal progress is an OUTCOME, not backlog burn', () =
 describe('zoo game: the plan (task decomposition) gates Done', () => {
   const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
 
-  it('suggests build steps only (placing / opening is the Open action, not a task)', () => {
+  it('the plan reflects the DoD: build steps + review + PO sign-off, but not placing/opening', () => {
     const tasks = suggestTasks(initialZooState(1).backlog.find((i) => i.id === 'lion')!);
     expect(tasks.length).toBeGreaterThan(0);
     expect(tasks.every((t) => !t.done)).toBe(true);
+    expect(tasks.some((t) => /peer-review/i.test(t.label))).toBe(true);
+    expect(tasks.some((t) => /sign-off/i.test(t.label))).toBe(true);
+    // Placing & opening is the Deploy action (the Open button), not a plan task.
     expect(tasks.some((t) => /open|place/i.test(t.label))).toBe(false);
   });
 

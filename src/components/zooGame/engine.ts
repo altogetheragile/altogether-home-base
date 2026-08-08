@@ -204,17 +204,19 @@ export function estimateItem(state: ZooGameState, id: string, points: number): Z
 /** A coached default breakdown of how a PBI gets built, by kind - the design work and
  *  then opening it. It is a starting point the Developers edit, not a fixed template. */
 export function suggestTasks(item: BacklogItem): SprintTask[] {
-  // The plan is the BUILD work (the design steps). Placing and opening to visitors is a
-  // separate step - the Open button on a Done item - not a task, so the plan does not
-  // include "place it" or "open it" (that would duplicate the Open action).
-  const labels = item.category === 'enclosure'
+  // The plan reflects the Definition of Done - the work to take this item to Done. First the
+  // BUILD steps (meeting the acceptance criteria), then the standing workflow steps the DoD
+  // requires of every item: peer review and the PO's sign-off. Placing & opening is the Deploy
+  // action (the Open button on a Done item), not a task, so it is not in the plan.
+  const build = item.category === 'enclosure'
     ? ['Set the footprint size', 'Fence it securely', 'Lay the ground, shelter and water']
     : item.category === 'exhibit'
     ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features']
     : item.category === 'amenity'
       ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
       : ['Choose the plant type', 'Colour the foliage'];
-  return labels.map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
+  const workflow = ['Peer-review it', "Get the PO's sign-off"];
+  return [...build, ...workflow].map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
 }
 
 /** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
