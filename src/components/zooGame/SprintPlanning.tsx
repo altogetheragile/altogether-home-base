@@ -181,15 +181,18 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                 <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over the last ${Math.min(state.velocity.length, 3)} Sprint${Math.min(state.velocity.length, 3) > 1 ? 's' : ''}.` : 'We don’t know your velocity yet — this is a first guess. You’ll learn it by doing: after each Sprint, capacity becomes your recent actual delivery.'}</p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              {/* The same board you play the Sprint on, so it doesn't change shape when the
+                  Sprint starts: your forecast sits in To Do, the rest fill as work flows. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <BoardColumn title="To Do" count={chosen.length} hint="Add items from the Product Backlog">
                   {chosen.map((it) => (
                     <ItemCard key={it.id} item={it} onClick={() => toggle(it.id)}
                       actions={<span className="flex items-center gap-1 text-[11px] text-muted-foreground"><X className="h-3.5 w-3.5" /> remove</span>} />
                   ))}
                 </BoardColumn>
-                <BoardColumn title="Build" count={0} hint="Starts once the Sprint begins" />
-                <BoardColumn title="Done ✓" count={0} hint="Nothing built yet" tone="done" />
+                <BoardColumn title="Build" sub="design · build · test" count={0} limit={state.wipLimit} hint="Starts once the Sprint begins" />
+                <BoardColumn title="Deploy" count={0} hint="Built - place & open it" />
+                <BoardColumn title="Done ✓" count={0} hint="Nothing live yet" tone="done" />
               </div>
             </div>
           </div>
