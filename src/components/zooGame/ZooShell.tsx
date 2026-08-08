@@ -127,9 +127,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
               ? 'Initial Refinement'
               : <>Sprint {state.sprintNumber}{state.phase === 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>Day {state.dayNumber}/{state.sprintDays}</>}{state.phase !== 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}</>}</>}
           </span>
-          {/* The day clock lives here so it stays visible on both the Build and Park tabs. */}
+          {/* The day clock lives here so it stays visible on both the Build and Park tabs. The
+              z-index lifts it above the design-studio modal (z-40) so the Sprint clock is never
+              hidden while you build - the build spends the day's time, so you need to see it. */}
           {state.phase === 'sprint' && state.dayStage !== 'dailyScrum' && onEndDay && (
-            <DayTimer key={state.dayNumber} compact dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+            <span className="relative z-[45] rounded-full bg-background">
+              <DayTimer key={state.dayNumber} compact dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+            </span>
           )}
           <span className="flex min-w-0 flex-1 items-center gap-1 text-xs">
             <Target className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
