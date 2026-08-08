@@ -52,13 +52,15 @@ function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSpli
 
 /** One board column - To Do / Doing / Done - with a header count and an empty hint. When
  *  `limit` is set (a WIP limit) the header shows count/limit and flags when it is full. */
-export function BoardColumn({ title, count, hint, tone = 'default', limit, children }: { title: string; count: number; hint?: string; tone?: 'default' | 'done'; limit?: number; children?: ReactNode }) {
+export function BoardColumn({ title, count, hint, sub, tone = 'default', limit, children }: { title: string; count: number; hint?: string; sub?: string; tone?: 'default' | 'done'; limit?: number; children?: ReactNode }) {
   const full = limit != null && count >= limit;
   return (
     <div className="flex min-w-0 flex-col">
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',
         tone === 'done' ? 'bg-emerald-100/60 dark:bg-emerald-950/30' : full ? 'bg-amber-100/70 dark:bg-amber-950/30' : 'bg-muted')}>
-        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? `/${limit}` : ''})</span></h3>
+        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? `/${limit}` : ''})</span>
+          {sub && <span className="ml-1.5 font-mono text-[9px] font-normal uppercase tracking-wide text-muted-foreground/70">{sub}</span>}
+        </h3>
         {limit != null && <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground" title="Work-in-progress limit">WIP</span>}
       </div>
       <div className="flex-1 space-y-1.5 rounded-b-lg border border-border bg-card/40 p-2" style={{ minHeight: 84 }}>
@@ -171,26 +173,42 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
 
 /** A board card's detail (acceptance criteria + the task plan), collapsed behind a one-line
  *  toggle by default so cards stay short in narrow columns. `defaultOpen` keeps the active
- *  (Doing) card expanded; `interactive` allows ticking tasks. Each card keeps its own state. */
-export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, onToggleTask }:
-  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; onToggleTask: (id: string, taskId: string) => void }) {
+ *  (Build) card expanded; `interactive` allows ticking tasks. `built` marks the acceptance
+ *  criteria green (met) - an item that has been built to the studio has met them all; a card
+ *  still in Build/To Do shows them pending. Each card keeps its own open state. */
+export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, built = false, onToggleTask }:
+  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; built?: boolean; onToggleTask: (id: string, taskId: string) => void }) {
   const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
   const criteria = showAcceptance ? item.acceptance.filter(Boolean) : [];
   const [open, setOpen] = useState(defaultOpen);
   if (tasks.length === 0 && criteria.length === 0) return null;
   const done = tasks.filter((t) => t.done).length;
+  const acMet = built ? criteria.length : 0;
+  const acAll = criteria.length > 0 && acMet === criteria.length;
   return (
     <div className="mt-1.5">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
         className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
         <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !open && '-rotate-90')} />
         {tasks.length > 0 && <span className="flex items-center gap-0.5"><ListChecks className="h-3 w-3" /> Plan {done}/{tasks.length}</span>}
-        {criteria.length > 0 && <span>{tasks.length > 0 ? '· ' : ''}{criteria.length} criteri{criteria.length === 1 ? 'on' : 'a'}</span>}
+        {criteria.length > 0 && <span className={cn(acAll && 'text-emerald-600 dark:text-emerald-400')}>{tasks.length > 0 ? '· ' : ''}AC {acMet}/{criteria.length}</span>}
       </button>
       {open && (
-        <div className="mt-1 space-y-1">
-          {criteria.length > 0 && <div className="text-[10px] text-muted-foreground">Meet: {criteria.join(', ')}</div>}
-          <TaskChecklist item={item} onToggle={onToggleTask} readOnly={!interactive} />
+        <div className="mt-1 space-y-1.5">
+          {criteria.length > 0 && (
+            <div>
+              <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Acceptance criteria</div>
+              <ul className="space-y-0.5">
+                {criteria.map((c, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-[11px]">
+                    <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full', built ? 'bg-emerald-500 text-white' : 'border border-border')}>{built && <Check className="h-2 w-2" />}</span>
+                    <span className={cn(built ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {tasks.length > 0 && <TaskChecklist item={item} onToggle={onToggleTask} readOnly={!interactive} />}
         </div>
       )}
     </div>
