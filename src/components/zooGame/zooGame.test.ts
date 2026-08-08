@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, dodGaps, dodHappinessFactor, sprintProgress,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -817,23 +817,22 @@ describe('zoo game: enclosures are built before their animals', () => {
   });
 });
 
-describe('zoo game: a weak Definition of Done bites the outcome', () => {
+describe('zoo game: the Definition of Done is the completion gate, not a happiness dial', () => {
   const NICE = ['lion', 'tiger', 'kiosk', 'penguins', 'reef', 'wc'];
 
-  it('dropping accessibility / signposting from the DoD lowers visitor happiness', () => {
-    const strong = reviewSprint(buildAndOpen(flat(initialZooState(1)), NICE));
-    // A DoD that no longer requires safe/accessible or signposted.
-    let weak = setDefinitionOfDone(flat(initialZooState(1)), ['Meets its acceptance criteria', 'Fully finished']);
-    weak = reviewSprint(buildAndOpen(weak, NICE));
-    expect(dodGaps(weak.definitionOfDone).length).toBe(2);
-    expect(dodHappinessFactor(weak.definitionOfDone)).toBeCloseTo(0.81, 5);
-    expect(weak.lastReview!.overallHappiness).toBeLessThan(strong.lastReview!.overallHappiness);
+  it('the default DoD is the four-step workflow (build, review, PO sign-off, place & open)', () => {
+    expect(initialZooState(1).definitionOfDone).toEqual([
+      'Meets its acceptance criteria',
+      'Peer-reviewed by another Developer',
+      'Approved by the PO',
+      'Placed and opened',
+    ]);
   });
 
-  it('the default DoD covers both concerns, so there is no penalty', () => {
-    const s = initialZooState(1);
-    expect(dodGaps(s.definitionOfDone)).toHaveLength(0);
-    expect(dodHappinessFactor(s.definitionOfDone)).toBe(1);
+  it('editing the DoD text does not change visitor happiness - that comes from the design', () => {
+    const full = reviewSprint(buildAndOpen(flat(initialZooState(1)), NICE));
+    const trimmed = reviewSprint(buildAndOpen(setDefinitionOfDone(flat(initialZooState(1)), ['Meets its acceptance criteria']), NICE));
+    expect(trimmed.lastReview!.overallHappiness).toBe(full.lastReview!.overallHappiness);
   });
 });
 

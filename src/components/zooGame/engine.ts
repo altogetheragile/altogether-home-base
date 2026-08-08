@@ -728,30 +728,15 @@ const seedFor = (state: ZooGameState): number => ((state.gameSeed * 100003) ^ (s
 /** Product-wide quality bars that, if the team's Definition of Done does NOT require
  *  them, hurt the visitor outcome - so the DoD's content bites the outcome, not just the
  *  per-item Done gate. Weakening the DoD (dropping these at the Retro) has consequences. */
-const DOD_CONCERNS = [
-  { test: /safe|accessib/i, penalty: 0.9, label: 'safe & accessible', effect: 'some visitors can’t safely reach parts of the zoo' },
-  { test: /signpost|find|wayfind/i, penalty: 0.9, label: 'signposted', effect: 'visitors struggle to find the exhibits' },
-] as const;
-
-/** Which quality concerns the current Definition of Done leaves uncovered. */
-export function dodGaps(dod: string[]): { label: string; effect: string }[] {
-  return DOD_CONCERNS.filter((c) => !dod.some((d) => c.test.test(d))).map((c) => ({ label: c.label, effect: c.effect }));
-}
-/** The happiness multiplier from a weak DoD (1 when every concern is covered). */
-export function dodHappinessFactor(dod: string[]): number {
-  return DOD_CONCERNS.reduce((f, c) => (dod.some((d) => c.test.test(d)) ? f : f * c.penalty), 1);
-}
 
 export function reviewSprint(state: ZooGameState): ZooGameState {
   // Enclosures are infrastructure, not something visitors score directly - exclude them
   // from the simulation (the animals inside them carry the appeal).
   const openItems = state.backlog.filter((it) => it.status === 'open' && it.category !== 'enclosure').map(toZooItem);
-  const sim = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, state.attendance, seedFor(state));
-  // A weak Definition of Done costs happiness (safety/wayfinding gaps visitors feel).
-  const dodFactor = dodHappinessFactor(state.definitionOfDone);
-  const result = dodFactor < 1
-    ? { ...sim, overallHappiness: Math.round(sim.overallHappiness * dodFactor), segments: sim.segments.map((s) => ({ ...s, happiness: Math.round(s.happiness * dodFactor) })) }
-    : sim;
+  // Visitor happiness comes from what the game actually models - the design quality of what
+  // you delivered - not from the wording of the Definition of Done. The DoD's job is to be the
+  // team's completion gate (the workflow every item follows to be Done), not a happiness dial.
+  const result = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, state.attendance, seedFor(state));
 
   const committedThisSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
   const deliveredThisSprint = committedThisSprint.filter((it) => it.status === 'done' || it.status === 'open');
