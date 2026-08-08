@@ -243,7 +243,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                 <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
                   {deploy.map((it) => (
                     <ItemCard key={it.id} item={it}
-                      subtitle={<CardDetail item={it} onToggleTask={onToggleTask} />}
+                      subtitle={<CardDetail item={it} interactive defaultOpen onToggleTask={onToggleTask} />}
                       actions={deployActions(it)} />
                   ))}
                 </BoardColumn>
@@ -273,6 +273,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               dod={state.definitionOfDone}
               editing={editing}
               copySources={copySources}
+              onToggleTask={onToggleTask}
               onSetEnclosure={(size) => onSetEnclosure(designItem.id, size)}
               initial={draft && draft.id === designItem.id ? draft.design : undefined}
               onChange={(d) => setDraft({ id: designItem.id, design: d })}
