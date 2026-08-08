@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { BacklogItem } from './types';
 import {
-  renderDesign, isDesignDone, presetFor, GRID_W,
+  renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W,
   EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES, type ItemDesign,
 } from './design';
 import { TaskChecklist } from './Board';
@@ -92,6 +92,17 @@ export function DesignStudio({ item, dod, editing, onFinish, onCancel, initial, 
   const setPart = (key: string, opt: string) => commit({ ...design, parts: { ...design.parts, [key]: opt } });
   const setColor = (key: string, hex: string) => commit({ ...design, colors: { ...design.colors, [key]: hex } });
   const copyFrom = (src: CopySource) => commit({ parts: { ...src.design.parts }, colors: { ...src.design.colors } });
+
+  // Tick the plan off automatically as the design work is done - setting the footprint,
+  // colouring the fence, laying the ground, etc. - so it isn't a second set of boxes to
+  // check for work you just did. Only ticks forward; a custom task with no design match
+  // stays a manual tick. Idempotent, so it can't loop.
+  useEffect(() => {
+    if (!onToggleTask) return;
+    for (const t of item.tasks ?? []) {
+      if (t.label.trim() && !t.done && designSatisfiesTask(item, design, t.label)) onToggleTask(item.id, t.id);
+    }
+  }, [design, item, onToggleTask]);
 
   // Acceptance criteria are the Product Owner's, carried on the PBI. Building is you
   // accepting the work against them, so you confirm each (a judgement, like a lion
