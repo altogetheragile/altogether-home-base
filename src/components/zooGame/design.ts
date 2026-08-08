@@ -363,6 +363,36 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
 
 export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => designCriteria(item, design).every((x) => x.pass);
 
+/** Whether the actual design work for a plan task has been done - so the studio can tick the
+ *  plan off automatically as you build, instead of making you check boxes for work you just
+ *  did. Matched loosely by keyword against the generated task labels; a custom/unmatched task
+ *  returns false and stays a manual tick. */
+export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label: string): boolean {
+  const s = label.toLowerCase();
+  const c = design.colors, p = design.parts;
+  if (item.category === 'enclosure') {
+    if (/footprint|size/.test(s)) return !!item.enclosureSize;
+    if (/fence/.test(s)) return !!c.fence;
+    if (/ground|shelter|water|lay/.test(s)) return !!c.ground;
+    return false;
+  }
+  if (item.category === 'flora') {
+    if (/plant|type/.test(s)) return !!p.type;
+    if (/foliage|colou?r/.test(s)) return !!c.foliage;
+    return false;
+  }
+  if (item.category === 'amenity') {
+    if (/sign/.test(s)) return p.sign === 'on' && !!c.sign;
+    if (/colou?r|design/.test(s)) return !!c.walls || !!c.roof;
+    return false;
+  }
+  // exhibit (an animal)
+  if (/marking|feature/.test(s)) return isDesignDone(item, design);
+  if (/sketch|shape|look/.test(s)) return !!c.body || !!c.head;
+  if (/colou?r|paint|body|head/.test(s)) return !!c.body;
+  return false;
+}
+
 // ---- Appeal: the design choices are the product ----
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
