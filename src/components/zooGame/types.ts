@@ -320,6 +320,7 @@ export type ZooAction =
   | { type: 'SET_ITEM_SPOT'; id: string; spot: { x: number; y: number } }
   | { type: 'NEST_ITEM'; id: string; enclosureId: string; spot: { x: number; y: number } }
   | { type: 'UNNEST_ITEM'; id: string }
+  | { type: 'RENAME_ITEM'; id: string; name: string }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }

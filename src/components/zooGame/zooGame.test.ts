@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -886,6 +886,13 @@ describe('zoo game: enclosures are built before their animals', () => {
     expect(out.spot).toBeUndefined();
   });
 
+  it('an enclosure can be renamed via its sign, and a blank name is ignored', () => {
+    let s = renameItem(initialZooState(1), 'lion-enc', '  Savanna Kingdom  ');
+    expect(find(s, 'lion-enc').name).toBe('Savanna Kingdom'); // trimmed
+    s = renameItem(s, 'lion-enc', '   ');
+    expect(find(s, 'lion-enc').name).toBe('Savanna Kingdom'); // blank ignored, keeps the last name
+  });
+
   it('enclosures are excluded from the visitor simulation (they carry no appeal)', () => {
     // Open only the enclosure: no exhibits open, so visitors have nothing to enjoy.
     let s = planSprint(initialZooState(1), ['lion-enc']);
@@ -971,6 +978,28 @@ describe('zoo game: the toolbox', () => {
     expect(item.category).toBe('enclosure');
     expect(item.enclosureSize).toBe('large');
     expect(item.unsized).toBe(true);
+  });
+
+  it('offers a Signpost in Flora & decor that starts as a signpost shape and reads as a sign', () => {
+    const sign = TOOLBOX.flatMap((g) => g.items).find((i) => i.name === 'Signpost')!;
+    expect(sign).toBeDefined();
+    expect(sign.category).toBe('flora');
+    expect(sign.template).toBe('signpost');
+    const s = addPbi(initialZooState(1), toolboxDraft(sign));
+    const item = s.backlog.find((i) => i.name === 'Signpost' && i.status === 'backlog')!;
+    expect(item.acceptance).toContain('Clearly readable'); // sign-appropriate ACs, not "planting"
+    expect(presetFor(item).parts.type).toBe('signpost'); // the flora template drives the shape
+    // The signpost renders something (a non-empty grid), like the other flora shapes.
+    const grid = renderDesign(item, { parts: { type: 'signpost' }, colors: { foliage: '#c8873b', trunk: '#7a5230' } });
+    expect(grid.some((row) => row.some((c) => c))).toBe(true);
+  });
+
+  it('flora templates keep their distinct starting shapes (trees, bushes, flowerbeds)', () => {
+    const flora = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'flora');
+    const byName = (n: string) => flora.find((i) => i.name === n)!;
+    expect(presetFor({ category: 'flora', template: byName('Bushes').template } as never).parts.type).toBe('bush');
+    expect(presetFor({ category: 'flora', template: byName('Flowerbed').template } as never).parts.type).toBe('flowers');
+    expect(presetFor({ category: 'flora', template: byName('Trees').template } as never).parts.type).toBe('tree');
   });
 });
 
