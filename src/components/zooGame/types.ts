@@ -318,6 +318,8 @@ export type ZooAction =
   | { type: 'ADD_ANOTHER'; id: string }
   | { type: 'IMPROVE_ITEM'; id: string }
   | { type: 'SET_ITEM_SPOT'; id: string; spot: { x: number; y: number } }
+  | { type: 'NEST_ITEM'; id: string; enclosureId: string; spot: { x: number; y: number } }
+  | { type: 'UNNEST_ITEM'; id: string }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }

@@ -372,6 +372,18 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, spot } : it)) };
 }
 
+/** Nest a plant inside an enclosure (drag it in) - it becomes part of that habitat, positioned at
+ *  the drop spot, and no longer sits loose on the grounds. */
+export function nestItem(state: ZooGameState, id: string, enclosureId: string, spot: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureId, spot, pos: undefined } : it)) };
+}
+
+/** Take a nested plant back out onto the open grounds (drag it out) - it returns to a loose
+ *  feature and is auto-arranged until placed. */
+export function unnestItem(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureId: undefined, spot: undefined } : it)) };
+}
+
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
  *  among the other still-in-Backlog items. */
 export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {

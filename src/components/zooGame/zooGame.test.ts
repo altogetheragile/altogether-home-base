@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -869,6 +869,21 @@ describe('zoo game: enclosures are built before their animals', () => {
     s = setItemSpot(s, 'lion', { x: 0.6, y: 0.5 });
     expect(find(s, 'lion').spot).toEqual({ x: 0.6, y: 0.5 });
     expect(find(s, 'lion').pos).toBeUndefined(); // spot is separate from the park position
+  });
+
+  it('planting can be nested inside an enclosure (drag in) and taken back out (drag out)', () => {
+    let s = addPbi(initialZooState(1), { name: 'Fern', category: 'flora', zone: 'Big Cats', acceptance: [] });
+    const fernId = s.backlog.find((i) => i.name === 'Fern')!.id;
+    s = setItemPos(s, fernId, { x: 200, y: 100 }); // loose on the grounds
+    s = nestItem(s, fernId, 'lion-enc', { x: 0.4, y: 0.6 });
+    const nested = find(s, fernId);
+    expect(nested.enclosureId).toBe('lion-enc'); // now part of that habitat
+    expect(nested.spot).toEqual({ x: 0.4, y: 0.6 });
+    expect(nested.pos).toBeUndefined(); // no longer a loose grounds position
+    s = unnestItem(s, fernId);
+    const out = find(s, fernId);
+    expect(out.enclosureId).toBeUndefined(); // back on the open grounds
+    expect(out.spot).toBeUndefined();
   });
 
   it('enclosures are excluded from the visitor simulation (they carry no appeal)', () => {

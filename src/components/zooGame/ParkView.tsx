@@ -140,7 +140,7 @@ export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children,
   );
 }
 
-function Enclosure({ enc, animals, theme, onSetSpot }: { enc: BacklogItem; animals: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void }) {
+function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = enc.design;
   const ground = d?.colors.ground ?? theme.plot;
@@ -149,28 +149,34 @@ function Enclosure({ enc, animals, theme, onSetSpot }: { enc: BacklogItem; anima
   const cell = n >= 4 ? 1 : 2; // more animals share the space, so each is drawn smaller
   const boxRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
-  // An animal keeps its dragged spot; otherwise it auto-arranges along the habitat floor.
+  // A content item keeps its dragged spot; an animal without one auto-arranges along the floor.
   const spotOf = (a: BacklogItem, i: number) => a.spot
     ? { left: a.spot.x * 100, top: a.spot.y * 100 }
     : { left: n <= 1 ? 50 : 14 + (i / (n - 1)) * 72, top: 62 + (i % 2 === 0 ? -6 : 6) };
+  const clampSpot = (p: { x: number; y: number }) => ({ x: clamp(p.x, 0.08, 0.92), y: clamp(p.y, 0.1, 0.94) });
 
-  // Drag an animal to a spot inside its enclosure. Coordinates come from the habitat box, so
-  // it works regardless of the park's zoom. stopPropagation keeps the whole enclosure from moving.
-  const startSpotDrag = (e: ReactPointerEvent, id: string) => {
+  // Drag a content item (animal or planted flora) to a spot inside its enclosure. Coordinates come
+  // from the habitat box, so it works regardless of the park's zoom; stopPropagation keeps the
+  // whole enclosure from moving. A plant released well outside the box is taken back out (un-nested).
+  const startSpotDrag = (e: ReactPointerEvent, id: string, unnestable: boolean) => {
     if (!onSetSpot) return;
     e.stopPropagation();
     e.preventDefault();
-    const at = (ev: { clientX: number; clientY: number }) => {
+    const raw = (ev: { clientX: number; clientY: number }) => {
       const r = boxRef.current?.getBoundingClientRect();
       if (!r) return null;
-      return { x: clamp((ev.clientX - r.left) / r.width, 0.08, 0.92), y: clamp((ev.clientY - r.top) / r.height, 0.1, 0.94) };
+      return { x: (ev.clientX - r.left) / r.width, y: (ev.clientY - r.top) / r.height };
     };
-    const move = (ev: globalThis.PointerEvent) => { const p = at(ev); if (p) setDrag({ id, ...p }); };
+    const move = (ev: globalThis.PointerEvent) => { const p = raw(ev); if (p) { const c = clampSpot(p); setDrag({ id, x: c.x, y: c.y }); } };
     const up = (ev: globalThis.PointerEvent) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      const p = at(ev);
-      if (p) onSetSpot(id, p);
+      const p = raw(ev);
+      if (p) {
+        const outside = p.x < -0.05 || p.x > 1.05 || p.y < -0.05 || p.y > 1.05;
+        if (unnestable && outside && onUnnest) onUnnest(id);
+        else onSetSpot(id, clampSpot(p));
+      }
       setDrag(null);
     };
     window.addEventListener('pointermove', move);
@@ -183,12 +189,24 @@ function Enclosure({ enc, animals, theme, onSetSpot }: { enc: BacklogItem; anima
         {d && enclosureWater(d).map((wf, i) => (
           <div key={i} className="absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
         ))}
-        {n === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {n === 0 && plants.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {/* Planting sits behind the animals; drag it within, or out of the fence to remove it. */}
+        {plants.map((pl) => {
+          const p = drag?.id === pl.id ? { left: drag.x * 100, top: drag.y * 100 } : { left: (pl.spot?.x ?? 0.5) * 100, top: (pl.spot?.y ?? 0.4) * 100 };
+          return (
+            <div key={pl.id} title={onSetSpot ? `${pl.name} - drag within, or out of the fence to remove` : undefined}
+              className={cn('absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
+              onPointerDown={(e) => startSpotDrag(e, pl.id, true)}
+              style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === pl.id ? 3 : 0, touchAction: onSetSpot ? 'none' : undefined }}>
+              <Sprite item={pl} design={pl.design ?? presetFor(pl)} cell={cell} />
+            </div>
+          );
+        })}
         {animals.map((a, i) => {
           const p = drag?.id === a.id ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i);
           return (
             <div key={a.id} className={cn('absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
-              onPointerDown={(e) => startSpotDrag(e, a.id)}
+              onPointerDown={(e) => startSpotDrag(e, a.id, false)}
               style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot ? 'none' : undefined }}>
               <Sprite item={a} design={a.design ?? presetFor(a)} cell={cell} />
             </div>
@@ -202,7 +220,7 @@ function Enclosure({ enc, animals, theme, onSetSpot }: { enc: BacklogItem; anima
 
 // ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
 
-interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h: number; animals: BacklogItem[]; theme: ZoneTheme }
+interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h: number; animals: BacklogItem[]; plants: BacklogItem[]; theme: ZoneTheme }
 
 /** Everything currently shown in the park, as positionable features. An enclosure appears
  *  once BUILT (Done or Open) - the habitat is there before its animals are released - with
@@ -212,20 +230,24 @@ function buildFeatures(state: ZooGameState): Feature[] {
   const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open') && !it.enhancesId);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const theme = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
+  // Planting dragged into a built enclosure lives inside that habitat, not loose on the grounds.
+  const nestedFlora = (o: BacklogItem) => o.category === 'flora' && !!o.enclosureId && builtEnc.some((e) => e.id === o.enclosureId);
   const feats: Feature[] = [];
   for (const e of builtEnc) {
     const cfg = ENCLOSURE[e.enclosureSize ?? 'medium'];
     const animals = open.filter((o) => o.category === 'exhibit' && o.enclosureId === e.id);
-    feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, theme: theme(e.zone) });
+    const plants = open.filter((o) => nestedFlora(o) && o.enclosureId === e.id);
+    feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, plants, theme: theme(e.zone) });
   }
   // Any open exhibit whose enclosure is not built falls back to a small plot (shouldn't
   // normally happen, since the habitat is built first).
   for (const o of open.filter((o) => o.category === 'exhibit' && !builtEnc.some((e) => e.id === o.enclosureId))) {
-    feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], theme: theme(o.zone) });
+    feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(o.zone) });
   }
-  // Amenities and planting (flora) sit freely on the grounds - drag them anywhere.
-  for (const a of open.filter((o) => o.category === 'amenity' || o.category === 'flora')) {
-    feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], theme: theme(a.zone) });
+  // Amenities and loose planting sit freely on the grounds - drag them anywhere (or a plant onto
+  // an enclosure to plant it inside).
+  for (const a of open.filter((o) => o.category === 'amenity' || (o.category === 'flora' && !nestedFlora(o)))) {
+    feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
   }
   return feats;
 }
@@ -260,7 +282,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving, onSetSpot }: {
+function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving, onSetSpot, onNest, onUnnest }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
@@ -274,6 +296,8 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
   onImprove?: (id: string) => void;
   improving?: Set<string>;
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
+  onUnnest?: (id: string) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
@@ -311,7 +335,24 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
     const up = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      onPlaceItem(f.item.id, at(ev));
+      const drop = at(ev);
+      // A plant dropped onto a built enclosure is planted inside it; otherwise it just moves.
+      if (onNest && f.kind === 'plot' && f.item.category === 'flora') {
+        const enc = features.find((g) => {
+          if (g.kind !== 'enclosure') return false;
+          const c = posOf(g);
+          const left = c.x - g.w / 2, top = c.y - g.h / 2;
+          return drop.x >= left && drop.x <= left + g.w && drop.y >= top && drop.y <= top + (g.h - LABEL_H);
+        });
+        if (enc) {
+          const c = posOf(enc);
+          const left = c.x - enc.w / 2, top = c.y - enc.h / 2;
+          onNest(f.item.id, enc.item.id, { x: clamp((drop.x - left) / enc.w, 0.08, 0.92), y: clamp((drop.y - top) / (enc.h - LABEL_H), 0.1, 0.94) });
+          setDrag(null);
+          return;
+        }
+      }
+      onPlaceItem(f.item.id, drop);
       setDrag(null);
     };
     window.addEventListener('pointermove', move);
@@ -412,7 +453,7 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
-                ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} onSetSpot={onSetSpot} />
+                ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} />
                 : <Plot item={f.item} cell={4} />}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
               {onImprove && tool === 'none' && !dragging && (
@@ -496,12 +537,15 @@ interface ParkViewProps {
   onImprove?: (id: string) => void;
   /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  /** On the big Park tab, plant flora inside an enclosure (drag onto it) or take it back out. */
+  onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
+  onUnnest?: (id: string) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot, onNest, onUnnest }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const route = state.pathRoute ?? 'straight';
   const paths = state.paths ?? [];
@@ -610,7 +654,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           )}
           <FreeScene features={features} dots={dots} style={style} route={route} tool={tool} draft={draft} paths={paths}
             onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath}
-            onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} />
+            onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />
