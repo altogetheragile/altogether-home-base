@@ -296,6 +296,10 @@ const CANVAS_W = 880;
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
 const PAD = 20;
 const GAP = 18;
+const PERIM = 8;        // how far a perimeter path sits outside a feature's body
+const PERIM_W = 8;      // perimeter / park-boundary path thickness
+const PATH_TAN = '#c9a86a'; // the default path colour (perimeters, park boundary, new connectors)
+const PATH_EDGE = 'rgba(0,0,0,.28)'; // the dark outline under every path
 
 /** Default tidy layout for features without a saved position: shelf-pack left-to-right,
  *  wrapping within the canvas width. Returns each feature's CENTRE in design px. */
@@ -367,13 +371,35 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
   const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
 
-  // --- Connector geometry: resolve each end (attached feature edge, or free point) and the polyline.
-  const boxOf = (id: string) => { const f = features.find((x) => x.item.id === id); if (!f) return null; const c = posOf(f); return { cx: c.x, cy: c.y, hw: f.w / 2, hh: (f.h - LABEL_H) / 2 + LABEL_H / 2 }; };
+  // The visible body box of a feature (the enclosure box / building tile, excluding the name label),
+  // used for both its perimeter path and where connectors attach.
+  const coreBox = (f: Feature) => { const c = posOf(f); const bh = f.h - LABEL_H; const cy = f.kind === 'enclosure' ? c.y : c.y - LABEL_H / 2; return { cx: c.x, cy, hw: f.w / 2, hh: bh / 2 }; };
+  // --- Connector geometry: resolve each end (its feature's perimeter edge, or a free point) + the polyline.
+  const boxOf = (id: string) => { const f = features.find((x) => x.item.id === id); return f ? coreBox(f) : null; };
   const anchor = (end: ConnectorEnd) => { const b = end.featureId ? boxOf(end.featureId) : null; return b ? { x: b.cx, y: b.cy } : { x: end.x, y: end.y }; };
   const resolveEnd = (end: ConnectorEnd, toward: { x: number; y: number }) => {
     const b = end.featureId ? boxOf(end.featureId) : null;
-    return b ? boxEdge(b.cx, b.cy, b.hw + 3, b.hh + 3, toward.x, toward.y) : { x: end.x, y: end.y };
+    return b ? boxEdge(b.cx, b.cy, b.hw + PERIM, b.hh + PERIM, toward.x, toward.y) : { x: end.x, y: end.y };
   };
+  // A feature's perimeter path (a loop just outside its body), following its shape. Enclosures use
+  // their chosen shape; buildings use a rounded rectangle. Only enclosures and buildings get one.
+  const perimeters = features.filter((f) => f.kind === 'enclosure' || f.item.category === 'amenity').map((f) => {
+    const b = coreBox(f);
+    const shape = f.kind === 'enclosure' ? (f.item.design?.parts.shape ?? 'rounded') : 'rounded';
+    return { id: f.item.id, shape, x: b.cx - b.hw - PERIM, y: b.cy - b.hh - PERIM, w: b.hw * 2 + PERIM * 2, h: b.hh * 2 + PERIM * 2 };
+  });
+  const perimEl = (p: { id: string; shape: string; x: number; y: number; w: number; h: number }, stroke: string, width: number, key: string) => {
+    const common = { fill: 'none' as const, stroke, strokeWidth: width, strokeLinejoin: 'round' as const };
+    if (p.shape === 'circle') return <ellipse key={key} cx={p.x + p.w / 2} cy={p.y + p.h / 2} rx={p.w / 2} ry={p.h / 2} {...common} />;
+    if (p.shape === 'pill') return <rect key={key} x={p.x} y={p.y} width={p.w} height={p.h} rx={p.h / 2} {...common} />;
+    if (p.shape === 'hexagon' || p.shape === 'octagon') return <polygon key={key} points={enclosureShapePoints(p.shape, p.w, p.h, 0) ?? ''} transform={`translate(${p.x},${p.y})`} {...common} />;
+    return <rect key={key} x={p.x} y={p.y} width={p.w} height={p.h} rx={14} {...common} />;
+  };
+  // The park boundary: a rounded loop just inside the canvas, above the promenade.
+  const boundary = { x: 10, y: 10, w: CANVAS_W - 20, h: canvasH - PATH_H - 16 };
+  const boundaryEl = (stroke: string, width: number, key: string) => (
+    <rect key={key} x={boundary.x} y={boundary.y} width={boundary.w} height={boundary.h} rx={22} fill="none" stroke={stroke} strokeWidth={width} />
+  );
   const connPoints = (c: { a: ConnectorEnd; b: ConnectorEnd; bends: { x: number; y: number }[] }) => {
     const aToward = c.bends[0] ?? anchor(c.b);
     const bToward = c.bends[c.bends.length - 1] ?? anchor(c.a);
@@ -494,16 +520,24 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         {/* Promenade path + entrance + trees along the foot. */}
         <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
 
-        {/* Connector layer: each connector is a manual polyline; attached ends follow their feature
-            (posOf recomputes each render). Rendered in passes - all outlines first, then all bodies -
-            so where paths cross, the tan bodies merge cleanly instead of one outline cutting another. */}
+        {/* Path layer: the park boundary, a perimeter walkway around each enclosure/building, and the
+            manual connectors that join them. Attached connector ends follow their feature (posOf
+            recomputes each render). Everything is drawn in two passes - all dark outlines first, then
+            all tan bodies - so where paths meet, the bodies merge cleanly instead of one outline
+            cutting through another. */}
         {(() => {
           const drawn = connectors.map((c) => ({ c, d: toD(connPoints(c)) }));
           return (
             <svg className="absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} style={{ pointerEvents: 'none' }}>
+              {/* Outlines */}
+              {boundaryEl(PATH_EDGE, PERIM_W + 3, 'bo')}
+              {perimeters.map((p) => perimEl(p, PATH_EDGE, PERIM_W + 3, `po-${p.id}`))}
               {drawn.map(({ c, d }) => (
-                <polyline key={`o-${c.id}`} points={d} fill="none" stroke="rgba(0,0,0,.28)" strokeWidth={c.thickness + 3} strokeLinecap="round" strokeLinejoin="round" />
+                <polyline key={`o-${c.id}`} points={d} fill="none" stroke={PATH_EDGE} strokeWidth={c.thickness + 3} strokeLinecap="round" strokeLinejoin="round" />
               ))}
+              {/* Bodies */}
+              {boundaryEl(PATH_TAN, PERIM_W, 'bb')}
+              {perimeters.map((p) => perimEl(p, PATH_TAN, PERIM_W, `pb-${p.id}`))}
               {drawn.map(({ c, d }) => (
                 <polyline key={`b-${c.id}`} points={d} fill="none" stroke={c.color} strokeWidth={c.thickness} strokeLinecap="round" strokeLinejoin="round" />
               ))}
