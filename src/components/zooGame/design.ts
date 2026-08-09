@@ -225,14 +225,65 @@ function creatureGrid(design: ItemDesign): (string | null)[][] {
 function buildingGrid(design: ItemDesign): (string | null)[][] {
   const g = blank();
   const col = (k: string) => design.colors[k] ?? PLACEHOLDER;
+  const win = '#a9d3ea';
+  const wallC = col('walls'), roofC = col('roof'), doorC = col('door'), signC = col('sign');
+  const type = design.parts.type ?? 'shop';
+  const sign = (row: number, x0 = 5, x1 = 11) => { if (design.parts.sign === 'on') for (let x = x0; x <= x1; x++) g[row][x] = signC; };
+
+  if (type === 'kiosk') {
+    // A small stall: body with an open counter under a striped flat awning.
+    const wall: Cell[] = []; for (let y = 7; y <= 12; y++) for (let x = 5; x <= 11; x++) wall.push([x, y]);
+    paintShaded(g, wall, wallC, 14, -18);
+    for (let x = 4; x <= 12; x++) { g[5][x] = shade(roofC, 10); g[6][x] = roofC; }
+    for (let x = 4; x <= 12; x += 2) g[6][x] = shade(roofC, -28); // awning stripes
+    for (let y = 8; y <= 9; y++) for (let x = 6; x <= 10; x++) g[y][x] = win; // counter opening
+    g[13][5] = wallC; g[13][11] = wallC; // legs
+    sign(3, 6, 10);
+    return g;
+  }
+  if (type === 'stall') {
+    // An open canopy on posts (picnic/seating): striped roof, a counter, no walls.
+    for (let x = 3; x <= 13; x++) { g[4][x] = shade(roofC, 12); g[5][x] = roofC; }
+    for (let x = 3; x <= 13; x += 2) g[5][x] = shade(roofC, -28);
+    for (let y = 6; y <= 13; y++) { g[y][3] = wallC; g[y][13] = wallC; } // posts
+    for (let y = 10; y <= 11; y++) for (let x = 6; x <= 10; x++) g[y][x] = doorC; // table/counter
+    sign(2);
+    return g;
+  }
+  if (type === 'toilets') {
+    // A blocky flat-roofed building with a prominent sign panel.
+    const wall: Cell[] = []; for (let y = 5; y <= 13; y++) for (let x = 5; x <= 11; x++) wall.push([x, y]);
+    paintShaded(g, wall, wallC, 12, -16);
+    for (let x = 5; x <= 11; x++) { g[4][x] = roofC; g[5][x] = shade(roofC, -14); }
+    for (let y = 8; y <= 13; y++) for (let x = 7; x <= 9; x++) g[y][x] = doorC; // door
+    g[7][6] = win; g[7][10] = win;
+    if (design.parts.sign === 'on') for (let y = 1; y <= 3; y++) for (let x = 5; x <= 11; x++) g[y][x] = signC; // big sign
+    return g;
+  }
+  if (type === 'cafe') {
+    // A house with a striped side awning.
+    const wall: Cell[] = [], roof: Cell[] = [];
+    for (let y = 6; y <= 12; y++) for (let x = 5; x <= 12; x++) wall.push([x, y]);
+    for (let y = 3; y <= 5; y++) for (let x = 5 + (5 - y); x <= 12 - (5 - y); x++) roof.push([x, y]);
+    paintShaded(g, wall, wallC, 14, -18);
+    paintShaded(g, roof, roofC, 16, -20);
+    for (let y = 8; y <= 12; y++) for (let x = 8; x <= 10; x++) g[y][x] = doorC;
+    g[8][6] = win; g[8][11] = win;
+    for (let x = 1; x <= 4; x++) g[9][x] = shade(roofC, 10); // side awning
+    for (let x = 1; x <= 4; x += 2) g[9][x] = shade(roofC, -28);
+    g[12][2] = doorC; g[11][2] = shade(wallC, -10); // little table + post
+    sign(2, 6, 11);
+    return g;
+  }
+  // Default 'shop': the classic pitched-roof building with door, two windows and a sign.
   const wall: Cell[] = [], roof: Cell[] = [];
   for (let y = 6; y <= 12; y++) for (let x = 4; x <= 12; x++) wall.push([x, y]);
   for (let y = 3; y <= 5; y++) for (let x = 4 + (5 - y); x <= 12 - (5 - y); x++) roof.push([x, y]);
-  paintShaded(g, wall, col('walls'), 14, -18);
-  paintShaded(g, roof, col('roof'), 16, -20);
-  for (let y = 8; y <= 12; y++) for (let x = 7; x <= 9; x++) g[y][x] = col('door');
-  g[8][5] = '#a9d3ea'; g[8][11] = '#a9d3ea'; // windows
-  if (design.parts.sign === 'on') for (let x = 5; x <= 11; x++) g[1][x] = col('sign');
+  paintShaded(g, wall, wallC, 14, -18);
+  paintShaded(g, roof, roofC, 16, -20);
+  for (let y = 8; y <= 12; y++) for (let x = 7; x <= 9; x++) g[y][x] = doorC;
+  g[8][5] = win; g[8][11] = win;
+  sign(1);
   return g;
 }
 
@@ -281,6 +332,19 @@ export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
 ];
 export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost'];
+export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
+
+/** A sensible building shape for an amenity from its name/services, so every facility (toolbox,
+ *  initial backlog, split epics, visitor signals) starts as a fitting building - overridable in
+ *  the studio. */
+export function buildingTypeFor(name: string, services?: string): string {
+  const n = name.toLowerCase();
+  if (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) return 'toilets';
+  if (/kiosk|stall|stand/.test(n)) return 'kiosk';
+  if (/caf|coffee/.test(n)) return 'cafe';
+  if (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) return 'stall';
+  return 'shop';
+}
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
 ];
@@ -339,7 +403,7 @@ export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART
 export function presetFor(item: BacklogItem): ItemDesign {
   if (item.category === 'enclosure') return { parts: { water: 'on' }, colors: {} };
   if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
-  if (item.category === 'amenity') return { parts: { sign: 'on' }, colors: {} };
+  if (item.category === 'amenity') return { parts: { type: item.template ?? buildingTypeFor(item.name, item.services), sign: 'on' }, colors: {} };
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
 }
 export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);

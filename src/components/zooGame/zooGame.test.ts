@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -969,6 +969,20 @@ describe('zoo game: the toolbox', () => {
     expect(item.category).toBe('enclosure');
     expect(item.enclosureSize).toBe('large');
     expect(item.unsized).toBe(true);
+  });
+
+  it('buildings come in distinct shapes, each carried from the toolbox and rendering differently', () => {
+    const amenities = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'amenity');
+    // The toolbox spread across several building shapes, not all the same.
+    const shapes = new Set(amenities.map((a) => a.template));
+    expect(shapes.size).toBeGreaterThanOrEqual(4);
+    for (const a of amenities) expect(BUILDING_TYPES).toContain(a.template);
+    // Kiosk starts as a kiosk; each building type renders a non-empty, distinct grid.
+    const kiosk = amenities.find((a) => a.name === 'Kiosk')!;
+    const item = { id: 'k', name: 'Kiosk', category: 'amenity' as const, zone: 'General', acceptance: [], status: 'backlog' as const, sprintNumber: null, accessible: true, estimate: 0, template: kiosk.template };
+    expect(presetFor(item).parts.type).toBe('kiosk');
+    const rendered = BUILDING_TYPES.map((t) => JSON.stringify(renderDesign(item, { parts: { type: t, sign: 'on' }, colors: { walls: '#cfd4d8', roof: '#9aa3ab', door: '#8a5a2b', sign: '#e6842a' } })));
+    expect(new Set(rendered).size).toBe(BUILDING_TYPES.length); // every building type looks different
   });
 
   it('offers a Signpost in Flora & decor that starts as a signpost shape and reads as a sign', () => {
