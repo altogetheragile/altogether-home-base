@@ -366,6 +366,12 @@ export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y:
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
 }
 
+/** Position an item WITHIN its parent enclosure (0..1 fractions of the habitat box) - drag an
+ *  animal to a spot inside its enclosure rather than letting it auto-arrange. */
+export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, spot } : it)) };
+}
+
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
  *  among the other still-in-Backlog items. */
 export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {

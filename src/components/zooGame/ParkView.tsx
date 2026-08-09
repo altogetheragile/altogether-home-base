@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooPath } from './types';
 import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
@@ -116,11 +116,11 @@ const LABEL_H = 18; // the name pill under a feature, counted in its layout heig
 /** The habitat box in its chosen shape (rounded rectangle, pill, round, hexagon, octagon), with
  *  the ground fill and fence outline. Rounded keeps the crisp bordered div; the other shapes are
  *  drawn as an SVG outline so the fence follows the shape. Contents (animals, water) overlay it. */
-export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children }:
-  { shape: string; w: number; h: number; ground: string; fence: string; border?: number; children?: ReactNode }) {
+export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children, boxRef }:
+  { shape: string; w: number; h: number; ground: string; fence: string; border?: number; children?: ReactNode; boxRef?: Ref<HTMLDivElement> }) {
   const points = enclosureShapePoints(shape, w, h, border);
   return (
-    <div className="relative" style={{ width: w, height: h }}>
+    <div ref={boxRef} className="relative" style={{ width: w, height: h }}>
       {shape === 'rounded' || !shape ? (
         <div className="absolute inset-0 overflow-hidden rounded-lg"
           style={{ background: ground, border: `${border}px solid ${fence}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.2), 0 2px 0 rgba(0,0,0,.08)' }}>
@@ -140,29 +140,60 @@ export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children 
   );
 }
 
-function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: BacklogItem[]; theme: ZoneTheme }) {
+function Enclosure({ enc, animals, theme, onSetSpot }: { enc: BacklogItem; animals: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = enc.design;
   const ground = d?.colors.ground ?? theme.plot;
   const fence = d?.colors.fence ?? theme.plotBorder;
   const n = animals.length;
   const cell = n >= 4 ? 1 : 2; // more animals share the space, so each is drawn smaller
-  const positions = animals.map((_, i) => ({
-    left: n <= 1 ? 50 : 14 + (i / (n - 1)) * 72,
-    top: 62 + (i % 2 === 0 ? -6 : 6),
-  }));
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
+  // An animal keeps its dragged spot; otherwise it auto-arranges along the habitat floor.
+  const spotOf = (a: BacklogItem, i: number) => a.spot
+    ? { left: a.spot.x * 100, top: a.spot.y * 100 }
+    : { left: n <= 1 ? 50 : 14 + (i / (n - 1)) * 72, top: 62 + (i % 2 === 0 ? -6 : 6) };
+
+  // Drag an animal to a spot inside its enclosure. Coordinates come from the habitat box, so
+  // it works regardless of the park's zoom. stopPropagation keeps the whole enclosure from moving.
+  const startSpotDrag = (e: ReactPointerEvent, id: string) => {
+    if (!onSetSpot) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const at = (ev: { clientX: number; clientY: number }) => {
+      const r = boxRef.current?.getBoundingClientRect();
+      if (!r) return null;
+      return { x: clamp((ev.clientX - r.left) / r.width, 0.08, 0.92), y: clamp((ev.clientY - r.top) / r.height, 0.1, 0.94) };
+    };
+    const move = (ev: globalThis.PointerEvent) => { const p = at(ev); if (p) setDrag({ id, ...p }); };
+    const up = (ev: globalThis.PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      const p = at(ev);
+      if (p) onSetSpot(id, p);
+      setDrag(null);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
   return (
     <div className="relative flex flex-col items-center">
-      <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence}>
+      <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence} boxRef={boxRef}>
         {d && enclosureWater(d).map((wf, i) => (
           <div key={i} className="absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
         ))}
         {n === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
-        {positions.map((p, i) => (
-          <div key={animals[i].id} className="absolute" style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: 1 }}>
-            <Sprite item={animals[i]} design={animals[i].design ?? presetFor(animals[i])} cell={cell} />
-          </div>
-        ))}
+        {animals.map((a, i) => {
+          const p = drag?.id === a.id ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i);
+          return (
+            <div key={a.id} className={cn('absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
+              onPointerDown={(e) => startSpotDrag(e, a.id)}
+              style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot ? 'none' : undefined }}>
+              <Sprite item={a} design={a.design ?? presetFor(a)} cell={cell} />
+            </div>
+          );
+        })}
       </EnclosureBox>
       <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{enc.name}</span>
     </div>
@@ -229,7 +260,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving }: {
+function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving, onSetSpot }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
@@ -242,6 +273,7 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
   onDeletePath?: (id: string) => void;
   onImprove?: (id: string) => void;
   improving?: Set<string>;
+  onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
@@ -380,7 +412,7 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
-                ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} />
+                ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} onSetSpot={onSetSpot} />
                 : <Plot item={f.item} cell={4} />}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
               {onImprove && tool === 'none' && !dragging && (
@@ -462,12 +494,14 @@ interface ParkViewProps {
   onClearPaths?: () => void;
   /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
   onImprove?: (id: string) => void;
+  /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
+  onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const route = state.pathRoute ?? 'straight';
   const paths = state.paths ?? [];
@@ -576,7 +610,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           )}
           <FreeScene features={features} dots={dots} style={style} route={route} tool={tool} draft={draft} paths={paths}
             onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath}
-            onImprove={onImprove} improving={improving} />
+            onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />

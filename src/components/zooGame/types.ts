@@ -157,6 +157,9 @@ export interface BacklogItem {
    *  It carries a clone of that item's design; on delivery the design is applied back to the
    *  target (keeping its place) and this PBI is not rendered as a second feature. */
   enhancesId?: string;
+  /** Position WITHIN a parent enclosure, as 0..1 fractions of the habitat box. Set when an
+   *  animal (or nested plant) is dragged to a spot inside its enclosure; unset = auto-arranged. */
+  spot?: { x: number; y: number };
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -314,6 +317,7 @@ export type ZooAction =
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
   | { type: 'ADD_ANOTHER'; id: string }
   | { type: 'IMPROVE_ITEM'; id: string }
+  | { type: 'SET_ITEM_SPOT'; id: string; spot: { x: number; y: number } }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }
