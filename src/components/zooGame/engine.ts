@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign } from './design';
+import { appealFromDesign, amenityAcceptance } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -140,7 +140,7 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
     } else {
       created.push({
         id: mem.id, name: mem.name, category: 'amenity', zone, services: mem.services, serviceCapacity: 500,
-        acceptance: ['Clearly signed', mem.services === 'food' ? 'Serves food and drink' : mem.services === 'toilet' ? 'Has enough cubicles' : 'Enough seating'],
+        acceptance: amenityAcceptance(mem.name, mem.services),
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
       });
     }
@@ -186,9 +186,10 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
     s = { ...s, backlog: s.backlog.map((it) => (it.id === rf.id && it.status === 'backlog' ? { ...it, acceptance: acc } : it)) };
   }
   if (d.order?.length) s = reorderByPriority(s, d.order);
-  // The PO may propose the initial Sprint Goal - apply it only when none is set yet.
+  // "Ask the PO" is an explicit request for the PO's proposal, so its Sprint Goal populates the
+  // field (you can still edit it). This only runs on that explicit action, never automatically.
   const goal = d.sprintGoal?.trim();
-  if (goal && !state.sprintGoal.trim()) s = { ...s, sprintGoal: goal };
+  if (goal) s = { ...s, sprintGoal: goal };
   return { ...s, refinePenalty: penaltyBefore };
 }
 

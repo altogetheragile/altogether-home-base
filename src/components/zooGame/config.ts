@@ -2,6 +2,7 @@ import type { BacklogItem, ZooGameState, EpicMember } from './types';
 import type { ZooItem } from './simulation/types';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
+import { amenityAcceptance } from './design';
 
 /** First-Sprint capacity guess, before there is velocity. A deliberate over-guess: you
  *  cannot know velocity yet, so this is a starting point you learn away from by doing. */
@@ -145,7 +146,7 @@ function enc(id: string, name: string, zone: string, size: number, footprint: 's
 function am(id: string, name: string, zone: string, size: number, services: 'food' | 'toilet' | 'rest', unsized = false): BacklogItem {
   return {
     id, name, category: 'amenity', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
-    acceptance: ['Clearly signed', services === 'food' ? 'Serves food and drink' : services === 'toilet' ? 'Has enough cubicles' : 'Enough seating'],
+    acceptance: amenityAcceptance(name, services),
     status: 'backlog', sprintNumber: null, accessible: true, services, serviceCapacity: 500,
   };
 }

@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -971,6 +971,18 @@ describe('zoo game: the toolbox', () => {
     expect(item.unsized).toBe(true);
   });
 
+  it('gives each building acceptance criteria that fit what it is (a gift shop does not serve food)', () => {
+    const draft = (name: string) => toolboxDraft(TOOLBOX.flatMap((g) => g.items).find((i) => i.name === name)!);
+    expect(draft('Gift Shop').acceptance).toContain('Sells a range of souvenirs');
+    expect(draft('Gift Shop').acceptance).not.toContain('Serves food and drink');
+    expect(draft('Kiosk').acceptance).toContain('Serves food and drink');
+    expect(draft('Cafe').acceptance).toContain('Serves food and drink');
+    expect(draft('Toilets').acceptance).toContain('Has enough cubicles');
+    expect(draft('Seating').acceptance.some((a) => /seating/i.test(a))).toBe(true);
+    // A food outlet raised from a visitor signal still reads as food, not retail.
+    expect(amenityAcceptance('Food outlet', 'food')).toContain('Serves food and drink');
+  });
+
   it('buildings come in distinct shapes, each carried from the toolbox and rendering differently', () => {
     const amenities = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'amenity');
     // The toolbox spread across several building shapes, not all the same.
@@ -1184,13 +1196,16 @@ describe('zoo game: AI Product Owner refinement', () => {
 });
 
 describe('zoo game: the PO can suggest the initial Sprint Goal', () => {
-  it('sets the Sprint Goal when none is set, and never overwrites an agreed one', () => {
-    // No goal yet -> the PO's suggestion seeds it.
+  it('populates the Sprint Goal from the PO proposal (explicit "Ask the PO"), replacing a placeholder', () => {
+    // No goal yet -> the PO's proposal seeds it.
     let s = applyPoRefinements(initialZooState(1), { sprintGoal: 'Open the Big Cats zone so families have a headline exhibit.' });
     expect(s.sprintGoal).toContain('Big Cats');
-    // A goal already agreed -> the PO does not overwrite it.
-    s = setSprintGoal(initialZooState(1), 'Our own goal');
-    s = applyPoRefinements(s, { sprintGoal: 'A different PO idea' });
-    expect(s.sprintGoal).toBe('Our own goal');
+    // A placeholder is in the field -> asking the PO replaces it with the proposed goal.
+    s = setSprintGoal(initialZooState(1), 'b');
+    s = applyPoRefinements(s, { sprintGoal: 'A clear PO goal' });
+    expect(s.sprintGoal).toBe('A clear PO goal');
+    // No proposal -> the existing goal is left alone.
+    s = applyPoRefinements(setSprintGoal(initialZooState(1), 'Keep me'), {});
+    expect(s.sprintGoal).toBe('Keep me');
   });
 });

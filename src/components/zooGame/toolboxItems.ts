@@ -1,4 +1,5 @@
 import type { ItemCategory, PbiDraft } from './types';
+import { amenityAcceptance } from './design';
 
 // ============= The Toolbox =============
 //
@@ -70,7 +71,7 @@ export function toolboxDraft(t: ToolboxItem): PbiDraft {
     : t.category === 'enclosure'
       ? ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up']
     : t.category === 'amenity'
-      ? ['Clearly signed', t.services === 'food' ? 'Serves food and drink' : t.services === 'toilet' ? 'Has enough cubicles' : 'Enough seating']
+      ? amenityAcceptance(t.name, t.services)
     : t.template === 'signpost'
       ? ['Clearly readable', 'Coloured, no bare patches']
       : ['Fits the planting', 'Coloured, no bare patches'];
