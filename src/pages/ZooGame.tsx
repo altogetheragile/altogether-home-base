@@ -57,13 +57,28 @@ export default function ZooGame() {
   const [poNote, setPoNote] = useState<string | null>(null);
   // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
   const [parkTab, setParkTab] = useState<'work' | 'park'>('work');
-  const placeAndOpen = (id: string) => { open(id); setParkTab('park'); };
+  // Deploying an item: placing it AND laying the paths that link it in. Holds the item name for the
+  // banner; while set, the park's Connect tool is available. Cleared by "Finish deploying".
+  const [deploying, setDeploying] = useState<string | null>(null);
+  const placeAndOpen = (id: string) => {
+    const it = state.backlog.find((x) => x.id === id);
+    // An improvement re-delivers its target; deploy against the target's name.
+    const shownId = it?.enhancesId ?? id;
+    const shown = state.backlog.find((x) => x.id === shownId);
+    open(id);
+    setParkTab('park');
+    setDeploying(shown?.name ?? it?.name ?? 'this item');
+  };
   // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
-  // view so they can refine, estimate and pull it like any other item.
+  // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
   const raiseImprovement = (id: string) => {
     const target = state.backlog.find((it) => it.id === id);
-    improve(id);
     setParkTab('work');
+    if (state.backlog.some((it) => it.enhancesId === id && it.status !== 'open')) {
+      toast.info(`An improvement for "${target?.name ?? 'this item'}" is already in the Backlog`);
+      return;
+    }
+    improve(id);
     toast.success(target ? `Raised "Improve ${target.name.replace(/^Improve /, '')}" - refine and estimate it in the Backlog` : 'Improvement raised in the Backlog');
   };
 
@@ -103,7 +118,7 @@ export default function ZooGame() {
     }
   };
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, onImprove: raiseImprovement, onSetSpot: setItemSpot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: closeDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, onFinishDeploy: () => setDeploying(null), onImprove: raiseImprovement, onSetSpot: setItemSpot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: closeDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {

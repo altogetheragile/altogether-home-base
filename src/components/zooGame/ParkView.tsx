@@ -332,11 +332,12 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, connectors, selectedConn, newConn, onPlaceItem, onImprove, improving, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, onPlaceItem, onImprove, improving, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
   tool: 'none' | 'connect';
+  editable: boolean;
   connectors: ZooConnector[];
   selectedConn: string | null;
   newConn: { thickness: number; color: string };
@@ -494,33 +495,38 @@ function FreeScene({ features, dots, style, tool, connectors, selectedConn, newC
         <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
 
         {/* Connector layer: each connector is a manual polyline; attached ends follow their feature
-            (posOf recomputes each render). A fat transparent hit-line selects one in arrange mode. */}
-        <svg className="absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} style={{ pointerEvents: 'none' }}>
-          {connectors.map((c) => {
-            const d = toD(connPoints(c));
-            const sel = selectedConn === c.id;
-            return (
-              <g key={c.id}>
-                <polyline points={d} fill="none" stroke="rgba(0,0,0,.28)" strokeWidth={c.thickness + 3} strokeLinecap="round" strokeLinejoin="round" />
-                <polyline points={d} fill="none" stroke={c.color} strokeWidth={c.thickness} strokeLinecap="round" strokeLinejoin="round" />
-                {sel && <polyline points={d} fill="none" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" />}
-                {tool === 'none' && onSelectConn && (
-                  <polyline points={d} fill="none" stroke="transparent" strokeWidth={Math.max(20, c.thickness + 12)} strokeLinecap="round" strokeLinejoin="round"
-                    style={{ pointerEvents: 'stroke', cursor: 'pointer' }} onPointerDown={(e) => { e.stopPropagation(); onSelectConn(c.id); }} />
-                )}
-              </g>
-            );
-          })}
-          {/* Live preview while drawing a connector. */}
-          {tool === 'connect' && draftA && cursor && (
-            <polyline points={toD([resolveEnd(draftA, cursor), cursor])} fill="none" stroke={newConn.color} strokeWidth={newConn.thickness}
-              strokeLinecap="round" strokeLinejoin="round" opacity={0.65} strokeDasharray="7 6" />
-          )}
-        </svg>
+            (posOf recomputes each render). Rendered in passes - all outlines first, then all bodies -
+            so where paths cross, the tan bodies merge cleanly instead of one outline cutting another. */}
+        {(() => {
+          const drawn = connectors.map((c) => ({ c, d: toD(connPoints(c)) }));
+          return (
+            <svg className="absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} style={{ pointerEvents: 'none' }}>
+              {drawn.map(({ c, d }) => (
+                <polyline key={`o-${c.id}`} points={d} fill="none" stroke="rgba(0,0,0,.28)" strokeWidth={c.thickness + 3} strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+              {drawn.map(({ c, d }) => (
+                <polyline key={`b-${c.id}`} points={d} fill="none" stroke={c.color} strokeWidth={c.thickness} strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+              {selected && selectedConn && (
+                <polyline points={toD(connPoints(selected))} fill="none" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" />
+              )}
+              {/* Selection hit-lines (only while deploying, i.e. editable). */}
+              {editable && tool === 'none' && onSelectConn && drawn.map(({ c, d }) => (
+                <polyline key={`h-${c.id}`} points={d} fill="none" stroke="transparent" strokeWidth={Math.max(20, c.thickness + 12)} strokeLinecap="round" strokeLinejoin="round"
+                  style={{ pointerEvents: 'stroke', cursor: 'pointer' }} onPointerDown={(e) => { e.stopPropagation(); onSelectConn(c.id); }} />
+              ))}
+              {/* Live preview while drawing a connector. */}
+              {tool === 'connect' && draftA && cursor && (
+                <polyline points={toD([resolveEnd(draftA, cursor), cursor])} fill="none" stroke={newConn.color} strokeWidth={newConn.thickness}
+                  strokeLinecap="round" strokeLinejoin="round" opacity={0.65} strokeDasharray="7 6" />
+              )}
+            </svg>
+          );
+        })()}
 
         {/* Handles for the selected connector: drag the ends (re-attach or free), drag a bend to move
             it (double-click to remove), or drag a segment's midpoint dot to add a bend. */}
-        {tool === 'none' && selected && (() => {
+        {editable && tool === 'none' && selected && (() => {
           const pts = connPoints(selected);
           const mids = pts.slice(0, -1).map((p, i) => ({ x: (p.x + pts[i + 1].x) / 2, y: (p.y + pts[i + 1].y) / 2, seg: i }));
           return (
@@ -638,10 +644,15 @@ interface ParkViewProps {
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   /** On the big Park tab, called when the promenade surface is changed. */
   onSetPathStyle?: (key: string) => void;
-  /** On the big Park tab, manual connectors: add a new one, edit its ends/bends/style, or delete. */
+  /** On the big Park tab, manual connectors: add a new one, edit its ends/bends/style, or delete.
+   *  Paths are only editable while DEPLOYING an item (see deployMode). */
   onAddConnector?: (c: ZooConnector) => void;
   onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void;
   onDeleteConnector?: (id: string) => void;
+  /** Non-null while an item is being deployed (its name) - drawing/editing paths is part of that
+   *  placement step. Outside deploy mode connectors are read-only; changes then go through PBIs. */
+  deployMode?: string | null;
+  onFinishDeploy?: () => void;
   /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
   onImprove?: (id: string) => void;
   /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
@@ -656,18 +667,23 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, onFinishDeploy }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
-  // The park tool: 'connect' draws connectors, 'none' = arrange & select.
+  // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
+  // while DEPLOYING an item; after it's open, connectors are read-only (changes go through PBIs).
+  const canConnect = !!deployMode;
   const [tool, setTool] = useState<'none' | 'connect'>('none');
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
+  const effectiveTool = canConnect ? tool : 'none';
   // Style applied to a NEW connector; the toolbar edits the selected one.
   const newConn = { thickness: 8, color: '#c9a86a' };
-  const selected = connectors.find((c) => c.id === selectedConn) ?? null;
+  const selected = canConnect ? (connectors.find((c) => c.id === selectedConn) ?? null) : null;
   const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
   // Ids of live features that already have an improvement in flight (so we don't stack PBIs).
-  const improving = new Set(state.backlog.filter((it) => it.enhancesId && it.status !== 'open').map((it) => it.enhancesId!));
+  // "Improving…" shows only while an improvement is actively being built this Sprint (committed or
+  // done) - a transient state - not while it merely sits in the Backlog waiting to be pulled.
+  const improving = new Set(state.backlog.filter((it) => it.enhancesId && (it.status === 'committed' || it.status === 'done')).map((it) => it.enhancesId!));
   const features = buildFeatures(state);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const activeZones = new Set(features.map((f) => f.item.zone));
@@ -711,8 +727,8 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             ) : <span />}
             <div className="flex items-center gap-3">
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
-              {onAddConnector && (
-                <button type="button" onClick={() => { setSelectedConn(null); setTool((t) => (t === 'connect' ? 'none' : 'connect')); }} title="Draw a connector" aria-pressed={tool === 'connect'}
+              {canConnect && onAddConnector && (
+                <button type="button" onClick={() => { setSelectedConn(null); setTool((t) => (t === 'connect' ? 'none' : 'connect')); }} title="Draw a path" aria-pressed={tool === 'connect'}
                   className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
                     tool === 'connect' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
                   <Spline className="h-3.5 w-3.5" /> Connect
@@ -720,15 +736,25 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
               )}
             </div>
           </div>
+          {/* Deploy mode: placing an item is when you position it AND lay the paths that link it in. */}
+          {canConnect && (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2 py-1.5 text-[11px]">
+              <span className="font-medium text-emerald-700 dark:text-emerald-400">Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
+              {onFinishDeploy && (
+                <button type="button" onClick={() => { setTool('none'); setSelectedConn(null); onFinishDeploy(); }}
+                  className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700"><Check className="h-3 w-3" /> Finish deploying</button>
+              )}
+            </div>
+          )}
           {/* Connect-tool guidance. */}
-          {tool === 'connect' && (
+          {canConnect && tool === 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
               <span className="font-medium text-primary">Click a start (an enclosure to attach, or empty grass to free-place), then click where it ends. It attaches if you finish on a feature.</span>
               <button type="button" onClick={() => setTool('none')} className="ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Done</button>
             </div>
           )}
           {/* Selected-connector toolbar: thickness, colour, delete. */}
-          {tool === 'none' && selected && onUpdateConnector && (
+          {canConnect && tool === 'none' && selected && onUpdateConnector && (
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-blue-400/50 bg-blue-500/5 px-2 py-1.5 text-[11px]">
               <span className="flex items-center gap-1.5">
                 <span className="font-medium text-muted-foreground">Thickness</span>
@@ -752,7 +778,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
               )}
             </div>
           )}
-          <FreeScene features={features} dots={dots} style={style} tool={tool} connectors={connectors} selectedConn={selectedConn} newConn={newConn}
+          <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
