@@ -153,6 +153,10 @@ export interface BacklogItem {
   /** Ids of the Developers who have picked this item up to work on (self-managed - the
    *  Developers decide, no one assigns them). Drives the swarm/WIP teaching on the board. */
   assignedDevs?: string[];
+  /** Set on a feedback-driven "Improve X" PBI: the id of the delivered item it improves.
+   *  It carries a clone of that item's design; on delivery the design is applied back to the
+   *  target (keeping its place) and this PBI is not rendered as a second feature. */
+  enhancesId?: string;
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -309,6 +313,7 @@ export type ZooAction =
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
   | { type: 'ADD_ANOTHER'; id: string }
+  | { type: 'IMPROVE_ITEM'; id: string }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM' }

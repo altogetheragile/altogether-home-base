@@ -5,7 +5,7 @@ import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Fish, Move, Pencil, Eraser, Undo2, Check, X, ChevronDown } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Fish, Move, Pencil, Eraser, Undo2, Check, X, ChevronDown, Sparkles } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -177,8 +177,8 @@ interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h:
  *  once BUILT (Done or Open) - the habitat is there before its animals are released - with
  *  its open animals inside; amenities and planting appear when open. */
 function buildFeatures(state: ZooGameState): Feature[] {
-  const open = state.backlog.filter((it) => it.status === 'open');
-  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open'));
+  const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
+  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open') && !it.enhancesId);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const theme = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
   const feats: Feature[] = [];
@@ -229,7 +229,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath }: {
+function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
@@ -240,6 +240,8 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   onCanvasPoint?: (pt: { x: number; y: number }) => void;
   onDeletePath?: (id: string) => void;
+  onImprove?: (id: string) => void;
+  improving?: Set<string>;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
@@ -371,14 +373,28 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
         {features.map((f) => {
           const p = posOf(f);
           const dragging = drag?.id === f.item.id;
+          const queued = improving?.has(f.item.id);
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
-              className={cn('absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
+              className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
                 ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} />
                 : <Plot item={f.item} cell={4} />}
+              {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
+              {onImprove && tool === 'none' && !dragging && (
+                queued ? (
+                  <span className="pointer-events-none absolute -top-2 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">Improving…</span>
+                ) : (
+                  <button type="button" title={`Raise an Improve PBI for ${f.item.name}`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); onImprove(f.item.id); }}
+                    className="absolute -top-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700">
+                    <Sparkles className="h-3 w-3" /> Improve
+                  </button>
+                )
+              )}
             </div>
           );
         })}
@@ -444,12 +460,14 @@ interface ParkViewProps {
   onAddPath?: (points: { x: number; y: number }[]) => void;
   onDeletePath?: (id: string) => void;
   onClearPaths?: () => void;
+  /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
+  onImprove?: (id: string) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const route = state.pathRoute ?? 'straight';
   const paths = state.paths ?? [];
@@ -458,7 +476,9 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
   const [draft, setDraft] = useState<{ x: number; y: number }[]>([]);
   const commitDraft = () => { if (draft.length >= 2) onAddPath?.(draft); setDraft([]); };
   const exitDraw = () => { setDraft([]); setTool('none'); };
-  const open = state.backlog.filter((it) => it.status === 'open');
+  const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
+  // Ids of live features that already have an improvement in flight (so we don't stack PBIs).
+  const improving = new Set(state.backlog.filter((it) => it.enhancesId && it.status !== 'open').map((it) => it.enhancesId!));
   const features = buildFeatures(state);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const activeZones = new Set(features.map((f) => f.item.zone));
@@ -555,7 +575,8 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             </div>
           )}
           <FreeScene features={features} dots={dots} style={style} route={route} tool={tool} draft={draft} paths={paths}
-            onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath} />
+            onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath}
+            onImprove={onImprove} improving={improving} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />

@@ -549,10 +549,54 @@ export function addAnother(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: [...state.backlog, clone] };
 }
 
+/** Feedback-driven improvement: the player, acting as PO on a visitor signal, decides a live
+ *  item needs work. This creates a new "Improve X" PBI in the Product Backlog carrying a clone of
+ *  the target's current design, so it flows through the normal loop (refine -> estimate -> pull ->
+ *  build). Building it re-opens the studio on that design; delivering it applies the design back to
+ *  the target (see openItem) rather than adding a second feature. */
+export function improveItem(state: ZooGameState, id: string): ZooGameState {
+  const target = state.backlog.find((it) => it.id === id);
+  if (!target || target.status !== 'open') return state;
+  // One improvement in flight per item: don't stack duplicate PBIs while one is being worked.
+  if (state.backlog.some((it) => it.enhancesId === id && it.status !== 'open')) return state;
+  const n = state.backlog.filter((it) => it.enhancesId === id).length;
+  const base = target.name.replace(/^Improve /, '');
+  const d = target.design;
+  const clone: BacklogItem = {
+    ...target,
+    id: `${id}-imp${n + 1}`,
+    name: `Improve ${base}`,
+    enhancesId: id,
+    status: 'backlog',
+    sprintNumber: null,
+    unsized: true,
+    estimate: 0,
+    tasks: undefined,
+    started: false,
+    assignedDevs: undefined,
+    goalCritical: false,
+    pos: undefined,
+    design: d ? { ...d, parts: { ...d.parts }, colors: { ...d.colors }, water: d.water?.map((w) => ({ ...w })) } : undefined,
+  };
+  return { ...state, backlog: [...state.backlog, clone] };
+}
+
 /** Release a Done item to visitors. Decoupled from the Review: you can open a Done
  *  item at any time during the Sprint. Once open it is part of the zoo the visitors
  *  experience. */
 export function openItem(state: ZooGameState, id: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (item?.enhancesId) {
+    // Delivering an improvement: apply its design (and enclosure size) back to the target it
+    // improves, keeping the target's place. The improvement itself is marked delivered - it counts
+    // for velocity - but is excluded from the park so there is no duplicate feature.
+    const backlog = state.backlog.map((it) => {
+      if (it.id === id) return { ...it, status: 'open' as const };
+      if (it.id === item.enhancesId) return { ...it, design: item.design, enclosureSize: item.enclosureSize ?? it.enclosureSize };
+      return it;
+    });
+    return { ...state, backlog };
+  }
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, status: 'open' as const } : it));
   return { ...state, backlog };
 }
