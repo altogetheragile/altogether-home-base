@@ -15,6 +15,25 @@ export interface ItemDesign {
   parts: Record<string, string>;
   /** Editable colour per part / building surface, as hex. Missing = not coloured yet. */
   colors: Record<string, string>;
+  /** Enclosure water features - as many as you like, each a fraction of the habitat box
+   *  (0..1), movable and resizable in the studio. Absent = the legacy single-water flag. */
+  water?: WaterFeature[];
+}
+
+/** A water feature inside an enclosure: position and size as fractions of the habitat box. */
+export interface WaterFeature { x: number; y: number; w: number; h: number }
+
+/** A sensible starting pool, offset a little each time so a new one doesn't stack exactly. */
+export function defaultWater(n = 0): WaterFeature {
+  const off = (n % 3) * 0.12;
+  return { x: Math.min(0.55, 0.1 + off), y: Math.min(0.6, 0.5 + off * 0.4), w: 0.32, h: 0.28 };
+}
+
+/** The water features to draw for an enclosure design, honouring the legacy single-water flag. */
+export function enclosureWater(design: ItemDesign): WaterFeature[] {
+  if (design.water && design.water.length) return design.water;
+  if (design.parts.water === 'on') return [{ x: 0.12, y: 0.55, w: 0.34, h: 0.3 }];
+  return [];
 }
 
 // ---- Grid + geometry ----

@@ -1,6 +1,6 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooPath } from './types';
-import { renderDesign, presetFor, GRID_W, enclosureShapePoints, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -154,9 +154,9 @@ function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: Backlog
   return (
     <div className="relative flex flex-col items-center">
       <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence}>
-        {d?.parts.water === 'on' && (
-          <div className="absolute" style={{ bottom: '12%', right: '10%', width: '34%', height: '30%', borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
-        )}
+        {d && enclosureWater(d).map((wf, i) => (
+          <div key={i} className="absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
+        ))}
         {n === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
         {positions.map((p, i) => (
           <div key={animals[i].id} className="absolute" style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: 1 }}>
