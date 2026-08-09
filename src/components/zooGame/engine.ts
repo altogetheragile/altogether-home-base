@@ -1,4 +1,4 @@
-import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions } from './types';
+import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign } from './design';
@@ -349,6 +349,21 @@ export function deleteZooPath(state: ZooGameState, id: string): ZooGameState {
 /** Remove every hand-drawn path. */
 export function clearZooPaths(state: ZooGameState): ZooGameState {
   return { ...state, paths: [] };
+}
+
+/** Add a manual connector (drawn on the Park). */
+export function addConnector(state: ZooGameState, connector: ZooConnector): ZooGameState {
+  return { ...state, connectors: [...(state.connectors ?? []), connector] };
+}
+
+/** Update a connector's ends, bends, thickness or colour. */
+export function updateConnector(state: ZooGameState, id: string, patch: Partial<ZooConnector>): ZooGameState {
+  return { ...state, connectors: (state.connectors ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)) };
+}
+
+/** Remove a connector by id. */
+export function deleteConnector(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, connectors: (state.connectors ?? []).filter((c) => c.id !== id) };
 }
 
 /** Choose when the Daily Scrum is held - at the start of each day or the end. */

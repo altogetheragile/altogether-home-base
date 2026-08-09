@@ -1,11 +1,11 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
-import type { ZooGameState, BacklogItem, ZooPath } from './types';
+import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
 import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Fish, Move, Pencil, Eraser, Undo2, Check, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Fish, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2 } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -18,13 +18,8 @@ import { Users, Smile, LayoutGrid, Trees, Fish, Move, Pencil, Eraser, Undo2, Che
 
 const SEG_DOT: Record<SegmentId, string> = { families: '#e6842a', enthusiasts: '#3f8fd0', comfortSeekers: '#8a5a2b' };
 
-// The path route shapes offered on the Park (local, not exported, to keep react-refresh happy).
-const ROUTE_OPTIONS: { key: 'straight' | 'elbow' | 'spine' | 'none'; label: string }[] = [
-  { key: 'straight', label: 'Straight' },
-  { key: 'elbow', label: 'Elbow' },
-  { key: 'spine', label: 'Spine' },
-  { key: 'none', label: 'None' },
-];
+// Quick colours for connectors (path tan, plus a few clear signposting hues).
+const CONNECTOR_COLORS = ['#c9a86a', '#8a5a2b', '#c9cdd2', '#e6842a', '#4a90d9', '#43a047', '#e5484d'];
 
 /** A small swatch of a path surface (a gradient dot), reused in the picker trigger and list. */
 function SurfaceSwatch({ style, size = 14 }: { style: PathStyle; size?: number }) {
@@ -318,6 +313,16 @@ function autoLayout(features: Feature[]): Map<string, { x: number; y: number }> 
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
+/** The point on a feature's bounding box edge, on the ray from its centre toward a target - so a
+ *  connector attaches to the edge nearest the thing it points at, not the middle of the sprite. */
+function boxEdge(cx: number, cy: number, hw: number, hh: number, tx: number, ty: number): { x: number; y: number } {
+  const dx = tx - cx, dy = ty - cy;
+  if (dx === 0 && dy === 0) return { x: cx, y: cy };
+  const t = 1 / Math.max(Math.abs(dx) / hw, Math.abs(dy) / hh);
+  if (t >= 1) return { x: tx, y: ty }; // target already inside the box
+  return { x: cx + dx * t, y: cy + dy * t };
+}
+
 /** Deterministic 0..1 from an index + channel (stable across renders). */
 const jitter = (n: number, k: number) => {
   const x = Math.sin((n + 1) * (k === 0 ? 12.9898 : 78.233)) * 43758.5453;
@@ -327,33 +332,101 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving, onSetSpot, onNest, onUnnest, onRename }: {
+function FreeScene({ features, dots, style, tool, connectors, selectedConn, newConn, onPlaceItem, onImprove, improving, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
-  route: 'straight' | 'elbow' | 'spine' | 'none';
-  tool: 'none' | 'draw' | 'erase';
-  draft: { x: number; y: number }[];
-  paths: ZooPath[];
+  tool: 'none' | 'connect';
+  connectors: ZooConnector[];
+  selectedConn: string | null;
+  newConn: { thickness: number; color: string };
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
-  onCanvasPoint?: (pt: { x: number; y: number }) => void;
-  onDeletePath?: (id: string) => void;
   onImprove?: (id: string) => void;
   improving?: Set<string>;
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
   onRename?: (id: string, name: string) => void;
+  onAddConnector?: (c: ZooConnector) => void;
+  onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void;
+  onSelectConn?: (id: string | null) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [drag, setDrag] = useState<{ id: string; pos: { x: number; y: number } } | null>(null);
+  // Connector drawing: the first end that has been placed, plus any bends and the live cursor.
+  const [draftA, setDraftA] = useState<ConnectorEnd | null>(null);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const idc = useRef(0);
+  const newId = () => `conn-${connectors.length}-${idc.current++}`;
 
   const auto = autoLayout(features);
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD });
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
   const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
+
+  // --- Connector geometry: resolve each end (attached feature edge, or free point) and the polyline.
+  const boxOf = (id: string) => { const f = features.find((x) => x.item.id === id); if (!f) return null; const c = posOf(f); return { cx: c.x, cy: c.y, hw: f.w / 2, hh: (f.h - LABEL_H) / 2 + LABEL_H / 2 }; };
+  const anchor = (end: ConnectorEnd) => { const b = end.featureId ? boxOf(end.featureId) : null; return b ? { x: b.cx, y: b.cy } : { x: end.x, y: end.y }; };
+  const resolveEnd = (end: ConnectorEnd, toward: { x: number; y: number }) => {
+    const b = end.featureId ? boxOf(end.featureId) : null;
+    return b ? boxEdge(b.cx, b.cy, b.hw + 3, b.hh + 3, toward.x, toward.y) : { x: end.x, y: end.y };
+  };
+  const connPoints = (c: { a: ConnectorEnd; b: ConnectorEnd; bends: { x: number; y: number }[] }) => {
+    const aToward = c.bends[0] ?? anchor(c.b);
+    const bToward = c.bends[c.bends.length - 1] ?? anchor(c.a);
+    return [resolveEnd(c.a, aToward), ...c.bends, resolveEnd(c.b, bToward)];
+  };
+  const toD = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x},${p.y}`).join(' ');
+
+  // Point (design px) from a pointer event, and the top-most feature under a point.
+  const ptOf = (ev: { clientX: number; clientY: number }) => {
+    const rect = inner.current!.getBoundingClientRect();
+    const s = rect.width / CANVAS_W || 1;
+    return { x: clamp((ev.clientX - rect.left) / s, 0, CANVAS_W), y: clamp((ev.clientY - rect.top) / s, 0, canvasH) };
+  };
+  const featureAt = (pt: { x: number; y: number }) => {
+    for (let i = features.length - 1; i >= 0; i--) { const f = features[i]; const c = posOf(f); if (Math.abs(pt.x - c.x) <= f.w / 2 && Math.abs(pt.y - c.y) <= f.h / 2) return f; }
+    return null;
+  };
+  const endAt = (pt: { x: number; y: number }): ConnectorEnd => { const f = featureAt(pt); return f ? { featureId: f.item.id, x: posOf(f).x, y: posOf(f).y } : { x: pt.x, y: pt.y }; };
+
+  // Connect tool: click to place the first end, click a feature (or empty) to finish, empty clicks
+  // in between drop a bend so you can route it by hand.
+  const connectClick = (e: ReactPointerEvent) => {
+    if (tool !== 'connect' || !onAddConnector) return;
+    const pt = ptOf(e); const f = featureAt(pt);
+    if (!draftA) { setDraftA(endAt(pt)); return; }
+    if (f) { onAddConnector({ id: newId(), a: draftA, b: endAt(pt), bends: [], thickness: newConn.thickness, color: newConn.color }); setDraftA(null); setCursor(null); }
+    else { onAddConnector({ id: newId(), a: draftA, b: endAt(pt), bends: [], thickness: newConn.thickness, color: newConn.color }); setDraftA(null); setCursor(null); }
+  };
+
+  // Drag a connector end or bend. Ends re-attach to a feature if released over one, else go free.
+  const dragHandle = (id: string, part: 'a' | 'b' | number) => (e: ReactPointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const conn = connectors.find((c) => c.id === id); if (!conn || !onUpdateConnector) return;
+    const move = (ev: PointerEvent) => {
+      const pt = ptOf(ev);
+      if (part === 'a' || part === 'b') onUpdateConnector(id, { [part]: { x: pt.x, y: pt.y } });
+      else { const bends = conn.bends.slice(); bends[part] = pt; onUpdateConnector(id, { bends }); }
+    };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+      if (part === 'a' || part === 'b') onUpdateConnector(id, { [part]: endAt(ptOf(ev)) });
+    };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+  // Insert a bend by dragging a segment's midpoint.
+  const dragNewBend = (id: string, segIndex: number, start: { x: number; y: number }) => (e: ReactPointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const conn = connectors.find((c) => c.id === id); if (!conn || !onUpdateConnector) return;
+    const bends = conn.bends.slice(); bends.splice(segIndex, 0, start);
+    onUpdateConnector(id, { bends });
+    const move = (ev: PointerEvent) => { const b2 = bends.slice(); b2[segIndex] = ptOf(ev); onUpdateConnector(id, { bends: b2 }); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
 
   useLayoutEffect(() => {
     const o = outer.current;
@@ -366,7 +439,7 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
   }, []);
 
   const startDrag = (e: ReactPointerEvent, f: Feature) => {
-    if (!onPlaceItem || tool !== 'none') return; // in draw/erase mode, clicks are for paths
+    if (!onPlaceItem || tool !== 'none') return; // in connect mode, clicks draw connectors
     e.preventDefault();
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const startX = e.clientX, startY = e.clientY;
@@ -406,77 +479,69 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
     setDrag({ id: f.item.id, pos: origin });
   };
 
-  // In draw mode, a click on the canvas adds a vertex to the current path (design-px coords).
-  const addPoint = (e: ReactPointerEvent) => {
-    if (tool !== 'draw' || !onCanvasPoint || !inner.current) return;
-    const rect = inner.current.getBoundingClientRect();
-    const s = rect.width / CANVAS_W || 1;
-    onCanvasPoint({ x: clamp((e.clientX - rect.left) / s, 0, CANVAS_W), y: clamp((e.clientY - rect.top) / s, 0, canvasH) });
-  };
+  const selected = connectors.find((c) => c.id === selectedConn) ?? null;
 
   return (
     <div ref={outer} className="relative w-full" style={{ height: canvasH * scale }}>
-      <div ref={inner} onPointerDown={tool === 'draw' ? addPoint : undefined}
+      <div ref={inner}
+        onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => onSelectConn?.(null) : undefined)}
+        onPointerMove={tool === 'connect' ? (e) => setCursor(ptOf(e)) : undefined}
         className="absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm"
-        style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left', cursor: tool === 'draw' ? 'crosshair' : undefined,
+        style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left', cursor: tool === 'connect' ? 'crosshair' : undefined,
           borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
 
-        {/* Promenade path + entrance + trees along the foot. Surface follows the chosen style. */}
+        {/* Promenade path + entrance + trees along the foot. */}
         <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
 
-        {/* Paths layer: auto-routes connect each feature to the promenade ('straight'/'elbow'/
-            'spine'; 'none' turns them off), plus any hand-drawn paths, plus the live draw draft.
-            The promenade is the main road; everything branches off it. Auto-routes follow
-            features live as they are dragged (posOf recomputes each render). */}
-        {(() => {
-          const cx = CANVAS_W / 2;
-          const promY = canvasH - PATH_H + 3; // where paths meet the promenade
-          const auto: { key: string; d: string }[] = [];
-          const poly = (key: string, pointsList: number[][]) => auto.push({ key, d: pointsList.map(([x, y]) => `${x},${y}`).join(' ') });
-          if (features.length > 0 && route !== 'none') {
-            // Planting (flora) is decorative, not a destination, so it gets no path spur.
-            const pts = features.filter((f) => f.item.category !== 'flora').map((f) => ({ id: f.item.id, ...posOf(f) }));
-            if (route === 'spine') {
-              const topY = Math.min(promY, ...pts.map((p) => p.y));
-              poly('spine', [[cx, promY], [cx, topY]]);
-              pts.forEach((p) => poly(p.id, [[p.x, p.y], [cx, p.y]]));
-            } else if (route === 'elbow') {
-              const boulevardY = Math.max(promY - 44, Math.max(...pts.map((p) => p.y)) + 4);
-              const xs = pts.map((p) => p.x);
-              poly('boulevard', [[Math.min(cx, ...xs), boulevardY], [Math.max(cx, ...xs), boulevardY]]);
-              poly('entry', [[cx, boulevardY], [cx, promY]]);
-              pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, boulevardY]]));
-            } else {
-              pts.forEach((p) => poly(p.id, [[p.x, p.y], [p.x, promY]]));
-            }
-          }
-          const toD = (points: { x: number; y: number }[]) => points.map((p) => `${p.x},${p.y}`).join(' ');
-          const layered = (key: string, d: string) => (
-            <g key={key}>
-              <polyline points={d} fill="none" stroke={style.edge} strokeWidth={17} strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points={d} fill="none" stroke={style.road} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" />
-              {style.dash && <polyline points={d} fill="none" stroke={style.dash} strokeWidth={12} strokeDasharray="2 9" strokeLinecap="round" strokeLinejoin="round" />}
-            </g>
-          );
-          if (auto.length === 0 && paths.length === 0 && draft.length === 0) return null;
+        {/* Connector layer: each connector is a manual polyline; attached ends follow their feature
+            (posOf recomputes each render). A fat transparent hit-line selects one in arrange mode. */}
+        <svg className="absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} style={{ pointerEvents: 'none' }}>
+          {connectors.map((c) => {
+            const d = toD(connPoints(c));
+            const sel = selectedConn === c.id;
+            return (
+              <g key={c.id}>
+                <polyline points={d} fill="none" stroke="rgba(0,0,0,.28)" strokeWidth={c.thickness + 3} strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points={d} fill="none" stroke={c.color} strokeWidth={c.thickness} strokeLinecap="round" strokeLinejoin="round" />
+                {sel && <polyline points={d} fill="none" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" />}
+                {tool === 'none' && onSelectConn && (
+                  <polyline points={d} fill="none" stroke="transparent" strokeWidth={Math.max(20, c.thickness + 12)} strokeLinecap="round" strokeLinejoin="round"
+                    style={{ pointerEvents: 'stroke', cursor: 'pointer' }} onPointerDown={(e) => { e.stopPropagation(); onSelectConn(c.id); }} />
+                )}
+              </g>
+            );
+          })}
+          {/* Live preview while drawing a connector. */}
+          {tool === 'connect' && draftA && cursor && (
+            <polyline points={toD([resolveEnd(draftA, cursor), cursor])} fill="none" stroke={newConn.color} strokeWidth={newConn.thickness}
+              strokeLinecap="round" strokeLinejoin="round" opacity={0.65} strokeDasharray="7 6" />
+          )}
+        </svg>
+
+        {/* Handles for the selected connector: drag the ends (re-attach or free), drag a bend to move
+            it (double-click to remove), or drag a segment's midpoint dot to add a bend. */}
+        {tool === 'none' && selected && (() => {
+          const pts = connPoints(selected);
+          const mids = pts.slice(0, -1).map((p, i) => ({ x: (p.x + pts[i + 1].x) / 2, y: (p.y + pts[i + 1].y) / 2, seg: i }));
           return (
-            <svg className="pointer-events-none absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} aria-hidden>
-              {auto.map((l) => layered(l.key, l.d))}
-              {paths.map((p) => layered(p.id, toD(p.points)))}
-              {/* Erase mode: a fat clickable overlay per drawn path removes it. */}
-              {tool === 'erase' && onDeletePath && paths.map((p) => (
-                <polyline key={`erase-${p.id}`} points={toD(p.points)} fill="none" stroke="rgba(220,40,40,.35)" strokeWidth={20}
-                  strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
-                  onPointerDown={(e) => { e.stopPropagation(); onDeletePath(p.id); }} />
+            <div className="absolute inset-0 z-[25]" style={{ pointerEvents: 'none' }}>
+              {mids.map((m) => (
+                <div key={`mid-${m.seg}`} onPointerDown={dragNewBend(selected.id, m.seg, { x: m.x, y: m.y })}
+                  title="Drag to add a bend" className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 cursor-crosshair rounded-full border border-blue-400 bg-white/70"
+                  style={{ left: m.x, top: m.y, pointerEvents: 'auto', touchAction: 'none' }} />
               ))}
-              {/* Live draft while drawing: the road preview plus a dot at each placed vertex. */}
-              {tool === 'draw' && draft.length > 0 && (
-                <g>
-                  {draft.length > 1 && layered('draft', toD(draft))}
-                  {draft.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} fill="#fff" stroke={style.edge} strokeWidth={2} />)}
-                </g>
-              )}
-            </svg>
+              {selected.bends.map((bd, i) => (
+                <div key={`bend-${i}`} onPointerDown={dragHandle(selected.id, i)}
+                  onDoubleClick={(e) => { e.stopPropagation(); onUpdateConnector?.(selected.id, { bends: selected.bends.filter((_, j) => j !== i) }); }}
+                  title="Drag to move, double-click to remove" className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 border-blue-500 bg-white active:cursor-grabbing"
+                  style={{ left: bd.x, top: bd.y, pointerEvents: 'auto', touchAction: 'none' }} />
+              ))}
+              {(['a', 'b'] as const).map((k) => { const p = k === 'a' ? pts[0] : pts[pts.length - 1]; return (
+                <div key={k} onPointerDown={dragHandle(selected.id, k)} title="Drag onto a feature to attach, or anywhere to free it"
+                  className={cn('absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 bg-white active:cursor-grabbing', selected[k].featureId ? 'border-emerald-500' : 'border-blue-500')}
+                  style={{ left: p.x, top: p.y, pointerEvents: 'auto', touchAction: 'none' }} />
+              ); })}
+            </div>
           );
         })()}
 
@@ -571,14 +636,12 @@ interface ParkViewProps {
   large?: boolean;
   /** On the big Park tab, called when a feature is dragged to a new position. */
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
-  /** On the big Park tab, called when the path/road surface is changed. */
+  /** On the big Park tab, called when the promenade surface is changed. */
   onSetPathStyle?: (key: string) => void;
-  /** On the big Park tab, called when the path route shape is changed. */
-  onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void;
-  /** On the big Park tab, path drawing: commit a drawn path, delete one, or clear all. */
-  onAddPath?: (points: { x: number; y: number }[]) => void;
-  onDeletePath?: (id: string) => void;
-  onClearPaths?: () => void;
+  /** On the big Park tab, manual connectors: add a new one, edit its ends/bends/style, or delete. */
+  onAddConnector?: (c: ZooConnector) => void;
+  onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void;
+  onDeleteConnector?: (id: string) => void;
   /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
   onImprove?: (id: string) => void;
   /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
@@ -593,15 +656,15 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot, onNest, onUnnest, onRename }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
-  const route = state.pathRoute ?? 'straight';
-  const paths = state.paths ?? [];
-  // The path-drawing tool: 'draw' lays vertices, 'erase' removes a path, 'none' = arrange.
-  const [tool, setTool] = useState<'none' | 'draw' | 'erase'>('none');
-  const [draft, setDraft] = useState<{ x: number; y: number }[]>([]);
-  const commitDraft = () => { if (draft.length >= 2) onAddPath?.(draft); setDraft([]); };
-  const exitDraw = () => { setDraft([]); setTool('none'); };
+  const connectors = state.connectors ?? [];
+  // The park tool: 'connect' draws connectors, 'none' = arrange & select.
+  const [tool, setTool] = useState<'none' | 'connect'>('none');
+  const [selectedConn, setSelectedConn] = useState<string | null>(null);
+  // Style applied to a NEW connector; the toolbar edits the selected one.
+  const newConn = { thickness: 8, color: '#c9a86a' };
+  const selected = connectors.find((c) => c.id === selectedConn) ?? null;
   const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
   // Ids of live features that already have an improvement in flight (so we don't stack PBIs).
   const improving = new Set(state.backlog.filter((it) => it.enhancesId && it.status !== 'open').map((it) => it.enhancesId!));
@@ -647,62 +710,51 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
             ) : <span />}
             <div className="flex items-center gap-3">
-              {onSetPathRoute && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-medium text-muted-foreground">Route</span>
-                  {ROUTE_OPTIONS.map((r) => (
-                    <button key={r.key} type="button" onClick={() => onSetPathRoute(r.key)} title={r.label} aria-label={`${r.label} route`}
-                      aria-pressed={route === r.key}
-                      className={cn('rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
-                        route === r.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              )}
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
-              {onAddPath && (
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => { setDraft([]); setTool((t) => (t === 'draw' ? 'none' : 'draw')); }} title="Draw a path" aria-pressed={tool === 'draw'}
-                    className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
-                      tool === 'draw' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
-                    <Pencil className="h-3.5 w-3.5" /> Draw
-                  </button>
-                  {paths.length > 0 && onDeletePath && (
-                    <button type="button" onClick={() => { setDraft([]); setTool((t) => (t === 'erase' ? 'none' : 'erase')); }} title="Erase a path" aria-pressed={tool === 'erase'}
-                      className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
-                        tool === 'erase' ? 'border-destructive bg-destructive/10 text-destructive' : 'border-border text-muted-foreground hover:text-foreground')}>
-                      <Eraser className="h-3.5 w-3.5" /> Erase
-                    </button>
-                  )}
-                  {paths.length > 0 && onClearPaths && (
-                    <button type="button" onClick={() => { exitDraw(); onClearPaths(); }} title="Remove all drawn paths"
-                      className="rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">Clear</button>
-                  )}
-                </div>
+              {onAddConnector && (
+                <button type="button" onClick={() => { setSelectedConn(null); setTool((t) => (t === 'connect' ? 'none' : 'connect')); }} title="Draw a connector" aria-pressed={tool === 'connect'}
+                  className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                    tool === 'connect' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+                  <Spline className="h-3.5 w-3.5" /> Connect
+                </button>
               )}
             </div>
           </div>
-          {/* Active-tool guidance and the draft controls. */}
-          {tool === 'draw' && (
+          {/* Connect-tool guidance. */}
+          {tool === 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
-              <span className="font-medium text-primary">Tap the park to place points{draft.length > 0 ? ` (${draft.length})` : ''}. Add at least two, then Done.</span>
-              <div className="ml-auto flex items-center gap-1">
-                <button type="button" disabled={draft.length === 0} onClick={() => setDraft((d) => d.slice(0, -1))} className="flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground disabled:opacity-40"><Undo2 className="h-3 w-3" /> Undo</button>
-                <button type="button" disabled={draft.length < 2} onClick={commitDraft} className="flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40"><Check className="h-3 w-3" /> Done</button>
-                <button type="button" onClick={exitDraw} className="flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Cancel</button>
-              </div>
-            </div>
-          )}
-          {tool === 'erase' && (
-            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5 text-[11px]">
-              <span className="font-medium text-destructive">Tap a drawn path to remove it.</span>
+              <span className="font-medium text-primary">Click a start (an enclosure to attach, or empty grass to free-place), then click where it ends. It attaches if you finish on a feature.</span>
               <button type="button" onClick={() => setTool('none')} className="ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Done</button>
             </div>
           )}
-          <FreeScene features={features} dots={dots} style={style} route={route} tool={tool} draft={draft} paths={paths}
-            onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath}
-            onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
+          {/* Selected-connector toolbar: thickness, colour, delete. */}
+          {tool === 'none' && selected && onUpdateConnector && (
+            <div className="flex flex-wrap items-center gap-3 rounded-md border border-blue-400/50 bg-blue-500/5 px-2 py-1.5 text-[11px]">
+              <span className="flex items-center gap-1.5">
+                <span className="font-medium text-muted-foreground">Thickness</span>
+                {[4, 8, 14].map((t) => (
+                  <button key={t} type="button" onClick={() => onUpdateConnector(selected.id, { thickness: t })} title={`${t}px`} aria-pressed={selected.thickness === t}
+                    className={cn('flex h-6 w-7 items-center justify-center rounded border', selected.thickness === t ? 'border-primary bg-primary/10' : 'border-border')}>
+                    <span className="rounded-full bg-foreground" style={{ width: 16, height: Math.max(2, t / 2) }} />
+                  </button>
+                ))}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="font-medium text-muted-foreground">Colour</span>
+                {CONNECTOR_COLORS.map((c) => (
+                  <button key={c} type="button" onClick={() => onUpdateConnector(selected.id, { color: c })} title={c}
+                    className={cn('h-5 w-5 rounded-full border', selected.color.toLowerCase() === c ? 'border-foreground ring-2 ring-foreground/30' : 'border-border/60')} style={{ background: c }} />
+                ))}
+              </span>
+              {onDeleteConnector && (
+                <button type="button" onClick={() => { onDeleteConnector(selected.id); setSelectedConn(null); }} title="Delete connector"
+                  className="ml-auto flex items-center gap-1 rounded border border-destructive/50 bg-background px-1.5 py-0.5 font-medium text-destructive hover:bg-destructive/10"><Trash2 className="h-3 w-3" /> Delete</button>
+              )}
+            </div>
+          )}
+          <FreeScene features={features} dots={dots} style={style} tool={tool} connectors={connectors} selectedConn={selectedConn} newConn={newConn}
+            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
+            onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />

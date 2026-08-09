@@ -209,8 +209,9 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     dailyScrumAt: 'start',
     refinePenalty: 0,
     pathStyle: 'gravel',
-    pathRoute: 'straight',
+    pathRoute: 'none',
     paths: [],
+    connectors: [],
   };
 }
 
