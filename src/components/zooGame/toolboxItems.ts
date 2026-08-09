@@ -21,7 +21,8 @@ export interface ToolboxItem {
 
 const exhibit = (template: string, name: string, zone: string): ToolboxItem => ({ template, name, category: 'exhibit', zone });
 const amenity = (name: string, zone: string, services: 'food' | 'toilet' | 'rest'): ToolboxItem => ({ name, category: 'amenity', zone, services });
-const flora = (name: string): ToolboxItem => ({ name, category: 'flora', zone: 'General' });
+// The template carries the starting flora shape (tree / bush / flowers / signpost).
+const flora = (name: string, type: string): ToolboxItem => ({ template: type, name, category: 'flora', zone: 'General' });
 const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint });
 
 export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
@@ -57,7 +58,7 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
   },
   {
     group: 'Flora & decor',
-    items: [flora('Trees'), flora('Bushes'), flora('Flowerbed')],
+    items: [flora('Trees', 'tree'), flora('Bushes', 'bush'), flora('Flowerbed', 'flowers'), flora('Signpost', 'signpost')],
   },
 ];
 
@@ -69,6 +70,8 @@ export function toolboxDraft(t: ToolboxItem): PbiDraft {
       ? ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up']
     : t.category === 'amenity'
       ? ['Clearly signed', t.services === 'food' ? 'Serves food and drink' : t.services === 'toilet' ? 'Has enough cubicles' : 'Enough seating']
+    : t.template === 'signpost'
+      ? ['Clearly readable', 'Coloured, no bare patches']
       : ['Fits the planting', 'Coloured, no bare patches'];
   return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, enclosureSize: t.footprint, acceptance };
 }

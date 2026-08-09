@@ -230,6 +230,13 @@ function floraGrid(design: ItemDesign): (string | null)[][] {
     for (const [fx, fy] of [[4, 8], [7, 7], [10, 8], [5, 9], [11, 9]] as Cell[]) { set(g, ellipse(fx, fy, 1.2, 1.2), foliage); setCell(g, fx, fy, '#f4d03a'); }
     return g;
   }
+  if (type === 'signpost') {
+    // A board on a post: the "trunk" colour is the post, the "foliage" colour the sign board.
+    for (let y = 5; y <= 13; y++) { g[y][8] = trunk; g[y][9] = shade(trunk, -16); } // post
+    for (let x = 3; x <= 13; x++) for (let y = 2; y <= 6; y++) g[y][x] = shade(foliage, y === 2 ? 10 : y === 6 ? -14 : 0); // board
+    for (let x = 5; x <= 11; x += 2) g[4][x] = shade(foliage, -30); // a couple of "letters" so it reads as a sign
+    return g;
+  }
   if (type === 'bush') { paintShaded(g, ellipse(8, 9, 4.2, 3.4).filter(([, y]) => y >= 6), foliage, 22, -20); return g; }
   paintShaded(g, ellipse(8, 6, 4.4, 4).filter(([, y]) => y <= 10), foliage, 24, -22); // crown
   for (let y = 10; y <= 13; y++) { g[y][7] = trunk; g[y][8] = shade(trunk, -14); } // trunk
@@ -256,7 +263,7 @@ export const EXHIBIT_PARTS: PartSpec[] = [
 export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
 ];
-export const FLORA_TYPES = ['tree', 'bush', 'flowers'];
+export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost'];
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
 ];
@@ -314,7 +321,7 @@ export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART
  *  back to its id) to pick the species shape. */
 export function presetFor(item: BacklogItem): ItemDesign {
   if (item.category === 'enclosure') return { parts: { water: 'on' }, colors: {} };
-  if (item.category === 'flora') return { parts: { type: 'tree' }, colors: {} };
+  if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { sign: 'on' }, colors: {} };
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
 }

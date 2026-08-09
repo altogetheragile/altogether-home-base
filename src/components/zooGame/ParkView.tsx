@@ -140,7 +140,33 @@ export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children,
   );
 }
 
-function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void }) {
+/** The enclosure's name shown as a little sign at the top of the habitat. Click it (on the big
+ *  Park tab) to rename the enclosure inline. Read-only in the small live views. */
+function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(name);
+  const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't start dragging the enclosure
+  const commit = () => { setEditing(false); onRename?.(val); };
+  const cls = 'max-w-[132px] truncate rounded-md border-2 border-amber-900/70 bg-amber-200 px-1.5 py-0.5 text-center text-[10px] font-bold leading-tight text-amber-950 shadow-sm dark:bg-amber-300';
+  return (
+    <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
+      {editing ? (
+        <input autoFocus value={val} onPointerDown={stop}
+          onChange={(e) => setVal(e.target.value)} onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setVal(name); setEditing(false); } }}
+          className={cn(cls, 'w-[120px] outline-none ring-2 ring-amber-500')} />
+      ) : onRename ? (
+        <button type="button" title="Rename this enclosure" onPointerDown={stop}
+          onClick={() => { setVal(name); setEditing(true); }}
+          className={cn(cls, 'cursor-text hover:bg-amber-100')}>{name}</button>
+      ) : (
+        <span className={cls}>{name}</span>
+      )}
+    </div>
+  );
+}
+
+function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = enc.design;
   const ground = d?.colors.ground ?? theme.plot;
@@ -186,6 +212,7 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest }: { 
   return (
     <div className="relative flex flex-col items-center">
       <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence} boxRef={boxRef}>
+        <EnclosureSign name={enc.name} onRename={onRename ? (name) => onRename(enc.id, name) : undefined} />
         {d && enclosureWater(d).map((wf, i) => (
           <div key={i} className="absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
         ))}
@@ -213,7 +240,6 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest }: { 
           );
         })}
       </EnclosureBox>
-      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{enc.name}</span>
     </div>
   );
 }
@@ -282,7 +308,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving, onSetSpot, onNest, onUnnest }: {
+function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceItem, onCanvasPoint, onDeletePath, onImprove, improving, onSetSpot, onNest, onUnnest, onRename }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
@@ -298,6 +324,7 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
+  onRename?: (id: string, name: string) => void;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
@@ -453,17 +480,17 @@ function FreeScene({ features, dots, style, route, tool, draft, paths, onPlaceIt
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
-                ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} />
+                ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : <Plot item={f.item} cell={4} />}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
               {onImprove && tool === 'none' && !dragging && (
                 queued ? (
-                  <span className="pointer-events-none absolute -top-2 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">Improving…</span>
+                  <span className="pointer-events-none absolute -top-2 -right-1 z-40 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">Improving…</span>
                 ) : (
                   <button type="button" title={`Raise an Improve PBI for ${f.item.name}`}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onImprove(f.item.id); }}
-                    className="absolute -top-2 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700">
+                    className="absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700">
                     <Sparkles className="h-3 w-3" /> Improve
                   </button>
                 )
@@ -540,12 +567,14 @@ interface ParkViewProps {
   /** On the big Park tab, plant flora inside an enclosure (drag onto it) or take it back out. */
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
+  /** On the big Park tab, rename an enclosure by editing its sign. */
+  onRename?: (id: string, name: string) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot, onNest, onUnnest }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot, onNest, onUnnest, onRename }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const route = state.pathRoute ?? 'straight';
   const paths = state.paths ?? [];
@@ -654,7 +683,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           )}
           <FreeScene features={features} dots={dots} style={style} route={route} tool={tool} draft={draft} paths={paths}
             onPlaceItem={onPlaceItem} onCanvasPoint={(pt) => setDraft((d) => [...d, pt])} onDeletePath={onDeletePath}
-            onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} />
+            onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />

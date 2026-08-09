@@ -372,6 +372,13 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, spot } : it)) };
 }
 
+/** Rename an item (e.g. edit an enclosure's sign in the park). Ignores an empty name. */
+export function renameItem(state: ZooGameState, id: string, name: string): ZooGameState {
+  const trimmed = name.trim();
+  if (!trimmed) return state;
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, name: trimmed } : it)) };
+}
+
 /** Nest a plant inside an enclosure (drag it in) - it becomes part of that habitat, positioned at
  *  the drop spot, and no longer sits loose on the grounds. */
 export function nestItem(state: ZooGameState, id: string, enclosureId: string, spot: { x: number; y: number }): ZooGameState {

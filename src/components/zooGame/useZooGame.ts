@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisio
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone,
   reviewSprint, startNextSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -104,6 +104,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return nestItem(state, action.id, action.enclosureId, action.spot);
     case 'UNNEST_ITEM':
       return unnestItem(state, action.id);
+    case 'RENAME_ITEM':
+      return renameItem(state, action.id, action.name);
     case 'OPEN_ITEM':
       return openItem(state, action.id);
     case 'END_DAY':
@@ -181,6 +183,7 @@ export function useZooGame(gameSeed?: number) {
   const setSpot = useCallback((id: string, spot: { x: number; y: number }) => dispatch({ type: 'SET_ITEM_SPOT', id, spot }), []);
   const nest = useCallback((id: string, enclosureId: string, spot: { x: number; y: number }) => dispatch({ type: 'NEST_ITEM', id, enclosureId, spot }), []);
   const unnest = useCallback((id: string) => dispatch({ type: 'UNNEST_ITEM', id }), []);
+  const renameItemCb = useCallback((id: string, name: string) => dispatch({ type: 'RENAME_ITEM', id, name }), []);
   const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
   const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
   const holdDailyScrum = useCallback(() => dispatch({ type: 'RUN_DAILY_SCRUM' }), []);
@@ -194,7 +197,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, setItemSpot: setSpot, nestItem: nest, unnestItem: unnest, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, loadGame, poRefine,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, setItemSpot: setSpot, nestItem: nest, unnestItem: unnest, renameItem: renameItemCb, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, loadGame, poRefine,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, deletePbi: deletePbiCb, duplicatePbi: duplicatePbiCb, assignDev: assignDevCb, renameMember: renameMemberCb, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb, addPath: addPathCb, deletePath: deletePathCb, clearPaths: clearPathsCb,
     closeDay, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };
