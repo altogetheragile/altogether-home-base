@@ -340,10 +340,23 @@ export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
 export function buildingTypeFor(name: string, services?: string): string {
   const n = name.toLowerCase();
   if (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) return 'toilets';
-  if (/kiosk|stall|stand/.test(n)) return 'kiosk';
-  if (/caf|coffee/.test(n)) return 'cafe';
-  if (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) return 'stall';
+  if (/gift|shop|souvenir|store|retail/.test(n)) return 'shop';       // retail, even though it may sit in the "food" group
+  if (/caf|coffee|restaurant/.test(n)) return 'cafe';
+  if (/kiosk|stall|stand|snack|food|drink|refresh|outlet/.test(n) || services === 'food') return 'kiosk';
+  if (/picnic|seat|bench|shade|rest|viewing/.test(n) || services === 'rest') return 'stall';
   return 'shop';
+}
+
+/** Acceptance criteria that fit what the building actually is (a gift shop sells souvenirs; it does
+ *  not serve food). Keyed on the name first, so retail is distinguished from food even when both sit
+ *  in the same service group. */
+export function amenityAcceptance(name: string, services?: string): string[] {
+  const n = name.toLowerCase();
+  if (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) return ['Clearly signed', 'Has enough cubicles'];
+  if (/gift|shop|souvenir|store|retail/.test(n)) return ['Clearly signed', 'Sells a range of souvenirs'];
+  if (services === 'food' || /kiosk|caf|coffee|restaurant|snack|food|drink|refresh|outlet/.test(n)) return ['Clearly signed', 'Serves food and drink'];
+  if (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) return ['Clearly signed', 'Enough seating and shade'];
+  return ['Clearly signed', 'Fit for its purpose'];
 }
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },

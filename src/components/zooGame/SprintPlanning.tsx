@@ -104,7 +104,12 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             it guides what you select next, and stays fixed even if the scope flexes.
           </p>
           <div className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(items))} title="Draft a Sprint Goal from the ready Backlog">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest Goal
+              </Button>
+            </div>
             <textarea
               value={state.sprintGoal}
               onChange={(e) => onSetSprintGoal(e.target.value)}
@@ -131,7 +136,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
-              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={chosen.length === 0} onClick={() => onSetSprintGoal(suggestSprintGoal(chosen))} title="Draft a Sprint Goal from what you selected">
+              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(chosen.length ? chosen : items))} title="Draft a Sprint Goal from your selection (or the ready Backlog if nothing is selected yet)">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest Goal
               </Button>
             </div>
