@@ -1,6 +1,6 @@
-import { useRef, useState, useLayoutEffect, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef, useState, useLayoutEffect, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooPath } from './types';
-import { renderDesign, presetFor, GRID_W, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W, enclosureShapePoints, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -113,6 +113,33 @@ const LABEL_H = 18; // the name pill under a feature, counted in its layout heig
 /** A built enclosure (habitat) with the animals that live in it rendered to scale
  *  inside - one sprite per animal the team has actually built and opened, so you see
  *  "lions in a space", not one huge lion, and never more animals than were built. */
+/** The habitat box in its chosen shape (rounded rectangle, pill, round, hexagon, octagon), with
+ *  the ground fill and fence outline. Rounded keeps the crisp bordered div; the other shapes are
+ *  drawn as an SVG outline so the fence follows the shape. Contents (animals, water) overlay it. */
+export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children }:
+  { shape: string; w: number; h: number; ground: string; fence: string; border?: number; children?: ReactNode }) {
+  const points = enclosureShapePoints(shape, w, h, border);
+  return (
+    <div className="relative" style={{ width: w, height: h }}>
+      {shape === 'rounded' || !shape ? (
+        <div className="absolute inset-0 overflow-hidden rounded-lg"
+          style={{ background: ground, border: `${border}px solid ${fence}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.2), 0 2px 0 rgba(0,0,0,.08)' }}>
+          <div className="absolute inset-x-0 bottom-0" style={{ height: '30%', background: 'rgba(0,0,0,.08)' }} />
+        </div>
+      ) : (
+        <svg className="absolute inset-0" width={w} height={h} aria-hidden>
+          {shape === 'circle'
+            ? <ellipse cx={w / 2} cy={h / 2} rx={w / 2 - border} ry={h / 2 - border} fill={ground} stroke={fence} strokeWidth={border} />
+            : shape === 'pill'
+              ? <rect x={border} y={border} width={w - 2 * border} height={h - 2 * border} rx={(h - 2 * border) / 2} fill={ground} stroke={fence} strokeWidth={border} />
+              : <polygon points={points ?? ''} fill={ground} stroke={fence} strokeWidth={border} strokeLinejoin="round" />}
+        </svg>
+      )}
+      <div className="absolute inset-0">{children}</div>
+    </div>
+  );
+}
+
 function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: BacklogItem[]; theme: ZoneTheme }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = enc.design;
@@ -126,9 +153,7 @@ function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: Backlog
   }));
   return (
     <div className="relative flex flex-col items-center">
-      <div className="relative overflow-hidden rounded-lg"
-        style={{ width: cfg.w, height: cfg.h, background: ground, border: `3px solid ${fence}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.2), 0 2px 0 rgba(0,0,0,.08)' }}>
-        <div className="absolute inset-x-0 bottom-0" style={{ height: '30%', background: 'rgba(0,0,0,.08)' }} />
+      <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence}>
         {d?.parts.water === 'on' && (
           <div className="absolute" style={{ bottom: '12%', right: '10%', width: '34%', height: '30%', borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
         )}
@@ -138,7 +163,7 @@ function Enclosure({ enc, animals, theme }: { enc: BacklogItem; animals: Backlog
             <Sprite item={animals[i]} design={animals[i].design ?? presetFor(animals[i])} cell={cell} />
           </div>
         ))}
-      </div>
+      </EnclosureBox>
       <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{enc.name}</span>
     </div>
   );

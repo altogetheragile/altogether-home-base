@@ -393,6 +393,26 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
   return false;
 }
 
+// ---- Enclosure shapes: a habitat can be more than a rectangle ----
+
+/** The habitat shapes an enclosure can take. Stored on the design (design.parts.shape). */
+export const ENCLOSURE_SHAPES = [
+  { key: 'rounded', label: 'Rounded' },
+  { key: 'pill', label: 'Pill' },
+  { key: 'circle', label: 'Round' },
+  { key: 'hexagon', label: 'Hexagon' },
+  { key: 'octagon', label: 'Octagon' },
+] as const;
+
+/** SVG polygon points for a shaped enclosure at w x h (inset by the stroke width s so the fence
+ *  stays inside the box). Returns null for shapes drawn with an ellipse/rect instead of a polygon. */
+export function enclosureShapePoints(shape: string, w: number, h: number, s = 3): string | null {
+  const P = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
+  if (shape === 'hexagon') return [P(w * 0.24, s), P(w * 0.76, s), P(w - s, h / 2), P(w * 0.76, h - s), P(w * 0.24, h - s), P(s, h / 2)].join(' ');
+  if (shape === 'octagon') { const c = Math.min(w, h) * 0.29; return [P(c, s), P(w - c, s), P(w - s, c), P(w - s, h - c), P(w - c, h - s), P(c, h - s), P(s, h - c), P(s, c)].join(' '); }
+  return null;
+}
+
 // ---- Appeal: the design choices are the product ----
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));

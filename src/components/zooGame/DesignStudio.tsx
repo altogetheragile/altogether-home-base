@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import type { BacklogItem } from './types';
 import {
-  renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W,
+  renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
   EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES, type ItemDesign,
 } from './design';
+import { EnclosureBox } from './ParkView';
 import { TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -48,13 +49,11 @@ function Preview({ item, design, cell }: { item: BacklogItem; design: ItemDesign
 function EnclosurePreview({ item, design }: { item: BacklogItem; design: ItemDesign }) {
   const dims = { small: { w: 132, h: 92 }, medium: { w: 176, h: 118 }, large: { w: 220, h: 146 } }[item.enclosureSize ?? 'medium'];
   return (
-    <div className="relative overflow-hidden rounded-lg" aria-hidden
-      style={{ width: dims.w, height: dims.h, background: design.colors.ground ?? '#cbb78d', border: `4px solid ${design.colors.fence ?? '#9a7b4f'}` }}>
-      <div className="absolute inset-x-0 bottom-0" style={{ height: '30%', background: 'rgba(0,0,0,.06)' }} />
+    <EnclosureBox shape={design.parts.shape ?? 'rounded'} w={dims.w} h={dims.h} ground={design.colors.ground ?? '#cbb78d'} fence={design.colors.fence ?? '#9a7b4f'} border={4}>
       {design.parts.water === 'on' && (
         <div className="absolute" style={{ bottom: '14%', right: '12%', width: '40%', height: '32%', borderRadius: 999, background: design.colors.water ?? '#5aa9c8', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.3)' }} />
       )}
-    </div>
+    </EnclosureBox>
   );
 }
 
@@ -161,6 +160,19 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             );
           })}
           <span className="text-[11px] text-muted-foreground/70">A bigger habitat holds more animals - each one is drawn to scale inside it.</span>
+        </div>
+      )}
+
+      {isEnclosure && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Shape</span>
+          {ENCLOSURE_SHAPES.map((s) => {
+            const on = (design.parts.shape ?? 'rounded') === s.key;
+            return (
+              <button key={s.key} type="button" onClick={() => setPart('shape', s.key)}
+                className={cn('rounded-full border px-2.5 py-0.5 text-xs', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{s.label}</button>
+            );
+          })}
         </div>
       )}
 
