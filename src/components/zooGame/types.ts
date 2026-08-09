@@ -169,10 +169,27 @@ export interface BacklogItem {
 }
 
 /** A hand-drawn park path: a polyline of points in the park's design-pixel space. Its
- *  surface follows the global pathStyle; it renders alongside the auto-drawn routes. */
+ *  surface follows the global pathStyle; it renders alongside the auto-drawn routes.
+ *  Legacy - superseded by connectors; kept so old saved games still deserialise. */
 export interface ZooPath {
   id: string;
   points: { x: number; y: number }[];
+}
+
+/** One end of a connector. If `featureId` is set the end is ATTACHED to that feature and follows
+ *  it (x,y is a fallback); otherwise it is a free point at (x,y) in the park's design pixels. */
+export interface ConnectorEnd { featureId?: string; x: number; y: number }
+
+/** A manual path connector the user draws on the Park: two ends (each attached to a feature or
+ *  free), optional bend points between them, and its own thickness and colour. Attached ends
+ *  reflow when the feature moves. */
+export interface ZooConnector {
+  id: string;
+  a: ConnectorEnd;
+  b: ConnectorEnd;
+  bends: { x: number; y: number }[];
+  thickness: number;
+  color: string;
 }
 
 /** One member of the Scrum Team. A `seat` a real person could take in a future multiplayer
@@ -270,8 +287,11 @@ export interface ZooGameState {
    *  'spine' (a central avenue with a branch to each), or 'none' (no auto-paths - draw your
    *  own). Defaults to 'straight'. */
   pathRoute: 'straight' | 'elbow' | 'spine' | 'none';
-  /** Hand-drawn paths, laid on the Park with the draw tool. Persist with the game. */
+  /** Legacy hand-drawn paths (superseded by connectors). Kept for old-save compatibility. */
   paths: ZooPath[];
+  /** Manual connectors drawn on the Park: attach an enclosure/building to another (or to a free
+   *  point), route them by hand, and style each. Persist with the game. */
+  connectors: ZooConnector[];
 }
 
 export type ZooAction =
@@ -312,6 +332,9 @@ export type ZooAction =
   | { type: 'ADD_PATH'; points: { x: number; y: number }[] }
   | { type: 'DELETE_PATH'; id: string }
   | { type: 'CLEAR_PATHS' }
+  | { type: 'ADD_CONNECTOR'; connector: ZooConnector }
+  | { type: 'UPDATE_CONNECTOR'; id: string; patch: Partial<ZooConnector> }
+  | { type: 'DELETE_CONNECTOR'; id: string }
   | { type: 'PULL_ITEM'; id: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }

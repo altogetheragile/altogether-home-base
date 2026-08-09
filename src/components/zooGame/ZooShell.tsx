@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import type { ZooGameState } from './types';
+import type { ZooGameState, ZooConnector } from './types';
 import { ParkView } from './ParkView';
 import { DayTimer } from './DayTimer';
 import { DodEditor } from './DodEditor';
@@ -106,7 +106,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onSetPathRoute, onAddPath, onDeletePath, onClearPaths, onImprove, onSetSpot, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onSetPathRoute?: (route: 'straight' | 'elbow' | 'spine' | 'none') => void; onAddPath?: (points: { x: number; y: number }[]) => void; onDeletePath?: (id: string) => void; onClearPaths?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
+export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, onImprove, onSetSpot, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
   // `tab` is controlled from above when provided, so an event (place & open) can switch to
   // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
   // position the released item there.
@@ -195,7 +195,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
           tab === 'work' && 'xl:w-[360px] xl:shrink-0 xl:border-l xl:border-border',
           tab === 'park' && 'xl:flex-1 xl:min-w-0')}>
           <p className="mb-2 text-[11px] text-muted-foreground">The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.</p>
-          <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onSetPathRoute={onSetPathRoute} onAddPath={onAddPath} onDeletePath={onDeletePath} onClearPaths={onClearPaths} onImprove={onImprove} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
+          <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} onImprove={onImprove} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
         </div>
       </div>
     </div>

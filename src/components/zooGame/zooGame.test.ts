@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -227,30 +227,21 @@ describe('zoo game: arranging the park layout', () => {
     expect(setPathStyle(s, 'boardwalk').pathStyle).toBe('boardwalk');
   });
 
-  it('sets the park path route, defaulting to straight', () => {
-    const s = initialZooState(1);
-    expect(s.pathRoute).toBe('straight');
-    expect(setPathRoute(s, 'spine').pathRoute).toBe('spine');
-    expect(setPathRoute(s, 'elbow').pathRoute).toBe('elbow');
-    expect(setPathRoute(s, 'none').pathRoute).toBe('none');
-  });
-
-  it('adds, deletes and clears hand-drawn paths (ignoring degenerate ones)', () => {
+  it('adds, edits (ends, bends, style) and deletes manual connectors', () => {
     let s = initialZooState(1);
-    expect(s.paths).toEqual([]);
-    s = addZooPath(s, [{ x: 10, y: 10 }, { x: 100, y: 200 }]);
-    expect(s.paths).toHaveLength(1);
-    // a single-point path is degenerate and ignored
-    s = addZooPath(s, [{ x: 5, y: 5 }]);
-    expect(s.paths).toHaveLength(1);
-    s = addZooPath(s, [{ x: 300, y: 20 }, { x: 300, y: 400 }]);
-    expect(s.paths).toHaveLength(2);
-    const id0 = s.paths[0].id;
-    s = deleteZooPath(s, id0);
-    expect(s.paths).toHaveLength(1);
-    expect(s.paths.some((p) => p.id === id0)).toBe(false);
-    s = clearZooPaths(s);
-    expect(s.paths).toEqual([]);
+    expect(s.connectors).toEqual([]);
+    s = addConnector(s, { id: 'k1', a: { featureId: 'lion-enc', x: 10, y: 10 }, b: { x: 200, y: 120 }, bends: [], thickness: 8, color: '#c9a86a' });
+    expect(s.connectors).toHaveLength(1);
+    expect(s.connectors[0].a.featureId).toBe('lion-enc'); // one end attached to a feature
+    expect(s.connectors[0].b.featureId).toBeUndefined();   // the other a free point
+    s = updateConnector(s, 'k1', { thickness: 14, color: '#4a90d9', bends: [{ x: 100, y: 100 }] });
+    expect(s.connectors[0].thickness).toBe(14);
+    expect(s.connectors[0].color).toBe('#4a90d9');
+    expect(s.connectors[0].bends).toHaveLength(1); // a hand-placed bend
+    s = updateConnector(s, 'k1', { b: { featureId: 'tiger-enc', x: 0, y: 0 } }); // re-attach the free end
+    expect(s.connectors[0].b.featureId).toBe('tiger-enc');
+    s = deleteConnector(s, 'k1');
+    expect(s.connectors).toEqual([]);
   });
 
   it('moves a whole zone (epic) up as a block, keeping item order within it', () => {
