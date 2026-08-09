@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -1035,6 +1035,28 @@ describe('zoo game: richer studio kit', () => {
       design.colors.ears = '#efe6d0';
       expect(designCriteria(exhibit(), design).find((c) => /crest|tusks/.test(c.label))!.pass).toBe(true);
     }
+  });
+});
+
+describe('zoo game: enclosure planting (flora added in the studio, like water)', () => {
+  it('flora is added to the design and is independent of water features', () => {
+    const design: ItemDesign = { parts: {}, colors: {} };
+    expect(enclosureFlora(design)).toEqual([]); // none by default
+    const withFlora: ItemDesign = { ...design, flora: [defaultFlora('tree', 0), defaultFlora('bush', 1)] };
+    const fl = enclosureFlora(withFlora);
+    expect(fl.length).toBe(2);
+    expect(fl.map((f) => f.type)).toEqual(['tree', 'bush']);
+    expect(fl.every((f) => f.x >= 0 && f.x <= 1 && f.y >= 0 && f.y <= 1 && f.s > 0)).toBe(true);
+    expect(withFlora.water).toBeUndefined(); // planting does not touch water
+  });
+
+  it('supports every flora shape, including the signpost, as enclosure planting', () => {
+    for (const t of FLORA_TYPES) {
+      const f = defaultFlora(t, 0);
+      expect(f.type).toBe(t);
+      expect(FLORA_TYPES).toContain(f.type);
+    }
+    expect(FLORA_TYPES).toContain('signpost');
   });
 });
 

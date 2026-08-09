@@ -601,7 +601,7 @@ export function improveItem(state: ZooGameState, id: string): ZooGameState {
     assignedDevs: undefined,
     goalCritical: false,
     pos: undefined,
-    design: d ? { ...d, parts: { ...d.parts }, colors: { ...d.colors }, water: d.water?.map((w) => ({ ...w })) } : undefined,
+    design: d ? { ...d, parts: { ...d.parts }, colors: { ...d.colors }, water: d.water?.map((w) => ({ ...w })), flora: d.flora?.map((f) => ({ ...f })) } : undefined,
   };
   return { ...state, backlog: [...state.backlog, clone] };
 }

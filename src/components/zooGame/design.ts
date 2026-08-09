@@ -18,10 +18,27 @@ export interface ItemDesign {
   /** Enclosure water features - as many as you like, each a fraction of the habitat box
    *  (0..1), movable and resizable in the studio. Absent = the legacy single-water flag. */
   water?: WaterFeature[];
+  /** Enclosure planting - decorative flora placed inside the habitat in the studio, just like
+   *  water features (add / drag / resize / remove). Each is a plant type at a fractional spot. */
+  flora?: EnclosureFlora[];
 }
 
 /** A water feature inside an enclosure: position and size as fractions of the habitat box. */
 export interface WaterFeature { x: number; y: number; w: number; h: number }
+
+/** A plant placed inside an enclosure: position (0..1 fractions of the box), scale, and shape. */
+export interface EnclosureFlora { x: number; y: number; s: number; type: string }
+
+/** A new plant of the given type, offset a little each time so it doesn't stack exactly. */
+export function defaultFlora(type: string, n = 0): EnclosureFlora {
+  const cols = [0.28, 0.72, 0.5, 0.16, 0.84, 0.4];
+  return { x: cols[n % cols.length], y: 0.42 + (n % 3) * 0.13, s: 1, type };
+}
+
+/** The planting to draw inside an enclosure (empty if none added). */
+export function enclosureFlora(design: ItemDesign): EnclosureFlora[] {
+  return design.flora ?? [];
+}
 
 /** A sensible starting pool, offset a little each time so a new one doesn't stack exactly. */
 export function defaultWater(n = 0): WaterFeature {
