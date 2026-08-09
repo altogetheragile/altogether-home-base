@@ -1,6 +1,6 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooPath } from './types';
-import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -75,6 +75,19 @@ function themeFor(zone: string, idx: number): ZoneTheme {
 /** Render one design (a creature or building) at a small scale. */
 function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign; cell: number }) {
   const grid = renderDesign(item, design);
+  return (
+    <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
+      {grid.flatMap((row, r) => row.map((color, c) => (
+        <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />
+      )))}
+    </div>
+  );
+}
+
+/** A planting sprite of a given type and colours, at a chosen cell size. Used for enclosure
+ *  planting in both the park and the studio preview so they match. */
+export function FloraSprite({ type, foliage, trunk, cell }: { type: string; foliage?: string; trunk?: string; cell: number }) {
+  const grid = renderDesign({ category: 'flora' } as BacklogItem, { parts: { type }, colors: { foliage: foliage ?? '#43a047', trunk: trunk ?? '#7a5230' } });
   return (
     <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
       {grid.flatMap((row, r) => row.map((color, c) => (
@@ -216,7 +229,13 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
         {d && enclosureWater(d).map((wf, i) => (
           <div key={i} className="absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
         ))}
-        {n === 0 && plants.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {/* Studio-placed planting: decorative flora that is part of the enclosure design. */}
+        {d && enclosureFlora(d).map((fl, i) => (
+          <div key={`fl-${i}`} className="absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: `translate(-50%,-50%) scale(${fl.s})`, transformOrigin: 'center', zIndex: 0 }}>
+            <FloraSprite type={fl.type} foliage={d.colors.foliage} trunk={d.colors.trunk} cell={cell} />
+          </div>
+        ))}
+        {n === 0 && plants.length === 0 && (!d || enclosureFlora(d).length === 0) && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
         {/* Planting sits behind the animals; drag it within, or out of the fence to remove it. */}
         {plants.map((pl) => {
           const p = drag?.id === pl.id ? { left: drag.x * 100, top: drag.y * 100 } : { left: (pl.spot?.x ?? 0.5) * 100, top: (pl.spot?.y ?? 0.4) * 100 };

@@ -2,10 +2,10 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES,
-  type ItemDesign, type WaterFeature,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES,
+  type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
-import { EnclosureBox } from './ParkView';
+import { EnclosureBox, FloraSprite } from './ParkView';
 import { TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -51,9 +51,10 @@ const clampF = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, 
 
 /** Live, editable enclosure: the habitat in its shape, with water features you can drag to move
  *  and resize by their corner (and remove on hover). Positions are fractions of the box. */
-function EnclosurePreview({ item, design, onSetWater }: { item: BacklogItem; design: ItemDesign; onSetWater: (w: WaterFeature[]) => void }) {
+function EnclosurePreview({ item, design, onSetWater, onSetFlora }: { item: BacklogItem; design: ItemDesign; onSetWater: (w: WaterFeature[]) => void; onSetFlora: (f: EnclosureFlora[]) => void }) {
   const dims = { small: { w: 132, h: 92 }, medium: { w: 176, h: 118 }, large: { w: 220, h: 146 } }[item.enclosureSize ?? 'medium'];
   const water = enclosureWater(design);
+  const flora = enclosureFlora(design);
   const drag = (i: number, mode: 'move' | 'resize') => (e: ReactPointerEvent) => {
     e.preventDefault();
     const sx = e.clientX, sy = e.clientY, orig = water[i];
@@ -62,6 +63,20 @@ function EnclosurePreview({ item, design, onSetWater }: { item: BacklogItem; des
       onSetWater(water.map((w, j) => j !== i ? w : mode === 'move'
         ? { ...w, x: clampF(orig.x + dx, 0, 1 - orig.w), y: clampF(orig.y + dy, 0, 1 - orig.h) }
         : { ...w, w: clampF(orig.w + dx, 0.08, 1 - orig.x), h: clampF(orig.h + dy, 0.08, 1 - orig.y) }));
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+  // Planting works like water: drag the plant to move it, drag its corner to scale it.
+  const dragFlora = (i: number, mode: 'move' | 'resize') => (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sx = e.clientX, sy = e.clientY, orig = flora[i];
+    const move = (ev: PointerEvent) => {
+      const dx = (ev.clientX - sx) / dims.w, dy = (ev.clientY - sy) / dims.h;
+      onSetFlora(flora.map((f, j) => j !== i ? f : mode === 'move'
+        ? { ...f, x: clampF(orig.x + dx, 0.05, 0.95), y: clampF(orig.y + dy, 0.08, 0.95) }
+        : { ...f, s: clampF(orig.s + (dx + dy) * 1.5, 0.5, 2.6) }));
     };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
@@ -75,6 +90,16 @@ function EnclosurePreview({ item, design, onSetWater }: { item: BacklogItem; des
           <button type="button" aria-label="Remove water feature" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onSetWater(water.filter((_, j) => j !== i)); }}
             className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
           <div onPointerDown={drag(i, 'resize')} className="absolute -bottom-0.5 -right-0.5 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-sky-600 bg-white group-hover:block" />
+        </div>
+      ))}
+      {flora.map((fl, i) => (
+        <div key={`fl-${i}`} className="group absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
+          <div onPointerDown={dragFlora(i, 'move')} className="cursor-grab active:cursor-grabbing" style={{ transform: `scale(${fl.s})`, transformOrigin: 'center' }}>
+            <FloraSprite type={fl.type} foliage={design.colors.foliage} trunk={design.colors.trunk} cell={2} />
+          </div>
+          <button type="button" aria-label="Remove planting" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onSetFlora(flora.filter((_, j) => j !== i)); }}
+            className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
+          <div onPointerDown={dragFlora(i, 'resize')} className="absolute -bottom-1 -right-1 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-emerald-600 bg-white group-hover:block" />
         </div>
       ))}
     </EnclosureBox>
@@ -110,6 +135,8 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
   const commit = (next: ItemDesign) => { setDesign(next); onChange?.(next); };
   const setWater = (w: WaterFeature[]) => commit({ ...design, water: w });
+  const setFlora = (f: EnclosureFlora[]) => commit({ ...design, flora: f });
+  const addFlora = (type: string) => setFlora([...enclosureFlora(design), defaultFlora(type, enclosureFlora(design).length)]);
   const setPart = (key: string, opt: string) => commit({ ...design, parts: { ...design.parts, [key]: opt } });
   const setColor = (key: string, hex: string) => commit({ ...design, colors: { ...design.colors, [key]: hex } });
   const copyFrom = (src: CopySource) => commit({ parts: { ...src.design.parts }, colors: { ...src.design.colors } });
@@ -204,7 +231,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         {/* Live preview */}
         <div className="flex items-start justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
-          {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} /> : <Preview item={item} design={design} cell={cell} />}
+          {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} onSetFlora={setFlora} /> : <Preview item={item} design={design} cell={cell} />}
         </div>
 
         {/* Controls */}
@@ -219,6 +246,20 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             </div>
             {enclosureWater(design).length > 0 && (
               <ColourPickerRow label="Water" value={design.colors.water} onChange={(hex) => setColor('water', hex)} />
+            )}
+            <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-3">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Planting</span>
+              {FLORA_TYPES.map((t) => (
+                <button key={t} type="button" onClick={() => addFlora(t)}
+                  className="rounded-full border border-emerald-600/50 bg-emerald-600/5 px-2.5 py-0.5 text-xs font-medium capitalize text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400">+ {t}</button>
+              ))}
+            </div>
+            {enclosureFlora(design).length > 0 && (
+              <>
+                <span className="block text-[11px] text-muted-foreground/70">Drag a plant to move it, drag its corner to resize, hover for &times;.</span>
+                <ColourPickerRow label="Foliage" value={design.colors.foliage} onChange={(hex) => setColor('foliage', hex)} />
+                <ColourPickerRow label="Trunk / bed" value={design.colors.trunk} onChange={(hex) => setColor('trunk', hex)} />
+              </>
             )}
           </div>
         ) : isExhibit ? (
