@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, BUILDING_TYPES, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite } from './ParkView';
@@ -297,6 +297,15 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Building</span>
+              <div className="flex flex-wrap gap-1.5">
+                {BUILDING_TYPES.map((o) => (
+                  <button key={o} type="button" onClick={() => setPart('type', o)}
+                    className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', (design.parts.type ?? 'shop') === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{o}</button>
+                ))}
+              </div>
+            </div>
             {AMENITY_COLORS.map((c) => (
               <ColourPickerRow key={c.key} label={c.label} value={design.colors[c.key]}
                 onChange={(hex) => commit({ ...design, colors: { ...design.colors, [c.key]: hex }, parts: c.key === 'sign' ? { ...design.parts, sign: 'on' } : design.parts })} />

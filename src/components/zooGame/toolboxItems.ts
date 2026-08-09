@@ -20,7 +20,8 @@ export interface ToolboxItem {
 }
 
 const exhibit = (template: string, name: string, zone: string): ToolboxItem => ({ template, name, category: 'exhibit', zone });
-const amenity = (name: string, zone: string, services: 'food' | 'toilet' | 'rest'): ToolboxItem => ({ name, category: 'amenity', zone, services });
+// The template carries the building shape (shop / kiosk / cafe / stall / toilets).
+const amenity = (name: string, zone: string, services: 'food' | 'toilet' | 'rest', type: string): ToolboxItem => ({ template: type, name, category: 'amenity', zone, services });
 // The template carries the starting flora shape (tree / bush / flowers / signpost).
 const flora = (name: string, type: string): ToolboxItem => ({ template: type, name, category: 'flora', zone: 'General' });
 const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint });
@@ -54,7 +55,7 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
   },
   {
     group: 'Facilities',
-    items: [amenity('Kiosk', 'General', 'food'), amenity('Cafe', 'General', 'food'), amenity('Gift Shop', 'General', 'food'), amenity('Toilets', 'General', 'toilet'), amenity('Picnic Area', 'General', 'rest'), amenity('Seating', 'General', 'rest')],
+    items: [amenity('Kiosk', 'General', 'food', 'kiosk'), amenity('Cafe', 'General', 'food', 'cafe'), amenity('Gift Shop', 'General', 'food', 'shop'), amenity('Toilets', 'General', 'toilet', 'toilets'), amenity('Picnic Area', 'General', 'rest', 'stall'), amenity('Seating', 'General', 'rest', 'stall')],
   },
   {
     group: 'Flora & decor',
