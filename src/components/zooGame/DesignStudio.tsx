@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES, type ItemDesign,
+  enclosureWater, defaultWater, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, SWATCHES,
+  type ItemDesign, type WaterFeature,
 } from './design';
 import { EnclosureBox } from './ParkView';
 import { TaskChecklist } from './Board';
@@ -46,13 +47,36 @@ function Preview({ item, design, cell }: { item: BacklogItem; design: ItemDesign
 
 /** Live preview of an enclosure: the habitat box at its chosen footprint, with the
  *  ground, fence and optional water feature the team is building. */
-function EnclosurePreview({ item, design }: { item: BacklogItem; design: ItemDesign }) {
+const clampF = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+/** Live, editable enclosure: the habitat in its shape, with water features you can drag to move
+ *  and resize by their corner (and remove on hover). Positions are fractions of the box. */
+function EnclosurePreview({ item, design, onSetWater }: { item: BacklogItem; design: ItemDesign; onSetWater: (w: WaterFeature[]) => void }) {
   const dims = { small: { w: 132, h: 92 }, medium: { w: 176, h: 118 }, large: { w: 220, h: 146 } }[item.enclosureSize ?? 'medium'];
+  const water = enclosureWater(design);
+  const drag = (i: number, mode: 'move' | 'resize') => (e: ReactPointerEvent) => {
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, orig = water[i];
+    const move = (ev: PointerEvent) => {
+      const dx = (ev.clientX - sx) / dims.w, dy = (ev.clientY - sy) / dims.h;
+      onSetWater(water.map((w, j) => j !== i ? w : mode === 'move'
+        ? { ...w, x: clampF(orig.x + dx, 0, 1 - orig.w), y: clampF(orig.y + dy, 0, 1 - orig.h) }
+        : { ...w, w: clampF(orig.w + dx, 0.08, 1 - orig.x), h: clampF(orig.h + dy, 0.08, 1 - orig.y) }));
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
   return (
     <EnclosureBox shape={design.parts.shape ?? 'rounded'} w={dims.w} h={dims.h} ground={design.colors.ground ?? '#cbb78d'} fence={design.colors.fence ?? '#9a7b4f'} border={4}>
-      {design.parts.water === 'on' && (
-        <div className="absolute" style={{ bottom: '14%', right: '12%', width: '40%', height: '32%', borderRadius: 999, background: design.colors.water ?? '#5aa9c8', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.3)' }} />
-      )}
+      {water.map((wf, i) => (
+        <div key={i} className="group absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, touchAction: 'none' }}>
+          <div onPointerDown={drag(i, 'move')} className="h-full w-full cursor-grab rounded-full active:cursor-grabbing"
+            style={{ background: design.colors.water ?? '#5aa9c8', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.3)' }} />
+          <button type="button" aria-label="Remove water feature" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onSetWater(water.filter((_, j) => j !== i)); }}
+            className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
+          <div onPointerDown={drag(i, 'resize')} className="absolute -bottom-0.5 -right-0.5 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-sky-600 bg-white group-hover:block" />
+        </div>
+      ))}
     </EnclosureBox>
   );
 }
@@ -85,6 +109,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const [design, setDesign] = useState<ItemDesign>(initial ?? item.design ?? presetFor(item));
 
   const commit = (next: ItemDesign) => { setDesign(next); onChange?.(next); };
+  const setWater = (w: WaterFeature[]) => commit({ ...design, water: w });
   const setPart = (key: string, opt: string) => commit({ ...design, parts: { ...design.parts, [key]: opt } });
   const setColor = (key: string, hex: string) => commit({ ...design, colors: { ...design.colors, [key]: hex } });
   const copyFrom = (src: CopySource) => commit({ parts: { ...src.design.parts }, colors: { ...src.design.colors } });
@@ -179,7 +204,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         {/* Live preview */}
         <div className="flex items-start justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
-          {isEnclosure ? <EnclosurePreview item={item} design={design} /> : <Preview item={item} design={design} cell={cell} />}
+          {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} /> : <Preview item={item} design={design} cell={cell} />}
         </div>
 
         {/* Controls */}
@@ -187,11 +212,12 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
           <div className="space-y-3">
             <ColourPickerRow label="Ground" value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
             <ColourPickerRow label="Fence" value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={design.parts.water === 'on'} onChange={(e) => setPart('water', e.target.checked ? 'on' : 'off')} />
-              Add a water feature
-            </label>
-            {design.parts.water === 'on' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setWater([...enclosureWater(design), defaultWater(enclosureWater(design).length)])}
+                className="rounded-full border border-primary/50 bg-primary/5 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/10">+ Add water feature</button>
+              <span className="text-[11px] text-muted-foreground/70">Drag to move, drag the corner to resize, hover for &times;.</span>
+            </div>
+            {enclosureWater(design).length > 0 && (
               <ColourPickerRow label="Water" value={design.colors.water} onChange={(hex) => setColor('water', hex)} />
             )}
           </div>
