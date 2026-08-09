@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -860,6 +860,15 @@ describe('zoo game: enclosures are built before their animals', () => {
     expect(s.backlog.filter((i) => i.pos).map((i) => i.id)).toEqual(['lion-enc']);
     s = setItemPos(s, 'lion-enc', { x: 50, y: 60 });
     expect(find(s, 'lion-enc').pos).toEqual({ x: 50, y: 60 });
+  });
+
+  it('an animal keeps its dragged spot inside the enclosure (0..1 fractions), independent of the park position', () => {
+    let s = setItemSpot(initialZooState(1), 'lion', { x: 0.3, y: 0.7 });
+    expect(find(s, 'lion').spot).toEqual({ x: 0.3, y: 0.7 });
+    expect(s.backlog.filter((i) => i.spot).map((i) => i.id)).toEqual(['lion']); // targeted
+    s = setItemSpot(s, 'lion', { x: 0.6, y: 0.5 });
+    expect(find(s, 'lion').spot).toEqual({ x: 0.6, y: 0.5 });
+    expect(find(s, 'lion').pos).toBeUndefined(); // spot is separate from the park position
   });
 
   it('enclosures are excluded from the visitor simulation (they carry no appeal)', () => {
