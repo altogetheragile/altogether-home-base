@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, openItem, reviewSprint, startNextSprint, acceptSignal,
+  planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
@@ -582,6 +582,57 @@ describe('zoo game: design choices are the product', () => {
     expect(clone.status).toBe('backlog'); // a new item to plan and build
     expect(clone.design).toBeUndefined(); // not built yet
     expect(clone.name).toBe('Lion 2');
+  });
+});
+
+describe('zoo game: improving a delivered item (feedback-driven PBI)', () => {
+  const brightDesign = { parts: { body: 'round', head: 'maned' }, colors: { body: '#ffd54a', head: '#ffd54a' } };
+
+  it('raises an unsized Improve PBI carrying a clone of the target design', () => {
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign), 'lion');
+    s = improveItem(s, 'lion');
+    const imp = s.backlog.find((i) => i.enhancesId === 'lion')!;
+    expect(imp).toBeTruthy();
+    expect(imp.status).toBe('backlog'); // a real PBL item that must be refined and pulled
+    expect(imp.unsized).toBe(true); // needs re-estimating
+    expect(imp.name).toBe('Improve Lion');
+    expect(imp.design).toEqual(brightDesign); // pre-loaded with the current design
+    expect(imp.design).not.toBe(s.backlog.find((i) => i.id === 'lion')!.design); // a clone, not a shared ref
+  });
+
+  it('will not stack a second Improve PBI while one is in flight', () => {
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign), 'lion');
+    s = improveItem(s, 'lion');
+    s = improveItem(s, 'lion');
+    expect(s.backlog.filter((i) => i.enhancesId === 'lion').length).toBe(1);
+  });
+
+  it('delivering the improvement applies its design to the target and does not add a second feature', () => {
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign), 'lion');
+    s = improveItem(s, 'lion');
+    const impId = s.backlog.find((i) => i.enhancesId === 'lion')!.id;
+    // Estimate, pull and build the improvement with a repaint, then deliver it.
+    s = estimateItem(s, impId, 3);
+    s = pullIntoSprint(s, impId);
+    const repaint = { parts: { body: 'round', head: 'maned' }, colors: { body: '#33aaff', head: '#33aaff' } };
+    s = openItem(finish(s, impId, repaint), impId);
+    const target = s.backlog.find((i) => i.id === 'lion')!;
+    expect(target.design).toEqual(repaint); // the target now shows the improved design
+    expect(target.status).toBe('open'); // still live, still one feature
+    const imp = s.backlog.find((i) => i.id === impId)!;
+    expect(imp.status).toBe('open'); // counts as delivered work (velocity)...
+    expect(imp.enhancesId).toBe('lion'); // ...but is flagged as an improvement, so the park hides it
+  });
+
+  it('once an improvement is delivered, the item can be improved again', () => {
+    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign), 'lion');
+    s = improveItem(s, 'lion');
+    const impId = s.backlog.find((i) => i.enhancesId === 'lion')!.id;
+    s = estimateItem(s, impId, 3);
+    s = pullIntoSprint(s, impId);
+    s = openItem(finish(s, impId, brightDesign), impId);
+    s = improveItem(s, 'lion'); // now allowed again
+    expect(s.backlog.filter((i) => i.enhancesId === 'lion').length).toBe(2);
   });
 });
 

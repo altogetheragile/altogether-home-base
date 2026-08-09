@@ -43,7 +43,7 @@ function GameTopBar() {
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, setPathRoute, addPath, deletePath, clearPaths, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, splitEpic, createPbi, refinePbi, reorder, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, setPathRoute, addPath, deletePath, clearPaths, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -58,6 +58,14 @@ export default function ZooGame() {
   // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
   const [parkTab, setParkTab] = useState<'work' | 'park'>('work');
   const placeAndOpen = (id: string) => { open(id); setParkTab('park'); };
+  // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
+  // view so they can refine, estimate and pull it like any other item.
+  const raiseImprovement = (id: string) => {
+    const target = state.backlog.find((it) => it.id === id);
+    improve(id);
+    setParkTab('work');
+    toast.success(target ? `Raised "Improve ${target.name.replace(/^Improve /, '')}" - refine and estimate it in the Backlog` : 'Improvement raised in the Backlog');
+  };
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
@@ -95,7 +103,7 @@ export default function ZooGame() {
     }
   };
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onSetPathRoute: setPathRoute, onAddPath: addPath, onDeletePath: deletePath, onClearPaths: clearPaths, onEndDay: closeDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onSetPathRoute: setPathRoute, onAddPath: addPath, onDeletePath: deletePath, onClearPaths: clearPaths, onImprove: raiseImprovement, onEndDay: closeDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {
