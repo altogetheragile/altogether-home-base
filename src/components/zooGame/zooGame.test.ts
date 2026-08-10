@@ -971,6 +971,27 @@ describe('zoo game: the toolbox', () => {
     expect(item.unsized).toBe(true);
   });
 
+  it('offers landscape & wayfinding items as normal (PBI-creating) toolbox pieces with fitting shapes and ACs', () => {
+    const items = TOOLBOX.flatMap((g) => g.items);
+    for (const name of ['River', 'Pond', 'Rocks', 'Entrance', 'Car Park', 'Hedge', 'Fountain']) {
+      const t = items.find((i) => i.name === name)!;
+      expect(t, name).toBeTruthy();
+      expect(t.category).toBe('flora'); // scenery flows through the flora/PBI pipeline
+      const draft = toolboxDraft(t);
+      expect(draft.template).toBe(t.template);
+      // Each renders a distinct, non-empty sprite from its type.
+      const grid = renderDesign({ category: 'flora' } as never, { parts: { type: t.template! }, colors: { foliage: '#5aa9c8', trunk: '#b7965f' } });
+      expect(grid.some((row) => row.some((c) => c)), `${name} renders`).toBe(true);
+    }
+    // Water features read as water, not "planting".
+    expect(toolboxDraft(items.find((i) => i.name === 'River')!).acceptance).toContain('Reads as water');
+    expect(toolboxDraft(items.find((i) => i.name === 'Entrance')!).acceptance).toContain('Clearly marks the way in');
+    // All the landscape sprites differ from each other.
+    const shapes = ['river', 'pond', 'rocks', 'entrance', 'carpark', 'hedge', 'fountain'];
+    const rendered = shapes.map((t) => JSON.stringify(renderDesign({ category: 'flora' } as never, { parts: { type: t }, colors: { foliage: '#5aa9c8', trunk: '#8a5a2b' } })));
+    expect(new Set(rendered).size).toBe(shapes.length);
+  });
+
   it('gives each building acceptance criteria that fit what it is (a gift shop does not serve food)', () => {
     const draft = (name: string) => toolboxDraft(TOOLBOX.flatMap((g) => g.items).find((i) => i.name === name)!);
     expect(draft('Gift Shop').acceptance).toContain('Sells a range of souvenirs');
