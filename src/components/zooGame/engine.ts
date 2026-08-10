@@ -227,6 +227,12 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
 /** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
 export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
 
+/** Put a built (Done-column) item onto the park to place & size it. It shows on the park but is not
+ *  yet live to visitors - its card stays in Deploy until you mark it "Deploy complete" (openItem). */
+export function placeOnPark(state: ZooGameState, id: string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, placed: true } : it)) };
+}
+
 /** Confirm (or un-confirm) one of an item's acceptance criteria. Build ACs are ticked in the studio;
  *  deploy ACs (sizing/placement) are ticked on the park while placing & sizing the item. */
 export function confirmAcceptance(state: ZooGameState, id: string, index: number, value: boolean): ZooGameState {

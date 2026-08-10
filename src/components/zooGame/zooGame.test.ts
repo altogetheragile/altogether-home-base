@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1050,6 +1050,18 @@ describe('zoo game: the toolbox', () => {
     expect(lion().acConfirmed?.[1]).toBe(true);
     s = confirmAcceptance(s, 'lion', 1, false);
     expect(lion().acConfirmed?.[1]).toBe(false);
+  });
+
+  it('placeOnPark marks a built item as placed (on the park) without releasing it to visitors', () => {
+    let s = initialZooState(1);
+    const lion = () => s.backlog.find((i) => i.id === 'lion')!;
+    // Only a built (Done-column) item can be placed; a backlog item is untouched.
+    s = placeOnPark(s, 'lion');
+    expect(lion().placed).toBeFalsy();
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'done' as const } : it)) };
+    s = placeOnPark(s, 'lion');
+    expect(lion().placed).toBe(true);
+    expect(lion().status).toBe('done'); // still in Deploy - not live until Deploy complete
   });
 
   it('gives each building acceptance criteria that fit what it is (a gift shop does not serve food)', () => {

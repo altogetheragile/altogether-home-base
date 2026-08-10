@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
+import { isDeployAcceptance } from './design';
 import { enclosureReady, enclosureOf } from './engine';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
@@ -12,7 +13,7 @@ import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Boar
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, DoorOpen, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { Palette, DoorOpen, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -35,6 +36,9 @@ interface SprintBoardProps {
   onAssignDev: (itemId: string, devId: string) => void;
   onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
+  /** Put a built item on the park to place & size it (for items with placement acceptance criteria)
+   *  before marking it Deploy complete. */
+  onPlaceOnPark: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
   onSkipDailyScrum: () => void;
@@ -97,7 +101,7 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -138,9 +142,15 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
     return 'studio';
   };
   const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
+  // A built item can be marked Done only once its placement acceptance criteria (if any) are confirmed
+  // on the park - you can't accept placement before you have placed it.
+  const deployReady = (id: string) => {
+    const it = deploy.find((x) => x.id === id);
+    return !!it && it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label)).every((a) => !!it.acConfirmed?.[a.i]);
+  };
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
-    return o === 'open' || (o === 'start' && canStart(id));
+    return (o === 'open' && deployReady(id)) || (o === 'start' && canStart(id));
   };
   const handleDrop = (to: string) => {
     if (!drag) return;
@@ -154,6 +164,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
       if (atWipLimit) { toast.error(`WIP limit ${state.wipLimit} reached - finish something in Doing first.`); return; }
       onStartItem(id);
     } else if (o === 'open') {
+      if (!deployReady(id)) { toast.error('Place & size it on the park and confirm its placement criteria first.'); return; }
       onOpen(id);
     } else if (o === 'studio') {
       toast('Open "Design & build" to finish it - it moves to Deploy once it is built and the plan is ticked off.');
@@ -183,14 +194,31 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   }
   const dayStarting = state.dayStage === 'dayStart';
 
-  // Deploy column: built to the DoD, release it to the park. "Place & open" is the delivery.
-  const deployActions = (it: BacklogItem) => (
-    <>
-      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1 h-3.5 w-3.5" /> Place &amp; open</Button>
-      <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
-      {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
-    </>
-  );
+  // Deploy column: built to the DoD, release it to the park. Items with placement acceptance
+  // criteria (a river "Sized to fit the space") are a two-step deploy - Place on the park to
+  // position & size it and confirm those criteria, then Deploy complete moves it to Done. Everything
+  // else is a one-click "Place & open" (nothing to confirm before it is live).
+  const deployActions = (it: BacklogItem) => {
+    const deployAcs = it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
+    const editAdd = (
+      <>
+        <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
+        {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
+      </>
+    );
+    if (deployAcs.length === 0) {
+      return <>
+        <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1 h-3.5 w-3.5" /> Place &amp; open</Button>
+        {editAdd}
+      </>;
+    }
+    const acsDone = deployAcs.every((a) => !!it.acConfirmed?.[a.i]);
+    return <>
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> {it.placed ? 'Adjust on park' : 'Place on the park'}</Button>
+      <Button size="sm" className="h-7 px-2 text-xs" disabled={!acsDone} title={acsDone ? undefined : 'Place & size it on the park and confirm its placement criteria first'} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Deploy complete</Button>
+      {editAdd}
+    </>;
+  };
   // Done column: deployed, live to visitors.
   const doneActions = (it: BacklogItem) => (
     <>

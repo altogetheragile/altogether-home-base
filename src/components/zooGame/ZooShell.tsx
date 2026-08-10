@@ -9,7 +9,7 @@ import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, Pencil, Check, Sa
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
-const WORK_TAB: Record<string, string> = { refine: 'Refine', planning: 'Plan', sprint: 'Build', review: 'Review', retro: 'Retro' };
+const WORK_TAB: Record<string, string> = { refine: 'Refine', planning: 'Plan', sprint: 'Sprint Backlog Board', review: 'Review', retro: 'Retro' };
 /** Which Scrum accountabilities you are wearing in each phase - a solo game plays all
  *  three, so naming the "hat" keeps who-does-what visible (shown as a tooltip to save space). */
 const ROLE_HINT: Record<string, string> = {
