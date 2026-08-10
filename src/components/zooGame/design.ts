@@ -455,6 +455,23 @@ export function amenityAcceptance(name: string, services?: string): string[] {
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
 ];
+/** The colours a scenery type actually uses, named for what they are - a river has water, not
+ *  "foliage"; a car park has tarmac and markings. The keys stay 'foliage'/'trunk' (what the
+ *  renderer reads); only the labels change, and a type that uses one colour shows just the one. */
+export function floraColors(type?: string): { key: string; label: string }[] {
+  switch (type) {
+    case 'river': return [{ key: 'foliage', label: 'Water' }];
+    case 'rocks': return [{ key: 'foliage', label: 'Rock' }];
+    case 'hedge': return [{ key: 'foliage', label: 'Leaves' }];
+    case 'pond': return [{ key: 'foliage', label: 'Water' }, { key: 'trunk', label: 'Bank' }];
+    case 'fountain': return [{ key: 'foliage', label: 'Water' }, { key: 'trunk', label: 'Stone' }];
+    case 'entrance': return [{ key: 'foliage', label: 'Banner' }, { key: 'trunk', label: 'Posts' }];
+    case 'carpark': return [{ key: 'foliage', label: 'Tarmac' }, { key: 'trunk', label: 'Markings' }];
+    case 'signpost': return [{ key: 'foliage', label: 'Sign' }, { key: 'trunk', label: 'Post' }];
+    case 'flowers': return [{ key: 'foliage', label: 'Flowers' }, { key: 'trunk', label: 'Bed' }];
+    default: return [{ key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' }];
+  }
+}
 /** Quick colour suggestions offered next to each picker (still fully editable). */
 export const SWATCHES = ['#c8873b', '#e6842a', '#e3c66b', '#8a5a2b', '#2a2622', '#f0efe9', '#43a047', '#ef6f53', '#f4c430', '#4a90d9'];
 
