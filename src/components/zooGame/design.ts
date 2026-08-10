@@ -388,6 +388,14 @@ export const AMENITY_COLORS: { key: string; label: string }[] = [
 export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'rocks', 'pond', 'river', 'fountain', 'entrance', 'carpark'];
 export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
 
+/** Path widths a Pathway can be designed at; the px is the connector thickness it deploys with. */
+export const PATH_WIDTHS: { key: string; label: string; px: number }[] = [
+  { key: 'thin', label: 'Thin', px: 5 },
+  { key: 'medium', label: 'Medium', px: 9 },
+  { key: 'thick', label: 'Thick', px: 14 },
+];
+export const pathWidthPx = (thickness?: string): number => PATH_WIDTHS.find((w) => w.key === thickness)?.px ?? 9;
+
 /** Acceptance criteria that fit a piece of scenery/landscape from its type (a river reads as water,
  *  an entrance marks the way in), so each backlog item is judged against something sensible. */
 export function floraAcceptance(type?: string): string[] {
@@ -481,7 +489,7 @@ export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART
  *  colours yet, so the player colours it in. Uses the item's toolbox template (falling
  *  back to its id) to pick the species shape. */
 export function presetFor(item: BacklogItem): ItemDesign {
-  if (item.category === 'path') return { parts: {}, colors: {} };
+  if (item.category === 'path') return { parts: { thickness: 'medium' }, colors: { path: '#c9a86a' } };
   if (item.category === 'enclosure') return { parts: { water: 'on' }, colors: {} };
   if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { type: item.template ?? buildingTypeFor(item.name, item.services), sign: 'on' }, colors: {} };
@@ -494,8 +502,12 @@ export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
 
 export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
-  // A path has no studio design - it is drawn on the park when you deploy it - so nothing to build.
-  if (item.category === 'path') return [];
+  // A path is designed as a width and a colour in the studio; the route itself is drawn on the
+  // park when you deploy it.
+  if (item.category === 'path') return [
+    { label: 'Set the path width', pass: !!design.parts.thickness },
+    { label: 'Choose the path colour', pass: !!design.colors.path },
+  ];
   if (item.category === 'enclosure') {
     return [
       { label: 'Lay the ground', pass: !!design.colors.ground },
@@ -560,6 +572,7 @@ export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => 
 export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label: string): boolean {
   const s = label.toLowerCase();
   const c = design.colors, p = design.parts;
+  if (item.category === 'path') return !!p.thickness && !!c.path; // width + colour chosen
   if (item.category === 'enclosure') {
     if (/footprint|size/.test(s)) return !!item.enclosureSize;
     if (/fence/.test(s)) return !!c.fence;

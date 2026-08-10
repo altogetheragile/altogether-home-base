@@ -210,7 +210,7 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
   // requires of every item: peer review and the PO's sign-off. Placing & opening is the Deploy
   // action (the Open button on a Done item), not a task, so it is not in the plan.
   const build = item.category === 'path'
-    ? ['Plan the route']                       // a path is drawn on the park at deployment, not designed
+    ? ['Set its width and colour']             // the route itself is drawn on the park at deployment
     : item.category === 'enclosure'
     ? ['Set the footprint size', 'Fence it securely', 'Lay the ground, shelter and water']
     : item.category === 'exhibit'

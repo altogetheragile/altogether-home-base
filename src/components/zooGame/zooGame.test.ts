@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -971,18 +971,22 @@ describe('zoo game: the toolbox', () => {
     expect(item.unsized).toBe(true);
   });
 
-  it('offers a Pathway PBI that needs no studio design and builds through its plan', () => {
+  it('offers a Pathway PBI designed as a width + colour, built through its plan', () => {
     const pathway = TOOLBOX.flatMap((g) => g.items).find((i) => i.name === 'Pathway')!;
     expect(pathway.category).toBe('path');
     const draft = toolboxDraft(pathway);
     expect(draft.acceptance).toContain('Clearly routed');
     let s = addPbi(initialZooState(1), draft);
     const item = s.backlog.find((i) => i.category === 'path')!;
-    // No design to do: its design criteria are empty, so it is "built" the moment its plan is done.
-    expect(designCriteria(item, presetFor(item))).toEqual([]);
-    // Its plan is route + the standing workflow (no colour/shape build steps).
+    // A path is designed as a width and a colour (both preset, so the design is ready to build).
+    const preset = presetFor(item);
+    expect(designCriteria(item, preset).map((c) => c.label)).toEqual(['Set the path width', 'Choose the path colour']);
+    expect(designCriteria(item, preset).every((c) => c.pass)).toBe(true);
+    expect(preset.parts.thickness).toBe('medium');
+    expect(pathWidthPx(preset.parts.thickness)).toBe(9);
+    // Its plan is the width/colour design + the standing workflow (no route step - the route is drawn at deploy).
     const tasks = suggestTasks(item).map((t) => t.label);
-    expect(tasks).toEqual(['Plan the route', 'Peer-review it', "Get the PO's sign-off"]);
+    expect(tasks).toEqual(['Set its width and colour', 'Peer-review it', "Get the PO's sign-off"]);
     // Building it (no design) with its plan complete takes it to Done.
     s = estimateItem(s, item.id, 3);
     s = planSprint(s, [item.id]);

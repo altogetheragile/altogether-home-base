@@ -17,6 +17,7 @@ import { ZooShell } from '@/components/zooGame/ZooShell';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
+import { pathWidthPx } from '@/components/zooGame/design';
 
 /** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
  *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
@@ -60,6 +61,8 @@ export default function ZooGame() {
   // Deploying an item: placing it AND laying the paths that link it in. Holds the item name for the
   // banner; while set, the park's Connect tool is available. Cleared by "Finish deploying".
   const [deploying, setDeploying] = useState<string | null>(null);
+  // When deploying a Pathway, the Connect tool lays connectors at the width and colour designed for it.
+  const [deployStyle, setDeployStyle] = useState<{ thickness: number; color: string } | null>(null);
   // Ending a day (clock ran out or "End Day") moves to the Daily Scrum or the Sprint Review, which
   // live in the work pane - so focus it, or the transition is invisible when you're on the Park tab.
   const endDay = () => { closeDay(); setParkTab('work'); };
@@ -71,6 +74,7 @@ export default function ZooGame() {
     open(id);
     setParkTab('park');
     setDeploying(shown?.name ?? it?.name ?? 'this item');
+    setDeployStyle(it?.category === 'path' ? { thickness: pathWidthPx(it.design?.parts.thickness), color: it.design?.colors.path ?? '#c9a86a' } : null);
   };
   // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
   // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
@@ -121,7 +125,7 @@ export default function ZooGame() {
     }
   };
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, onFinishDeploy: () => setDeploying(null), onImprove: raiseImprovement, onSetSpot: setItemSpot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, onFinishDeploy: () => { setDeploying(null); setDeployStyle(null); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {

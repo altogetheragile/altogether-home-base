@@ -686,6 +686,8 @@ interface ParkViewProps {
   /** Non-null while an item is being deployed (its name) - drawing/editing paths is part of that
    *  placement step. Outside deploy mode connectors are read-only; changes then go through PBIs. */
   deployMode?: string | null;
+  /** When deploying a Pathway, the width and colour it was designed at - new connectors use it. */
+  deployStyle?: { thickness: number; color: string } | null;
   onFinishDeploy?: () => void;
   /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
   onImprove?: (id: string) => void;
@@ -701,7 +703,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, onFinishDeploy }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, onFinishDeploy }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -710,8 +712,9 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
   const [tool, setTool] = useState<'none' | 'connect'>('none');
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
   const effectiveTool = canConnect ? tool : 'none';
-  // Style applied to a NEW connector; the toolbar edits the selected one.
-  const newConn = { thickness: 8, color: '#c9a86a' };
+  // Style applied to a NEW connector; when deploying a Pathway it's the width/colour designed for
+  // it, otherwise a sensible default. The toolbar still edits the selected one.
+  const newConn = deployStyle ?? { thickness: 8, color: '#c9a86a' };
   const selected = canConnect ? (connectors.find((c) => c.id === selectedConn) ?? null) : null;
   const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
   // Ids of live features that already have an improvement in flight (so we don't stack PBIs).
