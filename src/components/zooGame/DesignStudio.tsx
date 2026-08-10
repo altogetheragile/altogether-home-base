@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, floraColors, isLandscapeType, landscapePalette, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, floraColors, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
@@ -148,15 +148,20 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   // Acceptance criteria are the Product Owner's, carried on the PBI. Building is you
   // accepting the work against them, so you confirm each (a judgement, like a lion
   // being "recognisable"). Already-built items being refined start fully confirmed.
+  // Build ACs (appearance) are accepted here in the studio; deploy ACs (sizing/placement) can only
+  // be judged once the item is on the park, so they are confirmed there, not here - you never accept
+  // placement before you have placed it.
   const acceptance = item.acceptance ?? [];
-  const [confirmed, setConfirmed] = useState<Set<number>>(() => new Set(editing ? acceptance.map((_, i) => i) : []));
+  const buildAcceptance = acceptance.filter((a) => !isDeployAcceptance(a));
+  const deployAcceptance = acceptance.filter((a) => isDeployAcceptance(a));
+  const [confirmed, setConfirmed] = useState<Set<number>>(() => new Set(editing ? buildAcceptance.map((_, i) => i) : []));
   const toggleAc = (i: number) => setConfirmed((prev) => {
     const next = new Set(prev);
     if (next.has(i)) next.delete(i); else next.add(i);
     return next;
   });
   const built = isDesignDone(item, design);
-  const acAll = acceptance.every((_, i) => confirmed.has(i));
+  const acAll = buildAcceptance.every((_, i) => confirmed.has(i));
 
   // Tick the plan off automatically as the work is done, so it isn't a second set of boxes to
   // check for what you just did: build steps tick as you design; "get the PO's sign-off" ticks
@@ -382,7 +387,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
               Acceptance criteria <span className="font-normal normal-case tracking-normal text-muted-foreground/70">from the Product Backlog</span>
             </div>
             <ul className="space-y-1">
-              {acceptance.map((c, i) => {
+              {buildAcceptance.map((c, i) => {
                 const on = confirmed.has(i);
                 return (
                   <li key={i}>
@@ -395,6 +400,19 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
               })}
             </ul>
             <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it - this is you accepting the work against the Product Owner's criteria.</p>
+            {deployAcceptance.length > 0 && (
+              <div className="mt-1.5 rounded-md border border-dashed border-border bg-muted/20 p-2">
+                <ul className="space-y-1">
+                  {deployAcceptance.map((c, i) => (
+                    <li key={i} className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/50" />
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1 text-[11px] text-muted-foreground/70">You confirm this when you place &amp; size it on the Park - you can't accept placement before you have placed it.</p>
+              </div>
+            )}
           </div>
         )}
 

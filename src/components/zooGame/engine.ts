@@ -227,6 +227,20 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
 /** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
 export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
 
+/** Confirm (or un-confirm) one of an item's acceptance criteria. Build ACs are ticked in the studio;
+ *  deploy ACs (sizing/placement) are ticked on the park while placing & sizing the item. */
+export function confirmAcceptance(state: ZooGameState, id: string, index: number, value: boolean): ZooGameState {
+  return {
+    ...state,
+    backlog: state.backlog.map((it) => {
+      if (it.id !== id) return it;
+      const ac = [...(it.acConfirmed ?? Array(it.acceptance.length).fill(false))];
+      ac[index] = value;
+      return { ...it, acConfirmed: ac };
+    }),
+  };
+}
+
 /** Replace a PBI's task plan (used for add / edit / remove / suggest during Planning). */
 export function setItemTasks(state: ZooGameState, id: string, tasks: SprintTask[]): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, tasks } : it)) };
