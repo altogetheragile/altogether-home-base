@@ -386,6 +386,11 @@ export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
 ];
 export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'rocks', 'pond', 'river', 'fountain', 'entrance', 'carpark'];
+/** Inside an enclosure you can add plants and natural habitat features, split so scenery isn't
+ *  mislabelled as "planting". Park-only wayfinding (signpost, entrance, car park) is left out - it
+ *  belongs on the grounds, not in a habitat. */
+export const PLANTING_TYPES = ['tree', 'bush', 'flowers', 'hedge'];
+export const HABITAT_FEATURE_TYPES = ['rocks', 'pond', 'river', 'fountain'];
 export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
 
 /** Path widths a Pathway can be designed at; the px is the connector thickness it deploys with. */

@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, floraColors, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
@@ -273,9 +273,16 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             )}
             <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-3">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Planting</span>
-              {FLORA_TYPES.map((t) => (
+              {PLANTING_TYPES.map((t) => (
                 <button key={t} type="button" onClick={() => addFlora(t)}
                   className="rounded-full border border-emerald-600/50 bg-emerald-600/5 px-2.5 py-0.5 text-xs font-medium capitalize text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400">+ {t}</button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Features</span>
+              {HABITAT_FEATURE_TYPES.map((t) => (
+                <button key={t} type="button" onClick={() => addFlora(t)}
+                  className="rounded-full border border-sky-600/50 bg-sky-600/5 px-2.5 py-0.5 text-xs font-medium capitalize text-sky-700 hover:bg-sky-600/10 dark:text-sky-400">+ {t}</button>
               ))}
             </div>
             {enclosureFlora(design).length > 0 && (
