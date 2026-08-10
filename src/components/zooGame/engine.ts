@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance } from './design';
+import { appealFromDesign, amenityAcceptance, isLandscapeType } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -217,6 +217,8 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
     ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features']
     : item.category === 'amenity'
       ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
+      : isLandscapeType(item.template)
+      ? ['Colour it']                            // its footprint is sized on the park at deployment
       : ['Choose the plant type', 'Colour the foliage'];
   const workflow = ['Peer-review it', "Get the PO's sign-off"];
   return [...build, ...workflow].map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));

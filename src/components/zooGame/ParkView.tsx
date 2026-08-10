@@ -531,17 +531,29 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     setDrag({ id: f.item.id, pos: origin });
   };
 
-  // Drag the corner handle to resize a landscape feature's footprint (design px). Free arranging,
-  // like repositioning - it stretches a river across the park without changing what it is.
-  const startResize = (e: ReactPointerEvent, f: Feature) => {
+  // Resize a landscape feature's footprint by dragging an edge handle - length (how far it runs)
+  // and width (how wide it is) are separate controls, so a river can run right across the park and
+  // stay a slim band, or a car park spread out square. The dragged edge moves while the opposite
+  // edge stays put (so lengthening a river grows it towards the far side, not from its middle);
+  // the feature's centre shifts to hold that anchor. Free arranging, not a design change.
+  const startResize = (e: ReactPointerEvent, f: Feature, axis: 'len' | 'wid') => {
     if (!onSetSize) return;
     e.preventDefault(); e.stopPropagation();
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
-    const sx = e.clientX, sy = e.clientY, w0 = f.w, h0 = f.h - LABEL_H;
-    const move = (ev: PointerEvent) => onSetSize(f.item.id, {
-      w: Math.round(clamp(w0 + (ev.clientX - sx) / s, 40, CANVAS_W - 40)),
-      h: Math.round(clamp(h0 + (ev.clientY - sy) / s, 24, 320)),
-    });
+    const sx = e.clientX, sy = e.clientY, w0 = f.w, bandH0 = f.h - LABEL_H;
+    const c0 = posOf(f);
+    const leftEdge = c0.x - w0 / 2, topEdge = c0.y - f.h / 2;
+    const move = (ev: PointerEvent) => {
+      if (axis === 'len') {
+        const w = Math.round(clamp(w0 + (ev.clientX - sx) / s, 40, Math.max(40, CANVAS_W - 8 - leftEdge)));
+        onSetSize(f.item.id, { w, h: bandH0 });
+        onPlaceItem?.(f.item.id, { x: leftEdge + w / 2, y: c0.y });
+      } else {
+        const h = Math.round(clamp(bandH0 + (ev.clientY - sy) / s, 24, Math.max(24, canvasH - PATH_H - 8 - topEdge - LABEL_H)));
+        onSetSize(f.item.id, { w: w0, h });
+        onPlaceItem?.(f.item.id, { x: c0.x, y: topEdge + (h + LABEL_H) / 2 });
+      }
+    };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
@@ -648,11 +660,17 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} />
                 : <Plot item={f.item} cell={4} />}
-              {/* Resize handle for landscape scenery: drag to stretch a river across the park. */}
+              {/* Resize a landscape feature: the right-edge handle sets its length (drag it across the
+                  park), the bottom-edge handle its width - two separate controls. */}
               {isLand && onSetSize && tool === 'none' && !dragging && (
-                <div onPointerDown={(e) => startResize(e, f)} title="Drag to resize"
-                  className="absolute z-40 h-3.5 w-3.5 cursor-nwse-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
-                  style={{ right: -6, bottom: LABEL_H - 4, touchAction: 'none' }} />
+                <>
+                  <div onPointerDown={(e) => startResize(e, f, 'len')} title="Drag to lengthen"
+                    className="absolute z-40 h-4 w-4 -translate-y-1/2 cursor-ew-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
+                    style={{ right: -8, top: (f.h - LABEL_H) / 2, touchAction: 'none' }} />
+                  <div onPointerDown={(e) => startResize(e, f, 'wid')} title="Drag to widen"
+                    className="absolute z-40 h-4 w-4 -translate-x-1/2 cursor-ns-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
+                    style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
+                </>
               )}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
               {onImprove && tool === 'none' && !dragging && (

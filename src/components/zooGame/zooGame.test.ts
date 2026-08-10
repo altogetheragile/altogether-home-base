@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -1020,6 +1020,17 @@ describe('zoo game: the toolbox', () => {
     expect(landscapeDefaultSize('river').w).toBeGreaterThan(landscapeDefaultSize('river').h); // a river starts wide
     const sized = setItemSize(initialZooState(1), 'lion', { w: 400, h: 40 });
     expect(sized.backlog.find((i) => i.id === 'lion')!.size).toEqual({ w: 400, h: 40 });
+    // The studio names a feature's colours for what they are - a river has water, not "foliage" or
+    // a trunk - and shows only the colours it uses.
+    expect(floraColors('river')).toEqual([{ key: 'foliage', label: 'Water' }]);
+    expect(floraColors('carpark').map((c) => c.label)).toEqual(['Tarmac', 'Markings']);
+    expect(floraColors('tree').map((c) => c.label)).toEqual(['Foliage', 'Trunk / bed']);
+    // A landscape PBI's plan has no "choose the plant type" step - it is scenery you colour and
+    // then size on the park.
+    // suggestTasks only reads category + template, both of which a toolbox draft carries.
+    const riverPlan = suggestTasks(toolboxDraft(items.find((i) => i.name === 'River')!) as never).map((t) => t.label);
+    expect(riverPlan).toContain('Colour it');
+    expect(riverPlan.some((l) => /plant type/i.test(l))).toBe(false);
     // All the landscape sprites differ from each other.
     const shapes = ['river', 'pond', 'rocks', 'entrance', 'carpark', 'hedge', 'fountain'];
     const rendered = shapes.map((t) => JSON.stringify(renderDesign({ category: 'flora' } as never, { parts: { type: t }, colors: { foliage: '#5aa9c8', trunk: '#8a5a2b' } })));

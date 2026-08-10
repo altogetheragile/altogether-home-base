@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, floraColors, isLandscapeType, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite } from './ParkView';
@@ -133,6 +133,9 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const isPath = item.category === 'path';
   const cell = Math.floor(232 / GRID_W);
   const [design, setDesign] = useState<ItemDesign>(initial ?? item.design ?? presetFor(item));
+  // A landscape feature (river, pond, car park...) is scenery you colour here and size on the park -
+  // not a plant you pick, so the flora "type" grid and "foliage/trunk" labels do not fit it.
+  const isLand = isFlora && isLandscapeType(design.parts.type ?? item.template);
 
   const commit = (next: ItemDesign) => { setDesign(next); onChange?.(next); };
   const setWater = (w: WaterFeature[]) => commit({ ...design, water: w });
@@ -185,7 +188,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">{editing ? 'Edit' : 'Design'} your {item.name.toLowerCase()}</h3>
-          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isEnclosure ? 'build the habitat first, then add animals' : isExhibit ? 'one animal, one PBI' : isFlora ? 'pick a plant and colour it' : isPath ? 'drawn on the Park when you deploy it' : 'set the colours and add a sign'}</p>
+          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isEnclosure ? 'build the habitat first, then add animals' : isExhibit ? 'one animal, one PBI' : isLand ? 'colour it, then size it on the Park' : isFlora ? 'pick a plant and colour it' : isPath ? 'drawn on the Park when you deploy it' : 'set the colours and add a sign'}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onCancel}>Back</Button>
       </div>
@@ -293,16 +296,23 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
           </div>
         ) : isFlora ? (
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Type</span>
-              <div className="flex flex-wrap gap-1.5">
-                {FLORA_TYPES.map((o) => (
-                  <button key={o} type="button" onClick={() => setPart('type', o)}
-                    className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', (design.parts.type ?? 'tree') === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{o}</button>
-                ))}
+            {isLand ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
+                <span className="rounded-full border border-primary bg-primary px-2.5 py-0.5 text-xs capitalize text-primary-foreground">{design.parts.type ?? item.template}</span>
+                <span className="text-[11px] text-muted-foreground/70">Colour it here, then drag it on the Park to set how far it runs and how wide it is.</span>
               </div>
-            </div>
-            {FLORA_COLORS.map((c) => (
+            ) : (
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Type</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {FLORA_TYPES.map((o) => (
+                    <button key={o} type="button" onClick={() => setPart('type', o)}
+                      className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', (design.parts.type ?? 'tree') === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{o}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {floraColors(design.parts.type ?? item.template).map((c) => (
               <ColourPickerRow key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />
             ))}
           </div>
