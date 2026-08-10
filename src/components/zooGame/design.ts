@@ -400,12 +400,31 @@ export const pathWidthPx = (thickness?: string): number => PATH_WIDTHS.find((w) 
  *  an entrance marks the way in), so each backlog item is judged against something sensible. */
 export function floraAcceptance(type?: string): string[] {
   switch (type) {
-    case 'signpost': return ['Clearly readable', 'Coloured, no bare patches'];
-    case 'river': case 'pond': case 'fountain': return ['Reads as water', 'Coloured, no bare patches'];
-    case 'rocks': return ['Reads as rock', 'Coloured, no bare patches'];
-    case 'entrance': return ['Clearly marks the way in', 'Coloured, no bare patches'];
-    case 'carpark': return ['Clearly marked out', 'Coloured, no bare patches'];
+    case 'signpost': return ['Clearly readable', 'Coloured'];
+    case 'river': case 'pond': case 'fountain': return ['Reads as water', 'Sized to fit the space'];
+    case 'rocks': return ['Reads as rock', 'Sized to fit the space'];
+    case 'entrance': return ['Clearly marks the way in', 'Coloured'];
+    case 'carpark': return ['Clearly marked out', 'Sized to fit the space'];
+    case 'hedge': return ['Reads as a hedge', 'Sized to fit the space'];
     default: return ['Fits the planting', 'Coloured, no bare patches'];
+  }
+}
+
+/** Scenery types that are placed as a resizable footprint on the park (stretch a river across it),
+ *  rather than a fixed little sprite like a tree or bush. */
+export const LANDSCAPE_TYPES = ['river', 'pond', 'rocks', 'hedge', 'fountain', 'entrance', 'carpark'];
+export const isLandscapeType = (type?: string): boolean => !!type && LANDSCAPE_TYPES.includes(type);
+
+/** The starting footprint (design px) for a landscape feature - a river starts wide, a fountain
+ *  square - then you resize it on the park. */
+export function landscapeDefaultSize(type?: string): { w: number; h: number } {
+  switch (type) {
+    case 'river': return { w: 220, h: 46 };
+    case 'hedge': return { w: 150, h: 44 };
+    case 'carpark': return { w: 150, h: 104 };
+    case 'pond': return { w: 120, h: 88 };
+    case 'entrance': return { w: 96, h: 96 };
+    default: return { w: 96, h: 80 }; // rocks, fountain
   }
 }
 

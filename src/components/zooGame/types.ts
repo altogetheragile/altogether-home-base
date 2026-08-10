@@ -160,6 +160,9 @@ export interface BacklogItem {
   /** Position WITHIN a parent enclosure, as 0..1 fractions of the habitat box. Set when an
    *  animal (or nested plant) is dragged to a spot inside its enclosure; unset = auto-arranged. */
   spot?: { x: number; y: number };
+  /** Footprint size on the park, in design px - set by resizing a landscape feature (a river you
+   *  stretch across the park). Like `pos`, it's spatial arrangement, not a design change. */
+  size?: { w: number; h: number };
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -341,6 +344,7 @@ export type ZooAction =
   | { type: 'ADD_ANOTHER'; id: string }
   | { type: 'IMPROVE_ITEM'; id: string }
   | { type: 'SET_ITEM_SPOT'; id: string; spot: { x: number; y: number } }
+  | { type: 'SET_ITEM_SIZE'; id: string; size: { w: number; h: number } }
   | { type: 'NEST_ITEM'; id: string; enclosureId: string; spot: { x: number; y: number } }
   | { type: 'UNNEST_ITEM'; id: string }
   | { type: 'RENAME_ITEM'; id: string; name: string }

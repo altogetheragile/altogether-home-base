@@ -390,6 +390,11 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, spot } : it)) };
 }
 
+/** Resize a landscape feature's footprint on the park (e.g. stretch a river across it). */
+export function setItemSize(state: ZooGameState, id: string, size: { w: number; h: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, size } : it)) };
+}
+
 /** Rename an item (e.g. edit an enclosure's sign in the park). Ignores an empty name. */
 export function renameItem(state: ZooGameState, id: string, name: string): ZooGameState {
   const trimmed = name.trim();
