@@ -1,6 +1,6 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
-import { renderDesign, presetFor, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, shade, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -99,18 +99,113 @@ const landType = (item: BacklogItem): string | undefined => item.design?.parts.t
  *  no gap at either end - so only its thickness is taken from a saved size. */
 const landSize = (item: BacklogItem): { w: number; h: number } =>
   landType(item) === 'river'
-    ? { w: CANVAS_W - 20, h: item.size?.h ?? landscapeDefaultSize('river').h }
+    ? { w: CANVAS_W, h: item.size?.h ?? landscapeDefaultSize('river').h } // full width - flows off both edges, no gaps
     : item.size ?? landscapeDefaultSize(landType(item));
 
-/** A landscape feature (river, pond, rocks, hedge...) drawn to fill a resizable box: the pixel
- *  grid is stretched to the footprint, so a river can run right across the park. */
+/** A smooth (vector) wavy line: `n` samples of `yAt` across the width, as an SVG points string.
+ *  Drawing scenery as vectors instead of a stretched pixel grid keeps it smooth at any size. */
+function wavePoints(w: number, n: number, yAt: (t: number) => number): [number, number][] {
+  return Array.from({ length: n + 1 }, (_, i) => [(w * i) / n, yAt(i / n)] as [number, number]);
+}
+const ptsStr = (pts: [number, number][]) => pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+
+/** The smooth vector shape for a landscape feature at a given footprint. Scenery is drawn as SVG
+ *  (curves, ellipses) rather than a blown-up pixel grid, so a river's banks stay smooth however
+ *  wide it is stretched. Colours come from the player's design (primary fill, secondary trim). */
+export function LandscapeShape({ type, w, h, primary, secondary }: { type: string; w: number; h: number; primary: string; secondary: string }) {
+  const common = { width: w, height: h, viewBox: `0 0 ${w} ${h}`, style: { display: 'block' as const }, shapeRendering: 'geometricPrecision' as const };
+  if (type === 'river') {
+    // Read as water, not a road: a body of water with soft (bluish, not black) edges and a few
+    // lighter ripple lines drifting along the current - no hard shoulders, no single centre line.
+    const mid = h / 2, amp = Math.min(h * 0.07, 6), band = h * 0.4;
+    const n = Math.max(20, Math.min(240, Math.round(w / 12)));
+    const wave = (t: number, ph = 0) => amp * Math.sin(t * Math.PI * 6 + ph);
+    const top = wavePoints(w, n, (t) => mid - band + wave(t));
+    const bot = wavePoints(w, n, (t) => mid + band + wave(t));
+    const ripple = (frac: number, ph: number) => wavePoints(w, n, (t) => mid + band * frac + wave(t, ph));
+    return (
+      <svg {...common} aria-hidden>
+        <defs>
+          <linearGradient id={`riv-${w}-${h}-${primary.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={shade(primary, -14)} />
+            <stop offset="45%" stopColor={shade(primary, 8)} />
+            <stop offset="100%" stopColor={shade(primary, -14)} />
+          </linearGradient>
+        </defs>
+        <polygon points={ptsStr([...top, ...[...bot].reverse()])} fill={`url(#riv-${w}-${h}-${primary.replace('#','')})`} />
+        <polyline points={ptsStr(ripple(-0.45, 0.6))} fill="none" stroke={shade(primary, 30)} strokeWidth={Math.max(1.2, h * 0.045)} strokeLinecap="round" opacity={0.5} />
+        <polyline points={ptsStr(ripple(0.1, 2.2))} fill="none" stroke={shade(primary, 24)} strokeWidth={Math.max(1, h * 0.04)} strokeLinecap="round" opacity={0.45} />
+        <polyline points={ptsStr(ripple(0.5, 3.6))} fill="none" stroke={shade(primary, 18)} strokeWidth={Math.max(1, h * 0.035)} strokeLinecap="round" opacity={0.4} />
+      </svg>
+    );
+  }
+  if (type === 'pond' || type === 'fountain') {
+    const cx = w / 2, cy = h / 2, rx = (w / 2) * 0.94, ry = (h / 2) * 0.94;
+    return (
+      <svg {...common} aria-hidden>
+        <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={secondary} />
+        <ellipse cx={cx} cy={cy} rx={rx * 0.8} ry={ry * 0.8} fill={primary} />
+        {type === 'fountain' && <ellipse cx={cx} cy={cy} rx={rx * 0.28} ry={ry * 0.28} fill={secondary} />}
+        <ellipse cx={cx - rx * 0.32} cy={cy - ry * 0.36} rx={rx * 0.22} ry={ry * 0.14} fill={shade(primary, 26)} opacity={0.85} />
+      </svg>
+    );
+  }
+  if (type === 'rocks') {
+    return (
+      <svg {...common} aria-hidden>
+        <ellipse cx={w * 0.34} cy={h * 0.62} rx={w * 0.28} ry={h * 0.3} fill={shade(primary, -10)} />
+        <ellipse cx={w * 0.66} cy={h * 0.52} rx={w * 0.32} ry={h * 0.38} fill={primary} />
+        <ellipse cx={w * 0.5} cy={h * 0.76} rx={w * 0.24} ry={h * 0.2} fill={shade(primary, 10)} />
+        <ellipse cx={w * 0.62} cy={h * 0.4} rx={w * 0.12} ry={h * 0.1} fill={shade(primary, 22)} opacity={0.8} />
+      </svg>
+    );
+  }
+  if (type === 'hedge') {
+    const r = Math.min(w, h) * 0.14;
+    const bumps = Math.max(3, Math.round(w / (h * 0.7)));
+    return (
+      <svg {...common} aria-hidden>
+        <rect x={w * 0.02} y={h * 0.3} width={w * 0.96} height={h * 0.66} rx={r} fill={primary} />
+        {Array.from({ length: bumps }, (_, i) => (
+          <circle key={i} cx={w * ((i + 0.5) / bumps)} cy={h * 0.34} r={h * 0.24} fill={shade(primary, 12)} />
+        ))}
+        <rect x={w * 0.02} y={h * 0.82} width={w * 0.96} height={h * 0.14} rx={r * 0.6} fill={shade(primary, -16)} opacity={0.6} />
+      </svg>
+    );
+  }
+  if (type === 'entrance') {
+    const postW = Math.max(4, w * 0.1);
+    return (
+      <svg {...common} aria-hidden>
+        <rect x={w * 0.08} y={h * 0.22} width={postW} height={h * 0.72} rx={postW * 0.4} fill={secondary} />
+        <rect x={w * 0.92 - postW} y={h * 0.22} width={postW} height={h * 0.72} rx={postW * 0.4} fill={secondary} />
+        <rect x={w * 0.06} y={h * 0.08} width={w * 0.88} height={h * 0.28} rx={h * 0.1} fill={primary} />
+        <rect x={w * 0.06} y={h * 0.28} width={w * 0.88} height={h * 0.06} fill={shade(primary, -18)} opacity={0.7} />
+      </svg>
+    );
+  }
+  // carpark
+  const r = Math.min(w, h) * 0.06;
+  const bays = Math.max(3, Math.round(w / (h * 0.55)));
+  return (
+    <svg {...common} aria-hidden>
+      <rect x={w * 0.02} y={h * 0.06} width={w * 0.96} height={h * 0.88} rx={r} fill={primary} />
+      {Array.from({ length: bays - 1 }, (_, i) => (
+        <rect key={i} x={w * ((i + 1) / bays) - Math.max(1, w * 0.004)} y={h * 0.16} width={Math.max(2, w * 0.008)} height={h * 0.68} fill={secondary} opacity={0.85} />
+      ))}
+      <rect x={w * 0.14} y={h * 0.34} width={w * 0.16} height={h * 0.3} rx={h * 0.08} fill="#c0533b" />
+    </svg>
+  );
+}
+
+/** A landscape feature (river, pond, rocks, hedge...) drawn to fill a resizable box as smooth
+ *  vector scenery, so it can be stretched right across the park without going blocky. */
 function LandscapePlot({ item, w, h }: { item: BacklogItem; w: number; h: number }) {
-  const grid = renderDesign(item, item.design ?? presetFor(item));
+  const type = landType(item) ?? 'river';
+  const { primary, secondary } = landscapePalette(type, item.design?.colors);
   return (
     <div className="relative flex flex-col items-center">
-      <div className="grid" style={{ width: w, height: h, gridTemplateColumns: `repeat(${GRID_W}, 1fr)`, gridTemplateRows: `repeat(${GRID_H}, 1fr)` }} aria-hidden>
-        {grid.flatMap((row, r) => row.map((color, c) => <span key={`${r}-${c}`} style={{ background: color ?? 'transparent' }} />))}
-      </div>
+      <LandscapeShape type={type} w={w} h={h} primary={primary} secondary={secondary} />
       <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
     </div>
   );

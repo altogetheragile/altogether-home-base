@@ -2,10 +2,10 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, floraColors, isLandscapeType, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, floraColors, isLandscapeType, landscapePalette, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
-import { EnclosureBox, FloraSprite } from './ParkView';
+import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
 import { TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -245,6 +245,11 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                 <span className="text-center text-[11px] text-muted-foreground">You draw the route on the Park when you deploy it.</span>
               </div>
             )
+            : isLand ? (() => {
+                const lt = design.parts.type ?? item.template ?? 'river';
+                const { primary, secondary } = landscapePalette(lt, design.colors);
+                return <LandscapeShape type={lt} w={210} h={lt === 'river' ? 56 : 118} primary={primary} secondary={secondary} />;
+              })()
             : <Preview item={item} design={design} cell={cell} />}
         </div>
 

@@ -86,7 +86,7 @@ const set = (g: (string | null)[][], cells: Cell[], color: string | null) => {
 const blank = (): (string | null)[][] => Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
 
 /** Lighten (amt > 0) or darken (amt < 0) a hex colour, for pixel-art shading. */
-function shade(hex: string, amt: number): string {
+export function shade(hex: string, amt: number): string {
   const h = hex.replace('#', '');
   const ch = (i: number) => Math.max(0, Math.min(255, parseInt(h.slice(i, i + 2), 16) + amt));
   return '#' + [ch(0), ch(2), ch(4)].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
@@ -408,6 +408,20 @@ export function floraAcceptance(type?: string): string[] {
     case 'hedge': return ['Reads as a hedge', 'Sized to fit the space'];
     default: return ['Fits the planting', 'Coloured, no bare patches'];
   }
+}
+
+/** A landscape feature's two working colours (primary fill, secondary trim), taking the player's
+ *  chosen colours where set and falling back to a sensible default per type. Used to draw the
+ *  smooth, resizable scenery on the park (the keys mirror floraColors: foliage + trunk). */
+export function landscapePalette(type: string | undefined, colors?: Record<string, string>): { primary: string; secondary: string } {
+  const c = colors ?? {};
+  const def: Record<string, [string, string]> = {
+    river: ['#5aa9c8', '#b7965f'], pond: ['#5aa9c8', '#b7965f'], rocks: ['#9aa1a8', '#6f757b'],
+    hedge: ['#4f8f3a', '#3a6b2a'], fountain: ['#5aa9c8', '#c9cdd2'],
+    entrance: ['#e6842a', '#8a5a2b'], carpark: ['#8a8f96', '#eaeaea'],
+  };
+  const [p, s] = def[type ?? ''] ?? ['#5aa9c8', '#b7965f'];
+  return { primary: c.foliage ?? p, secondary: c.trunk ?? s };
 }
 
 /** Scenery types that are placed as a resizable footprint on the park (stretch a river across it),
