@@ -305,6 +305,60 @@ function floraGrid(design: ItemDesign): (string | null)[][] {
     for (let x = 5; x <= 11; x += 2) g[4][x] = shade(foliage, -30); // a couple of "letters" so it reads as a sign
     return g;
   }
+  if (type === 'river') {
+    // A wavy water band across the tile; place several to run a stream through the park.
+    const water = design.colors.foliage ?? '#5aa9c8';
+    const wave = [0, 0, 1, 1, 1, 0, -1, -1, -1, 0, 1, 1, 1, 0, -1, -1];
+    for (let x = 0; x < GRID_W; x++) { const cy = 7 + wave[x]; for (let y = cy - 2; y <= cy + 2; y++) if (y >= 0 && y < GRID_H) g[y][x] = shade(water, y === cy - 2 ? 14 : y === cy + 2 ? -14 : 0); }
+    return g;
+  }
+  if (type === 'pond') {
+    const water = design.colors.foliage ?? '#5aa9c8';
+    const bank = design.colors.trunk ?? '#b7965f';
+    set(g, ellipse(8, 8, 6, 4.6), bank);
+    paintShaded(g, ellipse(8, 8, 4.9, 3.6), water, 18, -16);
+    set(g, ellipse(6, 6.5, 1.5, 0.9), shade(water, 24)); // highlight
+    return g;
+  }
+  if (type === 'rocks') {
+    const rock = design.colors.foliage ?? '#9aa1a8';
+    paintShaded(g, ellipse(6, 9, 3, 2.4), rock, 20, -22);
+    paintShaded(g, ellipse(10.5, 8, 3.4, 2.9), shade(rock, -8), 20, -22);
+    paintShaded(g, ellipse(8, 11, 2.6, 1.6), shade(rock, 8), 18, -20);
+    return g;
+  }
+  if (type === 'hedge') {
+    const leaf = design.colors.foliage ?? '#4f8f3a';
+    for (let y = 5; y <= 12; y++) for (let x = 2; x <= 13; x++) g[y][x] = shade(leaf, y <= 6 ? 10 : y === 12 ? -16 : 0);
+    for (let x = 3; x <= 12; x += 3) { setCell(g, x, 4, shade(leaf, 12)); setCell(g, x + 1, 4, shade(leaf, 12)); } // rounded top bumps
+    return g;
+  }
+  if (type === 'fountain') {
+    const stone = design.colors.trunk ?? '#c9cdd2';
+    const water = design.colors.foliage ?? '#5aa9c8';
+    set(g, ellipse(8, 10, 5.5, 2.6), stone); // basin rim
+    paintShaded(g, ellipse(8, 10, 4.3, 1.9), water, 16, -14); // basin water
+    for (let y = 4; y <= 9; y++) g[y][8] = stone; // central column
+    set(g, ellipse(8, 4, 2.2, 1.4), shade(water, 26)); // spouting water
+    g[3][6] = shade(water, 32); g[3][10] = shade(water, 32);
+    return g;
+  }
+  if (type === 'entrance') {
+    const post = design.colors.trunk ?? '#8a5a2b';
+    const arch = design.colors.foliage ?? '#e6842a';
+    for (let y = 3; y <= 13; y++) { g[y][3] = post; g[y][4] = shade(post, -12); g[y][11] = post; g[y][12] = shade(post, -12); } // posts
+    for (let x = 3; x <= 12; x++) { g[2][x] = arch; g[3][x] = shade(arch, -10); } // banner
+    for (let x = 5; x <= 10; x += 2) g[2][x] = shade(arch, -30); // banner lettering
+    return g;
+  }
+  if (type === 'carpark') {
+    const tarmac = design.colors.foliage ?? '#8a8f96';
+    const line = design.colors.trunk ?? '#eaeaea';
+    for (let y = 4; y <= 13; y++) for (let x = 2; x <= 13; x++) g[y][x] = shade(tarmac, (x + y) % 2 ? 0 : -6);
+    for (let x = 4; x <= 12; x += 4) for (let y = 5; y <= 12; y++) g[y][x] = line; // bay lines
+    set(g, ellipse(6, 8, 1.7, 1.1), '#c0533b'); g[7][6] = '#a9d3ea'; // a parked car
+    return g;
+  }
   if (type === 'bush') { paintShaded(g, ellipse(8, 9, 4.2, 3.4).filter(([, y]) => y >= 6), foliage, 22, -20); return g; }
   paintShaded(g, ellipse(8, 6, 4.4, 4).filter(([, y]) => y <= 10), foliage, 24, -22); // crown
   for (let y = 10; y <= 13; y++) { g[y][7] = trunk; g[y][8] = shade(trunk, -14); } // trunk
@@ -331,8 +385,21 @@ export const EXHIBIT_PARTS: PartSpec[] = [
 export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
 ];
-export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost'];
+export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'rocks', 'pond', 'river', 'fountain', 'entrance', 'carpark'];
 export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
+
+/** Acceptance criteria that fit a piece of scenery/landscape from its type (a river reads as water,
+ *  an entrance marks the way in), so each backlog item is judged against something sensible. */
+export function floraAcceptance(type?: string): string[] {
+  switch (type) {
+    case 'signpost': return ['Clearly readable', 'Coloured, no bare patches'];
+    case 'river': case 'pond': case 'fountain': return ['Reads as water', 'Coloured, no bare patches'];
+    case 'rocks': return ['Reads as rock', 'Coloured, no bare patches'];
+    case 'entrance': return ['Clearly marks the way in', 'Coloured, no bare patches'];
+    case 'carpark': return ['Clearly marked out', 'Coloured, no bare patches'];
+    default: return ['Fits the planting', 'Coloured, no bare patches'];
+  }
+}
 
 /** A sensible building shape for an amenity from its name/services, so every facility (toolbox,
  *  initial backlog, split epics, visitor signals) starts as a fitting building - overridable in

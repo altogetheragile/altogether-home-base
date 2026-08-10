@@ -1,5 +1,5 @@
 import type { ItemCategory, PbiDraft } from './types';
-import { amenityAcceptance } from './design';
+import { amenityAcceptance, floraAcceptance } from './design';
 
 // ============= The Toolbox =============
 //
@@ -60,7 +60,13 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
   },
   {
     group: 'Flora & decor',
-    items: [flora('Trees', 'tree'), flora('Bushes', 'bush'), flora('Flowerbed', 'flowers'), flora('Signpost', 'signpost')],
+    items: [flora('Trees', 'tree'), flora('Bushes', 'bush'), flora('Flowerbed', 'flowers'), flora('Hedge', 'hedge'), flora('Fountain', 'fountain'), flora('Signpost', 'signpost')],
+  },
+  {
+    // Landscape & wayfinding: scenery and arrival features. Each is a Backlog item like any other -
+    // refine, estimate, build and deploy it. (Paths themselves are drawn when you deploy.)
+    group: 'Landscape & wayfinding',
+    items: [flora('River', 'river'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Entrance', 'entrance'), flora('Car Park', 'carpark')],
   },
 ];
 
@@ -72,8 +78,6 @@ export function toolboxDraft(t: ToolboxItem): PbiDraft {
       ? ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up']
     : t.category === 'amenity'
       ? amenityAcceptance(t.name, t.services)
-    : t.template === 'signpost'
-      ? ['Clearly readable', 'Coloured, no bare patches']
-      : ['Fits the planting', 'Coloured, no bare patches'];
+      : floraAcceptance(t.template);
   return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, enclosureSize: t.footprint, acceptance };
 }

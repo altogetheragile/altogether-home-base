@@ -283,7 +283,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
         ) : isFlora ? (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Plant type</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Type</span>
               <div className="flex flex-wrap gap-1.5">
                 {FLORA_TYPES.map((o) => (
                   <button key={o} type="button" onClick={() => setPart('type', o)}
