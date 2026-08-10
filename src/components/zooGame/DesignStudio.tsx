@@ -2,14 +2,14 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, BUILDING_TYPES, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, FLORA_COLORS, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite } from './ParkView';
 import { TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Check, Copy, Spline } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 /** A built design you can copy as a starting point (e.g. an existing lion). */
 export interface CopySource { id: string; name: string; design: ItemDesign }
@@ -233,7 +233,15 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
         {/* Live preview */}
         <div className="flex min-h-[120px] items-center justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
           {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} onSetFlora={setFlora} />
-            : isPath ? <div className="max-w-[220px] text-center text-xs text-muted-foreground"><Spline className="mx-auto mb-1 h-6 w-6 text-primary/70" /> A path has nothing to design here - you'll draw the route on the Park when you deploy it.</div>
+            : isPath ? (
+              <div className="flex w-full max-w-[240px] flex-col items-center gap-2">
+                <svg width="200" height="70" aria-hidden>
+                  <polyline points="8,58 60,20 140,50 192,14" fill="none" stroke="rgba(0,0,0,.28)" strokeWidth={pathWidthPx(design.parts.thickness) + 3} strokeLinecap="round" strokeLinejoin="round" />
+                  <polyline points="8,58 60,20 140,50 192,14" fill="none" stroke={design.colors.path ?? '#c9a86a'} strokeWidth={pathWidthPx(design.parts.thickness)} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-center text-[11px] text-muted-foreground">You draw the route on the Park when you deploy it.</span>
+              </div>
+            )
             : <Preview item={item} design={design} cell={cell} />}
         </div>
 
@@ -299,9 +307,20 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             ))}
           </div>
         ) : isPath ? (
-          <div className="space-y-2 rounded-md border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">Nothing to design.</p>
-            <p>A path is drawn on the Park as part of deploying it: complete the plan below (peer review and the PO's sign-off), finish the build, then <b>Place &amp; open</b> it to lay the route with the Connect tool.</p>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Width</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {PATH_WIDTHS.map((w) => (
+                  <button key={w.key} type="button" onClick={() => setPart('thickness', w.key)} aria-pressed={(design.parts.thickness ?? 'medium') === w.key}
+                    className={cn('flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs', (design.parts.thickness ?? 'medium') === w.key ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-muted/40')}>
+                    <span className="rounded-full bg-foreground" style={{ width: 18, height: Math.max(2, w.px / 2) }} /> {w.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <ColourPickerRow label="Path colour" value={design.colors.path} onChange={(hex) => setColor('path', hex)} />
+            <p className="rounded-md border border-dashed border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">The route itself is drawn on the Park when you <b>Place &amp; open</b> this - the width and colour you set here are what it lays.</p>
           </div>
         ) : (
           <div className="space-y-3">
