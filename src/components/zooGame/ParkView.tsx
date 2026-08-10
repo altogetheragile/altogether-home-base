@@ -1,6 +1,6 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
-import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -88,6 +88,25 @@ export function FloraSprite({ type, foliage, trunk, cell }: { type: string; foli
       {grid.flatMap((row, r) => row.map((color, c) => (
         <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />
       )))}
+    </div>
+  );
+}
+
+/** The type of a flora/scenery item (from its built design, or its toolbox template before build). */
+const landType = (item: BacklogItem): string | undefined => item.design?.parts.type ?? item.template;
+/** A landscape feature's footprint on the park: its saved size, or the default for its type. */
+const landSize = (item: BacklogItem): { w: number; h: number } => item.size ?? landscapeDefaultSize(landType(item));
+
+/** A landscape feature (river, pond, rocks, hedge...) drawn to fill a resizable box: the pixel
+ *  grid is stretched to the footprint, so a river can run right across the park. */
+function LandscapePlot({ item, w, h }: { item: BacklogItem; w: number; h: number }) {
+  const grid = renderDesign(item, item.design ?? presetFor(item));
+  return (
+    <div className="relative flex flex-col items-center">
+      <div className="grid" style={{ width: w, height: h, gridTemplateColumns: `repeat(${GRID_W}, 1fr)`, gridTemplateRows: `repeat(${GRID_H}, 1fr)` }} aria-hidden>
+        {grid.flatMap((row, r) => row.map((color, c) => <span key={`${r}-${c}`} style={{ background: color ?? 'transparent' }} />))}
+      </div>
+      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
     </div>
   );
 }
@@ -285,9 +304,14 @@ function buildFeatures(state: ZooGameState): Feature[] {
     feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(o.zone) });
   }
   // Amenities and loose planting sit freely on the grounds - drag them anywhere (or a plant onto
-  // an enclosure to plant it inside).
+  // an enclosure to plant it inside). Landscape scenery takes its own resizable footprint.
   for (const a of open.filter((o) => o.category === 'amenity' || (o.category === 'flora' && !nestedFlora(o)))) {
-    feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
+    if (a.category === 'flora' && isLandscapeType(landType(a))) {
+      const sz = landSize(a);
+      feats.push({ item: a, kind: 'plot', w: sz.w, h: sz.h + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
+    } else {
+      feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
+    }
   }
   return feats;
 }
@@ -336,7 +360,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, onPlaceItem, onImprove, improving, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   style: PathStyle;
@@ -349,6 +373,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   onImprove?: (id: string) => void;
   improving?: Set<string>;
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  onSetSize?: (id: string, size: { w: number; h: number }) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
   onRename?: (id: string, name: string) => void;
@@ -506,6 +531,21 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     setDrag({ id: f.item.id, pos: origin });
   };
 
+  // Drag the corner handle to resize a landscape feature's footprint (design px). Free arranging,
+  // like repositioning - it stretches a river across the park without changing what it is.
+  const startResize = (e: ReactPointerEvent, f: Feature) => {
+    if (!onSetSize) return;
+    e.preventDefault(); e.stopPropagation();
+    const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
+    const sx = e.clientX, sy = e.clientY, w0 = f.w, h0 = f.h - LABEL_H;
+    const move = (ev: PointerEvent) => onSetSize(f.item.id, {
+      w: Math.round(clamp(w0 + (ev.clientX - sx) / s, 40, CANVAS_W - 40)),
+      h: Math.round(clamp(h0 + (ev.clientY - sy) / s, 24, 320)),
+    });
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+
   const selected = connectors.find((c) => c.id === selectedConn) ?? null;
 
   return (
@@ -598,6 +638,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           const p = posOf(f);
           const dragging = drag?.id === f.item.id;
           const queued = improving?.has(f.item.id);
+          const isLand = f.kind === 'plot' && f.item.category === 'flora' && isLandscapeType(landType(f.item));
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
@@ -605,7 +646,14 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
+                : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} />
                 : <Plot item={f.item} cell={4} />}
+              {/* Resize handle for landscape scenery: drag to stretch a river across the park. */}
+              {isLand && onSetSize && tool === 'none' && !dragging && (
+                <div onPointerDown={(e) => startResize(e, f)} title="Drag to resize"
+                  className="absolute z-40 h-3.5 w-3.5 cursor-nwse-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
+                  style={{ right: -6, bottom: LABEL_H - 4, touchAction: 'none' }} />
+              )}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
               {onImprove && tool === 'none' && !dragging && (
                 queued ? (
@@ -693,6 +741,8 @@ interface ParkViewProps {
   onImprove?: (id: string) => void;
   /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  /** On the big Park tab, resize a landscape feature's footprint (drag its corner). */
+  onSetSize?: (id: string, size: { w: number; h: number }) => void;
   /** On the big Park tab, plant flora inside an enclosure (drag onto it) or take it back out. */
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
@@ -703,7 +753,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, onFinishDeploy }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, onFinishDeploy, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -816,7 +866,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             </div>
           )}
           <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn}
-            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
+            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
       ) : (

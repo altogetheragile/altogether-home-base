@@ -3,11 +3,11 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -1011,9 +1011,15 @@ describe('zoo game: the toolbox', () => {
       const grid = renderDesign({ category: 'flora' } as never, { parts: { type: t.template! }, colors: { foliage: '#5aa9c8', trunk: '#b7965f' } });
       expect(grid.some((row) => row.some((c) => c)), `${name} renders`).toBe(true);
     }
-    // Water features read as water, not "planting".
-    expect(toolboxDraft(items.find((i) => i.name === 'River')!).acceptance).toContain('Reads as water');
+    // Water features read as water, not "planting", and are sized to fit rather than "no bare patches".
+    expect(toolboxDraft(items.find((i) => i.name === 'River')!).acceptance).toEqual(['Reads as water', 'Sized to fit the space']);
     expect(toolboxDraft(items.find((i) => i.name === 'Entrance')!).acceptance).toContain('Clearly marks the way in');
+    // Landscape features are resizable: they carry a default footprint and take a saved size.
+    expect(isLandscapeType('river')).toBe(true);
+    expect(isLandscapeType('tree')).toBe(false);
+    expect(landscapeDefaultSize('river').w).toBeGreaterThan(landscapeDefaultSize('river').h); // a river starts wide
+    const sized = setItemSize(initialZooState(1), 'lion', { w: 400, h: 40 });
+    expect(sized.backlog.find((i) => i.id === 'lion')!.size).toEqual({ w: 400, h: 40 });
     // All the landscape sprites differ from each other.
     const shapes = ['river', 'pond', 'rocks', 'entrance', 'carpark', 'hedge', 'fountain'];
     const rendered = shapes.map((t) => JSON.stringify(renderDesign({ category: 'flora' } as never, { parts: { type: t }, colors: { foliage: '#5aa9c8', trunk: '#8a5a2b' } })));
