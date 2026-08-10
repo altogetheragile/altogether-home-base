@@ -9,7 +9,7 @@
 // 'enclosure' is infrastructure (a habitat animals live in); the simulation does not
 // score it directly - it is excluded before the sim runs - but the type includes it so
 // backlog items flow through toZooItem cleanly.
-export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora';
+export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora' | 'path';
 
 export type NeedType = 'food' | 'toilet' | 'rest';
 

@@ -72,7 +72,7 @@ export interface SprintTask { id: string; label: string; done: boolean }
  *  into smaller PBIs; enclosure = a habitat you build FIRST (its footprint and fences),
  *  then populate with animals; exhibit = an animal that lives inside an enclosure; amenity
  *  = a facility (cafe/toilets/seating); flora = scenery/planting. */
-export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora';
+export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora' | 'path';
 
 /** One thing an epic contains, ready to be split out into its own PBI(s). An exhibit
  *  member becomes an enclosure PBI plus the animal PBI that lives in it (the dependency);

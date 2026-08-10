@@ -481,6 +481,7 @@ export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART
  *  colours yet, so the player colours it in. Uses the item's toolbox template (falling
  *  back to its id) to pick the species shape. */
 export function presetFor(item: BacklogItem): ItemDesign {
+  if (item.category === 'path') return { parts: {}, colors: {} };
   if (item.category === 'enclosure') return { parts: { water: 'on' }, colors: {} };
   if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { type: item.template ?? buildingTypeFor(item.name, item.services), sign: 'on' }, colors: {} };
@@ -493,6 +494,8 @@ export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
 
 export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
+  // A path has no studio design - it is drawn on the park when you deploy it - so nothing to build.
+  if (item.category === 'path') return [];
   if (item.category === 'enclosure') {
     return [
       { label: 'Lay the ground', pass: !!design.colors.ground },

@@ -209,7 +209,9 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
   // BUILD steps (meeting the acceptance criteria), then the standing workflow steps the DoD
   // requires of every item: peer review and the PO's sign-off. Placing & opening is the Deploy
   // action (the Open button on a Done item), not a task, so it is not in the plan.
-  const build = item.category === 'enclosure'
+  const build = item.category === 'path'
+    ? ['Plan the route']                       // a path is drawn on the park at deployment, not designed
+    : item.category === 'enclosure'
     ? ['Set the footprint size', 'Fence it securely', 'Lay the ground, shelter and water']
     : item.category === 'exhibit'
     ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features']

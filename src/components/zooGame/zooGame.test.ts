@@ -971,6 +971,30 @@ describe('zoo game: the toolbox', () => {
     expect(item.unsized).toBe(true);
   });
 
+  it('offers a Pathway PBI that needs no studio design and builds through its plan', () => {
+    const pathway = TOOLBOX.flatMap((g) => g.items).find((i) => i.name === 'Pathway')!;
+    expect(pathway.category).toBe('path');
+    const draft = toolboxDraft(pathway);
+    expect(draft.acceptance).toContain('Clearly routed');
+    let s = addPbi(initialZooState(1), draft);
+    const item = s.backlog.find((i) => i.category === 'path')!;
+    // No design to do: its design criteria are empty, so it is "built" the moment its plan is done.
+    expect(designCriteria(item, presetFor(item))).toEqual([]);
+    // Its plan is route + the standing workflow (no colour/shape build steps).
+    const tasks = suggestTasks(item).map((t) => t.label);
+    expect(tasks).toEqual(['Plan the route', 'Peer-review it', "Get the PO's sign-off"]);
+    // Building it (no design) with its plan complete takes it to Done.
+    s = estimateItem(s, item.id, 3);
+    s = planSprint(s, [item.id]);
+    s = setItemTasks(s, item.id, suggestTasks(item));
+    let built = buildItem(s, item.id, presetFor(item)); // the studio passes the (empty) path design
+    for (const t of built.backlog.find((x) => x.id === item.id)!.tasks ?? []) built = toggleItemTask(built, item.id, t.id);
+    expect(built.backlog.find((x) => x.id === item.id)!.status).toBe('done');
+    // Delivering it does not add a park feature (it is the connectors it drew).
+    const open = openItem(built, item.id);
+    expect(open.backlog.find((x) => x.id === item.id)!.status).toBe('open');
+  });
+
   it('offers landscape & wayfinding items as normal (PBI-creating) toolbox pieces with fitting shapes and ACs', () => {
     const items = TOOLBOX.flatMap((g) => g.items);
     for (const name of ['River', 'Pond', 'Rocks', 'Entrance', 'Car Park', 'Hedge', 'Fountain']) {

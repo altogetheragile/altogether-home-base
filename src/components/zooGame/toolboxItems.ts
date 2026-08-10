@@ -26,6 +26,8 @@ const amenity = (name: string, zone: string, services: 'food' | 'toilet' | 'rest
 // The template carries the starting flora shape (tree / bush / flowers / signpost).
 const flora = (name: string, type: string): ToolboxItem => ({ template: type, name, category: 'flora', zone: 'General' });
 const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint });
+// A pathway has no studio design; its delivery is drawing the route on the Park at deployment.
+const pathway = (name: string): ToolboxItem => ({ name, category: 'path', zone: 'General' });
 
 export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
   {
@@ -66,7 +68,7 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
     // Landscape & wayfinding: scenery and arrival features. Each is a Backlog item like any other -
     // refine, estimate, build and deploy it. (Paths themselves are drawn when you deploy.)
     group: 'Landscape & wayfinding',
-    items: [flora('River', 'river'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Entrance', 'entrance'), flora('Car Park', 'carpark')],
+    items: [pathway('Pathway'), flora('River', 'river'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Entrance', 'entrance'), flora('Car Park', 'carpark')],
   },
 ];
 
@@ -78,6 +80,8 @@ export function toolboxDraft(t: ToolboxItem): PbiDraft {
       ? ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up']
     : t.category === 'amenity'
       ? amenityAcceptance(t.name, t.services)
+    : t.category === 'path'
+      ? ['Connects features into the network', 'Clearly routed']
       : floraAcceptance(t.template);
   return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, enclosureSize: t.footprint, acceptance };
 }
