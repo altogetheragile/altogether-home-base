@@ -9,7 +9,7 @@ import { EnclosureBox, FloraSprite } from './ParkView';
 import { TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Spline } from 'lucide-react';
 
 /** A built design you can copy as a starting point (e.g. an existing lion). */
 export interface CopySource { id: string; name: string; design: ItemDesign }
@@ -130,6 +130,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const isExhibit = item.category === 'exhibit';
   const isEnclosure = item.category === 'enclosure';
   const isFlora = item.category === 'flora';
+  const isPath = item.category === 'path';
   const cell = Math.floor(232 / GRID_W);
   const [design, setDesign] = useState<ItemDesign>(initial ?? item.design ?? presetFor(item));
 
@@ -184,7 +185,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h3 className="font-semibold">{editing ? 'Edit' : 'Design'} your {item.name.toLowerCase()}</h3>
-          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isEnclosure ? 'build the habitat first, then add animals' : isExhibit ? 'one animal, one PBI' : isFlora ? 'pick a plant and colour it' : 'set the colours and add a sign'}</p>
+          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isEnclosure ? 'build the habitat first, then add animals' : isExhibit ? 'one animal, one PBI' : isFlora ? 'pick a plant and colour it' : isPath ? 'drawn on the Park when you deploy it' : 'set the colours and add a sign'}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onCancel}>Back</Button>
       </div>
@@ -230,8 +231,10 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
       <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         {/* Live preview */}
-        <div className="flex items-start justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
-          {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} onSetFlora={setFlora} /> : <Preview item={item} design={design} cell={cell} />}
+        <div className="flex min-h-[120px] items-center justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
+          {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} onSetFlora={setFlora} />
+            : isPath ? <div className="max-w-[220px] text-center text-xs text-muted-foreground"><Spline className="mx-auto mb-1 h-6 w-6 text-primary/70" /> A path has nothing to design here - you'll draw the route on the Park when you deploy it.</div>
+            : <Preview item={item} design={design} cell={cell} />}
         </div>
 
         {/* Controls */}
@@ -294,6 +297,11 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             {FLORA_COLORS.map((c) => (
               <ColourPickerRow key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />
             ))}
+          </div>
+        ) : isPath ? (
+          <div className="space-y-2 rounded-md border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Nothing to design.</p>
+            <p>A path is drawn on the Park as part of deploying it: complete the plan below (peer review and the PO's sign-off), finish the build, then <b>Place &amp; open</b> it to lay the route with the Connect tool.</p>
           </div>
         ) : (
           <div className="space-y-3">
