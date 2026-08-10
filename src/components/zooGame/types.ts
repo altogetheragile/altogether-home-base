@@ -163,6 +163,10 @@ export interface BacklogItem {
   /** Footprint size on the park, in design px - set by resizing a landscape feature (a river you
    *  stretch across the park). Like `pos`, it's spatial arrangement, not a design change. */
   size?: { w: number; h: number };
+  /** Which acceptance criteria the player has confirmed, index-aligned with `acceptance`. Build-time
+   *  ACs are ticked in the studio; deploy-time ACs (sizing/placement) are ticked on the park when the
+   *  item is placed & sized. undefined = none confirmed yet. */
+  acConfirmed?: boolean[];
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -308,6 +312,7 @@ export type ZooAction =
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
+  | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
   | { type: 'START_ITEM'; id: string }
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
   | { type: 'SET_SPRINT_DAYS'; days: number }

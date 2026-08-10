@@ -410,6 +410,14 @@ export function floraAcceptance(type?: string): string[] {
   }
 }
 
+/** Whether an acceptance criterion is a DEPLOY-time one - about how the item is sized or placed,
+ *  which can only be judged once it is on the park (e.g. "Sized to fit the space"). The rest are
+ *  BUILD-time (appearance), confirmed in the studio. So you never accept placement before you have
+ *  placed it: build ACs are ticked in the studio, deploy ACs when you place & size it on the park. */
+export function isDeployAcceptance(label: string): boolean {
+  return /\bsized?\b|fit the space|placed|placement|position/i.test(label);
+}
+
 /** A landscape feature's two working colours (primary fill, secondary trim), taking the player's
  *  chosen colours where set and falling back to a sensible default per type. Used to draw the
  *  smooth, resizable scenery on the park (the keys mirror floraColors: foliage + trunk). */

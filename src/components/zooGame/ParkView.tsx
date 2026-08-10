@@ -867,6 +867,10 @@ interface ParkViewProps {
   deployMode?: string | null;
   /** When deploying a Pathway, the width and colour it was designed at - new connectors use it. */
   deployStyle?: { thickness: number; color: string } | null;
+  /** Deploy-time acceptance criteria (sizing/placement) for the item being deployed - confirmed here
+   *  on the park, as you place & size it, since they can't be judged before it is placed. */
+  deployAcs?: { index: number; label: string; confirmed: boolean }[];
+  onConfirmDeployAc?: (index: number, value: boolean) => void;
   onFinishDeploy?: () => void;
   /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
   onImprove?: (id: string) => void;
@@ -884,7 +888,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, onFinishDeploy, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -955,15 +959,37 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             </div>
           </div>
           {/* Deploy mode: placing an item is when you position it AND lay the paths that link it in. */}
-          {canConnect && (
-            <div className="flex flex-wrap items-center gap-2 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2 py-1.5 text-[11px]">
-              <span className="font-medium text-emerald-700 dark:text-emerald-400">Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
-              {onFinishDeploy && (
-                <button type="button" onClick={() => { setTool('none'); setSelectedConn(null); onFinishDeploy(); }}
-                  className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700"><Check className="h-3 w-3" /> Finish deploying</button>
+          {canConnect && (() => {
+            const acs = deployAcs ?? [];
+            const acsDone = acs.every((a) => a.confirmed);
+            return (
+            <div className="flex flex-col gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2 py-1.5 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
+                {onFinishDeploy && (
+                  <button type="button" disabled={!acsDone} title={acsDone ? undefined : 'Confirm the placement criteria first'}
+                    onClick={() => { setTool('none'); setSelectedConn(null); onFinishDeploy(); }}
+                    className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-3 w-3" /> Finish deploying</button>
+                )}
+              </div>
+              {acs.length > 0 && (
+                <div className="rounded border border-emerald-500/30 bg-background/60 px-2 py-1">
+                  <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">Acceptance criteria - confirm now it is placed &amp; sized</div>
+                  <ul className="space-y-0.5">
+                    {acs.map((a) => (
+                      <li key={a.index}>
+                        <button type="button" onClick={() => onConfirmDeployAc?.(a.index, !a.confirmed)} className="flex w-full items-center gap-2 text-left">
+                          <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full', a.confirmed ? 'bg-emerald-500 text-white' : 'border border-emerald-500/60')}>{a.confirmed && <Check className="h-3 w-3" />}</span>
+                          <span className={cn(a.confirmed ? 'text-foreground' : 'text-muted-foreground')}>{a.label}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
-          )}
+            );
+          })()}
           {/* Connect-tool guidance. */}
           {canConnect && tool === 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
