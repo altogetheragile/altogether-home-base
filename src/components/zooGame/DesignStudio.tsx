@@ -299,7 +299,9 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             {isLand ? (
               <div className="flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
                 <span className="rounded-full border border-primary bg-primary px-2.5 py-0.5 text-xs capitalize text-primary-foreground">{design.parts.type ?? item.template}</span>
-                <span className="text-[11px] text-muted-foreground/70">Colour it here, then drag it on the Park to set how far it runs and how wide it is.</span>
+                <span className="text-[11px] text-muted-foreground/70">{(design.parts.type ?? item.template) === 'river'
+                  ? 'Colour it here. On the Park it flows the full width - drag it up or down to place it, and drag its edge to set how wide it is.'
+                  : 'Colour it here, then drag it on the Park to set how far it runs and how wide it is.'}</span>
               </div>
             ) : (
               <div className="space-y-1.5">

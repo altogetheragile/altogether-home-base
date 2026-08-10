@@ -94,8 +94,13 @@ export function FloraSprite({ type, foliage, trunk, cell }: { type: string; foli
 
 /** The type of a flora/scenery item (from its built design, or its toolbox template before build). */
 const landType = (item: BacklogItem): string | undefined => item.design?.parts.type ?? item.template;
-/** A landscape feature's footprint on the park: its saved size, or the default for its type. */
-const landSize = (item: BacklogItem): { w: number; h: number } => item.size ?? landscapeDefaultSize(landType(item));
+/** A landscape feature's footprint on the park: its saved size, or the default for its type. A
+ *  river always spans the full width of the park - it flows across the land, fence to fence, with
+ *  no gap at either end - so only its thickness is taken from a saved size. */
+const landSize = (item: BacklogItem): { w: number; h: number } =>
+  landType(item) === 'river'
+    ? { w: CANVAS_W - 20, h: item.size?.h ?? landscapeDefaultSize('river').h }
+    : item.size ?? landscapeDefaultSize(landType(item));
 
 /** A landscape feature (river, pond, rocks, hedge...) drawn to fill a resizable box: the pixel
  *  grid is stretched to the footprint, so a river can run right across the park. */
@@ -392,7 +397,13 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const newId = () => `conn-${connectors.length}-${idc.current++}`;
 
   const auto = autoLayout(features);
-  const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD });
+  const posOf = (f: Feature) => {
+    if (drag?.id === f.item.id) return drag.pos;
+    const base = f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD };
+    // A river spans the whole park, so its horizontal position is pinned to centre (fence to fence,
+    // no end gaps); only its vertical position moves.
+    return landType(f.item) === 'river' ? { x: CANVAS_W / 2, y: base.y } : base;
+  };
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
   const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
 
@@ -498,10 +509,14 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     const origin = posOf(f);
     const minX = f.w / 2 + 4, maxX = CANVAS_W - f.w / 2 - 4;
     const minY = f.h / 2 + 4, maxY = canvasH - PATH_H - f.h / 2;
-    const at = (ev: PointerEvent) => ({
-      x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
-      y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
-    });
+    const at = (ev: PointerEvent) => {
+      const p = {
+        x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
+        y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
+      };
+      // A river only moves up and down - it always spans the park from side to side.
+      return landType(f.item) === 'river' ? { x: CANVAS_W / 2, y: p.y } : p;
+    };
     const move = (ev: PointerEvent) => setDrag({ id: f.item.id, pos: at(ev) });
     const up = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', move);
@@ -651,6 +666,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           const dragging = drag?.id === f.item.id;
           const queued = improving?.has(f.item.id);
           const isLand = f.kind === 'plot' && f.item.category === 'flora' && isLandscapeType(landType(f.item));
+          const isRiver = isLand && landType(f.item) === 'river'; // spans the park; no length handle
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
@@ -664,9 +680,11 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   park), the bottom-edge handle its width - two separate controls. */}
               {isLand && onSetSize && tool === 'none' && !dragging && (
                 <>
+                  {!isRiver && (
                   <div onPointerDown={(e) => startResize(e, f, 'len')} title="Drag to lengthen"
                     className="absolute z-40 h-4 w-4 -translate-y-1/2 cursor-ew-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
                     style={{ right: -8, top: (f.h - LABEL_H) / 2, touchAction: 'none' }} />
+                  )}
                   <div onPointerDown={(e) => startResize(e, f, 'wid')} title="Drag to widen"
                     className="absolute z-40 h-4 w-4 -translate-x-1/2 cursor-ns-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
                     style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
