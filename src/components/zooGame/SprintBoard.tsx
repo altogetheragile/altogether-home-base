@@ -13,7 +13,7 @@ import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Boar
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, DoorOpen, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -146,7 +146,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   // on the park - you can't accept placement before you have placed it.
   const deployReady = (id: string) => {
     const it = deploy.find((x) => x.id === id);
-    return !!it && it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label)).every((a) => !!it.acConfirmed?.[a.i]);
+    return !!it && !!it.placed && it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label)).every((a) => !!it.acConfirmed?.[a.i]);
   };
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
@@ -164,7 +164,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
       if (atWipLimit) { toast.error(`WIP limit ${state.wipLimit} reached - finish something in Doing first.`); return; }
       onStartItem(id);
     } else if (o === 'open') {
-      if (!deployReady(id)) { toast.error('Place & size it on the park and confirm its placement criteria first.'); return; }
+      if (!deployReady(id)) { toast.error('Place it on the park first, then mark it Deploy complete.'); return; }
       onOpen(id);
     } else if (o === 'studio') {
       toast('Open "Design & build" to finish it - it moves to Deploy once it is built and the plan is ticked off.');
@@ -194,29 +194,20 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
   }
   const dayStarting = state.dayStage === 'dayStart';
 
-  // Deploy column: built to the DoD, release it to the park. Items with placement acceptance
-  // criteria (a river "Sized to fit the space") are a two-step deploy - Place on the park to
-  // position & size it and confirm those criteria, then Deploy complete moves it to Done. Everything
-  // else is a one-click "Place & open" (nothing to confirm before it is live).
+  // Deploy column: every item follows the same two steps, so deploying is consistent - "Place on the
+  // park" to position & size it (and confirm any placement acceptance criteria, e.g. a river "Sized
+  // to fit the space"), then "Deploy complete" releases it to visitors and moves it to Done. Build
+  // acceptance (appearance) was already accepted in the studio; this step is only about placement.
   const deployActions = (it: BacklogItem) => {
     const deployAcs = it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
-    const editAdd = (
-      <>
-        <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
-        {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
-      </>
-    );
-    if (deployAcs.length === 0) {
-      return <>
-        <Button size="sm" className="h-7 px-2 text-xs" onClick={() => onOpen(it.id)}><DoorOpen className="mr-1 h-3.5 w-3.5" /> Place &amp; open</Button>
-        {editAdd}
-      </>;
-    }
     const acsDone = deployAcs.every((a) => !!it.acConfirmed?.[a.i]);
+    const ready = !!it.placed && acsDone;
+    const why = !it.placed ? 'Place it on the park first' : (!acsDone ? 'Confirm its placement criteria on the park first' : undefined);
     return <>
       <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> {it.placed ? 'Adjust on park' : 'Place on the park'}</Button>
-      <Button size="sm" className="h-7 px-2 text-xs" disabled={!acsDone} title={acsDone ? undefined : 'Place & size it on the park and confirm its placement criteria first'} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Deploy complete</Button>
-      {editAdd}
+      <Button size="sm" className="h-7 px-2 text-xs" disabled={!ready} title={why} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Deploy complete</Button>
+      <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
+      {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
     </>;
   };
   // Done column: deployed, live to visitors.
@@ -326,7 +317,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                 </BoardColumn>
                 </div>
                 <div {...dropProps('deploy')} className={cn('min-w-0 transition-shadow', dropClass('deploy'))}>
-                <BoardColumn title="Deploy" count={deploy.length} hint="Built - place & open it">
+                <BoardColumn title="Deploy" count={deploy.length} hint="Place on the park, then Deploy complete">
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
                     <ItemCard item={it}
