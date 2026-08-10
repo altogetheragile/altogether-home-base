@@ -385,7 +385,9 @@ interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h:
  *  once BUILT (Done or Open) - the habitat is there before its animals are released - with
  *  its open animals inside; amenities and planting appear when open. */
 function buildFeatures(state: ZooGameState): Feature[] {
-  const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
+  // Show live items (open) plus any built item currently being placed on the park (done + placed) -
+  // so you can position it and confirm its placement before marking it Deploy complete.
+  const open = state.backlog.filter((it) => (it.status === 'open' || (it.status === 'done' && it.placed)) && !it.enhancesId);
   const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open') && !it.enhancesId);
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const theme = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
@@ -961,20 +963,20 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           {/* Deploy mode: placing an item is when you position it AND lay the paths that link it in. */}
           {canConnect && (() => {
             const acs = deployAcs ?? [];
-            const acsDone = acs.every((a) => a.confirmed);
             return (
             <div className="flex flex-col gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2 py-1.5 text-[11px]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium text-emerald-700 dark:text-emerald-400">Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
                 {onFinishDeploy && (
-                  <button type="button" disabled={!acsDone} title={acsDone ? undefined : 'Confirm the placement criteria first'}
+                  <button type="button"
                     onClick={() => { setTool('none'); setSelectedConn(null); onFinishDeploy(); }}
-                    className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-3 w-3" /> Finish deploying</button>
+                    className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700">
+                    <Check className="h-3 w-3" /> {acs.length > 0 ? 'Back to the board' : 'Finish deploying'}</button>
                 )}
               </div>
               {acs.length > 0 && (
                 <div className="rounded border border-emerald-500/30 bg-background/60 px-2 py-1">
-                  <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">Acceptance criteria - confirm now it is placed &amp; sized</div>
+                  <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">Acceptance criteria - confirm now it is placed &amp; sized, then mark it Deploy complete on its card</div>
                   <ul className="space-y-0.5">
                     {acs.map((a) => (
                       <li key={a.index}>

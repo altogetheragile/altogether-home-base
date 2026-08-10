@@ -44,7 +44,7 @@ function GameTopBar() {
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, confirmAc, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, takeSignal, plan, estimate, setTasks, toggleTask, confirmAc, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -69,16 +69,28 @@ export default function ZooGame() {
   // Ending a day (clock ran out or "End Day") moves to the Daily Scrum or the Sprint Review, which
   // live in the work pane - so focus it, or the transition is invisible when you're on the Park tab.
   const endDay = () => { closeDay(); setParkTab('work'); };
-  const placeAndOpen = (id: string) => {
+  const enterDeploy = (id: string) => {
     const it = state.backlog.find((x) => x.id === id);
     // An improvement re-delivers its target; deploy against the target's name.
     const shownId = it?.enhancesId ?? id;
     const shown = state.backlog.find((x) => x.id === shownId);
-    open(id);
     setParkTab('park');
     setDeploying(shown?.name ?? it?.name ?? 'this item');
     setDeployId(id);
     setDeployStyle(it?.category === 'path' ? { thickness: pathWidthPx(it.design?.parts.thickness), color: it.design?.colors.path ?? '#c9a86a' } : null);
+  };
+  const clearDeploy = () => { setDeploying(null); setDeployId(null); setDeployStyle(null); };
+  // "Place on the park" (items with placement acceptance): put it on the park to position, size and
+  // confirm its criteria - it stays in Deploy until "Deploy complete".
+  const placeOnParkAndEnter = (id: string) => { placeOnPark(id); enterDeploy(id); };
+  // "Place & open" / "Deploy complete": release the item to visitors (moves the card to Done). If it
+  // had placement criteria it was already placed on the park, so just release and return to the board;
+  // otherwise open it and drop into deploy mode so its linking paths can be drawn.
+  const placeAndOpen = (id: string) => {
+    const it = state.backlog.find((x) => x.id === id);
+    const hasDeployAcs = !!it && it.acceptance.some(isDeployAcceptance);
+    open(id);
+    if (hasDeployAcs) { clearDeploy(); setParkTab('work'); } else { enterDeploy(id); }
   };
   // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
   // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
@@ -136,7 +148,7 @@ export default function ZooGame() {
     ? deployItem.acceptance.map((label, index) => ({ index, label, confirmed: !!deployItem.acConfirmed?.[index] })).filter((a) => isDeployAcceptance(a.label))
     : [];
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setDeploying(null); setDeployId(null); setDeployStyle(null); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { if (deployAcs.length > 0) setParkTab('work'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {
@@ -147,7 +159,7 @@ export default function ZooGame() {
       case 'planning':
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onToggleGoalCritical={toggleGoalCritical} onSetSprintDays={setSprintDays} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onNavigateStep={() => setPoNote(null)} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onEstimate={estimate} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={placeAndOpen} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onAssignDev={assignDev} onRenameMember={renameMember} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onAddPbi={createPbi} onRefinePbi={refinePbi} onEstimate={estimate} onSetUseStories={setUserStories} onToggleTask={toggleTask} onStartItem={startItem} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={placeAndOpen} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onAssignDev={assignDev} onRenameMember={renameMember} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} /></ZooShell>;
       case 'retro':
