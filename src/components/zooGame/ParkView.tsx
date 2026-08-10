@@ -387,8 +387,9 @@ interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h:
 function buildFeatures(state: ZooGameState): Feature[] {
   // Show live items (open) plus any built item currently being placed on the park (done + placed) -
   // so you can position it and confirm its placement before marking it Deploy complete.
-  const open = state.backlog.filter((it) => (it.status === 'open' || (it.status === 'done' && it.placed)) && !it.enhancesId);
-  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open') && !it.enhancesId);
+  const isShown = (it: BacklogItem) => (it.status === 'open' || (it.status === 'done' && it.placed)) && !it.enhancesId;
+  const open = state.backlog.filter(isShown);
+  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && isShown(it));
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const theme = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
   // Planting dragged into a built enclosure lives inside that habitat, not loose on the grounds.
@@ -971,7 +972,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
                   <button type="button"
                     onClick={() => { setTool('none'); setSelectedConn(null); onFinishDeploy(); }}
                     className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700">
-                    <Check className="h-3 w-3" /> {acs.length > 0 ? 'Back to the board' : 'Finish deploying'}</button>
+                    <Check className="h-3 w-3" /> Back to the board</button>
                 )}
               </div>
               {acs.length > 0 && (
