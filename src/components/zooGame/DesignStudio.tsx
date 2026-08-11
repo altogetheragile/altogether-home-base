@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, floraDefaultColors, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
@@ -100,7 +100,7 @@ function EnclosurePreview({ item, design, selectedFlora, onSelectFlora, onSetWat
       {flora.map((fl, i) => (
         <div key={`fl-${i}`} className="group absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
           <div onPointerDown={dragFlora(i, 'move')} className={cn('cursor-grab rounded-sm active:cursor-grabbing', selectedFlora === i && 'ring-2 ring-primary ring-offset-1')} style={{ transform: `scale(${fl.s})`, transformOrigin: 'center' }}>
-            <FloraSprite type={fl.type} foliage={fl.foliage ?? design.colors.foliage} trunk={fl.trunk ?? design.colors.trunk} cell={2} />
+            <FloraSprite type={fl.type} foliage={fl.foliage ?? floraDefaultColors(fl.type).foliage} trunk={fl.trunk ?? floraDefaultColors(fl.type).trunk} cell={2} />
           </div>
           <button type="button" aria-label="Remove planting" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onSetFlora(flora.filter((_, j) => j !== i)); }}
             className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
@@ -297,25 +297,20 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
               const sel = selectedFlora != null ? encFlora[selectedFlora] : null;
               return (
               <>
-                <span className="block text-[11px] text-muted-foreground/70">Click a plant or feature to colour it on its own; drag to move, drag its corner to resize, hover for &times;.</span>
-                {sel ? (
+                <span className="block text-[11px] text-muted-foreground/70">{sel ? 'Colouring the selected item; click empty ground or Done to finish.' : 'Click a plant or feature to colour it; drag to move, drag its corner to resize, hover for ×.'}</span>
+                {sel && (
                   <div className="space-y-2 rounded-md border border-primary/40 bg-primary/5 p-2">
                     <div className="flex flex-wrap items-center gap-2 text-[11px]">
                       <span className="rounded-full bg-primary px-2 py-0.5 font-medium capitalize text-primary-foreground">{sel.type}</span>
                       <span className="text-muted-foreground/70">colouring just this one</span>
-                      <button type="button" onClick={() => setSelectedFlora(null)} className="ml-auto rounded border border-border px-1.5 py-0.5 font-medium hover:bg-muted/40">Colour all instead</button>
+                      <button type="button" onClick={() => setSelectedFlora(null)} className="ml-auto rounded border border-border px-1.5 py-0.5 font-medium hover:bg-muted/40">Done</button>
                     </div>
                     {floraColors(sel.type).map((c) => {
                       const key = c.key as 'foliage' | 'trunk';
-                      return <ColourPickerRow key={key} label={c.label} value={sel[key] ?? design.colors[key]}
+                      return <ColourPickerRow key={key} label={c.label} value={sel[key] ?? floraDefaultColors(sel.type)[key]}
                         onChange={(hex) => setFlora(encFlora.map((f, j) => (j === selectedFlora ? { ...f, [key]: hex } : f)))} />;
                     })}
                   </div>
-                ) : (
-                  <>
-                    <ColourPickerRow label="Foliage" value={design.colors.foliage} onChange={(hex) => setColor('foliage', hex)} />
-                    <ColourPickerRow label="Trunk / bed" value={design.colors.trunk} onChange={(hex) => setColor('trunk', hex)} />
-                  </>
                 )}
               </>
               );

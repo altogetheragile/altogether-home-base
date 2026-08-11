@@ -29,10 +29,20 @@ export interface WaterFeature { x: number; y: number; w: number; h: number }
 /** A plant placed inside an enclosure: position (0..1 fractions of the box), scale, and shape. */
 export interface EnclosureFlora { x: number; y: number; s: number; type: string; foliage?: string; trunk?: string }
 
-/** A new plant of the given type, offset a little each time so it doesn't stack exactly. */
+/** A sensible starting colour per plant/feature type, so a new rock is grey and a new tree green
+ *  whatever was added before it (each item keeps its own colours). */
+export function floraDefaultColors(type: string): { foliage: string; trunk: string } {
+  if (type === 'tree' || type === 'bush') return { foliage: '#43a047', trunk: '#7a5230' };
+  if (type === 'flowers') return { foliage: '#e0679a', trunk: '#6a8f3a' };
+  const p = landscapePalette(type); // rocks, pond, hedge... get their natural colours
+  return { foliage: p.primary, trunk: p.secondary };
+}
+
+/** A new plant of the given type, offset a little each time so it doesn't stack exactly, and given
+ *  its own sensible colours so it doesn't inherit the last item's. */
 export function defaultFlora(type: string, n = 0): EnclosureFlora {
   const cols = [0.28, 0.72, 0.5, 0.16, 0.84, 0.4];
-  return { x: cols[n % cols.length], y: 0.42 + (n % 3) * 0.13, s: 1, type };
+  return { x: cols[n % cols.length], y: 0.42 + (n % 3) * 0.13, s: 1, type, ...floraDefaultColors(type) };
 }
 
 /** The planting to draw inside an enclosure (empty if none added). */
@@ -390,7 +400,8 @@ export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'roc
  *  mislabelled as "planting". Park-only wayfinding (signpost, entrance, car park) is left out - it
  *  belongs on the grounds, not in a habitat. */
 export const PLANTING_TYPES = ['tree', 'bush', 'flowers', 'hedge'];
-export const HABITAT_FEATURE_TYPES = ['rocks', 'pond', 'river', 'fountain'];
+// Rivers and fountains are park-scale features, so they stay out on the grounds, not in a habitat.
+export const HABITAT_FEATURE_TYPES = ['rocks', 'pond'];
 export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
 
 /** Path widths a Pathway can be designed at; the px is the connector thickness it deploys with. */
