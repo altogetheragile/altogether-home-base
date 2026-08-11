@@ -127,6 +127,10 @@ export interface BacklogItem {
   /** True until the team estimates it: an unsized item can't be planned yet - it
    *  must be refined (estimated) first. */
   unsized?: boolean;
+  /** Set when an item carried over unfinished from a previous Sprint: it is re-opened for
+   *  estimation so the team re-points the work that is LEFT before re-planning it. Cleared once
+   *  re-estimated. Its build progress (design, plan) is kept. */
+  carriedOver?: boolean;
   /** Hidden intended size; what planning poker clusters the cards around. */
   trueSize?: number;
   /** Per-item acceptance criteria (what makes this item correct). Distinct from the

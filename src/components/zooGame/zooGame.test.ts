@@ -1064,10 +1064,35 @@ describe('zoo game: the toolbox', () => {
     const lion = s.backlog.find((i) => i.id === 'lion')!;
     expect(lion.status).toBe('backlog');
     expect(lion.draftDesign).toEqual(partial);
+    // Carried over unfinished, it is re-opened for estimation (a fresh Ready check) - the team
+    // re-points the work that is left before it can be re-planned.
+    expect(lion.unsized).toBe(true);
+    expect(lion.carriedOver).toBe(true);
+    // Re-estimating clears the carry-over flag and makes it Ready again.
+    s = estimateItem(s, 'lion', 3);
+    const relion = s.backlog.find((i) => i.id === 'lion')!;
+    expect(relion.unsized).toBe(false);
+    expect(relion.carriedOver).toBe(false);
+    expect(relion.estimate).toBe(3);
     // Finishing the build clears the draft (the work becomes the real design).
     s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'committed' as const } : it)) };
     s = buildItem(s, 'lion', { parts: { body: 'round' }, colors: { body: '#123456' } });
     expect(s.backlog.find((i) => i.id === 'lion')!.draftDesign).toBeUndefined();
+  });
+
+  it('scales a carried-over item\'s poker toward the work that is left (by plan progress)', () => {
+    let s = initialZooState(1);
+    // An item mostly done: 3 of 4 plan tasks ticked, committed this Sprint.
+    const tasks = [
+      { id: 't0', label: 'a', done: true }, { id: 't1', label: 'b', done: true },
+      { id: 't2', label: 'c', done: true }, { id: 't3', label: 'd', done: false },
+    ];
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, tasks, trueSize: 8 } : it)) };
+    s = reviewSprint(s);
+    const lion = s.backlog.find((i) => i.id === 'lion')!;
+    // 3/4 done -> ~1/4 of the work left, so the hidden size is nudged well below the original 8.
+    expect(lion.trueSize).toBeLessThan(8);
+    expect(lion.trueSize).toBeGreaterThanOrEqual(1);
   });
 
   it('placeOnPark marks a built item as placed (on the park) without releasing it to visitors', () => {
