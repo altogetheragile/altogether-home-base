@@ -18,6 +18,9 @@ import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, S
 interface SprintBoardProps {
   state: ZooGameState;
   onBuild: (id: string, design?: ItemDesign) => void;
+  /** Save the in-progress design as it changes in the studio, so partial work survives the studio
+   *  closing and the Sprint rolling over. */
+  onDraftChange: (id: string, design: ItemDesign) => void;
   onEditBuild: (id: string, design: ItemDesign) => void;
   onAddAnother: (id: string) => void;
   onAddPbi: (draft: PbiDraft) => void;
@@ -101,11 +104,10 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
-  const [draft, setDraft] = useState<{ id: string; design: ItemDesign } | null>(null);
   const committed = state.backlog.filter((it) =>
     (it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'))
     // Unreleased Done work built in an earlier Sprint carries over here (not lost) until you open it.
@@ -310,7 +312,7 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
                           </div>
                         </>}
-                        actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : 'Design & build'}</Button>} />
+                        actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : it.draftDesign ? 'Resume build' : 'Design & build'}</Button>} />
                       </div>
                     );
                   })}
@@ -353,9 +355,9 @@ export function SprintBoard({ state, onBuild, onEditBuild, onAddAnother, onAddPb
               copySources={copySources}
               onToggleTask={onToggleTask}
               onSetEnclosure={(size) => onSetEnclosure(designItem.id, size)}
-              initial={draft && draft.id === designItem.id ? draft.design : undefined}
-              onChange={(d) => setDraft({ id: designItem.id, design: d })}
-              onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); setDraft(null); }}
+              initial={editing ? undefined : designItem.draftDesign}
+              onChange={(d) => { if (!editing) onDraftChange(designItem.id, d); }}
+              onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); }}
               onCancel={() => setDesigning(null)}
             />
           </div>
