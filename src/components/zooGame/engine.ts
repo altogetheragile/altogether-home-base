@@ -227,6 +227,12 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
 /** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
 export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
 
+/** Save an item's in-progress design while it is still being built in the studio, so partial work
+ *  survives the studio closing or the Sprint ending. Does not change status - it stays in Doing. */
+export function setDraftDesign(state: ZooGameState, id: string, design: ItemDesign): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'committed' ? { ...it, draftDesign: design } : it)) };
+}
+
 /** Put a built (Done-column) item onto the park to place & size it. It shows on the park but is not
  *  yet live to visitors - its card stays in Deploy until you mark it "Deploy complete" (openItem). */
 export function placeOnPark(state: ZooGameState, id: string): ZooGameState {
@@ -586,7 +592,7 @@ export function buildItem(state: ZooGameState, id: string, design?: ItemDesign):
     // The design is built in the studio. The item is only Done when its plan is also
     // complete - otherwise it waits in Doing while the Developers tick the tasks off.
     const built = design
-      ? { ...it, started: true, design, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
+      ? { ...it, started: true, design, draftDesign: undefined, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
       : { ...it, started: true };
     return allTasksDone(built) ? { ...built, status: 'done' as const } : { ...built, status: 'committed' as const };
   });

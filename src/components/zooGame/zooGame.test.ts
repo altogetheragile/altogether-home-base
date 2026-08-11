@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1050,6 +1050,24 @@ describe('zoo game: the toolbox', () => {
     expect(lion().acConfirmed?.[1]).toBe(true);
     s = confirmAcceptance(s, 'lion', 1, false);
     expect(lion().acConfirmed?.[1]).toBe(false);
+  });
+
+  it('keeps in-progress design work across a Sprint boundary (draftDesign survives review + replan)', () => {
+    let s = initialZooState(1);
+    // An item being built in this Sprint, with partial studio work saved.
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, started: true } : it)) };
+    const partial = { parts: { body: 'round' }, colors: { body: '#123456' } };
+    s = setDraftDesign(s, 'lion', partial);
+    expect(s.backlog.find((i) => i.id === 'lion')!.draftDesign).toEqual(partial);
+    // The Sprint ends with it unfinished: it returns to the Backlog but the work must not be lost.
+    s = reviewSprint(s);
+    const lion = s.backlog.find((i) => i.id === 'lion')!;
+    expect(lion.status).toBe('backlog');
+    expect(lion.draftDesign).toEqual(partial);
+    // Finishing the build clears the draft (the work becomes the real design).
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'committed' as const } : it)) };
+    s = buildItem(s, 'lion', { parts: { body: 'round' }, colors: { body: '#123456' } });
+    expect(s.backlog.find((i) => i.id === 'lion')!.draftDesign).toBeUndefined();
   });
 
   it('placeOnPark marks a built item as placed (on the park) without releasing it to visitors', () => {

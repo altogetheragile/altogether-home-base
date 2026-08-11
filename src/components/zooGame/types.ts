@@ -140,6 +140,10 @@ export interface BacklogItem {
    *  building. Every animal is its own Product Backlog Item - to add more of a
    *  species you add more PBIs, not more animals in one build. */
   design?: ItemDesign;
+  /** In-progress design saved while an item is still being built in the studio (before "Finish the
+   *  build"), so partial work isn't lost when the studio closes or the Sprint rolls over. Cleared
+   *  once the item is finished (its work becomes `design`). */
+  draftDesign?: ItemDesign;
   /** The Developers' plan for how this item gets built: a decomposition into tasks,
    *  written during Sprint Planning (the "how") and ticked off as the work is done.
    *  The item reaches Done only when its design is built AND every task is ticked. */
@@ -317,6 +321,7 @@ export type ZooAction =
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
+  | { type: 'SET_DRAFT_DESIGN'; id: string; design: ItemDesign }
   | { type: 'PLACE_ON_PARK'; id: string }
   | { type: 'START_ITEM'; id: string }
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
