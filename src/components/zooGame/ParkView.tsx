@@ -346,7 +346,7 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
         {/* Studio-placed planting: decorative flora that is part of the enclosure design. */}
         {d && enclosureFlora(d).map((fl, i) => (
           <div key={`fl-${i}`} className="absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: `translate(-50%,-50%) scale(${fl.s})`, transformOrigin: 'center', zIndex: 0 }}>
-            <FloraSprite type={fl.type} foliage={d.colors.foliage} trunk={d.colors.trunk} cell={cell} />
+            <FloraSprite type={fl.type} foliage={fl.foliage ?? d.colors.foliage} trunk={fl.trunk ?? d.colors.trunk} cell={cell} />
           </div>
         ))}
         {n === 0 && plants.length === 0 && (!d || enclosureFlora(d).length === 0) && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
