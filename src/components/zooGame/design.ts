@@ -27,7 +27,7 @@ export interface ItemDesign {
 export interface WaterFeature { x: number; y: number; w: number; h: number }
 
 /** A plant placed inside an enclosure: position (0..1 fractions of the box), scale, and shape. */
-export interface EnclosureFlora { x: number; y: number; s: number; type: string }
+export interface EnclosureFlora { x: number; y: number; s: number; type: string; foliage?: string; trunk?: string }
 
 /** A new plant of the given type, offset a little each time so it doesn't stack exactly. */
 export function defaultFlora(type: string, n = 0): EnclosureFlora {

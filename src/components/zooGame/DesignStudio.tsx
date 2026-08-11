@@ -51,7 +51,7 @@ const clampF = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, 
 
 /** Live, editable enclosure: the habitat in its shape, with water features you can drag to move
  *  and resize by their corner (and remove on hover). Positions are fractions of the box. */
-function EnclosurePreview({ item, design, onSetWater, onSetFlora }: { item: BacklogItem; design: ItemDesign; onSetWater: (w: WaterFeature[]) => void; onSetFlora: (f: EnclosureFlora[]) => void }) {
+function EnclosurePreview({ item, design, selectedFlora, onSelectFlora, onSetWater, onSetFlora }: { item: BacklogItem; design: ItemDesign; selectedFlora: number | null; onSelectFlora: (i: number | null) => void; onSetWater: (w: WaterFeature[]) => void; onSetFlora: (f: EnclosureFlora[]) => void }) {
   const dims = { small: { w: 132, h: 92 }, medium: { w: 176, h: 118 }, large: { w: 220, h: 146 } }[item.enclosureSize ?? 'medium'];
   const water = enclosureWater(design);
   const flora = enclosureFlora(design);
@@ -67,22 +67,27 @@ function EnclosurePreview({ item, design, onSetWater, onSetFlora }: { item: Back
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
-  // Planting works like water: drag the plant to move it, drag its corner to scale it.
+  // Planting works like water: drag the plant to move it, drag its corner to scale it. A tap (no
+  // drag) selects it, so you can colour that one plant on its own.
   const dragFlora = (i: number, mode: 'move' | 'resize') => (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const sx = e.clientX, sy = e.clientY, orig = flora[i];
+    let moved = false;
     const move = (ev: PointerEvent) => {
+      if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 3) moved = true;
       const dx = (ev.clientX - sx) / dims.w, dy = (ev.clientY - sy) / dims.h;
       onSetFlora(flora.map((f, j) => j !== i ? f : mode === 'move'
         ? { ...f, x: clampF(orig.x + dx, 0.05, 0.95), y: clampF(orig.y + dy, 0.08, 0.95) }
         : { ...f, s: clampF(orig.s + (dx + dy) * 1.5, 0.5, 2.6) }));
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); if (!moved) onSelectFlora(i); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
   return (
     <EnclosureBox shape={design.parts.shape ?? 'rounded'} w={dims.w} h={dims.h} ground={design.colors.ground ?? '#cbb78d'} fence={design.colors.fence ?? '#9a7b4f'} border={4}>
+      {/* Click empty ground to deselect the current plant. */}
+      <div className="absolute inset-0" onPointerDown={() => onSelectFlora(null)} />
       {water.map((wf, i) => (
         <div key={i} className="group absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, touchAction: 'none' }}>
           <div onPointerDown={drag(i, 'move')} className="h-full w-full cursor-grab rounded-full active:cursor-grabbing"
@@ -94,8 +99,8 @@ function EnclosurePreview({ item, design, onSetWater, onSetFlora }: { item: Back
       ))}
       {flora.map((fl, i) => (
         <div key={`fl-${i}`} className="group absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
-          <div onPointerDown={dragFlora(i, 'move')} className="cursor-grab active:cursor-grabbing" style={{ transform: `scale(${fl.s})`, transformOrigin: 'center' }}>
-            <FloraSprite type={fl.type} foliage={design.colors.foliage} trunk={design.colors.trunk} cell={2} />
+          <div onPointerDown={dragFlora(i, 'move')} className={cn('cursor-grab rounded-sm active:cursor-grabbing', selectedFlora === i && 'ring-2 ring-primary ring-offset-1')} style={{ transform: `scale(${fl.s})`, transformOrigin: 'center' }}>
+            <FloraSprite type={fl.type} foliage={fl.foliage ?? design.colors.foliage} trunk={fl.trunk ?? design.colors.trunk} cell={2} />
           </div>
           <button type="button" aria-label="Remove planting" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); onSetFlora(flora.filter((_, j) => j !== i)); }}
             className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
@@ -136,6 +141,8 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   // A landscape feature (river, pond, car park...) is scenery you colour here and size on the park -
   // not a plant you pick, so the flora "type" grid and "foliage/trunk" labels do not fit it.
   const isLand = isFlora && isLandscapeType(design.parts.type ?? item.template);
+  // Which planted item inside an enclosure is selected, so it can be coloured on its own.
+  const [selectedFlora, setSelectedFlora] = useState<number | null>(null);
 
   const commit = (next: ItemDesign) => { setDesign(next); onChange?.(next); };
   const setWater = (w: WaterFeature[]) => commit({ ...design, water: w });
@@ -240,7 +247,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
       <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         {/* Live preview */}
         <div className="flex min-h-[120px] items-center justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
-          {isEnclosure ? <EnclosurePreview item={item} design={design} onSetWater={setWater} onSetFlora={setFlora} />
+          {isEnclosure ? <EnclosurePreview item={item} design={design} selectedFlora={selectedFlora} onSelectFlora={setSelectedFlora} onSetWater={setWater} onSetFlora={setFlora} />
             : isPath ? (
               <div className="flex w-full max-w-[240px] flex-col items-center gap-2">
                 <svg width="200" height="70" aria-hidden>
@@ -285,13 +292,34 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                   className="rounded-full border border-sky-600/50 bg-sky-600/5 px-2.5 py-0.5 text-xs font-medium capitalize text-sky-700 hover:bg-sky-600/10 dark:text-sky-400">+ {t}</button>
               ))}
             </div>
-            {enclosureFlora(design).length > 0 && (
+            {enclosureFlora(design).length > 0 && (() => {
+              const encFlora = enclosureFlora(design);
+              const sel = selectedFlora != null ? encFlora[selectedFlora] : null;
+              return (
               <>
-                <span className="block text-[11px] text-muted-foreground/70">Drag a plant to move it, drag its corner to resize, hover for &times;.</span>
-                <ColourPickerRow label="Foliage" value={design.colors.foliage} onChange={(hex) => setColor('foliage', hex)} />
-                <ColourPickerRow label="Trunk / bed" value={design.colors.trunk} onChange={(hex) => setColor('trunk', hex)} />
+                <span className="block text-[11px] text-muted-foreground/70">Click a plant or feature to colour it on its own; drag to move, drag its corner to resize, hover for &times;.</span>
+                {sel ? (
+                  <div className="space-y-2 rounded-md border border-primary/40 bg-primary/5 p-2">
+                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                      <span className="rounded-full bg-primary px-2 py-0.5 font-medium capitalize text-primary-foreground">{sel.type}</span>
+                      <span className="text-muted-foreground/70">colouring just this one</span>
+                      <button type="button" onClick={() => setSelectedFlora(null)} className="ml-auto rounded border border-border px-1.5 py-0.5 font-medium hover:bg-muted/40">Colour all instead</button>
+                    </div>
+                    {floraColors(sel.type).map((c) => {
+                      const key = c.key as 'foliage' | 'trunk';
+                      return <ColourPickerRow key={key} label={c.label} value={sel[key] ?? design.colors[key]}
+                        onChange={(hex) => setFlora(encFlora.map((f, j) => (j === selectedFlora ? { ...f, [key]: hex } : f)))} />;
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    <ColourPickerRow label="Foliage" value={design.colors.foliage} onChange={(hex) => setColor('foliage', hex)} />
+                    <ColourPickerRow label="Trunk / bed" value={design.colors.trunk} onChange={(hex) => setColor('trunk', hex)} />
+                  </>
+                )}
               </>
-            )}
+              );
+            })()}
           </div>
         ) : isExhibit ? (
           <div className="space-y-3">
