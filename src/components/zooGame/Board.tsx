@@ -313,6 +313,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
           </button>
           <CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 truncate text-left font-medium hover:text-foreground">{it.name}</button>
+          {it.carriedOver && <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400" title={`Carried over unfinished - re-estimate the work that's left (was ${it.estimate} pts)`}>carried over</span>}
           <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
           {action}
         </div>

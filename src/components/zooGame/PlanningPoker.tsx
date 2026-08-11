@@ -29,6 +29,12 @@ export function PlanningPoker({ item, seed, onCommit, onCancel }: PlanningPokerP
       </div>
       <p className="mb-3 text-[11px] text-muted-foreground">The team each show a card. The forecast is the most common value, ties rounding up. Estimate the size and complexity - it is a shared forecast, not a promise.</p>
 
+      {item.carriedOver && (
+        <p className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-800 dark:text-amber-300">
+          Carried over unfinished (was {item.estimate} pts). Estimate the work that is <b>left</b>, not the whole item again - the build progress is kept. Velocity only counts it once, in the Sprint it is finished.
+        </p>
+      )}
+
       <div className="mb-3 flex items-center gap-2">
         {hand.map((c, i) => (
           <span key={i} className="flex h-12 w-9 items-center justify-center rounded-md border border-border bg-card font-mono text-lg font-bold shadow-sm">{c}</span>

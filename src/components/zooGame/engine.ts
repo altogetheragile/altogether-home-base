@@ -196,7 +196,7 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
 /** Commit an estimate to a Backlog item (refinement): it becomes sized and can now
  *  be planned. */
 export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
-  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false } : it));
+  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false, carriedOver: false } : it));
   return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.estimate);
 }
 
@@ -875,11 +875,18 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
 
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
-  // Unfinished committed items (never built) return to the Backlog; clear the per-Sprint
-  // goal-critical mark so it is re-decided next time they are planned.
-  const backlog = state.backlog.map((it) =>
-    it.sprintNumber === state.sprintNumber && it.status === 'committed' ? { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false } : it,
-  );
+  // Unfinished committed items return to the Backlog to be RE-ESTIMATED against the work that is
+  // LEFT, then re-planned (a fresh Ready check). Their build progress - design and ticked plan
+  // tasks - is kept; only their sizing is reopened, with the poker nudged toward the remaining
+  // work (trueSize scaled by how much of the plan is still to do). The per-Sprint goal-critical
+  // mark is cleared so it is re-decided next time they are planned.
+  const backlog = state.backlog.map((it) => {
+    if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
+    const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
+    const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
+    const remaining = Math.max(1, Math.round((it.trueSize ?? it.estimate ?? 5) * (1 - doneFrac)));
+    return { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false, unsized: true, carriedOver: true, trueSize: remaining };
+  });
 
   return {
     ...state,
