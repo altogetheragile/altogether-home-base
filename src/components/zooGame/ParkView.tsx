@@ -2,6 +2,7 @@ import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type Point
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
 import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
+import { VisitorLayer, type Attraction } from './VisitorLayer';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -704,6 +705,20 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
 
   const selected = connectors.find((c) => c.id === selectedConn) ?? null;
 
+  // Living visitors: the exhibits worth visiting (built enclosures with animals, at their centre and
+  // with an appeal per segment averaged from their animals), the food stops that satisfy hunger, and
+  // the entrance they arrive at. Fed to the guest layer drawn over the park.
+  const norm = (v: number, n: number) => Math.max(0.15, Math.min(1, v / n / 8));
+  const attractions: Attraction[] = features
+    .filter((f) => f.kind === 'enclosure' && f.animals.length > 0)
+    .map((f) => {
+      const c = posOf(f), n = f.animals.length, a = { families: 0, enthusiasts: 0, comfortSeekers: 0 };
+      for (const an of f.animals) { const g = an.appeal; if (g) { a.families += g.families; a.enthusiasts += g.enthusiasts; a.comfortSeekers += g.comfortSeekers; } }
+      return { x: c.x, y: c.y, appeal: { families: norm(a.families, n), enthusiasts: norm(a.enthusiasts, n), comfortSeekers: norm(a.comfortSeekers, n) } };
+    });
+  const foodPts = features.filter((f) => f.item.category === 'amenity').map((f) => { const c = posOf(f); return { x: c.x, y: c.y }; });
+  const visitorEntrance = { x: CANVAS_W / 2, y: canvasH - PATH_H / 2 };
+
   return (
     <div ref={outer} className="relative w-full" style={{ height: canvasH * scale }}>
       <div ref={inner}
@@ -836,21 +851,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           );
         })}
 
-        {/* Visitors keep to the promenade, never inside a habitat. */}
-        {dots.length > 0 && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: PATH_H }} aria-hidden>
-            {dots.map((seg, i) => (
-              <span key={i} className="zoo-visitor absolute" style={{
-                left: `${4 + jitter(i, 0) * 92}%`, top: `${18 + jitter(i, 1) * 50}%`,
-                animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite`,
-              }}>
-                <span className="block rounded-full ring-1 ring-white/70" style={{ width: 5, height: 5, margin: '0 auto', background: '#f0c9a8' }} />
-                <span className="block rounded-b-sm rounded-t" style={{ width: 7, height: 7, background: SEG_DOT[seg] }} />
-              </span>
-            ))}
-          </div>
-        )}
       </div>
+      {/* Living visitors: guests walk the park to the live exhibits and react. Drawn over the
+          (unscaled) outer box so they stay crisp at any zoom. */}
+      {attractions.length > 0 && (
+        <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={canvasH} />
+      )}
     </div>
   );
 }
