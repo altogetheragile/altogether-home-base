@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, floraDefaultColors, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, floraDefaultColors, appealFromDesign, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
@@ -10,6 +10,36 @@ import { TaskChecklist } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, Copy } from 'lucide-react';
+
+/** Live "who will love this" read-out for an exhibit, so design choices (bright vs muted, busy vs
+ *  calm, distinctive markings, finish) show their payoff as you build. Surfaces appealFromDesign. */
+function AppealMeter({ item, design }: { item: BacklogItem; design: ItemDesign }) {
+  const appeal = appealFromDesign(item, design);
+  if (!appeal) return null;
+  const segs = [
+    { id: 'families' as const, label: 'Families', color: '#ef6f53' },
+    { id: 'enthusiasts' as const, label: 'Enthusiasts', color: '#4a90d9' },
+    { id: 'comfortSeekers' as const, label: 'Comfort seekers', color: '#43a047' },
+  ];
+  const best = segs.reduce((a, b) => (appeal[b.id] > appeal[a.id] ? b : a));
+  return (
+    <div className="space-y-1.5 rounded-md border border-border bg-muted/20 p-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Visitor appeal</span>
+        <span className="text-[11px] text-muted-foreground">Best for <b className="text-foreground">{best.label}</b></span>
+      </div>
+      {segs.map((s) => (
+        <div key={s.id} className="flex items-center gap-2">
+          <span className="w-24 shrink-0 text-[11px] text-muted-foreground">{s.label}</span>
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-border/50">
+            <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${Math.max(4, Math.min(100, appeal[s.id] * 10))}%`, background: s.color }} />
+          </div>
+          <span className="w-6 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground">{appeal[s.id].toFixed(1)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** A built design you can copy as a starting point (e.g. an existing lion). */
 export interface CopySource { id: string; name: string; design: ItemDesign }
@@ -333,6 +363,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                 </div>
               );
             })}
+            <AppealMeter item={item} design={design} />
           </div>
         ) : isFlora ? (
           <div className="space-y-3">
