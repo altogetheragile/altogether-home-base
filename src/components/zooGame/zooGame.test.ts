@@ -1017,7 +1017,7 @@ describe('zoo game: the toolbox', () => {
 
   it('offers landscape & wayfinding items as normal (PBI-creating) toolbox pieces with fitting shapes and ACs', () => {
     const items = TOOLBOX.flatMap((g) => g.items);
-    for (const name of ['River', 'Pond', 'Rocks', 'Entrance', 'Car Park', 'Hedge', 'Fountain']) {
+    for (const name of ['River', 'Pond', 'Rocks', 'Entrance', 'Hedge', 'Fountain']) {
       const t = items.find((i) => i.name === name)!;
       expect(t, name).toBeTruthy();
       expect(t.category).toBe('flora'); // scenery flows through the flora/PBI pipeline

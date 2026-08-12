@@ -68,7 +68,7 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
     // Landscape & wayfinding: scenery and arrival features. Each is a Backlog item like any other -
     // refine, estimate, build and deploy it. (Paths themselves are drawn when you deploy.)
     group: 'Landscape & wayfinding',
-    items: [pathway('Pathway'), flora('River', 'river'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Entrance', 'entrance'), flora('Car Park', 'carpark')],
+    items: [pathway('Pathway'), flora('River', 'river'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Entrance', 'entrance')],
   },
 ];
 
