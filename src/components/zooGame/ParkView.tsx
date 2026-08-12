@@ -714,7 +714,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     .map((f) => {
       const c = posOf(f), n = f.animals.length, a = { families: 0, enthusiasts: 0, comfortSeekers: 0 };
       for (const an of f.animals) { const g = an.appeal; if (g) { a.families += g.families; a.enthusiasts += g.enthusiasts; a.comfortSeekers += g.comfortSeekers; } }
-      return { x: c.x, y: c.y, appeal: { families: norm(a.families, n), enthusiasts: norm(a.enthusiasts, n), comfortSeekers: norm(a.comfortSeekers, n) } };
+      return { x: c.x, y: c.y, hh: f.h / 2, appeal: { families: norm(a.families, n), enthusiasts: norm(a.enthusiasts, n), comfortSeekers: norm(a.comfortSeekers, n) } };
     });
   const foodPts = features.filter((f) => f.item.category === 'amenity').map((f) => { const c = posOf(f); return { x: c.x, y: c.y }; });
   const visitorEntrance = { x: CANVAS_W / 2, y: canvasH - PATH_H / 2 };
