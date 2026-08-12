@@ -3,6 +3,7 @@ import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './ty
 import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
+import { carParkLayout, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -718,9 +719,18 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     });
   const foodPts = features.filter((f) => f.item.category === 'amenity').map((f) => { const c = posOf(f); return { x: c.x, y: c.y }; });
   const visitorEntrance = { x: CANVAS_W / 2, y: canvasH - PATH_H / 2 };
+  // The car park is the frame outside the fence: an apron pinned below the entrance, full width, no
+  // matter how tall the park grows. It starts empty and fills as the zoo opens more to see - roughly
+  // three cars per live exhibit or amenity, with coaches once the park is a real day out - so the lot
+  // reads as how busy the park is. Guests arrive from its cars and walk up through the gate.
+  const built = attractions.length + foodPts.length;
+  const carCount = Math.min(16, built * 3);
+  const busCount = built >= 5 ? 2 : built >= 3 ? 1 : 0;
+  const carPark = carParkLayout(CANVAS_W, canvasH, carCount, busCount);
+  const sceneH = canvasH + CAR_PARK_H;
 
   return (
-    <div ref={outer} className="relative w-full" style={{ height: canvasH * scale }}>
+    <div ref={outer} className="relative w-full" style={{ height: sceneH * scale }}>
       <div ref={inner}
         onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => onSelectConn?.(null) : undefined)}
         onPointerMove={tool === 'connect' ? (e) => setCursor(ptOf(e)) : undefined}
@@ -852,11 +862,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         })}
 
       </div>
-      {/* Living visitors: guests walk the park to the live exhibits and react. Drawn over the
-          (unscaled) outer box so they stay crisp at any zoom. */}
-      {attractions.length > 0 && (
-        <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={canvasH} />
-      )}
+      {/* Living visitors + the car park: the lot is drawn in this layer below the fence, and guests
+          arrive from its cars and walk the park to the live exhibits. Drawn over the (unscaled) outer
+          box so they stay crisp at any zoom. Always mounted so the lot shows even before opening. */}
+      <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={sceneH} carPark={carPark} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { SegmentId } from './simulation/types';
+import { drawCarPark, type CarParkLayout } from './carPark';
 
 // ============= Living visitors =============
 //
@@ -21,9 +22,9 @@ type Role = 'adult' | 'kid' | 'pram';
 interface Member { role: Role; ox: number; oy: number; x: number; y: number; vx: number; vy: number; color: string; phase: number; hand: boolean; }
 interface Party {
   seg: SegmentId; color: string; x: number; y: number; route: Pt[]; ri: number;
-  state: 'toExhibit' | 'viewing' | 'toFood' | 'atFood' | 'leaving'; target: Attraction | null; food: Pt | null;
+  state: 'arriving' | 'toExhibit' | 'viewing' | 'toFood' | 'atFood' | 'leaving' | 'departing'; target: Attraction | null; food: Pt | null;
   dwell: number; mood: number; emote: 'heart' | 'frown' | 'need' | null; et: number; needy: boolean;
-  jx: number; jy: number; speed: number; members: Member[];
+  jx: number; jy: number; speed: number; members: Member[]; homeCar: Pt | null;
 }
 
 function lighten(hex: string, amt: number): string {
@@ -32,12 +33,12 @@ function lighten(hex: string, amt: number): string {
 }
 const rnd = () => Math.random();
 
-interface Inputs { attractions: Attraction[]; food: Pt[]; entrance: Pt; mix: SegmentId[]; W: number; H: number; }
+interface Inputs { attractions: Attraction[]; food: Pt[]; entrance: Pt; mix: SegmentId[]; W: number; H: number; carPark?: CarParkLayout | null; }
 
-export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs) {
+export function VisitorLayer({ attractions, food, entrance, mix, W, H, carPark }: Inputs) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const inRef = useRef<Inputs>({ attractions, food, entrance, mix, W, H });
-  useEffect(() => { inRef.current = { attractions, food, entrance, mix, W, H }; });
+  const inRef = useRef<Inputs>({ attractions, food, entrance, mix, W, H, carPark });
+  useEffect(() => { inRef.current = { attractions, food, entrance, mix, W, H, carPark }; });
 
   useEffect(() => {
     const canvas0 = canvasRef.current; if (!canvas0) return;
@@ -49,7 +50,11 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
     const parties: Party[] = [];
     let spawnTimer = 0.4, raf = 0, last = performance.now();
 
-    const hub = () => { const I = inRef.current; return { x: I.W / 2, y: I.H * 0.62 }; };
+    // A routing midpoint inside the park. The park is the scene minus the car-park apron, so the hub
+    // stays in the grounds even though the canvas now extends over the lot below the fence.
+    const hub = () => { const I = inRef.current; const parkH = I.carPark ? I.carPark.top : I.H; return { x: I.W / 2, y: parkH * 0.62 }; };
+    // Where a party gathers at an exhibit: at the fence, in front of it, never inside.
+    const gatherPt = (a: Attraction): Pt => ({ x: a.x + (rnd() - 0.5) * 40, y: a.y + a.hh + 12 + (rnd() - 0.5) * 6 });
 
     function pickSeg(mix: SegmentId[]): SegmentId {
       // Weight party segments by the current visitor mix (falls back to a family-heavy default).
@@ -78,16 +83,43 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
     function spawn() {
       const I = inRef.current; if (!I.attractions.length) return;
       const seg = pickSeg(I.mix), target = I.attractions[(rnd() * I.attractions.length) | 0];
-      // Gather at the fence, IN FRONT of the enclosure (below its bottom edge) - never inside it.
-      const gx = target.x + (rnd() - 0.5) * 40, gy = target.y + target.hh + 12 + (rnd() - 0.5) * 6;
+      const cp = I.carPark;
+      // Arrive from a parked car (or coach) in the lot when there is one; otherwise appear at the gate.
+      let x: number, y: number, state: Party['state'], route: Pt[], homeCar: Pt | null;
+      if (cp && cp.spots.length) {
+        const s = cp.spots[(rnd() * cp.spots.length) | 0];
+        x = s.x + (rnd() - 0.5) * 10; y = s.y - (s.bus ? 50 : 24) - 6; // step out in front, toward the gate
+        homeCar = { x: s.x, y: s.y }; state = 'arriving'; route = [];
+      } else {
+        x = I.entrance.x + (rnd() - 0.5) * 40; y = I.entrance.y;
+        state = 'toExhibit'; route = [hub(), gatherPt(target)]; homeCar = null;
+      }
       const p: Party = {
-        seg, color: SEG[seg], x: I.entrance.x + (rnd() - 0.5) * 40, y: I.entrance.y,
-        route: [hub(), { x: gx, y: gy }], ri: 0, state: 'toExhibit', target, food: null,
+        seg, color: SEG[seg], x, y, route, ri: 0, state, target, food: null,
         dwell: 0, mood: 0, emote: null, et: 0, needy: seg !== 'enthusiasts' && rnd() < 0.3,
-        jx: (rnd() - 0.5) * 40, jy: (rnd() - 0.5) * 12, speed: 46 + rnd() * 24, members: members(seg),
+        jx: (rnd() - 0.5) * 40, jy: (rnd() - 0.5) * 12, speed: 46 + rnd() * 24, members: members(seg), homeCar,
       };
       for (const m of p.members) { m.x = p.x + m.ox; m.y = p.y + m.oy; m.vx = m.x; m.vy = m.y; }
       parties.push(p);
+    }
+
+    // Steer a party through the lot toward `targetX`, going `dir` (-1 up to the gate, +1 down to a
+    // car), sliding around the parked footprints so guests walk between the cars, never over them.
+    function apronSteer(p: Party, dir: number, targetX: number, dt: number) {
+      const cp = inRef.current.carPark; if (!cp) return;
+      let vx = Math.max(-0.6, Math.min(0.6, (targetX - p.x) * 0.02)), vy = dir;
+      for (const o of cp.obstacles) {
+        const margin = 9, look = 18;
+        const nearX = p.x > o.x0 - margin && p.x < o.x1 + margin;
+        const ahead = dir < 0 ? (p.y > o.y0 - 2 && p.y < o.y1 + margin + look) : (p.y < o.y1 + 2 && p.y > o.y0 - margin - look);
+        if (nearX && ahead) {
+          const toLeft = p.x - (o.x0 - margin), toRight = (o.x1 + margin) - p.x;
+          const depth = 1 - Math.min(toLeft, toRight) / (o.x1 - o.x0 + 2 * margin);
+          vx += (toLeft < toRight ? -1 : 1) * (1.2 + 1.4 * depth); vy *= 0.25;
+        }
+      }
+      const m = Math.hypot(vx, vy) || 1, sp = p.speed * dt;
+      p.x += vx / m * sp; p.y += vy / m * sp;
     }
 
     function arrive(p: Party) {
@@ -119,9 +151,17 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
       for (let i = parties.length - 1; i >= 0; i--) {
         const p = parties[i];
         if (p.emote) { p.et -= dt; if (p.et <= 0) p.emote = null; }
-        const moving = p.state === 'toExhibit' || p.state === 'toFood' || p.state === 'leaving';
+        const moving = p.state === 'arriving' || p.state === 'toExhibit' || p.state === 'toFood' || p.state === 'leaving' || p.state === 'departing';
 
-        if (p.state === 'viewing' || p.state === 'atFood') {
+        if (p.state === 'arriving') {
+          // Walk up out of the lot to the gate, then join the park and head for the exhibit.
+          apronSteer(p, -1, I.entrance.x, dt);
+          if (p.y <= I.entrance.y) { p.state = 'toExhibit'; p.route = [hub(), gatherPt(p.target!)]; p.ri = 0; }
+        } else if (p.state === 'departing') {
+          // Back down through the lot to the car they came in, then they are gone.
+          const hc = p.homeCar!; apronSteer(p, 1, hc.x, dt);
+          if (p.y >= hc.y - 2) { parties.splice(i, 1); continue; }
+        } else if (p.state === 'viewing' || p.state === 'atFood') {
           p.dwell -= dt; if (p.dwell <= 0) { if (p.state === 'viewing') afterView(p); else leave(p); }
         } else if (p.route.length) {
           const dest = p.route[p.ri], dx = dest.x - p.x, dy = dest.y - p.y, d = Math.hypot(dx, dy) || 1, sd = p.speed * dt;
@@ -129,6 +169,7 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
             if (p.ri >= p.route.length) {
               if (p.state === 'toExhibit') arrive(p);
               else if (p.state === 'toFood') { p.state = 'atFood'; p.dwell = 1.1; p.emote = 'heart'; p.et = 1.3; p.mood = 0.5; }
+              else if (I.carPark && p.homeCar) { p.state = 'departing'; p.route = []; } // at the gate: walk back to the car
               else { parties.splice(i, 1); continue; }
             }
           } else { p.x += dx / d * sd; p.y += dy / d * sd; }
@@ -201,6 +242,7 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
       const s = (cw / I.W) * dpr;
       ctx.setTransform(s, 0, 0, s, 0, 0);
       ctx.clearRect(0, 0, I.W, I.H);
+      if (I.carPark) drawCarPark(ctx, I.carPark); // the lot sits below the fence, under the guests
       for (const p of [...parties].sort((a, b) => a.y - b.y)) party(p);
     }
 
