@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance, isLandscapeType } from './design';
+import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, isLandscapeType } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -128,12 +128,12 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
       created.push({
         id: mem.enclosureId ?? `${mem.id}-enc`, name: mem.habitat ?? `${mem.name} Enclosure`, category: 'enclosure', zone,
         enclosureSize: mem.footprint ?? 'medium',
-        acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
+        acceptance: enclosureAcceptance(),
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: Math.max(3, Math.round(mem.size / 2)),
       });
       created.push({
         id: mem.id, name: mem.name, category: 'exhibit', zone, template: mem.template, enclosureId: mem.enclosureId,
-        acceptance: ['Recognisable as a ' + mem.name.toLowerCase(), 'Uses at least two colours', 'No bare patches'],
+        acceptance: exhibitAcceptance(mem.name),
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
         appeal: mem.appeal ? { families: mem.appeal[0], enthusiasts: mem.appeal[1], comfortSeekers: mem.appeal[2] } : undefined, capacity: 320,
       });
@@ -701,10 +701,10 @@ function escalateSignals(prevAge: Record<string, number>, fresh: Signal[]): { si
 function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   const id = 'sig-' + sig.drivenBy.replace(/[^a-z]/g, '') + '-' + state.backlog.length;
   const base = { id, status: 'backlog' as const, sprintNumber: null, accessible: true, zone: 'General', unsized: true, estimate: 0 };
-  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: ['Clearly signed', 'Serves food and drink'], services: 'food', serviceCapacity: 500 };
-  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: ['Clearly signed', 'Has enough cubicles'], services: 'toilet', serviceCapacity: 500 };
-  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: ['Enough seating', 'Some shade'], services: 'rest', serviceCapacity: 500 };
-  if (sig.drivenBy === 'crowding') return { ...base, name: 'Extra viewing area', category: 'amenity', trueSize: 5, acceptance: ['Eases the queues', 'Good sightlines'] };
+  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: amenityAcceptance('Food outlet', 'food'), services: 'food', serviceCapacity: 500 };
+  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('More toilets', 'toilet'), services: 'toilet', serviceCapacity: 500 };
+  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('Seating and shade', 'rest'), services: 'rest', serviceCapacity: 500 };
+  if (sig.drivenBy === 'crowding') return { ...base, name: 'Extra viewing area', category: 'amenity', trueSize: 5, acceptance: ['Eases the queues', 'Good sightlines', 'Placed where visitors can reach it'] };
   return null;
 }
 

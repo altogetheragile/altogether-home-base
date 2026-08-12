@@ -2,7 +2,7 @@ import type { BacklogItem, ZooGameState, EpicMember } from './types';
 import type { ZooItem } from './simulation/types';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
-import { amenityAcceptance } from './design';
+import { amenityAcceptance, enclosureAcceptance, exhibitAcceptance } from './design';
 
 /** First-Sprint capacity guess, before there is velocity. A deliberate over-guess: you
  *  cannot know velocity yet, so this is a starting point you learn away from by doing. */
@@ -127,7 +127,7 @@ function epic(id: string, name: string, zone: string, members: EpicMember[]): Ba
 function ex(id: string, name: string, zone: string, size: number, appeal: [number, number, number], enclosureId?: string, unsized = false): BacklogItem {
   return {
     id, name, category: 'exhibit', zone, enclosureId, estimate: unsized ? 0 : size, unsized, trueSize: size,
-    acceptance: ['Recognisable as a ' + name.toLowerCase(), 'Uses at least two colours', 'No bare patches'],
+    acceptance: exhibitAcceptance(name),
     status: 'backlog', sprintNumber: null, accessible: true,
     appeal: { families: appeal[0], enthusiasts: appeal[1], comfortSeekers: appeal[2] }, capacity: 320,
   };
@@ -138,7 +138,7 @@ function ex(id: string, name: string, zone: string, size: number, appeal: [numbe
 function enc(id: string, name: string, zone: string, size: number, footprint: 'small' | 'medium' | 'large', unsized = false): BacklogItem {
   return {
     id, name, category: 'enclosure', zone, enclosureSize: footprint, estimate: unsized ? 0 : size, unsized, trueSize: size,
-    acceptance: ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up'],
+    acceptance: enclosureAcceptance(),
     status: 'backlog', sprintNumber: null, accessible: true,
   };
 }

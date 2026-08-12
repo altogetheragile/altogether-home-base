@@ -415,15 +415,36 @@ export const pathWidthPx = (thickness?: string): number => PATH_WIDTHS.find((w) 
 /** Acceptance criteria that fit a piece of scenery/landscape from its type (a river reads as water,
  *  an entrance marks the way in), so each backlog item is judged against something sensible. */
 export function floraAcceptance(type?: string): string[] {
+  // Each list ends with a DEPLOY (placement/sizing) criterion, confirmed on the park; the rest are
+  // BUILD (appearance), confirmed in the studio.
   switch (type) {
-    case 'signpost': return ['Clearly readable', 'Coloured'];
+    case 'signpost': return ['Clearly readable', 'Coloured', 'Placed where visitors will see it'];
     case 'river': case 'pond': case 'fountain': return ['Reads as water', 'Sized to fit the space'];
     case 'rocks': return ['Reads as rock', 'Sized to fit the space'];
-    case 'entrance': return ['Clearly marks the way in', 'Coloured'];
+    case 'entrance': return ['Clearly marks the way in', 'Coloured', 'Placed at the way in'];
     case 'carpark': return ['Clearly marked out', 'Sized to fit the space'];
     case 'hedge': return ['Reads as a hedge', 'Sized to fit the space'];
-    default: return ['Fits the planting', 'Coloured, no bare patches'];
+    default: return ['Fits the planting', 'Coloured, no bare patches', 'Placed where it looks right'];
   }
+}
+
+/** Build + placement acceptance criteria for an enclosure (habitat). The footprint is a studio
+ *  (build) decision; where it sits in the park is the deploy one. */
+export function enclosureAcceptance(): string[] {
+  return ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up', 'Placed in its zone with room around it'];
+}
+
+/** Build + placement acceptance criteria for an exhibit (animal): built to look right, then settled
+ *  into its enclosure. Handles plural names ("Penguins" -> "recognisable as penguins"). */
+export function exhibitAcceptance(name: string): string[] {
+  const looksLike = `Recognisable as ${/s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase()}`;
+  return [looksLike, 'Uses at least two colours', 'No bare patches', 'Placed in its enclosure'];
+}
+
+/** Build + placement acceptance criteria for a pathway: designed as a width + colour in the studio,
+ *  then routed (placed) on the park to link things - the route can only be judged once drawn. */
+export function pathAcceptance(): string[] {
+  return ['The right width and colour', 'Placed to link the right features'];
 }
 
 /** Whether an acceptance criterion is a DEPLOY-time one - about how the item is sized or placed,
@@ -484,11 +505,13 @@ export function buildingTypeFor(name: string, services?: string): string {
  *  in the same service group. */
 export function amenityAcceptance(name: string, services?: string): string[] {
   const n = name.toLowerCase();
-  if (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) return ['Clearly signed', 'Has enough cubicles'];
-  if (/gift|shop|souvenir|store|retail/.test(n)) return ['Clearly signed', 'Sells a range of souvenirs'];
-  if (services === 'food' || /kiosk|caf|coffee|restaurant|snack|food|drink|refresh|outlet/.test(n)) return ['Clearly signed', 'Serves food and drink'];
-  if (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) return ['Clearly signed', 'Enough seating and shade'];
-  return ['Clearly signed', 'Fit for its purpose'];
+  const build = (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) ? ['Clearly signed', 'Has enough cubicles']
+    : /gift|shop|souvenir|store|retail/.test(n) ? ['Clearly signed', 'Sells a range of souvenirs']
+    : (services === 'food' || /kiosk|caf|coffee|restaurant|snack|food|drink|refresh|outlet/.test(n)) ? ['Clearly signed', 'Serves food and drink']
+    : (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) ? ['Clearly signed', 'Enough seating and shade']
+    : ['Clearly signed', 'Fit for its purpose'];
+  // ...then placed where visitors can actually reach it (a deploy-time, on-the-park criterion).
+  return [...build, 'Placed where visitors can reach it'];
 }
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
