@@ -12,7 +12,7 @@ import type { SegmentId } from './simulation/types';
 
 type Pt = { x: number; y: number };
 type Appeal = { families: number; enthusiasts: number; comfortSeekers: number };
-export type Attraction = Pt & { appeal: Appeal };
+export type Attraction = Pt & { hh: number; appeal: Appeal };
 
 const SEG: Record<SegmentId, string> = { families: '#ef6f53', enthusiasts: '#4a90d9', comfortSeekers: '#43a047' };
 const SKIN = '#f1c9a0';
@@ -78,7 +78,8 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
     function spawn() {
       const I = inRef.current; if (!I.attractions.length) return;
       const seg = pickSeg(I.mix), target = I.attractions[(rnd() * I.attractions.length) | 0];
-      const gx = target.x + (rnd() - 0.5) * 40, gy = target.y + 46 + (rnd() - 0.5) * 10;
+      // Gather at the fence, IN FRONT of the enclosure (below its bottom edge) - never inside it.
+      const gx = target.x + (rnd() - 0.5) * 40, gy = target.y + target.hh + 12 + (rnd() - 0.5) * 6;
       const p: Party = {
         seg, color: SEG[seg], x: I.entrance.x + (rnd() - 0.5) * 40, y: I.entrance.y,
         route: [hub(), { x: gx, y: gy }], ri: 0, state: 'toExhibit', target, food: null,
@@ -96,10 +97,10 @@ export function VisitorLayer({ attractions, food, entrance, mix, W, H }: Inputs)
       p.mood = Math.max(-1, Math.min(1, (ap - (p.seg === 'comfortSeekers' ? Math.max(0, crowd - 4) * 0.1 : 0)) * 2 - 0.6));
       if (p.mood > 0.3) p.emote = 'heart'; else if (p.mood < -0.2) p.emote = 'frown';
       p.et = p.dwell;
-      // Kids press up to the fence, the grown-ups hang back a little.
+      // Kids press up to the fence (front edge), the grown-ups hang back a little - all OUTSIDE it.
       p.members.forEach((m, i) => {
         const spread = (i - (p.members.length - 1) / 2) * 13 + (rnd() - 0.5) * 4;
-        m.vx = a.x + spread; m.vy = a.y + (m.role === 'adult' ? 50 : 26);
+        m.vx = a.x + spread; m.vy = a.y + a.hh + (m.role === 'adult' ? 22 : 6);
       });
     }
     function afterView(p: Party) {
