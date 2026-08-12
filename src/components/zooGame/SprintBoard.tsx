@@ -332,9 +332,12 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                 <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
                 <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
                   {done.map((it) => (
-                    <ItemCard key={it.id} item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
-                      subtitle={<CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />}
-                      actions={doneActions(it)} />
+                    // data-done-card lets the delivery celebration burst confetti from this card.
+                    <div key={it.id} data-done-card={it.id}>
+                      <ItemCard item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
+                        subtitle={<CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />}
+                        actions={doneActions(it)} />
+                    </div>
                   ))}
                 </BoardColumn>
                 </div>
