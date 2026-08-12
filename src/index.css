@@ -271,3 +271,11 @@
 }
 .zoo-pop-in { animation: zoo-pop-in 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
 @media (prefers-reduced-motion: reduce) { .zoo-pop-in { animation: none; } }
+
+/* Zoo game: a gentle idle bob so delivered animals feel alive on the park. */
+@keyframes zoo-idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-2px) scale(1.04); }
+}
+.zoo-idle { animation: zoo-idle 2.4s ease-in-out infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .zoo-idle { animation: none; } }

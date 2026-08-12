@@ -368,7 +368,10 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
             <div key={a.id} className={cn('absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
               onPointerDown={(e) => startSpotDrag(e, a.id, false)}
               style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot ? 'none' : undefined }}>
-              <Sprite item={a} design={a.design ?? presetFor(a)} cell={cell} />
+              {/* Gentle idle bob so the animals feel alive; each desynced by a stable per-animal delay. */}
+              <div className={cn(drag?.id !== a.id && 'zoo-idle')} style={{ animationDelay: `-${(jitter(i, 1) * 2.4).toFixed(2)}s` }}>
+                <Sprite item={a} design={a.design ?? presetFor(a)} cell={cell} />
+              </div>
             </div>
           );
         })}
