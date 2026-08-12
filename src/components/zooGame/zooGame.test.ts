@@ -975,7 +975,10 @@ describe('zoo game: the toolbox', () => {
     const pathway = TOOLBOX.flatMap((g) => g.items).find((i) => i.name === 'Pathway')!;
     expect(pathway.category).toBe('path');
     const draft = toolboxDraft(pathway);
-    expect(draft.acceptance).toContain('Clearly routed');
+    // Build AC (studio: width + colour) plus a deploy AC (routed on the park) - split correctly.
+    expect(draft.acceptance).toContain('The right width and colour');
+    expect(draft.acceptance.some((a) => isDeployAcceptance(a))).toBe(true);
+    expect(draft.acceptance.filter((a) => !isDeployAcceptance(a))).toEqual(['The right width and colour']);
     let s = addPbi(initialZooState(1), draft);
     const item = s.backlog.find((i) => i.category === 'path')!;
     // A path is designed as a width and a colour (both preset, so the design is ready to build).
@@ -997,6 +1000,19 @@ describe('zoo game: the toolbox', () => {
     // Delivering it does not add a park feature (it is the connectors it drew).
     const open = openItem(built, item.id);
     expect(open.backlog.find((x) => x.id === item.id)!.status).toBe('open');
+  });
+
+  it('gives every toolbox item ACs split across build (studio) and deploy (park)', () => {
+    // Consistency across ALL items: each has at least one build-time (appearance) criterion and
+    // exactly one deploy-time (placement/sizing) criterion - so every item is verified on the park
+    // when placed, not just landscape scenery.
+    for (const t of TOOLBOX.flatMap((g) => g.items)) {
+      const acs = toolboxDraft(t).acceptance;
+      const build = acs.filter((a) => !isDeployAcceptance(a));
+      const deploy = acs.filter((a) => isDeployAcceptance(a));
+      expect(build.length, `${t.name} should have a build AC`).toBeGreaterThanOrEqual(1);
+      expect(deploy.length, `${t.name} should have exactly one deploy AC`).toBe(1);
+    }
   });
 
   it('offers landscape & wayfinding items as normal (PBI-creating) toolbox pieces with fitting shapes and ACs', () => {

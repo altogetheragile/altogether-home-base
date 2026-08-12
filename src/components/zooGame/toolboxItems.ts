@@ -1,5 +1,5 @@
 import type { ItemCategory, PbiDraft } from './types';
-import { amenityAcceptance, floraAcceptance } from './design';
+import { amenityAcceptance, floraAcceptance, enclosureAcceptance, exhibitAcceptance, pathAcceptance } from './design';
 
 // ============= The Toolbox =============
 //
@@ -75,13 +75,13 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
 /** Turn a picked toolbox item into a Product Backlog Item draft with coached defaults. */
 export function toolboxDraft(t: ToolboxItem): PbiDraft {
   const acceptance = t.category === 'exhibit'
-    ? [`Recognisable as ${/s$/.test(t.name) ? t.name.toLowerCase() : 'a ' + t.name.toLowerCase()}`, 'Uses at least two colours', 'No bare patches']
+    ? exhibitAcceptance(t.name)
     : t.category === 'enclosure'
-      ? ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up']
+      ? enclosureAcceptance()
     : t.category === 'amenity'
       ? amenityAcceptance(t.name, t.services)
     : t.category === 'path'
-      ? ['Connects features into the network', 'Clearly routed']
+      ? pathAcceptance()
       : floraAcceptance(t.template);
   return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, enclosureSize: t.footprint, acceptance };
 }
