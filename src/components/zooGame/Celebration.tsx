@@ -3,8 +3,10 @@ import { useEffect, useRef } from 'react';
 /** A short, self-contained confetti burst for celebrating a delivery (Deploy Complete). Re-fires
  *  whenever `trigger` changes to a new truthy value. Pure canvas, no dependencies; cleans itself up.
  *  Respects prefers-reduced-motion (skips the animation). */
-export function Celebration({ trigger }: { trigger: number }) {
+export function Celebration({ trigger, origin }: { trigger: number; origin?: { x: number; y: number } | null }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const originRef = useRef(origin);
+  useEffect(() => { originRef.current = origin; }, [origin]);
 
   useEffect(() => {
     if (!trigger) return;
@@ -20,7 +22,9 @@ export function Celebration({ trigger }: { trigger: number }) {
     ctx.scale(dpr, dpr);
 
     const colors = ['#f4c430', '#43a047', '#4a90d9', '#ef6f53', '#e6842a', '#a56cc1', '#ffffff'];
-    const cx = W / 2, cy = H * 0.32;
+    // Burst from the delivered card (viewport coords) so the celebration points at the win.
+    const o = originRef.current;
+    const cx = o?.x ?? W / 2, cy = o?.y ?? H * 0.32;
     const N = 140;
     const parts = Array.from({ length: N }, () => {
       const a = Math.random() * Math.PI * 2;

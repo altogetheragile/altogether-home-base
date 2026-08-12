@@ -62,6 +62,8 @@ export default function ZooGame() {
   const [celebrate, setCelebrate] = useState(0);
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
   const [justOpened, setJustOpened] = useState<string | null>(null);
+  // Viewport point the delivery confetti bursts from - the card as it lands in Done.
+  const [celebrateOrigin, setCelebrateOrigin] = useState<{ x: number; y: number } | null>(null);
   // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
   const [parkTab, setParkTab] = useState<'work' | 'park'>('work');
   // Deploying an item: placing it AND laying the paths that link it in. Holds the item name for the
@@ -98,11 +100,17 @@ export default function ZooGame() {
     open(id);
     clearDeploy();
     setParkTab('work');
-    // Celebrate the delivery: this increment is now live to visitors.
-    setCelebrate((c) => c + 1);
+    // Celebrate the delivery: this increment is now live to visitors. Burst the confetti from the
+    // card once it has landed in the Done column (measured after the re-render).
     setJustOpened(shownId);
     window.setTimeout(() => setJustOpened((cur) => (cur === shownId ? null : cur)), 900);
     toast.success(`🎉 ${name} is live to visitors!`);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-done-card="${shownId}"]`);
+      const r = el?.getBoundingClientRect();
+      setCelebrateOrigin(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null);
+      setCelebrate((c) => c + 1);
+    }));
   };
   // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
   // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
@@ -191,7 +199,7 @@ export default function ZooGame() {
       <main className="min-h-0 flex-1 overflow-hidden">{render()}</main>
       <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
       <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
-      <Celebration trigger={celebrate} />
+      <Celebration trigger={celebrate} origin={celebrateOrigin} />
     </div>
   );
 }
