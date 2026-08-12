@@ -194,7 +194,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
           tab !== 'park' && 'hidden xl:block',
           tab === 'work' && 'xl:w-[360px] xl:shrink-0 xl:border-l xl:border-border',
           tab === 'park' && 'xl:flex-1 xl:min-w-0')}>
-          <p className="mb-2 text-[11px] text-muted-foreground">The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.</p>
           <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
         </div>
       </div>

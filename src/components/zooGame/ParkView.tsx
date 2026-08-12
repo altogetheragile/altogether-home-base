@@ -966,6 +966,16 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
     }
   }
 
+  const statsBar = (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5">
+      <Stat icon={LayoutGrid} value={`${activeZones.size}/${zones.length}`} label="zones" />
+      <Stat icon={Fish} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
+      <Stat icon={Trees} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
+      <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors" />
+      <Stat icon={Smile} value={happiness === null ? '—' : `${happiness}`} label="happiness" title={happiness === null ? 'Measured at the Sprint Review' : undefined} />
+    </div>
+  );
+
   return (
     <section className={cn('space-y-3', compact && 'space-y-2')}>
       <style>{`
@@ -973,18 +983,15 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
         @media (prefers-reduced-motion: reduce) { .zoo-visitor { animation: none !important } }
       `}</style>
 
-      {!compact && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5">
-          <Stat icon={LayoutGrid} value={`${activeZones.size}/${zones.length}`} label="zones" />
-          <Stat icon={Fish} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
-          <Stat icon={Trees} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
-          <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors" />
-          <Stat icon={Smile} value={happiness === null ? '—' : `${happiness}`} label="happiness" title={happiness === null ? 'Measured at the Sprint Review' : undefined} />
-        </div>
-      )}
+      {!compact && !large && statsBar}
 
       {large ? (
         <>
+          {/* Everything above the park image stays pinned to the top of the scroll area, so the
+              stats, the description and the toolbar are always visible while you scroll the park. */}
+          <div className="sticky top-0 z-30 -mx-2 -mt-3 space-y-2 border-b border-border bg-background/95 px-2 pb-2 pt-3 backdrop-blur-sm sm:-mx-3 sm:px-3">
+          <p className="text-[11px] text-muted-foreground">The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.</p>
+          {statsBar}
           <div className="flex flex-wrap items-center justify-between gap-2">
             {features.length > 0 && onPlaceItem ? (
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
@@ -1064,6 +1071,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
               )}
             </div>
           )}
+          </div>
           <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
