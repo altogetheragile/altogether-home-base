@@ -2,7 +2,7 @@ import type { BacklogItem, ZooGameState, EpicMember } from './types';
 import type { ZooItem } from './simulation/types';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
-import { amenityAcceptance, enclosureAcceptance, exhibitAcceptance } from './design';
+import { amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance } from './design';
 
 /** First-Sprint capacity guess, before there is velocity. A deliberate over-guess: you
  *  cannot know velocity yet, so this is a starting point you learn away from by doing. */
@@ -100,6 +100,14 @@ const STARTING_BACKLOG: BacklogItem[] = [
     m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 5, 'Monkey Habitat'),
     ma('picnic', 'Picnic area', 'rest', 3),
   ]),
+  // Park grounds: the scenery and wayfinding that make the place a park - paths to walk, water to
+  // cross, and greenery. Small pieces, ready to build alongside the exhibits.
+  pth('paths', 'Pathways', 'Grounds', 3),
+  flr('trees', 'Trees', 'Grounds', 'tree', 2),
+  flr('flowerbed', 'Flowerbed', 'Grounds', 'flowers', 2),
+  flr('rocks', 'Rockery', 'Grounds', 'rocks', 2),
+  flr('river', 'River', 'Grounds', 'river', 3),
+  flr('bridge', 'Bridge', 'Grounds', 'bridge', 3),
 ];
 
 /** An epic member that is an animal (exhibit): splits into its enclosure + the animal.
@@ -139,6 +147,25 @@ function enc(id: string, name: string, zone: string, size: number, footprint: 's
   return {
     id, name, category: 'enclosure', zone, enclosureSize: footprint, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: enclosureAcceptance(),
+    status: 'backlog', sprintNumber: null, accessible: true,
+  };
+}
+
+/** A piece of scenery (flora/landscape). `type` is its template (tree, river, rocks, bridge...),
+ *  which the studio starts the design from and which fixes its fitting acceptance criteria. */
+function flr(id: string, name: string, zone: string, type: string, size: number, unsized = false): BacklogItem {
+  return {
+    id, name, category: 'flora', zone, template: type, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    acceptance: floraAcceptance(type),
+    status: 'backlog', sprintNumber: null, accessible: true,
+  };
+}
+
+/** A pathway PBI - designed as a width + colour, then routed on the park at deployment. */
+function pth(id: string, name: string, zone: string, size: number, unsized = false): BacklogItem {
+  return {
+    id, name, category: 'path', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    acceptance: pathAcceptance(),
     status: 'backlog', sprintNumber: null, accessible: true,
   };
 }
@@ -185,7 +212,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     definitionOfDone: [...DEFAULT_DOD],
     useUserStories: false,
     backlog,
-    zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest'],
+    zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest', 'Grounds'],
     sprintNumber: 1,
     committedIds: [],
     velocity: [],

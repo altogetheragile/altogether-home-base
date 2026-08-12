@@ -64,6 +64,20 @@ describe('zoo game: setup', () => {
     expect(s.velocity).toEqual([]);
   });
 
+  it('seeds the backlog with park grounds: pathways and scenery to build', () => {
+    const s = initialZooState(1);
+    expect(s.zones).toContain('Grounds');
+    const grounds = s.backlog.filter((i) => i.zone === 'Grounds');
+    // pathways plus a spread of scenery (trees, rocks, river, bridge...)
+    expect(grounds.some((i) => i.category === 'path')).toBe(true);
+    expect(grounds.some((i) => i.template === 'bridge')).toBe(true);
+    expect(grounds.some((i) => i.template === 'river')).toBe(true);
+    expect(grounds.some((i) => i.template === 'tree')).toBe(true);
+    // each is a ready, estimated PBI (not an unsized epic) so it can be pulled straight in
+    expect(grounds.every((i) => i.category === 'flora' || i.category === 'path')).toBe(true);
+    expect(grounds.every((i) => !i.unsized && i.estimate > 0)).toBe(true);
+  });
+
   it('is deterministic per game seed (taste jitter and drift)', () => {
     expect(initialZooState(7)).toEqual(initialZooState(7));
     // A different seed jitters the appeal differently (the lion is an exhibit with appeal).
@@ -1017,7 +1031,7 @@ describe('zoo game: the toolbox', () => {
 
   it('offers landscape & wayfinding items as normal (PBI-creating) toolbox pieces with fitting shapes and ACs', () => {
     const items = TOOLBOX.flatMap((g) => g.items);
-    for (const name of ['River', 'Pond', 'Rocks', 'Entrance', 'Hedge', 'Fountain']) {
+    for (const name of ['River', 'Bridge', 'Pond', 'Rocks', 'Entrance', 'Hedge', 'Fountain']) {
       const t = items.find((i) => i.name === name)!;
       expect(t, name).toBeTruthy();
       expect(t.category).toBe('flora'); // scenery flows through the flora/PBI pipeline
@@ -1032,7 +1046,10 @@ describe('zoo game: the toolbox', () => {
     expect(toolboxDraft(items.find((i) => i.name === 'Entrance')!).acceptance).toContain('Clearly marks the way in');
     // Landscape features are resizable: they carry a default footprint and take a saved size.
     expect(isLandscapeType('river')).toBe(true);
+    expect(isLandscapeType('bridge')).toBe(true);
     expect(isLandscapeType('tree')).toBe(false);
+    // A bridge is scenery you cross: it reads as a bridge (build) and is placed across the water (deploy).
+    expect(toolboxDraft(items.find((i) => i.name === 'Bridge')!).acceptance).toEqual(['Reads as a bridge you can cross', 'Placed across the water']);
     expect(landscapeDefaultSize('river').w).toBeGreaterThan(landscapeDefaultSize('river').h); // a river starts wide
     const sized = setItemSize(initialZooState(1), 'lion', { w: 400, h: 40 });
     expect(sized.backlog.find((i) => i.id === 'lion')!.size).toEqual({ w: 400, h: 40 });
