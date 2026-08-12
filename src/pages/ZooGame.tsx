@@ -15,6 +15,7 @@ import { SprintRetro } from '@/components/zooGame/SprintRetro';
 import { ZooFinal } from '@/components/zooGame/ZooFinal';
 import { ZooShell } from '@/components/zooGame/ZooShell';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
+import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance } from '@/components/zooGame/design';
@@ -56,6 +57,11 @@ export default function ZooGame() {
   const [saveOpen, setSaveOpen] = useState(false);
   const [savesOpen, setSavesOpen] = useState(false);
   const [poNote, setPoNote] = useState<string | null>(null);
+  // Bumped on each delivery (Deploy Complete) to fire a confetti burst - a celebration of the
+  // shippable increment reaching visitors.
+  const [celebrate, setCelebrate] = useState(0);
+  // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
+  const [justOpened, setJustOpened] = useState<string | null>(null);
   // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
   const [parkTab, setParkTab] = useState<'work' | 'park'>('work');
   // Deploying an item: placing it AND laying the paths that link it in. Holds the item name for the
@@ -85,7 +91,19 @@ export default function ZooGame() {
   const placeOnParkAndEnter = (id: string) => { placeOnPark(id); enterDeploy(id); };
   // "Deploy complete": release the item to visitors (moves the card to Done). It was already placed
   // & sized on the park, so just release it and stay on the board where the card lands in Done.
-  const deployComplete = (id: string) => { open(id); clearDeploy(); setParkTab('work'); };
+  const deployComplete = (id: string) => {
+    const it = state.backlog.find((x) => x.id === id);
+    const shownId = it?.enhancesId ?? id;
+    const name = state.backlog.find((x) => x.id === shownId)?.name ?? it?.name ?? 'It';
+    open(id);
+    clearDeploy();
+    setParkTab('work');
+    // Celebrate the delivery: this increment is now live to visitors.
+    setCelebrate((c) => c + 1);
+    setJustOpened(shownId);
+    window.setTimeout(() => setJustOpened((cur) => (cur === shownId ? null : cur)), 900);
+    toast.success(`🎉 ${name} is live to visitors!`);
+  };
   // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
   // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
   const raiseImprovement = (id: string) => {
@@ -142,7 +160,7 @@ export default function ZooGame() {
     ? deployItem.acceptance.map((label, index) => ({ index, label, confirmed: !!deployItem.acConfirmed?.[index] })).filter((a) => isDeployAcceptance(a.label))
     : [];
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
 
   const render = () => {
     switch (state.phase) {
@@ -173,6 +191,7 @@ export default function ZooGame() {
       <main className="min-h-0 flex-1 overflow-hidden">{render()}</main>
       <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
       <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
+      <Celebration trigger={celebrate} />
     </div>
   );
 }

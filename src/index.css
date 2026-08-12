@@ -263,3 +263,11 @@
     margin-bottom: 0;
   }
 }
+/* Zoo game: a celebratory pop-in for a just-delivered feature on the park. */
+@keyframes zoo-pop-in {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  60%  { transform: translate(-50%, -50%) scale(1.12); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.zoo-pop-in { animation: zoo-pop-in 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { .zoo-pop-in { animation: none; } }
