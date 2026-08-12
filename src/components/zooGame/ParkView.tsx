@@ -293,6 +293,32 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
   );
 }
 
+/** A small editable name under an animal, so you can name your lion "Leo" - naming builds
+ *  attachment. Reveals on hover; click to rename. */
+function AnimalName({ name, onRename }: { name: string; onRename?: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(name);
+  const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't drag the animal
+  const commit = () => { setEditing(false); const t = val.trim(); if (t) onRename?.(t); };
+  const cls = 'max-w-[72px] truncate rounded-full bg-white/85 px-1.5 text-[8px] font-semibold leading-[1.5] text-emerald-950 shadow-sm dark:bg-black/60 dark:text-emerald-50';
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-0.5 flex -translate-x-1/2 justify-center">
+      {editing ? (
+        <input autoFocus value={val} onPointerDown={stop}
+          onChange={(e) => setVal(e.target.value)} onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setVal(name); setEditing(false); } }}
+          className={cn(cls, 'pointer-events-auto w-[64px] outline-none ring-1 ring-emerald-500')} />
+      ) : onRename ? (
+        <button type="button" title="Name this animal" onPointerDown={stop}
+          onClick={() => { setVal(name); setEditing(true); }}
+          className={cn(cls, 'pointer-events-auto cursor-text opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white')}>{name}</button>
+      ) : (
+        <span className={cls}>{name}</span>
+      )}
+    </div>
+  );
+}
+
 function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = enc.design;
@@ -365,13 +391,14 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
         {animals.map((a, i) => {
           const p = drag?.id === a.id ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i);
           return (
-            <div key={a.id} className={cn('absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
+            <div key={a.id} className={cn('group absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
               onPointerDown={(e) => startSpotDrag(e, a.id, false)}
               style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot ? 'none' : undefined }}>
               {/* Gentle idle bob so the animals feel alive; each desynced by a stable per-animal delay. */}
               <div className={cn(drag?.id !== a.id && 'zoo-idle')} style={{ animationDelay: `-${(jitter(i, 1) * 2.4).toFixed(2)}s` }}>
                 <Sprite item={a} design={a.design ?? presetFor(a)} cell={cell} />
               </div>
+              <AnimalName name={a.name} onRename={onRename ? (nm) => onRename(a.id, nm) : undefined} />
             </div>
           );
         })}
