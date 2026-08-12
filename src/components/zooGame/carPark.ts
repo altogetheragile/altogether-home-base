@@ -8,15 +8,17 @@
 // Everything here is pure and deterministic (no randomness), so the lot renders the same every
 // frame. Coordinates are in the park's design pixels; `top` is the apron's top edge (the fence).
 
-export const CAR_PARK_H = 234; // apron height in design px: two car rows + a coach bay
+export const CAR_PARK_H = 278; // apron height in design px: two car rows + a coach bay, with aisles
 
 export interface CarSpot { x: number; y: number; kind: string; color: string; bus: boolean; }
 export interface Obstacle { x0: number; x1: number; y0: number; y1: number; }
+export interface Road { x: number; y: number; w: number; h: number; dir: 'h' | 'v'; }
 export interface CarParkLayout {
   top: number; W: number;
   spots: CarSpot[];      // occupied bays (cars + coaches), used to draw and to spawn guests from
   empties: { x: number; y: number; w: number; h: number; bus: boolean }[]; // marked-out empty bays
   obstacles: Obstacle[]; // footprints the guests walk around (occupied bays only)
+  roads: Road[];         // driving aisles: a central entry road from the gate + an aisle per row
 }
 
 const CARS = ['#e0574b', '#4a90d9', '#43a047', '#f0b429', '#eeeeee', '#7d6bd0', '#e6842a', '#37b3a6', '#d94f8a', '#5b6673'];
@@ -35,9 +37,18 @@ export function carParkLayout(W: number, top: number, carCount = CAR_BAYS, busCo
   const bayW = 78, gap = 10, cols = 8;
   const totalW = cols * bayW + (cols - 1) * gap;
   const startX = (W - totalW) / 2 + bayW / 2;
-  const rowA = top + 44;          // front row (nearer the gate) - fills first
-  const rowB = top + 100;         // back row
-  const coachY = top + 182;       // coach bay
+  // Each row of bays has a driving aisle just above it (its front), so cars pull in off a road; a
+  // central entry road runs from the gate down to the coaches, linking the aisles.
+  const road1 = top + 2, road2 = top + 76, road3 = top + 150, roadH = 22;
+  const rowA = top + 50;          // front row (nearer the gate) - fills first
+  const rowB = top + 124;         // back row
+  const coachY = top + 226;       // coach bay
+  const roads: Road[] = [
+    { x: 4, y: road1, w: W - 8, h: roadH, dir: 'h' },
+    { x: 4, y: road2, w: W - 8, h: roadH, dir: 'h' },
+    { x: 4, y: road3, w: W - 8, h: roadH, dir: 'h' },
+    { x: W / 2 - 24, y: top, w: 48, h: road3 + roadH - top, dir: 'v' }, // gate -> aisles -> coaches
+  ];
   const cars = Math.max(0, Math.min(CAR_BAYS, carCount));
   const spots: CarSpot[] = [];
   const empties: CarParkLayout['empties'] = [];
@@ -66,7 +77,7 @@ export function carParkLayout(W: number, top: number, carCount = CAR_BAYS, busCo
   const obstacles: Obstacle[] = spots.map((s) => s.bus
     ? { x0: s.x - 26, x1: s.x + 26, y0: s.y - BUS_HH, y1: s.y + BUS_HH }
     : { x0: s.x - 23, x1: s.x + 23, y0: s.y - CAR_HH, y1: s.y + CAR_HH });
-  return { top, W, spots, empties, obstacles };
+  return { top, W, spots, empties, obstacles, roads };
 }
 
 // ---- drawing (pure canvas, design-space) ------------------------------------------------------
@@ -164,6 +175,16 @@ export function drawCarPark(ctx: CanvasRenderingContext2D, lot: CarParkLayout) {
   // subtle asphalt speckle (deterministic)
   ctx.fillStyle = 'rgba(255,255,255,.03)';
   for (let i = 0; i < 360; i++) { const px = (i * 137) % (W - 8) + 4, py = top + ((i * 53) % (CAR_PARK_H - 6)); ctx.fillRect(px, py, 1, 1); }
+  // driving aisles: a lighter tarmac with a dashed centre line, so cars have a road into each bay
+  for (const r of lot.roads) { ctx.fillStyle = '#5c626c'; rr(ctx, r.x, r.y, r.w, r.h, 6); ctx.fill(); }
+  ctx.strokeStyle = 'rgba(244,236,207,.5)'; ctx.lineWidth = 2; ctx.setLineDash([10, 9]);
+  for (const r of lot.roads) {
+    ctx.beginPath();
+    if (r.dir === 'h') { ctx.moveTo(r.x + 8, r.y + r.h / 2); ctx.lineTo(r.x + r.w - 8, r.y + r.h / 2); }
+    else { ctx.moveTo(r.x + r.w / 2, r.y + 8); ctx.lineTo(r.x + r.w / 2, r.y + r.h - 8); }
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
   // curb line at the fence
   ctx.fillStyle = '#c9a86a'; ctx.fillRect(4, top, W - 8, 3);
   // bay + coach outlines (empties get a full box; occupied bays get side ticks)
