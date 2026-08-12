@@ -369,6 +369,19 @@ function floraGrid(design: ItemDesign): (string | null)[][] {
     set(g, ellipse(6, 8, 1.7, 1.1), '#c0533b'); g[7][6] = '#a9d3ea'; // a parked car
     return g;
   }
+  if (type === 'bridge') {
+    // A plank deck crossing water: water bands top and bottom, a wooden deck across the middle with
+    // vertical plank seams, and a railing along each long edge. Drop it over a river to cross it.
+    const deck = design.colors.foliage ?? '#c8965a';
+    const rail = design.colors.trunk ?? '#7a5230';
+    const water = '#7fc5e0';
+    for (let x = 0; x < GRID_W; x++) for (const y of [0, 1, 12, 13]) g[y][x] = shade(water, y < 2 ? 10 : -8); // water it spans
+    for (let y = 3; y <= 10; y++) for (let x = 0; x < GRID_W; x++) g[y][x] = shade(deck, y % 2 ? 0 : -8); // deck planks
+    for (let x = 2; x < GRID_W; x += 3) for (let y = 3; y <= 10; y++) g[y][x] = shade(deck, -18); // plank seams
+    for (let x = 0; x < GRID_W; x++) { g[2][x] = rail; g[11][x] = rail; } // railings
+    for (let x = 1; x < GRID_W; x += 3) { g[2][x] = shade(rail, 16); g[11][x] = shade(rail, 16); } // rail posts
+    return g;
+  }
   if (type === 'bush') { paintShaded(g, ellipse(8, 9, 4.2, 3.4).filter(([, y]) => y >= 6), foliage, 22, -20); return g; }
   paintShaded(g, ellipse(8, 6, 4.4, 4).filter(([, y]) => y <= 10), foliage, 24, -22); // crown
   for (let y = 10; y <= 13; y++) { g[y][7] = trunk; g[y][8] = shade(trunk, -14); } // trunk
@@ -395,7 +408,7 @@ export const EXHIBIT_PARTS: PartSpec[] = [
 export const AMENITY_COLORS: { key: string; label: string }[] = [
   { key: 'walls', label: 'Walls' }, { key: 'roof', label: 'Roof' }, { key: 'door', label: 'Door' }, { key: 'sign', label: 'Sign' },
 ];
-export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'rocks', 'pond', 'river', 'fountain', 'entrance', 'carpark'];
+export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'rocks', 'pond', 'river', 'fountain', 'bridge', 'entrance', 'carpark'];
 /** Inside an enclosure you can add plants and natural habitat features, split so scenery isn't
  *  mislabelled as "planting". Park-only wayfinding (signpost, entrance, car park) is left out - it
  *  belongs on the grounds, not in a habitat. */
@@ -421,6 +434,7 @@ export function floraAcceptance(type?: string): string[] {
     case 'signpost': return ['Clearly readable', 'Coloured', 'Placed where visitors will see it'];
     case 'river': case 'pond': case 'fountain': return ['Reads as water', 'Sized to fit the space'];
     case 'rocks': return ['Reads as rock', 'Sized to fit the space'];
+    case 'bridge': return ['Reads as a bridge you can cross', 'Placed across the water'];
     case 'entrance': return ['Clearly marks the way in', 'Coloured', 'Placed at the way in'];
     case 'carpark': return ['Clearly marked out', 'Sized to fit the space'];
     case 'hedge': return ['Reads as a hedge', 'Sized to fit the space'];
@@ -462,7 +476,7 @@ export function landscapePalette(type: string | undefined, colors?: Record<strin
   const c = colors ?? {};
   const def: Record<string, [string, string]> = {
     river: ['#5aa9c8', '#b7965f'], pond: ['#5aa9c8', '#b7965f'], rocks: ['#9aa1a8', '#6f757b'],
-    hedge: ['#4f8f3a', '#3a6b2a'], fountain: ['#5aa9c8', '#c9cdd2'],
+    hedge: ['#4f8f3a', '#3a6b2a'], fountain: ['#5aa9c8', '#c9cdd2'], bridge: ['#c8965a', '#7a5230'],
     entrance: ['#e6842a', '#8a5a2b'], carpark: ['#8a8f96', '#eaeaea'],
   };
   const [p, s] = def[type ?? ''] ?? ['#5aa9c8', '#b7965f'];
@@ -471,7 +485,7 @@ export function landscapePalette(type: string | undefined, colors?: Record<strin
 
 /** Scenery types that are placed as a resizable footprint on the park (stretch a river across it),
  *  rather than a fixed little sprite like a tree or bush. */
-export const LANDSCAPE_TYPES = ['river', 'pond', 'rocks', 'hedge', 'fountain', 'entrance', 'carpark'];
+export const LANDSCAPE_TYPES = ['river', 'pond', 'rocks', 'hedge', 'fountain', 'bridge', 'entrance', 'carpark'];
 export const isLandscapeType = (type?: string): boolean => !!type && LANDSCAPE_TYPES.includes(type);
 
 /** The starting footprint (design px) for a landscape feature - a river starts wide, a fountain
@@ -479,6 +493,7 @@ export const isLandscapeType = (type?: string): boolean => !!type && LANDSCAPE_T
 export function landscapeDefaultSize(type?: string): { w: number; h: number } {
   switch (type) {
     case 'river': return { w: 220, h: 46 };
+    case 'bridge': return { w: 120, h: 60 };
     case 'hedge': return { w: 150, h: 44 };
     case 'carpark': return { w: 150, h: 104 };
     case 'pond': return { w: 120, h: 88 };
@@ -526,6 +541,7 @@ export function floraColors(type?: string): { key: string; label: string }[] {
     case 'hedge': return [{ key: 'foliage', label: 'Leaves' }];
     case 'pond': return [{ key: 'foliage', label: 'Water' }, { key: 'trunk', label: 'Bank' }];
     case 'fountain': return [{ key: 'foliage', label: 'Water' }, { key: 'trunk', label: 'Stone' }];
+    case 'bridge': return [{ key: 'foliage', label: 'Deck' }, { key: 'trunk', label: 'Railings' }];
     case 'entrance': return [{ key: 'foliage', label: 'Banner' }, { key: 'trunk', label: 'Posts' }];
     case 'carpark': return [{ key: 'foliage', label: 'Tarmac' }, { key: 'trunk', label: 'Markings' }];
     case 'signpost': return [{ key: 'foliage', label: 'Sign' }, { key: 'trunk', label: 'Post' }];
