@@ -226,8 +226,11 @@ export function drawCarPark(ctx: CanvasRenderingContext2D, lot: CarParkLayout) {
   ctx.fillStyle = '#c9a86a'; ctx.fillRect(wk.x + 3, wk.y, wk.w - 6, wk.h);
   for (const cr of lot.crossings) {
     ctx.fillStyle = '#5c626c'; ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+    // Zebra stripes lie across the way people walk, so you step over one bar after another - they
+    // run with the traffic, not with the pedestrian. The walkway runs up the lot, so the bars are
+    // horizontal, spanning its width.
     ctx.fillStyle = 'rgba(244,236,207,.85)';
-    for (let sx = cr.x + 5; sx < cr.x + cr.w - 6; sx += 12) ctx.fillRect(sx, cr.y + 5, 7, cr.h - 10);
+    for (let sy = cr.y + 5; sy < cr.y + cr.h - 6; sy += 12) ctx.fillRect(cr.x + 3, sy, cr.w - 6, 7);
   }
   // curb line at the fence
   ctx.fillStyle = '#c9a86a'; ctx.fillRect(4, top, W - 8, 3);
