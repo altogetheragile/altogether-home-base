@@ -90,13 +90,16 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 // refined by splitting it into its animals (each an enclosure + animal, with the animal
 // depending on its enclosure) and facilities. Every species has its own enclosure.
 const STARTING_BACKLOG: BacklogItem[] = [
+  // Big Cats is where you start, so it arrives as one ready enclosure and its animal - enough to
+  // build something in Sprint 1 - with the rest of the zone still an epic to be refined. Every
+  // other area is an epic too: refining them into buildable pieces is the work.
   enc('lion-enc', 'Lion Enclosure', 'Big Cats', 5, 'large'),
   ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6], 'lion-enc'),
-  enc('tiger-enc', 'Tiger Enclosure', 'Big Cats', 5, 'large'),
-  ex('tiger', 'Tiger', 'Big Cats', 8, [8, 7, 6], 'tiger-enc'),
-  enc('leopard-enc', 'Leopard Enclosure', 'Big Cats', 5, 'medium'),
-  ex('leopard', 'Leopard', 'Big Cats', 8, [7, 8, 5], 'leopard-enc'),
-  am('kiosk', 'Kiosk', 'Big Cats', 5, 'food'),
+  epic('bigcats', 'Big Cats', 'Big Cats', [
+    m('tiger', 'Tiger', 'tiger-enc', [8, 7, 6], 'large', 8, 'Tiger Enclosure'),
+    m('leopard', 'Leopard', 'leopard-enc', [7, 8, 5], 'medium', 8, 'Leopard Enclosure'),
+    ma('kiosk', 'Kiosk', 'food', 5),
+  ]),
   epic('waterside', 'Waterside', 'Waterside', [
     m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 8, 'Penguin Habitat'),
     m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 5, 'Reef Tank'),
@@ -122,6 +125,13 @@ const STARTING_BACKLOG: BacklogItem[] = [
   flr('rocks', 'Rockery', 'Grounds', 'rocks', 2),
   flr('river', 'River', 'Grounds', 'river', 3),
   flr('bridge', 'Bridge', 'Grounds', 'bridge', 3),
+  flr('signposts', 'Signposts', 'Grounds', 'signpost', 2),
+  flr('fountain', 'Fountain', 'Grounds', 'fountain', 3),
+  // Facilities: a day out needs somewhere to eat, somewhere to go and somewhere to sit. These are
+  // their own PBIs rather than something buried inside an animal epic.
+  am('main-wc', 'Toilets', 'Facilities', 3, 'toilet'),
+  am('gift-shop', 'Gift Shop', 'Facilities', 5, 'food'),
+  am('benches', 'Seating Area', 'Facilities', 3, 'rest'),
 ];
 
 /** An epic member that is an animal (exhibit): splits into its enclosure + the animal.
@@ -226,6 +236,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     definitionOfDone: [...DEFAULT_DOD],
     definitionOfReady: [...DEFAULT_DOR],
     refineSpend: 0,
+    happiness: [],
     useUserStories: false,
     backlog,
     zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest', 'Grounds'],

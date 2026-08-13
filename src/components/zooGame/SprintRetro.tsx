@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
-import { productGoalProgress, retroQuestions } from './engine';
+import { retroQuestions } from './engine';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,6 @@ interface SprintRetroProps {
   state: ZooGameState;
   onNextSprint: (improvement: string) => void;
   onSetDod: (dod: string[]) => void;
-  onWrapUp: () => void;
 }
 
 /** Improvements the team can commit to. Some have a real mechanical effect next Sprint,
@@ -24,9 +23,8 @@ const IMPROVEMENTS: { text: string; effect?: string }[] = [
 
 /** Retrospective: inspect how the team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
-export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintRetroProps) {
+export function SprintRetro({ state, onNextSprint, onSetDod }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
-  const canWrap = productGoalProgress(state) >= 0.8;
   const questions = retroQuestions(state);
 
   return (
@@ -76,7 +74,6 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onWrapUp }: SprintR
       {/* A normal in-flow action row (not sticky), so a long, coached DoD editor is never
           overlapped by a floating bar. */}
       <div className="mt-2 flex items-center justify-end gap-3 border-t border-border pt-4">
-        {canWrap && <Button size="sm" variant="outline" onClick={onWrapUp}>Wrap up</Button>}
         <Button size="sm" disabled={!selected} onClick={() => selected && onNextSprint(selected)}>Start Sprint {state.sprintNumber + 1}</Button>
       </div>
     </div>

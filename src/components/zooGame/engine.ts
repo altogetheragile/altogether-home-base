@@ -954,6 +954,7 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     velocity: [...state.velocity, velocityPts],
     attendance: result.nextAttendance,
     lastReview: result,
+    happiness: [...(state.happiness ?? []), result.overallHappiness],
     sprintGoalMet,
     signals,
     signalAge,
@@ -1004,7 +1005,7 @@ export const availableItems = (state: ZooGameState): BacklogItem[] => state.back
  *  the signal we track. Building more Backlog does not move this on its own; delivering
  *  things visitors love does. Zero until the first Review produces an outcome. */
 const GOAL_HAPPINESS_FLOOR = 25; // below this, visitors are not enjoying the zoo
-const GOAL_HAPPINESS_TARGET = 80; // "visitors love it": the Product Goal outcome
+export const GOAL_HAPPINESS_TARGET = 80; // "visitors love it": the Product Goal outcome
 export function productGoalProgress(state: ZooGameState): number {
   const h = state.lastReview?.overallHappiness;
   if (h == null) return 0;

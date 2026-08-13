@@ -244,6 +244,8 @@ export interface ZooGameState {
   definitionOfReady: string[];
   /** Capacity points spent refining the Backlog before this Sprint was forecast. */
   refineSpend: number;
+  /** Visitor happiness at each Sprint Review, so the Product Goal's progress has a trend. */
+  happiness: number[];
   /** Whether new PBIs default to the user-story format (a preference, off by default
    *  so it is never forced). */
   useUserStories: boolean;
