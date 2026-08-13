@@ -213,7 +213,7 @@ function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; 
       <div style={rot ? { transform: `rotate(${rot}deg)` } : undefined}>
         <LandscapeShape type={type} w={w} h={h} primary={primary} secondary={secondary} />
       </div>
-      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
+      <FeatureName name={item.name} />
     </div>
   );
 }
@@ -230,8 +230,15 @@ function Plot({ item, cell }: { item: BacklogItem; cell: number }) {
           : { background: '#cfd4d8', border: '2px solid #9aa3ab', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell }}>
         <Sprite item={item} design={item.design ?? presetFor(item)} cell={cell} />
       </div>
-      <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
+      <FeatureName name={item.name} />
     </div>
+  );
+}
+
+/** A feature's name, inside its own footprint and out of the pointer's way. */
+function FeatureName({ name }: { name: string }) {
+  return (
+    <span className="pointer-events-none absolute bottom-0 left-1/2 z-10 max-w-[130px] -translate-x-1/2 translate-y-1/3 truncate rounded-full bg-white/85 px-1.5 text-[9px] font-semibold text-emerald-950 shadow-sm dark:bg-black/60 dark:text-emerald-50">{name}</span>
   );
 }
 
@@ -242,7 +249,9 @@ const ENCLOSURE: Record<'small' | 'medium' | 'large', { w: number; h: number }> 
   medium: { w: 164, h: 110 },
   large: { w: 210, h: 138 },
 };
-const LABEL_H = 18; // the name pill under a feature, counted in its layout height
+// A feature's name is drawn INSIDE its own footprint and ignores the pointer, so it never blocks
+// dragging, a resize handle or a path being drawn - and it adds nothing to the feature's box.
+const LABEL_H = 0;
 
 /** A built enclosure (habitat) with the animals that live in it rendered to scale
  *  inside - one sprite per animal the team has actually built and opened, so you see
@@ -283,7 +292,7 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
   const commit = () => { setEditing(false); onRename?.(val); };
   const cls = 'max-w-[132px] truncate rounded-md border-2 border-amber-900/70 bg-amber-200 px-1.5 py-0.5 text-center text-[10px] font-bold leading-tight text-amber-950 shadow-sm dark:bg-amber-300';
   return (
-    <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2">
+    <div className="absolute left-1/2 top-1 z-20 -translate-x-1/2">
       {editing ? (
         <input autoFocus value={val} onPointerDown={stop}
           onChange={(e) => setVal(e.target.value)} onBlur={commit}

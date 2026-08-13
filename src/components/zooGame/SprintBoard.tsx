@@ -81,11 +81,16 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Board settings</div>
         <div className="space-y-2 text-xs">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground">Daily Scrum</span>
+            <span className="text-muted-foreground" title="When the Developers hold their Daily Scrum - at the start of a day, planning the day ahead, or at its end">Daily Scrum</span>
             <button type="button" onClick={() => onSetScrumAt(dailyScrumAt === 'start' ? 'end' : 'start')}
               className="rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40">
               {dailyScrumAt === 'start' ? 'Day start' : 'Day end'}
             </button>
+          </div>
+          <div className="-mt-1 text-[10px] leading-snug text-muted-foreground/80">
+            {dailyScrumAt === 'start'
+              ? 'Held first thing, so the Developers plan the day ahead. Ending a day takes you into the next day\u2019s Scrum.'
+              : 'Held as the day closes, looking back on it.'}
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground">Days</span>
@@ -241,7 +246,13 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
           <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} />
           {!dayStarting && (
             <Button size="sm" className="h-8" onClick={onEndDay}>
-              {state.dayNumber === state.sprintDays ? 'End day → Review' : `End Day ${state.dayNumber} → Scrum`}
+              {/* Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
+                  day, which otherwise reads as though the Scrum is an end-of-day event. */}
+              {state.dayNumber === state.sprintDays
+                ? 'End day → Review'
+                : state.dailyScrumAt === 'start'
+                  ? `End Day ${state.dayNumber} → Day ${state.dayNumber + 1} Scrum`
+                  : `End Day ${state.dayNumber} → its Scrum`}
             </Button>
           )}
         </div>
