@@ -457,6 +457,25 @@ export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): Z
   return { ...state, backlog };
 }
 
+/** Re-order the Sprint Backlog: move an item up or down among the other items waiting to be
+ *  started in this Sprint. The Product Backlog is the Product Owner's order, but once work is
+ *  forecast into a Sprint the plan for it belongs to the Developers - so what to pick up next is
+ *  theirs to arrange. Only items not yet started move: once something is under way its place in
+ *  the queue no longer means anything. */
+export function moveSprintItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
+  const inSprint = (it: BacklogItem) =>
+    it.status === 'committed' && !it.started && it.sprintNumber === state.sprintNumber;
+  const backlog = [...state.backlog];
+  const idx = backlog.findIndex((it) => it.id === id);
+  if (idx < 0 || !inSprint(backlog[idx])) return state;
+  const step = dir === 'up' ? -1 : 1;
+  let j = idx + step;
+  while (j >= 0 && j < backlog.length && !inSprint(backlog[j])) j += step;
+  if (j < 0 || j >= backlog.length) return state;
+  [backlog[idx], backlog[j]] = [backlog[j], backlog[idx]];
+  return { ...state, backlog };
+}
+
 // ============= Park layout (arrange within the Scrum flow) =============
 
 /** Move an item into a different zone. Building still happens via Sprints; this just

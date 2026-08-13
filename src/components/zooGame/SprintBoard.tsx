@@ -13,7 +13,7 @@ import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Boar
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin } from 'lucide-react';
+import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -29,6 +29,8 @@ interface SprintBoardProps {
   onSetUseStories: (on: boolean) => void;
   onToggleTask: (id: string, taskId: string) => void;
   onStartItem: (id: string) => void;
+  /** Re-order what to pick up next - the Developers arranging their own Sprint Backlog. */
+  onReorderSprint?: (id: string, dir: 'up' | 'down') => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onSetLearnMode: (on: boolean) => void;
   onSetScrumAt: (at: 'start' | 'end') => void;
@@ -104,7 +106,7 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -272,7 +274,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:items-start">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
-                  {todo.map((it) => {
+                  {todo.map((it, i) => {
                     // You build the habitat before its animals: an animal can't start until
                     // its enclosure is built.
                     const needsEnc = !enclosureReady(state, it);
@@ -283,6 +285,15 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                     return (
                       <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
                       <ItemCard item={it}
+                        lead={onReorderSprint && todo.length > 1 && (
+                          // The order to pick things up in is the Developers' plan, so they can change it.
+                          <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Re-order what to pick up next">
+                            <button type="button" title="Move up" aria-label={`Move ${it.name} up the Sprint Backlog`} disabled={i === 0}
+                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'up'); }} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
+                            <button type="button" title="Move down" aria-label={`Move ${it.name} down the Sprint Backlog`} disabled={i === todo.length - 1}
+                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'down'); }} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+                          </div>
+                        )}
                         subtitle={<>
                           {needsEnc && <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">Needs {encName} built first</div>}
                           <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />

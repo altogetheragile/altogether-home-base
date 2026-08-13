@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -412,6 +412,32 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
     const after = availableItems(moved).map((i) => i.id);
     expect(after[0]).toBe(before[1]); // the second item moved to the front
     expect(after[1]).toBe(before[0]);
+  });
+
+  it('the Developers can re-order what they pick up next in the Sprint', () => {
+    let s = planSprint(initialZooState(1), ['lion', 'tiger', 'leopard']);
+    const todo = (x: ZooGameState) => x.backlog.filter((it) => it.status === 'committed' && !it.started).map((it) => it.id);
+    const before = todo(s);
+    expect(before.length).toBe(3);
+
+    s = moveSprintItem(s, before[2], 'up');
+    expect(todo(s)).toEqual([before[0], before[2], before[1]]);
+    s = moveSprintItem(s, before[2], 'up');
+    expect(todo(s)).toEqual([before[2], before[0], before[1]]);
+    // and it stops at the ends rather than falling off
+    expect(todo(moveSprintItem(s, before[2], 'up'))).toEqual(todo(s));
+  });
+
+  it('leaves started work and the Product Backlog where they are', () => {
+    const s = planSprint(initialZooState(1), ['lion-enc', 'tiger-enc']);
+    const started = startItem(s, 'lion-enc');
+    expect(started.backlog.find((it) => it.id === 'lion-enc')!.started).toBe(true);
+    // work already under way has no queue position left to argue about
+    expect(moveSprintItem(started, 'lion-enc', 'down')).toBe(started);
+    // an item still in the Product Backlog is the PO's to order, not the Developers'
+    expect(moveSprintItem(s, 'elephant', 'up')).toBe(s);
+    // and the one still waiting does not jump over the started one - there is nowhere above it
+    expect(moveSprintItem(started, 'tiger-enc', 'up')).toBe(started);
   });
 });
 
