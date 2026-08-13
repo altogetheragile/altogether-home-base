@@ -442,19 +442,32 @@ export function unnestItem(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureId: undefined, spot: undefined } : it)) };
 }
 
-/** Re-order the Product Backlog (the Product Owner's job): move an item up or down
- *  among the other still-in-Backlog items. */
-export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
+/** Move an item up or down among its peers - the other items in whichever list is on screen -
+ *  leaving everything else where it is. One Backlog holds every list in the game, so "up" always
+ *  means "swap with the nearest item that belongs to the same list", skipping the rest. */
+function swapAmong(state: ZooGameState, id: string, dir: 'up' | 'down', peer: (it: BacklogItem) => boolean): ZooGameState {
   const backlog = [...state.backlog];
   const idx = backlog.findIndex((it) => it.id === id);
-  if (idx < 0 || backlog[idx].status !== 'backlog') return state;
-  // Find the previous/next item that is also still in the Backlog.
+  if (idx < 0 || !peer(backlog[idx])) return state;
   const step = dir === 'up' ? -1 : 1;
   let j = idx + step;
-  while (j >= 0 && j < backlog.length && backlog[j].status !== 'backlog') j += step;
+  while (j >= 0 && j < backlog.length && !peer(backlog[j])) j += step;
   if (j < 0 || j >= backlog.length) return state;
   [backlog[idx], backlog[j]] = [backlog[j], backlog[idx]];
   return { ...state, backlog };
+}
+
+/** Re-order the Product Backlog (the Product Owner's job): move an item up or down
+ *  among the other still-in-Backlog items. */
+export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
+  return swapAmong(state, id, dir, (it) => it.status === 'backlog');
+}
+
+/** Re-order the Sprint forecast while it is still being put together in Sprint Planning. The items
+ *  are still in the Backlog at this point - nothing is committed until the Sprint is started - so
+ *  the peers are whatever has been picked so far. */
+export function moveForecastItem(state: ZooGameState, id: string, dir: 'up' | 'down', picked: string[]): ZooGameState {
+  return swapAmong(state, id, dir, (it) => picked.includes(it.id));
 }
 
 /** Re-order the Sprint Backlog: move an item up or down among the other items waiting to be
@@ -463,17 +476,8 @@ export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): Z
  *  theirs to arrange. Only items not yet started move: once something is under way its place in
  *  the queue no longer means anything. */
 export function moveSprintItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
-  const inSprint = (it: BacklogItem) =>
-    it.status === 'committed' && !it.started && it.sprintNumber === state.sprintNumber;
-  const backlog = [...state.backlog];
-  const idx = backlog.findIndex((it) => it.id === id);
-  if (idx < 0 || !inSprint(backlog[idx])) return state;
-  const step = dir === 'up' ? -1 : 1;
-  let j = idx + step;
-  while (j >= 0 && j < backlog.length && !inSprint(backlog[j])) j += step;
-  if (j < 0 || j >= backlog.length) return state;
-  [backlog[idx], backlog[j]] = [backlog[j], backlog[idx]];
-  return { ...state, backlog };
+  return swapAmong(state, id, dir, (it) =>
+    it.status === 'committed' && !it.started && it.sprintNumber === state.sprintNumber);
 }
 
 // ============= Park layout (arrange within the Scrum flow) =============

@@ -6,7 +6,7 @@ import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Boar
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Lightbulb, Target, Wand2, X, Check, ClipboardCheck } from 'lucide-react';
+import { Lightbulb, Target, Wand2, X, Check, ClipboardCheck, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface SprintPlanningProps {
   state: ZooGameState;
@@ -18,6 +18,8 @@ interface SprintPlanningProps {
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
+  /** Re-order the forecast itself - the Developers arranging the plan they are making. */
+  onReorderForecast?: (id: string, dir: 'up' | 'down', picked: string[]) => void;
   onMoveZone: (zone: string, dir: 'up' | 'down') => void;
   onMoveBefore: (id: string, beforeId: string) => void;
   onSetUseStories: (on: boolean) => void;
@@ -42,7 +44,7 @@ const STEPS: { key: Step; label: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onReorderForecast, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
   // Moving between topics clears the transient "Ask the PO" note so it doesn't follow you.
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
@@ -190,8 +192,21 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                   Sprint starts: your forecast sits in To Do, the rest fill as work flows. */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <BoardColumn title="To Do" count={chosen.length} hint="Pull items from the Product Backlog">
-                  {chosen.map((it) => (
-                    <ItemCard key={it.id} item={it} onClick={() => toggle(it.id)}
+                  {chosen.map((it, i) => (
+                    <ItemCard key={it.id} item={it} onClick={() => toggle(it.id)} label={`Remove ${it.name} from the Sprint forecast`}
+                      lead={onReorderForecast && chosen.length > 1 && (
+                        // The order to work in is the Developers' plan, so it is theirs to arrange -
+                        // here as well as on the board once the Sprint is running. The arrows must not
+                        // fall through to the card, whose click takes the item back out of the Sprint.
+                        <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Re-order the forecast">
+                          <button type="button" title="Move up" aria-label={`Move ${it.name} up the Sprint forecast`} disabled={i === 0}
+                            onClick={(e) => { e.stopPropagation(); onReorderForecast(it.id, 'up', chosen.map((c) => c.id)); }}
+                            className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
+                          <button type="button" title="Move down" aria-label={`Move ${it.name} down the Sprint forecast`} disabled={i === chosen.length - 1}
+                            onClick={(e) => { e.stopPropagation(); onReorderForecast(it.id, 'down', chosen.map((c) => c.id)); }}
+                            className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+                        </div>
+                      )}
                       actions={<span className="flex items-center gap-1 text-[11px] text-muted-foreground"><X className="h-3.5 w-3.5" /> remove</span>} />
                   ))}
                 </BoardColumn>

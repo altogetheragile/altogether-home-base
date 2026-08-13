@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
+  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
   endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
@@ -426,6 +426,21 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
     expect(todo(s)).toEqual([before[2], before[0], before[1]]);
     // and it stops at the ends rather than falling off
     expect(todo(moveSprintItem(s, before[2], 'up'))).toEqual(todo(s));
+  });
+
+  it('the forecast can be re-ordered while it is still being put together', () => {
+    const s = initialZooState(1);
+    const picked = ['lion', 'leopard']; // two picks with another Backlog item sitting between them
+    const forecast = (x: ZooGameState) => availableItems(x).filter((it) => picked.includes(it.id)).map((it) => it.id);
+    expect(forecast(s)).toEqual(['lion', 'leopard']);
+
+    const moved = moveForecastItem(s, 'leopard', 'up', picked);
+    expect(forecast(moved)).toEqual(['leopard', 'lion']); // swaps with its neighbour in the forecast
+    // ...and the item that was not picked keeps its place in the Product Backlog
+    const between = availableItems(s).map((it) => it.id).filter((id) => !picked.includes(id));
+    expect(availableItems(moved).map((it) => it.id).filter((id) => !picked.includes(id))).toEqual(between);
+    // the ends hold
+    expect(moveForecastItem(moved, 'leopard', 'up', picked)).toBe(moved);
   });
 
   it('leaves started work and the Product Backlog where they are', () => {
