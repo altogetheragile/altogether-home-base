@@ -10,6 +10,15 @@ import type { ItemDesign } from './design';
 import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
+/** Big Cats arrives as an epic now, so tests that use its animals split it up front - which is
+ *  what a player does in Refinement before they can forecast any of it. */
+const bigCatsSplit = (seed = 1) => {
+  // ...and sizes them, because a split leaves its pieces unsized and only Ready work can be forecast
+  let s = splitEpic(initialZooState(seed), 'bigcats', ['tiger', 'leopard', 'kiosk']);
+  for (const it of s.backlog.filter((x) => x.unsized)) s = estimateItem(s, it.id, it.trueSize ?? 5);
+  return s;
+};
+
 /** A design that colours every part, so any category's build meets the Definition of Done. */
 const FULL_DESIGN: ItemDesign = { parts: {}, colors: { body: '#c8873b', head: '#8a5a2b', ears: '#e3c66b', tail: '#2a2622', markings: '#f0efe9', foliage: '#43a047', trunk: '#7a5230', walls: '#cfd4d8', roof: '#9aa3ab', door: '#8a5a2b', sign: '#e6842a' } };
 
@@ -104,7 +113,7 @@ describe('zoo game: setup', () => {
   });
 
   it('seeds the burndown at the full commitment and appends the remaining each day', () => {
-    let s = planSprint(flat(initialZooState(1)), ['lion', 'kiosk']); // 8 + 5 = 13 pts
+    let s = planSprint(flat(bigCatsSplit(1)), ['lion', 'kiosk']); // 8 + 5 = 13 pts
     expect(s.burndown).toEqual([13]); // day 0: everything remains
     // Finish the lion (8 pts done), then end day 1: 5 pts remain.
     s = openItem(finish(s, 'lion'), 'lion');
@@ -117,7 +126,7 @@ describe('zoo game: setup', () => {
 
 describe('zoo game: the Sprint loop', () => {
   it('plans, builds, opens, and reviews with a real visitor simulation', () => {
-    let s = initialZooState(1);
+    let s = bigCatsSplit(1);
     s = buildAndOpen(s, ['lion', 'tiger', 'kiosk']);
     expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'tiger']);
     s = reviewSprint(s);
@@ -140,7 +149,7 @@ describe('zoo game: the Sprint loop', () => {
   });
 
   it('unfinished committed items return to the Backlog', () => {
-    let s = planSprint(flat(initialZooState(1)), ['lion', 'tiger', 'penguins']);
+    let s = planSprint(flat(bigCatsSplit(1)), ['lion', 'tiger', 'penguins']);
     s = openItem(finish(s, 'lion'), 'lion'); // only lion finished
     s = reviewSprint(s);
     const tiger = s.backlog.find((i) => i.id === 'tiger')!;
@@ -163,7 +172,7 @@ describe('zoo game: the Sprint loop', () => {
   });
 
   it('runs across Sprints, carrying velocity and the growing zoo', () => {
-    let s = flat(initialZooState(1));
+    let s = flat(bigCatsSplit(1));
     s = reviewSprint(buildAndOpen(s, ['lion', 'kiosk']));
     s = startNextSprint(s, 'Swarm on fewer exhibits at once');
     expect(s.phase).toBe('refine'); // every Sprint opens with Refinement
@@ -177,7 +186,7 @@ describe('zoo game: the Sprint loop', () => {
 
 describe('zoo game: arranging the park layout', () => {
   it('moves an item to another zone (adding the zone if new)', () => {
-    let s = moveToZone(initialZooState(1), 'lion', 'Waterside');
+    let s = moveToZone(bigCatsSplit(1), 'lion', 'Waterside');
     expect(s.backlog.find((i) => i.id === 'lion')!.zone).toBe('Waterside');
     s = moveToZone(s, 'tiger', 'Reptile House'); // new zone
     expect(s.backlog.find((i) => i.id === 'tiger')!.zone).toBe('Reptile House');
@@ -242,7 +251,7 @@ describe('zoo game: arranging the park layout', () => {
   });
 
   it('adds, edits (ends, bends, style) and deletes manual connectors', () => {
-    let s = initialZooState(1);
+    let s = bigCatsSplit(1);
     expect(s.connectors).toEqual([]);
     s = addConnector(s, { id: 'k1', a: { featureId: 'lion-enc', x: 10, y: 10 }, b: { x: 200, y: 120 }, bends: [], thickness: 8, color: '#c9a86a' });
     expect(s.connectors).toHaveLength(1);
@@ -277,7 +286,7 @@ describe('zoo game: arranging the park layout', () => {
 
 describe('zoo game: the Sprint Goal', () => {
   it('is set at Planning and coached from the selection, and is judged at the Review', () => {
-    let s = setSprintGoal(initialZooState(1), 'Open Big Cats so families have more to see.');
+    let s = setSprintGoal(bigCatsSplit(1), 'Open Big Cats so families have more to see.');
     expect(s.sprintGoal).toContain('Big Cats');
     expect(s.sprintGoalMet).toBeNull();
     // Deliver everything committed -> goal met.
@@ -290,7 +299,7 @@ describe('zoo game: the Sprint Goal', () => {
   });
 
   it('is not met when committed work is left unfinished (with nothing marked essential)', () => {
-    let s = setSprintGoal(initialZooState(1), 'Fill Big Cats.');
+    let s = setSprintGoal(bigCatsSplit(1), 'Fill Big Cats.');
     s = planSprint(s, ['lion', 'tiger']);
     s = openItem(finish(s, 'lion'), 'lion'); // tiger left unbuilt
     s = reviewSprint(s);
@@ -298,7 +307,7 @@ describe('zoo game: the Sprint Goal', () => {
   });
 
   it('is MET when the goal-critical items are delivered, even if other scope is dropped', () => {
-    let s = setSprintGoal(initialZooState(1), 'Open the lion for families.');
+    let s = setSprintGoal(bigCatsSplit(1), 'Open the lion for families.');
     s = planSprint(s, ['lion', 'tiger']);
     s = toggleGoalCritical(s, 'lion'); // lion is essential to the Goal; tiger is not
     s = openItem(finish(s, 'lion'), 'lion'); // deliver lion, drop tiger
@@ -308,7 +317,7 @@ describe('zoo game: the Sprint Goal', () => {
   });
 
   it('is NOT met when a goal-critical item is unfinished, even if others are done', () => {
-    let s = setSprintGoal(initialZooState(1), 'Open the tiger.');
+    let s = setSprintGoal(bigCatsSplit(1), 'Open the tiger.');
     s = planSprint(s, ['lion', 'tiger']);
     s = toggleGoalCritical(s, 'tiger'); // tiger essential
     s = openItem(finish(s, 'lion'), 'lion'); // lion done, tiger not
@@ -317,7 +326,7 @@ describe('zoo game: the Sprint Goal', () => {
   });
 
   it('the coach shapes an outcome from the selection', () => {
-    const items = initialZooState(1).backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
+    const items = bigCatsSplit(1).backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
     expect(suggestSprintGoal(items)).toMatch(/Big Cats/);
     expect(suggestSprintGoal(items)).toMatch(/so /); // outcome-shaped
   });
@@ -415,7 +424,7 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
   });
 
   it('the Developers can re-order what they pick up next in the Sprint', () => {
-    let s = planSprint(initialZooState(1), ['lion', 'tiger', 'leopard']);
+    let s = planSprint(bigCatsSplit(1), ['lion', 'tiger', 'leopard']);
     const todo = (x: ZooGameState) => x.backlog.filter((it) => it.status === 'committed' && !it.started).map((it) => it.id);
     const before = todo(s);
     expect(before.length).toBe(3);
@@ -429,7 +438,7 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
   });
 
   it('the forecast can be re-ordered while it is still being put together', () => {
-    const s = initialZooState(1);
+    const s = bigCatsSplit(1);
     const picked = ['lion', 'leopard']; // two picks with another Backlog item sitting between them
     const forecast = (x: ZooGameState) => availableItems(x).filter((it) => picked.includes(it.id)).map((it) => it.id);
     expect(forecast(s)).toEqual(['lion', 'leopard']);
@@ -444,7 +453,7 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
   });
 
   it('leaves started work and the Product Backlog where they are', () => {
-    const s = planSprint(initialZooState(1), ['lion-enc', 'tiger-enc']);
+    const s = planSprint(bigCatsSplit(1), ['lion-enc', 'tiger-enc']);
     const started = startItem(s, 'lion-enc');
     expect(started.backlog.find((it) => it.id === 'lion-enc')!.started).toBe(true);
     // work already under way has no queue position left to argue about
@@ -472,7 +481,7 @@ describe('zoo game: work that outlives the Sprint it was built in', () => {
   };
 
   it('sends work that was started but never built back to the Product Backlog to be re-estimated', () => {
-    let s = planSprint(initialZooState(1), ['tiger-enc']);
+    let s = planSprint(bigCatsSplit(1), ['tiger-enc']);
     s = startItem(s, 'tiger-enc');
     s = startNextSprint(reviewSprint(s), '');
     const t = s.backlog.find((x) => x.id === 'tiger-enc')!;
@@ -484,7 +493,7 @@ describe('zoo game: work that outlives the Sprint it was built in', () => {
   });
 
   it('keeps Done-but-unreleased work on the board, and in Done once it is released', () => {
-    let s = planSprint(initialZooState(1), ['tiger-enc']);
+    let s = planSprint(bigCatsSplit(1), ['tiger-enc']);
     s = finish(startItem(s, 'tiger-enc'), 'tiger-enc');
     expect(board(s).deploy).toContain('tiger-enc'); // built, awaiting release
     s = startNextSprint(reviewSprint(s), '');
@@ -499,7 +508,7 @@ describe('zoo game: work that outlives the Sprint it was built in', () => {
   });
 
   it('counts the work in the Sprint it was built in, not the one it was released in', () => {
-    let s = planSprint(initialZooState(1), ['tiger-enc']);
+    let s = planSprint(bigCatsSplit(1), ['tiger-enc']);
     s = finish(startItem(s, 'tiger-enc'), 'tiger-enc');
     const built = s.backlog.find((x) => x.id === 'tiger-enc')!.estimate;
     s = reviewSprint(s);
@@ -511,7 +520,7 @@ describe('zoo game: work that outlives the Sprint it was built in', () => {
 
 describe('zoo game: pulling Backlog items mid-Sprint', () => {
   it('commits a Backlog item into the running Sprint', () => {
-    let s = planSprint(initialZooState(1), ['lion']);
+    let s = planSprint(bigCatsSplit(1), ['lion']);
     expect(availableItems(s).some((i) => i.id === 'tiger')).toBe(true);
     s = pullIntoSprint(s, 'tiger');
     const tiger = s.backlog.find((i) => i.id === 'tiger')!;
@@ -522,9 +531,9 @@ describe('zoo game: pulling Backlog items mid-Sprint', () => {
   });
 
   it('only pulls from the Backlog, and only during a Sprint', () => {
-    const planning = initialZooState(1); // phase 'intro', not a Sprint
+    const planning = bigCatsSplit(1); // phase 'intro', not a Sprint
     expect(pullIntoSprint(planning, 'tiger')).toBe(planning);
-    const s = planSprint(initialZooState(1), ['lion']);
+    const s = planSprint(bigCatsSplit(1), ['lion']);
     expect(pullIntoSprint(s, 'lion')).toBe(s); // lion is committed, not in the Backlog
   });
 });
@@ -622,7 +631,7 @@ describe('zoo game: timed days and the Daily Scrum', () => {
 
 describe('zoo game: emergent backlog from visitor signals', () => {
   it('a zoo with exhibits but no food produces a food signal, which the PO can accept', () => {
-    let s = initialZooState(1);
+    let s = bigCatsSplit(1);
     s = reviewSprint(buildAndOpen(s, ['lion', 'tiger', 'penguins'])); // no food amenity
     const food = s.signals.find((sig) => sig.drivenBy === 'unmet:food');
     expect(food).toBeTruthy();
@@ -633,7 +642,7 @@ describe('zoo game: emergent backlog from visitor signals', () => {
   });
 
   it('ignored signals persist and worsen across Reviews', () => {
-    let s = initialZooState(1);
+    let s = bigCatsSplit(1);
     s = reviewSprint(buildAndOpen(s, ['lion', 'tiger', 'penguins']));
     const first = s.signals.find((sig) => sig.drivenBy === 'unmet:food');
     expect(first).toBeTruthy();
@@ -724,7 +733,7 @@ describe('zoo game: improving a delivered item (feedback-driven PBI)', () => {
   });
 
   it('once an improvement is delivered, the item can be improved again', () => {
-    let s = openItem(finish(planSprint(initialZooState(1), ['lion']), 'lion', brightDesign), 'lion');
+    let s = openItem(finish(planSprint(bigCatsSplit(1), ['lion']), 'lion', brightDesign), 'lion');
     s = improveItem(s, 'lion');
     const impId = s.backlog.find((i) => i.enhancesId === 'lion')!.id;
     s = estimateItem(s, impId, 3);
@@ -816,7 +825,7 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
   });
 
   it('a mid-Sprint pull also gets a default plan', () => {
-    let s = planSprint(initialZooState(1), ['lion']);
+    let s = planSprint(bigCatsSplit(1), ['lion']);
     s = pullIntoSprint(s, 'tiger');
     expect((s.backlog.find((i) => i.id === 'tiger')!.tasks ?? []).length).toBeGreaterThan(0);
   });
@@ -825,7 +834,7 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
 describe('zoo game: WIP limit and improvements with teeth', () => {
   it('the WIP limit blocks starting more items than the limit allows', () => {
     // Their enclosures are built first, so the WIP limit is what gates starting (not the habitat).
-    let s = withEnclosuresBuilt(flat(initialZooState(1)), 'lion-enc', 'tiger-enc', 'leopard-enc', 'penguin-enc');
+    let s = withEnclosuresBuilt(flat(bigCatsSplit(1)), 'lion-enc', 'tiger-enc', 'leopard-enc', 'penguin-enc');
     s = planSprint(s, ['lion', 'tiger', 'leopard', 'penguins']);
     expect(s.wipLimit).toBe(3);
     const doing = () => s.backlog.filter((i) => i.status === 'committed' && i.started).length;
@@ -880,7 +889,7 @@ describe('zoo game: enclosures are built before their animals', () => {
   const find = (s: ZooGameState, id: string) => s.backlog.find((i) => i.id === id)!;
 
   it('each species has its OWN enclosure; lions and tigers do not share', () => {
-    const s = initialZooState(1);
+    const s = bigCatsSplit(1);
     expect(find(s, 'lion-enc').category).toBe('enclosure');
     expect(find(s, 'lion').enclosureId).toBe('lion-enc');
     expect(find(s, 'tiger').enclosureId).toBe('tiger-enc');
@@ -945,7 +954,7 @@ describe('zoo game: enclosures are built before their animals', () => {
   });
 
   it('setting an enclosure footprint is targeted (other enclosures untouched)', () => {
-    let s = initialZooState(1);
+    let s = bigCatsSplit(1);
     expect(find(s, 'lion-enc').enclosureSize).toBe('large'); // its starter footprint
     s = setEnclosureSize(s, 'lion-enc', 'small');
     expect(find(s, 'lion-enc').enclosureSize).toBe('small');
@@ -994,7 +1003,7 @@ describe('zoo game: enclosures are built before their animals', () => {
 
   it('enclosures are excluded from the visitor simulation (they carry no appeal)', () => {
     // Open only the enclosure: no exhibits open, so visitors have nothing to enjoy.
-    let s = planSprint(initialZooState(1), ['lion-enc']);
+    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
     s = openItem(finish(s, 'lion-enc'), 'lion-enc');
     s = reviewSprint(s);
     expect(s.lastReview!.segments.every((seg) => seg.happiness === 0)).toBe(true);
@@ -1014,8 +1023,8 @@ describe('zoo game: the Definition of Done is the completion gate, not a happine
   });
 
   it('editing the DoD text does not change visitor happiness - that comes from the design', () => {
-    const full = reviewSprint(buildAndOpen(flat(initialZooState(1)), NICE));
-    const trimmed = reviewSprint(buildAndOpen(setDefinitionOfDone(flat(initialZooState(1)), ['Meets its acceptance criteria']), NICE));
+    const full = reviewSprint(buildAndOpen(flat(bigCatsSplit(1)), NICE));
+    const trimmed = reviewSprint(buildAndOpen(setDefinitionOfDone(flat(bigCatsSplit(1)), ['Meets its acceptance criteria']), NICE));
     expect(trimmed.lastReview!.overallHappiness).toBe(full.lastReview!.overallHappiness);
   });
 });
@@ -1025,7 +1034,7 @@ describe('zoo game: Retrospective coaching questions', () => {
 
   it('are open (what/how/when), never "why", and there is always at least one', () => {
     // A Sprint where the Goal is missed (only the lion of two goal items delivered).
-    let s = planSprint(flat(initialZooState(1)), ['lion', 'tiger']);
+    let s = planSprint(flat(bigCatsSplit(1)), ['lion', 'tiger']);
     s = reviewSprint(openItem(finish(s, 'lion'), 'lion'));
     const qs = retroQuestions(s);
     expect(qs.length).toBeGreaterThan(0);
@@ -1441,7 +1450,7 @@ describe('zoo game: enclosure planting (flora added in the studio, like water)',
 
 describe('zoo game: bespoke animals (base shape)', () => {
   it('a New PBI animal can start from a base species shape the studio uses', () => {
-    let s = addPbi(initialZooState(1), { name: 'Sabretooth', category: 'exhibit', zone: 'Big Cats', acceptance: ['Fierce'], template: 'tiger' });
+    let s = addPbi(bigCatsSplit(1), { name: 'Sabretooth', category: 'exhibit', zone: 'Big Cats', acceptance: ['Fierce'], template: 'tiger' });
     const sabre = s.backlog.find((i) => i.name === 'Sabretooth')!;
     expect(sabre.template).toBe('tiger');
     expect(presetFor(sabre).parts.markings).toBe('stripes'); // starts from the tiger silhouette
@@ -1521,7 +1530,7 @@ describe('zoo game: ongoing refinement consumes Sprint time', () => {
 
 describe('zoo game: AI Product Owner refinement', () => {
   it('splits, adds, clarifies and re-orders by value - and never estimates (Developers do)', () => {
-    let s = initialZooState(1);
+    let s = bigCatsSplit(1);
     const decisions: PoDecisions = {
       rationale: 'Open Waterside; add food near the cats.',
       splitEpics: [{ epicId: 'waterside', memberIds: ['penguins'] }],

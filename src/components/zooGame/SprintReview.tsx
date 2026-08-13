@@ -1,6 +1,6 @@
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress } from './engine';
+import { productGoalProgress, GOAL_HAPPINESS_TARGET } from './engine';
 import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ interface SprintReviewProps {
   state: ZooGameState;
   onTakeSignal: (index: number) => void;
   onContinue: () => void;
+  /** The PO judging the Product Goal met - the game has no fixed length. */
+  onWrapUp?: () => void;
 }
 
 const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts: 'Enthusiasts', comfortSeekers: 'Comfort Seekers' };
@@ -19,10 +21,11 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const progress = Math.round(productGoalProgress(state) * 100);
+  const history = (state.happiness ?? []).slice(-6);
   // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
   const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
 
@@ -117,8 +120,45 @@ export function SprintReview({ state, onTakeSignal, onContinue }: SprintReviewPr
         </>
       )}
 
-      <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
-        <span className="text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">Product Goal (visitors love it): <span className="font-medium text-foreground">{progress}%</span></span>
+      {/* The Product Goal, and the one decision only the Product Owner makes: is it met? There is no
+          set number of Sprints - the zoo runs until the PO says the Goal is reached. */}
+      <section className="space-y-2 rounded-lg border border-border bg-card px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Product Goal &middot; the Product Owner&rsquo;s call</span>
+          <span className="text-[11px] text-muted-foreground">Sprint {state.sprintNumber} &middot; no set number of Sprints</span>
+        </div>
+        <p className="text-sm font-medium">{state.productGoal}</p>
+        <div className="flex items-center gap-2">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+            <div className={cn('h-full rounded-full', progress >= 80 ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
+          </div>
+          <span className="font-mono text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">{progress}%</span>
+        </div>
+        {history.length > 1 && (
+          <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="uppercase tracking-wide">Happiness by Sprint</span>
+            {history.map((h, i) => (
+              <span key={i} className={cn('rounded-full px-1.5 py-0.5 font-mono', i === history.length - 1 ? 'bg-primary/10 font-semibold text-primary' : 'bg-muted')}>{h}</span>
+            ))}
+            <span>&middot; target {GOAL_HAPPINESS_TARGET}</span>
+          </div>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          {progress >= 80
+            ? 'Visitors love the zoo. If you judge the Product Goal met, wrap up - or keep going and make it better.'
+            : 'Not there yet. Another Sprint of value - things to see, somewhere to eat, a park that is easy to get around - moves it.'}
+        </p>
+        {onWrapUp && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button size="sm" variant={progress >= 80 ? 'default' : 'outline'} onClick={onWrapUp}>
+              {progress >= 80 ? 'The Product Goal is met - wrap up' : 'End it here anyway'}
+            </Button>
+            {progress < 80 && <span className="text-[10px] text-muted-foreground/80">It is your call as PO - but the visitors are not there yet.</span>}
+          </div>
+        )}
+      </section>
+
+      <div className="sticky bottom-4 flex items-center justify-end gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
         <Button size="sm" onClick={onContinue}>Retrospective &rarr;</Button>
       </div>
     </div>
