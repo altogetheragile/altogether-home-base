@@ -71,14 +71,15 @@ export function BoardColumn({ title, count, hint, tone = 'default', limit, child
 
 /** An item as a board card: kind icon, name, zone pill, points, plus optional badge,
  *  a subtitle line and a row of actions. */
-export function ItemCard({ item, badge, subtitle, actions, onClick, selectable, className }:
-  { item: BacklogItem; badge?: ReactNode; subtitle?: ReactNode; actions?: ReactNode; onClick?: () => void; selectable?: boolean; className?: string }) {
+export function ItemCard({ item, badge, subtitle, actions, lead, onClick, selectable, className }:
+  { item: BacklogItem; badge?: ReactNode; subtitle?: ReactNode; actions?: ReactNode; lead?: ReactNode; onClick?: () => void; selectable?: boolean; className?: string }) {
   return (
     <div
       role={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cn('rounded-md border border-border bg-card p-2 text-sm', onClick && 'cursor-pointer hover:border-primary/60 hover:bg-primary/5', selectable && 'ring-2 ring-primary/50', className)}>
       <div className="flex min-w-0 items-start gap-1.5">
+        {lead}
         <CategoryIcon item={item} className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium">{item.name}</div>

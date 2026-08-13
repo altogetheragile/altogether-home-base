@@ -339,6 +339,7 @@ export type ZooAction =
   | { type: 'REFINE_PBI'; id: string; draft: PbiDraft }
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_ITEM_BEFORE'; id: string; beforeId: string }
+  | { type: 'MOVE_SPRINT_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }
