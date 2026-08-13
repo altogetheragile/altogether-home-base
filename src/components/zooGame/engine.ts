@@ -419,6 +419,13 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
 }
 
 /** Resize a landscape feature's footprint on the park (e.g. stretch a river across it). */
+/** Turn a landscape feature on the park. Degrees clockwise from running across; kept in 0-359 so
+ *  the value never drifts off after repeated turns. Arranging, not a design change. */
+export function setItemRot(state: ZooGameState, id: string, rot: number): ZooGameState {
+  const deg = ((Math.round(rot) % 360) + 360) % 360;
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, rot: deg } : it)) };
+}
+
 export function setItemSize(state: ZooGameState, id: string, size: { w: number; h: number }): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, size } : it)) };
 }
