@@ -340,6 +340,7 @@ export type ZooAction =
   | { type: 'MOVE_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_ITEM_BEFORE'; id: string; beforeId: string }
   | { type: 'MOVE_SPRINT_ITEM'; id: string; dir: 'up' | 'down' }
+  | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }
