@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
-import { availableItems, suggestTasks } from './engine';
+import { availableItems, notReady, suggestTasks } from './engine';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2 } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2, AlertCircle } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -278,9 +278,17 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
 
   const renderItem = (it: BacklogItem, idx: number) => {
     const on = selected?.has(it.id);
+    const why = notReady(it); // null once it meets the Definition of Ready
     const isOpen = expandedItems.has(it.id);
     const action =
-      it.category === 'epic' ? (
+      // Sizing is refinement, not planning: in Planning an unready item says why, and cannot be
+      // pulled in. You fix it by refining - which is where the Developers size things.
+      mode === 'plan' && why ? (
+        <span title={`${why}. Refine it before you can forecast it.`}
+          className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+          <AlertCircle className="h-3 w-3" /> Not ready
+        </span>
+      ) : it.category === 'epic' ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>

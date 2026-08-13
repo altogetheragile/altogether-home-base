@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState, PbiDraft, SprintTask } from './types';
 import { availableItems, suggestSprintGoal, suggestTasks } from './engine';
 import { zooCapacity, SPRINT_LENGTH_OPTIONS } from './config';
+import { sprintCapacity } from './engine';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,8 @@ interface SprintPlanningProps {
   onReorder: (id: string, dir: 'up' | 'down') => void;
   /** Re-order the forecast itself - the Developers arranging the plan they are making. */
   onReorderForecast?: (id: string, dir: 'up' | 'down', picked: string[]) => void;
+  /** Back to Refinement - sizing and splitting happen there, not here. */
+  onRefine?: () => void;
   onMoveZone: (zone: string, dir: 'up' | 'down') => void;
   onMoveBefore: (id: string, beforeId: string) => void;
   onSetUseStories: (on: boolean) => void;
@@ -44,7 +47,7 @@ const STEPS: { key: Step; label: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onReorderForecast, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onReorderForecast, onRefine, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
   // Moving between topics clears the transient "Ask the PO" note so it doesn't follow you.
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
@@ -52,7 +55,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
-  const capacity = zooCapacity(state.velocity);
+  const capacity = sprintCapacity(state); // velocity, less what refining the Backlog for it cost
   const over = committed > capacity;
   const hasGoal = state.sprintGoal.trim().length > 0;
   const hasWhat = chosen.length > 0;
@@ -180,6 +183,20 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                 <div className="flex items-baseline justify-between text-sm">
                   <span className="font-semibold">Sprint forecast</span>
                   <span className={cn('font-mono', over ? 'text-destructive' : 'text-muted-foreground')}>{committed} / {capacity} pts</span>
+                  {onRefine && (
+                    // Nothing Ready to forecast? Refinement is where that is fixed - and it costs
+                    // this Sprint capacity, which is the point.
+                    <button type="button" onClick={onRefine}
+                      className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      title="Size, split and clarify PBIs. It takes time from this Sprint.">
+                      Refine the Backlog
+                    </button>
+                  )}
+                  {state.refineSpend > 0 && (
+                    <span className="text-[10px] text-muted-foreground/80" title="Refining the Backlog is real work - it comes out of the capacity you have left to build with">
+                      ({zooCapacity(state.velocity)} less {state.refineSpend} spent refining)
+                    </span>
+                  )}
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div className={cn('h-full rounded-full', over ? 'bg-destructive' : 'bg-primary')} style={{ width: `${Math.min(100, capacity ? (committed / capacity) * 100 : 0)}%` }} />

@@ -240,6 +240,10 @@ export interface ZooGameState {
   sprintGoalMet: boolean | null;
   /** Product-wide, team-owned quality bar every item clears to be shippable. */
   definitionOfDone: string[];
+  /** The team's agreement about what makes an item ready to forecast. Editable, like the DoD. */
+  definitionOfReady: string[];
+  /** Capacity points spent refining the Backlog before this Sprint was forecast. */
+  refineSpend: number;
   /** Whether new PBIs default to the user-story format (a preference, off by default
    *  so it is never forced). */
   useUserStories: boolean;
@@ -349,6 +353,7 @@ export type ZooAction =
   | { type: 'MOVE_SPRINT_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
+  | { type: 'SET_DOR'; dor: string[] }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }

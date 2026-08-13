@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, REFINE_PTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, sprintCapacity, notReady, isReady, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -166,7 +166,7 @@ describe('zoo game: the Sprint loop', () => {
     let s = flat(initialZooState(1));
     s = reviewSprint(buildAndOpen(s, ['lion', 'kiosk']));
     s = startNextSprint(s, 'Swarm on fewer exhibits at once');
-    expect(s.phase).toBe('planning');
+    expect(s.phase).toBe('refine'); // every Sprint opens with Refinement
     expect(s.sprintNumber).toBe(2);
     expect(s.improvements).toHaveLength(1);
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
@@ -1315,6 +1315,55 @@ describe('zoo game: richer studio kit', () => {
       design.colors.ears = '#efe6d0';
       expect(designCriteria(exhibit(), design).find((c) => /crest|tusks/.test(c.label))!.pass).toBe(true);
     }
+  });
+});
+
+describe('zoo game: refinement is ongoing, and only Ready work is forecast', () => {
+  it('opens every Sprint with Refinement, not Planning', () => {
+    let s = planSprint(initialZooState(1), ['lion-enc']);
+    s = startNextSprint(reviewSprint(s), '');
+    expect(s.phase).toBe('refine');
+    expect(s.refineSpend).toBe(0); // a fresh budget each Sprint
+  });
+
+  it('knows why an item is not ready, and will not forecast it', () => {
+    const s = initialZooState(1);
+    const epic = s.backlog.find((it) => it.category === 'epic')!;
+    expect(notReady(epic)).toMatch(/split/i);
+    expect(isReady(epic)).toBe(false);
+    const unsized = { ...s.backlog[0], unsized: true };
+    expect(notReady(unsized)).toMatch(/sized/i);
+    expect(notReady({ ...s.backlog[0], acceptance: [] })).toMatch(/acceptance/i);
+    expect(isReady(s.backlog.find((it) => it.id === 'lion-enc')!)).toBe(true);
+
+    // asking to forecast an epic simply does not commit it
+    const planned = planSprint(s, [epic.id, 'lion-enc']);
+    expect(planned.committedIds).toEqual(['lion-enc']);
+  });
+
+  it('charges refinement done between Sprints to the Sprint it is preparing', () => {
+    let s: ZooGameState = { ...initialZooState(1), phase: 'refine', velocity: [20] };
+    const base = zooCapacity(s.velocity);
+    expect(sprintCapacity(s)).toBe(base); // nothing spent yet
+    s = splitEpic(s, 'forest', ['bear', 'monkey', 'picnic']);
+    s = estimateItem(s, 'bear-enc', 5);
+    expect(s.refineSpend).toBe(REFINE_PTS.split + REFINE_PTS.estimate);
+    expect(sprintCapacity(s)).toBe(base - s.refineSpend); // the Sprint has that much less to build with
+    // ...and it never falls to nothing, however much refining is done
+    expect(sprintCapacity({ ...s, refineSpend: 999 })).toBeGreaterThan(0);
+  });
+
+  it('does not charge capacity for refining mid-Sprint - that costs the day clock instead', () => {
+    let s = planSprint(initialZooState(1), ['lion-enc']);
+    expect(s.phase).toBe('sprint');
+    s = estimateItem(s, 'penguins', 5);
+    expect(s.refineSpend).toBe(0);
+    expect(s.refinePenalty).toBeGreaterThan(0);
+  });
+
+  it('lets the team edit their Definition of Ready', () => {
+    const s = setDefinitionOfReady(initialZooState(1), ['  Sized  ', '', 'Agreed with the PO']);
+    expect(s.definitionOfReady).toEqual(['Sized', 'Agreed with the PO']);
   });
 });
 

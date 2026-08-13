@@ -5,7 +5,7 @@ import { DayTimer } from './DayTimer';
 import { DodEditor } from './DodEditor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, Pencil, Check, Save, FolderOpen, Sparkles, Loader2, X } from 'lucide-react';
+import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, Pencil, Check, Save, FolderOpen, Sparkles, Loader2, X, ListChecks } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -45,6 +45,42 @@ function DodPopover({ dod, onSetDod }: { dod: string[]; onSetDod?: (dod: string[
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {dod.map((d) => <span key={d} className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** The Definition of Ready, alongside the DoD. It is a working agreement rather than anything Scrum
+ *  asks for, so it says so - and the team edits it. The game holds them to the parts it can see. */
+function DorPopover({ dor, onSetDor }: { dor: string[]; onSetDor?: (dor: string[]) => void }) {
+  const [editing, setEditing] = useState(false);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+          <ListChecks className="h-3.5 w-3.5" /> DoR <span className="text-muted-foreground/70">({dor.length})</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Definition of Ready</span>
+          {onSetDor && (
+            <button type="button" onClick={() => setEditing((e) => !e)} className="flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+              {editing ? <><Check className="h-3 w-3" /> Done</> : <><Pencil className="h-3 w-3" /> Edit</>}
+            </button>
+          )}
+        </div>
+        <p className="mb-2 text-[10px] leading-snug text-muted-foreground/80">
+          Your own agreement about what makes a PBI ready to forecast - Scrum does not require one. Keep it a
+          conversation, not a gate. Refinement is where items are made ready, and it takes time from the Sprint.
+        </p>
+        {editing && onSetDor ? (
+          <DodEditor dod={dor} onSave={onSetDor} />
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {dor.map((d) => <span key={d} className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
           </div>
         )}
       </PopoverContent>
@@ -106,7 +142,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean }[]; onConfirmDeployAc?: (index: number, value: boolean) => void; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
+export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean }[]; onConfirmDeployAc?: (index: number, value: boolean) => void; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void }) {
   // `tab` is controlled from above when provided, so an event (place & open) can switch to
   // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
   // position the released item there.
@@ -150,6 +186,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
                 <span className="hidden md:inline">{poRefining ? 'PO refining…' : 'Ask the PO'}</span>
               </button>
             )}
+            {onSetDod !== undefined && <DorPopover dor={state.definitionOfReady} onSetDor={onSetDor} />}
             {onSetDod !== undefined && <DodPopover dod={state.definitionOfDone} onSetDod={onSetDod} />}
             {onOpenSaves && (
               <button type="button" onClick={onOpenSaves} title="Saved games" className="rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground"><FolderOpen className="h-3.5 w-3.5" /></button>
