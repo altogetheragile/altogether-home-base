@@ -5,7 +5,7 @@ import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAccept
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, zooCapacity } from './config';
+import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, REFINE_PTS, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -13,6 +13,12 @@ import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISS
  *  unless a Sprint is in progress. */
 const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number): ZooGameState =>
   before.phase === 'sprint' ? { ...after, refinePenalty: after.refinePenalty + seconds } : after;
+
+/** Refining BETWEEN Sprints is not free either: it costs the Sprint about to be forecast some of
+ *  its capacity. Refinement is ongoing work the team does every Sprint, so the trade-off has to be
+ *  felt - time spent getting the Backlog ready is time not spent building. */
+const chargeRefinePts = (before: ZooGameState, after: ZooGameState, pts: number): ZooGameState =>
+  before.phase === 'refine' || before.phase === 'planning' ? { ...after, refineSpend: after.refineSpend + pts } : after;
 
 // ============= Refinement: estimation and ordering =============
 
@@ -82,7 +88,7 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   else if (draft.category === 'enclosure') item = { ...base, enclosureSize: draft.enclosureSize ?? 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
-  return chargeRefine(state, { ...state, backlog: [...state.backlog, item], zones }, REFINE_COSTS.addPbi);
+  return chargeRefinePts(state, chargeRefine(state, { ...state, backlog: [...state.backlog, item], zones }, REFINE_COSTS.addPbi), REFINE_PTS.addPbi);
 }
 
 /** Refine an existing Backlog PBI (edit its name, zone and acceptance criteria).
@@ -105,7 +111,7 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
       : it,
   );
   const zones = zone && !state.zones.includes(zone) ? [...state.zones, zone] : state.zones;
-  return chargeRefine(state, { ...state, backlog, zones }, REFINE_COSTS.refinePbi);
+  return chargeRefinePts(state, chargeRefine(state, { ...state, backlog, zones }, REFINE_COSTS.refinePbi), REFINE_PTS.refinePbi);
 }
 
 /** Refine an EPIC by splitting the chosen members out into their own PBIs. Each animal
@@ -149,7 +155,7 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
   const remaining = members.filter((mem) => !memberIds.includes(mem.id));
   const replacement = remaining.length ? [{ ...epicItem, epicMembers: remaining }, ...created] : created;
   const backlog = [...state.backlog.slice(0, idx), ...replacement, ...state.backlog.slice(idx + 1)];
-  return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.split);
+  return chargeRefinePts(state, chargeRefine(state, { ...state, backlog }, REFINE_COSTS.split), REFINE_PTS.split);
 }
 
 /** Move the given Backlog-status items to the front of the Backlog in the given order (the
@@ -197,7 +203,7 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
  *  be planned. */
 export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false, carriedOver: false } : it));
-  return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.estimate);
+  return chargeRefinePts(state, chargeRefine(state, { ...state, backlog }, REFINE_COSTS.estimate), REFINE_PTS.estimate);
 }
 
 // ============= The plan: decomposing a PBI into tasks (Planning's "how") =============
@@ -568,9 +574,18 @@ export function reorderInZone(state: ZooGameState, id: string, dir: 'up' | 'down
 const withPlan = (item: BacklogItem): BacklogItem =>
   (item.tasks ?? []).filter((t) => t.label.trim()).length ? item : { ...item, tasks: suggestTasks(item) };
 
+/** The capacity this Sprint actually has: the team's velocity, less what refining the Backlog for
+ *  it has already cost them. Never below a quarter of it - a team that refines all day still builds
+ *  something, and the game should teach the trade-off, not deadlock on it. */
+export function sprintCapacity(state: ZooGameState): number {
+  const base = zooCapacity(state.velocity);
+  return Math.max(Math.ceil(base / 4), base - state.refineSpend);
+}
+
 export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
-  // Only estimated (sized) Backlog items can be committed.
-  const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && !it.unsized).map((it) => it.id));
+  // Only Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
+  // and with acceptance criteria. Anything else has to go back through Refinement first.
+  const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && isReady(it)).map((it) => it.id));
   const backlog = state.backlog.map((it) =>
     committed.has(it.id) ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it,
   );
@@ -578,7 +593,7 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
   return {
     ...state, phase: 'sprint', committedIds: [...committed], backlog,
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
-    sprintForecast: zooCapacity(state.velocity),
+    sprintForecast: sprintCapacity(state),
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
     burndown: [committedPts],
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null, refinePenalty: 0,
@@ -772,6 +787,21 @@ export function suggestSprintGoal(items: BacklogItem[]): string {
   return `Bring the ${zone} zone to life so visitors have more to enjoy.`;
 }
 
+/** Why an item is not ready to be forecast, or null if it is. The team's Definition of Ready is
+ *  their own agreement; these are the parts of it the game can see for itself. */
+export function notReady(item: BacklogItem): string | null {
+  if (item.category === 'epic') return 'Too big - split it into the pieces you could build';
+  if (item.unsized) return 'Not sized yet - the Developers size it in Refinement';
+  if (!item.acceptance.length) return 'No acceptance criteria agreed';
+  return null;
+}
+export const isReady = (item: BacklogItem): boolean => notReady(item) === null;
+
+/** Edit the Definition of Ready (a working agreement, so the team owns it). */
+export function setDefinitionOfReady(state: ZooGameState, dor: string[]): ZooGameState {
+  return { ...state, definitionOfReady: dor.map((d) => d.trim()).filter((d) => d.length > 0) };
+}
+
 export function setDefinitionOfDone(state: ZooGameState, dod: string[]): ZooGameState {
   return { ...state, definitionOfDone: dod.map((d) => d.trim()).filter((d) => d.length > 0) };
 }
@@ -943,7 +973,10 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
   const scrumDiscipline = state.scrumDiscipline || /daily scrum every day/i.test(imp);
   return {
     ...state,
-    phase: 'planning',
+    // Each Sprint opens with Refinement, not Planning: getting the Backlog ready is ongoing work the
+    // team does every Sprint, and it costs the Sprint they are about to forecast.
+    phase: 'refine',
+    refineSpend: 0,
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
