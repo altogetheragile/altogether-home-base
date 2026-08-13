@@ -3,7 +3,7 @@ import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './ty
 import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
-import { carParkLayout, CAR_PARK_H } from './carPark';
+import { carParkLayout, carCapacity, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -245,9 +245,9 @@ function FeatureName({ name }: { name: string }) {
 /** Enclosure footprints (in the fixed design px). A bigger habitat is simply a bigger
  *  box; how many animals appear inside is how many you have actually built. */
 const ENCLOSURE: Record<'small' | 'medium' | 'large', { w: number; h: number }> = {
-  small: { w: 120, h: 84 },
-  medium: { w: 164, h: 110 },
-  large: { w: 210, h: 138 },
+  small: { w: 96, h: 68 },
+  medium: { w: 132, h: 90 },
+  large: { w: 172, h: 114 },
 };
 // A feature's name is drawn INSIDE its own footprint and ignores the pointer, so it never blocks
 // dragging, a resize handle or a path being drawn - and it adds nothing to the feature's box.
@@ -465,7 +465,7 @@ function buildFeatures(state: ZooGameState): Feature[] {
   return feats;
 }
 
-const CANVAS_W = 880;
+const CANVAS_W = 1180; // the park's design width - wide enough to lay a zoo out, and zoomable
 // A river is cut long enough to cross the park from any angle (past the corners on the diagonal)
 // and is clipped by the park's edges, so turning it never leaves a gap at the ends.
 const RIVER_LEN = 1700;
@@ -762,7 +762,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // three cars per live exhibit or amenity, with coaches once the park is a real day out - so the lot
   // reads as how busy the park is. Guests arrive from its cars and walk up through the gate.
   const built = attractions.length + foodPts.length;
-  const carCount = Math.min(16, built * 3);
+  const carCount = Math.min(carCapacity(CANVAS_W), built * 3);
   const busCount = built >= 5 ? 2 : built >= 3 ? 1 : 0;
   const carPark = carParkLayout(CANVAS_W, canvasH, carCount, busCount);
   const sceneH = canvasH + CAR_PARK_H;

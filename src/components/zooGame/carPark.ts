@@ -39,7 +39,16 @@ const CARS = ['#e0574b', '#4a90d9', '#43a047', '#f0b429', '#eeeeee', '#7d6bd0', 
 const KINDS = ['sedan', 'suv', 'hatch', 'van', 'pickup', 'sedan', 'suv', 'hatch'];
 const CAR_HW = 23, CAR_HH = 26, BUS_HW = 50, BUS_HH = 23; // half-footprints; a coach lies on its side
 
-export const CAR_BAYS = 16, COACH_BAYS = 2; // capacity: 16 car bays + 2 coach spaces in the lay-by
+const BAY_W = 78, BAY_GAP = 10, EDGE = 56; // bay pitch, and the margin the link roads need each side
+export const CAR_BAYS = 16, COACH_BAYS = 2; // what a default-width apron holds: 16 bays + 2 coaches
+
+/** How many car bays this apron is wide enough for: two rows of columns either side of the walkway,
+ *  four columns per side at the least and more as the park gets wider - so a bigger lot is a fuller
+ *  one rather than bare asphalt. */
+export function carCapacity(W: number): number {
+  const perBlock = Math.max(4, Math.floor((W - WALK_W - 2 * EDGE) / 2 / (BAY_W + BAY_GAP)));
+  return perBlock * 4; // two blocks of columns, two rows deep
+}
 
 /** Build the lot for an apron of width `W` whose top edge is at `top`, filled to `carCount` cars
  *  and `busCount` coaches. The lot starts empty (just painted bays) and fills front-to-back as the
@@ -53,7 +62,7 @@ export const CAR_BAYS = 16, COACH_BAYS = 2; // capacity: 16 car bays + 2 coach s
  *  there is a way in and out of every space. Four bays either side of a pedestrian walkway that
  *  runs up the middle to the gate, so people on foot are never in the traffic. */
 export function carParkLayout(W: number, top: number, carCount = CAR_BAYS, busCount = COACH_BAYS): CarParkLayout {
-  const bayW = 78, gap = 10, perBlock = 4;
+  const bayW = BAY_W, gap = BAY_GAP, perBlock = carCapacity(W) / 4; // columns each side of the walkway
   const blockW = perBlock * bayW + (perBlock - 1) * gap;
   const startX = (W - (blockW * 2 + WALK_W)) / 2;
   const walkX = startX + blockW;                 // the walkway sits between the two blocks of bays
@@ -67,7 +76,7 @@ export function carParkLayout(W: number, top: number, carCount = CAR_BAYS, busCo
     { x: 4, y: aisleY, w: LINK_W, h: coachY0 + COACH_H - aisleY, dir: 'v' },
     { x: W - 4 - LINK_W, y: aisleY, w: LINK_W, h: coachY0 + COACH_H - aisleY, dir: 'v' },
   ];
-  const cars = Math.max(0, Math.min(CAR_BAYS, carCount));
+  const cars = Math.max(0, Math.min(carCapacity(W), carCount));
   const spots: CarSpot[] = [];
   const empties: CarParkLayout['empties'] = [];
   // Fill order: the whole front row, then the back row, left to right across both blocks. Each bay's
