@@ -133,6 +133,10 @@ export interface BacklogItem {
   carriedOver?: boolean;
   /** Hidden intended size; what planning poker clusters the cards around. */
   trueSize?: number;
+  /** The Sprint this item was RELEASED in (opened to visitors). Usually the Sprint it was built
+   *  in, but Done work can be released later - releasing is not gated by the Sprint Review - so
+   *  the two can differ, and the board needs this to know what went live during this Sprint. */
+  openedIn?: number;
   /** Per-item acceptance criteria (what makes this item correct). Distinct from the
    *  product-wide Definition of Done. */
   acceptance: string[];

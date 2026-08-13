@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
-import { enclosureReady, enclosureOf } from './engine';
+import { enclosureReady, enclosureOf, availableItems } from './engine';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
@@ -13,7 +13,7 @@ import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Boar
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown } from 'lucide-react';
+import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -108,12 +108,16 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
 export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
+  const [showBacklog, setShowBacklog] = useState(true); // the Backlog sidebar tucks away during the Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const committed = state.backlog.filter((it) =>
     (it.sprintNumber === state.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'))
     // Unreleased Done work built in an earlier Sprint carries over here (not lost) until you open it.
-    || (it.status === 'done' && it.sprintNumber !== state.sprintNumber),
+    || (it.status === 'done' && it.sprintNumber !== state.sprintNumber)
+    // ...and once you do release it, it belongs in this Sprint's Done column - it went live now,
+    // even though it was built earlier. Without this it would drop off the board on deployment.
+    || (it.status === 'open' && it.openedIn === state.sprintNumber),
   );
   const designItem = designing ? committed.find((it) => it.id === designing) : null;
   const editing = !!designItem && designItem.status !== 'committed';
@@ -128,6 +132,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
   const deploy = committed.filter((it) => it.status === 'done');
   const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = doing.length >= state.wipLimit;
+  const available = availableItems(state).length; // shown on the collapsed tab, so it still tells you what is waiting
 
   // Drag a card to the next column, as an alternative to its button. The columns are the
   // workflow, but a card's column is derived from its real state, so a drag runs the same
@@ -262,9 +267,25 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
           )}
 
           {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
-          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
-            <ProductBacklogSidebar state={state} mode="sprint" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-              onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+          {/* The Product Backlog is there to pull from mid-Sprint, but the board is the thing you are
+              working on - so it tucks away and gives the columns the whole width when you don't need it. */}
+          <div className={cn('grid gap-4 lg:items-start', showBacklog ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : 'lg:grid-cols-[auto_minmax(0,1fr)]')}>
+            {showBacklog ? (
+              <div className="min-w-0 space-y-1.5">
+                <button type="button" onClick={() => setShowBacklog(false)}
+                  className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
+                  <PanelLeftClose className="h-3.5 w-3.5" /> Hide the Product Backlog
+                </button>
+                <ProductBacklogSidebar state={state} mode="sprint" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+                  onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+              </div>
+            ) : (
+              <button type="button" onClick={() => setShowBacklog(true)} title="Show the Product Backlog" aria-label="Show the Product Backlog"
+                className="flex h-fit items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground lg:flex-col lg:gap-2 lg:px-1.5 lg:py-3">
+                <PanelLeftOpen className="h-4 w-4 shrink-0" />
+                <span className="lg:[writing-mode:vertical-rl]">Product Backlog ({available})</span>
+              </button>
+            )}
 
             <div className="min-w-0 space-y-3">
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
@@ -334,6 +355,14 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
                     <ItemCard item={it}
+                      // Built in an earlier Sprint and still not released: say so, so a finished
+                      // Increment waiting on deployment does not read as this Sprint's work.
+                      badge={it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber ? (
+                        <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400"
+                          title={`Built in Sprint ${it.sprintNumber} and Done - it is waiting to be released, not work forecast for this Sprint`}>
+                          built in Sprint {it.sprintNumber}
+                        </span>
+                      ) : undefined}
                       subtitle={<CardDetail item={it} interactive showAcceptance built onToggleTask={onToggleTask} />}
                       actions={deployActions(it)} />
                     </div>

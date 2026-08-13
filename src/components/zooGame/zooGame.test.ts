@@ -456,6 +456,59 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
   });
 });
 
+describe('zoo game: work that outlives the Sprint it was built in', () => {
+  // The board's columns, derived the way SprintBoard derives them.
+  const board = (s: ZooGameState) => {
+    const on = s.backlog.filter((it) =>
+      (it.sprintNumber === s.sprintNumber && (it.status === 'committed' || it.status === 'done' || it.status === 'open'))
+      || (it.status === 'done' && it.sprintNumber !== s.sprintNumber)
+      || (it.status === 'open' && it.openedIn === s.sprintNumber));
+    return {
+      todo: on.filter((it) => it.status === 'committed' && !it.started).map((i) => i.id),
+      doing: on.filter((it) => it.status === 'committed' && it.started).map((i) => i.id),
+      deploy: on.filter((it) => it.status === 'done').map((i) => i.id),
+      done: on.filter((it) => it.status === 'open').map((i) => i.id),
+    };
+  };
+
+  it('sends work that was started but never built back to the Product Backlog to be re-estimated', () => {
+    let s = planSprint(initialZooState(1), ['tiger-enc']);
+    s = startItem(s, 'tiger-enc');
+    s = startNextSprint(reviewSprint(s), '');
+    const t = s.backlog.find((x) => x.id === 'tiger-enc')!;
+    expect(t.status).toBe('backlog');   // back to the PO's list, not carried into the next Sprint
+    expect(t.sprintNumber).toBeNull();
+    expect(t.carriedOver).toBe(true);   // ...flagged, and re-opened for estimation
+    expect(t.unsized).toBe(true);
+    expect(board(s).todo).not.toContain('tiger-enc');
+  });
+
+  it('keeps Done-but-unreleased work on the board, and in Done once it is released', () => {
+    let s = planSprint(initialZooState(1), ['tiger-enc']);
+    s = finish(startItem(s, 'tiger-enc'), 'tiger-enc');
+    expect(board(s).deploy).toContain('tiger-enc'); // built, awaiting release
+    s = startNextSprint(reviewSprint(s), '');
+    // it is a finished Increment waiting to be released, so it is still there to deploy...
+    expect(board(s).deploy).toContain('tiger-enc');
+    expect(s.backlog.find((x) => x.id === 'tiger-enc')!.sprintNumber).toBe(1); // ...marked as Sprint 1's work
+    // ...and releasing it now puts it in THIS Sprint's Done column rather than dropping it off the board
+    s = openItem(s, 'tiger-enc');
+    expect(s.backlog.find((x) => x.id === 'tiger-enc')!.openedIn).toBe(s.sprintNumber);
+    expect(board(s).done).toContain('tiger-enc');
+    expect(board(s).deploy).not.toContain('tiger-enc');
+  });
+
+  it('counts the work in the Sprint it was built in, not the one it was released in', () => {
+    let s = planSprint(initialZooState(1), ['tiger-enc']);
+    s = finish(startItem(s, 'tiger-enc'), 'tiger-enc');
+    const built = s.backlog.find((x) => x.id === 'tiger-enc')!.estimate;
+    s = reviewSprint(s);
+    expect(s.velocity[s.velocity.length - 1]).toBe(built); // counted in Sprint 1
+    s = reviewSprint(openItem(startNextSprint(s, ''), 'tiger-enc'));
+    expect(s.velocity[s.velocity.length - 1]).toBe(0);     // and not counted again in Sprint 2
+  });
+});
+
 describe('zoo game: pulling Backlog items mid-Sprint', () => {
   it('commits a Backlog item into the running Sprint', () => {
     let s = planSprint(initialZooState(1), ['lion']);

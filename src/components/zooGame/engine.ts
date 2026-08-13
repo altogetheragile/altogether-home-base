@@ -690,13 +690,13 @@ export function openItem(state: ZooGameState, id: string): ZooGameState {
     // improves, keeping the target's place. The improvement itself is marked delivered - it counts
     // for velocity - but is excluded from the park so there is no duplicate feature.
     const backlog = state.backlog.map((it) => {
-      if (it.id === id) return { ...it, status: 'open' as const };
+      if (it.id === id) return { ...it, status: 'open' as const, openedIn: state.sprintNumber };
       if (it.id === item.enhancesId) return { ...it, design: item.design, enclosureSize: item.enclosureSize ?? it.enclosureSize };
       return it;
     });
     return { ...state, backlog };
   }
-  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, status: 'open' as const } : it));
+  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, status: 'open' as const, openedIn: state.sprintNumber } : it));
   return { ...state, backlog };
 }
 
