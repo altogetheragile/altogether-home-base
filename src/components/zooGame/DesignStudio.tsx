@@ -2,7 +2,7 @@ import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'rea
 import type { BacklogItem } from './types';
 import {
   renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
-  enclosureWater, defaultWater, enclosureFlora, defaultFlora, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, floraDefaultColors, appealFromDesign, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
+  enclosureWater, addWaterTo, enclosureFlora, addFloraTo, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, floraDefaultColors, appealFromDesign, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
@@ -177,7 +177,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const commit = (next: ItemDesign) => { setDesign(next); onChange?.(next); };
   const setWater = (w: WaterFeature[]) => commit({ ...design, water: w });
   const setFlora = (f: EnclosureFlora[]) => commit({ ...design, flora: f });
-  const addFlora = (type: string) => setFlora([...enclosureFlora(design), defaultFlora(type, enclosureFlora(design).length)]);
+  const addFlora = (type: string) => setFlora(addFloraTo(design, type)); // placed clear of what is already in there
   const setPart = (key: string, opt: string) => commit({ ...design, parts: { ...design.parts, [key]: opt } });
   const setColor = (key: string, hex: string) => commit({ ...design, colors: { ...design.colors, [key]: hex } });
   const copyFrom = (src: CopySource) => commit({ parts: { ...src.design.parts }, colors: { ...src.design.colors } });
@@ -301,7 +301,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             <ColourPickerRow label="Ground" value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
             <ColourPickerRow label="Fence" value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => setWater([...enclosureWater(design), defaultWater(enclosureWater(design).length)])}
+              <button type="button" onClick={() => setWater(addWaterTo(design))}
                 className="rounded-full border border-primary/50 bg-primary/5 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/10">+ Add water feature</button>
               <span className="text-[11px] text-muted-foreground/70">Drag to move, drag the corner to resize, hover for &times;.</span>
             </div>

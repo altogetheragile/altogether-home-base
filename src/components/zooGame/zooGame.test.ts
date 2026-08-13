@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
+import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 
 /** A design that colours every part, so any category's build meets the Definition of Done. */
@@ -1315,6 +1315,56 @@ describe('zoo game: richer studio kit', () => {
       design.colors.ears = '#efe6d0';
       expect(designCriteria(exhibit(), design).find((c) => /crest|tusks/.test(c.label))!.pass).toBe(true);
     }
+  });
+});
+
+describe('zoo game: nothing is placed on top of anything else in a habitat', () => {
+  const R = 0.11; // the room one plant takes up, as a radius in box fractions
+  const overlaps = (a: { x: number; y: number; s?: number }, b: { x: number; y: number; s?: number }) =>
+    Math.hypot(a.x - b.x, a.y - b.y) < R * (a.s ?? 1) + R * (b.s ?? 1);
+  // a plant may stand at the water's edge, but its centre must not be in the pool
+  const inWater = (p: { x: number; y: number }, w: { x: number; y: number; w: number; h: number }) => {
+    const cx = w.x + w.w / 2, cy = w.y + w.h / 2;
+    return Math.hypot((p.x - cx) / (w.w / 2), (p.y - cy) / (w.h / 2)) <= 1;
+  };
+
+  it('a new enclosure has no water until you add one', () => {
+    const enc = { id: 'e1', name: 'Lion Enclosure', category: 'enclosure' } as BacklogItem;
+    expect(enclosureWater(presetFor(enc))).toEqual([]);
+    // ...but a design saved before that still shows the pool it was given
+    expect(enclosureWater({ parts: { water: 'on' }, colors: {} }).length).toBe(1);
+  });
+
+  it('adds planting clear of the planting already there', () => {
+    let design: ItemDesign = { parts: {}, colors: {} };
+    for (const t of ['tree', 'bush', 'rocks', 'flowers', 'tree', 'bush']) design = { ...design, flora: addFloraTo(design, t) };
+    const flora = enclosureFlora(design);
+    expect(flora.length).toBe(6);
+    for (let i = 0; i < flora.length; i++) {
+      for (let j = i + 1; j < flora.length; j++) expect(overlaps(flora[i], flora[j])).toBe(false);
+    }
+  });
+
+  it('does not drop a plant in the pond', () => {
+    let design: ItemDesign = { parts: {}, colors: {} };
+    design = { ...design, water: addWaterTo(design) };
+    design = { ...design, water: addWaterTo(design) };
+    for (const t of ['tree', 'rocks', 'bush']) design = { ...design, flora: addFloraTo(design, t) };
+    for (const f of enclosureFlora(design)) {
+      for (const w of enclosureWater(design)) expect(inWater(f, w)).toBe(false);
+    }
+  });
+
+  it('puts a new pool where the planting is not, and keeps it inside the habitat', () => {
+    let design: ItemDesign = { parts: {}, colors: {} };
+    for (const t of ['tree', 'bush', 'rocks']) design = { ...design, flora: addFloraTo(design, t) };
+    design = { ...design, water: addWaterTo(design) };
+    const pool = enclosureWater(design)[0];
+    expect(pool.x).toBeGreaterThanOrEqual(0);
+    expect(pool.y).toBeGreaterThanOrEqual(0);
+    expect(pool.x + pool.w).toBeLessThanOrEqual(1);
+    expect(pool.y + pool.h).toBeLessThanOrEqual(1);
+    for (const f of enclosureFlora(design)) expect(inWater(f, pool)).toBe(false);
   });
 });
 

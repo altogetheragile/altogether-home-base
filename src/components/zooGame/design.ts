@@ -50,6 +50,65 @@ export function enclosureFlora(design: ItemDesign): EnclosureFlora[] {
   return design.flora ?? [];
 }
 
+// Roughly how much of the habitat box one plant or feature covers, as a radius in box fractions -
+// enough to keep two of them from sitting on top of each other.
+const FLORA_R = 0.11;
+
+/** Somewhere free to put something new inside the habitat, so nothing lands on top of anything.
+ *  What "on top of" means depends on what is being placed: two plants must not overlap at all (they
+ *  are objects sitting on the ground), while a pool is ground - a plant may stand at its edge, but
+ *  not in it, and a new pool must not swallow a plant that is already there. If the habitat is too
+ *  full for a clear spot it gives the emptiest one, rather than refusing to place anything. */
+export function freeSpot(design: ItemDesign, foot: { rx: number; ry: number } = { rx: FLORA_R, ry: FLORA_R }, kind: 'plant' | 'water' = 'plant'): { x: number; y: number } {
+  const flora = enclosureFlora(design), water = enclosureWater(design);
+  // How far a point is outside an ellipse, roughly, in box fractions (negative = inside it). The
+  // pad keeps a plant's sprite out of the water, not just the point it is pinned at.
+  const PAD = FLORA_R * 0.55;
+  const outside = (px: number, py: number, cx: number, cy: number, rx: number, ry: number) =>
+    (Math.hypot((px - cx) / rx, (py - cy) / ry) - 1) * Math.min(rx, ry) - PAD;
+  const gapAt = (x: number, y: number) => {
+    let gap = Infinity;
+    for (const f of flora) {
+      const fr = FLORA_R * (f.s || 1);
+      gap = Math.min(gap, kind === 'plant'
+        ? Math.hypot(f.x - x, f.y - y) - (foot.rx + fr) // two sprites must not overlap
+        : outside(f.x, f.y, x, y, foot.rx, foot.ry));   // a new pool must not swallow a plant
+    }
+    for (const w of water) {
+      const cx = w.x + w.w / 2, cy = w.y + w.h / 2, rx = w.w / 2, ry = w.h / 2;
+      gap = Math.min(gap, kind === 'plant'
+        ? outside(x, y, cx, cy, rx, ry)                          // a plant stands out of the water
+        : Math.hypot(cx - x, cy - y) - (foot.rx + rx));          // pools sit side by side, not stacked
+    }
+    return gap;
+  };
+  const round = (v: number) => Math.round(v * 1000) / 1000;
+  let best = { x: 0.5, y: 0.55 }, bestGap = -Infinity;
+  for (let y = 0.3; y <= 0.82; y += 0.04) {
+    for (let x = 0.12; x <= 0.88; x += 0.038) {
+      const gap = gapAt(x, y);
+      if (gap > 0) return { x: round(x), y: round(y) };
+      if (gap > bestGap) { bestGap = gap; best = { x: round(x), y: round(y) }; }
+    }
+  }
+  return best;
+}
+
+/** Add a plant or habitat feature, in a spot that is clear of everything already in the habitat. */
+export function addFloraTo(design: ItemDesign, type: string): EnclosureFlora[] {
+  const flora = enclosureFlora(design);
+  return [...flora, { ...defaultFlora(type, flora.length), ...freeSpot(design) }];
+}
+
+/** Add a pool, likewise in a spot that is clear - and kept inside the habitat box. */
+export function addWaterTo(design: ItemDesign): WaterFeature[] {
+  const water = enclosureWater(design);
+  const next = defaultWater(water.length);
+  const c = freeSpot(design, { rx: next.w / 2, ry: next.h / 2 }, 'water');
+  const clamp01 = (v: number, size: number) => Math.max(0.02, Math.min(0.98 - size, v));
+  return [...water, { ...next, x: clamp01(c.x - next.w / 2, next.w), y: clamp01(c.y - next.h / 2, next.h) }];
+}
+
 /** A sensible starting pool, offset a little each time so a new one doesn't stack exactly. */
 export function defaultWater(n = 0): WaterFeature {
   const off = (n % 3) * 0.12;
@@ -603,7 +662,9 @@ export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART
  *  back to its id) to pick the species shape. */
 export function presetFor(item: BacklogItem): ItemDesign {
   if (item.category === 'path') return { parts: { thickness: 'medium' }, colors: { path: '#c9a86a' } };
-  if (item.category === 'enclosure') return { parts: { water: 'on' }, colors: {} };
+  // A habitat starts as bare ground: water is something you choose to add, not something every
+  // enclosure is born with. (Designs saved before this still honour the old `water: 'on'` flag.)
+  if (item.category === 'enclosure') return { parts: {}, colors: {} };
   if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { type: item.template ?? buildingTypeFor(item.name, item.services), sign: 'on' }, colors: {} };
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
