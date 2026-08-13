@@ -7,7 +7,7 @@ import { carParkLayout, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Fish, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Fish, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -101,7 +101,9 @@ const landType = (item: BacklogItem): string | undefined => item.design?.parts.t
  *  no gap at either end - so only its thickness is taken from a saved size. */
 const landSize = (item: BacklogItem): { w: number; h: number } =>
   landType(item) === 'river'
-    ? { w: CANVAS_W, h: item.size?.h ?? landscapeDefaultSize('river').h } // full width - flows off both edges, no gaps
+    // A river always runs right across the land, whichever way it is turned - so it is cut long
+    // enough to reach past two opposite edges even on the diagonal, and clipped by the park.
+    ? { w: RIVER_LEN, h: item.size?.h ?? landscapeDefaultSize('river').h }
     : item.size ?? landscapeDefaultSize(landType(item));
 
 /** A smooth (vector) wavy line: `n` samples of `yAt` across the width, as an SVG points string.
@@ -202,12 +204,15 @@ export function LandscapeShape({ type, w, h, primary, secondary }: { type: strin
 
 /** A landscape feature (river, pond, rocks, hedge...) drawn to fill a resizable box as smooth
  *  vector scenery, so it can be stretched right across the park without going blocky. */
-function LandscapePlot({ item, w, h }: { item: BacklogItem; w: number; h: number }) {
+function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; h: number; rot?: number }) {
   const type = landType(item) ?? 'river';
   const { primary, secondary } = landscapePalette(type, item.design?.colors);
   return (
     <div className="relative flex flex-col items-center">
-      <LandscapeShape type={type} w={w} h={h} primary={primary} secondary={secondary} />
+      {/* Only the scenery turns - its name stays the right way up and under it, still readable. */}
+      <div style={rot ? { transform: `rotate(${rot}deg)` } : undefined}>
+        <LandscapeShape type={type} w={w} h={h} primary={primary} secondary={secondary} />
+      </div>
       <span className="mt-1 rounded-full bg-white/80 px-1.5 text-[9px] font-semibold text-emerald-950 dark:bg-black/50 dark:text-emerald-50">{item.name}</span>
     </div>
   );
@@ -452,6 +457,9 @@ function buildFeatures(state: ZooGameState): Feature[] {
 }
 
 const CANVAS_W = 880;
+// A river is cut long enough to cross the park from any angle (past the corners on the diagonal)
+// and is clipped by the park's edges, so turning it never leaves a gap at the ends.
+const RIVER_LEN = 1700;
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
 const PAD = 20;
 const GAP = 18;
@@ -495,7 +503,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -511,6 +519,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   improving?: Set<string>;
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
+  onSetRot?: (id: string, rot: number) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
   onRename?: (id: string, name: string) => void;
@@ -535,9 +544,8 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const posOf = (f: Feature) => {
     if (drag?.id === f.item.id) return drag.pos;
     const base = f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD };
-    // A river spans the whole park, so its horizontal position is pinned to centre (fence to fence,
-    // no end gaps); only its vertical position moves.
-    return landType(f.item) === 'river' ? { x: CANVAS_W / 2, y: base.y } : base;
+    // A river starts life running across the middle; from there it can be dragged and turned.
+    return landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
   };
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
   const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
@@ -642,16 +650,15 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const startX = e.clientX, startY = e.clientY;
     const origin = posOf(f);
-    const minX = f.w / 2 + 4, maxX = CANVAS_W - f.w / 2 - 4;
-    const minY = f.h / 2 + 4, maxY = canvasH - PATH_H - f.h / 2;
-    const at = (ev: PointerEvent) => {
-      const p = {
-        x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
-        y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
-      };
-      // A river only moves up and down - it always spans the park from side to side.
-      return landType(f.item) === 'river' ? { x: CANVAS_W / 2, y: p.y } : p;
-    };
+    // Keep a feature inside the park - except one cut longer than the park itself (a river), which
+    // is meant to run off the edges, so it is only held by its centre.
+    const spans = f.w > CANVAS_W - 8;
+    const minX = spans ? 8 : f.w / 2 + 4, maxX = spans ? CANVAS_W - 8 : CANVAS_W - f.w / 2 - 4;
+    const minY = spans ? 8 : f.h / 2 + 4, maxY = canvasH - PATH_H - (spans ? 8 : f.h / 2);
+    const at = (ev: PointerEvent) => ({
+      x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
+      y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
+    });
     const move = (ev: PointerEvent) => setDrag({ id: f.item.id, pos: at(ev) });
     const up = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', move);
@@ -708,6 +715,24 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
 
+  // Turn a landscape feature by dragging its handle round its centre: the angle follows the pointer,
+  // snapped to 15 degrees so across, up-and-down and the diagonals all land exactly. Hold Shift for
+  // any angle in between.
+  const startRotate = (e: ReactPointerEvent, f: Feature) => {
+    if (!onSetRot) return;
+    e.preventDefault(); e.stopPropagation();
+    const rect = inner.current?.getBoundingClientRect();
+    const sc = rect ? rect.width / CANVAS_W : scale || 1;
+    const c = posOf(f);
+    const cx = (rect?.left ?? 0) + c.x * sc, cy = (rect?.top ?? 0) + c.y * sc;
+    const move = (ev: PointerEvent) => {
+      const deg = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+      onSetRot(f.item.id, ev.shiftKey ? deg : Math.round(deg / 15) * 15);
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+
   const selected = connectors.find((c) => c.id === selectedConn) ?? null;
 
   // Living visitors: the exhibits worth visiting (built enclosures with animals, at their centre and
@@ -738,7 +763,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // laid - so wherever the player has made a route, that is the route people take. Water is a wall
   // with one door: a bridge over it. A bridge is walkable along its length, which is how guests get
   // from one bank to the other.
-  const rectOf = (f: Feature) => { const b = coreBox(f); return { x0: b.cx - b.hw, y0: b.cy - b.hh, x1: b.cx + b.hw, y1: b.cy + b.hh }; };
+  const rectOf = (f: Feature) => {
+    const b = coreBox(f);
+    return { x0: b.cx - b.hw, y0: b.cy - b.hh, x1: b.cx + b.hw, y1: b.cy + b.hh, rot: f.item.rot ?? 0 };
+  };
   const landFeats = (type: string) => features.filter((f) => f.item.category === 'flora' && landType(f.item) === type);
   const loop = (x: number, y: number, w: number, h: number) =>
     [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }, { x, y }];
@@ -749,7 +777,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
       ...perimeters.map((p) => loop(p.x, p.y, p.w, p.h)),
       ...connectors.map((c) => connPoints(c)),
       // a bridge is crossed along its short way - bank to bank, running past both ends onto dry land
-      ...landFeats('bridge').map((f) => { const r = rectOf(f); const cx = (r.x0 + r.x1) / 2; return [{ x: cx, y: r.y0 - 12 }, { x: cx, y: r.y1 + 12 }]; }),
+      ...landFeats('bridge').map((f) => {
+        const r = rectOf(f), cx = (r.x0 + r.x1) / 2, cy = (r.y0 + r.y1) / 2;
+        const half = (r.y1 - r.y0) / 2 + 12, a = (r.rot ?? 0) * Math.PI / 180;
+        // bank to bank along the bridge's short way, turned with it, running past both ends
+        return [-1, 1].map((k) => ({ x: cx + Math.sin(a) * -k * half, y: cy + Math.cos(a) * k * half }));
+      }),
     ],
     water: [...landFeats('river'), ...landFeats('pond')].map(rectOf),
     crossings: landFeats('bridge').map(rectOf),
@@ -857,7 +890,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'enclosure'
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
-                : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} />
+                : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                 : <Plot item={f.item} cell={4} />}
               {/* Resize a landscape feature: the right-edge handle sets its length (drag it across the
                   park), the bottom-edge handle its width - two separate controls. */}
@@ -872,6 +905,14 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                     className="absolute z-40 h-4 w-4 -translate-x-1/2 cursor-ns-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
                     style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
                 </>
+              )}
+              {/* Turn it: across, up and down, or on the diagonal. */}
+              {isLand && onSetRot && tool === 'none' && !dragging && (
+                <div onPointerDown={(e) => startRotate(e, f)} title="Drag to turn it - across, up and down, or diagonally (hold Shift for any angle)"
+                  className="absolute z-40 flex h-5 w-5 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100 active:cursor-grabbing"
+                  style={{ left: '50%', top: -14, touchAction: 'none' }}>
+                  <RotateCw className="h-3 w-3 text-emerald-700" />
+                </div>
               )}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
               {onImprove && tool === 'none' && !dragging && (
@@ -990,12 +1031,14 @@ interface ParkViewProps {
   onUnnest?: (id: string) => void;
   /** On the big Park tab, rename an enclosure by editing its sign. */
   onRename?: (id: string, name: string) => void;
+  /** Turn a landscape feature on the park (degrees clockwise). */
+  onSetRot?: (id: string, rot: number) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1140,7 +1183,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           )}
           </div>
           <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
-            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
+            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
       ) : (

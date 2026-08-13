@@ -14,7 +14,9 @@
 // Everything here is pure geometry, so it is unit-testable and has no idea it is in a game.
 
 export interface Pt { x: number; y: number; }
-export interface Rect { x0: number; y0: number; x1: number; y1: number; }
+/** An area on the park. `rot` turns it (degrees clockwise) about its own centre, so a river running
+ *  up and down or on the diagonal blocks the ground it actually covers, not its bounding box. */
+export interface Rect { x0: number; y0: number; x1: number; y1: number; rot?: number; }
 export interface NavInput {
   paths: Pt[][];    // walkable polylines: boundary, perimeters, connectors, bridges
   water: Rect[];    // impassable: rivers, ponds
@@ -30,7 +32,19 @@ const HOPS = 6;      // how many network nodes a guest will consider joining/lea
 const DETOUR = 1.6;  // take the path unless it is more than this much longer than walking straight
 
 const dist = (a: Pt, b: Pt) => Math.hypot(b.x - a.x, b.y - a.y);
-const inAny = (p: Pt, rs: Rect[]) => rs.some((r) => p.x >= r.x0 && p.x <= r.x1 && p.y >= r.y0 && p.y <= r.y1);
+/** Is this point inside the area? A turned area is tested by turning the point back the other way
+ *  about the area's centre, which puts it back in the area's own square-on frame. */
+function inRect(p: Pt, r: Rect): boolean {
+  let { x, y } = p;
+  if (r.rot) {
+    const cx = (r.x0 + r.x1) / 2, cy = (r.y0 + r.y1) / 2, a = -r.rot * Math.PI / 180;
+    const dx = x - cx, dy = y - cy;
+    x = cx + dx * Math.cos(a) - dy * Math.sin(a);
+    y = cy + dx * Math.sin(a) + dy * Math.cos(a);
+  }
+  return x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
+}
+const inAny = (p: Pt, rs: Rect[]) => rs.some((r) => inRect(p, r));
 
 /** Would walking straight from `a` to `b` mean going through water? A bridge over that water makes
  *  the stretch it covers dry, so crossing there is fine. */

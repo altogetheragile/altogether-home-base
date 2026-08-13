@@ -176,6 +176,9 @@ export interface BacklogItem {
   /** Position WITHIN a parent enclosure, as 0..1 fractions of the habitat box. Set when an
    *  animal (or nested plant) is dragged to a spot inside its enclosure; unset = auto-arranged. */
   spot?: { x: number; y: number };
+  /** How far a landscape feature is turned on the park, in degrees clockwise (0 = running across).
+   *  Lets a river or a bridge run up and down, or on the diagonal, instead of only side to side. */
+  rot?: number;
   /** Footprint size on the park, in design px - set by resizing a landscape feature (a river you
    *  stretch across the park). Like `pos`, it's spatial arrangement, not a design change. */
   size?: { w: number; h: number };
@@ -345,6 +348,7 @@ export type ZooAction =
   | { type: 'MOVE_ITEM_BEFORE'; id: string; beforeId: string }
   | { type: 'MOVE_SPRINT_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
+  | { type: 'SET_ROT'; id: string; rot: number }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }

@@ -16,6 +16,25 @@ describe('wet', () => {
   });
 });
 
+describe('turned water', () => {
+  // the same river stood on its end: it now runs up and down the park instead of across it
+  const upDown = { x0: 0, y0: 200, x1: 880, y1: 250, rot: 90 };
+  it('blocks the ground it actually covers, not its bounding box', () => {
+    const cut: NavInput = { paths: [], water: [upDown], crossings: [] };
+    // turning about its centre (440, 225) puts the band across the park's middle, top to bottom
+    expect(wet({ x: 300, y: 225 }, { x: 600, y: 225 }, cut)).toBe(true);   // straight through it
+    // turned, the band covers x 415-465; alongside it is dry all the way down the park
+    expect(wet({ x: 380, y: 100 }, { x: 380, y: 600 }, cut)).toBe(false);
+  });
+
+  it('lets a turned bridge over it be crossed', () => {
+    const bridgeOnIt = { x0: 400, y0: 185, x1: 480, y1: 265, rot: 90 };
+    const cut: NavInput = { paths: [], water: [upDown], crossings: [bridgeOnIt] };
+    expect(wet({ x: 300, y: 225 }, { x: 600, y: 225 }, cut)).toBe(false); // over the bridge
+    expect(wet({ x: 300, y: 400 }, { x: 600, y: 400 }, cut)).toBe(true);  // and still wet elsewhere
+  });
+});
+
 describe('routeAcross', () => {
   it('cuts straight across the grass when the network is no help', () => {
     const nav = buildNav({ ...empty, paths: [[{ x: 10, y: 10 }, { x: 870, y: 10 }]] });
