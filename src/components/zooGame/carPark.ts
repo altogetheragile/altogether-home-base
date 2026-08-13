@@ -8,9 +8,18 @@
 // Everything here is pure and deterministic (no randomness), so the lot renders the same every
 // frame. Coordinates are in the park's design pixels; `top` is the apron's top edge (the fence).
 
-export const CAR_PARK_H = 278; // apron height in design px: two car rows + a coach bay, with aisles
+// Vertical rhythm of the apron. Every lane is sized against the vehicle that has to use it: a car is
+// ~48 long, so a car aisle is wider than that (you have to be able to drive along it and swing into
+// a bay); a coach is ~100 long and 46 wide, so coaches get their own lay-by lane deep enough for one
+// to drive down it. Bays face each other across the single aisle, the way a real lot is set out.
+const BAY_H = 52;      // depth of a car bay
+const AISLE_H = 64;    // the driving aisle - wider than a car is long, so a car can travel it
+const COACH_H = 76;    // the coach lay-by: coaches park along it, nose to tail, and drive out of it
+const LINK_W = 52;     // the link roads down each side, joining the aisle to the lay-by
+const WALK_W = 64;     // the pedestrian walkway up the middle, from the lay-by to the gate
+export const CAR_PARK_H = 6 + BAY_H + AISLE_H + BAY_H + COACH_H + 6; // = 256
 
-export interface CarSpot { x: number; y: number; kind: string; color: string; bus: boolean; }
+export interface CarSpot { x: number; y: number; kind: string; color: string; bus: boolean; rot: number; }
 export interface Obstacle { x0: number; x1: number; y0: number; y1: number; }
 export interface Road { x: number; y: number; w: number; h: number; dir: 'h' | 'v'; }
 export interface CarParkLayout {
@@ -18,66 +27,92 @@ export interface CarParkLayout {
   spots: CarSpot[];      // occupied bays (cars + coaches), used to draw and to spawn guests from
   empties: { x: number; y: number; w: number; h: number; bus: boolean }[]; // marked-out empty bays
   obstacles: Obstacle[]; // footprints the guests walk around (occupied bays only)
-  roads: Road[];         // driving aisles: a central entry road from the gate + an aisle per row
+  roads: Road[];         // driving lanes: the aisle, the coach lay-by, and a link road each side
+  walkway: { x: number; y: number; w: number; h: number }; // the footway up the middle to the gate
+  crossings: { x: number; y: number; w: number; h: number }[]; // where that footway crosses a lane
+  lanes: { aisle: number; layby: number }; // centre line of each lane, for guests walking out to it
 }
+
+export interface Pt { x: number; y: number; }
 
 const CARS = ['#e0574b', '#4a90d9', '#43a047', '#f0b429', '#eeeeee', '#7d6bd0', '#e6842a', '#37b3a6', '#d94f8a', '#5b6673'];
 const KINDS = ['sedan', 'suv', 'hatch', 'van', 'pickup', 'sedan', 'suv', 'hatch'];
-const CAR_HH = 24, BUS_HH = 50;
+const CAR_HW = 23, CAR_HH = 26, BUS_HW = 50, BUS_HH = 23; // half-footprints; a coach lies on its side
 
-export const CAR_BAYS = 16, COACH_BAYS = 2; // capacity: 16 car bays + 2 usable coach bays
+export const CAR_BAYS = 16, COACH_BAYS = 2; // capacity: 16 car bays + 2 coach spaces in the lay-by
 
 /** Build the lot for an apron of width `W` whose top edge is at `top`, filled to `carCount` cars
  *  and `busCount` coaches. The lot starts empty (just painted bays) and fills front-to-back as the
  *  zoo gets busier, so it reads as how full the park is. Bays beyond the count are drawn as empty
  *  outlines. Which bay gets a car, and its colour/kind, is deterministic, so a given car stays put
- *  and keeps its look as more arrive. Two car rows over a central lane, then two coach bays that
- *  flank an always-empty middle bay, keeping the centre corridor clear up to the gate. */
+ *  and keeps its look as more arrive.
+ *
+ *  The set-out, top (the fence) to bottom: a row of bays nosed up to the curb, the driving aisle,
+ *  a second row nosed the other way off that same aisle, then the coach lay-by, which doubles as
+ *  the access road in off the street. A link road down each side joins the aisle to the lay-by, so
+ *  there is a way in and out of every space. Four bays either side of a pedestrian walkway that
+ *  runs up the middle to the gate, so people on foot are never in the traffic. */
 export function carParkLayout(W: number, top: number, carCount = CAR_BAYS, busCount = COACH_BAYS): CarParkLayout {
-  const bayW = 78, gap = 10, cols = 8;
-  const totalW = cols * bayW + (cols - 1) * gap;
-  const startX = (W - totalW) / 2 + bayW / 2;
-  // Each row of bays has a driving aisle just above it (its front), so cars pull in off a road; a
-  // central entry road runs from the gate down to the coaches, linking the aisles.
-  const road1 = top + 2, road2 = top + 76, road3 = top + 150, roadH = 22;
-  const rowA = top + 50;          // front row (nearer the gate) - fills first
-  const rowB = top + 124;         // back row
-  const coachY = top + 226;       // coach bay
+  const bayW = 78, gap = 10, perBlock = 4;
+  const blockW = perBlock * bayW + (perBlock - 1) * gap;
+  const startX = (W - (blockW * 2 + WALK_W)) / 2;
+  const walkX = startX + blockW;                 // the walkway sits between the two blocks of bays
+  const rowA = top + 6 + BAY_H / 2;              // front row, nosed up to the curb - fills first
+  const aisleY = top + 6 + BAY_H;                // the one aisle, serving both rows
+  const rowB = aisleY + AISLE_H + BAY_H / 2;     // back row, nosed the other way off the aisle
+  const coachY0 = aisleY + AISLE_H + BAY_H;      // the lay-by along the foot
   const roads: Road[] = [
-    { x: 4, y: road1, w: W - 8, h: roadH, dir: 'h' },
-    { x: 4, y: road2, w: W - 8, h: roadH, dir: 'h' },
-    { x: 4, y: road3, w: W - 8, h: roadH, dir: 'h' },
-    { x: W / 2 - 24, y: top, w: 48, h: road3 + roadH - top, dir: 'v' }, // gate -> aisles -> coaches
+    { x: 4, y: aisleY, w: W - 8, h: AISLE_H, dir: 'h' },
+    { x: 4, y: coachY0, w: W - 8, h: COACH_H, dir: 'h' },
+    { x: 4, y: aisleY, w: LINK_W, h: coachY0 + COACH_H - aisleY, dir: 'v' },
+    { x: W - 4 - LINK_W, y: aisleY, w: LINK_W, h: coachY0 + COACH_H - aisleY, dir: 'v' },
   ];
   const cars = Math.max(0, Math.min(CAR_BAYS, carCount));
   const spots: CarSpot[] = [];
   const empties: CarParkLayout['empties'] = [];
-  // Fill order: whole front row, then the back row. Each bay's colour/kind is keyed to its own
-  // fill index so it is stable as the lot fills.
+  // Fill order: the whole front row, then the back row, left to right across both blocks. Each bay's
+  // colour/kind is keyed to its own fill index so it is stable as the lot fills.
   let fi = 0;
-  for (const y of [rowA, rowB]) {
-    for (let c = 0; c < cols; c++, fi++) {
-      const bx = startX + c * (bayW + gap);
-      if (fi < cars) spots.push({ x: bx, y, kind: KINDS[fi % KINDS.length], color: CARS[fi % CARS.length], bus: false });
-      else empties.push({ x: bx, y, w: 46, h: 52, bus: false });
+  for (const [y, rot] of [[rowA, 0], [rowB, Math.PI]] as [number, number][]) {
+    for (let c = 0; c < perBlock * 2; c++, fi++) {
+      // columns 0-3 are the left block, 4-7 the right one - the walkway sits in the gap between them
+      const bx = startX + (c < perBlock ? 0 : blockW + WALK_W) + (c % perBlock) * (bayW + gap) + bayW / 2;
+      if (fi < cars) spots.push({ x: bx, y, kind: KINDS[fi % KINDS.length], color: CARS[fi % CARS.length], bus: false, rot });
+      else empties.push({ x: bx, y, w: 46, h: BAY_H - 4, bus: false });
     }
   }
-  // three coach bays: [left] [empty middle] [right]; the middle stays open for the corridor
-  const coachW = 150, coachGap = 24, coachCols = 3;
-  const coachTotal = coachCols * coachW + (coachCols - 1) * coachGap;
-  const coachStart = (W - coachTotal) / 2 + coachW / 2;
+  // Two coach spaces in the lay-by, one either side of the walkway, coaches lying along it (nose to
+  // tail, facing the way out) - so a coach only ever drives straight down its own lane.
+  const coachCy = coachY0 + COACH_H / 2;
   const buses = Math.max(0, Math.min(COACH_BAYS, busCount));
-  const coachOrder = [0, 2]; // left bay fills first, then right; index 1 (middle) never
-  for (let c = 0; c < coachCols; c++) {
-    const cx = coachStart + c * (coachW + coachGap);
-    const filled = c !== 1 && coachOrder.indexOf(c) < buses;
-    if (filled) spots.push({ x: cx, y: coachY, kind: 'bus', color: c === 0 ? '#3f8fd0' : '#e0574b', bus: true });
-    else empties.push({ x: cx, y: coachY, w: coachW - 6, h: 104, bus: true });
-  }
+  const mid = walkX + WALK_W / 2;
+  const coachXs = [mid - 174, mid + 174];
+  coachXs.forEach((cx, i) => {
+    if (i < buses) spots.push({ x: cx, y: coachCy, kind: 'bus', color: i === 0 ? '#3f8fd0' : '#e0574b', bus: true, rot: Math.PI / 2 });
+    else empties.push({ x: cx, y: coachCy, w: 2 * BUS_HW + 8, h: 2 * BUS_HH + 10, bus: true });
+  });
   const obstacles: Obstacle[] = spots.map((s) => s.bus
-    ? { x0: s.x - 26, x1: s.x + 26, y0: s.y - BUS_HH, y1: s.y + BUS_HH }
-    : { x0: s.x - 23, x1: s.x + 23, y0: s.y - CAR_HH, y1: s.y + CAR_HH });
-  return { top, W, spots, empties, obstacles, roads };
+    ? { x0: s.x - BUS_HW, x1: s.x + BUS_HW, y0: s.y - BUS_HH, y1: s.y + BUS_HH }
+    : { x0: s.x - CAR_HW, x1: s.x + CAR_HW, y0: s.y - CAR_HH, y1: s.y + CAR_HH });
+  return {
+    top, W, spots, empties, obstacles, roads,
+    walkway: { x: walkX, y: top, w: WALK_W, h: coachY0 + COACH_H - top },
+    crossings: [
+      { x: walkX, y: aisleY, w: WALK_W, h: AISLE_H },
+      { x: walkX, y: coachY0, w: WALK_W, h: COACH_H },
+    ],
+    lanes: { aisle: aisleY + AISLE_H / 2, layby: coachCy },
+  };
+}
+
+/** The way a guest walks between their vehicle and the gate: out of the bay into the lane behind it,
+ *  along that lane to the walkway, then straight up the walkway and in. Nobody cuts across the bays,
+ *  because the lanes and the walkway are clear by construction - they follow the made route, which
+ *  is what the lot is drawn to invite. Pass `gateY` for the park entrance; reverse it to go home. */
+export function walkToGate(lot: CarParkLayout, spot: CarSpot, gateY: number, spread = 0): Pt[] {
+  const laneY = spot.bus ? lot.lanes.layby : lot.lanes.aisle;
+  const cx = lot.walkway.x + lot.walkway.w / 2;
+  return [{ x: spot.x + spread, y: laneY }, { x: cx + spread, y: laneY }, { x: cx + spread, y: gateY }];
 }
 
 // ---- drawing (pure canvas, design-space) ------------------------------------------------------
@@ -166,18 +201,18 @@ function bus(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: strin
   ctx.restore();
 }
 
-/** Draw the whole lot: asphalt apron, curb, bay markings, empty-bay outlines, then the vehicles. */
+/** Draw the whole lot: asphalt apron, lanes, the walkway, bay markings, then the vehicles. */
 export function drawCarPark(ctx: CanvasRenderingContext2D, lot: CarParkLayout) {
-  const { top, W } = lot;
+  const { top, W, walkway: wk } = lot;
   // asphalt slab with a rounded bottom to echo the park panel above
   ctx.fillStyle = '#4f545b';
   rr(ctx, 2, top, W - 4, CAR_PARK_H - 2, 16); ctx.fill();
   // subtle asphalt speckle (deterministic)
   ctx.fillStyle = 'rgba(255,255,255,.03)';
   for (let i = 0; i < 360; i++) { const px = (i * 137) % (W - 8) + 4, py = top + ((i * 53) % (CAR_PARK_H - 6)); ctx.fillRect(px, py, 1, 1); }
-  // driving aisles: a lighter tarmac with a dashed centre line, so cars have a road into each bay
+  // driving lanes: lighter tarmac with a dashed centre line, so every bay has a road to reach it
   for (const r of lot.roads) { ctx.fillStyle = '#5c626c'; rr(ctx, r.x, r.y, r.w, r.h, 6); ctx.fill(); }
-  ctx.strokeStyle = 'rgba(244,236,207,.5)'; ctx.lineWidth = 2; ctx.setLineDash([10, 9]);
+  ctx.strokeStyle = 'rgba(244,236,207,.5)'; ctx.lineWidth = 2; ctx.setLineDash([12, 11]);
   for (const r of lot.roads) {
     ctx.beginPath();
     if (r.dir === 'h') { ctx.moveTo(r.x + 8, r.y + r.h / 2); ctx.lineTo(r.x + r.w - 8, r.y + r.h / 2); }
@@ -185,18 +220,32 @@ export function drawCarPark(ctx: CanvasRenderingContext2D, lot: CarParkLayout) {
     ctx.stroke();
   }
   ctx.setLineDash([]);
+  // the pedestrian walkway up the middle, in the same tan as the park's paths, with a zebra crossing
+  // where it steps over the driving aisle - people on foot have their own way up to the gate
+  ctx.fillStyle = '#b9975e'; ctx.fillRect(wk.x, wk.y, wk.w, wk.h);
+  ctx.fillStyle = '#c9a86a'; ctx.fillRect(wk.x + 3, wk.y, wk.w - 6, wk.h);
+  for (const cr of lot.crossings) {
+    ctx.fillStyle = '#5c626c'; ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+    ctx.fillStyle = 'rgba(244,236,207,.85)';
+    for (let sx = cr.x + 5; sx < cr.x + cr.w - 6; sx += 12) ctx.fillRect(sx, cr.y + 5, 7, cr.h - 10);
+  }
   // curb line at the fence
   ctx.fillStyle = '#c9a86a'; ctx.fillRect(4, top, W - 8, 3);
-  // bay + coach outlines (empties get a full box; occupied bays get side ticks)
+  // bay + coach outlines (empties get a full box; occupied bays get ticks along their flanks)
   ctx.strokeStyle = '#f4eccf'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
   for (const e of lot.empties) ctx.strokeRect(e.x - e.w / 2, e.y - e.h / 2, e.w, e.h);
-  for (const s of lot.obstacles) { // side ticks either flank of an occupied bay
-    ctx.beginPath(); ctx.moveTo(s.x0 - 6, s.y0); ctx.lineTo(s.x0 - 6, s.y1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(s.x1 + 6, s.y0); ctx.lineTo(s.x1 + 6, s.y1); ctx.stroke();
+  for (const s of lot.spots) {
+    const o = s.bus // a coach lies along its lane, so its bay is marked front and back, not either side
+      ? { x0: s.x - BUS_HW - 6, x1: s.x + BUS_HW + 6, y0: s.y - BUS_HH, y1: s.y + BUS_HH }
+      : { x0: s.x - CAR_HW - 6, x1: s.x + CAR_HW + 6, y0: s.y - CAR_HH, y1: s.y + CAR_HH };
+    ctx.beginPath(); ctx.moveTo(o.x0, o.y0); ctx.lineTo(o.x0, o.y1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(o.x1, o.y0); ctx.lineTo(o.x1, o.y1); ctx.stroke();
   }
   ctx.globalAlpha = 1;
   // vehicles, back rows first so nearer ones overlap correctly
   for (const s of [...lot.spots].sort((a, b) => b.y - a.y)) {
-    if (s.bus) bus(ctx, s.x, s.y, s.color); else car(ctx, s.x, s.y, s.color, s.kind);
+    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
+    if (s.bus) bus(ctx, 0, 0, s.color); else car(ctx, 0, 0, s.color, s.kind);
+    ctx.restore();
   }
 }

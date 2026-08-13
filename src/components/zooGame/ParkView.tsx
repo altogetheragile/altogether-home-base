@@ -7,7 +7,7 @@ import { carParkLayout, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Fish, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2 } from 'lucide-react';
+import { Users, Smile, LayoutGrid, Trees, Fish, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -495,13 +495,14 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
   style: PathStyle;
   tool: 'none' | 'connect';
   editable: boolean;
+  zoom?: number;
   connectors: ZooConnector[];
   selectedConn: string | null;
   newConn: { thickness: number; color: string };
@@ -517,9 +518,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void;
   onSelectConn?: (id: string | null) => void;
 }) {
+  const viewport = useRef<HTMLDivElement>(null);
   const outer = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  // `fit` scales the park to the width it has to sit in; `zoom` is what the player asked for on top.
+  const [fit, setFit] = useState(1);
+  const scale = fit * zoom;
   const [drag, setDrag] = useState<{ id: string; pos: { x: number; y: number } } | null>(null);
   // Connector drawing: the first end that has been placed, plus any bends and the live cursor.
   const [draftA, setDraftA] = useState<ConnectorEnd | null>(null);
@@ -623,11 +627,11 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   };
 
   useLayoutEffect(() => {
-    const o = outer.current;
-    if (!o) return;
-    const update = () => setScale(o.clientWidth / CANVAS_W);
+    const v = viewport.current;
+    if (!v) return;
+    const update = () => setFit(v.clientWidth / CANVAS_W);
     const ro = new ResizeObserver(update);
-    ro.observe(o);
+    ro.observe(v);
     update();
     return () => ro.disconnect();
   }, []);
@@ -729,8 +733,33 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const carPark = carParkLayout(CANVAS_W, canvasH, carCount, busCount);
   const sceneH = canvasH + CAR_PARK_H;
 
+  // What the guests can walk on, and what they cannot. The paths are the ones actually drawn on the
+  // park - the promenade, the boundary walk, each feature's perimeter, and the connectors the player
+  // laid - so wherever the player has made a route, that is the route people take. Water is a wall
+  // with one door: a bridge over it. A bridge is walkable along its length, which is how guests get
+  // from one bank to the other.
+  const rectOf = (f: Feature) => { const b = coreBox(f); return { x0: b.cx - b.hw, y0: b.cy - b.hh, x1: b.cx + b.hw, y1: b.cy + b.hh }; };
+  const landFeats = (type: string) => features.filter((f) => f.item.category === 'flora' && landType(f.item) === type);
+  const loop = (x: number, y: number, w: number, h: number) =>
+    [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }, { x, y }];
+  const nav = {
+    paths: [
+      [{ x: 24, y: canvasH - PATH_H / 2 }, { x: CANVAS_W - 24, y: canvasH - PATH_H / 2 }], // the promenade
+      loop(boundary.x, boundary.y, boundary.w, boundary.h),
+      ...perimeters.map((p) => loop(p.x, p.y, p.w, p.h)),
+      ...connectors.map((c) => connPoints(c)),
+      // a bridge is crossed along its short way - bank to bank, running past both ends onto dry land
+      ...landFeats('bridge').map((f) => { const r = rectOf(f); const cx = (r.x0 + r.x1) / 2; return [{ x: cx, y: r.y0 - 12 }, { x: cx, y: r.y1 + 12 }]; }),
+    ],
+    water: [...landFeats('river'), ...landFeats('pond')].map(rectOf),
+    crossings: landFeats('bridge').map(rectOf),
+  };
+
   return (
-    <div ref={outer} className="relative w-full" style={{ height: sceneH * scale }}>
+    // Zoomed in, the park is bigger than the space it has, so the viewport scrolls over it and the
+    // panel keeps its height; zoomed out, the panel shrinks with the park rather than leaving a gap.
+    <div ref={viewport} className="relative w-full overflow-auto" style={{ height: sceneH * fit * Math.min(zoom, 1) }}>
+    <div ref={outer} className="relative" style={{ width: CANVAS_W * scale, height: sceneH * scale, margin: '0 auto' }}>
       <div ref={inner}
         onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => onSelectConn?.(null) : undefined)}
         onPointerMove={tool === 'connect' ? (e) => setCursor(ptOf(e)) : undefined}
@@ -865,7 +894,34 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
       {/* Living visitors + the car park: the lot is drawn in this layer below the fence, and guests
           arrive from its cars and walk the park to the live exhibits. Drawn over the (unscaled) outer
           box so they stay crisp at any zoom. Always mounted so the lot shows even before opening. */}
-      <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={sceneH} carPark={carPark} />
+      <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={sceneH} carPark={carPark} nav={nav} />
+    </div>
+    </div>
+  );
+}
+
+/** Zoom the park in and out. The stops are fixed so a click always lands somewhere sensible, and
+ *  the percentage doubles as the "back to fitting the width" button. */
+const ZOOM_STOPS = [0.5, 0.75, 1, 1.5, 2, 3];
+function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number) => void }) {
+  const step = (dir: -1 | 1) => {
+    const i = ZOOM_STOPS.indexOf(zoom);
+    const from = i >= 0 ? i : ZOOM_STOPS.findIndex((z) => z >= zoom);
+    onZoom(ZOOM_STOPS[clamp(from + dir, 0, ZOOM_STOPS.length - 1)]);
+  };
+  const btn = 'flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40';
+  return (
+    <div className="flex items-center gap-1" role="group" aria-label="Zoom the park">
+      <button type="button" className={btn} onClick={() => step(-1)} disabled={zoom <= ZOOM_STOPS[0]} title="Zoom out" aria-label="Zoom out">
+        <Minus className="h-3.5 w-3.5" />
+      </button>
+      <button type="button" onClick={() => onZoom(1)} disabled={zoom === 1} title="Fit the park to the width" aria-label="Fit the park to the width"
+        className="min-w-[3rem] rounded-md border border-border px-1 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60">
+        {Math.round(zoom * 100)}%
+      </button>
+      <button type="button" className={btn} onClick={() => step(1)} disabled={zoom >= ZOOM_STOPS[ZOOM_STOPS.length - 1]} title="Zoom in" aria-label="Zoom in">
+        <Plus className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
@@ -947,6 +1003,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
   const canConnect = !!deployMode;
   const [tool, setTool] = useState<'none' | 'connect'>('none');
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1); // 1 = the park fits the width it is given
   const effectiveTool = canConnect ? tool : 'none';
   // Style applied to a NEW connector; when deploying a Pathway it's the width/colour designed for
   // it, otherwise a sensible default. The toolbar still edits the selected one.
@@ -1006,6 +1063,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
             ) : <span />}
             <div className="flex items-center gap-3">
+              <ZoomControl zoom={zoom} onZoom={setZoom} />
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {canConnect && onAddConnector && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool((t) => (t === 'connect' ? 'none' : 'connect')); }} title="Draw a path" aria-pressed={tool === 'connect'}
@@ -1081,7 +1139,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             </div>
           )}
           </div>
-          <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened}
+          <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
