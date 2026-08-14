@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1430,6 +1430,32 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
   it('lets the team edit their Definition of Ready', () => {
     const s = setDefinitionOfReady(initialZooState(1), ['  Sized  ', '', 'Agreed with the PO']);
     expect(s.definitionOfReady).toEqual(['Sized', 'Agreed with the PO']);
+  });
+});
+
+describe('zoo game: some scenery is a set, not a single thing', () => {
+  it('puts down as many as the acceptance criteria need, without new PBIs', () => {
+    let s = initialZooState(1);
+    const before = s.backlog.length;
+    s = addItemCopy(s, 'signposts', { x: 200, y: 300 });
+    s = addItemCopy(s, 'signposts', { x: 500, y: 300 });
+    s = addItemCopy(s, 'signposts', { x: 800, y: 300 });
+    const signs = s.backlog.find((it) => it.id === 'signposts')!;
+    expect(signs.copies).toEqual([{ x: 200, y: 300 }, { x: 500, y: 300 }, { x: 800, y: 300 }]);
+    expect(s.backlog.length).toBe(before); // arranging, not new work - no PBI, no points
+    expect(signs.estimate).toBe(initialZooState(1).backlog.find((it) => it.id === 'signposts')!.estimate);
+  });
+
+  it('moves and removes them one at a time, leaving the item itself alone', () => {
+    let s = addItemCopy(addItemCopy(initialZooState(1), 'trees', { x: 100, y: 100 }), 'trees', { x: 300, y: 100 });
+    s = moveItemCopy(s, 'trees', 1, { x: 320, y: 140 });
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ x: 100, y: 100 }, { x: 320, y: 140 }]);
+    s = removeItemCopy(s, 'trees', 0);
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ x: 320, y: 140 }]);
+    // the item's own placement is not one of the copies, so it survives them all going
+    s = removeItemCopy(s, 'trees', 0);
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([]);
+    expect(s.backlog.some((it) => it.id === 'trees')).toBe(true);
   });
 });
 

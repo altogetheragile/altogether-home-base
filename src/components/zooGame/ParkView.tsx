@@ -512,7 +512,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -529,6 +529,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   onSetRot?: (id: string, rot: number) => void;
+  onAddCopy?: (id: string, pos: { x: number; y: number }) => void;
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
+  onRemoveCopy?: (id: string, index: number) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
   onRename?: (id: string, name: string) => void;
@@ -653,6 +656,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     return () => ro.disconnect();
   }, []);
 
+  // Scenery that is naturally a set. A river spans the park, so one is all there is.
+  const canCopy = (f: Feature) => f.kind === 'plot' && f.item.category === 'flora' && landType(f.item) !== 'river';
+
   const startDrag = (e: ReactPointerEvent, f: Feature) => {
     if (!onPlaceItem || tool !== 'none') return; // in connect mode, clicks draw connectors
     e.preventDefault();
@@ -738,6 +744,21 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
       const deg = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
       onSetRot(f.item.id, ev.shiftKey ? deg : Math.round(deg / 15) * 15);
     };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  };
+
+  // Dragging one of an item's extra placements. Same maths as dragging the feature, but it writes
+  // back to that copy rather than to the item's own position.
+  const startCopyDrag = (e: ReactPointerEvent, f: Feature, index: number, from: { x: number; y: number }) => {
+    if (!onMoveCopy || tool !== 'none') return;
+    e.preventDefault(); e.stopPropagation();
+    const sc = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
+    const sx = e.clientX, sy = e.clientY;
+    const move = (ev: PointerEvent) => onMoveCopy(f.item.id, index, {
+      x: clamp(from.x + (ev.clientX - sx) / sc, 8, CANVAS_W - 8),
+      y: clamp(from.y + (ev.clientY - sy) / sc, 8, canvasH - PATH_H - 8),
+    });
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
@@ -915,6 +936,16 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                     style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
                 </>
               )}
+              {/* Some scenery is a set - signposts at the junctions, trees along a path - so one
+                  delivered PBI can be put down more than once. */}
+              {canCopy(f) && onAddCopy && tool === 'none' && !dragging && (
+                <button type="button" title={`Put down another ${f.item.name}`} aria-label={`Put down another ${f.item.name}`}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); onAddCopy(f.item.id, { x: clamp(p.x + f.w / 2 + 26, 8, CANVAS_W - 8), y: p.y }); }}
+                  className="absolute -bottom-2 -right-1 z-40 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-600 bg-white text-emerald-700 opacity-0 shadow transition-opacity group-hover:opacity-100">
+                  <Plus className="h-3 w-3" />
+                </button>
+              )}
               {/* Turn it: across, up and down, or on the diagonal. */}
               {isLand && onSetRot && tool === 'none' && !dragging && (
                 <div onPointerDown={(e) => startRotate(e, f)} title="Drag to turn it - across, up and down, or diagonally (hold Shift for any angle)"
@@ -939,6 +970,26 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             </div>
           );
         })}
+
+        {/* Every extra placement of a piece of scenery: the same sprite, its own spot on the park. */}
+        {features.flatMap((f) => (canCopy(f) ? (f.item.copies ?? []).map((c, i) => (
+          <div key={`${f.item.id}-copy-${i}`}
+            onPointerDown={(e) => startCopyDrag(e, f, i, c)}
+            className={cn('group absolute z-10 select-none', onMoveCopy ? 'cursor-grab active:cursor-grabbing' : '')}
+            style={{ left: c.x, top: c.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
+            {f.item.category === 'flora' && isLandscapeType(landType(f.item))
+              ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
+              : <Plot item={f.item} cell={4} />}
+            {onRemoveCopy && tool === 'none' && (
+              <button type="button" title={`Remove this ${f.item.name}`} aria-label={`Remove this ${f.item.name}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); onRemoveCopy(f.item.id, i); }}
+                className="absolute -right-2 -top-2 z-40 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-white text-muted-foreground opacity-0 shadow transition-opacity hover:text-foreground group-hover:opacity-100">
+                <X className="h-2.5 w-2.5" />
+              </button>
+            )}
+          </div>
+        )) : []))}
 
       </div>
       {/* Living visitors + the car park: the lot is drawn in this layer below the fence, and guests
@@ -1042,12 +1093,16 @@ interface ParkViewProps {
   onRename?: (id: string, name: string) => void;
   /** Turn a landscape feature on the park (degrees clockwise). */
   onSetRot?: (id: string, rot: number) => void;
+  /** Extra placements of the same scenery - signposts at the junctions, trees along a path. */
+  onAddCopy?: (id: string, pos: { x: number; y: number }) => void;
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
+  onRemoveCopy?: (id: string, index: number) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1192,7 +1247,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           )}
           </div>
           <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
-            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
+            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
       ) : (

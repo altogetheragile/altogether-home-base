@@ -173,6 +173,10 @@ export interface BacklogItem {
   /** Position WITHIN a parent enclosure, as 0..1 fractions of the habitat box. Set when an
    *  animal (or nested plant) is dragged to a spot inside its enclosure; unset = auto-arranged. */
   spot?: { x: number; y: number };
+  /** Extra placements of the same delivered scenery: one "Signposts" PBI is a set of signs, not a
+   *  single sign, so it can be put down as many times as the acceptance criteria need. Each entry is
+   *  a position on the park; the first one is the item's own `pos`. */
+  copies?: { x: number; y: number }[];
   /** How far a landscape feature is turned on the park, in degrees clockwise (0 = running across).
    *  Lets a river or a bridge run up and down, or on the diagonal, instead of only side to side. */
   rot?: number;
@@ -351,6 +355,9 @@ export type ZooAction =
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
   | { type: 'SET_DOR'; dor: string[] }
+  | { type: 'ADD_COPY'; id: string; pos: { x: number; y: number } }
+  | { type: 'MOVE_COPY'; id: string; index: number; pos: { x: number; y: number } }
+  | { type: 'REMOVE_COPY'; id: string; index: number }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
   | { type: 'ADD_ZONE'; name: string }
