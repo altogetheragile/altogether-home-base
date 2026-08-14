@@ -179,11 +179,15 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
           </span>
           <div className="flex shrink-0 items-center gap-1.5">
             {onPoRefine && state.phase !== 'sprint' && (
+              // Not the same thing as the "Word it for me" draft in Planning: this is the Product
+              // Owner doing THEIR job on the Product BACKLOG - splitting, adding, clarifying,
+              // ordering by value. It changes the Backlog, it runs an AI, and it needs signing in.
               <button type="button" onClick={onPoRefine} disabled={poRefining}
-                title="The AI Product Owner refines the Backlog by value - splits epics, adds items, clarifies acceptance (it doesn't estimate effort)"
+                title="Ask the AI Product Owner to refine the PRODUCT BACKLOG: split epics, add items, clarify acceptance criteria and re-order by value. It never sizes the work (the Developers do) and never rewrites a Sprint Goal you have agreed."
                 className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-60">
                 {poRefining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                <span className="hidden md:inline">{poRefining ? 'PO refining…' : 'Ask the PO'}</span>
+                <span className="hidden md:inline">{poRefining ? 'PO refining the Backlog…' : 'Ask the PO to refine the Backlog'}</span>
+                <span className="md:hidden">{poRefining ? 'PO…' : 'PO'}</span>
               </button>
             )}
             {onSetDod !== undefined && <DorPopover dor={state.definitionOfReady} onSetDor={onSetDor} />}
