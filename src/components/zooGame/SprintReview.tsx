@@ -3,6 +3,7 @@ import type { SegmentId } from './simulation/types';
 import { productGoalProgress, GOAL_HAPPINESS_TARGET } from './engine';
 import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
+import { PhaseHeader } from './PhaseHeader';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
@@ -31,10 +32,9 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1">
-        <h2 className="text-lg font-bold">Sprint {state.sprintNumber} Review</h2>
-        <p className="text-xs text-muted-foreground">Inspect what was Done and how the visitors responded. Done work met its criteria during the Sprint - this is not a release gate.</p>
-      </div>
+      <PhaseHeader event="Sprint Review" title={`Sprint ${state.sprintNumber}: what did the visitors make of it?`}>
+        Inspect what was Done and how the visitors responded. Done work met its criteria during the Sprint - this is not a release gate.
+      </PhaseHeader>
 
       {state.sprintGoal.trim() && (
         <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3',

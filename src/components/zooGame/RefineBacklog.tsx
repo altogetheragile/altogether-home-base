@@ -1,8 +1,9 @@
 import type { ZooGameState, PbiDraft } from './types';
+import { PhaseHeader } from './PhaseHeader';
 import { availableItems } from './engine';
 import { ProductBacklogSidebar } from './Board';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 interface RefineBacklogProps {
   state: ZooGameState;
@@ -32,10 +33,10 @@ export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReor
 
   return (
     <div className="mx-auto max-w-3xl space-y-3">
-      <div className="flex items-center gap-2 text-sm font-bold">
-        <ClipboardList className="h-4 w-4 text-muted-foreground" /> Refine the Product Backlog
-        <span title="Order the Backlog and estimate the unsized items so the top ones are Ready to plan. From Sprint 2 you refine on the board (which costs a little Sprint time). Then move on to Planning." className="cursor-help text-[11px] font-normal text-muted-foreground/70">ⓘ</span>
-      </div>
+      <PhaseHeader event="Backlog Refinement" title={`Sprint ${state.sprintNumber}: get the Backlog ready`}>
+        Split what is too big, size what is not sized, and order it by value - so the top of the Backlog is
+        ready to forecast. This is ongoing work, and it costs this Sprint some of its capacity.
+      </PhaseHeader>
 
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-xs">
         <span className="text-muted-foreground">{items.length} in the Backlog</span>

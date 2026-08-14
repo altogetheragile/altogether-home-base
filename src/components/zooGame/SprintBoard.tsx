@@ -238,7 +238,10 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
           pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex items-center gap-2.5">
-          <h2 className="shrink-0 text-base font-bold">Day {state.dayNumber} / {state.sprintDays}</h2>
+          <div className="shrink-0">
+            <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Sprint {state.sprintNumber}</div>
+            <h2 className="text-xl font-bold leading-none">Day {state.dayNumber} <span className="text-sm font-semibold text-muted-foreground">of {state.sprintDays}</span></h2>
+          </div>
           <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
         </div>
         <div className="flex items-center gap-1.5">

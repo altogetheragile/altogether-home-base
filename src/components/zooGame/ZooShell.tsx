@@ -162,7 +162,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
           <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
             {state.phase === 'refine'
               ? 'Initial Refinement'
-              : <>Sprint {state.sprintNumber}{state.phase === 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>Day {state.dayNumber}/{state.sprintDays}</>}{state.phase !== 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>{PHASE_LABEL[state.phase] ?? ''}</>}</>}
+              : <>Sprint {state.sprintNumber}{state.phase === 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>Day {state.dayNumber}/{state.sprintDays}</>}{state.phase !== 'sprint' && <><span className="mx-1 text-muted-foreground">·</span><span className="font-bold uppercase tracking-wide text-primary">{PHASE_LABEL[state.phase] ?? ''}</span></>}</>}
           </span>
           {/* The day clock lives here so it stays visible on both the Build and Park tabs. The
               z-index lifts it above the design-studio modal (z-40) so the Sprint clock is never
