@@ -242,8 +242,6 @@ export interface ZooGameState {
   definitionOfDone: string[];
   /** The team's agreement about what makes an item ready to forecast. Editable, like the DoD. */
   definitionOfReady: string[];
-  /** Capacity points spent refining the Backlog before this Sprint was forecast. */
-  refineSpend: number;
   /** Visitor happiness at each Sprint Review, so the Product Goal's progress has a trend. */
   happiness: number[];
   /** Whether new PBIs default to the user-story format (a preference, off by default

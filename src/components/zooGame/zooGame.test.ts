@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, REFINE_PTS } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, sprintCapacity, notReady, isReady, nextNudge, isDraftedGoal, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -175,7 +175,7 @@ describe('zoo game: the Sprint loop', () => {
     let s = flat(bigCatsSplit(1));
     s = reviewSprint(buildAndOpen(s, ['lion', 'kiosk']));
     s = startNextSprint(s, 'Swarm on fewer exhibits at once');
-    expect(s.phase).toBe('refine'); // every Sprint opens with Refinement
+    expect(s.phase).toBe('planning');
     expect(s.sprintNumber).toBe(2);
     expect(s.improvements).toHaveLength(1);
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
@@ -1342,15 +1342,27 @@ describe('zoo game: the coach nudges a new player through the loop', () => {
     const s: ZooGameState = { ...initialZooState(1), phase: 'refine' }; // where Start lands you
     const n = nextNudge(s)!;
     expect(n.id).toBe('refine-first');
-    expect(n.text).toMatch(/split an epic/i);
+    expect(n.text).toMatch(/locked inside epics/i); // the animals, not the paths, are the work
   });
 
-  it('once they have refined, names what it cost and sends them to plan', () => {
-    const split: ZooGameState = { ...bigCatsSplit(1), phase: 'refine', refineSpend: 4 };
-    const n = nextNudge(split)!;
-    expect(n.id).toBe('refine-costs');
-    expect(n.text).toContain('4 points');
-    expect(n.text).toMatch(/not everything/i);
+  it('sends them to plan once a Sprint or two is ready, and warns when they overdo it', () => {
+    const ready: ZooGameState = { ...bigCatsSplit(1), phase: 'refine', velocity: [40] }; // ~1-3 Sprints ready
+    expect(readyHorizon(ready)).toBeGreaterThanOrEqual(1);
+    expect(nextNudge(ready)?.id).toBe('refine-enough');
+    // the same Backlog against a small velocity is far more than anyone should refine up front
+    const over: ZooGameState = { ...ready, velocity: [8] };
+    expect(readyHorizon(over)).toBeGreaterThan(3);
+    expect(nextNudge(over)!.text).toMatch(/waste/i);
+  });
+
+  it('asks them to refine ahead while a Sprint runs, and calls it late at Planning', () => {
+    const bare = (phase: 'sprint' | 'planning'): ZooGameState => ({
+      ...planSprint(bigCatsSplit(1), ['lion-enc']),
+      phase,
+      backlog: planSprint(bigCatsSplit(1), ['lion-enc']).backlog.map((it) => (it.status === 'backlog' ? { ...it, unsized: true } : it)),
+    });
+    expect(nextNudge(bare('sprint'))?.id).toBe('refine-ahead');
+    expect(nextNudge(bare('planning'))?.id).toBe('refine-late');
   });
 
   it('follows the loop: agree the Goal, forecast, start something, then deploy it', () => {
@@ -1372,12 +1384,11 @@ describe('zoo game: the coach nudges a new player through the loop', () => {
   });
 });
 
-describe('zoo game: refinement is ongoing, and only Ready work is forecast', () => {
-  it('opens every Sprint with Refinement, not Planning', () => {
-    let s = planSprint(initialZooState(1), ['lion-enc']);
+describe('zoo game: refinement prepares later Sprints, and only Ready work is forecast', () => {
+  it('does not put a refinement step between Sprints - there is no gap between them', () => {
+    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
     s = startNextSprint(reviewSprint(s), '');
-    expect(s.phase).toBe('refine');
-    expect(s.refineSpend).toBe(0); // a fresh budget each Sprint
+    expect(s.phase).toBe('planning');
   });
 
   it('knows why an item is not ready, and will not forecast it', () => {
@@ -1385,34 +1396,35 @@ describe('zoo game: refinement is ongoing, and only Ready work is forecast', () 
     const epic = s.backlog.find((it) => it.category === 'epic')!;
     expect(notReady(epic)).toMatch(/split/i);
     expect(isReady(epic)).toBe(false);
-    const unsized = { ...s.backlog[0], unsized: true };
-    expect(notReady(unsized)).toMatch(/sized/i);
+    expect(notReady({ ...s.backlog[0], unsized: true })).toMatch(/sized/i);
     expect(notReady({ ...s.backlog[0], acceptance: [] })).toMatch(/acceptance/i);
     expect(isReady(s.backlog.find((it) => it.id === 'lion-enc')!)).toBe(true);
 
     // asking to forecast an epic simply does not commit it
-    const planned = planSprint(s, [epic.id, 'lion-enc']);
-    expect(planned.committedIds).toEqual(['lion-enc']);
+    expect(planSprint(s, [epic.id, 'lion-enc']).committedIds).toEqual(['lion-enc']);
   });
 
-  it('charges refinement done between Sprints to the Sprint it is preparing', () => {
-    let s: ZooGameState = { ...initialZooState(1), phase: 'refine', velocity: [20] };
-    const base = zooCapacity(s.velocity);
-    expect(sprintCapacity(s)).toBe(base); // nothing spent yet
-    s = splitEpic(s, 'forest', ['bear', 'monkey', 'picnic']);
-    s = estimateItem(s, 'bear-enc', 5);
-    expect(s.refineSpend).toBe(REFINE_PTS.split + REFINE_PTS.estimate);
-    expect(sprintCapacity(s)).toBe(base - s.refineSpend); // the Sprint has that much less to build with
-    // ...and it never falls to nothing, however much refining is done
-    expect(sprintCapacity({ ...s, refineSpend: 999 })).toBeGreaterThan(0);
+  it('charges refinement to the day clock of the Sprint it is done in, and nothing else', () => {
+    // Before any Sprint, the initial discovery is free - there is no Sprint to take it from.
+    let s: ZooGameState = { ...initialZooState(1), phase: 'refine' };
+    const before = zooCapacity(s.velocity);
+    s = estimateItem(splitEpic(s, 'forest', ['bear', 'monkey', 'picnic']), 'bear-enc', 5);
+    expect(s.refinePenalty).toBe(0);
+    expect(zooCapacity(s.velocity)).toBe(before); // the coming Sprint is not docked for it
+
+    // Refining DURING a Sprint is the Developers' time, so it comes off the day's build clock.
+    let running = planSprint(bigCatsSplit(1), ['lion-enc']);
+    expect(running.phase).toBe('sprint');
+    running = estimateItem(running, 'penguins', 5);
+    expect(running.refinePenalty).toBeGreaterThan(0);
   });
 
-  it('does not charge capacity for refining mid-Sprint - that costs the day clock instead', () => {
-    let s = planSprint(initialZooState(1), ['lion-enc']);
-    expect(s.phase).toBe('sprint');
-    s = estimateItem(s, 'penguins', 5);
-    expect(s.refineSpend).toBe(0);
-    expect(s.refinePenalty).toBeGreaterThan(0);
+  it('measures how far ahead the Backlog is prepared, in Sprints of ready work', () => {
+    const s: ZooGameState = { ...bigCatsSplit(1), velocity: [20] };
+    const pts = availableItems(s).filter(isReady).reduce((n, it) => n + it.estimate, 0);
+    expect(readyHorizon(s)).toBeCloseTo(Math.round((pts / 20) * 10) / 10, 5);
+    // nothing ready -> nothing prepared
+    expect(readyHorizon({ ...s, backlog: s.backlog.map((it) => ({ ...it, unsized: true })) })).toBe(0);
   });
 
   it('lets the team edit their Definition of Ready', () => {

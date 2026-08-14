@@ -1,8 +1,9 @@
 import type { ZooGameState, PbiDraft } from './types';
 import { PhaseHeader } from './PhaseHeader';
-import { availableItems } from './engine';
+import { availableItems, readyHorizon } from './engine';
 import { ProductBacklogSidebar } from './Board';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { CheckCircle2 } from 'lucide-react';
 
 interface RefineBacklogProps {
@@ -31,6 +32,7 @@ export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReor
   const unsized = items.length - ready.length;
   const canPlan = ready.length > 0;
   const first = state.sprintNumber === 1 && state.velocity.length === 0; // the very first pass, before any Sprint
+  const horizon = readyHorizon(state);
 
   return (
     <div className="mx-auto max-w-3xl space-y-3">
@@ -38,19 +40,19 @@ export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReor
           has been built, nothing is ready, and there is no Sprint yet to be "in". Either way what
           refining costs comes out of the Sprint you are about to forecast, not one you are inside. */}
       <PhaseHeader event="Backlog Refinement"
-        title={first ? 'First, shape the Product Backlog' : `Getting ready for Sprint ${state.sprintNumber}`}>
-        Split what is too big, size what is not sized, and order it by value, so the top of the Backlog is ready
-        to forecast.{' '}
+        title={first ? 'First, shape the Product Backlog' : 'Get the Backlog ready'}>
+        Split what is too big, size what is not sized, and order it by value.{' '}
         {first
-          ? `Nothing is ready to build yet, so this is where a first Sprint becomes possible. What you spend here
-             comes out of the capacity you will have for Sprint ${state.sprintNumber} - so refine enough to have a
-             choice, not everything.`
-          : `Refinement is ongoing work, not a one-off: what you spend here comes out of the capacity you will
-             have for Sprint ${state.sprintNumber}.`}
+          ? 'Do enough discovery to get started - a Sprint or two of ready work, not the whole zoo. What you learn from building the first exhibits will change the rest of it.'
+          : 'Refinement keeps a couple of Sprints ready ahead of you. It does not settle what goes into the next Sprint - that is decided at Planning, from whatever is Ready by then.'}
       </PhaseHeader>
 
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-xs">
         <span className="text-muted-foreground">{items.length} in the Backlog</span>
+        <span className={cn('font-medium', horizon > 3 ? 'text-amber-700 dark:text-amber-400' : horizon >= 1 ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}
+          title="How far ahead the Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use.">
+          {horizon} {horizon === 1 ? 'Sprint' : 'Sprints'} ready
+        </span>
         <span className="flex items-center gap-3">
           {unsized > 0 && <span className="text-sky-700 dark:text-sky-400">{unsized} to estimate</span>}
           <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> {ready.length} Ready</span>

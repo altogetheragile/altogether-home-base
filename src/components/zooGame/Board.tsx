@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
-import { availableItems, notReady, suggestTasks } from './engine';
+import { availableItems, notReady, readyHorizon, suggestTasks } from './engine';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
@@ -261,6 +261,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
     if (editingPbi || estimating || splitting) editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [editingPbi, estimating, splitting]);
   const items = availableItems(state);
+  const horizon = readyHorizon(state); // Sprints' worth of Ready work - refinement aims to keep 1-3
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
@@ -375,7 +376,20 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
     <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
       {showToolbox && <Toolbox onPick={(t) => onAddPbi(toolboxDraft(t))} onClose={() => setShowToolbox(false)} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span></h3>
+        <h3 className="text-sm font-semibold">
+          Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span>
+          {mode === 'sprint' && (
+            // How far ahead the Backlog is prepared. Refining here costs the day's build time, and
+            // what it prepares is for LATER Sprints - this Sprint's plan is already settled.
+            <span className={cn('ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+              horizon > 3 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                : horizon >= 1 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+                : 'bg-muted text-muted-foreground')}
+              title="Sprints' worth of Ready work waiting. Refine ahead during this Sprint - it costs build time - so the next Planning has something to choose from. Aim for one to three.">
+              {horizon} ready
+            </span>
+          )}
+        </h3>
         <div className="flex items-center gap-1.5">
           <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>

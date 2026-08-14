@@ -29,9 +29,6 @@ export const DAY_SECONDS = 90;
  *  real work with a cost). Each action spends this many seconds of the current day. In the
  *  Refinement/Planning phases it is free - that is the dedicated time to refine. */
 export const REFINE_COSTS = { estimate: 8, split: 12, addPbi: 6, refinePbi: 5 } as const;
-/** What the same refinement costs when the team does it BETWEEN Sprints: capacity points off the
- *  Sprint they are about to forecast. Refinement is real work either way - it is never free. */
-export const REFINE_PTS = { estimate: 1, split: 2, addPbi: 1, refinePbi: 1 } as const;
 /** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */
 export const IMPEDIMENT_CHANCE = 0.55;
 /** A held Daily Scrum takes a little of the next day (the event is timeboxed). */
@@ -235,7 +232,6 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     sprintGoalMet: null,
     definitionOfDone: [...DEFAULT_DOD],
     definitionOfReady: [...DEFAULT_DOR],
-    refineSpend: 0,
     happiness: [],
     useUserStories: false,
     backlog,
