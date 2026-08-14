@@ -45,7 +45,7 @@ Backlog item categories: epic, enclosure, exhibit (animal), amenity (facility), 
 Return a single JSON object with this exact shape:
 {
   "rationale": "1-3 sentences: what you changed and why, in the PO's voice",
-  "sprintGoal": "one outcome-shaped sentence for the next Sprint",
+  "sprintGoal": "Our goal is to deliver [capability] so that [value] - one sentence, in exactly that shape",
   "splitEpics": [ { "epicId": "id", "memberIds": ["memberId", ...] } ],
   "order": ["itemId", ...],            // backlog item ids, most valuable first (subset is fine)
   "newItems": [ { "name": "string", "category": "exhibit|amenity|flora", "zone": "string", "services": "food|toilet|rest (amenity only, optional)", "acceptance": ["string", ...] } ],
