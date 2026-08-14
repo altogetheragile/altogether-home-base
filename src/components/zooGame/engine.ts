@@ -1119,3 +1119,49 @@ export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new S
   ];
   return nudges.find((n) => n.when && !seen.has(n.id)) ?? null;
 }
+
+// ============= The refinement conversation =============
+
+/** Product Backlog refinement is a conversation, not a form. The Scrum Guide is precise about who
+ *  does what in it: "The Developers who will be doing the work are responsible for the sizing. The
+ *  Product Owner may influence the Developers by helping them understand and select trade-offs."
+ *
+ *  So the Product Owner opens with why the item matters and what they would trade; the Developers
+ *  answer with what it would take and what they still need to know; and the sizing that follows is
+ *  the Developers'. Deterministic from the item and the Scrum Team, so the same item always draws
+ *  the same conversation.
+ */
+export function refinementTalk(state: ZooGameState, item: BacklogItem): {
+  po: { name: string; line: string };
+  devs: { name: string; line: string }[];
+} {
+  const po = state.team.productOwner.name;
+  const devs = state.team.developers;
+  const enc = enclosureOf(state, item);
+  const built = state.backlog.filter((it) => it.category === item.category && (it.status === 'open' || it.status === 'done') && it.id !== item.id);
+
+  // The Product Owner: why it is worth doing, and the trade-off they would accept.
+  const value = item.category === 'exhibit' ? `${item.name} is what visitors come for - it is the draw for this zone.`
+    : item.category === 'enclosure' ? `${item.name} is what makes its animals possible. On its own it is not a day out, so I want it small and sound rather than showy.`
+    : item.category === 'amenity' ? `${item.name} is what keeps visitors here longer. It will not pull anyone in on its own, but without it they leave early.`
+    : item.category === 'epic' ? `${item.name} is a whole area, and I would rather have one part of it open than all of it half-finished.`
+    : `${item.name} makes the park easier and pleasanter to be in - quiet value, but visitors notice when it is missing.`;
+  const tradeoff = item.category === 'epic'
+    ? 'Split it and I will take the most valuable slice first.'
+    : 'If it is bigger than you think it should be, tell me what you would drop and I will decide whether I can live without it.';
+
+  // The Developers: what it would take, and what is still unclear. Sizing is theirs.
+  const lines: string[] = [];
+  if (item.category === 'epic') lines.push('This is too big to finish in one Sprint, so we cannot size it as it stands. Break it up and we will size the pieces.');
+  if (enc) lines.push(`${item.name} cannot start until ${enc.name} is built - the habitat comes before the animal that lives in it.`);
+  if (!item.acceptance.length) lines.push('There is nothing here saying when it would be Done. We need the acceptance criteria before we can judge the size.');
+  if (built.length) lines.push(`It looks about the size of ${built[0].name}, which we have built - that is our reference.`);
+  if (item.carriedOver) lines.push(`We started this one and did not finish it. Size what is left, not the whole thing again.`);
+  if (!lines.length) lines.push('Nothing surprising in it. We can size this against what we have already built.');
+  lines.push('We will size it - we are the ones doing the work.');
+
+  return {
+    po: { name: po, line: `${value} ${tradeoff}` },
+    devs: lines.slice(0, 3).map((line, i) => ({ name: devs[i % devs.length]?.name ?? 'Developer', line })),
+  };
+}

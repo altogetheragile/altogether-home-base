@@ -16,7 +16,7 @@ interface SprintRetroProps {
   onSetSprintDays?: (days: number) => void;
 }
 
-/** Improvements the team can commit to. Some have a real mechanical effect next Sprint,
+/** Improvements the Scrum Team can pick. Some have a real mechanical effect next Sprint,
  *  so inspect-and-adapt actually changes how the team works. */
 const IMPROVEMENTS: { text: string; effect?: string }[] = [
   { text: 'Finish fewer things properly, rather than starting more', effect: 'Tightens the WIP limit by 1' },
@@ -25,7 +25,7 @@ const IMPROVEMENTS: { text: string; effect?: string }[] = [
   { text: 'Read the visitor feedback before adapting the plan' },
 ];
 
-/** Retrospective: inspect how the team worked and pick one improvement to carry
+/** Retrospective: inspect how the Scrum Team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
 export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -59,8 +59,8 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays }: 
       )}
 
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">Commit to one improvement</h3>
-        <p className="text-[11px] text-muted-foreground">Inspect-and-adapt has teeth: some improvements change how the team works next Sprint. Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · Daily Scrums are efficient' : ''}.</p>
+        <h3 className="text-sm font-semibold">Pick one improvement</h3>
+        <p className="text-[11px] text-muted-foreground">Inspect-and-adapt has teeth: some improvements change how the Scrum Team works next Sprint. Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · Daily Scrums are efficient' : ''}.</p>
       </div>
       <div className="space-y-2">
         {IMPROVEMENTS.map((imp) => (

@@ -124,7 +124,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
             );
           })}
         </div>
-        <p className="mt-1.5 text-[10px] text-muted-foreground">The Developers self-organise - more than one on an item is swarming. Limit work in progress so the team finishes together (Lean thinking).</p>
+        <p className="mt-1.5 text-[10px] text-muted-foreground">The Developers self-organise - more than one on an item is swarming. Limit work in progress so the Developers finish together (Lean thinking).</p>
       </PopoverContent>
     </Popover>
   );
