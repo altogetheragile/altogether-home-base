@@ -1623,22 +1623,21 @@ describe('zoo game: AI Product Owner refinement', () => {
   });
 });
 
-describe('zoo game: the PO can suggest the initial Sprint Goal', () => {
-  it('populates the Sprint Goal from the PO proposal (explicit "Ask the PO"), replacing a placeholder', () => {
-    // No goal yet -> the PO's proposal seeds it.
-    let s = applyPoRefinements(initialZooState(1), { sprintGoal: 'Open the Big Cats zone so families have a headline exhibit.' });
-    expect(s.sprintGoal).toContain('Big Cats');
-    // A placeholder is in the field -> asking the PO replaces it with the proposed goal.
-    s = setSprintGoal(initialZooState(1), 'b');
-    s = applyPoRefinements(s, { sprintGoal: 'A clear PO goal' });
-    expect(s.sprintGoal).toBe('A clear PO goal');
-    // No proposal -> the existing goal is left alone.
-    s = applyPoRefinements(setSprintGoal(initialZooState(1), 'Keep me'), {});
-    expect(s.sprintGoal).toBe('Keep me');
-    // A Goal the TEAM has written is theirs: asking the PO to refine the Backlog never rewrites it.
-    // Crafting the Sprint Goal is the whole Scrum Team's job, not something the PO hands down.
-    const ours = 'Open the Big Cats zone so families have somewhere to eat and something to see.';
-    s = applyPoRefinements(setSprintGoal(initialZooState(1), ours), { sprintGoal: 'The PO would rather this.' });
+describe('zoo game: the Sprint Goal is the Scrum Team\'s, not the PO\'s', () => {
+  it('is never set by refining the Backlog, whatever the PO says', () => {
+    // Nothing set yet: asking the PO to refine leaves the field empty for Sprint Planning, where the
+    // whole Scrum Team crafts the Goal from the work they select.
+    let s = applyPoRefinements(initialZooState(1), { order: ['lion', 'lion-enc'] });
+    expect(s.sprintGoal).toBe('');
+    // ...and a Goal the team has written is theirs, untouched.
+    const ours = 'Our goal is to deliver the Big Cats zone so that families have a headline exhibit';
+    s = applyPoRefinements(setSprintGoal(initialZooState(1), ours), { order: ['lion'] });
     expect(s.sprintGoal).toBe(ours);
+  });
+
+  it('cannot be skipped at Planning, so the team has to draft it', () => {
+    expect(isDraftedGoal('')).toBe(false);
+    expect(isDraftedGoal('b')).toBe(false);          // a stub is not an objective
+    expect(isDraftedGoal(suggestSprintGoal([]))).toBe(true);
   });
 });
