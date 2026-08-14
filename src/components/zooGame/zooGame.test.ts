@@ -1578,5 +1578,10 @@ describe('zoo game: the PO can suggest the initial Sprint Goal', () => {
     // No proposal -> the existing goal is left alone.
     s = applyPoRefinements(setSprintGoal(initialZooState(1), 'Keep me'), {});
     expect(s.sprintGoal).toBe('Keep me');
+    // A Goal the TEAM has written is theirs: asking the PO to refine the Backlog never rewrites it.
+    // Crafting the Sprint Goal is the whole Scrum Team's job, not something the PO hands down.
+    const ours = 'Open the Big Cats zone so families have somewhere to eat and something to see.';
+    s = applyPoRefinements(setSprintGoal(initialZooState(1), ours), { sprintGoal: 'The PO would rather this.' });
+    expect(s.sprintGoal).toBe(ours);
   });
 });

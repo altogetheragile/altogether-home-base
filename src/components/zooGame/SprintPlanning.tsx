@@ -105,14 +105,16 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       {step === 'why' && (
         <div className="mx-auto max-w-2xl space-y-3">
           <p className="text-sm text-muted-foreground">
-            The Sprint Goal is the single objective this Sprint commits to - the reason it is worth doing. Agree it first;
-            it guides what you select next, and stays fixed even if the scope flexes.
+            The Sprint Goal is the single objective this Sprint commits to - the reason it is worth doing. The whole
+            Scrum Team crafts it together; it is not handed down by the Product Owner. Agree it first; it guides what
+            you select next, and stays fixed even if the scope flexes.
           </p>
           <div className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
-              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(items))} title="Draft a Sprint Goal from the ready Backlog">
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest Goal
+              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(items))}
+                title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
             </div>
             <textarea
@@ -141,8 +143,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
-              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(chosen.length ? chosen : items))} title="Draft a Sprint Goal from your selection (or the ready Backlog if nothing is selected yet)">
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest Goal
+              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(chosen.length ? chosen : items))}
+                title="Re-words the Goal around what you have selected. Wording only - the Goal is the Scrum Team's to agree.">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
             </div>
             <textarea

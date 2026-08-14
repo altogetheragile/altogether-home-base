@@ -192,10 +192,12 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
     s = { ...s, backlog: s.backlog.map((it) => (it.id === rf.id && it.status === 'backlog' ? { ...it, acceptance: acc } : it)) };
   }
   if (d.order?.length) s = reorderByPriority(s, d.order);
-  // "Ask the PO" is an explicit request for the PO's proposal, so its Sprint Goal populates the
-  // field (you can still edit it). This only runs on that explicit action, never automatically.
+  // The PO may PROPOSE a Sprint Goal, but crafting it is the whole Scrum Team's job at Sprint
+  // Planning - so a proposal only ever seeds an empty field or replaces an obvious stub. A Goal the
+  // team has actually written is never overwritten by asking the PO to refine the Backlog.
   const goal = d.sprintGoal?.trim();
-  if (goal) s = { ...s, sprintGoal: goal };
+  const agreed = s.sprintGoal.trim();
+  if (goal && agreed.length < 15) s = { ...s, sprintGoal: goal }; // shorter than a sentence = a stub
   return { ...s, refinePenalty: penaltyBefore };
 }
 
