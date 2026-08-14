@@ -1073,7 +1073,7 @@ export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new S
     { id: 'refine-first', when: state.phase === 'refine' && state.sprintNumber === 1 && state.refineSpend === 0 && epics.length > 0,
       text: 'Start in the Backlog, not the Sprint. Split an epic into pieces you could actually build, and size them - that is Refinement, and it is where a Sprint becomes possible.' },
     { id: 'refine-costs', when: state.phase === 'refine' && state.refineSpend > 0,
-      text: `Refining has cost this Sprint ${state.refineSpend} points of capacity so far, and you have ${ready.length} items ready. Refine enough to have a choice, not everything - then go and plan.` },
+      text: `Refining has already cost Sprint ${state.sprintNumber} ${state.refineSpend} points of the capacity you will have to build with, and you have ${ready.length} items ready. Refine enough to have a choice, not everything - then go and plan.` },
     { id: 'goal-first', when: state.phase === 'planning' && !state.sprintGoal.trim(),
       text: 'Agree the Sprint Goal before you pick the work. It is the one objective the Sprint commits to, and it is what you protect if the scope has to flex.' },
     { id: 'forecast', when: state.phase === 'planning' && !!state.sprintGoal.trim() && state.committedIds.length === 0,
