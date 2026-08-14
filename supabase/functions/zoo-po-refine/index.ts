@@ -39,13 +39,14 @@ Hard rules (Scrum fidelity):
 - Only reference item ids and epic member ids that appear in the input. For a new zone use
   a sensible zone name.
 - Be decisive but conservative: a few high-value moves, not a rewrite.
+- Do NOT propose a Sprint Goal. The Sprint Goal is crafted by the whole Scrum Team at Sprint
+  Planning; your job here is the Product Backlog. Do not mention it in the rationale either.
 
 Backlog item categories: epic, enclosure, exhibit (animal), amenity (facility), flora.
 
 Return a single JSON object with this exact shape:
 {
   "rationale": "1-3 sentences: what you changed and why, in the PO's voice",
-  "sprintGoal": "Our goal is to deliver [capability] so that [value] - one sentence, in exactly that shape",
   "splitEpics": [ { "epicId": "id", "memberIds": ["memberId", ...] } ],
   "order": ["itemId", ...],            // backlog item ids, most valuable first (subset is fine)
   "newItems": [ { "name": "string", "category": "exhibit|amenity|flora", "zone": "string", "services": "food|toilet|rest (amenity only, optional)", "acceptance": ["string", ...] } ],
@@ -84,7 +85,6 @@ serve(async (req) => {
     const context = {
       productGoal: String(body.productGoal ?? '').slice(0, 300),
       sprintNumber: Number(body.sprintNumber ?? 1),
-      sprintGoal: String(body.sprintGoal ?? '').slice(0, 300),
       signals: Array.isArray(body.signals) ? body.signals.slice(0, 10) : [],
       backlog: Array.isArray(body.backlog) ? body.backlog.slice(0, 60) : [],
     };

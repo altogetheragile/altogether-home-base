@@ -187,12 +187,8 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
     s = { ...s, backlog: s.backlog.map((it) => (it.id === rf.id && it.status === 'backlog' ? { ...it, acceptance: acc } : it)) };
   }
   if (d.order?.length) s = reorderByPriority(s, d.order);
-  // The PO may PROPOSE a Sprint Goal, but crafting it is the whole Scrum Team's job at Sprint
-  // Planning - so a proposal only ever seeds an empty field or replaces an obvious stub. A Goal the
-  // team has actually written is never overwritten by asking the PO to refine the Backlog.
-  const goal = d.sprintGoal?.trim();
-  const agreed = s.sprintGoal.trim();
-  if (goal && !isDraftedGoal(agreed)) s = { ...s, sprintGoal: goal }; // an empty field or a stub
+  // The PO does not set the Sprint Goal. It is crafted by the whole Scrum Team at Sprint Planning,
+  // from the work they select - so refining the Backlog never touches it, whenever it is asked for.
   return { ...s, refinePenalty: penaltyBefore };
 }
 
