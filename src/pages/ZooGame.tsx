@@ -19,6 +19,7 @@ import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance } from '@/components/zooGame/design';
+import { nextNudge } from '@/components/zooGame/engine';
 
 /** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
  *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
@@ -60,6 +61,8 @@ export default function ZooGame() {
   // Bumped on each delivery (Deploy Complete) to fire a confetti burst - a celebration of the
   // shippable increment reaching visitors.
   const [celebrate, setCelebrate] = useState(0);
+  // The coach's nudges: one at a time, and any the player waves away stays away for the session.
+  const [hushed, setHushed] = useState<Set<string>>(new Set());
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
   const [justOpened, setJustOpened] = useState<string | null>(null);
   // Viewport point the delivery confetti bursts from - the card as it lands in Done.
@@ -168,7 +171,8 @@ export default function ZooGame() {
     ? deployItem.acceptance.map((label, index) => ({ index, label, confirmed: !!deployItem.acConfirmed?.[index] })).filter((a) => isDeployAcceptance(a.label))
     : [];
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null) };
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null),
+    nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
     switch (state.phase) {

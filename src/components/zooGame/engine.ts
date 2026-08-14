@@ -1039,3 +1039,40 @@ export function retroQuestions(state: ZooGameState): string[] {
   for (const g of general) { if (qs.length >= 3) break; qs.push(g); }
   return qs.slice(0, 3);
 }
+
+// ============= The coach: one gentle nudge at a time =============
+
+/** What would help this player next, or null if they are clearly getting on with it. One nudge at a
+ *  time, phrased as a suggestion rather than an instruction - it should read like someone leaning
+ *  over your shoulder, not a wizard blocking the screen. Each nudge disappears by itself once its
+ *  condition stops holding, so nothing has to be dismissed to make progress.
+ *
+ *  Pure and ordered: the first matching rule wins, so the earliest unmet thing is what you hear
+ *  about. `seen` lets the UI hide ones the player has waved away this session. */
+export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new Set()): { id: string; text: string } | null {
+  const open = state.backlog.filter((it) => it.status === 'open');
+  const ready = availableItems(state).filter(isReady);
+  const epics = availableItems(state).filter((it) => it.category === 'epic');
+  const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
+  const nudges: { id: string; when: boolean; text: string }[] = [
+    { id: 'refine-first', when: state.phase === 'refine' && state.sprintNumber === 1 && state.refineSpend === 0 && epics.length > 0,
+      text: 'Start in the Backlog, not the Sprint. Split an epic into pieces you could actually build, and size them - that is Refinement, and it is where a Sprint becomes possible.' },
+    { id: 'refine-costs', when: state.phase === 'refine' && state.refineSpend > 0,
+      text: `Refining has cost this Sprint ${state.refineSpend} points of capacity so far, and you have ${ready.length} items ready. Refine enough to have a choice, not everything - then go and plan.` },
+    { id: 'goal-first', when: state.phase === 'planning' && !state.sprintGoal.trim(),
+      text: 'Agree the Sprint Goal before you pick the work. It is the one objective the Sprint commits to, and it is what you protect if the scope has to flex.' },
+    { id: 'forecast', when: state.phase === 'planning' && !!state.sprintGoal.trim() && state.committedIds.length === 0,
+      text: 'Now pull in the work that serves the Goal. Forecast what you believe you can finish to the Definition of Done - finishing a few things beats starting many.' },
+    { id: 'start-one', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'committed' && !it.started) && !inSprint.some((it) => it.started),
+      text: 'Pick one item and start it. The habitat comes before the animal that lives in it.' },
+    { id: 'deploy-it', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'done'),
+      text: 'Something is built and waiting. Place it on the park and deploy it - work only becomes value once visitors can see it, and you do not have to wait for the Review.' },
+    { id: 'review-signals', when: state.phase === 'review' && (state.lastReview?.signals?.length ?? 0) > 0,
+      text: 'The visitors are telling you something. Take the signals worth acting on into the Backlog - that is the Review doing its job.' },
+    { id: 'retro-one', when: state.phase === 'retro',
+      text: 'Pick one improvement you will actually make. It changes how the next Sprint runs, so choose the one that would help most.' },
+    { id: 'goal-check', when: state.phase === 'review' && open.length >= 4 && productGoalProgress(state) >= 0.8,
+      text: 'Visitors love the zoo. As Product Owner, it is your call whether the Product Goal is met - wrap up, or keep making it better.' },
+  ];
+  return nudges.find((n) => n.when && !seen.has(n.id)) ?? null;
+}

@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, sprintCapacity, notReady, isReady, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, sprintCapacity, notReady, isReady, nextNudge, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1324,6 +1324,41 @@ describe('zoo game: richer studio kit', () => {
       design.colors.ears = '#efe6d0';
       expect(designCriteria(exhibit(), design).find((c) => /crest|tusks/.test(c.label))!.pass).toBe(true);
     }
+  });
+});
+
+describe('zoo game: the coach nudges a new player through the loop', () => {
+  it('points a brand-new player at Refinement first, not at the Sprint', () => {
+    const s: ZooGameState = { ...initialZooState(1), phase: 'refine' }; // where Start lands you
+    const n = nextNudge(s)!;
+    expect(n.id).toBe('refine-first');
+    expect(n.text).toMatch(/split an epic/i);
+  });
+
+  it('once they have refined, names what it cost and sends them to plan', () => {
+    const split: ZooGameState = { ...bigCatsSplit(1), phase: 'refine', refineSpend: 4 };
+    const n = nextNudge(split)!;
+    expect(n.id).toBe('refine-costs');
+    expect(n.text).toContain('4 points');
+    expect(n.text).toMatch(/not everything/i);
+  });
+
+  it('follows the loop: agree the Goal, forecast, start something, then deploy it', () => {
+    let s: ZooGameState = { ...bigCatsSplit(1), phase: 'planning' };
+    expect(nextNudge(s)?.id).toBe('goal-first');
+    s = setSprintGoal(s, 'Open the Big Cats zone so families have a headline exhibit.');
+    expect(nextNudge(s)?.id).toBe('forecast');
+    s = planSprint(s, ['lion-enc']);
+    expect(nextNudge(s)?.id).toBe('start-one');
+    s = finish(startItem(s, 'lion-enc'), 'lion-enc');
+    expect(nextNudge(s)?.id).toBe('deploy-it');
+    s = openItem(s, 'lion-enc');
+    expect(nextNudge(s)).toBeNull(); // nothing to say - they are getting on with it
+  });
+
+  it('says nothing a player has waved away', () => {
+    const s: ZooGameState = { ...initialZooState(1), phase: 'refine' };
+    expect(nextNudge(s, new Set(['refine-first']))?.id).not.toBe('refine-first');
   });
 });
 
