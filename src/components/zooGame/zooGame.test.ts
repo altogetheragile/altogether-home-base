@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1464,6 +1464,33 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
   it('lets the team edit their Definition of Ready', () => {
     const s = setDefinitionOfReady(initialZooState(1), ['  Sized  ', '', 'Agreed with the PO']);
     expect(s.definitionOfReady).toEqual(['Sized', 'Agreed with the PO']);
+  });
+});
+
+describe('zoo game: refinement is a conversation, and the Developers do the sizing', () => {
+  it('opens with the Product Owner on value and a trade-off, and answers with the Developers', () => {
+    const s = initialZooState(1);
+    const talk = refinementTalk(s, s.backlog.find((it) => it.id === 'lion')!);
+    expect(talk.po.name).toBe(s.team.productOwner.name);
+    expect(talk.po.line).toMatch(/visitors come for/i);
+    expect(talk.po.line).toMatch(/tell me what you would drop/i); // the trade-off is the PO's to weigh
+    expect(talk.devs.map((d) => d.name)).toContain(s.team.developers[0].name);
+    // the Guide's line: the Developers who will do the work are responsible for the sizing
+    expect(talk.devs.some((d) => /we will size it/i.test(d.line))).toBe(true);
+  });
+
+  it('says what actually stands in the way of this item', () => {
+    const s = initialZooState(1);
+    // an animal cannot start before its habitat
+    expect(refinementTalk(s, s.backlog.find((it) => it.id === 'lion')!).devs
+      .some((d) => /Lion Enclosure is built/i.test(d.line))).toBe(true);
+    // an epic cannot be sized at all
+    const epic = refinementTalk(s, s.backlog.find((it) => it.category === 'epic')!);
+    expect(epic.devs[0].line).toMatch(/too big to finish in one Sprint/i);
+    expect(epic.po.line).toMatch(/split it/i);
+    // no acceptance criteria, nothing to judge Done against
+    const bare = refinementTalk(s, { ...s.backlog[0], acceptance: [] });
+    expect(bare.devs.some((d) => /acceptance criteria/i.test(d.line))).toBe(true);
   });
 });
 

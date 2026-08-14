@@ -33,7 +33,9 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
   return (
     <div className="space-y-5">
       <PhaseHeader event="Sprint Review" title={`Sprint ${state.sprintNumber}: what did the visitors make of it?`}>
-        Inspect what was Done and how the visitors responded. Done work met its criteria during the Sprint - this is not a release gate.
+        Inspect the Increment - everything that met the Definition of Done this Sprint - and how the visitors
+        responded to it. The Sprint Review is a working session with the people the zoo is for, not a release
+        gate: Done work could be released the moment it was Done.
       </PhaseHeader>
 
       {state.sprintGoal.trim() && (

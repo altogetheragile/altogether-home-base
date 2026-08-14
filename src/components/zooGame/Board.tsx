@@ -28,7 +28,7 @@ function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSpli
   return (
     <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold"><Scissors className="mr-1 inline h-3.5 w-3.5" />Split &ldquo;{epic.name}&rdquo; into PBIs</h3>
+        <h3 className="text-sm font-semibold"><Scissors className="mr-1 inline h-3.5 w-3.5" />Split &ldquo;{epic.name}&rdquo; into Product Backlog items</h3>
         <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
       <p className="text-[11px] text-muted-foreground">Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). Untick anything you don&rsquo;t want yet - the epic stays for the rest.</p>
@@ -44,7 +44,7 @@ function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSpli
         ))}
       </ul>
       <div className="flex justify-end">
-        <Button size="sm" disabled={count === 0} onClick={() => onSplit(members.filter((m) => picked.has(m.id)).map((m) => m.id))}>Create {count} PBI{count === 1 ? '' : 's'}</Button>
+        <Button size="sm" disabled={count === 0} onClick={() => onSplit(members.filter((m) => picked.has(m.id)).map((m) => m.id))}>Create {count} Product Backlog item{count === 1 ? '' : 's'}</Button>
       </div>
     </div>
   );
@@ -101,7 +101,7 @@ export function ItemCard({ item, badge, subtitle, actions, lead, onClick, label,
 
 /** Plan-time task decomposition for one PBI (Sprint Planning's "how"): a coached
  *  breakdown you can suggest, then add / edit / remove. Optionally shows a goal-critical
- *  star, so the team marks which items the Sprint Goal truly depends on. */
+ *  star, so the Scrum Team marks which items the Sprint Goal truly depends on. */
 export function TaskEditor({ item, onSetTasks, onToggleGoalCritical }: { item: BacklogItem; onSetTasks: (id: string, tasks: SprintTask[]) => void; onToggleGoalCritical?: (id: string) => void }) {
   const tasks = item.tasks ?? [];
   const uid = useRef(0);
@@ -399,7 +399,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
         {mode === 'refine'
           ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. Refining now is free; later it happens on the board and costs the Sprint a little time.'
           : mode === 'plan'
-            ? 'Ordered by you (the PO). The Developers pull the Ready ones they will commit to into the Sprint (estimate any that are still unsized).'
+            ? 'Ordered by you (the PO). The Developers select the ready ones they forecast they can finish, and those become the Sprint Backlog.'
             : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk. Refining here - estimating, splitting, clarifying - is the whole Scrum Team\u2019s work, done together, and it takes time from the day’s build. What it prepares is later Sprints, not this one.'}
       </p>
 
@@ -417,7 +417,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
           onCancel={() => setSplitting(null)} />
       )}
       {estimatingItem && (
-        <PlanningPoker item={estimatingItem} seed={state.gameSeed}
+        <PlanningPoker item={estimatingItem} state={state} seed={state.gameSeed}
           onCommit={(pts) => { onEstimate?.(estimatingItem.id, pts); setEstimating(null); }}
           onCancel={() => setEstimating(null)} />
       )}
