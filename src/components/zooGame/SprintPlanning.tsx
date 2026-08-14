@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState, PbiDraft, SprintTask } from './types';
 import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal } from './engine';
 import { zooCapacity, SPRINT_LENGTH_OPTIONS } from './config';
-import { sprintCapacity } from './engine';
+
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
 import { CoachTip } from './CoachTip';
 import { PhaseHeader } from './PhaseHeader';
@@ -56,7 +56,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
-  const capacity = sprintCapacity(state); // velocity, less what refining the Backlog for it cost
+  const capacity = zooCapacity(state.velocity);
   const over = committed > capacity;
   const hasGoal = isDraftedGoal(state.sprintGoal); // Why is not done until the Goal is actually drafted
   const hasWhat = chosen.length > 0;
@@ -194,14 +194,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                     // this Sprint capacity, which is the point.
                     <button type="button" onClick={onRefine}
                       className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      title="Size, split and clarify PBIs. It takes time from this Sprint.">
+                      title="Size, split and clarify PBIs. Refinement belongs in the Sprint before - doing it now is catching up.">
                       Refine the Backlog
                     </button>
-                  )}
-                  {state.refineSpend > 0 && (
-                    <span className="text-[10px] text-muted-foreground/80" title="Refining the Backlog is real work - it comes out of the capacity you have left to build with">
-                      ({zooCapacity(state.velocity)} less {state.refineSpend} spent refining)
-                    </span>
                   )}
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
