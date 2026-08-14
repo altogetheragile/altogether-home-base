@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, sprintCapacity, notReady, isReady, nextNudge, sprintProgress, retroQuestions,
+  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, sprintCapacity, notReady, isReady, nextNudge, isDraftedGoal, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -325,10 +325,20 @@ describe('zoo game: the Sprint Goal', () => {
     expect(s.sprintGoalMet).toBe(false);
   });
 
-  it('the coach shapes an outcome from the selection', () => {
-    const items = bigCatsSplit(1).backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
-    expect(suggestSprintGoal(items)).toMatch(/Big Cats/);
-    expect(suggestSprintGoal(items)).toMatch(/so /); // outcome-shaped
+  it('drafts the Goal in the house shape: deliver [capability] so that [value]', () => {
+    const s = bigCatsSplit(1);
+    // A couple of items: name them - that is the capability this Sprint would put in front of visitors.
+    const pair = s.backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
+    expect(suggestSprintGoal(pair)).toBe('Our goal is to deliver lion and tiger so that visitors have more to enjoy');
+    // Most of a zone: name the zone rather than listing it out.
+    const zone = s.backlog.filter((i) => i.zone === 'Big Cats' && i.status === 'backlog');
+    expect(zone.length).toBeGreaterThan(3);
+    expect(suggestSprintGoal(zone)).toMatch(/^Our goal is to deliver the Big Cats zone so that /);
+    // Exhibits and somewhere to stop: the value says both.
+    const mixed = s.backlog.filter((i) => ['lion', 'kiosk'].includes(i.id));
+    expect(suggestSprintGoal(mixed)).toMatch(/something to see and somewhere to stop/);
+    // Every draft is a real Goal, so Planning will accept it.
+    for (const sel of [pair, zone, mixed, []]) expect(isDraftedGoal(suggestSprintGoal(sel))).toBe(true);
   });
 });
 
