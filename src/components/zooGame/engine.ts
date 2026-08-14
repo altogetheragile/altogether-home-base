@@ -305,8 +305,14 @@ export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameStat
 }
 
 /** Choose the Sprint length (number of build days) at Planning. */
+/** Set how long a Sprint runs. A Sprint is a fixed-length container - that consistency is the
+ *  heartbeat - so the length is agreed ONCE before the first Sprint, and after that only at a
+ *  Retrospective, where the team inspects how they work. Changed there, it applies to the Sprint
+ *  they are about to start. It is never a Sprint Planning decision: sizing the box to the work is
+ *  backwards, and a team that can add days stops making the hard call about what fits. */
 export function setSprintDays(state: ZooGameState, days: number): ZooGameState {
-  if (state.phase !== 'planning' && state.phase !== 'refine') return state;
+  const settingUp = state.phase === 'refine' && state.sprintNumber === 1 && state.velocity.length === 0;
+  if (!settingUp && state.phase !== 'retro') return state;
   return { ...state, sprintDays: Math.max(1, Math.round(days)) };
 }
 
@@ -1089,7 +1095,11 @@ export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new S
     { id: 'refine-enough', when: state.phase === 'refine' && horizon >= 1 && horizon <= 3,
       text: `You have about ${horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Backlog better than more analysis now.` },
     { id: 'refine-ahead', when: state.phase === 'sprint' && horizon < 1 && !!inSprint.length,
-      text: 'Less than a Sprint of ready work is left. Refine ahead while this Sprint runs - it costs the day\u2019s build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },
+      text: 'Less than a Sprint of ready work is left. Get the whole Scrum Team round the Backlog while this Sprint runs - the PO brings the value, the Developers bring what it would take. It costs build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },
+    // Refinement is a Scrum Team activity, not a PO chore and not a separate meeting the Developers
+    // are summoned to. Ask for it partway through the Sprint, once the build is under way.
+    { id: 'refine-midsprint', when: state.phase === 'sprint' && state.dayNumber > 1 && horizon <= 2 && !!inSprint.length,
+      text: `About ${horizon} Sprints of work is ready. Take some time this Sprint to refine together - the whole Scrum Team, not the PO alone - so the Backlog stays a couple of Sprints ahead of you.` },
     { id: 'refine-late', when: state.phase === 'planning' && ready.length === 0,
       text: 'Nothing is Ready to forecast. You can refine now, but this is late - refinement is meant to happen during the Sprint before, keeping a couple of Sprints ready ahead of you.' },
     { id: 'goal-first', when: state.phase === 'planning' && !state.sprintGoal.trim(),

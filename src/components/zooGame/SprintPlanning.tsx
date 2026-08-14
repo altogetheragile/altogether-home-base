@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft, SprintTask } from './types';
 import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal } from './engine';
-import { zooCapacity, SPRINT_LENGTH_OPTIONS } from './config';
+import { zooCapacity } from './config';
 
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
 import { CoachTip } from './CoachTip';
@@ -16,7 +16,6 @@ interface SprintPlanningProps {
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   onToggleGoalCritical: (id: string) => void;
-  onSetSprintDays: (days: number) => void;
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onReorder: (id: string, dir: 'up' | 'down') => void;
@@ -48,7 +47,7 @@ const STEPS: { key: Step; label: string; short: string; full: string }[] = [
  *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
  *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
  *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onSetSprintDays, onAddPbi, onRefinePbi, onReorder, onReorderForecast, onRefine, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onAddPbi, onRefinePbi, onReorder, onReorderForecast, onRefine, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
   // Moving between topics clears the transient "Ask the PO" note so it doesn't follow you.
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
@@ -250,19 +249,6 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
             <p className="text-sm font-medium">{state.sprintGoal || '(not set)'}</p>
-          </div>
-
-          {/* Sprint length: a real cadence choice - shorter gives faster feedback but more
-              event overhead per build day; longer gives more build time but slower feedback. */}
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Sprint length</span>
-            <div className="flex gap-1.5">
-              {SPRINT_LENGTH_OPTIONS.map((d) => (
-                <button key={d} type="button" onClick={() => onSetSprintDays(d)}
-                  className={cn('rounded-md border px-3 py-1 text-sm transition-colors', state.sprintDays === d ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted')}>{d} days</button>
-              ))}
-            </div>
-            <span className="text-[11px] text-muted-foreground">Shorter = faster feedback; longer = more build time. A short, regular cadence is usually best.</span>
           </div>
 
           {/* Mark which items the Goal depends on. The Goal is an outcome: deliver the

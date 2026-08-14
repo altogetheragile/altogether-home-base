@@ -1,6 +1,7 @@
 import type { ZooGameState, PbiDraft } from './types';
-import { PhaseHeader } from './PhaseHeader';
+import { PhaseHeader, SprintLengthPicker } from './PhaseHeader';
 import { availableItems, readyHorizon } from './engine';
+import { SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductBacklogSidebar } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -20,13 +21,15 @@ interface RefineBacklogProps {
   onDuplicatePbi: (id: string) => void;
   /** Move on to Sprint Planning with the refined Backlog. */
   onPlan: () => void;
+  /** Agreed once, here, before the first Sprint. After that only a Retrospective changes it. */
+  onSetSprintDays?: (days: number) => void;
 }
 
 /** Product Backlog Refinement - a one-time bootstrap before the FIRST Sprint. You need
  *  a Backlog, however rough, to start: order it and estimate the unsized items until the
  *  top items are Ready to plan. From Sprint 2 on, refinement is not a separate step - it
  *  is ongoing, done during each Sprint on the board, where it costs a little capacity. */
-export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan }: RefineBacklogProps) {
+export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan }: RefineBacklogProps) {
   const items = availableItems(state);
   const ready = items.filter((it) => !it.unsized);
   const unsized = items.length - ready.length;
@@ -46,6 +49,10 @@ export function RefineBacklog({ state, onEstimate, onAddPbi, onRefinePbi, onReor
           ? 'Do enough discovery to get started - a Sprint or two of ready work, not the whole zoo. What you learn from building the first exhibits will change the rest of it.'
           : 'Refinement keeps a couple of Sprints ready ahead of you. It does not settle what goes into the next Sprint - that is decided at Planning, from whatever is Ready by then.'}
       </PhaseHeader>
+
+      {first && onSetSprintDays && (
+        <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
+      )}
 
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-xs">
         <span className="text-muted-foreground">{items.length} in the Backlog</span>
