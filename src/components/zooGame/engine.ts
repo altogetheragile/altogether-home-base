@@ -418,6 +418,23 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
 }
 
 /** Resize a landscape feature's footprint on the park (e.g. stretch a river across it). */
+/** Put down another of the same scenery. Some items are a set by nature - signposts at the
+ *  junctions, trees along a path - so one delivered PBI can appear on the park as many times as it
+ *  takes to meet its acceptance criteria. Arranging, not new work: no new PBI, no new points. */
+export function addItemCopy(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, copies: [...(it.copies ?? []), pos] } : it)) };
+}
+/** Move one of those extra placements. */
+export function moveItemCopy(state: ZooGameState, id: string, index: number, pos: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id
+    ? { ...it, copies: (it.copies ?? []).map((c, i) => (i === index ? pos : c)) } : it)) };
+}
+/** Take one away again (the original placement stays - that is the item itself). */
+export function removeItemCopy(state: ZooGameState, id: string, index: number): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id
+    ? { ...it, copies: (it.copies ?? []).filter((_, i) => i !== index) } : it)) };
+}
+
 /** Turn a landscape feature on the park. Degrees clockwise from running across; kept in 0-359 so
  *  the value never drifts off after repeated turns. Arranging, not a design change. */
 export function setItemRot(state: ZooGameState, id: string, rot: number): ZooGameState {
