@@ -877,14 +877,36 @@ describe('zoo game: WIP limit and improvements with teeth', () => {
 });
 
 describe('zoo game: sprint length and learn mode', () => {
-  it('choosing the Sprint length sets the number of build days (at Planning)', () => {
-    let s: ZooGameState = { ...initialZooState(1), phase: 'planning' };
+  it('agrees the Sprint length once, up front, before the first Sprint', () => {
+    let s: ZooGameState = { ...initialZooState(1), phase: 'refine' };
     expect(s.sprintDays).toBe(SPRINT_DAYS);
     s = setSprintDays(s, 5);
     expect(s.sprintDays).toBe(5);
-    // planning it in commits with that length preserved
-    s = planSprint(s, ['lion']);
+    s = planSprint(s, ['lion-enc']); // and the Sprint runs at that length
     expect(s.sprintDays).toBe(5);
+  });
+
+  it('will not let Sprint Planning change it - the box is not sized to the work', () => {
+    const planning: ZooGameState = { ...initialZooState(1), phase: 'planning' };
+    expect(setSprintDays(planning, 5).sprintDays).toBe(SPRINT_DAYS);
+    // nor mid-Sprint, when the days are already running
+    const running = planSprint({ ...initialZooState(1), phase: 'refine' }, ['lion-enc']);
+    expect(setSprintDays(running, 5).sprintDays).toBe(running.sprintDays);
+  });
+
+  it('changes it only at a Retrospective, applying from the next Sprint', () => {
+    let s = planSprint({ ...initialZooState(1), phase: 'refine' }, ['lion-enc']);
+    s = reviewSprint(s);
+    s = { ...s, phase: 'retro' };
+    s = setSprintDays(s, 5);
+    expect(s.sprintDays).toBe(5);
+    expect(startNextSprint(s, '').sprintDays).toBe(5); // the Sprint they are about to start
+  });
+
+  it('is not on offer again once the first Sprint has been run', () => {
+    // a second "refine" pass is not a set-up moment: the cadence is already agreed
+    const later: ZooGameState = { ...initialZooState(1), phase: 'refine', sprintNumber: 3, velocity: [12, 14] };
+    expect(setSprintDays(later, 5).sprintDays).toBe(SPRINT_DAYS);
   });
 
   it('learn mode is a toggle on state (pauses the clock in the UI)', () => {
@@ -1353,6 +1375,18 @@ describe('zoo game: the coach nudges a new player through the loop', () => {
     const over: ZooGameState = { ...ready, velocity: [8] };
     expect(readyHorizon(over)).toBeGreaterThan(3);
     expect(nextNudge(over)!.text).toMatch(/waste/i);
+  });
+
+  it('asks the whole Scrum Team to refine together partway through a Sprint', () => {
+    // a team whose Backlog is not far ahead: a couple of Sprints of ready work at most
+    const s = { ...planSprint(bigCatsSplit(1), ['lion-enc']), velocity: [40] };
+    expect(readyHorizon(s)).toBeLessThanOrEqual(2);
+    const day2 = { ...s, dayNumber: 2 };
+    const n = nextNudge(day2, new Set(['start-one', 'deploy-it']))!;
+    expect(n.id).toBe('refine-midsprint');
+    expect(n.text).toMatch(/whole Scrum Team, not the PO alone/i);
+    // on day one the team is getting started, so it holds its tongue
+    expect(nextNudge({ ...s, dayNumber: 1 }, new Set(['start-one', 'deploy-it']))?.id).not.toBe('refine-midsprint');
   });
 
   it('asks them to refine ahead while a Sprint runs, and calls it late at Planning', () => {

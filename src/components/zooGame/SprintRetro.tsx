@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
-import { PhaseHeader } from './PhaseHeader';
+import { PhaseHeader, SprintLengthPicker } from './PhaseHeader';
 import { retroQuestions } from './engine';
+import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,8 @@ interface SprintRetroProps {
   state: ZooGameState;
   onNextSprint: (improvement: string) => void;
   onSetDod: (dod: string[]) => void;
+  /** The one place the Sprint's length can change - inspect and adapt, from the next Sprint. */
+  onSetSprintDays?: (days: number) => void;
 }
 
 /** Improvements the team can commit to. Some have a real mechanical effect next Sprint,
@@ -24,7 +27,7 @@ const IMPROVEMENTS: { text: string; effect?: string }[] = [
 
 /** Retrospective: inspect how the team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
-export function SprintRetro({ state, onNextSprint, onSetDod }: SprintRetroProps) {
+export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const questions = retroQuestions(state);
 
@@ -48,6 +51,12 @@ export function SprintRetro({ state, onNextSprint, onSetDod }: SprintRetroProps)
 
       {/* The Retrospective is where the team inspects and adapts the Definition of Done. */}
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+
+      {/* ...and the only place the Sprint's own length changes, because a fixed container is the
+          point of it. Never in Planning, where the box would just be sized to the work. */}
+      {onSetSprintDays && (
+        <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="retro" />
+      )}
 
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Commit to one improvement</h3>

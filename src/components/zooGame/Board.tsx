@@ -400,7 +400,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
           ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. Refining now is free; later it happens on the board and costs the Sprint a little time.'
           : mode === 'plan'
             ? 'Ordered by you (the PO). The Developers pull the Ready ones they will commit to into the Sprint (estimate any that are still unsized).'
-            : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk. Refining here (estimating, splitting, adding) is ongoing work - it takes time from the day’s build.'}
+            : 'Pull a Ready item into the Sprint by agreement, as long as it will not put the Sprint Goal at risk. Refining here - estimating, splitting, clarifying - is the whole Scrum Team\u2019s work, done together, and it takes time from the day’s build. What it prepares is later Sprints, not this one.'}
       </p>
 
       <div ref={editorRef}>
