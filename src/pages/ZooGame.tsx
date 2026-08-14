@@ -57,12 +57,16 @@ export default function ZooGame() {
   const [saveName, setSaveName] = useState('');
   const [saveOpen, setSaveOpen] = useState(false);
   const [savesOpen, setSavesOpen] = useState(false);
-  const [poNote, setPoNote] = useState<string | null>(null);
+  // The PO's note describes the refinement they have just done, so it belongs to the phase you
+  // asked them in. Remembering that phase means it stops showing when you move on, rather than
+  // following you into Planning as though it were about the Sprint.
+  const [poNote, setPoNote] = useState<{ phase: string; text: string } | null>(null);
   // Bumped on each delivery (Deploy Complete) to fire a confetti burst - a celebration of the
   // shippable increment reaching visitors.
   const [celebrate, setCelebrate] = useState(0);
   // The coach's nudges: one at a time, and any the player waves away stays away for the session.
   const [hushed, setHushed] = useState<Set<string>>(new Set());
+
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
   const [justOpened, setJustOpened] = useState<string | null>(null);
   // Viewport point the delivery confetti bursts from - the card as it lands in Done.
@@ -157,7 +161,7 @@ export default function ZooGame() {
     try {
       const decisions = await poRefineCall(state);
       poRefine(decisions);
-      setPoNote(decisions.rationale?.trim() || 'The Product Owner refined the Backlog.');
+      setPoNote({ phase: state.phase, text: decisions.rationale?.trim() || 'The Product Owner refined the Backlog.' });
       toast.success('Product Owner refined the Backlog');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'The Product Owner could not refine the Backlog.');
@@ -171,7 +175,7 @@ export default function ZooGame() {
     ? deployItem.acceptance.map((label, index) => ({ index, label, confirmed: !!deployItem.acConfirmed?.[index] })).filter((a) => isDeployAcceptance(a.label))
     : [];
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote, onDismissPoNote: () => setPoNote(null),
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {

@@ -197,7 +197,7 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
   // team has actually written is never overwritten by asking the PO to refine the Backlog.
   const goal = d.sprintGoal?.trim();
   const agreed = s.sprintGoal.trim();
-  if (goal && agreed.length < 15) s = { ...s, sprintGoal: goal }; // shorter than a sentence = a stub
+  if (goal && !isDraftedGoal(agreed)) s = { ...s, sprintGoal: goal }; // an empty field or a stub
   return { ...s, refinePenalty: penaltyBefore };
 }
 
@@ -775,18 +775,33 @@ export function setSprintGoal(state: ZooGameState, goal: string): ZooGameState {
   return { ...state, sprintGoal: goal };
 }
 
-/** Coach an outcome-shaped Sprint Goal from the items the PO is selecting: what the
- *  Sprint delivers, so that visitors get something. */
+/** A Sprint Goal the team has actually drafted, rather than an empty field or a stub. Shorter than
+ *  a short sentence is not an objective, and Planning will not move past Why without one. */
+export const GOAL_MIN = 15;
+export const isDraftedGoal = (goal: string): boolean => goal.trim().length >= GOAL_MIN;
+
+/** Coach an outcome-shaped Sprint Goal from the items being selected, in the house shape the
+ *  /scrum-game uses too: "Our goal is to deliver [capability] so that [value]". The capability is
+ *  what this Sprint would put in front of visitors; the value is what they get out of it. A
+ *  starting point the team then shapes - the Goal is a single objective, not a list of PBIs. */
 export function suggestSprintGoal(items: BacklogItem[]): string {
-  if (!items.length) return 'Give visitors a reason to come back this Sprint.';
+  if (!items.length) return 'Our goal is to deliver a reason to come back so that visitors return';
   const counts: Record<string, number> = {};
   for (const it of items) counts[it.zone] = (counts[it.zone] ?? 0) + 1;
-  const zone = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-  const exhibits = items.filter((i) => i.category === 'exhibit').length;
-  const amenities = items.filter((i) => i.category === 'amenity').length;
-  if (exhibits && amenities) return `Open the ${zone} zone with things to see and somewhere to stop, so visitors stay longer.`;
-  if (amenities) return `Serve the ${zone} zone so visitors can eat, rest and stay longer.`;
-  return `Bring the ${zone} zone to life so visitors have more to enjoy.`;
+  const [zone, inZone] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const exhibits = items.filter((i) => i.category === 'exhibit');
+  const amenities = items.filter((i) => i.category === 'amenity');
+  // Name the pieces while there are few enough to say; once it is most of a zone, name the zone.
+  const names = items.slice(0, 3).map((i) => i.name.toLowerCase());
+  const capability = inZone >= 3 || items.length > 3
+    ? `the ${zone} zone`
+    : names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  const value = exhibits.length && amenities.length
+    ? 'visitors have something to see and somewhere to stop, and stay longer'
+    : amenities.length ? 'visitors can eat, rest and stay longer'
+    : exhibits.length ? 'visitors have more to enjoy'
+    : 'the park is easier and pleasanter to get around';
+  return `Our goal is to deliver ${capability} so that ${value}`;
 }
 
 /** Why an item is not ready to be forecast, or null if it is. The team's Definition of Ready is

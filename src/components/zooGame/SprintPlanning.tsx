@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft, SprintTask } from './types';
-import { availableItems, suggestSprintGoal, suggestTasks } from './engine';
+import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal } from './engine';
 import { zooCapacity, SPRINT_LENGTH_OPTIONS } from './config';
 import { sprintCapacity } from './engine';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
@@ -58,7 +58,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
   const capacity = sprintCapacity(state); // velocity, less what refining the Backlog for it cost
   const over = committed > capacity;
-  const hasGoal = state.sprintGoal.trim().length > 0;
+  const hasGoal = isDraftedGoal(state.sprintGoal); // Why is not done until the Goal is actually drafted
   const hasWhat = chosen.length > 0;
   const totalTasks = chosen.reduce((s, i) => s + (i.tasks?.filter((t) => t.label.trim()).length ?? 0), 0);
   const essentials = chosen.filter((i) => i.goalCritical).length;
@@ -311,7 +311,11 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
         <div className="flex items-center gap-2.5">
           {step === 'why' && (
             <>
-              {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">Agree a Sprint Goal to continue</span>}
+              {!hasGoal && (
+                <span className="hidden text-[11px] text-muted-foreground sm:inline">
+                  {state.sprintGoal.trim() ? 'Say a bit more - a Sprint Goal is an objective, not a word' : 'Draft the Sprint Goal to continue'}
+                </span>
+              )}
               <Button size="sm" disabled={!hasGoal} onClick={() => setStep('what')}>Next: what to build →</Button>
             </>
           )}
