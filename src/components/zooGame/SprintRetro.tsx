@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
+import { PhaseHeader } from './PhaseHeader';
 import { retroQuestions } from './engine';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
@@ -29,10 +30,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod }: SprintRetroProps)
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1">
-        <h2 className="text-lg font-bold">Sprint {state.sprintNumber} Retrospective</h2>
-        <p className="text-xs text-muted-foreground">How did the team work this Sprint? Refine the Definition of Done and pick one improvement to carry into the next one.</p>
-      </div>
+      <PhaseHeader event="Sprint Retrospective" title={`Sprint ${state.sprintNumber}: how did we work?`}>
+        Refine the Definition of Done and pick one improvement to carry into the next Sprint.
+      </PhaseHeader>
 
       {/* Coaching questions: open prompts drawn from what happened, to inspect before adapting.
           Reflective and unscored - the point is the thinking, not a right answer. */}

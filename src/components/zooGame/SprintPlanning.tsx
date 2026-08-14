@@ -5,6 +5,7 @@ import { zooCapacity, SPRINT_LENGTH_OPTIONS } from './config';
 import { sprintCapacity } from './engine';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
 import { CoachTip } from './CoachTip';
+import { PhaseHeader } from './PhaseHeader';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Lightbulb, Target, Wand2, X, Check, ClipboardCheck, ChevronUp, ChevronDown } from 'lucide-react';
@@ -37,10 +38,10 @@ interface SprintPlanningProps {
 }
 
 type Step = 'why' | 'what' | 'how';
-const STEPS: { key: Step; label: string; full: string }[] = [
-  { key: 'why', label: 'Why', full: 'Why is this Sprint valuable?' },
-  { key: 'what', label: 'What', full: 'What can we build?' },
-  { key: 'how', label: 'How', full: 'How will we get it done?' },
+const STEPS: { key: Step; label: string; short: string; full: string }[] = [
+  { key: 'why', label: 'Why', short: 'the Sprint Goal', full: 'Why is this Sprint valuable?' },
+  { key: 'what', label: 'What', short: 'the forecast', full: 'What can we build?' },
+  { key: 'how', label: 'How', short: 'the plan', full: 'How will we get it done?' },
 ];
 
 /** Sprint Planning as its three real topics, in order: Why (agree the Sprint Goal),
@@ -92,6 +93,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                   {done && !active ? <Check className="h-3 w-3" /> : i + 1}
                 </span>
                 {s.label}
+                <span className="hidden text-[11px] font-normal text-muted-foreground sm:inline">{s.short}</span>
               </button>
               {i < STEPS.length - 1 && <span className="text-muted-foreground/40">→</span>}
             </div>
@@ -99,7 +101,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
         })}
       </div>
 
-      <h2 className="text-lg font-bold">{STEPS.find((s) => s.key === step)!.full}</h2>
+      <PhaseHeader event="Sprint Planning" title={STEPS.find((s) => s.key === step)!.full}
+        step={STEPS.findIndex((s) => s.key === step) + 1} of={STEPS.length} />
 
       {/* ---- WHY: agree the Sprint Goal ---- */}
       {step === 'why' && (
