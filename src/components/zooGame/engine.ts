@@ -997,6 +997,43 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
 
 // ============= Retrospective and next Sprint =============
 
+/** Cancel the Sprint. The Scrum Guide: "A Sprint could be cancelled if the Sprint Goal becomes
+ *  obsolete. Only the Product Owner has the authority to cancel the Sprint." It is rare, and it is
+ *  not a way out of a Sprint that is going badly - the Sprint Goal has to have stopped being worth
+ *  pursuing.
+ *
+ *  What happens follows the Guide too: work that is Done is reviewed and kept, so anything built can
+ *  still be released; everything incomplete goes back to the Product Backlog to be re-estimated
+ *  against what is left. There is no Sprint Review for a cancelled Sprint and nothing is measured
+ *  from it, so velocity is untouched. A new Sprint starts straight after. */
+export function cancelSprint(state: ZooGameState): ZooGameState {
+  if (state.phase !== 'sprint') return state;
+  const backlog = state.backlog.map((it) => {
+    if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
+    const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
+    const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
+    const remaining = Math.max(1, Math.round((it.trueSize ?? it.estimate ?? 5) * (1 - doneFrac)));
+    return { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false, unsized: true, carriedOver: true, trueSize: remaining };
+  });
+  return {
+    ...state,
+    phase: 'planning',
+    sprintNumber: state.sprintNumber + 1,
+    sprintGoal: '',
+    sprintGoalMet: null,
+    committedIds: [],
+    backlog,
+    dayNumber: 1,
+    dayStage: 'building',
+    dayTimeMult: 1,
+    pendingImpediment: null,
+    carriedImpediment: null,
+    refinePenalty: 0,
+    burndown: [],
+    sprintsCancelled: (state.sprintsCancelled ?? 0) + 1,
+  };
+}
+
 export function startNextSprint(state: ZooGameState, improvement: string): ZooGameState {
   // The chosen improvement has a mechanical effect next Sprint, so inspect-and-adapt
   // actually changes how the team works (not just a note): "finish fewer" tightens the

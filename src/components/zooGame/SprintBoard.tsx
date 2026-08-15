@@ -29,6 +29,8 @@ interface SprintBoardProps {
   onSetUseStories: (on: boolean) => void;
   onToggleTask: (id: string, taskId: string) => void;
   onStartItem: (id: string) => void;
+  /** The Product Owner cancelling the Sprint - only they can, and only if the Goal is obsolete. */
+  onCancelSprint?: () => void;
   /** Re-order what to pick up next - the Developers arranging their own Sprint Backlog. */
   onReorderSprint?: (id: string, dir: 'up' | 'down') => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
@@ -111,7 +113,7 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   const [showBacklog, setShowBacklog] = useState(true); // the Backlog sidebar tucks away during the Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
@@ -251,6 +253,16 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
             <Button size="sm" className="h-8" onClick={onEndDay}>
               {/* Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
                   day, which otherwise reads as though the Scrum is an end-of-day event. */}
+              {onCancelSprint && (
+                // Rare, and deliberately awkward: it is not a way out of a Sprint that is going
+                // badly, it is for a Sprint Goal that has stopped being worth pursuing.
+                <button type="button"
+                  onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-estimated. A new Sprint starts straight away.')) onCancelSprint(); }}
+                  title="Cancel the Sprint (Product Owner only, when the Sprint Goal is obsolete)"
+                  className="rounded-md border border-destructive/40 px-2 py-1 text-[11px] font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive">
+                  Cancel Sprint
+                </button>
+              )}
               {state.dayNumber === state.sprintDays
                 ? 'End day → Review'
                 : state.dailyScrumAt === 'start'

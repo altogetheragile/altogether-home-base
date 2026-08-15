@@ -243,6 +243,8 @@ export interface ZooGameState {
   definitionOfDone: string[];
   /** The team's agreement about what makes an item ready to forecast. Editable, like the DoD. */
   definitionOfReady: string[];
+  /** How many Sprints the Product Owner has cancelled. Rare, and worth remembering at the Retro. */
+  sprintsCancelled: number;
   /** Visitor happiness at each Sprint Review, so the Product Goal's progress has a trend. */
   happiness: number[];
   /** Whether new PBIs default to the user-story format (a preference, off by default
@@ -354,6 +356,7 @@ export type ZooAction =
   | { type: 'MOVE_SPRINT_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
+  | { type: 'CANCEL_SPRINT' }
   | { type: 'SET_DOR'; dor: string[] }
   | { type: 'ADD_COPY'; id: string; pos: { x: number; y: number } }
   | { type: 'MOVE_COPY'; id: string; index: number; pos: { x: number; y: number } }

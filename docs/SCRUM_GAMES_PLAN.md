@@ -45,8 +45,14 @@ Four things to settle before building. Three are wording; one is a real gap.
    Developers can size). The model calls it a working agreement rather than a gate. Compatible.
    **Action: none, beyond keeping the game's "not required by Scrum" note.**
 4. **Sprint cancellation is missing from both games.** Course slide 41: if the Sprint Goal becomes
-   obsolete the Sprint can be cancelled, and only the Product Owner can do it. **Action: build it.**
-   It is also a good trainer lever.
+   obsolete the Sprint can be cancelled, and only the Product Owner can do it. **Built in the zoo
+   game.** Still to do in `/scrum-game`.
+
+All four are now settled. The first three are recorded in the model's decision log with the Guide's
+own wording, so they are not reopened: the Sprint Goal is both defined by the whole Scrum Team and a
+commitment by the Developers; the Product Owner proposes value while the Developers pull the work;
+and "ready" carries only the Guide's meaning, with a Definition of Ready labelled a common
+practice.
 
 ## What Exists Today
 
@@ -72,6 +78,8 @@ The largest gap against the learning outcomes, and the one that makes the game s
 
 - **A one-page intro** before play: the three artifacts and their commitments, the five events, the
   three accountabilities, the Scrum Values, empiricism and lean thinking. One screen, not a course.
+- **All of it skippable.** A learner who has just sat through the taught session should be able to
+  turn the teaching off and play, and turn it back on from the reference panel.
 - **Why / Who / When / How cards** for each element, shown in context the first time it is met (the
   Product Goal, the Product Backlog, a Product Backlog item, the Definition of Done, each event, each
   accountability), dismissible, and revisitable from a Scrum reference panel that is always to hand.
@@ -96,14 +104,23 @@ Size: medium.
 
 ## Increment 3: The Mock Exam
 
-- A question bank tagged to the model: accountabilities, artifacts and commitments, events,
-  Definition of Done, empiricism and lean thinking, and the practices that are not Scrum.
-- PSM-style formats: multiple choice, multiple answer, true or false. Scored, with a pass mark.
+Much smaller than it first looked. The site already has the whole apparatus: an `exams` and
+`questions` bank with a published **Professional Scrum Master** paper, an exam player with exam and
+practice modes, multi-answer support and references, and `exam_attempts` for tracking. The mock exam
+**reuses the existing questions and player** rather than growing a second one.
+
+What is actually needed:
+
+- **Length choice** at the start: the full paper, half of it, or twenty questions. Same bank, same
+  scoring, fewer questions.
+- **Save and return.** `exam_attempts` already stores answers as JSON, so an unfinished attempt can
+  be resumed rather than restarted.
 - **Explanations that point back at the play**: "you extended a Sprint in Sprint 2, which is why this
   matters" beats a paragraph of theory. This is the thing a static quiz cannot do, and the reason to
-  build the exam inside the game rather than beside it.
+  put the exam inside the game rather than beside it. It needs the play history that the debrief work
+  produces, which is why the exam sits after it.
 
-Size: medium. The bank is the work; the runner is small.
+Size: small to medium, most of it in the length choice and resuming.
 
 ## Increment 4: Trainer Mode, Still Single Player
 
