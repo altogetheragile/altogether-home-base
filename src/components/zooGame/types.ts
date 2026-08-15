@@ -304,6 +304,11 @@ export interface ZooGameState {
   /** Learn mode: pause the day clock so there is no real-time pressure - days end only
    *  when you choose. The timed mode teaches Sprint pressure; this is the reflective one. */
   learnMode: boolean;
+  /** Teaching on: the one-page intro and the in-context cards. A learner who has just had the taught
+   *  session can turn it off, and back on from the Scrum reference. */
+  teaching: boolean;
+  /** Cards already read, so each is shown once and survives save and resume. */
+  taught: string[];
   /** When the Daily Scrum is held: at the START of each day (Scrum's usual cadence) or at
    *  the END. Chosen by the team; the same event either way, just timed differently. */
   dailyScrumAt: 'start' | 'end';
@@ -357,6 +362,8 @@ export type ZooAction =
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
   | { type: 'CANCEL_SPRINT' }
+  | { type: 'SET_TEACHING'; on: boolean }
+  | { type: 'MARK_TAUGHT'; id: string }
   | { type: 'SET_DOR'; dor: string[] }
   | { type: 'ADD_COPY'; id: string; pos: { x: number; y: number } }
   | { type: 'MOVE_COPY'; id: string; index: number; pos: { x: number; y: number } }

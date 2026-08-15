@@ -3,6 +3,8 @@ import type { ZooGameState, ZooConnector } from './types';
 import { ParkView } from './ParkView';
 import { DayTimer } from './DayTimer';
 import { CoachNudge } from './CoachTip';
+import { TeachingCard, ScrumReference } from './ScrumTeaching';
+import { CARDS_BY_PHASE } from './scrumContent';
 import { DodEditor } from './DodEditor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -143,7 +145,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean }[]; onConfirmDeployAc?: (index: number, value: boolean) => void; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onAddCopy?: (id: string, pos: { x: number; y: number }) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void }) {
+export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, onSetTeaching, onMarkTaught }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean }[]; onConfirmDeployAc?: (index: number, value: boolean) => void; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onAddCopy?: (id: string, pos: { x: number; y: number }) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void }) {
   // `tab` is controlled from above when provided, so an event (place & open) can switch to
   // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
   // position the released item there.
@@ -151,6 +153,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
   const tab = parkTab ?? localTab;
   const setTab = onSetTab ?? setLocalTab;
   const open = state.backlog.filter((it) => it.status === 'open').length;
+
+  // The next thing worth explaining here, if the teaching is on and it has not been read yet.
+  const teachCard = (state.teaching ?? true)
+    ? (CARDS_BY_PHASE[state.phase] ?? []).find((id) => !(state.taught ?? []).includes(id))
+    : undefined;
 
   return (
     <div className="flex h-full flex-col">
@@ -191,6 +198,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
                 <span className="md:hidden">{poRefining ? 'PO…' : 'PO'}</span>
               </button>
             )}
+            <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />
             {onSetDod !== undefined && <DorPopover dor={state.definitionOfReady} onSetDor={onSetDor} />}
             {onSetDod !== undefined && <DodPopover dod={state.definitionOfDone} onSetDod={onSetDod} />}
             {onOpenSaves && (
@@ -231,6 +239,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
       <div className="min-h-0 flex-1 overflow-hidden xl:flex">
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3 xl:min-w-0 xl:flex-1', tab === 'park' && 'hidden')}>
           <div className={cn('space-y-3', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>
+            {/* One card at a time, for the element they have just arrived at, once each. */}
+            {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
             {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
             {children}
           </div>
