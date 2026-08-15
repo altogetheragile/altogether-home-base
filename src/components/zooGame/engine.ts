@@ -294,7 +294,7 @@ export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean 
 export function startItem(state: ZooGameState, id: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || item.status !== 'committed' || item.started) return state;
-  if (doingCount(state) >= state.wipLimit) return state; // WIP limit reached
+  if (state.wipLimit > 0 && doingCount(state) >= state.wipLimit) return state; // WIP limit reached (0 = no limit)
   if (!enclosureReady(state, item)) return state; // build the enclosure before the animals
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
@@ -325,6 +325,12 @@ export function setTeaching(state: ZooGameState, on: boolean): ZooGameState {
 /** Remember a card has been read, so it is not shown again. */
 export function markTaught(state: ZooGameState, id: string): ZooGameState {
   return state.taught?.includes(id) ? state : { ...state, taught: [...(state.taught ?? []), id] };
+}
+
+/** Set the work in progress limit, or turn it off with 0. A WIP limit is Lean thinking, not part
+ *  of Scrum - the Developers are self-managing, so it is their agreement to make and to drop. */
+export function setWipLimit(state: ZooGameState, limit: number): ZooGameState {
+  return { ...state, wipLimit: Math.max(0, Math.round(limit)) };
 }
 
 export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
@@ -1049,7 +1055,7 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
   // actually changes how the team works (not just a note): "finish fewer" tightens the
   // WIP limit; committing to the Daily Scrum makes it efficient (no time cost).
   const imp = improvement.trim();
-  const wipLimit = /finish fewer/i.test(imp) ? Math.max(1, state.wipLimit - 1) : state.wipLimit;
+  const wipLimit = /finish fewer/i.test(imp) && state.wipLimit > 0 ? Math.max(1, state.wipLimit - 1) : state.wipLimit;
   const scrumDiscipline = state.scrumDiscipline || /daily scrum every day/i.test(imp);
   return {
     ...state,

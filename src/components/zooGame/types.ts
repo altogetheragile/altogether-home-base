@@ -362,6 +362,7 @@ export type ZooAction =
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
   | { type: 'CANCEL_SPRINT' }
+  | { type: 'SET_WIP_LIMIT'; limit: number }
   | { type: 'SET_TEACHING'; on: boolean }
   | { type: 'MARK_TAUGHT'; id: string }
   | { type: 'SET_DOR'; dor: string[] }

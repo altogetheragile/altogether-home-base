@@ -52,6 +52,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   // Moving between topics clears the transient "Ask the PO" note so it doesn't follow you.
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [wideBacklog, setWideBacklog] = useState(false);
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
@@ -134,6 +135,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
 
       {/* ---- WHAT: forecast Backlog items into the Sprint ---- */}
 
+      {step === 'why' && (
+          <div className="mx-auto max-w-2xl">
           {/* The Scrum Team crafts the Sprint Goal looking at the top of the Product Backlog - it is
               what the Product Owner is proposing value from. Read-only here: this topic is about the
               objective, and the work is selected in topic two. */}
@@ -160,6 +163,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             </ol>
             {items.length > 6 && <p className="text-[11px] text-muted-foreground">...and {items.length - 6} more.</p>}
           </section>
+          </div>
+      )}
 
       {step === 'what' && (
         <div className="space-y-3">
@@ -170,9 +175,13 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
 
           {/* The Sprint Goal you agreed in Why - shown here to guide selection, and editable so
               you can refine it as the forecast takes shape (or draft one from your selection). */}
-          <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
+          <div className="space-y-1.5 rounded-lg border-2 border-primary/50 bg-primary/5 px-4 py-3 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Target className="h-4 w-4 text-primary" />
+                <span className="text-sm font-bold">Sprint Goal</span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Commitment of the Sprint Backlog</span>
+              </div>
               <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(chosen.length ? chosen : items))}
                 title="Re-words the Goal around what you have selected. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
@@ -183,7 +192,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               onChange={(e) => onSetSprintGoal(e.target.value)}
               rows={2}
               placeholder="One outcome for this Sprint - refine it as you choose what to build."
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              className="w-full resize-none rounded-md border-2 border-primary/40 bg-background px-3 py-2 text-base font-medium leading-snug outline-none focus:border-primary"
             />
           </div>
 
@@ -205,8 +214,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             </section>
           )}
 
-          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
-            <ProductBacklogSidebar state={state} mode="plan" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+          <div className={cn('grid gap-4 lg:items-start', wideBacklog ? 'lg:grid-cols-[440px_minmax(0,1fr)]' : 'lg:grid-cols-[280px_minmax(0,1fr)]')}>
+            <ProductBacklogSidebar onWidth={setWideBacklog} state={state} mode="plan" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
               onSetUseStories={onSetUseStories} onEstimate={onEstimate} selected={selected} onToggle={toggle}
               onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
 

@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisio
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
+  planSprint, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
   reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
 
@@ -48,6 +48,8 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
       return toggleGoalCritical(state, action.id);
     case 'SET_SPRINT_DAYS':
       return setSprintDays(state, action.days);
+    case 'SET_WIP_LIMIT':
+      return setWipLimit(state, action.limit);
     case 'SET_TEACHING':
       return setTeaching(state, action.on);
     case 'MARK_TAUGHT':
@@ -189,6 +191,7 @@ export function useZooGame(gameSeed?: number) {
   const startWork = useCallback((id: string) => dispatch({ type: 'START_ITEM', id }), []);
   const markGoalCritical = useCallback((id: string) => dispatch({ type: 'TOGGLE_GOAL_CRITICAL', id }), []);
   const chooseSprintDays = useCallback((days: number) => dispatch({ type: 'SET_SPRINT_DAYS', days }), []);
+  const setWip = useCallback((limit: number) => dispatch({ type: 'SET_WIP_LIMIT', limit }), []);
   const teach = useCallback((on: boolean) => dispatch({ type: 'SET_TEACHING', on }), []);
   const markRead = useCallback((id: string) => dispatch({ type: 'MARK_TAUGHT', id }), []);
   const setLearn = useCallback((on: boolean) => dispatch({ type: 'SET_LEARN_MODE', on }), []);
@@ -248,7 +251,7 @@ export function useZooGame(gameSeed?: number) {
   const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
 
   return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, setDor, takeSignal, plan, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark: placeOnParkCb, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setTeaching: teach, markTaught: markRead, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, setItemSpot: setSpot, setItemSize: setSize, setItemRot: setRot, addCopy, moveCopy, removeCopy, nestItem: nest, unnestItem: unnest, renameItem: renameItemCb, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, reorderSprint, reorderForecast, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, loadGame, poRefine,
+    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, setDor, takeSignal, plan, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark: placeOnParkCb, startItem: startWork, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setWipLimit: setWip, setTeaching: teach, markTaught: markRead, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, setItemSpot: setSpot, setItemSize: setSize, setItemRot: setRot, addCopy, moveCopy, removeCopy, nestItem: nest, unnestItem: unnest, renameItem: renameItemCb, splitEpic: splitEpicCb, createPbi, refinePbi: refinePbiCb, reorder, moveBefore, reorderSprint, reorderForecast, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, loadGame, poRefine,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, deletePbi: deletePbiCb, duplicatePbi: duplicatePbiCb, assignDev: assignDevCb, renameMember: renameMemberCb, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb, addPath: addPathCb, deletePath: deletePathCb, clearPaths: clearPathsCb, addConnector: addConnectorCb, updateConnector: updateConnectorCb, deleteConnector: deleteConnectorCb,
     closeDay, cancelSprint: cancelTheSprint, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };

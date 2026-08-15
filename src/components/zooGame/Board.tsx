@@ -7,7 +7,7 @@ import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2, AlertCircle } from 'lucide-react';
+import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
@@ -231,6 +231,8 @@ interface SidebarProps {
   /** Move a whole zone (a themed epic and all its PBIs) up/down among the zones. */
   onMoveZone?: (zone: string, dir: 'up' | 'down') => void;
   onMoveBefore?: (id: string, beforeId: string) => void;
+  /** Tells the page how wide the panel wants to be, so the layout can follow it. */
+  onWidth?: (wide: boolean) => void;
   /** sprint mode: pull a Ready item into the running Sprint. */
   onPull?: (id: string) => void;
   /** Refine an epic by splitting the chosen members into their own PBIs. */
@@ -243,12 +245,14 @@ interface SidebarProps {
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi }: SidebarProps) {
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [showToolbox, setShowToolbox] = useState(false);
+  const [wide, setWide] = useState(false); // a narrow rail by default, widened to read comfortably
+  useEffect(() => { onWidth?.(wide); }, [wide, onWidth]);
   const [collapsedZones, setCollapsedZones] = useState<Set<string>>(new Set());
   // PBIs render collapsed (one neat line) by default; expand on demand for the detail.
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -325,7 +329,7 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
             <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
           </button>
           <CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 truncate text-left font-medium hover:text-foreground">{it.name}</button>
+          <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 text-left font-medium leading-tight hover:text-foreground">{it.name}</button>
           {it.carriedOver && <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400" title={`Carried over unfinished - re-estimate the work that's left (was ${it.estimate} pts)`}>carried over</span>}
           <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
           {action}
@@ -376,7 +380,13 @@ export function ProductBacklogSidebar({ state, mode, onAddPbi, onRefinePbi, onSe
     <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
       {showToolbox && <Toolbox onPick={(t) => onAddPbi(toolboxDraft(t))} onClose={() => setShowToolbox(false)} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+          <button type="button" onClick={() => setWide((w) => !w)}
+            title={wide ? 'Narrow the Product Backlog' : 'Widen the Product Backlog to read it'}
+            aria-label={wide ? 'Narrow the Product Backlog' : 'Widen the Product Backlog'}
+            className="rounded border border-border p-0.5 text-muted-foreground transition-colors hover:text-foreground">
+            {wide ? <ChevronsLeft className="h-3 w-3" /> : <ChevronsRight className="h-3 w-3" />}
+          </button>
           Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span>
           {mode === 'sprint' && (
             // How far ahead the Backlog is prepared. Refining here costs the day's build time, and
