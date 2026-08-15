@@ -30,7 +30,10 @@ Rules the games enforce:
   responsible for the sizing. The Product Owner may influence the Developers by helping them
   understand and select trade-offs." Sizing is never the Product Owner's, and never automatic.
 - **The Sprint Goal is crafted by the whole Scrum Team** during Sprint Planning. The Product Owner
-  does not hand one down, and nothing outside Sprint Planning may write it.
+  may offer a starting point *within* topic one, and the Scrum Master typically facilitates, but the
+  Goal is discussed, refined and agreed together, and the Developers have to agree it. Nothing
+  outside Sprint Planning may write it: a Goal that arrives before the event has pre-empted the
+  conversation the event exists for.
 - **The Product Backlog's order is the Product Owner's.** The Developers do not reorder it. Within a
   Sprint, the order of work is the Developers' own.
 
@@ -139,8 +142,9 @@ Kept so they are not relitigated:
 
 - **2026-08-14** Refinement charges the Sprint it happens in, not the Sprint it prepares. An earlier
   model docked the Sprint about to be planned, which implied refinement buys the next Sprint.
-- **2026-08-14** The Product Owner does not propose a Sprint Goal, even to seed an empty field. It
-  bypassed the team crafting one.
+- **2026-08-14** The Product Owner does not propose a Sprint Goal *outside* Sprint Planning, even to
+  seed an empty field: it bypassed the team crafting one. Suggesting a starting point inside topic
+  one, for the team to discuss and agree, is a different thing and is sound.
 - **2026-08-15** Sprint length moved out of Sprint Planning entirely.
 - **2026-08-13** Work that is Done but not released carries forward as an Increment awaiting release,
   labelled with the Sprint it was built in. It is not re-estimated: it is finished.
