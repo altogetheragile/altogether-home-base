@@ -35,6 +35,8 @@ interface SprintBoardProps {
   onReorderSprint?: (id: string, dir: 'up' | 'down') => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onSetLearnMode: (on: boolean) => void;
+  /** The WIP limit is the Developers' own agreement, so they can change it or switch it off. */
+  onSetWipLimit?: (n: number) => void;
   onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
@@ -70,7 +72,7 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
 
 /** The board's two set-once settings, tucked behind a gear so they don't sit in prime space:
  *  when the Daily Scrum is held, and whether days run on a timer (learn mode pauses the clock). */
-function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }: { dailyScrumAt: 'start' | 'end'; learnMode: boolean; onSetScrumAt: (at: 'start' | 'end') => void; onSetLearnMode: (on: boolean) => void }) {
+function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetLearnMode, onSetWipLimit }: { dailyScrumAt: 'start' | 'end'; learnMode: boolean; wipLimit: number; onSetScrumAt: (at: 'start' | 'end') => void; onSetLearnMode: (on: boolean) => void; onSetWipLimit?: (n: number) => void }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -95,6 +97,26 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
               : 'Held as the day closes, looking back on it.'}
           </div>
           <div className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground" title="How many items the Developers will have under way at once">Work in progress limit</span>
+            {onSetWipLimit ? (
+              <div className="flex items-center gap-1">
+                {[0, 1, 2, 3, 4].map((n) => (
+                  <button key={n} type="button" onClick={() => onSetWipLimit(n)}
+                    className={cn('rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                      wipLimit === n ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+                    {n === 0 ? 'Off' : n}
+                  </button>
+                ))}
+              </div>
+            ) : <span className="text-[11px] font-medium">{wipLimit || 'Off'}</span>}
+          </div>
+          <div className="-mt-1 text-[10px] leading-snug text-muted-foreground/80">
+            {wipLimit > 0
+              ? `The Developers start no more than ${wipLimit} at once, and swarm to finish rather than starting more. Fewer things in flight means things actually finish.`
+              : 'No limit: anything can be started at any time. Watch how much ends the Sprint unfinished.'}
+            {' '}A WIP limit is Lean thinking, not part of Scrum - it is the Developers' own agreement.
+          </div>
+          <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground">Days</span>
             <button type="button" onClick={() => onSetLearnMode(!learnMode)}
               title={learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
@@ -113,7 +135,7 @@ function BoardSettings({ dailyScrumAt, learnMode, onSetScrumAt, onSetLearnMode }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
   const [showBacklog, setShowBacklog] = useState(true); // the Backlog sidebar tucks away during the Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
@@ -248,7 +270,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
         </div>
         <div className="flex items-center gap-1.5">
           {!dayStarting && <BurndownChip state={state} />}
-          <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} />
+          <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} />
           {!dayStarting && (
             <Button size="sm" className="h-8" onClick={onEndDay}>
               {/* Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
@@ -352,7 +374,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                 </BoardColumn>
                 </div>
                 <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow', dropClass('doing'))}>
-                <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit} hint="Nothing in progress">
+                <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit || undefined} hint="Nothing in progress">
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
