@@ -8,6 +8,8 @@ interface ZooIntroProps {
   /** The Product Goal card, shown here because this is where the Product Goal is first met. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
+  /** Back to the one page of Scrum, for a player who wants to read it again. */
+  onBack?: () => void;
   onSetGoal: (goal: string) => void;
   onStart: () => void;
   /** Signed-in players can resume a saved game. */
@@ -16,11 +18,16 @@ interface ZooIntroProps {
 
 /** Landing screen. The player is the Product Owner: they shape the Product Goal
  *  before the first Sprint, then run the zoo in Sprints. */
-export function ZooIntro({ productGoal, teachCard, onMarkTaught, onSetGoal, onStart, onOpenSaves }: ZooIntroProps) {
+export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGoal, onStart, onOpenSaves }: ZooIntroProps) {
   const [goal, setGoal] = useState(productGoal);
 
   return (
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center">
+      {onBack && (
+        <button type="button" onClick={onBack} className="self-start text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+          &larr; Scrum on one page
+        </button>
+      )}
       {teachCard && onMarkTaught && (
         <div className="w-full text-left"><TeachingCard id={teachCard} onDismiss={onMarkTaught} /></div>
       )}

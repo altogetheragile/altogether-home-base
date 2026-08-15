@@ -111,13 +111,18 @@ function Row({ name, note, text }: { name: string; note?: string; text: string }
 }
 
 /** The one page of Scrum a player meets before building anything. Skippable. */
-export function ScrumOnePager({ onDone, onSkipTeaching }: { onDone: () => void; onSkipTeaching: () => void }) {
+export function ScrumOnePager({ onDone, onSkipTeaching, onBack }: { onDone: () => void; onSkipTeaching: () => void; onBack?: () => void }) {
   return (
     // The game frame never scrolls, so every screen inside it has to scroll itself - this one is
     // taller than a viewport, and without its own overflow the foot of it is simply unreachable.
     <div className="h-full overflow-y-auto">
     <div className="mx-auto max-w-3xl space-y-5 px-4 py-8">
       <header className="space-y-1">
+        {onBack && (
+          <button type="button" onClick={onBack} className="mb-1 block text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+            &larr; Back
+          </button>
+        )}
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
         <h2 className="text-2xl font-bold leading-tight">Scrum on one page</h2>
         <p className="text-sm text-muted-foreground">{SCRUM_INTRO.what}</p>

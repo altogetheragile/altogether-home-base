@@ -221,3 +221,22 @@ export const CARDS_BY_PHASE: Record<string, string[]> = {
   review: ['sprint-review', 'product-owner'],
   retro: ['sprint-retrospective', 'scrum-master'],
 };
+
+// ---- Going back ----
+
+/** Where "back" leads from each screen, and why it does not lead anywhere from the rest.
+ *
+ *  Some steps can be revisited freely: looking at Refinement again from Planning changes nothing,
+ *  and the events at the end of a Sprint can be re-read. Others cannot be undone without teaching
+ *  something false - a Sprint that has started has started, and a Sprint that has ended cannot be
+ *  reopened to squeeze more in. Where there is no way back, the game says why rather than hiding
+ *  the control, because the reason is the lesson.
+ */
+export const BACK_FROM: Record<string, { to: string; label: string } | { blocked: string }> = {
+  refine: { to: 'intro', label: 'Back to the start' },
+  planning: { to: 'refine', label: 'Back to Refinement' },
+  sprint: { blocked: 'The Sprint has started. It cannot be un-started - if the Sprint Goal has become obsolete, only the Product Owner can cancel the Sprint.' },
+  review: { blocked: 'The Sprint has ended, so there is no going back into it. Unfinished work has already returned to the Product Backlog.' },
+  retro: { to: 'review', label: 'Back to the Sprint Review' },
+  final: { blocked: 'The Product Owner has judged the Product Goal met and wrapped up.' },
+};
