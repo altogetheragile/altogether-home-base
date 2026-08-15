@@ -111,6 +111,9 @@ function Row({ name, note, text }: { name: string; note?: string; text: string }
 /** The one page of Scrum a player meets before building anything. Skippable. */
 export function ScrumOnePager({ onDone, onSkipTeaching }: { onDone: () => void; onSkipTeaching: () => void }) {
   return (
+    // The game frame never scrolls, so every screen inside it has to scroll itself - this one is
+    // taller than a viewport, and without its own overflow the foot of it is simply unreachable.
+    <div className="h-full overflow-y-auto">
     <div className="mx-auto max-w-3xl space-y-5 px-4 py-8">
       <header className="space-y-1">
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
@@ -151,6 +154,7 @@ export function ScrumOnePager({ onDone, onSkipTeaching }: { onDone: () => void; 
           Start building the zoo &rarr;
         </button>
       </div>
+    </div>
     </div>
   );
 }
