@@ -62,8 +62,11 @@ Rules the games enforce:
 ## The Events
 
 **Sprint Planning** answers three topics, in order: why this Sprint is valuable (the Sprint Goal),
-what can be Done (the forecast), and how the work will get done (the plan). It does **not** size
-items, split items or set the Sprint length. Only items that are ready may be forecast.
+what can be Done (the forecast), and how the work will get done (the plan). Only items that are
+ready may be forecast. Refining an item here is allowed - "The Scrum Team may refine these items
+during this process, which increases understanding and confidence" - but a Backlog refined during
+the previous Sprint should not need it, and the time comes out of Planning. It does **not** set the
+Sprint length: that is a cadence, agreed once.
 
 **The Daily Scrum** is a short progress sync toward the Sprint Goal, for the Developers. Impediments
 are surfaced there and removed outside it. It is not a status report to anyone, and it is not where
@@ -133,7 +136,9 @@ practice rather than part of Scrum:
 A checklist for any new game, and for reviewing an existing one. Zoo implementation in brackets.
 
 1. Sprint length agreed once, changed only at a Retrospective (`setSprintDays`).
-2. Sprint Planning cannot size, split, or set the Sprint length (`planSprint`, `notReady`).
+2. Sprint Planning cannot forecast unready work, and cannot set the Sprint length. It CAN refine an
+   item to make it ready, while saying that a well-refined Backlog would not need it (`planSprint`,
+   `notReady`).
 3. Only ready items can be forecast, and the reason is shown when they cannot (`isReady`).
 4. The Sprint Goal is written by the player, never seeded by the Product Owner or by refinement
    (`applyPoRefinements`, `isDraftedGoal`).
@@ -159,6 +164,8 @@ Kept so they are not relitigated:
   seed an empty field: it bypassed the team crafting one. Suggesting a starting point inside topic
   one, for the team to discuss and agree, is a different thing and is sound.
 - **2026-08-15** Sprint length moved out of Sprint Planning entirely.
+- **2026-08-15** Refining IS allowed in Sprint Planning - the Guide permits it in topic two - but the
+  game says you should not need to. An earlier rule forbade it outright, which was wrong.
 - **2026-08-15** The Sprint Goal is both "defined by the whole Scrum Team" and "a commitment by the
   Developers": the Guide says both, and the games use both sentences rather than choosing.
 - **2026-08-15** "Ready" carries only the Guide's meaning - can be Done within a Sprint. A Definition
