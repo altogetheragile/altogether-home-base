@@ -34,7 +34,7 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const [goal, setGoal] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [length, setLength] = useState(state.sprintLength); // development days
+  const length = state.sprintLength; // development days - the agreed cadence, not a choice made here
   const lengthOpt = SPRINT_LENGTH_OPTIONS.find((o) => o.devDays === length);
 
   const available = availableStories(state);
@@ -124,26 +124,16 @@ export function SprintPlanning({ state, onCommit, onSetTeam, onSetDod, onMoveSto
       {/* Sprint length - a real cadence choice. Two weeks is the common default.
           The Sprint is the container: Planning, the Daily Scrums, Review and Retro
           all happen inside it, so not every working day is a development day. */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* The Sprint's length is a fixed cadence, agreed before the first Sprint and changed only at
+          a Retrospective. Planning reports it; it does not choose it, because sizing the box to the
+          work is backwards. See docs/SCRUM_MODEL.md. */}
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
         <span className="text-sm font-semibold">Sprint length</span>
-        <div className="flex gap-1.5">
-          {SPRINT_LENGTH_OPTIONS.map((opt) => (
-            <button
-              key={opt.devDays}
-              type="button"
-              onClick={() => setLength(opt.devDays)}
-              className={cn(
-                'rounded-md border px-3 py-1.5 text-sm transition-colors',
-                length === opt.devDays ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted',
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <span className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium">{lengthOpt?.label ?? `${length} days`}</span>
         {lengthOpt && (
           <span className="text-xs text-muted-foreground">
-            {lengthOpt.workingDays} working days - <span className="font-medium text-foreground">{lengthOpt.devDays} for development</span>; the events take the rest
+            {lengthOpt.workingDays} working days - <span className="font-medium text-foreground">{lengthOpt.devDays} for development</span>; the events take the rest.
+            Fixed for every Sprint - change it at a Retrospective if the cadence itself is wrong.
           </span>
         )}
       </div>

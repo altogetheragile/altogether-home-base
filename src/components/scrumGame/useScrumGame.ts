@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import type { ScrumState, ScrumAction } from './types';
 import { initialScrumState } from './config';
-import { planSprint, moveBacklogStory, splitStory, estimateStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, chooseEvent, runSprintDay, runRemainingDays, reviewSprint, startNextSprint, endGame } from './engine';
+import { planSprint, moveBacklogStory, splitStory, estimateStory, startStory, addToSprint, assignDev, unassignDev, setTeam, setDefinitionOfDone, clearImpediment, acceptChange, declineChange, chooseEvent, runSprintDay, runRemainingDays, reviewSprint, startNextSprint, endGame, setSprintLength } from './engine';
 
 // The Sprint loop is built out slice by slice. Planning is live; daily execution,
 // Review and Retro follow.
@@ -13,6 +13,8 @@ function reducer(state: ScrumState, action: ScrumAction): ScrumState {
       return { ...initialScrumState(action.themeId), phase: 'refine' };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
+    case 'SET_SPRINT_LENGTH':
+      return setSprintLength(state, action.devDays);
     case 'SET_TEAM':
       return setTeam(state, action.team);
     case 'SET_DOD':
@@ -63,6 +65,7 @@ export function useScrumGame() {
 
   const start = useCallback((themeId?: string) => dispatch({ type: 'START', themeId }), []);
   const setPhase = useCallback((phase: ScrumState['phase']) => dispatch({ type: 'SET_PHASE', phase }), []);
+  const setSprintLength = useCallback((devDays: number) => dispatch({ type: 'SET_SPRINT_LENGTH', devDays }), []);
   const planSprintAction = useCallback(
     (goal: string, storyIds: string[], length: number) => dispatch({ type: 'PLAN_SPRINT', goal, storyIds, length }),
     [],
@@ -91,6 +94,7 @@ export function useScrumGame() {
     state,
     start,
     setPhase,
+    setSprintLength,
     planSprint: planSprintAction,
     startStory: startStoryAction,
     addToSprint: addToSprintAction,

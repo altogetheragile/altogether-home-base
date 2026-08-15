@@ -7,7 +7,7 @@ import {
 } from './config';
 import { learningFor, LEARNING } from './learning';
 import { ACTIVE_THEME, THEMES, getTheme, bookingTheme, missionTheme } from './theme';
-import { nextSatisfaction, generateEvent, currentEventCard, chooseEvent } from './engine';
+import { nextSatisfaction, generateEvent, currentEventCard, chooseEvent, setSprintLength } from './engine';
 import {
   planSprint, moveBacklogStory, splitStory, estimateStory, pokerHand, estimateSuggestion,
   availableStories, sprintStories, startStory, addToSprint,
@@ -764,5 +764,26 @@ describe('renegotiating scope mid-sprint (velocity can exceed the forecast)', ()
     s = addToSprint(s, 's2'); // 21 pts extra, nobody assigned to it
     s = runUntilDone(s, 's3');
     expect(sprintGoalMet(s, 1)).toBe(true); // committed story Done => goal met
+  });
+});
+
+describe('the Sprint length is a fixed cadence', () => {
+  it('is agreed before the first Sprint, and only a Retrospective changes it after that', () => {
+    // See docs/SCRUM_MODEL.md: a Sprint is a fixed-length container, so its length is never a
+    // Sprint Planning decision - sizing the box to the work is backwards.
+    let s = initialScrumState();
+    s = setSprintLength(s, 8);
+    expect(s.sprintLength).toBe(8);
+
+    // planning cannot change it
+    const planning = { ...s, phase: 'planning' as const };
+    expect(setSprintLength(planning, 12).sprintLength).toBe(8);
+
+    // nor mid-Sprint
+    const running = planSprint(s, 'Our goal is to deliver booking so that customers can book', [], 8);
+    expect(setSprintLength({ ...running, phase: 'sprint' }, 12).sprintLength).toBe(8);
+
+    // the Retrospective can, for the Sprint that follows
+    expect(setSprintLength({ ...running, phase: 'retro' }, 12).sprintLength).toBe(12);
   });
 });

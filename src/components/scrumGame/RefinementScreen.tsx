@@ -1,12 +1,13 @@
 import type { ScrumState } from './types';
 import { availableStories } from './engine';
-import { isSplittable, REFINE_MAX, storyReady } from './config';
+import { isSplittable, REFINE_MAX, storyReady, SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductGoalProgress } from './ProductGoalProgress';
 import { PlanningPoker } from './PlanningPoker';
 import { LearningTip } from './LearningTip';
 import { learningFor } from './learning';
 import { FloatingBar } from './FloatingBar';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { ChevronUp, ChevronDown, Scissors, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface RefinementScreenProps {
@@ -18,6 +19,8 @@ interface RefinementScreenProps {
   onPlan: () => void;
   /** Back to the intro (only offered before the first Sprint). */
   onBack?: () => void;
+  /** Agreed here, before the first Sprint. After that only a Retrospective changes it. */
+  onSetSprintLength?: (devDays: number) => void;
 }
 
 /** Product Backlog Refinement - a one-time bootstrap before the FIRST Sprint. A
@@ -26,7 +29,7 @@ interface RefinementScreenProps {
  *  to plan Sprint 1. From then on refinement is not a separate step - it is ongoing,
  *  done DURING each Sprint on the board (as much as each Sprint needs), which is
  *  where it costs the running Sprint a little capacity. */
-export function RefinementScreen({ state, onMoveStory, onSplitStory, onEstimate, onPlan, onBack }: RefinementScreenProps) {
+export function RefinementScreen({ state, onSetSprintLength, onMoveStory, onSplitStory, onEstimate, onPlan, onBack }: RefinementScreenProps) {
   const sprintNumber = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const items = availableStories(state);
   const ready = items.filter(storyReady);
@@ -47,6 +50,27 @@ export function RefinementScreen({ state, onMoveStory, onSplitStory, onEstimate,
         </div>
         {onBack && <Button variant="outline" size="sm" onClick={onBack}>Back</Button>}
       </div>
+
+      {/* The cadence, agreed once before the first Sprint. It is fixed after that, and only a
+          Retrospective changes it - never Sprint Planning. See docs/SCRUM_MODEL.md. */}
+      {onSetSprintLength && state.sprints.length === 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3">
+          <span className="text-sm font-semibold">Sprint length</span>
+          <div className="flex gap-1.5">
+            {SPRINT_LENGTH_OPTIONS.map((opt) => (
+              <button key={opt.devDays} type="button" onClick={() => onSetSprintLength(opt.devDays)}
+                className={cn('rounded-md border px-3 py-1.5 text-sm transition-colors',
+                  state.sprintLength === opt.devDays ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted')}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <span className="max-w-md text-xs text-muted-foreground">
+            Agree it once and keep it - the regular cadence is the point. Shorter gives faster feedback,
+            longer more development time. You can only change it at a Retrospective.
+          </span>
+        </div>
+      )}
 
       {state.velocity.length > 0 ? (
         <ProductGoalProgress state={state} />

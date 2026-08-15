@@ -209,6 +209,7 @@ export interface ScrumState {
 export type ScrumAction =
   | { type: 'START'; themeId?: string }
   | { type: 'SET_PHASE'; phase: ScrumPhase }
+  | { type: 'SET_SPRINT_LENGTH'; devDays: number }
   | { type: 'SET_TEAM'; team: Developer[] }
   | { type: 'SET_DOD'; dod: Criterion[] }
   | { type: 'MOVE_STORY'; storyId: string; dir: 'up' | 'down' }
