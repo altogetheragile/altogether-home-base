@@ -161,14 +161,14 @@ export default function ZooGame() {
     toast.success(`Resumed "${name}"`);
   };
   const handlePoRefine = async () => {
-    if (!user) { toast.error('Sign in to use the AI Product Owner.'); return; }
+    if (!user) { toast.error('Sign in to hold an AI refinement session.'); return; }
     try {
       const decisions = await poRefineCall(state);
       poRefine(decisions);
-      setPoNote({ phase: state.phase, text: decisions.rationale?.trim() || 'The Product Owner refined the Backlog.' });
-      toast.success('Product Owner refined the Backlog');
+      setPoNote({ phase: state.phase, text: decisions.rationale?.trim() || 'The Scrum Team refined the Product Backlog.' });
+      toast.success('The Scrum Team refined the Product Backlog');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'The Product Owner could not refine the Backlog.');
+      toast.error(e instanceof Error ? e.message : 'The refinement session could not run.');
     }
   };
 
