@@ -8,7 +8,7 @@
 // docs/SCRUM_MODEL.md and against the Scrum Guide without running the game. Wording follows the
 // Guide. Where something is common practice rather than Scrum, the card says so.
 
-export type CardKind = 'artifact' | 'event' | 'accountability' | 'concept';
+export type CardKind = 'artifact' | 'commitment' | 'event' | 'accountability' | 'concept';
 
 export interface ScrumCard {
   id: string;
@@ -20,6 +20,8 @@ export interface ScrumCard {
   who: string;
   when: string;
   how: string;
+  /** For a commitment, the artifact it belongs to. The commitment is not itself an artifact. */
+  of?: string;
   /** The Guide's maximum for a one-month Sprint. Shorter Sprints are usually shorter. */
   timebox?: string;
   /** Set when the thing is a common practice rather than part of Scrum. */
@@ -63,7 +65,7 @@ export const SCRUM_INTRO = {
 /** A card per element, in the order a player meets them. */
 export const SCRUM_CARDS: ScrumCard[] = [
   {
-    id: 'product-goal', kind: 'artifact', title: 'The Product Goal',
+    id: 'product-goal', kind: 'commitment', of: 'Product Backlog', title: 'The Product Goal',
     summary: 'The Product Backlog’s commitment: the future state of the product you are working toward.',
     why: 'It gives every Sprint something to aim at, so the Backlog is a plan rather than a list. Progress toward it is what the Sprint Review discusses.',
     who: 'The Product Owner is accountable for it, and for making it transparent to everyone.',
@@ -79,7 +81,8 @@ export const SCRUM_CARDS: ScrumCard[] = [
     how: 'Order it by value, taking in risk, uncertainty, learning and dependencies. Items near the top are small and clear; items further down can stay vague.',
   },
   {
-    id: 'pbi', kind: 'artifact', title: 'A Product Backlog Item',
+    // Not an artifact in its own right: an item lives inside the Product Backlog, which is the artifact.
+    id: 'pbi', kind: 'concept', title: 'A Product Backlog Item',
     summary: 'One thing that would improve the product, with enough detail to be understood.',
     why: 'Work has to be broken into pieces small enough to finish inside a Sprint, or the Sprint cannot end with something usable.',
     who: 'Anyone can suggest one; the Product Owner decides whether it goes on the Backlog and where.',
@@ -96,7 +99,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     how: 'Split what is too big, add description and acceptance criteria, order by value, and size it. Keep a couple of Sprints ready ahead of you: detailed analysis of work you may never build is waste.',
   },
   {
-    id: 'definition-of-done', kind: 'artifact', title: 'The Definition of Done',
+    id: 'definition-of-done', kind: 'commitment', of: 'Increment', title: 'The Definition of Done',
     summary: 'The Increment’s commitment: what "finished" means for this product.',
     why: 'Without a shared meaning of Done, nobody can tell what has actually been delivered, and unfinished work piles up invisibly.',
     who: 'The Scrum Team, unless the organisation has a standard, which is then the minimum.',
@@ -122,7 +125,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     timebox: 'Up to 8 hours for a one-month Sprint, usually shorter for shorter Sprints',
   },
   {
-    id: 'sprint-goal', kind: 'artifact', title: 'The Sprint Goal',
+    id: 'sprint-goal', kind: 'commitment', of: 'Sprint Backlog', title: 'The Sprint Goal',
     summary: 'The Sprint Backlog’s commitment: the single objective for the Sprint.',
     why: 'It gives coherence and focus, so the Developers work together on one thing rather than separate errands. It is what you protect when scope has to flex.',
     who: 'The whole Scrum Team defines it during Sprint Planning. It is a commitment by the Developers.',
@@ -210,7 +213,9 @@ export const cardFor = (id: string): ScrumCard | undefined => SCRUM_CARDS.find((
 
 /** The cards worth showing when a player first reaches each phase of the game. */
 export const CARDS_BY_PHASE: Record<string, string[]> = {
-  refine: ['product-goal', 'product-backlog', 'pbi', 'refinement', 'definition-of-done'],
+  // The Product Goal is set on the opening screen, so it is explained there rather than later.
+  intro: ['product-goal'],
+  refine: ['product-backlog', 'pbi', 'refinement', 'definition-of-done'],
   planning: ['sprint-planning', 'sprint-goal', 'sprint-backlog'],
   sprint: ['sprint', 'daily-scrum', 'increment', 'developers'],
   review: ['sprint-review', 'product-owner'],

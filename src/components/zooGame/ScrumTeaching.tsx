@@ -9,8 +9,10 @@ import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from
 // be turned off - a learner who has just sat through the taught session should be able to play.
 
 const KIND_LABEL: Record<CardKind, string> = {
-  artifact: 'Artifact', event: 'Event', accountability: 'Accountability', concept: 'Concept',
+  artifact: 'Artifact', commitment: 'Commitment', event: 'Event', accountability: 'Accountability', concept: 'Concept',
 };
+/** A commitment belongs to an artifact, so the label says which: "Commitment of the Product Backlog". */
+const kindLabel = (c: ScrumCard) => (c.kind === 'commitment' && c.of ? `Commitment of the ${c.of}` : KIND_LABEL[c.kind]);
 
 function CardBody({ card }: { card: ScrumCard }) {
   return (
@@ -35,7 +37,7 @@ export function TeachingCard({ id, onDismiss }: { id: string; onDismiss: (id: st
       <div className="mb-1.5 flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <GraduationCap className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">{KIND_LABEL[card.kind]}</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">{kindLabel(card)}</span>
           <h3 className="text-sm font-semibold">{card.title}</h3>
         </div>
         <button type="button" onClick={() => onDismiss(card.id)} title="Got it" aria-label={`Got it - hide ${card.title}`}

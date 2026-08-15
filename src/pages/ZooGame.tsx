@@ -21,6 +21,7 @@ import type { ZooGameState } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance } from '@/components/zooGame/design';
 import { nextNudge } from '@/components/zooGame/engine';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
+import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 
 /** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
  *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
@@ -188,7 +189,10 @@ export default function ZooGame() {
         if (onePager && (state.teaching ?? true)) {
           return <ScrumOnePager onDone={() => setOnePager(false)} onSkipTeaching={() => { setTeaching(false); setOnePager(false); }} />;
         }
-        return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} onOpenSaves={user ? () => setSavesOpen(true) : undefined} />;
+        return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start}
+          teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
+          onMarkTaught={markTaught}
+          onOpenSaves={user ? () => setSavesOpen(true) : undefined} />;
       case 'refine':
         return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onSetSprintDays={setSprintDays} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onPlan={() => setPhase('planning')} /></ZooShell>;
       case 'planning':
