@@ -10,6 +10,19 @@ import { cn } from '@/lib/utils';
 import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 /** The icon that reads for an item's kind (rendered directly so it stays stable). */
+/** A colour per kind of work, matching what it becomes in the park: habitats brown, animals orange,
+ *  facilities slate, planting green, paths amber, and an epic violet because it is not buildable yet.
+ *  Used for the stripe down the left of a row and for its icon, so kinds are told apart at a glance. */
+const CATEGORY_STYLE: Record<string, { edge: string; icon: string; chip: string; label: string }> = {
+  epic: { edge: 'border-l-violet-400', icon: 'text-violet-600 dark:text-violet-400', chip: 'bg-violet-500/10 text-violet-700 dark:text-violet-300', label: 'Epic' },
+  enclosure: { edge: 'border-l-amber-700', icon: 'text-amber-800 dark:text-amber-500', chip: 'bg-amber-700/10 text-amber-800 dark:text-amber-400', label: 'Habitat' },
+  exhibit: { edge: 'border-l-orange-500', icon: 'text-orange-600 dark:text-orange-400', chip: 'bg-orange-500/10 text-orange-700 dark:text-orange-300', label: 'Animal' },
+  amenity: { edge: 'border-l-slate-400', icon: 'text-slate-600 dark:text-slate-300', chip: 'bg-slate-500/10 text-slate-700 dark:text-slate-300', label: 'Facility' },
+  flora: { edge: 'border-l-emerald-500', icon: 'text-emerald-600 dark:text-emerald-400', chip: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300', label: 'Planting' },
+  path: { edge: 'border-l-yellow-600', icon: 'text-yellow-700 dark:text-yellow-500', chip: 'bg-yellow-600/10 text-yellow-800 dark:text-yellow-400', label: 'Path' },
+};
+const categoryStyle = (item: BacklogItem) => CATEGORY_STYLE[item.category] ?? CATEGORY_STYLE.exhibit;
+
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
   if (item.category === 'epic') return <Layers className={className} />;
   if (item.category === 'enclosure') return <Boxes className={className} />;
@@ -219,7 +232,7 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
 
 interface SidebarProps {
   state: ZooGameState;
-  mode: 'plan' | 'sprint' | 'refine';
+  mode: 'plan' | 'sprint' | 'refine' | 'view';
   onAddPbi: (draft: PbiDraft) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onSetUseStories: (on: boolean) => void;
@@ -288,10 +301,29 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
     const action =
       // Sizing is refinement, not planning: in Planning an unready item says why, and cannot be
       // pulled in. You fix it by refining - which is where the Developers size things.
-      mode === 'plan' && why ? (
-        <span title={`${why}. Refine it before you can forecast it.`}
-          className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-          <AlertCircle className="h-3 w-3" /> Not ready
+      mode === 'view' ? (
+        // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
+        why ? (
+          <span title={why} className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            <AlertCircle className="h-3 w-3" /> Not ready
+          </span>
+        ) : (
+          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
+        )
+      ) : mode === 'plan' && why ? (
+        // You CAN refine in Sprint Planning - the Guide: "The Scrum Team may refine these items
+        // during this process, which increases understanding and confidence." But if the Backlog
+        // has been refined as it should be, you will not need to, and doing it here eats Planning.
+        <span className="flex shrink-0 items-center gap-1.5">
+          <span title={`${why}. You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning's time.`}
+            className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            <AlertCircle className="h-3 w-3" /> Not ready
+          </span>
+          {it.category === 'epic' ? (
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
+          ) : it.unsized ? (
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+          ) : null}
         </span>
       ) : it.category === 'epic' ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
@@ -313,7 +345,9 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
         onDragEnd={onMoveBefore ? () => setDragId(null) : undefined}
         onDragOver={onMoveBefore ? (e) => e.preventDefault() : undefined}
         onDrop={onMoveBefore ? (e) => { e.preventDefault(); const from = e.dataTransfer?.getData('text/plain') || dragId; if (from && from !== it.id) onMoveBefore(from, it.id); setDragId(null); } : undefined}
-        className={cn('rounded-md border px-2 py-1.5 text-sm transition-colors', on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card', dragId === it.id && 'opacity-50')}>
+        className={cn('rounded-md border border-l-4 px-2 py-1.5 text-sm transition-colors', categoryStyle(it).edge,
+          on ? 'border-primary bg-primary/5' : it.unsized ? 'border-dashed border-border bg-background/60' : 'border-border bg-card',
+          on && categoryStyle(it).edge, it.unsized && categoryStyle(it).edge, dragId === it.id && 'opacity-50')}>
         {/* Collapsed by default: one line - reorder handle, expand toggle, name, points, primary action.
             Reorder stays visible while collapsed (drag the card, or use the arrows). */}
         <div className="flex items-center gap-1.5">
@@ -328,10 +362,15 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             className="shrink-0 text-muted-foreground hover:text-foreground">
             <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
           </button>
-          <CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 text-left font-medium leading-tight hover:text-foreground">{it.name}</button>
+          <CategoryIcon item={it} className={cn('h-4 w-4 shrink-0', categoryStyle(it).icon)} />
+          <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 text-left font-semibold leading-tight hover:text-foreground">{it.name}</button>
+          <span className={cn('hidden shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide sm:inline', categoryStyle(it).chip)}>{categoryStyle(it).label}</span>
           {it.carriedOver && <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400" title={`Carried over unfinished - re-estimate the work that's left (was ${it.estimate} pts)`}>carried over</span>}
-          <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{it.unsized ? '? pts' : `${it.estimate} pts`}</span>
+          <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold',
+            it.unsized ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'bg-muted text-muted-foreground')}
+            title={it.unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
+            {it.unsized ? '? pts' : `${it.estimate} pts`}
+          </span>
           {action}
         </div>
         {isOpen && (
@@ -400,13 +439,17 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             </span>
           )}
         </h3>
-        <div className="flex items-center gap-1.5">
-          <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
-        </div>
+        {mode !== 'view' && (
+          <div className="flex items-center gap-1.5">
+            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
+          </div>
+        )}
       </div>
       <p className="text-[11px] text-muted-foreground">
-        {mode === 'refine'
+        {mode === 'view'
+          ? 'Ordered by the Product Owner, most valuable first. This is what a Sprint Goal is built from - read it, then select the work in topic two.'
+          : mode === 'refine'
           ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. Refining now is free; later it happens on the board and costs the Sprint a little time.'
           : mode === 'plan'
             ? 'Ordered by you (the PO). The Developers select the ready ones they forecast they can finish, and those become the Sprint Backlog.'

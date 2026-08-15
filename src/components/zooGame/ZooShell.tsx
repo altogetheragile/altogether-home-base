@@ -195,9 +195,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
               <DayTimer key={state.dayNumber} compact dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
             </span>
           )}
-          <span className="flex min-w-0 flex-1 items-center gap-1 text-xs">
-            <Target className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className={cn('truncate', state.sprintGoal.trim() ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+          {/* The Sprint's commitment, on screen at all times - so it needs to read as more than one
+              more grey line in a crowded bar. Labelled, tinted and set in medium weight. */}
+          <span className={cn('flex min-w-0 flex-1 items-center gap-1.5 rounded-md border px-2 py-1 text-xs',
+            state.sprintGoal.trim() ? 'border-primary/30 bg-primary/5' : 'border-dashed border-border')}>
+            <Target className={cn('h-3.5 w-3.5 shrink-0', state.sprintGoal.trim() ? 'text-primary' : 'text-muted-foreground')} />
+            <span className="hidden shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] text-primary lg:inline">Sprint Goal</span>
+            <span className={cn('truncate', state.sprintGoal.trim() ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
               {state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
             </span>
           </span>
