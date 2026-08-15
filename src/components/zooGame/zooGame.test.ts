@@ -1484,6 +1484,27 @@ describe('zoo game: teaching Scrum while you play it', () => {
     }
   });
 
+  it('does not call a commitment an artifact', () => {
+    // Three artifacts, each WITH a commitment. The Product Goal is the Product Backlog's commitment,
+    // not a fourth artifact - and the same for the Sprint Goal and the Definition of Done.
+    for (const [id, artifact] of [['product-goal', 'Product Backlog'], ['sprint-goal', 'Sprint Backlog'], ['definition-of-done', 'Increment']] as const) {
+      const c = cardFor(id)!;
+      expect(c.kind, id).toBe('commitment');
+      expect(c.of, id).toBe(artifact);
+    }
+    for (const id of ['product-backlog', 'sprint-backlog', 'increment']) {
+      expect(cardFor(id)!.kind, id).toBe('artifact');
+    }
+    expect(SCRUM_CARDS.filter((c) => c.kind === 'artifact').length).toBe(3); // exactly three
+  });
+
+  it('teaches the Product Goal where it is first met, not later', () => {
+    expect(CARDS_BY_PHASE.intro).toEqual(['product-goal']);
+    for (const [phase, ids] of Object.entries(CARDS_BY_PHASE)) {
+      if (phase !== 'intro') expect(ids, phase).not.toContain('product-goal');
+    }
+  });
+
   it('names the timeboxes the Guide gives, and flags what is not Scrum', () => {
     expect(cardFor('daily-scrum')!.timebox).toMatch(/15 minutes/);
     expect(cardFor('sprint-planning')!.timebox).toMatch(/8 hours/);
