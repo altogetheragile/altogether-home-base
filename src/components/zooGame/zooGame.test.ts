@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, sprintProgress, retroQuestions,
+  endDay, cancelSprint, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1464,6 +1464,39 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
   it('lets the team edit their Definition of Ready', () => {
     const s = setDefinitionOfReady(initialZooState(1), ['  Sized  ', '', 'Agreed with the PO']);
     expect(s.definitionOfReady).toEqual(['Sized', 'Agreed with the PO']);
+  });
+});
+
+describe('zoo game: cancelling a Sprint', () => {
+  it('sends unfinished work back to the Product Backlog and keeps what is Done', () => {
+    let s = planSprint(bigCatsSplit(1), ['lion-enc', 'tiger-enc']);
+    s = finish(startItem(s, 'lion-enc'), 'lion-enc'); // Done, not yet released
+    s = startItem(s, 'tiger-enc');                     // under way, not finished
+    const before = s.sprintNumber;
+
+    s = cancelSprint(s);
+
+    const done = s.backlog.find((it) => it.id === 'lion-enc')!;
+    expect(done.status).toBe('done');            // Done work is kept and can still be released
+    const unfinished = s.backlog.find((it) => it.id === 'tiger-enc')!;
+    expect(unfinished.status).toBe('backlog');   // ...everything else goes back to be re-estimated
+    expect(unfinished.unsized).toBe(true);
+    expect(unfinished.carriedOver).toBe(true);
+    expect(unfinished.sprintNumber).toBeNull();
+
+    // a new Sprint starts straight after, with nothing measured from the cancelled one
+    expect(s.phase).toBe('planning');
+    expect(s.sprintNumber).toBe(before + 1);
+    expect(s.sprintGoal).toBe('');
+    expect(s.velocity).toEqual([]);
+    expect(s.sprintsCancelled).toBe(1);
+  });
+
+  it('is only possible while a Sprint is running', () => {
+    const planning: ZooGameState = { ...bigCatsSplit(1), phase: 'planning' };
+    expect(cancelSprint(planning)).toBe(planning);
+    const retro: ZooGameState = { ...bigCatsSplit(1), phase: 'retro' };
+    expect(cancelSprint(retro)).toBe(retro);
   });
 });
 

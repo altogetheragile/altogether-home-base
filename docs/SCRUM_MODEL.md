@@ -29,11 +29,19 @@ Rules the games enforce:
 - **The Developers size the work.** The Guide: "The Developers who will be doing the work are
   responsible for the sizing. The Product Owner may influence the Developers by helping them
   understand and select trade-offs." Sizing is never the Product Owner's, and never automatic.
-- **The Sprint Goal is crafted by the whole Scrum Team** during Sprint Planning. The Product Owner
-  may offer a starting point *within* topic one, and the Scrum Master typically facilitates, but the
-  Goal is discussed, refined and agreed together, and the Developers have to agree it. Nothing
-  outside Sprint Planning may write it: a Goal that arrives before the event has pre-empted the
-  conversation the event exists for.
+- **The Sprint Goal is defined by the whole Scrum Team, and is a commitment by the Developers.**
+  Both halves are the Guide's, and they are not in tension. Topic one: "The Product Owner proposes
+  how the product could increase its value and utility in the current Sprint. The whole Scrum Team
+  then collaborates to define a Sprint Goal." The commitment: "Although the Sprint Goal is a
+  commitment by the Developers, it provides flexibility in terms of the exact work needed to achieve
+  it." So the Product Owner proposes value, the Scrum Team shapes the Goal together, and the
+  Developers are the ones committed to it. Nothing outside Sprint Planning may write it: a Goal that
+  arrives before the event has pre-empted the conversation the event exists for.
+- **Work is pulled, not pushed.** The Product Owner proposes value and answers questions; they do not
+  tell the Developers what to build. Topic two: "Through discussion with the Product Owner, the
+  Developers select items from the Product Backlog to include in the current Sprint." Topic three:
+  "How this is done is at the sole discretion of the Developers. No one else tells them how to turn
+  Product Backlog items into Increments of value."
 - **The Product Backlog's order is the Product Owner's.** The Developers do not reorder it. Within a
   Sprint, the order of work is the Developers' own.
 
@@ -46,6 +54,9 @@ Rules the games enforce:
   timebox is fixed and the scope flexes against it.
 - A Sprint is **never extended** to finish work. Unfinished work returns to the Product Backlog. That
   is information, not failure.
+- A Sprint **can be cancelled**, and only by the Product Owner, if the Sprint Goal becomes obsolete.
+  Done work is reviewed and may be accepted; incomplete items go back to the Product Backlog to be
+  re-estimated. Cancellation is rare, and a new Sprint starts straight after.
 - If work is not finishing, a longer Sprint is rarely the fix. Smaller items usually are.
 
 ## The Events
@@ -97,12 +108,12 @@ A Sprint forecast is not a promise, and the games' copy must not imply that it i
 **Done** is the Definition of Done: the Increment's commitment, product-wide, and the completion gate
 every item passes. Acceptance criteria are per item and are not the Definition of Done.
 
-**Ready** is not a Scrum term in the sense of a gate. The Guide says only that items which can be
-Done within a Sprint are "deemed ready for selection". A **Definition of Ready** is a working
-agreement a team may choose to have, and the games must present it that way: the team's own, editable,
-and a conversation rather than a stage gate. What the games actually enforce is the minimum that can
-be checked: an item is not ready if it is too big to build in a Sprint, is unsized, or has no
-acceptance criteria.
+**Ready** is the Guide's word, and it means one thing: "Product Backlog items that can be Done by
+the Scrum Team within one Sprint are deemed ready for selection in a Sprint Planning event." That is
+all it says. A **Definition of Ready** is a common practice, not mandated by the Scrum Guide, and the
+games must present it that way: the team's own working agreement, editable, a conversation rather
+than a stage gate. What the games enforce is the minimum that can be checked: an item is not ready
+if it is too big to be Done in a Sprint, is unsized, or has no acceptance criteria.
 
 ## What Is Not Scrum
 
@@ -135,6 +146,8 @@ A checklist for any new game, and for reviewing an existing one. Zoo implementat
    (`productGoalProgress`).
 9. The Developers size; the Product Owner influences trade-offs (`refinementTalk`).
 10. Practices that are not Scrum say so where they appear.
+11. Only the Product Owner can cancel a Sprint, and only when the Sprint Goal is obsolete
+    (`cancelSprint`).
 
 ## Decisions We Have Already Made
 
@@ -146,5 +159,9 @@ Kept so they are not relitigated:
   seed an empty field: it bypassed the team crafting one. Suggesting a starting point inside topic
   one, for the team to discuss and agree, is a different thing and is sound.
 - **2026-08-15** Sprint length moved out of Sprint Planning entirely.
+- **2026-08-15** The Sprint Goal is both "defined by the whole Scrum Team" and "a commitment by the
+  Developers": the Guide says both, and the games use both sentences rather than choosing.
+- **2026-08-15** "Ready" carries only the Guide's meaning - can be Done within a Sprint. A Definition
+  of Ready is labelled a common practice everywhere it appears.
 - **2026-08-13** Work that is Done but not released carries forward as an Increment awaiting release,
   labelled with the Sprint it was built in. It is not re-estimated: it is finished.

@@ -233,6 +233,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     definitionOfDone: [...DEFAULT_DOD],
     definitionOfReady: [...DEFAULT_DOR],
     happiness: [],
+    sprintsCancelled: 0,
     useUserStories: false,
     backlog,
     zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest', 'Grounds'],
