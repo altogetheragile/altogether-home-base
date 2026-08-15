@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft, SprintTask } from './types';
-import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal } from './engine';
+import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady } from './engine';
 import { zooCapacity } from './config';
 
 import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
@@ -133,6 +133,34 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       )}
 
       {/* ---- WHAT: forecast Backlog items into the Sprint ---- */}
+
+          {/* The Scrum Team crafts the Sprint Goal looking at the top of the Product Backlog - it is
+              what the Product Owner is proposing value from. Read-only here: this topic is about the
+              objective, and the work is selected in topic two. */}
+          <section className="space-y-2 rounded-lg border border-border bg-card px-4 py-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="text-sm font-semibold">Top of the Product Backlog</h3>
+              <span className="text-[11px] text-muted-foreground">Ordered by the Product Owner &middot; what a Goal could be built from</span>
+            </div>
+            <ol className="space-y-1">
+              {items.slice(0, 6).map((it, i) => {
+                const why = notReady(it);
+                return (
+                  <li key={it.id} className="flex items-center gap-2 text-[12px]">
+                    <span className="w-4 shrink-0 text-right font-mono text-[10px] text-muted-foreground">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{it.name}</span>
+                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">{it.zone}</span>
+                    <span className={cn('shrink-0 font-mono text-[10px]', why ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground')}
+                      title={why ?? 'Ready to be forecast'}>
+                      {why ? 'not ready' : `${it.estimate} pts`}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+            {items.length > 6 && <p className="text-[11px] text-muted-foreground">...and {items.length - 6} more.</p>}
+          </section>
+
       {step === 'what' && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">

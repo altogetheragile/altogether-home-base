@@ -202,16 +202,20 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
             </span>
           </span>
           <div className="flex shrink-0 items-center gap-1.5">
-            {onPoRefine && state.phase !== 'sprint' && (
+            {/* Refinement belongs where refinement happens: shaping the Backlog before the first
+                Sprint, and adapting it at the Review. Not in Sprint Planning, which forecasts from
+                the Backlog rather than changing it, and not mid-Sprint, where the Developers refine
+                on the board and it costs the day's build time. */}
+            {onPoRefine && (state.phase === 'refine' || state.phase === 'review') && (
               // Not the same thing as the "Word it for me" draft in Planning: this is the Product
               // Owner doing THEIR job on the Product BACKLOG - splitting, adding, clarifying,
               // ordering by value. It changes the Backlog, it runs an AI, and it needs signing in.
               <button type="button" onClick={onPoRefine} disabled={poRefining}
-                title="Ask the AI Product Owner to refine the PRODUCT BACKLOG: split epics, add items, clarify acceptance criteria and re-order by value. It never sizes the work (the Developers do) and never rewrites a Sprint Goal you have agreed."
+                title="Hold a Product Backlog refinement session: the Product Owner brings value and order, the Developers bring what is too big, unclear or dependent on something else. Sizing stays yours - you are the Developers - and nothing here touches a Sprint Goal you have agreed."
                 className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-60">
                 {poRefining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                <span className="hidden md:inline">{poRefining ? 'PO refining the Backlog…' : 'Ask the PO to refine the Backlog'}</span>
-                <span className="md:hidden">{poRefining ? 'PO…' : 'PO'}</span>
+                <span className="hidden md:inline">{poRefining ? 'Refining together…' : 'Refine with the Scrum Team'}</span>
+                <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
               </button>
             )}
             <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />
@@ -233,12 +237,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
         </div>
       </header>
 
-      {/* The AI Product Owner's note, from the last refinement - readable and dismissible. */}
+      {/* What the Scrum Team changed in the last refinement session, and who changed it. */}
       {poNote && (
         <div className="mx-2 mt-2 flex shrink-0 items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 sm:mx-3">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Owner</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Refinement session &middot; the Scrum Team</div>
             <p className="mt-0.5 whitespace-pre-line text-sm leading-snug text-foreground">{poNote}</p>
           </div>
           {onDismissPoNote && (
