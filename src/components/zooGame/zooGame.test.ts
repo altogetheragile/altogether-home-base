@@ -3,12 +3,13 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, sprintProgress, retroQuestions,
+  endDay, cancelSprint, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
+import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor } from './scrumContent';
 
 /** Big Cats arrives as an epic now, so tests that use its animals split it up front - which is
  *  what a player does in Refinement before they can forecast any of it. */
@@ -1464,6 +1465,45 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
   it('lets the team edit their Definition of Ready', () => {
     const s = setDefinitionOfReady(initialZooState(1), ['  Sized  ', '', 'Agreed with the PO']);
     expect(s.definitionOfReady).toEqual(['Sized', 'Agreed with the PO']);
+  });
+});
+
+describe('zoo game: teaching Scrum while you play it', () => {
+  it('has a card for every element, answering why, who, when and how', () => {
+    expect(SCRUM_CARDS.length).toBeGreaterThan(12);
+    for (const c of SCRUM_CARDS) {
+      for (const field of [c.title, c.summary, c.why, c.who, c.when, c.how]) {
+        expect(field.trim().length).toBeGreaterThan(9);
+      }
+    }
+    // the three artifacts, the five events and the three accountabilities are all covered
+    for (const id of ['product-backlog', 'sprint-backlog', 'increment',
+      'sprint', 'sprint-planning', 'daily-scrum', 'sprint-review', 'sprint-retrospective',
+      'product-owner', 'developers', 'scrum-master']) {
+      expect(cardFor(id), id).toBeDefined();
+    }
+  });
+
+  it('names the timeboxes the Guide gives, and flags what is not Scrum', () => {
+    expect(cardFor('daily-scrum')!.timebox).toMatch(/15 minutes/);
+    expect(cardFor('sprint-planning')!.timebox).toMatch(/8 hours/);
+    expect(cardFor('sprint')!.timebox).toMatch(/one month or less/i);
+    // refinement is ongoing work, not an event, so it has no timebox
+    expect(cardFor('refinement')!.timebox).toBeUndefined();
+    expect(cardFor('pbi')!.notScrum).toMatch(/not part of Scrum/i);
+  });
+
+  it('shows each card once, and only while the teaching is on', () => {
+    let s = initialZooState(1);
+    expect(s.teaching).toBe(true);
+    expect(s.taught).toEqual([]);
+    const forRefine = CARDS_BY_PHASE.refine;
+    const next = (x: ZooGameState) => (x.teaching ? forRefine.find((id) => !x.taught.includes(id)) : undefined);
+    expect(next(s)).toBe(forRefine[0]);
+    s = markTaught(s, forRefine[0]);
+    expect(next(s)).toBe(forRefine[1]);
+    expect(markTaught(s, forRefine[0]).taught).toEqual([forRefine[0]]); // reading it twice changes nothing
+    expect(next(setTeaching(s, false))).toBeUndefined();
   });
 });
 

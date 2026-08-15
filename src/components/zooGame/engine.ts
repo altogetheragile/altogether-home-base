@@ -317,6 +317,16 @@ export function setSprintDays(state: ZooGameState, days: number): ZooGameState {
 }
 
 /** Toggle learn mode: pause the day clock so there is no real-time pressure. */
+/** Turn the teaching on or off. Off hides the one-page intro and the in-context cards; the Scrum
+ *  reference stays available either way. */
+export function setTeaching(state: ZooGameState, on: boolean): ZooGameState {
+  return { ...state, teaching: on };
+}
+/** Remember a card has been read, so it is not shown again. */
+export function markTaught(state: ZooGameState, id: string): ZooGameState {
+  return state.taught?.includes(id) ? state : { ...state, taught: [...(state.taught ?? []), id] };
+}
+
 export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
 }

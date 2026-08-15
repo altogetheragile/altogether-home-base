@@ -20,6 +20,7 @@ import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance } from '@/components/zooGame/design';
 import { nextNudge } from '@/components/zooGame/engine';
+import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
 
 /** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
  *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
@@ -46,7 +47,7 @@ function GameTopBar() {
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addCopy, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addCopy, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -66,6 +67,7 @@ export default function ZooGame() {
   const [celebrate, setCelebrate] = useState(0);
   // The coach's nudges: one at a time, and any the player waves away stays away for the session.
   const [hushed, setHushed] = useState<Set<string>>(new Set());
+  const [onePager, setOnePager] = useState(true); // shown once per visit, before the intro
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
   const [justOpened, setJustOpened] = useState<string | null>(null);
@@ -175,12 +177,17 @@ export default function ZooGame() {
     ? deployItem.acceptance.map((label, index) => ({ index, label, confirmed: !!deployItem.acConfirmed?.[index] })).filter((a) => isDeployAcceptance(a.label))
     : [];
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onAddCopy: addCopy, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null),
+  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onAddCopy: addCopy, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught,
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
     switch (state.phase) {
       case 'intro':
+        // One page of Scrum before anything is built, unless the teaching is off (a learner who has
+        // just had the taught session, or who has turned it off already).
+        if (onePager && (state.teaching ?? true)) {
+          return <ScrumOnePager onDone={() => setOnePager(false)} onSkipTeaching={() => { setTeaching(false); setOnePager(false); }} />;
+        }
         return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start} onOpenSaves={user ? () => setSavesOpen(true) : undefined} />;
       case 'refine':
         return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onSetSprintDays={setSprintDays} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onPlan={() => setPhase('planning')} /></ZooShell>;
