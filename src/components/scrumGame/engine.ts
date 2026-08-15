@@ -37,6 +37,17 @@ export function nextSatisfaction(state: ScrumState, sprintNumber: number): Recor
 /** Commit the planned stories into a new Sprint and open it for play. The chosen
  *  stories move from the Product Backlog onto the Sprint board (status 'todo',
  *  tagged with the Sprint number); the Sprint Goal is set. Pure and deterministic. */
+/** Agree how long a Sprint runs. A fixed-length container is the heartbeat, so this is settled
+ *  before the first Sprint and after that only at a Retrospective, applying to the next Sprint.
+ *  Never during Sprint Planning: sizing the box to the work is backwards. See docs/SCRUM_MODEL.md. */
+export function setSprintLength(state: ScrumState, devDays: number): ScrumState {
+  // Setting up means the initial refinement, before any Sprint has run - not Sprint Planning, which
+  // happens before the first Sprint too but must never choose the cadence.
+  const settingUp = (state.phase === 'intro' || state.phase === 'refine') && state.sprints.length === 0 && !state.currentSprint;
+  if (!settingUp && state.phase !== 'retro') return state;
+  return { ...state, sprintLength: Math.max(1, Math.round(devDays)) };
+}
+
 export function planSprint(state: ScrumState, goal: string, storyIds: string[], devDays = state.sprintLength): ScrumState {
   const number = (state.currentSprint?.number ?? state.sprints.length) + 1;
   const committed = new Set(storyIds);
