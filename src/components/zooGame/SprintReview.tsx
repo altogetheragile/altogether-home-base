@@ -1,12 +1,37 @@
+import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress, GOAL_HAPPINESS_TARGET } from './engine';
 import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
-import { PhaseHeader } from './PhaseHeader';
+import { ExplainButton } from './Explain';
+import { StepTrack } from './StepTrack';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
+
+type Step = 'done' | 'visitors' | 'next';
+const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
+  { key: 'done', label: 'Done', question: 'What did we get Done?', lead: 'Inspect the Increment: what met the Definition of Done this Sprint.' },
+  { key: 'visitors', label: 'Visitors', question: 'What do the visitors make of it?', lead: 'The people the zoo is for, telling you what they found.' },
+  { key: 'next', label: 'What next', question: 'So what do we do next?', lead: 'Adapt the Product Backlog, and judge how far the Product Goal has come.' },
+];
+/** What the Guide says about the Review - behind the "?", not on the page. */
+const DETAIL: Record<Step, string[]> = {
+  done: [
+    'The Sprint Review inspects the outcome of the Sprint and determines future adaptations. It is a working session, not a release gate: anything Done could have been released the moment it was Done.',
+    'The Sprint Goal is the Sprint Backlog\u2019s commitment. Dropping less essential scope to protect it is a win, not a miss.',
+    'Velocity is measured, not fixed. It is a common forecasting practice rather than part of Scrum, and a forecast was never a promise.',
+  ],
+  visitors: [
+    'The Scrum Team presents the results of their work to the key stakeholders and progress toward the Product Goal is discussed.',
+    'This is the feedback loop the whole framework is built on: real people meeting the actual Increment, not a status report about it.',
+  ],
+  next: [
+    'The attendees collaborate on what to do next, and the Product Backlog may be adjusted to meet new opportunities. That adjustment is the Review\u2019s output.',
+    'The Product Owner decides whether the Product Goal has been met. There is no set number of Sprints - the product runs until the Goal is reached or abandoned.',
+  ],
+};
 
 interface SprintReviewProps {
   state: ZooGameState;
@@ -14,6 +39,9 @@ interface SprintReviewProps {
   onContinue: () => void;
   /** The PO judging the Product Goal met - the game has no fixed length. */
   onWrapUp?: () => void;
+  /** The Sprint Review teaching card, shown inside the "?" rather than on the page. */
+  teachCard?: string | null;
+  onMarkTaught?: (id: string) => void;
 }
 
 const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts: 'Enthusiasts', comfortSeekers: 'Comfort Seekers' };
@@ -22,7 +50,7 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachCard, onMarkTaught }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const progress = Math.round(productGoalProgress(state) * 100);
@@ -30,14 +58,28 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
   // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
   const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
 
-  return (
-    <div className="space-y-5">
-      <PhaseHeader phase="review" event="Sprint Review" title={`Sprint ${state.sprintNumber}: what did the visitors make of it?`}>
-        Inspect the Increment - everything that met the Definition of Done this Sprint - and how the visitors
-        responded to it. The Sprint Review is a working session with the people the zoo is for, not a release
-        gate: Done work could be released the moment it was Done.
-      </PhaseHeader>
+  const [step, setStep] = useState<Step>('done');
+  const current = STEPS.find((s) => s.key === step)!;
+  const seen = STEPS.findIndex((s) => s.key === step);
+  const goTo = (k: Step) => setStep(k);
 
+  return (
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+      {/* The Review has a real agenda, so it walks: what was Done, what the visitors made of it,
+          and what we do about it. One question at a time, as everywhere else. */}
+      <header className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <StepTrack steps={STEPS} current={step} done={(k) => STEPS.findIndex((x) => x.key === k) < seen} onGo={goTo} />
+          <ExplainButton title={`Sprint Review \u00b7 Sprint ${state.sprintNumber}`} body={DETAIL[step]} phase="review"
+            teachCard={teachCard} onMarkTaught={onMarkTaught} />
+        </div>
+        <div>
+          <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
+          <p className="text-sm text-muted-foreground">{current.lead}</p>
+        </div>
+      </header>
+
+      {step === 'done' && (<>
       {state.sprintGoal.trim() && (
         <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3',
           state.sprintGoalMet ? 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/20' : 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20')}>
@@ -56,23 +98,27 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
         <CoachTip>You delivered <strong>{velocity} pts</strong>, but visitors aren&rsquo;t loving the zoo yet. Value is the <em>outcome</em>, not the output - build what a visitor group actually wants (serve a zone, match a design to its crowd), not just more.</CoachTip>
       )}
 
-      {!r || r.totalAttendance === 0 ? (
-        <p className="rounded-lg border border-border bg-muted/40 px-5 py-4 text-sm text-muted-foreground">Nothing is open to visitors yet, so there is no crowd to inspect. Delivered <strong>{velocity} pts</strong> of work this Sprint - open some of it next time to see the visitors arrive.</p>
-      ) : (
-        <>
-          {/* Headline numbers */}
-          <div className="grid grid-cols-3 gap-3">
-            <Stat label="Visitors today" value={r.totalAttendance.toLocaleString()} />
-            <Stat label="Happiness" value={`${r.overallHappiness}`} accent={barTone(r.overallHappiness)} />
-            <Stat label="Forecast → Delivered" value={`${state.sprintForecast} → ${velocity} pts`} />
-          </div>
-
-          {/* Empirical velocity: what we forecast vs delivered, and how it feeds the next forecast. */}
-          <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-[11px] text-muted-foreground">
+      {/* What was Done, and what it cost - the Increment, in numbers. */}
+      <div className="grid grid-cols-2 gap-3">
+        <Stat label="Delivered" value={`${velocity} pts`} />
+        <Stat label="Forecast" value={`${state.sprintForecast} pts`} />
+      </div>
+      <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-[11px] text-muted-foreground">
             You forecast <strong>{state.sprintForecast} pts</strong> and delivered <strong>{velocity} pts</strong>
             {velocity > state.sprintForecast ? ' - faster than forecast' : velocity < state.sprintForecast ? ' - short of the forecast' : ' - right on forecast'}.
-            Velocity is measured, not fixed: next Sprint&rsquo;s capacity becomes your average over the last {Math.min(state.velocity.length, 3)} Sprint{Math.min(state.velocity.length, 3) === 1 ? '' : 's'} (<strong>{zooCapacity(state.velocity)} pts</strong>).
-          </p>
+        Velocity is measured, not fixed: next Sprint&rsquo;s capacity becomes your average over the last {Math.min(state.velocity.length, 3)} Sprint{Math.min(state.velocity.length, 3) === 1 ? '' : 's'} (<strong>{zooCapacity(state.velocity)} pts</strong>).
+      </p>
+      </>)}
+
+      {/* ---- The visitors ---- */}
+      {step === 'visitors' && (!r || r.totalAttendance === 0 ? (
+        <p className="rounded-lg border border-border bg-muted/40 px-5 py-4 text-sm text-muted-foreground">Nothing is open to visitors yet, so there is no crowd to inspect. Open some of what you built next Sprint and they will come.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="Visitors today" value={r.totalAttendance.toLocaleString()} />
+            <Stat label="Happiness" value={`${r.overallHappiness}`} accent={barTone(r.overallHappiness)} />
+          </div>
 
           {/* Per-segment happiness */}
           <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-4">
@@ -105,7 +151,11 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
             </section>
           )}
 
-          {/* Signals to adapt the backlog */}
+        </>
+      ))}
+
+      {/* ---- What next: adapt the Backlog, and the Product Goal call ---- */}
+      {step === 'next' && (<>
           {state.signals.length > 0 && (
             <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800/50 dark:bg-amber-950/20">
               <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300"><Lightbulb className="h-4 w-4" /> Adapt the Backlog</div>
@@ -119,8 +169,11 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
               ))}
             </section>
           )}
-        </>
-      )}
+          {state.signals.length === 0 && (
+            <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-[12px] text-muted-foreground">
+              Nothing the visitors said needs turning into work this time. Adapting the Product Backlog is the Review&rsquo;s output - some Sprints it is a long list, some Sprints it is nothing.
+            </p>
+          )}
 
       {/* The Product Goal, and the one decision only the Product Owner makes: is it met? There is no
           set number of Sprints - the zoo runs until the PO says the Goal is reached. */}
@@ -160,8 +213,15 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp }: Spri
         )}
       </section>
 
-      <div className="sticky bottom-4 flex items-center justify-end gap-3 rounded-lg border border-border bg-background/95 px-4 py-2 shadow-sm backdrop-blur">
-        <Button size="sm" onClick={onContinue}>Retrospective &rarr;</Button>
+      </>)}
+
+      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
+        <div className="min-w-0">
+          {step !== 'done' && <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button>}
+        </div>
+        {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
+          : step === 'visitors' ? <Button onClick={() => setStep('next')}>Next: what we do about it &rarr;</Button>
+            : <Button onClick={onContinue}>Retrospective &rarr;</Button>}
       </div>
     </div>
   );

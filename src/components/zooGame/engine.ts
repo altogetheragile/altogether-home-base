@@ -1189,7 +1189,6 @@ export function retroQuestions(state: ZooGameState): string[] {
  *  Pure and ordered: the first matching rule wins, so the earliest unmet thing is what you hear
  *  about. `seen` lets the UI hide ones the player has waved away this session. */
 export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new Set()): { id: string; text: string } | null {
-  const open = state.backlog.filter((it) => it.status === 'open');
   const ready = availableItems(state).filter(isReady);
   const epics = availableItems(state).filter((it) => it.category === 'epic');
   const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
@@ -1218,12 +1217,9 @@ export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new S
     // says why on its face. The deploy nudge stays, trimmed to the part the board does NOT say.
     { id: 'deploy-it', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'done'),
       text: 'You do not have to wait for the Review - anything Done can go live now, and only then is it worth anything to a visitor.' },
-    { id: 'review-signals', when: state.phase === 'review' && (state.lastReview?.signals?.length ?? 0) > 0,
-      text: 'The visitors are telling you something. Take the signals worth acting on into the Backlog - that is the Review doing its job.' },
-    { id: 'retro-one', when: state.phase === 'retro',
-      text: 'Pick one improvement you will actually make. It changes how the next Sprint runs, so choose the one that would help most.' },
-    { id: 'goal-check', when: state.phase === 'review' && open.length >= 4 && productGoalProgress(state) >= 0.8,
-      text: 'Visitors love the zoo. As Product Owner, it is your call whether the Product Goal is met - wrap up, or keep making it better.' },
+    // Nothing for the Review or the Retrospective: both now walk their own agenda, question by
+    // question, and a coach who repeats the heading is noise. What is left below is what the
+    // screens do NOT say - which is why the coach is worth reading when it does speak.
   ];
   return nudges.find((n) => n.when && !seen.has(n.id)) ?? null;
 }

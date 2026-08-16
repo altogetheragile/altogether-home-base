@@ -2010,3 +2010,18 @@ describe('zoo game: a suggested Sprint Goal comes off the top of the Product Bac
     expect(suggestSprintGoal([kiosk])).toMatch(/kiosk/i);
   });
 });
+
+describe('zoo game: the coach says only what the screens do not', () => {
+  it('has nothing to add at the Review or the Retrospective - they walk their own agenda', () => {
+    const played = buildAndOpen(bigCatsSplit(1), ['lion-enc']);
+    const reviewed = reviewSprint(played);
+    expect(nextNudge({ ...reviewed, phase: 'review' })).toBeNull();
+    expect(nextNudge({ ...reviewed, phase: 'retro' })).toBeNull();
+  });
+
+  it('still speaks about refinement, which no screen asks for by itself', () => {
+    const thin = { ...bigCatsSplit(1), phase: 'planning' as const,
+      backlog: bigCatsSplit(1).backlog.map((it) => (it.status === 'backlog' ? { ...it, unsized: true } : it)) };
+    expect(nextNudge(thin)?.id).toBe('refine-late');
+  });
+});
