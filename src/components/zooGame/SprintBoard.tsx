@@ -9,7 +9,7 @@ import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
-import { EventContractStrip } from './ArtifactRail';
+import { ExplainButton } from './Explain';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Board';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,9 @@ interface SprintBoardProps {
   onHoldDailyScrum: () => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
+  /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
+  teachCard?: string | null;
+  onMarkTaught?: (id: string) => void;
 }
 
 /** The start of a new day, after the Daily Scrum: the team gathers before the build.
@@ -73,7 +76,7 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
 
 /** The board's two set-once settings, tucked behind a gear so they don't sit in prime space:
  *  when the Daily Scrum is held, and whether days run on a timer (learn mode pauses the clock). */
-function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetLearnMode, onSetWipLimit }: { dailyScrumAt: 'start' | 'end'; learnMode: boolean; wipLimit: number; onSetScrumAt: (at: 'start' | 'end') => void; onSetLearnMode: (on: boolean) => void; onSetWipLimit?: (n: number) => void }) {
+function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetLearnMode, onSetWipLimit, onCancelSprint }: { dailyScrumAt: 'start' | 'end'; learnMode: boolean; wipLimit: number; onSetScrumAt: (at: 'start' | 'end') => void; onSetLearnMode: (on: boolean) => void; onSetWipLimit?: (n: number) => void; onCancelSprint?: () => void }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -125,6 +128,18 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               {learnMode ? 'Learn mode (paused)' : 'Timed'}
             </button>
           </div>
+          {onCancelSprint && (
+            // Rare, and deliberately out of the way: it is not an exit from a Sprint that is going
+            // badly, it is for a Sprint Goal that has stopped being worth pursuing.
+            <div className="border-t border-border pt-2">
+              <button type="button"
+                onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-estimated. A new Sprint starts straight away.')) onCancelSprint(); }}
+                className="text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline">
+                Cancel the Sprint
+              </button>
+              <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>
@@ -136,9 +151,9 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, teachCard, onMarkTaught }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
-  const [showBacklog, setShowBacklog] = useState(true); // the Backlog sidebar tucks away during the Sprint
+  const [showBacklog, setShowBacklog] = useState(false); // the Backlog sidebar tucks away during the Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const committed = state.backlog.filter((it) =>
@@ -264,33 +279,30 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
     <div className="space-y-3">
       {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
           pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex items-center gap-2.5">
-          <div className="shrink-0">
-            <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Sprint {state.sprintNumber}</div>
-            <h2 className="text-xl font-bold leading-none">Day {state.dayNumber} <span className="text-sm font-semibold text-muted-foreground">of {state.sprintDays}</span></h2>
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Sprint {state.sprintNumber} &middot; Day {state.dayNumber} of {state.sprintDays}</span>
+            <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
           </div>
-          {/* The Sprint is an event too: what it inspects and adapts belongs here as much as anywhere. */}
-          <div className="hidden min-w-0 flex-1 lg:block"><EventContractStrip phase="sprint" /></div>
-          <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold leading-tight tracking-tight">What can we finish today?</h2>
+            <ExplainButton title="The Sprint" phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught}
+              body={[
+                'The Sprint is the container the other events live in: a fixed length, one after another, so progress can be inspected on a rhythm.',
+                'The Developers own this board. They decide the order they pick work up in, and they adapt the plan every day toward the Sprint Goal.',
+                'Scope may be renegotiated with the Product Owner as more is learned, but nothing may endanger the Sprint Goal or quality. A Sprint is never extended to finish work.',
+                'Anything Done can be released the moment it is Done - you do not wait for the Sprint Review.',
+              ]} />
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           {!dayStarting && <BurndownChip state={state} />}
-          <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} />
+          <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
           {!dayStarting && (
+            // Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
+            // day, which otherwise reads as though the Scrum is an end-of-day event.
             <Button size="sm" className="h-8" onClick={onEndDay}>
-              {/* Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
-                  day, which otherwise reads as though the Scrum is an end-of-day event. */}
-              {onCancelSprint && (
-                // Rare, and deliberately awkward: it is not a way out of a Sprint that is going
-                // badly, it is for a Sprint Goal that has stopped being worth pursuing.
-                <button type="button"
-                  onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-estimated. A new Sprint starts straight away.')) onCancelSprint(); }}
-                  title="Cancel the Sprint (Product Owner only, when the Sprint Goal is obsolete)"
-                  className="rounded-md border border-destructive/40 px-2 py-1 text-[11px] font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive">
-                  Cancel Sprint
-                </button>
-              )}
               {state.dayNumber === state.sprintDays
                 ? 'End day → Review'
                 : state.dailyScrumAt === 'start'

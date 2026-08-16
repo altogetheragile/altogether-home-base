@@ -1,7 +1,7 @@
 import { useState, useEffect, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem } from './types';
 import {
-  renderDesign, isDesignDone, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
+  renderDesign, isDesignDone, designCriteria, designSatisfiesTask, presetFor, GRID_W, ENCLOSURE_SHAPES,
   enclosureWater, addWaterTo, enclosureFlora, addFloraTo, EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, floraColors, floraDefaultColors, appealFromDesign, isLandscapeType, landscapePalette, isDeployAcceptance, BUILDING_TYPES, PATH_WIDTHS, pathWidthPx, SWATCHES,
   type ItemDesign, type WaterFeature, type EnclosureFlora,
 } from './design';
@@ -221,6 +221,12 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   // and its placement criteria are confirmed, which is the last thing that has to be true.
   const planDone = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
   const done = built && acAll && planDone;
+  // A disabled button that will not say why is the opposite of being led. One short reason, next to
+  // it, naming the next thing to do.
+  const blocker = done ? null
+    : !built ? (designCriteria(item, design).find((c) => !c.pass)?.label ?? 'Finish the design')
+    : !acAll ? 'Accept the criteria your build meets'
+    : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Finish the plan');
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -457,7 +463,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                 );
               })}
             </ul>
-            <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it - this is you accepting the work against the Product Owner's criteria.</p>
+            <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it.</p>
             {deployAcceptance.length > 0 && (
               <div className="mt-1.5 rounded-md border border-dashed border-border bg-muted/20 p-2">
                 <ul className="space-y-1">
@@ -479,6 +485,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
       <div className="mt-3 flex items-center justify-end gap-2">
         {/* A close within reach of the primary action - the top "Back" scrolls out of view. */}
+        {blocker && <span className="mr-1 text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</span>}
         <Button variant="outline" size="sm" onClick={onCancel}>Close</Button>
         <Button size="sm" disabled={!done} onClick={() => onFinish(design)}>{editing ? 'Save changes' : 'Finish the build'}</Button>
       </div>

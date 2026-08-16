@@ -1412,14 +1412,16 @@ describe('zoo game: the coach nudges a new player through the loop', () => {
     expect(nextNudge(bare('planning'))?.id).toBe('refine-late');
   });
 
-  it('follows the loop: start something, then deploy it - and says nothing Planning already asks', () => {
+  it('says only what the screens do not, then falls quiet', () => {
     let s: ZooGameState = { ...bigCatsSplit(1), phase: 'planning' };
-    // Sprint Planning's own heading asks for the Goal and then the forecast, so the coach does not.
+    // Sprint Planning's own heading asks for the Goal and then the forecast, and every To Do card
+    // carries a Start button - so the coach says none of it.
     expect(nextNudge(s)).toBeNull();
     s = setSprintGoal(s, 'Open the Big Cats zone so families have a headline exhibit.');
     expect(nextNudge(s)).toBeNull();
     s = planSprint(s, ['lion-enc']);
-    expect(nextNudge(s)?.id).toBe('start-one');
+    expect(nextNudge(s)).toBeNull();
+    // Releasing before the Review is the one thing the board does not say for itself.
     s = finish(startItem(s, 'lion-enc'), 'lion-enc');
     expect(nextNudge(s)?.id).toBe('deploy-it');
     s = openItem(s, 'lion-enc');
