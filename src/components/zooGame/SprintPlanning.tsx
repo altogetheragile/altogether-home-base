@@ -7,11 +7,12 @@ import { CategoryIcon, TaskEditor, SplitEpicPanel } from './Board';
 import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
+import { StepTrack } from './StepTrack';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Wand2, Check, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
+import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
 
 // ============= Sprint Planning =============
 //
@@ -79,36 +80,6 @@ const DETAIL: Record<Step, { title: string; body: string[] }> = {
   },
 };
 
-/** The three topics as a progress track: where you are, what is behind you, what is locked. */
-function Track({ step, done, onGo }: { step: Step; done: (s: Step) => boolean; onGo: (s: Step) => void }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      {STEPS.map((s, i) => {
-        const active = s.key === step;
-        const complete = done(s.key) && !active;
-        const locked = !done(s.key) && !active && STEPS.findIndex((x) => x.key === s.key) > STEPS.findIndex((x) => x.key === step);
-        return (
-          <div key={s.key} className="flex items-center gap-1.5">
-            <button type="button" disabled={locked} onClick={() => onGo(s.key)}
-              title={locked ? 'Finish the topic before this one' : s.question}
-              className={cn('flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-xs transition-colors',
-                active ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                  : complete ? 'text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400'
-                    : 'text-muted-foreground/60')}>
-              <span className={cn('flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold',
-                active ? 'bg-primary-foreground/20' : complete ? 'bg-emerald-500 text-white' : 'bg-muted')}>
-                {complete ? <Check className="h-3 w-3" /> : s.n}
-              </span>
-              {s.label}
-            </button>
-            {i < STEPS.length - 1 && <span className={cn('h-px w-4', complete ? 'bg-emerald-400' : 'bg-border')} />}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 /** The Sprint Goal, once you have written it: one line, always in view, click to reopen it. */
 function GoalBanner({ goal, onEdit }: { goal: string; onEdit: () => void }) {
   return (
@@ -174,7 +145,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       {/* Where you are, what you are being asked, and where the words are. Nothing else. */}
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <Track step={step} done={done} onGo={goTo} />
+          <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} />
           <ExplainButton title={DETAIL[step].title} body={DETAIL[step].body} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <div>

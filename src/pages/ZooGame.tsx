@@ -209,9 +209,9 @@ export default function ZooGame() {
       case 'sprint':
         return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onDraftChange={saveDraftDesign} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onAssignDev={assignDev} onRenameMember={renameMember} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
       case 'review':
-        return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':
-        return <ZooShell state={state} {...shellProps}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onSetSprintDays={setSprintDays} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onSetSprintDays={setSprintDays} teachCard={cardFor('retro')} onMarkTaught={markTaught} /></ZooShell>;
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:
