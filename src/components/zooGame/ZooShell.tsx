@@ -3,13 +3,12 @@ import type { ZooGameState, ZooConnector } from './types';
 import { ParkView } from './ParkView';
 import { DayTimer } from './DayTimer';
 import { CoachNudge } from './CoachTip';
-import { ArtifactRail } from './ArtifactRail';
+import { ArtifactsPanel } from './ArtifactsPanel';
 import { TeachingCard, ScrumReference } from './ScrumTeaching';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
-import { DodEditor } from './DodEditor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Trophy, Trees, ClipboardList, ClipboardCheck, Pencil, Check, Save, FolderOpen, Sparkles, Loader2, X, ListChecks, ChevronLeft } from 'lucide-react';
+import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -24,109 +23,33 @@ const ROLE_HINT: Record<string, string> = {
   retro: 'Hats: the Scrum Team inspects how it works and adapts',
 };
 
-/** The Definition of Done as a compact popover chip: it stays one line in the header and
- *  opens on demand (chips, and an inline editor). Editable any time. */
-function DodPopover({ dod, onSetDod }: { dod: string[]; onSetDod?: (dod: string[]) => void }) {
-  const [editing, setEditing] = useState(false);
+
+
+
+/** The game's own controls - save, resume - out of the way of the Scrum. */
+function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: () => void }) {
+  if (!onSave && !onOpenSaves) return null;
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-          <ClipboardCheck className="h-3.5 w-3.5" /> DoD <span className="text-muted-foreground/70">({dod.length})</span>
+        <button type="button" title="Game" aria-label="Game menu"
+          className="shrink-0 rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground">
+          <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Definition of Done</span>
-          {onSetDod && (
-            <button type="button" onClick={() => setEditing((e) => !e)} className="flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-              {editing ? <><Check className="h-3 w-3" /> Done</> : <><Pencil className="h-3 w-3" /> Edit</>}
+      <PopoverContent align="end" className="w-48">
+        <div className="space-y-0.5">
+          {onSave && (
+            <button type="button" onClick={onSave} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60">
+              <Save className="h-3.5 w-3.5 text-muted-foreground" /> Save this game
+            </button>
+          )}
+          {onOpenSaves && (
+            <button type="button" onClick={onOpenSaves} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60">
+              <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Saved games
             </button>
           )}
         </div>
-        {editing && onSetDod ? (
-          <DodEditor dod={dod} onSave={onSetDod} />
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {dod.map((d) => <span key={d} className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-/** The Definition of Ready, alongside the DoD. It is a working agreement rather than anything Scrum
- *  asks for, so it says so - and the team edits it. The game holds them to the parts it can see. */
-function DorPopover({ dor, onSetDor }: { dor: string[]; onSetDor?: (dor: string[]) => void }) {
-  const [editing, setEditing] = useState(false);
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-          <ListChecks className="h-3.5 w-3.5" /> DoR <span className="text-muted-foreground/70">({dor.length})</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Definition of Ready</span>
-          {onSetDor && (
-            <button type="button" onClick={() => setEditing((e) => !e)} className="flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-              {editing ? <><Check className="h-3 w-3" /> Done</> : <><Pencil className="h-3 w-3" /> Edit</>}
-            </button>
-          )}
-        </div>
-        <p className="mb-2 text-[10px] leading-snug text-muted-foreground/80">
-          Your own agreement about what makes a PBI ready to forecast - Scrum does not require one. Keep it a
-          conversation, not a gate. Refinement is where items are made ready, and it takes time from the Sprint.
-        </p>
-        {editing && onSetDor ? (
-          <DodEditor dod={dor} onSave={onSetDor} />
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {dor.map((d) => <span key={d} className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-/** The Product Goal as a tappable popover on the trophy - readable, and editable in place
- *  (the PO refines it any time), consistent with the DoD chip. */
-function ProductGoalPopover({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(goal);
-  return (
-    <Popover onOpenChange={(o) => { if (!o) setEditing(false); }}>
-      <PopoverTrigger asChild>
-        <button type="button" aria-label="Product Goal" title="Product Goal"
-          className="shrink-0 rounded-md border border-primary/30 bg-primary/5 p-1.5 text-primary hover:bg-primary/10">
-          <Trophy className="h-4 w-4" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-80">
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Product Goal</span>
-          {onSetGoal && !editing && (
-            <button type="button" onClick={() => { setDraft(goal); setEditing(true); }} className="flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-              <Pencil className="h-3 w-3" /> Edit
-            </button>
-          )}
-        </div>
-        {editing && onSetGoal ? (
-          <div className="space-y-2">
-            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={3} autoFocus
-              className="w-full resize-none rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary"
-              placeholder="One clear outcome: a park that [who] love, so that [outcome]." />
-            <div className="flex justify-end gap-1.5">
-              <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">Cancel</button>
-              <button type="button" disabled={!draft.trim()} onClick={() => { onSetGoal(draft); setEditing(false); }} className="rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Save</button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm leading-snug">{goal}</p>
-        )}
       </PopoverContent>
     </Popover>
   );
@@ -188,8 +111,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
                 </button>
               )
           )}
-          {/* Product Goal: tappable popover on the trophy - readable and editable in place. */}
-          <ProductGoalPopover goal={state.productGoal} onSetGoal={onSetProductGoal} />
           <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
             {state.phase === 'refine'
               ? 'Initial Refinement'
@@ -230,16 +151,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
                 <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
               </button>
             )}
-            <ArtifactRail state={state} />
+            {/* One control for the artifacts, their commitments and the team's agreements, and one
+                for the game itself. The header used to carry ten. */}
+            <ArtifactsPanel state={state} onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
             <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />
-            {onSetDod !== undefined && <DorPopover dor={state.definitionOfReady} onSetDor={onSetDor} />}
-            {onSetDod !== undefined && <DodPopover dod={state.definitionOfDone} onSetDod={onSetDod} />}
-            {onOpenSaves && (
-              <button type="button" onClick={onOpenSaves} title="Saved games" className="rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground"><FolderOpen className="h-3.5 w-3.5" /></button>
-            )}
-            {onSave && (
-              <button type="button" onClick={onSave} title="Save game" className="rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground"><Save className="h-3.5 w-3.5" /></button>
-            )}
+            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} />
           </div>
         </div>
         {/* Tabs at every size. Narrow/portrait: they switch the single visible pane. Wide (xl):

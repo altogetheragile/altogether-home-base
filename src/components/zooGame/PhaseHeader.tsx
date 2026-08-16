@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { EventContractStrip } from './ArtifactRail';
+import { EventContractStrip } from './EventContract';
 
 /** Where you are, said once and said properly.
  *
