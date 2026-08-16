@@ -8,6 +8,7 @@ import {
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
 import { TaskChecklist } from './Board';
 import { isSignOffTask } from './engine';
+import { ExplainButton } from './Explain';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, Copy } from 'lucide-react';
@@ -230,10 +231,24 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <h3 className="font-semibold">{editing ? 'Edit' : 'Design'} your {item.name.toLowerCase()}</h3>
-          <p className="text-[11px] text-muted-foreground">{item.zone} · {item.category} · {item.estimate} pts · {isEnclosure ? 'build the habitat first, then add animals' : isExhibit ? 'one animal, one PBI' : isLand ? 'colour it, then size it on the Park' : isFlora ? 'pick a plant and colour it' : isPath ? 'drawn on the Park when you deploy it' : 'set the colours and add a sign'}</p>
+      {/* One question, like every other screen: this is where an item is taken to Done. What Done
+          means, and how the plan, the acceptance criteria and the Definition of Done differ, is
+          behind the "?" rather than spread across the page. */}
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+            Sprint Backlog &middot; {item.estimate} pts &middot; {item.zone}
+          </div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xl font-bold leading-tight">{editing ? 'Edit' : 'Build'} the {item.name.toLowerCase()}</h3>
+            <ExplainButton title="Building it to Done"
+              body={[
+                'How the work gets done is at the sole discretion of the Developers. This is your workshop: the design is yours, and so is the plan beside it.',
+                'Three different things have to line up. Your PLAN is how you will build it - yours to change. The ACCEPTANCE CRITERIA came with the item and say what the Product Owner asked for. The DEFINITION OF DONE is the product-wide bar every item clears, and it is in the Artifacts panel in the header.',
+                'Nothing is Done until it meets the Definition of Done. An Increment is the sum of everything that has.',
+              ]} />
+          </div>
+          <p className="text-[11px] text-muted-foreground">{isEnclosure ? 'Build the habitat first, then add animals' : isExhibit ? 'One animal, one Product Backlog item' : isLand ? 'Colour it, then size it on the Park' : isFlora ? 'Pick a plant and colour it' : isPath ? 'Drawn on the Park when you deploy it' : 'Set the colours and add a sign'}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={onCancel}>Back</Button>
       </div>
@@ -431,15 +446,13 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
         )}
       </div>
 
-      {/* Acceptance criteria: the PBI's own, confirmed by you as you accept the work. */}
-      <div className="mt-4 space-y-3">
-        {/* The plan reflects the Definition of Done: build steps tick themselves as you design;
-            the workflow steps (peer review, PO sign-off) you tick when you have done them. The
-            item is Done when the whole plan is ticked. */}
+      {/* What has to be true before this is Done, in two columns so the difference between your plan
+          and the Product Owner's criteria is visible without a paragraph explaining it. */}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:items-start">
         {onToggleTask && (item.tasks ?? []).some((t) => t.label.trim()) && (
           <div className="space-y-1.5">
-            <div className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Plan <span className="font-normal normal-case tracking-normal text-muted-foreground/70">how this item meets the Definition of Done</span>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Your plan <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the Developers&rsquo;</span>
             </div>
             <TaskChecklist item={item} onToggle={onToggleTask} />
           </div>
@@ -447,8 +460,8 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
         {acceptance.length > 0 && (
           <div className="space-y-1.5">
-            <div className="flex flex-wrap items-baseline gap-x-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Acceptance criteria <span className="font-normal normal-case tracking-normal text-muted-foreground/70">from the Product Backlog</span>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Acceptance criteria <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the PO&rsquo;s</span>
             </div>
             <ul className="space-y-1">
               {buildAcceptance.map((c, i) => {
@@ -474,14 +487,15 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                     </li>
                   ))}
                 </ul>
-                <p className="mt-1 text-[11px] text-muted-foreground/70">You confirm this when you place &amp; size it on the Park - you can't accept placement before you have placed it.</p>
+                <p className="mt-1 text-[11px] text-muted-foreground/70">Confirmed when you place it on the Park - you cannot accept placement before you have placed it.</p>
               </div>
             )}
           </div>
         )}
 
-        {isExhibit && <p className="text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
       </div>
+
+      {isExhibit && <p className="mt-3 text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
 
       <div className="mt-3 flex items-center justify-end gap-2">
         {/* A close within reach of the primary action - the top "Back" scrolls out of view. */}

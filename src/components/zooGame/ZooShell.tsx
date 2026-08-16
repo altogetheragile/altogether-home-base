@@ -87,7 +87,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
   const back = BACK_FROM[state.phase];
   // Every event screen carries its own teaching inside the "?" beside its question, so the shell
   // does not also stack a card above it. Nothing is said twice.
-  const teachCard = (state.teaching ?? true) && state.phase !== 'planning' && state.phase !== 'sprint' && state.phase !== 'review' && state.phase !== 'retro'
+  const teachCard = (state.teaching ?? true) && !['refine', 'planning', 'sprint', 'review', 'retro'].includes(state.phase)
     ? (CARDS_BY_PHASE[state.phase] ?? []).find((id) => !(state.taught ?? []).includes(id))
     : undefined;
 

@@ -1,5 +1,6 @@
 import type { ZooGameState, PbiDraft } from './types';
-import { PhaseHeader, SprintLengthPicker } from './PhaseHeader';
+import { SprintLengthPicker } from './PhaseHeader';
+import { ExplainButton } from './Explain';
 import { availableItems, readyHorizon } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductBacklogSidebar } from './Board';
@@ -23,13 +24,16 @@ interface RefineBacklogProps {
   onPlan: () => void;
   /** Agreed once, here, before the first Sprint. After that only a Retrospective changes it. */
   onSetSprintDays?: (days: number) => void;
+  /** The refinement teaching card, shown inside the "?" rather than on the page. */
+  teachCard?: string | null;
+  onMarkTaught?: (id: string) => void;
 }
 
 /** Product Backlog Refinement - a one-time bootstrap before the FIRST Sprint. You need
  *  a Backlog, however rough, to start: order it and estimate the unsized items until the
  *  top items are Ready to plan. From Sprint 2 on, refinement is not a separate step - it
  *  is ongoing, done during each Sprint on the board, where it costs a little capacity. */
-export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan }: RefineBacklogProps) {
+export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan, teachCard, onMarkTaught }: RefineBacklogProps) {
   const items = availableItems(state);
   const ready = items.filter((it) => !it.unsized);
   const unsized = items.length - ready.length;
@@ -42,13 +46,22 @@ export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, on
       {/* The first pass through the Backlog is not the same conversation as the ones after it: nothing
           has been built, nothing is ready, and there is no Sprint yet to be "in". Either way what
           refining costs comes out of the Sprint you are about to forecast, not one you are inside. */}
-      <PhaseHeader phase="refine" event="Backlog Refinement"
-        title={first ? 'First, shape the Product Backlog' : 'Get the Backlog ready'}>
-        Split what is too big, size what is not sized, and order it by value.{' '}
-        {first
-          ? 'Do enough discovery to get started - a Sprint or two of ready work, not the whole zoo. What you learn from building the first exhibits will change the rest of it.'
-          : 'Refinement keeps a couple of Sprints ready ahead of you. It does not settle what goes into the next Sprint - that is decided at Planning, from whatever is Ready by then.'}
-      </PhaseHeader>
+      {/* One question, like every other screen. What refinement is, who does it and how much is
+          enough sits behind the "?" rather than as a paragraph over the work. */}
+      <header className="space-y-1">
+        <div className="flex items-center gap-2">
+          <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'What could we build first?' : 'What is ready for the Sprints ahead?'}</h2>
+          <ExplainButton title="Product Backlog refinement" phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught}
+            body={[
+              'Refinement breaks Product Backlog items into smaller, more precise ones, and adds detail: what it is, the order it sits in, and how big it is. The Developers who will do the work are the ones who size it.',
+              first
+                ? 'This first pass is discovery, not a plan for the whole product. A Sprint or two of ready work is enough - what you learn from building the first exhibits will change the rest of it, and detailed analysis of work that may never be built is waste.'
+                : 'Refinement is ongoing work during a Sprint, done by the whole Scrum Team. It prepares later Sprints - typically two or three ahead - and it does not settle what goes into the next one. That is decided at Sprint Planning, from whatever is ready by then.',
+              'It is not an event, and there is no gap between Sprints for it to happen in.',
+            ]} />
+        </div>
+        <p className="text-sm text-muted-foreground">Split what is too big, size what is not sized, and order it by value.</p>
+      </header>
 
       {first && onSetSprintDays && (
         <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
