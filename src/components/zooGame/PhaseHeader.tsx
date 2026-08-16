@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { EventContractStrip } from './ArtifactRail';
 
 /** Where you are, said once and said properly.
  *
@@ -8,7 +9,7 @@ import { cn } from '@/lib/utils';
  *  puts the Scrum event's name above the heading as an eyebrow, with the step you are on beside it,
  *  and gives the heading itself enough weight to be the first thing you see.
  */
-export function PhaseHeader({ event, title, step, of, aside, children }: {
+export function PhaseHeader({ event, title, step, of, aside, phase, children }: {
   /** The Scrum event you are in - "Sprint Planning", "Sprint Review". */
   event: string;
   /** What this particular screen is asking - the topic, question or day. */
@@ -20,6 +21,8 @@ export function PhaseHeader({ event, title, step, of, aside, children }: {
   aside?: ReactNode;
   /** A sentence under the heading saying what this step is for. */
   children?: ReactNode;
+  /** The game phase, so the header can say what this event inspects and adapts. */
+  phase?: string;
 }) {
   return (
     <header className="space-y-1">
@@ -34,6 +37,9 @@ export function PhaseHeader({ event, title, step, of, aside, children }: {
         {aside}
       </div>
       {children && <p className="text-sm text-muted-foreground">{children}</p>}
+      {/* Every event is an opportunity to inspect and adapt, and what it inspects and adapts are the
+          artifacts. Saying so on the event's own page is the Build a Scrum table, a row at a time. */}
+      {phase && <EventContractStrip phase={phase} />}
     </header>
   );
 }

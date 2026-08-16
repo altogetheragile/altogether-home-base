@@ -101,7 +101,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
         })}
       </div>
 
-      <PhaseHeader event="Sprint Planning" title={STEPS.find((s) => s.key === step)!.full}
+      <PhaseHeader phase="planning" event="Sprint Planning" title={STEPS.find((s) => s.key === step)!.full}
         step={STEPS.findIndex((s) => s.key === step) + 1} of={STEPS.length} />
 
       {/* ---- WHY: agree the Sprint Goal ---- */}

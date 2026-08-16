@@ -42,7 +42,7 @@ export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, on
       {/* The first pass through the Backlog is not the same conversation as the ones after it: nothing
           has been built, nothing is ready, and there is no Sprint yet to be "in". Either way what
           refining costs comes out of the Sprint you are about to forecast, not one you are inside. */}
-      <PhaseHeader event="Backlog Refinement"
+      <PhaseHeader phase="refine" event="Backlog Refinement"
         title={first ? 'First, shape the Product Backlog' : 'Get the Backlog ready'}>
         Split what is too big, size what is not sized, and order it by value.{' '}
         {first

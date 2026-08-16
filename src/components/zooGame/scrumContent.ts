@@ -240,3 +240,96 @@ export const BACK_FROM: Record<string, { to: string; label: string } | { blocked
   retro: { to: 'review', label: 'Back to the Sprint Review' },
   final: { blocked: 'The Product Owner has judged the Product Goal met and wrapped up.' },
 };
+
+// ---- What each event inspects, and what it adapts ----
+
+/** The heart of the framework, and the shape of the "Build a Scrum" exercise: every event is an
+ *  opportunity to inspect and adapt, and what it inspects and adapts are the artifacts. Holding it
+ *  as one table means the event headers, the artifact markers and the summaries cannot drift apart.
+ *
+ *  `inspects` and `adapts` are artifact ids; `creates` is for the one event that brings an artifact
+ *  into being. The Sprint Retrospective inspects how the Scrum Team works, which is not an artifact
+ *  at all - only its Definition of Done is - so `also` carries what does not fit the three. */
+export interface EventContract {
+  event: string;
+  inspects: string[];
+  adapts: string[];
+  creates: string[];
+  also?: string;
+  who: string;
+}
+
+export const ARTIFACTS = ['product-backlog', 'sprint-backlog', 'increment'] as const;
+export type ArtifactId = typeof ARTIFACTS[number];
+
+export const ARTIFACT_NAME: Record<string, string> = {
+  'product-backlog': 'Product Backlog',
+  'sprint-backlog': 'Sprint Backlog',
+  increment: 'Increment',
+  'definition-of-done': 'Definition of Done',
+};
+
+export const EVENT_CONTRACT: Record<string, EventContract> = {
+  refine: {
+    event: 'Product Backlog Refinement',
+    inspects: ['product-backlog'], adapts: ['product-backlog'], creates: [],
+    also: 'Not an event: ongoing work, done by the whole Scrum Team, preparing later Sprints.',
+    who: 'The whole Scrum Team',
+  },
+  planning: {
+    event: 'Sprint Planning',
+    inspects: ['product-backlog'], adapts: [], creates: ['sprint-backlog'],
+    also: 'Also inspects the Definition of Done and how much was delivered before.',
+    who: 'The whole Scrum Team',
+  },
+  sprint: {
+    event: 'The Sprint (and the Daily Scrum within it)',
+    inspects: ['sprint-backlog'], adapts: ['sprint-backlog'], creates: ['increment'],
+    also: 'The Daily Scrum inspects progress toward the Sprint Goal and adapts the plan for the day.',
+    who: 'The Developers',
+  },
+  review: {
+    event: 'Sprint Review',
+    inspects: ['increment'], adapts: ['product-backlog'], creates: [],
+    also: 'Progress toward the Product Goal is discussed, with the people the product is for.',
+    who: 'The Scrum Team and its stakeholders',
+  },
+  retro: {
+    event: 'Sprint Retrospective',
+    inspects: [], adapts: [],
+    creates: [],
+    also: 'Inspects how the Scrum Team works - individuals, interactions, process, tools - and its Definition of Done, which is the Increment’s commitment.',
+    who: 'The Scrum Team',
+  },
+};
+
+/** Where an artifact comes from and what keeps changing it, for the panel that shows it. */
+export const ARTIFACT_PROVENANCE: Record<ArtifactId, { commitment: string; born: string; changes: string }> = {
+  'product-backlog': {
+    commitment: 'Product Goal',
+    born: 'Exists from the start, and for as long as the product does.',
+    changes: 'Ordered by the Product Owner, refined by the whole Scrum Team, and adapted at every Sprint Review.',
+  },
+  'sprint-backlog': {
+    commitment: 'Sprint Goal',
+    born: 'Created at Sprint Planning: the Sprint Goal, the items selected, and a plan to deliver them.',
+    changes: 'A plan by and for the Developers, who change it through the Sprint as they learn.',
+  },
+  increment: {
+    commitment: 'Definition of Done',
+    born: 'An Increment is born the moment an item meets the Definition of Done.',
+    changes: 'Additive: each one joins those before it, and can be released whenever the Product Owner chooses.',
+  },
+};
+
+/** What a given event is doing to a given artifact, if anything. Drives the markers on the artifact
+ *  rail and the strip on each event's page, from the one table. */
+export type ArtifactRole = 'inspects' | 'adapts' | 'creates' | null;
+export function roleFor(phase: string, id: string): ArtifactRole {
+  const c = EVENT_CONTRACT[phase];
+  if (!c) return null;
+  if (c.creates.includes(id)) return 'creates';
+  if (c.adapts.includes(id)) return 'adapts';
+  if (c.inspects.includes(id)) return 'inspects';
+  return null;
+}

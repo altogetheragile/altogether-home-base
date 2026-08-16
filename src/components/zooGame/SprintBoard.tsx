@@ -9,6 +9,7 @@ import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
+import { EventContractStrip } from './ArtifactRail';
 import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Board';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -266,6 +267,8 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
             <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Sprint {state.sprintNumber}</div>
             <h2 className="text-xl font-bold leading-none">Day {state.dayNumber} <span className="text-sm font-semibold text-muted-foreground">of {state.sprintDays}</span></h2>
           </div>
+          {/* The Sprint is an event too: what it inspects and adapts belongs here as much as anywhere. */}
+          <div className="hidden min-w-0 flex-1 lg:block"><EventContractStrip phase="sprint" /></div>
           <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
         </div>
         <div className="flex items-center gap-1.5">
