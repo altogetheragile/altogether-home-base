@@ -89,6 +89,30 @@ The largest gap against the learning outcomes, and the one that makes the game s
 
 Size: medium. Mostly content, with a small card component and a reference panel.
 
+## How A Screen Is Built
+
+Learned the hard way: every increment added a layer and none took one away, and Sprint Planning
+ended up with twelve competing regions. A learner could not tell what they were being asked. These
+are the rules the screens now follow, so the next one does not have to be corrected afterwards.
+
+1. **One question per screen**, in full size, phrased as the question the event actually asks -
+   "Why is this Sprint valuable?", "What can we finish today?", "How did we work this Sprint?".
+   Under it, one line saying what to do. If a screen needs two questions it is two steps.
+2. **One thing to act on.** Whatever does not serve this question belongs on another screen or
+   behind a control. Four board columns at Sprint Planning, where three are empty, is noise.
+3. **One primary action**, bottom right, naming the next step. A disabled one says what is missing:
+   "Next: colour the foliage" beats a greyed-out button.
+4. **The words live behind the "?"** beside the question (`Explain.tsx`): what the Guide says, what
+   the event inspects and adapts, and the teaching card the first time through. Not on the page.
+5. **Nothing is said twice.** The shell does not stack a teaching card over a screen that carries
+   its own, and the coach never repeats a heading - what is left is only what the screens do not
+   say, which is what makes it worth reading.
+6. **Progressive disclosure by default.** The Product Backlog is tucked away during the Sprint; a
+   plan opens when you ask for it; the artifacts live in one panel with their commitments.
+7. **Shared parts for shared meaning**: `StepTrack` for "how far through am I", `PickCard` for
+   choosing work, `ExplainButton` for "where are the words". If two screens do the same thing they
+   look the same doing it.
+
 ## Increment 2: Close The Flow Gaps
 
 - **Sprint Review agenda** restructured to the common pattern the flow describes: Product Goal and
