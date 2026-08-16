@@ -115,7 +115,7 @@ export function ItemCard({ item, badge, subtitle, actions, lead, onClick, label,
 /** Plan-time task decomposition for one PBI (Sprint Planning's "how"): a coached
  *  breakdown you can suggest, then add / edit / remove. Optionally shows a goal-critical
  *  star, so the Scrum Team marks which items the Sprint Goal truly depends on. */
-export function TaskEditor({ item, onSetTasks, onToggleGoalCritical }: { item: BacklogItem; onSetTasks: (id: string, tasks: SprintTask[]) => void; onToggleGoalCritical?: (id: string) => void }) {
+export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: { item: BacklogItem; onSetTasks: (id: string, tasks: SprintTask[]) => void; onToggleGoalCritical?: (id: string) => void; onClose?: () => void }) {
   const tasks = item.tasks ?? [];
   const uid = useRef(0);
   const set = (next: SprintTask[]) => onSetTasks(item.id, next);
@@ -145,6 +145,13 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical }: { item: B
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => set(suggestTasks(item))}>
             <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest tasks
           </Button>
+          {/* The way out, where you would look for it: on the thing you opened, not under it. */}
+          {onClose && (
+            <button type="button" onClick={onClose} title="Close this plan" aria-label={`Close the plan for ${item.name}`}
+              className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:text-foreground">
+              <ChevronUp className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
       <div className="mt-2 space-y-1">

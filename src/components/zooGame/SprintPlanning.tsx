@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import type { ZooGameState, SprintTask, BacklogItem } from './types';
-import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady } from './engine';
+import type { ZooGameState, SprintTask } from './types';
+import { availableItems, goalCandidates, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady } from './engine';
 import { zooCapacity } from './config';
 
 import { CategoryIcon, TaskEditor, SplitEpicPanel } from './Board';
+import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Wand2, Check, Lock, Plus, X, Star, Lightbulb, Scissors, ChevronDown, ArrowRight } from 'lucide-react';
+import { Target, Wand2, Check, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
 
 // ============= Sprint Planning =============
 //
@@ -120,45 +121,6 @@ function GoalBanner({ goal, onEdit }: { goal: string; onEdit: () => void }) {
   );
 }
 
-/** One Backlog item, as a card you pick up. Ready items add themselves to the Sprint; an item that
- *  is not ready shows a padlock, and says what would make it ready. */
-function PickCard({ item, chosen, why, onPick, onFix }: {
-  item: BacklogItem; chosen?: boolean; why: string | null; onPick: () => void; onFix?: () => void;
-}) {
-  const card = (
-    <div className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors',
-      why ? 'border-dashed border-border bg-muted/20 text-muted-foreground'
-        : chosen ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/60 hover:bg-primary/5')}>
-      <CategoryIcon item={item} className={cn('h-4 w-4 shrink-0', why ? 'text-muted-foreground/60' : 'text-muted-foreground')} />
-      <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
-      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.unsized ? '?' : item.estimate}</span>
-      {why ? <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-        : chosen ? <X className="h-4 w-4 shrink-0 text-muted-foreground" />
-          : <Plus className="h-4 w-4 shrink-0 text-primary" />}
-    </div>
-  );
-  if (!why) return <button type="button" onClick={onPick} className="w-full text-left">{card}</button>;
-  return (
-    <Popover>
-      <PopoverTrigger asChild><button type="button" className="w-full text-left">{card}</button></PopoverTrigger>
-      <PopoverContent align="start" className="w-72">
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-sm font-semibold"><Lock className="h-3.5 w-3.5" /> Not ready</div>
-          <p className="text-[12px] text-muted-foreground">{why}</p>
-          <p className="text-[11px] text-muted-foreground/70">
-            You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning&rsquo;s time.
-          </p>
-          {onFix && (
-            <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onFix}>
-              {item.category === 'epic' ? <><Scissors className="mr-1 h-3.5 w-3.5" /> Split it</> : <><Wand2 className="mr-1 h-3.5 w-3.5" /> Estimate it</>}
-            </Button>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 /** How full the Sprint is. The one number that matters while selecting, said as a picture. */
 function Meter({ committed, capacity, count }: { committed: number; capacity: number; count: number }) {
   const over = committed > capacity;
@@ -194,6 +156,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const hasWhat = chosen.length > 0;
   const essentials = chosen.filter((i) => i.goalCritical).length;
   const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
+  // What a Goal would be about before anything is picked: the top of the Backlog, capped at a Sprint.
+  const candidates = goalCandidates(state);
 
   const toggle = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
@@ -229,7 +193,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                 <span className="text-sm font-bold">Sprint Goal</span>
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Commitment of the Sprint Backlog</span>
               </div>
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(items))}
+              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
                 title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
@@ -241,15 +205,25 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
 
           {/* What the Product Owner is proposing value from: the top of the Backlog, in order. */}
           <section>
-            <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top of the Product Backlog</h3>
+            <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top of the Product Backlog</h3>
+              <span className="text-[11px] text-muted-foreground/70">ordered by the Product Owner &middot; highlighted is about a Sprint&rsquo;s worth</span>
+            </div>
             <div className="grid gap-1.5 sm:grid-cols-2">
-              {items.slice(0, 8).map((it) => (
-                <div key={it.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm">
-                  <CategoryIcon item={it} className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">{it.name}</span>
-                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>
-                </div>
-              ))}
+              {items.slice(0, 8).map((it) => {
+                // The items the Goal would most likely be about, marked so the suggestion and the
+                // list agree on screen: the Goal comes off the top of the Backlog, as far down as a
+                // Sprint reaches.
+                const inReach = candidates.some((c) => c.id === it.id);
+                return (
+                  <div key={it.id} className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm',
+                    inReach ? 'border-primary/40 bg-primary/5 font-medium' : 'border-border bg-card text-muted-foreground')}>
+                    <CategoryIcon item={it} className={cn('h-4 w-4 shrink-0', inReach ? 'text-primary' : 'text-muted-foreground/60')} />
+                    <span className="min-w-0 flex-1 truncate">{it.name}</span>
+                    <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>
+                  </div>
+                );
+              })}
             </div>
           </section>
         </div>
@@ -303,7 +277,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               </div>
               <div className="space-y-1.5">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
-                  <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)} />
+                  <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
+                    note={"You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
                 ))}
               </div>
             </section>
@@ -348,21 +323,20 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               return (
                 <div key={it.id}>
                   {open ? (
-                    <div className="space-y-1">
-                      <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={onToggleGoalCritical} />
-                      <button type="button" onClick={() => setOpenPlan(null)} className="text-[11px] text-muted-foreground underline-offset-2 hover:underline">Close</button>
-                    </div>
+                    <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={onToggleGoalCritical} onClose={() => setOpenPlan(null)} />
                   ) : (
-                    <div className={cn('flex items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-sm',
-                      it.goalCritical ? 'border-amber-400/70' : 'border-border')}>
-                      <button type="button" onClick={() => onToggleGoalCritical(it.id)} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
+                    <div onClick={() => setOpenPlan(it.id)}
+                      className={cn('flex cursor-pointer items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-sm transition-colors hover:border-primary/60',
+                        it.goalCritical ? 'border-amber-400/70' : 'border-border')}>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
                         title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
                         <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
                       </button>
                       <CategoryIcon item={it} className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 flex-1 truncate font-medium">{it.name}</span>
                       <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.estimate} pts</span>
-                      <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs" onClick={() => setOpenPlan(it.id)}>
+                      <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
+                        onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
                         {tasks.length ? `${tasks.length} steps` : 'Plan it'}
                       </Button>
                     </div>

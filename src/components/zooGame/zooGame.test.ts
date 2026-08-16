@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1979,5 +1979,34 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
     expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('done'); // no sign-off, no release
     s = accept(s, id);
     expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('open');
+  });
+});
+
+describe('zoo game: a suggested Sprint Goal comes off the top of the Product Backlog', () => {
+  it('names what is at the top, not whatever there is most of', () => {
+    // The seeded Backlog is headed by the Big Cats, with a longer tail of Grounds scenery. Reading
+    // the whole list would name the Grounds; reading the top names the Big Cats.
+    const s = bigCatsSplit(1);
+    expect(s.backlog[0].zone).toBe('Big Cats');
+    const top = goalCandidates(s);
+    expect(top.length).toBeGreaterThan(0);
+    expect(top[0].id).toBe(availableItems(s).find(isReady)!.id);   // starts at the top
+    expect(top.every(isReady)).toBe(true);                          // and only what could be forecast
+    expect(suggestSprintGoal(top)).toMatch(/Big Cats/i);
+  });
+
+  it('stops at about a Sprint of work, so the Goal is reachable', () => {
+    const s = bigCatsSplit(1);
+    const top = goalCandidates(s);
+    const pts = top.reduce((n, i) => n + i.estimate, 0);
+    const cap = zooCapacity(s.velocity);
+    expect(pts).toBeGreaterThan(0);
+    expect(pts).toBeLessThanOrEqual(cap + Math.max(...top.map((i) => i.estimate)));
+  });
+
+  it('still shapes the Goal around the selection once there is one', () => {
+    const s = bigCatsSplit(1);
+    const kiosk = s.backlog.find((i) => i.name === 'Kiosk')!;
+    expect(suggestSprintGoal([kiosk])).toMatch(/kiosk/i);
   });
 });
