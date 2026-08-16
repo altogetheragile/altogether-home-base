@@ -847,6 +847,27 @@ export function setSprintGoal(state: ZooGameState, goal: string): ZooGameState {
 export const GOAL_MIN = 15;
 export const isDraftedGoal = (goal: string): boolean => goal.trim().length >= GOAL_MIN;
 
+/** What a Sprint Goal would most likely be about, before anything is selected: the TOP of the
+ *  ordered Product Backlog, taking ready items until roughly a Sprint's worth of them.
+ *
+ *  The order of the Product Backlog is the Product Owner's statement of value, so a suggested Goal
+ *  has to start there. Reading the whole Backlog instead would name whatever there happens to be
+ *  most of - which is how a Backlog headed by the Big Cats produced a Goal about the Grounds.
+ */
+export function goalCandidates(state: ZooGameState): BacklogItem[] {
+  const cap = zooCapacity(state.velocity);
+  const picked: BacklogItem[] = [];
+  let pts = 0;
+  for (const it of availableItems(state)) {
+    if (!isReady(it)) continue;           // the Goal has to be reachable, so skip what cannot be forecast
+    if (picked.length && pts + it.estimate > cap) break;
+    picked.push(it);
+    pts += it.estimate;
+    if (pts >= cap) break;
+  }
+  return picked;
+}
+
 /** Coach an outcome-shaped Sprint Goal from the items being selected, in the house shape the
  *  /scrum-game uses too: "Our goal is to deliver [capability] so that [value]". The capability is
  *  what this Sprint would put in front of visitors; the value is what they get out of it. A

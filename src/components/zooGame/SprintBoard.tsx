@@ -1,16 +1,18 @@
 import { useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { ZooGameState, BacklogItem, PbiDraft } from './types';
+import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
-import { enclosureReady, enclosureOf, availableItems, isSignOffTask, signOffReady } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, isSignOffTask, signOffReady } from './engine';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ExplainButton } from './Explain';
-import { ProductBacklogSidebar, BoardColumn, ItemCard, CardDetail } from './Board';
+import { BoardColumn, ItemCard, CardDetail, SplitEpicPanel } from './Board';
+import { PickCard } from './PickCard';
+import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -24,10 +26,7 @@ interface SprintBoardProps {
   onDraftChange: (id: string, design: ItemDesign) => void;
   onEditBuild: (id: string, design: ItemDesign) => void;
   onAddAnother: (id: string) => void;
-  onAddPbi: (draft: PbiDraft) => void;
-  onRefinePbi: (id: string, draft: PbiDraft) => void;
   onEstimate: (id: string, points: number) => void;
-  onSetUseStories: (on: boolean) => void;
   onToggleTask: (id: string, taskId: string) => void;
   onStartItem: (id: string) => void;
   /** The Product Owner cancelling the Sprint - only they can, and only if the Goal is obsolete. */
@@ -41,8 +40,6 @@ interface SprintBoardProps {
   onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
-  onDeletePbi: (id: string) => void;
-  onDuplicatePbi: (id: string) => void;
   onAssignDev: (itemId: string, devId: string) => void;
   onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
@@ -151,9 +148,10 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onAddPbi, onRefinePbi, onEstimate, onSetUseStories, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, teachCard, onMarkTaught }: SprintBoardProps) {
   const [designing, setDesigning] = useState<string | null>(null);
-  const [showBacklog, setShowBacklog] = useState(false); // the Backlog sidebar tucks away during the Sprint
+  const [showBacklog, setShowBacklog] = useState(false); // the Backlog tucks away during the Sprint
+  const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const committed = state.backlog.filter((it) =>
@@ -177,7 +175,9 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
   const deploy = committed.filter((it) => it.status === 'done');
   const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = doing.length >= state.wipLimit;
-  const available = availableItems(state).length; // shown on the collapsed tab, so it still tells you what is waiting
+  const backlog = availableItems(state);
+  const available = backlog.length; // shown on the collapsed tab, so it still tells you what is waiting
+  const fixingItem = fixing ? backlog.find((i) => i.id === fixing) : null;
 
   // Drag a card to the next column, as an alternative to its button. The columns are the
   // workflow, but a card's column is derived from its real state, so a drag runs the same
@@ -337,13 +337,27 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
               working on - so it tucks away and gives the columns the whole width when you don't need it. */}
           <div className={cn('grid gap-4 lg:items-start', showBacklog ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : 'lg:grid-cols-[auto_minmax(0,1fr)]')}>
             {showBacklog ? (
+              // The same pick-cards as Sprint Planning: tap to pull one in, a padlock on anything
+              // that is not ready. Choosing work looks the same wherever you do it.
               <div className="min-w-0 space-y-1.5">
-                <button type="button" onClick={() => setShowBacklog(false)}
-                  className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
-                  <PanelLeftClose className="h-3.5 w-3.5" /> Hide the Product Backlog
-                </button>
-                <ProductBacklogSidebar state={state} mode="sprint" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-                  onEstimate={onEstimate} onSetUseStories={onSetUseStories} onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></h3>
+                  <button type="button" onClick={() => setShowBacklog(false)} title="Hide the Product Backlog" aria-label="Hide the Product Backlog"
+                    className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:text-foreground">
+                    <PanelLeftClose className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
+                {fixingItem && (fixingItem.category === 'epic'
+                  ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} onCancel={() => setFixing(null)} />
+                  : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
+                    onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} onCancel={() => setFixing(null)} />)}
+                <div className="space-y-1.5">
+                  {backlog.map((it) => (
+                    <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => onPull(it.id)} onFix={() => setFixing(it.id)}
+                      note={"Refining now is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints."} />
+                  ))}
+                </div>
               </div>
             ) : (
               <button type="button" onClick={() => setShowBacklog(true)} title="Show the Product Backlog" aria-label="Show the Product Backlog"

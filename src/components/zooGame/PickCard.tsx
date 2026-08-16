@@ -1,0 +1,56 @@
+import type { BacklogItem } from './types';
+import { CategoryIcon } from './Board';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Lock, Plus, X, Scissors, Wand2 } from 'lucide-react';
+
+/** One Backlog item, as a card you pick up.
+ *
+ *  The same card wherever work is chosen - forecasting at Sprint Planning, or pulling something in
+ *  mid-Sprint - so choosing work looks and behaves the same everywhere. A ready item adds itself
+ *  with a tap; an item that is not ready wears a padlock and, when you press it, says what would
+ *  make it ready and offers the fix.
+ */
+export function PickCard({ item, chosen, why, note, onPick, onFix }: {
+  item: BacklogItem;
+  /** Already in the Sprint: the card shows a remove affordance instead of a plus. */
+  chosen?: boolean;
+  /** Why it cannot be picked, or null if it can. */
+  why: string | null;
+  /** The caveat shown under the reason - what the fix costs, where it belongs. */
+  note?: string;
+  onPick: () => void;
+  onFix?: () => void;
+}) {
+  const card = (
+    <div className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors',
+      why ? 'border-dashed border-border bg-muted/20 text-muted-foreground'
+        : chosen ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/60 hover:bg-primary/5')}>
+      <CategoryIcon item={item} className={cn('h-4 w-4 shrink-0', why ? 'text-muted-foreground/60' : 'text-muted-foreground')} />
+      <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
+      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.unsized ? '?' : item.estimate}</span>
+      {why ? <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+        : chosen ? <X className="h-4 w-4 shrink-0 text-muted-foreground" />
+          : <Plus className="h-4 w-4 shrink-0 text-primary" />}
+    </div>
+  );
+  if (!why) return <button type="button" onClick={onPick} className="w-full text-left">{card}</button>;
+  return (
+    <Popover>
+      <PopoverTrigger asChild><button type="button" className="w-full text-left">{card}</button></PopoverTrigger>
+      <PopoverContent align="start" className="w-72">
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-sm font-semibold"><Lock className="h-3.5 w-3.5" /> Not ready</div>
+          <p className="text-[12px] text-muted-foreground">{why}</p>
+          {note && <p className="text-[11px] text-muted-foreground/70">{note}</p>}
+          {onFix && (
+            <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onFix}>
+              {item.category === 'epic' ? <><Scissors className="mr-1 h-3.5 w-3.5" /> Split it</> : <><Wand2 className="mr-1 h-3.5 w-3.5" /> Estimate it</>}
+            </Button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}

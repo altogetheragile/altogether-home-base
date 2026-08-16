@@ -154,9 +154,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
   const tab = parkTab ?? localTab;
   const setTab = onSetTab ?? setLocalTab;
   const open = state.backlog.filter((it) => it.status === 'open').length;
-  // Where the park earns a rail beside the work: you are building into it, or inspecting it as
-  // the Increment. Elsewhere the work is the Backlog, and the Park tab is enough.
-  const railHere = state.phase === 'sprint' || state.phase === 'review' || state.phase === 'final';
+  // Where the park earns a rail beside the work. Only at the Review and the wrap-up, where the park
+  // IS the thing being inspected. During the Sprint the work is the board, and a 300px park squeezed
+  // beside it is neither useful nor legible - the Park tab gives it the whole width, and placing an
+  // item takes you there by itself.
+  const railHere = state.phase === 'review' || state.phase === 'final';
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
