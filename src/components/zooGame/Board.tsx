@@ -33,7 +33,7 @@ export function CategoryIcon({ item, className }: { item: BacklogItem; className
 
 /** Refine an epic: tick the members to split out into their own PBIs (each animal becomes
  *  an enclosure + the animal that depends on it; each facility becomes an amenity). */
-function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSplit: (memberIds: string[]) => void; onCancel: () => void }) {
+export function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSplit: (memberIds: string[]) => void; onCancel: () => void }) {
   const members = epic.epicMembers ?? [];
   const [picked, setPicked] = useState<Set<string>>(() => new Set(members.map((m) => m.id)));
   const toggle = (id: string) => setPicked((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });

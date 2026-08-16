@@ -1,14 +1,26 @@
 import { useState } from 'react';
-import type { ZooGameState, PbiDraft, SprintTask } from './types';
-import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal } from './engine';
+import type { ZooGameState, SprintTask, BacklogItem } from './types';
+import { availableItems, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady } from './engine';
 import { zooCapacity } from './config';
 
-import { ProductBacklogSidebar, BoardColumn, ItemCard, TaskEditor } from './Board';
+import { CategoryIcon, TaskEditor, SplitEpicPanel } from './Board';
+import { PlanningPoker } from './PlanningPoker';
+import { TeachingCard } from './ScrumTeaching';
+import { EventContractStrip } from './ArtifactRail';
 import { CoachTip } from './CoachTip';
-import { PhaseHeader } from './PhaseHeader';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Lightbulb, Target, Wand2, X, Check, ClipboardCheck, ChevronUp, ChevronDown } from 'lucide-react';
+import { Target, Wand2, Check, HelpCircle, Lock, Plus, X, Star, Lightbulb, Scissors, ChevronDown, ArrowRight } from 'lucide-react';
+
+// ============= Sprint Planning =============
+//
+// One question per screen, and as little else as we can get away with.
+//
+// The rule this screen is built on: at any moment the learner should be able to say what they are
+// being asked and what to press. So each topic shows its question in full size, the one thing you
+// act on, and a single primary button. Everything that explains, qualifies or teaches lives behind
+// the "?" beside the question - available in a breath, never in the way. Nothing is said twice.
 
 interface SprintPlanningProps {
   state: ZooGameState;
@@ -16,316 +28,399 @@ interface SprintPlanningProps {
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   onToggleGoalCritical: (id: string) => void;
-  onAddPbi: (draft: PbiDraft) => void;
-  onRefinePbi: (id: string, draft: PbiDraft) => void;
-  onReorder: (id: string, dir: 'up' | 'down') => void;
   /** Re-order the forecast itself - the Developers arranging the plan they are making. */
   onReorderForecast?: (id: string, dir: 'up' | 'down', picked: string[]) => void;
-  /** Back to Refinement - sizing and splitting happen there, not here. */
+  /** Back to Refinement - where sizing and splitting belong. */
   onRefine?: () => void;
-  onMoveZone: (zone: string, dir: 'up' | 'down') => void;
-  onMoveBefore: (id: string, beforeId: string) => void;
-  onSetUseStories: (on: boolean) => void;
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
-  onDeletePbi: (id: string) => void;
-  onDuplicatePbi: (id: string) => void;
   /** Called when the player moves between planning topics - used to clear the transient
    *  "Ask the PO" note so it doesn't linger onto the next topic. */
   onNavigateStep?: () => void;
+  /** The Sprint Planning teaching card, shown inside the "?" rather than on the page. */
+  teachCard?: string | null;
+  onMarkTaught?: (id: string) => void;
 }
 
 type Step = 'why' | 'what' | 'how';
-const STEPS: { key: Step; label: string; short: string; full: string }[] = [
-  { key: 'why', label: 'Why', short: 'the Sprint Goal', full: 'Why is this Sprint valuable?' },
-  { key: 'what', label: 'What', short: 'the forecast', full: 'What can we build?' },
-  { key: 'how', label: 'How', short: 'the plan', full: 'How will we get it done?' },
+const STEPS: { key: Step; n: number; label: string; question: string; lead: string }[] = [
+  { key: 'why', n: 1, label: 'Why', question: 'Why is this Sprint valuable?', lead: 'Agree one objective the whole Sprint aims at.' },
+  { key: 'what', n: 2, label: 'What', question: 'What can we build?', lead: 'Pull in the work you believe you can finish.' },
+  { key: 'how', n: 3, label: 'How', question: 'How will we get it done?', lead: 'Break each item into the steps that build it.' },
 ];
 
-/** Sprint Planning as its three real topics, in order: Why (agree the Sprint Goal),
- *  What (forecast Backlog items into the Sprint), then How (confirm the plan - the
- *  Sprint Backlog built to the Definition of Done over the Sprint's days). The initial
- *  Product Backlog refinement is a separate step before this (the Refine phase). */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onAddPbi, onRefinePbi, onReorder, onReorderForecast, onRefine, onMoveZone, onMoveBefore, onSetUseStories, onSetSprintGoal, onTakeSignal, onSplitEpic, onDeletePbi, onDuplicatePbi, onNavigateStep }: SprintPlanningProps) {
+/** What the Guide says about this topic - shown on request, not on the page. */
+const DETAIL: Record<Step, { title: string; body: string[] }> = {
+  why: {
+    title: 'Topic one: why this Sprint is valuable',
+    body: [
+      'The Product Owner proposes how the product could increase its value, and the whole Scrum Team then collaborates to define the Sprint Goal. It is not handed down.',
+      'The Sprint Goal is the commitment of the Sprint Backlog: one objective, which stays fixed even when the scope around it flexes.',
+      'You write it looking at the top of the Product Backlog, which is what the Product Owner is proposing value from.',
+    ],
+  },
+  what: {
+    title: 'Topic two: what can be Done',
+    body: [
+      'Through discussion with the Product Owner, the Developers select items from the Product Backlog to include in the Sprint. The work is pulled, never pushed.',
+      'Only items that are ready can be selected - ready means the Scrum Team could get them Done inside one Sprint.',
+      'Capacity here comes from your recent velocity. Velocity is a common forecasting practice, not part of Scrum, and a forecast is not a promise: finishing a few things well beats starting many.',
+      'You may refine an item here to make it ready, but a Backlog refined during the last Sprint would not need it, and the time comes out of Planning.',
+    ],
+  },
+  how: {
+    title: 'Topic three: how the work gets done',
+    body: [
+      'The Developers plan how they will turn the selected items into an Increment meeting the Definition of Done. How this is done is at their sole discretion - no one else tells them how.',
+      'The plan is theirs to change every day of the Sprint. It is a starting point, not a contract.',
+      'Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.',
+    ],
+  },
+};
+
+/** The three topics as a progress track: where you are, what is behind you, what is locked. */
+function Track({ step, done, onGo }: { step: Step; done: (s: Step) => boolean; onGo: (s: Step) => void }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {STEPS.map((s, i) => {
+        const active = s.key === step;
+        const complete = done(s.key) && !active;
+        const locked = !done(s.key) && !active && STEPS.findIndex((x) => x.key === s.key) > STEPS.findIndex((x) => x.key === step);
+        return (
+          <div key={s.key} className="flex items-center gap-1.5">
+            <button type="button" disabled={locked} onClick={() => onGo(s.key)}
+              title={locked ? 'Finish the topic before this one' : s.question}
+              className={cn('flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-xs transition-colors',
+                active ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                  : complete ? 'text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400'
+                    : 'text-muted-foreground/60')}>
+              <span className={cn('flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold',
+                active ? 'bg-primary-foreground/20' : complete ? 'bg-emerald-500 text-white' : 'bg-muted')}>
+                {complete ? <Check className="h-3 w-3" /> : s.n}
+              </span>
+              {s.label}
+            </button>
+            {i < STEPS.length - 1 && <span className={cn('h-px w-4', complete ? 'bg-emerald-400' : 'bg-border')} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The one place words live on this screen: what the Guide says, what this event touches, and the
+ *  teaching card the first time through. */
+function Explain({ step, teachCard, onMarkTaught }: { step: Step; teachCard?: string | null; onMarkTaught?: (id: string) => void }) {
+  const d = DETAIL[step];
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" title="What is this topic for?" aria-label="What is this topic for?"
+          className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors',
+            teachCard ? 'animate-pulse border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+          <HelpCircle className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="max-h-[70vh] w-96 overflow-y-auto">
+        <div className="space-y-2.5">
+          {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+          <div>
+            <h4 className="text-sm font-semibold">{d.title}</h4>
+            {d.body.map((p) => <p key={p} className="mt-1.5 text-[12px] leading-snug text-muted-foreground">{p}</p>)}
+          </div>
+          <EventContractStrip phase="planning" />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** The Sprint Goal, once you have written it: one line, always in view, click to reopen it. */
+function GoalBanner({ goal, onEdit }: { goal: string; onEdit: () => void }) {
+  return (
+    <button type="button" onClick={onEdit} title="Back to the Sprint Goal"
+      className="flex w-full items-center gap-2 rounded-lg border-2 border-primary/40 bg-primary/5 px-3 py-2 text-left transition-colors hover:border-primary/70">
+      <Target className="h-4 w-4 shrink-0 text-primary" />
+      <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Sprint Goal</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{goal}</span>
+    </button>
+  );
+}
+
+/** One Backlog item, as a card you pick up. Ready items add themselves to the Sprint; an item that
+ *  is not ready shows a padlock, and says what would make it ready. */
+function PickCard({ item, chosen, why, onPick, onFix }: {
+  item: BacklogItem; chosen?: boolean; why: string | null; onPick: () => void; onFix?: () => void;
+}) {
+  const card = (
+    <div className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors',
+      why ? 'border-dashed border-border bg-muted/20 text-muted-foreground'
+        : chosen ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/60 hover:bg-primary/5')}>
+      <CategoryIcon item={item} className={cn('h-4 w-4 shrink-0', why ? 'text-muted-foreground/60' : 'text-muted-foreground')} />
+      <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
+      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.unsized ? '?' : item.estimate}</span>
+      {why ? <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+        : chosen ? <X className="h-4 w-4 shrink-0 text-muted-foreground" />
+          : <Plus className="h-4 w-4 shrink-0 text-primary" />}
+    </div>
+  );
+  if (!why) return <button type="button" onClick={onPick} className="w-full text-left">{card}</button>;
+  return (
+    <Popover>
+      <PopoverTrigger asChild><button type="button" className="w-full text-left">{card}</button></PopoverTrigger>
+      <PopoverContent align="start" className="w-72">
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-sm font-semibold"><Lock className="h-3.5 w-3.5" /> Not ready</div>
+          <p className="text-[12px] text-muted-foreground">{why}</p>
+          <p className="text-[11px] text-muted-foreground/70">
+            You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning&rsquo;s time.
+          </p>
+          {onFix && (
+            <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onFix}>
+              {item.category === 'epic' ? <><Scissors className="mr-1 h-3.5 w-3.5" /> Split it</> : <><Wand2 className="mr-1 h-3.5 w-3.5" /> Estimate it</>}
+            </Button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** How full the Sprint is. The one number that matters while selecting, said as a picture. */
+function Meter({ committed, capacity, count }: { committed: number; capacity: number; count: number }) {
+  const over = committed > capacity;
+  const pct = Math.min(100, capacity ? (committed / capacity) * 100 : 0);
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <span className="text-sm font-semibold">{count} item{count === 1 ? '' : 's'} in this Sprint</span>
+        <span className={cn('font-mono text-sm font-semibold', over ? 'text-destructive' : 'text-foreground')}>{committed}<span className="text-muted-foreground"> / {capacity} pts</span></span>
+      </div>
+      <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+        <div className={cn('h-full rounded-full transition-all', over ? 'bg-destructive' : pct > 80 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
+ *  then plan how it gets done. */
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
-  // Moving between topics clears the transient "Ask the PO" note so it doesn't follow you.
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [wideBacklog, setWideBacklog] = useState(false);
+  const [fixing, setFixing] = useState<string | null>(null);   // refining an item mid-Planning
+  const [openPlan, setOpenPlan] = useState<string | null>(null); // which item's task plan is open
+
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
   const capacity = zooCapacity(state.velocity);
   const over = committed > capacity;
-  const hasGoal = isDraftedGoal(state.sprintGoal); // Why is not done until the Goal is actually drafted
+  const hasGoal = isDraftedGoal(state.sprintGoal);
   const hasWhat = chosen.length > 0;
-  const totalTasks = chosen.reduce((s, i) => s + (i.tasks?.filter((t) => t.label.trim()).length ?? 0), 0);
   const essentials = chosen.filter((i) => i.goalCritical).length;
+  const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
 
-  const toggle = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+  const toggle = (id: string) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const done = (s: Step) => (s === 'why' ? hasGoal : s === 'what' ? hasWhat : false);
+  const goTo = (s: Step) => { if (s === 'why' || (s === 'what' && hasGoal) || (s === 'how' && hasGoal && hasWhat)) setStep(s); };
 
-  // A step is reachable when the earlier steps are satisfied.
-  const reachable = (s: Step) => s === 'why' || (s === 'what' ? hasGoal : hasGoal && hasWhat);
-  const goTo = (s: Step) => { if (reachable(s)) setStep(s); };
+  const current = STEPS.find((s) => s.key === step)!;
 
   return (
-    <div className="space-y-4">
-      {/* Stepper: the three topics of Sprint Planning, in order. */}
-      <div className="flex items-center gap-2">
-        {STEPS.map((s, i) => {
-          const active = step === s.key;
-          const done = (s.key === 'why' && hasGoal) || (s.key === 'what' && hasWhat);
-          const can = reachable(s.key);
-          return (
-            <div key={s.key} className="flex items-center gap-2">
-              <button type="button" disabled={!can} onClick={() => goTo(s.key)}
-                className={cn('flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors',
-                  active ? 'border-primary bg-primary/10 font-semibold text-primary' : can ? 'border-border hover:bg-muted' : 'border-border/60 text-muted-foreground/50',
-                  'disabled:cursor-not-allowed')}>
-                <span className={cn('flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold',
-                  active ? 'bg-primary text-primary-foreground' : done ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground')}>
-                  {done && !active ? <Check className="h-3 w-3" /> : i + 1}
-                </span>
-                {s.label}
-                <span className="hidden text-[11px] font-normal text-muted-foreground sm:inline">{s.short}</span>
-              </button>
-              {i < STEPS.length - 1 && <span className="text-muted-foreground/40">→</span>}
-            </div>
-          );
-        })}
-      </div>
-
-      <PhaseHeader phase="planning" event="Sprint Planning" title={STEPS.find((s) => s.key === step)!.full}
-        step={STEPS.findIndex((s) => s.key === step) + 1} of={STEPS.length} />
-
-      {/* ---- WHY: agree the Sprint Goal ---- */}
-      {step === 'why' && (
-        <div className="mx-auto max-w-2xl space-y-3">
-          <p className="text-sm text-muted-foreground">
-            The Sprint Goal is the single objective this Sprint commits to - the reason it is worth doing. The whole
-            Scrum Team crafts it together; it is not handed down by the Product Owner. Agree it first; it guides what
-            you select next, and stays fixed even if the scope flexes.
-          </p>
-          <div className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
-              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(items))}
-                title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
-              </Button>
-            </div>
-            <textarea
-              value={state.sprintGoal}
-              onChange={(e) => onSetSprintGoal(e.target.value)}
-              rows={3}
-              autoFocus
-              placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo;"
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-            <p className="text-[11px] text-muted-foreground">Not sure yet? Draft one now - you can refine it while choosing what to build, including a coached suggestion from your selection.</p>
-          </div>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+      {/* Where you are, what you are being asked, and where the words are. Nothing else. */}
+      <header className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <Track step={step} done={done} onGo={goTo} />
+          <Explain step={step} teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
-      )}
-
-      {/* ---- WHAT: forecast Backlog items into the Sprint ---- */}
-
-      {step === 'why' && (
-        <div className="mx-auto max-w-2xl">
-          {/* The Scrum Team crafts the Sprint Goal looking at the top of the Product Backlog - it is
-              what the Product Owner is proposing value from. The same Backlog as topic two, in a
-              read-only mode: this topic is about the objective, and the work is selected next. */}
-          <ProductBacklogSidebar state={state} mode="view" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-            onSetUseStories={onSetUseStories} onEstimate={onEstimate} onSplitEpic={onSplitEpic}
-            onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+        <div>
+          <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
+          <p className="text-sm text-muted-foreground">{current.lead}</p>
         </div>
-      )}
+      </header>
 
-      {step === 'what' && (
+      {/* ---- WHY ---- */}
+      {step === 'why' && (
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            The Developers pull Ready items from the Product Backlog into the Sprint - what they believe they can build to the
-            Definition of Done, guided by the Sprint Goal and their capacity. Finishing fewer things well beats starting many.
-          </p>
-
-          {/* The Sprint Goal you agreed in Why - shown here to guide selection, and editable so
-              you can refine it as the forecast takes shape (or draft one from your selection). */}
-          <div className="space-y-1.5 rounded-lg border-2 border-primary/50 bg-primary/5 px-4 py-3 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5">
+          <div className="rounded-xl border-2 border-primary/50 bg-primary/5 p-4 shadow-sm">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
                 <Target className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold">Sprint Goal</span>
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Commitment of the Sprint Backlog</span>
               </div>
-              <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(chosen.length ? chosen : items))}
-                title="Re-words the Goal around what you have selected. Wording only - the Goal is the Scrum Team's to agree.">
+              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(items))}
+                title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
             </div>
-            <textarea
-              value={state.sprintGoal}
-              onChange={(e) => onSetSprintGoal(e.target.value)}
-              rows={2}
-              placeholder="One outcome for this Sprint - refine it as you choose what to build."
-              className="w-full resize-none rounded-md border-2 border-primary/40 bg-background px-3 py-2 text-base font-medium leading-snug outline-none focus:border-primary"
-            />
+            <textarea value={state.sprintGoal} onChange={(e) => onSetSprintGoal(e.target.value)} rows={2} autoFocus
+              placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo;"
+              className="w-full resize-none rounded-lg border-2 border-primary/40 bg-background px-3 py-2 text-lg font-medium leading-snug outline-none focus:border-primary" />
           </div>
 
+          {/* What the Product Owner is proposing value from: the top of the Backlog, in order. */}
+          <section>
+            <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top of the Product Backlog</h3>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {items.slice(0, 8).map((it) => (
+                <div key={it.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm">
+                  <CategoryIcon item={it} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">{it.name}</span>
+                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* ---- WHAT ---- */}
+      {step === 'what' && (
+        <div className="space-y-3">
+          <GoalBanner goal={state.sprintGoal} onEdit={() => setStep('why')} />
+
           {state.signals.length > 0 && (
-            <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-800/50 dark:bg-amber-950/20">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300"><Lightbulb className="h-4 w-4" /> Signals from your visitors</div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button type="button" className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/70 px-3 py-1.5 text-[12px] font-medium text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-300">
+                  <Lightbulb className="h-3.5 w-3.5" /> {state.signals.length} signal{state.signals.length === 1 ? '' : 's'} from your visitors
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-96">
+                <div className="space-y-1.5">
+                  <p className="text-[11px] text-muted-foreground">What the Sprint Review heard. Adding one puts it in the Product Backlog, unsized.</p>
+                  {state.signals.map((sig, i) => (
+                    <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-[12px]">
+                      <span className="min-w-0 flex-1">{sig.suggestion}</span>
+                      <Button size="sm" variant="outline" className="h-6 shrink-0 px-1.5 text-[11px]" onClick={() => onTakeSignal(i)}>Add</Button>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {fixingItem && (
+            <div>
+              {fixingItem.category === 'epic'
+                ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} onCancel={() => setFixing(null)} />
+                : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
+                  onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} onCancel={() => setFixing(null)} />}
+            </div>
+          )}
+
+          {/* Pick from the left, and watch the Sprint fill on the right. */}
+          <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+            <section className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length - chosen.length})</span></h3>
+                {onRefine && (
+                  <button type="button" onClick={onRefine} title="Sizing and splitting belong in refinement, during the Sprint before this one."
+                    className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">Refine the Backlog</button>
+                )}
+              </div>
               <div className="space-y-1.5">
-                {state.signals.map((sig, i) => (
-                  <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
-                    <span className="flex-1">{sig.suggestion}</span>
-                    <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase',
-                      sig.estimatedValue === 'high' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'
-                        : sig.estimatedValue === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
-                          : 'bg-muted text-muted-foreground')}>{sig.estimatedValue}</span>
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onTakeSignal(i)}>Add to Backlog</Button>
-                  </div>
+                {items.filter((i) => !selected.has(i.id)).map((it) => (
+                  <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)} />
                 ))}
               </div>
             </section>
-          )}
 
-          <div className={cn('grid gap-4 lg:items-start', // The park rail is not shown during Planning, so the Backlog can have the room: at 280px a
-            // PBI row had to wrap three deep to fit its badges and its button.
-            wideBacklog ? 'lg:grid-cols-[520px_minmax(0,1fr)]' : 'lg:grid-cols-[360px_minmax(0,1fr)]')}>
-            <ProductBacklogSidebar onWidth={setWideBacklog} state={state} mode="plan" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-              onSetUseStories={onSetUseStories} onEstimate={onEstimate} selected={selected} onToggle={toggle}
-              onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+            <section className="space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3">
+              <Meter committed={committed} capacity={capacity} count={chosen.length} />
+              {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
+              {chosen.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
+              <div className="space-y-1.5">
+                {chosen.map((it) => (
+                  <PickCard key={it.id} item={it} chosen why={null} onPick={() => toggle(it.id)} />
+                ))}
+              </div>
+              {chosen.length > 1 && onReorderForecast && (
+                <p className="text-[10px] text-muted-foreground/70">You can arrange the order of work on the board once the Sprint starts.</p>
+              )}
+            </section>
+          </div>
+        </div>
+      )}
 
-            <div className="min-w-0 space-y-3">
-              {/* Capacity + a coached goal suggestion from the selection. */}
-              <div className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
-                <div className="flex items-baseline justify-between text-sm">
-                  <span className="font-semibold">Sprint forecast</span>
-                  <span className={cn('font-mono', over ? 'text-destructive' : 'text-muted-foreground')}>{committed} / {capacity} pts</span>
-                  {onRefine && (
-                    // Nothing Ready to forecast? Refinement is where that is fixed - and it costs
-                    // this Sprint capacity, which is the point.
-                    <button type="button" onClick={onRefine}
-                      className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      title="Size, split and clarify PBIs. Refinement belongs in the Sprint before - doing it now is catching up.">
-                      Refine the Backlog
-                    </button>
+      {/* ---- HOW ---- */}
+      {step === 'how' && (
+        <div className="space-y-3">
+          <GoalBanner goal={state.sprintGoal} onEdit={() => setStep('why')} />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[12px] text-muted-foreground">
+              <Star className="mr-1 inline h-3.5 w-3.5 text-amber-500" />
+              Star what the Goal depends on{essentials > 0 ? ` (${essentials} starred)` : ''}, and break each item into steps.
+            </p>
+            <Button variant="outline" size="sm" className="h-7 px-2 text-xs"
+              onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
+              <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {chosen.map((it) => {
+              const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
+              const open = openPlan === it.id;
+              return (
+                <div key={it.id}>
+                  {open ? (
+                    <div className="space-y-1">
+                      <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={onToggleGoalCritical} />
+                      <button type="button" onClick={() => setOpenPlan(null)} className="text-[11px] text-muted-foreground underline-offset-2 hover:underline">Close</button>
+                    </div>
+                  ) : (
+                    <div className={cn('flex items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-sm',
+                      it.goalCritical ? 'border-amber-400/70' : 'border-border')}>
+                      <button type="button" onClick={() => onToggleGoalCritical(it.id)} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
+                        title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
+                        <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
+                      </button>
+                      <CategoryIcon item={it} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1 truncate font-medium">{it.name}</span>
+                      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.estimate} pts</span>
+                      <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs" onClick={() => setOpenPlan(it.id)}>
+                        {tasks.length ? `${tasks.length} steps` : 'Plan it'}
+                      </Button>
+                    </div>
                   )}
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className={cn('h-full rounded-full', over ? 'bg-destructive' : 'bg-primary')} style={{ width: `${Math.min(100, capacity ? (committed / capacity) * 100 : 0)}%` }} />
-                </div>
-                {over && <CoachTip>You&rsquo;re forecasting <strong>{committed} pts</strong> against a capacity of ~{capacity}. Over-committing tends to miss the Sprint Goal and carry unfinished work - forecast what you can finish to Done, not the most you could start.</CoachTip>}
-                <p className="text-[11px] text-muted-foreground">{state.velocity.length ? `Capacity is your average velocity over the last ${Math.min(state.velocity.length, 3)} Sprint${Math.min(state.velocity.length, 3) > 1 ? 's' : ''}. Velocity is a forecasting practice, not a Scrum Guide rule.` : 'We don’t know your velocity yet — this is a first guess. You’ll learn it by doing: after each Sprint, capacity becomes your recent actual delivery. (Velocity is a common practice, not required by Scrum.)'}</p>
-              </div>
-
-              {/* The same board you play the Sprint on, so it doesn't change shape when the
-                  Sprint starts: your forecast sits in To Do, the rest fill as work flows. */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <BoardColumn title="To Do" count={chosen.length} hint="Pull items from the Product Backlog">
-                  {chosen.map((it, i) => (
-                    <ItemCard key={it.id} item={it} onClick={() => toggle(it.id)} label={`Remove ${it.name} from the Sprint forecast`}
-                      lead={onReorderForecast && chosen.length > 1 && (
-                        // The order to work in is the Developers' plan, so it is theirs to arrange -
-                        // here as well as on the board once the Sprint is running. The arrows must not
-                        // fall through to the card, whose click takes the item back out of the Sprint.
-                        <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Re-order the forecast">
-                          <button type="button" title="Move up" aria-label={`Move ${it.name} up the Sprint forecast`} disabled={i === 0}
-                            onClick={(e) => { e.stopPropagation(); onReorderForecast(it.id, 'up', chosen.map((c) => c.id)); }}
-                            className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
-                          <button type="button" title="Move down" aria-label={`Move ${it.name} down the Sprint forecast`} disabled={i === chosen.length - 1}
-                            onClick={(e) => { e.stopPropagation(); onReorderForecast(it.id, 'down', chosen.map((c) => c.id)); }}
-                            className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
-                        </div>
-                      )}
-                      actions={<span className="flex items-center gap-1 text-[11px] text-muted-foreground"><X className="h-3.5 w-3.5" /> remove</span>} />
-                  ))}
-                </BoardColumn>
-                <BoardColumn title="Doing" count={0} limit={state.wipLimit} hint="Starts once the Sprint begins" />
-                <BoardColumn title="Deploy" count={0} hint="Built - place & open it" />
-                <BoardColumn title="Done ✓" count={0} hint="Nothing live yet" tone="done" />
-              </div>
-            </div>
+              );
+            })}
           </div>
-
         </div>
       )}
 
-      {/* ---- HOW: decompose each item into a plan of tasks, then start ---- */}
-      {step === 'how' && (
-        <div className="mx-auto max-w-2xl space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Plan <em>how</em> the work gets done: break each item in the Sprint Backlog into the tasks that build it to the
-            Definition of Done. This is the Developers&rsquo; plan - suggest a breakdown or write your own, and adapt it day
-            by day. The Definition of Done still decides when an item is truly Done.
-          </p>
-
-          <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Target className="h-3.5 w-3.5" /> Sprint Goal</div>
-            <p className="text-sm font-medium">{state.sprintGoal || '(not set)'}</p>
-          </div>
-
-          {/* Mark which items the Goal depends on. The Goal is an outcome: deliver the
-              essentials and it is met, even if you drop the rest. */}
-          <p className="rounded-lg border border-amber-300/70 bg-amber-50/60 px-4 py-2 text-[11px] text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-200">
-            Star the items the <strong>Sprint Goal</strong> truly depends on. The Goal is an outcome, not a to-do list -
-            deliver the {essentials} essential{essentials === 1 ? '' : 's'} and it is met, even if you drop the rest.
-            {essentials === 0 && ' (None starred yet - the Goal will then need every item.)'}
-          </p>
-
-          <section className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({chosen.length})</span> <span className="font-normal text-muted-foreground">· {totalTasks} task{totalTasks === 1 ? '' : 's'}</span></h3>
-              <div className="flex items-center gap-2">
-                <span className={cn('font-mono text-xs', over ? 'text-destructive' : 'text-muted-foreground')}>{committed} / {capacity} pts</span>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
-                  <Wand2 className="mr-1 h-3.5 w-3.5" /> Break all down
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {chosen.map((it) => <TaskEditor key={it.id} item={it} onSetTasks={onSetTasks} onToggleGoalCritical={onToggleGoalCritical} />)}
-            </div>
-          </section>
-
-          <div className="rounded-lg border border-border bg-muted/30 px-4 py-2.5">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><ClipboardCheck className="h-3.5 w-3.5" /> Definition of Done</div>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {state.definitionOfDone.map((d) => <span key={d} className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* Always-visible step navigation so Next / Start never sits below the fold. */}
-      <div className="sticky bottom-4 z-20 mt-2 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur">
+      {/* One primary action, always in the same place. */}
+      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
         <div className="min-w-0">
-          {step !== 'why' && <Button variant="outline" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>← Back</Button>}
+          {step !== 'why' && <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>← Back</Button>}
         </div>
         <div className="flex items-center gap-2.5">
           {step === 'why' && (
             <>
-              {!hasGoal && (
-                <span className="hidden text-[11px] text-muted-foreground sm:inline">
-                  {state.sprintGoal.trim() ? 'Say a bit more - a Sprint Goal is an objective, not a word' : 'Draft the Sprint Goal to continue'}
-                </span>
-              )}
-              <Button size="sm" disabled={!hasGoal} onClick={() => setStep('what')}>Next: what to build →</Button>
+              {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">{state.sprintGoal.trim() ? 'A Sprint Goal is an objective, not a word' : 'Write the Sprint Goal to continue'}</span>}
+              <Button disabled={!hasGoal} onClick={() => setStep('what')}>Next: what to build <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
           {step === 'what' && (
             <>
-              {!hasWhat && <span className="hidden text-[11px] text-muted-foreground sm:inline">Forecast at least one item to continue</span>}
-              <Button size="sm" disabled={!hasWhat} onClick={() => setStep('how')}>Next: plan the how →</Button>
+              {!hasWhat && <span className="hidden text-[11px] text-muted-foreground sm:inline">Pick at least one item to continue</span>}
+              <Button disabled={!hasWhat} onClick={() => setStep('how')}>Next: how <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
-          {step === 'how' && <Button size="sm" onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber} →</Button>}
+          {step === 'how' && <Button onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>}
         </div>
       </div>
     </div>
