@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, isSignOffTask, signOffReady } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, isSignOffTask, signOffReady } from './engine';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
@@ -16,7 +16,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -137,6 +137,49 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
             </div>
           )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** How far ahead the Product Backlog is prepared, and the prompt to do something about it.
+ *
+ *  Refinement is ongoing work during the Sprint, done by the whole Scrum Team - so the game has to
+ *  ask for it while the Sprint runs, not offer it as a tidy-up between Sprints. The chip is quiet
+ *  when the Backlog is a Sprint or two ahead and speaks up when it is not, which is the whole
+ *  lesson: you refine to keep the next Planning worth holding, and it costs today's build time. */
+function RefineChip({ horizon, onOpen }: { horizon: number; onOpen: () => void }) {
+  const thin = horizon < 1, deep = horizon > 3;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" title="How many Sprints of ready work are waiting"
+          className={cn('flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+            thin || deep ? 'border-amber-400/70 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+              : 'border-border bg-background text-muted-foreground hover:text-foreground')}>
+          <ListChecks className="h-3.5 w-3.5" /> {horizon} ready
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80">
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">Product Backlog refinement</h4>
+          <p className="text-[12px] text-muted-foreground">
+            About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting. Aim for one to three:
+            enough that the next Sprint Planning has something to choose from, not so much that you are analysing work you
+            may never build.
+          </p>
+          <p className="text-[12px] text-muted-foreground">
+            {thin ? 'That is thin. Refine together now, or the next Planning will have nothing ready to forecast.'
+              : deep ? 'That is a lot of detail on work that may change. Build something and learn from it instead.'
+                : 'That is about right. Keep it there as this Sprint burns through the work.'}
+          </p>
+          <p className="text-[11px] text-muted-foreground/80">
+            Refinement is ongoing work, done by the whole Scrum Team - the Product Owner brings why an item matters, the
+            Developers bring what it would take and the size. It is not an event, and doing it now costs the day&rsquo;s
+            build time. What it prepares is later Sprints, not this one.
+          </p>
+          <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onOpen}>Refine the Product Backlog</Button>
         </div>
       </PopoverContent>
     </Popover>
@@ -298,6 +341,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
         </div>
         <div className="flex items-center gap-1.5">
           {!dayStarting && <BurndownChip state={state} />}
+          {!dayStarting && <RefineChip horizon={readyHorizon(state)} onOpen={() => setShowBacklog(true)} />}
           <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
           {!dayStarting && (
             // Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
