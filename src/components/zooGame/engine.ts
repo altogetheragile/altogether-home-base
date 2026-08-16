@@ -1193,10 +1193,10 @@ export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new S
       text: 'Nothing is Ready to forecast. You can refine now, but this is late - refinement is meant to happen during the Sprint before, keeping a couple of Sprints ready ahead of you.' },
     // No "agree the Goal" or "now pull in the work" nudge: Sprint Planning asks exactly that as its
     // own heading, one topic at a time, and a coach who repeats the question on screen is noise.
-    { id: 'start-one', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'committed' && !it.started) && !inSprint.some((it) => it.started),
-      text: 'Pick one item and start it. The habitat comes before the animal that lives in it.' },
+    // No "start one" nudge: every To Do card carries a Start button, and a card that cannot start
+    // says why on its face. The deploy nudge stays, trimmed to the part the board does NOT say.
     { id: 'deploy-it', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'done'),
-      text: 'Something is built and waiting. Place it on the park and deploy it - work only becomes value once visitors can see it, and you do not have to wait for the Review.' },
+      text: 'You do not have to wait for the Review - anything Done can go live now, and only then is it worth anything to a visitor.' },
     { id: 'review-signals', when: state.phase === 'review' && (state.lastReview?.signals?.length ?? 0) > 0,
       text: 'The visitors are telling you something. Take the signals worth acting on into the Backlog - that is the Review doing its job.' },
     { id: 'retro-one', when: state.phase === 'retro',

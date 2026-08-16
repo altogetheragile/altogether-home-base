@@ -5,13 +5,12 @@ import { zooCapacity } from './config';
 
 import { CategoryIcon, TaskEditor, SplitEpicPanel } from './Board';
 import { PlanningPoker } from './PlanningPoker';
-import { TeachingCard } from './ScrumTeaching';
-import { EventContractStrip } from './ArtifactRail';
+import { ExplainButton } from './Explain';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Wand2, Check, HelpCircle, Lock, Plus, X, Star, Lightbulb, Scissors, ChevronDown, ArrowRight } from 'lucide-react';
+import { Target, Wand2, Check, Lock, Plus, X, Star, Lightbulb, Scissors, ChevronDown, ArrowRight } from 'lucide-react';
 
 // ============= Sprint Planning =============
 //
@@ -106,33 +105,6 @@ function Track({ step, done, onGo }: { step: Step; done: (s: Step) => boolean; o
         );
       })}
     </div>
-  );
-}
-
-/** The one place words live on this screen: what the Guide says, what this event touches, and the
- *  teaching card the first time through. */
-function Explain({ step, teachCard, onMarkTaught }: { step: Step; teachCard?: string | null; onMarkTaught?: (id: string) => void }) {
-  const d = DETAIL[step];
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" title="What is this topic for?" aria-label="What is this topic for?"
-          className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors',
-            teachCard ? 'animate-pulse border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
-          <HelpCircle className="h-4 w-4" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="max-h-[70vh] w-96 overflow-y-auto">
-        <div className="space-y-2.5">
-          {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-          <div>
-            <h4 className="text-sm font-semibold">{d.title}</h4>
-            {d.body.map((p) => <p key={p} className="mt-1.5 text-[12px] leading-snug text-muted-foreground">{p}</p>)}
-          </div>
-          <EventContractStrip phase="planning" />
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
 
@@ -239,7 +211,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <Track step={step} done={done} onGo={goTo} />
-          <Explain step={step} teachCard={teachCard} onMarkTaught={onMarkTaught} />
+          <ExplainButton title={DETAIL[step].title} body={DETAIL[step].body} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <div>
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
