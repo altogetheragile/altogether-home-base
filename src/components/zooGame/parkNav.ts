@@ -21,6 +21,9 @@ export interface NavInput {
   paths: Pt[][];    // walkable polylines: boundary, perimeters, connectors, bridges
   water: Rect[];    // impassable: rivers, ponds
   crossings: Rect[]; // bridges - the places water can be crossed
+  /** Things you walk AROUND rather than through: a kiosk, a cafe, a habitat fence. Softer than
+   *  water - it never strands a guest, it just stops them cutting straight through the building. */
+  solid?: Rect[];
 }
 export interface Nav { nodes: Pt[]; adj: { to: number; w: number }[][]; input: NavInput; }
 
@@ -54,6 +57,22 @@ export function wet(a: Pt, b: Pt, input: NavInput): boolean {
   for (let i = 0; i <= n; i++) {
     const t = i / n, p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
     if (inAny(p, input.water) && !inAny(p, input.crossings)) return true;
+  }
+  return false;
+}
+
+/** Would walking straight from `a` to `b` mean walking through something solid - a building, a
+ *  habitat? Whatever the guest is standing in, or heading for, does not count: you have to be able
+ *  to reach the kiosk you are buying from, and the lion you came to see is inside its fence. */
+export function throughSolid(a: Pt, b: Pt, input: NavInput): boolean {
+  const solid = input.solid ?? [];
+  if (!solid.length) return false;
+  const blocking = solid.filter((r) => !inRect(a, r) && !inRect(b, r));
+  if (!blocking.length) return false;
+  const n = Math.max(1, Math.ceil(dist(a, b) / 6));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    if (inAny(p, blocking)) return true;
   }
   return false;
 }
@@ -94,7 +113,7 @@ export function buildNav(input: NavInput): Nav {
       for (const j of grid.get(key(p.x + gx * cell, p.y + gy * cell)) ?? []) {
         if (j <= i || poly[j] === poly[i]) continue;
         const d = dist(p, nodes[j]);
-        if (d <= GRASS && !wet(p, nodes[j], input)) link(i, j, d <= LINK ? d : d * GRASS_COST);
+        if (d <= GRASS && !wet(p, nodes[j], input) && !throughSolid(p, nodes[j], input)) link(i, j, d <= LINK ? d : d * GRASS_COST);
       }
     }
   });
@@ -107,7 +126,7 @@ function hops(nav: Nav, p: Pt): { id: number; w: number }[] {
     .map((n, id) => ({ id, w: dist(p, n) }))
     .sort((a, b) => a.w - b.w)
     .slice(0, HOPS * 3)
-    .filter((h) => !wet(p, nav.nodes[h.id], nav.input));
+    .filter((h) => !wet(p, nav.nodes[h.id], nav.input) && !throughSolid(p, nav.nodes[h.id], nav.input));
   return near.slice(0, HOPS);
 }
 
@@ -150,13 +169,17 @@ export function navRoute(nav: Nav, from: Pt, to: Pt): Pt[] | null {
 /** How a guest gets from `from` to `to`: the made route where that makes sense, straight across the
  *  grass where it does not, and null when water is in the way with no bridge over it. */
 export function routeAcross(nav: Nav | null, from: Pt, to: Pt): Pt[] | null {
-  const blocked = nav ? wet(from, to, nav.input) : false;
   if (!nav) return [to];
+  const blocked = wet(from, to, nav.input);
+  // A building in the way is not a wall round the park: take the made route however far round it
+  // goes, but if there is no made route at all, still walk - a guest who cannot get anywhere is a
+  // worse bug than a guest who clips a corner.
+  const solid = throughSolid(from, to, nav.input);
   const onPath = navRoute(nav, from, to);
   if (onPath) {
     let len = 0;
     for (let i = 0, at = from; i < onPath.length; at = onPath[i], i++) len += dist(at, onPath[i]);
-    if (blocked || len <= DETOUR * dist(from, to)) return onPath;
+    if (blocked || solid || len <= DETOUR * dist(from, to)) return onPath;
   }
   return blocked ? null : [to];
 }
