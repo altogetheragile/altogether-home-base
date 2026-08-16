@@ -1191,10 +1191,8 @@ export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new S
       text: `About ${horizon} Sprints of work is ready. Take some time this Sprint to refine together - the whole Scrum Team, not the PO alone - so the Backlog stays a couple of Sprints ahead of you.` },
     { id: 'refine-late', when: state.phase === 'planning' && ready.length === 0,
       text: 'Nothing is Ready to forecast. You can refine now, but this is late - refinement is meant to happen during the Sprint before, keeping a couple of Sprints ready ahead of you.' },
-    { id: 'goal-first', when: state.phase === 'planning' && !state.sprintGoal.trim(),
-      text: 'Agree the Sprint Goal before you pick the work. It is the one objective the Sprint commits to, and it is what you protect if the scope has to flex.' },
-    { id: 'forecast', when: state.phase === 'planning' && !!state.sprintGoal.trim() && state.committedIds.length === 0,
-      text: 'Now pull in the work that serves the Goal. Forecast what you believe you can finish to the Definition of Done - finishing a few things beats starting many.' },
+    // No "agree the Goal" or "now pull in the work" nudge: Sprint Planning asks exactly that as its
+    // own heading, one topic at a time, and a coach who repeats the question on screen is noise.
     { id: 'start-one', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'committed' && !it.started) && !inSprint.some((it) => it.started),
       text: 'Pick one item and start it. The habitat comes before the animal that lives in it.' },
     { id: 'deploy-it', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'done'),

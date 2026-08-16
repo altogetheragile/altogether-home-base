@@ -160,7 +160,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
-  const teachCard = (state.teaching ?? true)
+  // Sprint Planning carries its own teaching inside the "?" beside the question, so the shell does
+  // not also stack a card above it. Nothing is said twice.
+  const teachCard = (state.teaching ?? true) && state.phase !== 'planning'
     ? (CARDS_BY_PHASE[state.phase] ?? []).find((id) => !(state.taught ?? []).includes(id))
     : undefined;
 

@@ -1412,11 +1412,12 @@ describe('zoo game: the coach nudges a new player through the loop', () => {
     expect(nextNudge(bare('planning'))?.id).toBe('refine-late');
   });
 
-  it('follows the loop: agree the Goal, forecast, start something, then deploy it', () => {
+  it('follows the loop: start something, then deploy it - and says nothing Planning already asks', () => {
     let s: ZooGameState = { ...bigCatsSplit(1), phase: 'planning' };
-    expect(nextNudge(s)?.id).toBe('goal-first');
+    // Sprint Planning's own heading asks for the Goal and then the forecast, so the coach does not.
+    expect(nextNudge(s)).toBeNull();
     s = setSprintGoal(s, 'Open the Big Cats zone so families have a headline exhibit.');
-    expect(nextNudge(s)?.id).toBe('forecast');
+    expect(nextNudge(s)).toBeNull();
     s = planSprint(s, ['lion-enc']);
     expect(nextNudge(s)?.id).toBe('start-one');
     s = finish(startItem(s, 'lion-enc'), 'lion-enc');
