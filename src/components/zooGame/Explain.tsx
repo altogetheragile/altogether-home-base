@@ -2,7 +2,7 @@ import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { TeachingCard } from './ScrumTeaching';
-import { EventContractStrip } from './ArtifactRail';
+import { EventContractStrip } from './EventContract';
 
 /** The one place words live on a screen.
  *
