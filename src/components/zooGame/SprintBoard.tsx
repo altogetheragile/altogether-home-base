@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
-import { enclosureReady, enclosureOf, availableItems } from './engine';
+import { enclosureReady, enclosureOf, availableItems, isSignOffTask, signOffReady } from './engine';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
@@ -181,11 +181,12 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
     return 'studio';
   };
   const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
-  // A built item can be marked Done only once its placement acceptance criteria (if any) are confirmed
-  // on the park - you can't accept placement before you have placed it.
+  // A built item goes live only once the Product Owner has signed it off, and they only sign off
+  // when every acceptance criterion is met - which for the placement ones means after it is on the
+  // park. You can't accept placement before you have placed it.
   const deployReady = (id: string) => {
     const it = deploy.find((x) => x.id === id);
-    return !!it && !!it.placed && it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label)).every((a) => !!it.acConfirmed?.[a.i]);
+    return !!it && !!it.placed && signOffReady(it) && !(it.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done);
   };
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
@@ -203,7 +204,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
       if (atWipLimit) { toast.error(`WIP limit ${state.wipLimit} reached - finish something in Doing first.`); return; }
       onStartItem(id);
     } else if (o === 'open') {
-      if (!deployReady(id)) { toast.error('Place it on the park first, then mark it Deploy complete.'); return; }
+      if (!deployReady(id)) { toast.error('Place it on the park and confirm its criteria - the Product Owner signs off once they are all met.'); return; }
       onOpen(id);
     } else if (o === 'studio') {
       toast('Open "Design & build" to finish it - it moves to Deploy once it is built and the plan is ticked off.');
@@ -240,8 +241,10 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
   const deployActions = (it: BacklogItem) => {
     const deployAcs = it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
     const acsDone = deployAcs.every((a) => !!it.acConfirmed?.[a.i]);
-    const ready = !!it.placed && acsDone;
-    const why = !it.placed ? 'Place it on the park first' : (!acsDone ? 'Confirm its placement criteria on the park first' : undefined);
+    const ready = deployReady(it.id);
+    const why = !it.placed ? 'Place it on the park first'
+      : !acsDone ? 'Confirm its placement criteria on the park - the Product Owner signs off once every criterion is met'
+      : !ready ? 'Waiting on the Product Owner\u2019s sign-off' : undefined;
     return <>
       <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> {it.placed ? 'Adjust on park' : 'Place on the park'}</Button>
       <Button size="sm" className="h-7 px-2 text-xs" disabled={!ready} title={why} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Deploy complete</Button>

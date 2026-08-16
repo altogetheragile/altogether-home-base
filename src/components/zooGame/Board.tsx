@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
-import { availableItems, notReady, readyHorizon, suggestTasks } from './engine';
+import { availableItems, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
+import { isDeployAcceptance } from './design';
 
 /** A colour per kind of work, matching what it becomes in the park: habitats brown, animals orange,
  *  facilities slate, planting green, paths amber, and an epic violet because it is not buildable yet.
@@ -174,12 +175,21 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
         <ListChecks className="h-3 w-3" /> Plan {done}/{tasks.length}
       </div>
       <div className="space-y-0.5">
-        {tasks.map((t) => (
-          <label key={t.id} className={cn('flex items-start gap-1.5 text-[11px]', !readOnly && 'cursor-pointer')}>
-            <input type="checkbox" checked={t.done} disabled={readOnly} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
-            <span className={cn(t.done && 'text-muted-foreground line-through')}>{t.label}</span>
-          </label>
-        ))}
+        {tasks.map((t) => {
+          // The Product Owner's sign-off is not the Developers' to tick: it follows the acceptance
+          // criteria, and the placement ones cannot be met until the item is on the park. So it is
+          // shown, greyed, with what it is still waiting for.
+          const signOff = isSignOffTask(t.label);
+          return (
+            <label key={t.id} className={cn('flex items-start gap-1.5 text-[11px]', !readOnly && !signOff && 'cursor-pointer')}>
+              <input type="checkbox" checked={t.done} disabled={readOnly || signOff} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
+              <span className={cn(t.done && 'text-muted-foreground line-through', signOff && !t.done && 'text-muted-foreground')}>
+                {t.label}
+                {signOff && !t.done && <span className="block text-[10px] text-muted-foreground/70">Once every acceptance criterion is met - place it on the park first.</span>}
+              </span>
+            </label>
+          );
+        })}
       </div>
     </div>
   );
@@ -197,7 +207,11 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
   const [open, setOpen] = useState(defaultOpen);
   if (tasks.length === 0 && criteria.length === 0) return null;
   const done = tasks.filter((t) => t.done).length;
-  const acMet = built ? criteria.length : 0;
+  // A built item has met its BUILD criteria (it could not leave the studio otherwise). The
+  // placement ones are only met once they are confirmed on the park, so the count must not claim
+  // them early - that count is what the Product Owner's sign-off waits on.
+  const met = (label: string, i: number) => built && (!isDeployAcceptance(label) || !!item.acConfirmed?.[i]);
+  const acMet = criteria.filter(met).length;
   const acAll = criteria.length > 0 && acMet === criteria.length;
   return (
     <div className="mt-1.5">
@@ -213,12 +227,15 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
             <div>
               <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Acceptance criteria</div>
               <ul className="space-y-0.5">
-                {criteria.map((c, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-[11px]">
-                    <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full', built ? 'bg-emerald-500 text-white' : 'border border-border')}>{built && <Check className="h-2 w-2" />}</span>
-                    <span className={cn(built ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
-                  </li>
-                ))}
+                {criteria.map((c, i) => {
+                  const ok = met(c, i);
+                  return (
+                    <li key={i} className="flex items-start gap-1.5 text-[11px]">
+                      <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full', ok ? 'bg-emerald-500 text-white' : 'border border-border')}>{ok && <Check className="h-2 w-2" />}</span>
+                      <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

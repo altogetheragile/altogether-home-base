@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -24,12 +24,21 @@ const bigCatsSplit = (seed = 1) => {
 /** A design that colours every part, so any category's build meets the Definition of Done. */
 const FULL_DESIGN: ItemDesign = { parts: {}, colors: { body: '#c8873b', head: '#8a5a2b', ears: '#e3c66b', tail: '#2a2622', markings: '#f0efe9', foliage: '#43a047', trunk: '#7a5230', walls: '#cfd4d8', roof: '#9aa3ab', door: '#8a5a2b', sign: '#e6842a' } };
 
-/** Fully finish a committed item: build its design and tick every plan task, so it
- *  reaches Done (every committed item now carries a default plan). */
+/** Fully finish a committed item: build its design, tick every plan task, then place it on the park
+ *  and confirm its placement criteria - which is what earns the Product Owner's sign-off and lets
+ *  it be released. */
 function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIGN): ZooGameState {
   let s = buildItem(state, id, design);
   const it = s.backlog.find((x) => x.id === id);
   for (const t of it?.tasks ?? []) if (!t.done) s = toggleItemTask(s, id, t.id);
+  return accept(s, id);
+}
+
+/** The deploy step: place it on the park and confirm every placement acceptance criterion. */
+function accept(state: ZooGameState, id: string): ZooGameState {
+  let s = placeOnPark(state, id);
+  const it = s.backlog.find((x) => x.id === id);
+  (it?.acceptance ?? []).forEach((label, i) => { if (isDeployAcceptance(label)) s = confirmAcceptance(s, id, i, true); });
   return s;
 }
 
@@ -1148,8 +1157,10 @@ describe('zoo game: the toolbox', () => {
     let built = buildItem(s, item.id, presetFor(item)); // the studio passes the (empty) path design
     for (const t of built.backlog.find((x) => x.id === item.id)!.tasks ?? []) built = toggleItemTask(built, item.id, t.id);
     expect(built.backlog.find((x) => x.id === item.id)!.status).toBe('done');
-    // Delivering it does not add a park feature (it is the connectors it drew).
-    const open = openItem(built, item.id);
+    // Delivering it does not add a park feature (it is the connectors it drew). It cannot be
+    // released until it is drawn on the park and that criterion is confirmed - the sign-off.
+    expect(openItem(built, item.id).backlog.find((x) => x.id === item.id)!.status).toBe('done');
+    const open = openItem(accept(built, item.id), item.id);
     expect(open.backlog.find((x) => x.id === item.id)!.status).toBe('open');
   });
 
@@ -1907,5 +1918,63 @@ describe('zoo game: the seeded Backlog reads correctly', () => {
       expect(it, name).toBeTruthy();
       expect(iconKey(it as BacklogItem), name).toBe(key);
     }
+  });
+});
+
+describe("zoo game: the Product Owner's sign-off follows the acceptance criteria", () => {
+  const path = () => {
+    let s = addPbi(initialZooState(1), toolboxDraft(TOOLBOX.flatMap((g) => g.items).find((t) => t.category === 'path')!));
+    const item = s.backlog.find((i) => i.category === 'path')!;
+    s = estimateItem(s, item.id, 3);
+    s = planSprint(s, [item.id]);
+    s = setItemTasks(s, item.id, suggestTasks(item));
+    return { s, id: item.id };
+  };
+  const signOff = (s: ZooGameState, id: string) => (s.backlog.find((x) => x.id === id)!.tasks ?? []).find((t) => isSignOffTask(t.label))!;
+
+  it('is not ticked when the build is finished - the placement criterion is still open', () => {
+    const { s: start, id } = path();
+    let s = start;
+    s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
+    for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
+    // The Developers' own steps are what take it out of Doing; the sign-off is not one of them.
+    expect(s.backlog.find((x) => x.id === id)!.status).toBe('done');
+    expect(signOff(s, id).done).toBe(false);
+    expect(signOffReady(s.backlog.find((x) => x.id === id)!)).toBe(false);
+  });
+
+  it('cannot be ticked by hand, however hard the Developers click it', () => {
+    const { s: start, id } = path();
+    let s = start;
+    s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
+    for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
+    s = toggleItemTask(s, id, signOff(s, id).id);
+    expect(signOff(s, id).done).toBe(false);
+  });
+
+  it('ticks itself once the item is on the park and every criterion is confirmed', () => {
+    const { s: start, id } = path();
+    let s = start;
+    s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
+    for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
+    s = placeOnPark(s, id);
+    expect(signOff(s, id).done).toBe(false); // placed, but the criterion is not accepted yet
+    const i = s.backlog.find((x) => x.id === id)!.acceptance.findIndex(isDeployAcceptance);
+    s = confirmAcceptance(s, id, i, true);
+    expect(signOff(s, id).done).toBe(true);
+    // ...and comes back off if the criterion is withdrawn, taking the release with it.
+    const back = confirmAcceptance(s, id, i, false);
+    expect(signOff(back, id).done).toBe(false);
+    expect(openItem(back, id).backlog.find((x) => x.id === id)!.status).toBe('done');
+  });
+
+  it('is what lets an item go live', () => {
+    const { s: start, id } = path();
+    let s = start;
+    s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
+    for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
+    expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('done'); // no sign-off, no release
+    s = accept(s, id);
+    expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('open');
   });
 });
