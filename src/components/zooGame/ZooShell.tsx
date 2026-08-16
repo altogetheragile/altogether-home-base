@@ -3,6 +3,7 @@ import type { ZooGameState, ZooConnector } from './types';
 import { ParkView } from './ParkView';
 import { DayTimer } from './DayTimer';
 import { CoachNudge } from './CoachTip';
+import { ArtifactRail } from './ArtifactRail';
 import { TeachingCard, ScrumReference } from './ScrumTeaching';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { DodEditor } from './DodEditor';
@@ -222,6 +223,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
                 <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
               </button>
             )}
+            <ArtifactRail state={state} />
             <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />
             {onSetDod !== undefined && <DorPopover dor={state.definitionOfReady} onSetDor={onSetDor} />}
             {onSetDod !== undefined && <DodPopover dod={state.definitionOfDone} onSetDod={onSetDod} />}

@@ -1218,3 +1218,49 @@ export function refinementTalk(state: ZooGameState, item: BacklogItem): {
     devs: lines.slice(0, 3).map((line, i) => ({ name: devs[i % devs.length]?.name ?? 'Developer', line })),
   };
 }
+
+// ============= The artifacts, as they actually stand =============
+
+/** Every artifact, whether it exists yet, and what is in it. Transparency is the point of an
+ *  artifact, so the game shows all three at any time - and where one does not exist yet, it says
+ *  what would bring it into being rather than showing an empty box. */
+export function artifactState(state: ZooGameState): {
+  id: 'product-backlog' | 'sprint-backlog' | 'increment';
+  exists: boolean;
+  summary: string;
+  commitment: string;
+  commitmentMet: boolean;
+}[] {
+  const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status !== 'backlog');
+  const done = state.backlog.filter((it) => it.status === 'done' || it.status === 'open');
+  const live = state.backlog.filter((it) => it.status === 'open');
+  const waiting = availableItems(state);
+  const pts = inSprint.reduce((n, it) => n + it.estimate, 0);
+  return [
+    {
+      id: 'product-backlog',
+      exists: true, // it exists from the start, and for as long as the product does
+      summary: `${waiting.length} item${waiting.length === 1 ? '' : 's'} waiting, ${waiting.filter(isReady).length} of them ready`,
+      commitment: state.productGoal.trim() || 'No Product Goal set',
+      commitmentMet: state.productGoal.trim().length > 0,
+    },
+    {
+      id: 'sprint-backlog',
+      exists: state.phase === 'sprint' || inSprint.length > 0,
+      summary: inSprint.length
+        ? `${inSprint.length} item${inSprint.length === 1 ? '' : 's'} forecast, ${pts} pts, ${inSprint.filter((it) => it.status === 'committed' && it.started).length} under way`
+        : 'Created at Sprint Planning, from the Sprint Goal and the items selected',
+      commitment: state.sprintGoal.trim() || 'No Sprint Goal yet',
+      commitmentMet: isDraftedGoal(state.sprintGoal),
+    },
+    {
+      id: 'increment',
+      exists: done.length > 0,
+      summary: done.length
+        ? `${done.length} item${done.length === 1 ? '' : 's'} Done, ${live.length} released to visitors`
+        : 'Born the moment an item meets the Definition of Done',
+      commitment: `${state.definitionOfDone.length} criteria in the Definition of Done`,
+      commitmentMet: done.length > 0,
+    },
+  ];
+}

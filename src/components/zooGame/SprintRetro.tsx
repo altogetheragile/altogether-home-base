@@ -33,7 +33,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays }: 
 
   return (
     <div className="space-y-5">
-      <PhaseHeader event="Sprint Retrospective" title={`Sprint ${state.sprintNumber}: how did we work?`}>
+      <PhaseHeader phase="retro" event="Sprint Retrospective" title={`Sprint ${state.sprintNumber}: how did we work?`}>
         Refine the Definition of Done and pick one improvement to carry into the next Sprint.
       </PhaseHeader>
 

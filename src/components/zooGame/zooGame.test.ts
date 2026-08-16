@@ -3,13 +3,13 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, sprintProgress, retroQuestions,
+  endDay, cancelSprint, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
-import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor } from './scrumContent';
+import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 
 /** Big Cats arrives as an epic now, so tests that use its animals split it up front - which is
  *  what a player does in Refinement before they can forecast any of it. */
@@ -1465,6 +1465,52 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
   it('lets the team edit their Definition of Ready', () => {
     const s = setDefinitionOfReady(initialZooState(1), ['  Sized  ', '', 'Agreed with the PO']);
     expect(s.definitionOfReady).toEqual(['Sized', 'Agreed with the PO']);
+  });
+});
+
+describe('zoo game: every event inspects and adapts an artifact', () => {
+  it('matches the Build a Scrum table', () => {
+    // Sprint Planning inspects the Product Backlog and CREATES the Sprint Backlog.
+    expect(EVENT_CONTRACT.planning.inspects).toContain('product-backlog');
+    expect(EVENT_CONTRACT.planning.creates).toContain('sprint-backlog');
+    // The Sprint (and the Daily Scrum in it) inspects and adapts the Sprint Backlog, and the work
+    // of the Sprint creates the Increment.
+    expect(EVENT_CONTRACT.sprint.inspects).toContain('sprint-backlog');
+    expect(EVENT_CONTRACT.sprint.adapts).toContain('sprint-backlog');
+    expect(EVENT_CONTRACT.sprint.creates).toContain('increment');
+    // The Review inspects the Increment and adapts the Product Backlog.
+    expect(EVENT_CONTRACT.review.inspects).toEqual(['increment']);
+    expect(EVENT_CONTRACT.review.adapts).toEqual(['product-backlog']);
+    // The Retrospective inspects how the team works, which is not one of the three artifacts.
+    expect(EVENT_CONTRACT.retro.inspects).toEqual([]);
+    expect(EVENT_CONTRACT.retro.also).toMatch(/Definition of Done/);
+    // and every event names who is there
+    for (const [phase, c] of Object.entries(EVENT_CONTRACT)) expect(c.who.length, phase).toBeGreaterThan(3);
+  });
+
+  it('drives the markers from that one table', () => {
+    expect(roleFor('planning', 'product-backlog')).toBe('inspects');
+    expect(roleFor('planning', 'sprint-backlog')).toBe('creates');
+    expect(roleFor('sprint', 'sprint-backlog')).toBe('adapts'); // adapting wins over inspecting
+    expect(roleFor('review', 'increment')).toBe('inspects');
+    expect(roleFor('review', 'sprint-backlog')).toBeNull();
+  });
+
+  it('shows all three artifacts, and says which do not exist yet', () => {
+    const fresh = artifactState(initialZooState(1));
+    expect(fresh.map((a) => a.id)).toEqual(['product-backlog', 'sprint-backlog', 'increment']);
+    // The Product Backlog exists from the start; the other two are brought into being.
+    expect(fresh.find((a) => a.id === 'product-backlog')!.exists).toBe(true);
+    expect(fresh.find((a) => a.id === 'sprint-backlog')!.exists).toBe(false);
+    expect(fresh.find((a) => a.id === 'increment')!.exists).toBe(false);
+    expect(fresh.find((a) => a.id === 'sprint-backlog')!.summary).toMatch(/Created at Sprint Planning/i);
+
+    // Forecasting brings the Sprint Backlog into being...
+    const planned = planSprint(bigCatsSplit(1), ['lion-enc']);
+    expect(artifactState(planned).find((a) => a.id === 'sprint-backlog')!.exists).toBe(true);
+    // ...and an item meeting the Definition of Done brings the Increment into being.
+    const built = finish(startItem(planned, 'lion-enc'), 'lion-enc');
+    expect(artifactState(built).find((a) => a.id === 'increment')!.exists).toBe(true);
   });
 });
 
