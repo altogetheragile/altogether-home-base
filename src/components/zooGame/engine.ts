@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, isLandscapeType } from './design';
+import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, isDeployAcceptance, isLandscapeType } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -226,6 +226,34 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
 /** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
 export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
 
+/** The plan step where the Product Owner accepts the work. */
+export const isSignOffTask = (label: string): boolean => /sign[- ]?off/i.test(label);
+
+/** The plan minus the sign-off: the Developers' own work, which is what takes an item out of Doing.
+ *  The sign-off is not theirs to tick and comes later, once the item is on the park. */
+export const buildTasksDone = (item: BacklogItem): boolean =>
+  (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
+
+/** Whether the Product Owner can sign the item off yet: every acceptance criterion has to be met.
+ *  The build criteria are accepted in the studio - an item cannot leave it otherwise - and the
+ *  placement criteria are confirmed on the park, which cannot happen until the item is placed. So
+ *  the sign-off is only in reach once the thing exists in the park, which is the point of it. */
+export function signOffReady(item: BacklogItem): boolean {
+  if (item.status !== 'done' && item.status !== 'open') return false; // still being built
+  return item.acceptance.every((label, i) => !isDeployAcceptance(label) || !!item.acConfirmed?.[i]);
+}
+
+/** Keep the sign-off task in step with the acceptance criteria, wherever they were changed. It is
+ *  derived, not ticked by hand: the Product Owner signs off when the criteria are met, and the
+ *  sign-off comes back off if one is later withdrawn. */
+function syncSignOff(item: BacklogItem): BacklogItem {
+  const tasks = item.tasks ?? [];
+  if (!tasks.some((t) => isSignOffTask(t.label))) return item;
+  const ready = signOffReady(item);
+  if (tasks.every((t) => !isSignOffTask(t.label) || t.done === ready)) return item;
+  return { ...item, tasks: tasks.map((t) => (isSignOffTask(t.label) ? { ...t, done: ready } : t)) };
+}
+
 /** Save an item's in-progress design while it is still being built in the studio, so partial work
  *  survives the studio closing or the Sprint ending. Does not change status - it stays in Doing. */
 export function setDraftDesign(state: ZooGameState, id: string, design: ItemDesign): ZooGameState {
@@ -235,7 +263,7 @@ export function setDraftDesign(state: ZooGameState, id: string, design: ItemDesi
 /** Put a built (Done-column) item onto the park to place & size it. It shows on the park but is not
  *  yet live to visitors - its card stays in Deploy until you mark it "Deploy complete" (openItem). */
 export function placeOnPark(state: ZooGameState, id: string): ZooGameState {
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, placed: true } : it)) };
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'done' ? syncSignOff({ ...it, placed: true }) : it)) };
 }
 
 /** Confirm (or un-confirm) one of an item's acceptance criteria. Build ACs are ticked in the studio;
@@ -247,7 +275,9 @@ export function confirmAcceptance(state: ZooGameState, id: string, index: number
       if (it.id !== id) return it;
       const ac = [...(it.acConfirmed ?? Array(it.acceptance.length).fill(false))];
       ac[index] = value;
-      return { ...it, acConfirmed: ac };
+      // Confirming the last criterion is what earns the Product Owner's sign-off; withdrawing one
+      // takes it back off again.
+      return syncSignOff({ ...it, acConfirmed: ac });
     }),
   };
 }
@@ -263,9 +293,12 @@ export function setItemTasks(state: ZooGameState, id: string, tasks: SprintTask[
 export function toggleItemTask(state: ZooGameState, id: string, taskId: string): ZooGameState {
   const backlog = state.backlog.map((it) => {
     if (it.id !== id) return it;
-    const next = { ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) };
-    if (next.status === 'committed' && next.design && allTasksDone(next)) return { ...next, status: 'done' as const };
-    if (next.status === 'done' && !allTasksDone(next)) return { ...next, status: 'committed' as const };
+    // The Product Owner's sign-off is not a box the Developers tick: it follows the acceptance
+    // criteria, so a click on it does nothing.
+    if ((it.tasks ?? []).some((t) => t.id === taskId && isSignOffTask(t.label))) return it;
+    const next = syncSignOff({ ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) });
+    if (next.status === 'committed' && next.design && buildTasksDone(next)) return syncSignOff({ ...next, status: 'done' as const });
+    if (next.status === 'done' && !buildTasksDone(next)) return syncSignOff({ ...next, status: 'committed' as const });
     return next;
   });
   return { ...state, backlog };
@@ -672,7 +705,7 @@ export function buildItem(state: ZooGameState, id: string, design?: ItemDesign):
     const built = design
       ? { ...it, started: true, design, draftDesign: undefined, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
       : { ...it, started: true };
-    return allTasksDone(built) ? { ...built, status: 'done' as const } : { ...built, status: 'committed' as const };
+    return syncSignOff(buildTasksDone(built) ? { ...built, status: 'done' as const } : { ...built, status: 'committed' as const });
   });
   return { ...state, backlog };
 }
@@ -740,6 +773,9 @@ export function improveItem(state: ZooGameState, id: string): ZooGameState {
  *  experience. */
 export function openItem(state: ZooGameState, id: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
+  // Nothing goes live before the Product Owner has signed it off, and they cannot sign it off until
+  // every acceptance criterion is met - the placement ones included.
+  if (item && (item.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done)) return state;
   if (item?.enhancesId) {
     // Delivering an improvement: apply its design (and enclosure size) back to the target it
     // improves, keeping the target's place. The improvement itself is marked delivered - it counts

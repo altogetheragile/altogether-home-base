@@ -7,6 +7,7 @@ import {
 } from './design';
 import { EnclosureBox, FloraSprite, LandscapeShape } from './ParkView';
 import { TaskChecklist } from './Board';
+import { isSignOffTask } from './engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, Copy } from 'lucide-react';
@@ -201,28 +202,24 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
   const acAll = buildAcceptance.every((_, i) => confirmed.has(i));
 
   // Tick the plan off automatically as the work is done, so it isn't a second set of boxes to
-  // check for what you just did: build steps tick as you design; "get the PO's sign-off" ticks
-  // once every acceptance criterion is met (accepting the ACs IS the PO's sign-off). Peer review
-  // stays a manual tick. Only ticks forward; a custom task with no match stays manual.
+  // check for what you just did: build steps tick as you design. Peer review stays a manual tick.
+  // The Product Owner's sign-off is not ticked here at all - it follows the acceptance criteria,
+  // and the placement ones cannot be met until the item is on the park. Only ticks forward; a
+  // custom task with no match stays manual.
   useEffect(() => {
     if (!onToggleTask) return;
     for (const t of item.tasks ?? []) {
-      if (!t.label.trim()) continue;
-      if (/sign[- ]?off/i.test(t.label)) {
-        // The PO's sign-off IS accepting the acceptance criteria, so mirror them both ways.
-        if (acAll !== t.done) onToggleTask(item.id, t.id);
-      } else if (!t.done && designSatisfiesTask(item, design, t.label)) {
-        onToggleTask(item.id, t.id);
-      }
+      if (!t.label.trim() || isSignOffTask(t.label)) continue;
+      if (!t.done && designSatisfiesTask(item, design, t.label)) onToggleTask(item.id, t.id);
     }
-  }, [design, item, onToggleTask, acAll]);
+  }, [design, item, onToggleTask]);
 
-  // The plan reflects the Definition of Done - the work to take this item to Done: build it to
-  // its acceptance criteria, then the standing workflow steps (peer review, PO sign-off). So
-  // finishing means it is built, it meets the acceptance criteria, and its whole plan is ticked.
-  // The DoD itself lives in the header as the standing reference; the plan is how you meet it.
-  const planTasks = (item.tasks ?? []).filter((t) => t.label.trim());
-  const planDone = planTasks.every((t) => t.done);
+  // The plan reflects the Definition of Done - the work to take this item to Done: build it to its
+  // acceptance criteria, then the standing workflow steps. Finishing the build means it is built,
+  // it meets the build criteria, and the Developers' own steps are ticked. The Product Owner's
+  // sign-off is deliberately NOT part of that gate: it comes after the item is placed on the park
+  // and its placement criteria are confirmed, which is the last thing that has to be true.
+  const planDone = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
   const done = built && acAll && planDone;
 
   return (
