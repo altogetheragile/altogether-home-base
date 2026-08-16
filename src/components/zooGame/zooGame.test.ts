@@ -10,6 +10,7 @@ import type { ItemDesign } from './design';
 import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
+import { iconKey } from './itemIcons';
 
 /** Big Cats arrives as an epic now, so tests that use its animals split it up front - which is
  *  what a player does in Refinement before they can forecast any of it. */
@@ -1866,5 +1867,45 @@ describe('zoo game: the Sprint Goal is the Scrum Team\'s, not the PO\'s', () => 
     expect(isDraftedGoal('')).toBe(false);
     expect(isDraftedGoal('b')).toBe(false);          // a stub is not an objective
     expect(isDraftedGoal(suggestSprintGoal([]))).toBe(true);
+  });
+});
+
+describe('zoo game: an item looks like what it is', () => {
+  it('gives a tiger a cat and a pathway a route, not a fish', () => {
+    expect(iconKey({ name: 'Tiger', category: 'exhibit', template: 'tiger' })).toBe('cat');
+    expect(iconKey({ name: 'Pathways', category: 'path' })).toBe('path');
+    expect(iconKey({ name: 'Toilets', category: 'amenity', template: 'toilets', services: 'toilet' })).toBe('toilets');
+    expect(iconKey({ name: 'Tiger Enclosure', category: 'enclosure' })).toBe('fence');
+    expect(iconKey({ name: 'Penguins', category: 'exhibit', template: 'penguins' })).toBe('bird');
+    expect(iconKey({ name: 'Reef', category: 'exhibit', template: 'reef' })).toBe('fish'); // the fish is for the fish
+  });
+
+  it('has an icon for every piece in the toolbox, and never falls through to the generic one', () => {
+    for (const group of TOOLBOX) {
+      for (const t of group.items) {
+        expect(iconKey({ name: t.name, category: t.category, template: t.template, services: t.services }), t.name).not.toBe('thing');
+      }
+    }
+  });
+
+  it('reads a hand-written PBI by its name when it has no template', () => {
+    expect(iconKey({ name: 'Wolf Wood', category: 'exhibit' })).toBe('dog');
+    expect(iconKey({ name: 'Second-hand book shop', category: 'amenity' })).toBe('shop');
+  });
+});
+
+describe('zoo game: the seeded Backlog reads correctly', () => {
+  it('gives every starting item an icon that matches what it is', () => {
+    const want: Record<string, string> = {
+      'Lion Enclosure': 'fence', Lion: 'cat', Pathways: 'path', Trees: 'tree', Flowerbed: 'flower',
+      Rockery: 'rocks', River: 'river', Bridge: 'bridge', Signposts: 'signpost', Fountain: 'fountain',
+      Toilets: 'toilets', 'Gift Shop': 'shop', 'Seating Area': 'seating',
+    };
+    const s = initialZooState(1);
+    for (const [name, key] of Object.entries(want)) {
+      const it = s.backlog.find((b) => b.name === name);
+      expect(it, name).toBeTruthy();
+      expect(iconKey(it as BacklogItem), name).toBe(key);
+    }
   });
 });

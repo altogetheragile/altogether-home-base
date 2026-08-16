@@ -4,7 +4,8 @@ import { renderDesign, presetFor, GRID_W } from './design';
 import { TOOLBOX, type ToolboxItem } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { X, Check, Coffee, Trees } from 'lucide-react';
+import { X, Check } from 'lucide-react';
+import { ICONS, iconKey } from './itemIcons';
 
 /** A small greyscale silhouette of a template's shape (uncoloured - you colour it in
  *  the studio), so users can see what each toolbox piece looks like before picking it. */
@@ -52,9 +53,11 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
                           ? <Preview item={it} cell={2} />
                           : it.category === 'enclosure'
                             ? <span className="rounded-sm border-2 border-muted-foreground/50 bg-background" style={{ width: it.footprint === 'large' ? 28 : it.footprint === 'small' ? 15 : 22, height: it.footprint === 'large' ? 20 : it.footprint === 'small' ? 11 : 16 }} />
-                          : it.category === 'amenity'
-                            ? <Coffee className="h-5 w-5 text-muted-foreground" />
-                            : <Trees className="h-5 w-5 text-emerald-600" />}
+                          : (() => {
+                            // The piece's own icon: a bath for the toilets, a route for a pathway.
+                            const Icon = ICONS[iconKey(it)];
+                            return <Icon className={cn('h-5 w-5', it.category === 'amenity' ? 'text-muted-foreground' : 'text-emerald-600')} />;
+                          })()}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{it.name}</span>

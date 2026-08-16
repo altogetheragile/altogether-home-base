@@ -7,9 +7,9 @@ import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Fish, Coffee, Trees, Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Layers, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ICONS, iconKey } from './itemIcons';
 
-/** The icon that reads for an item's kind (rendered directly so it stays stable). */
 /** A colour per kind of work, matching what it becomes in the park: habitats brown, animals orange,
  *  facilities slate, planting green, paths amber, and an epic violet because it is not buildable yet.
  *  Used for the stripe down the left of a row and for its icon, so kinds are told apart at a glance. */
@@ -23,12 +23,11 @@ const CATEGORY_STYLE: Record<string, { edge: string; icon: string; chip: string;
 };
 const categoryStyle = (item: BacklogItem) => CATEGORY_STYLE[item.category] ?? CATEGORY_STYLE.exhibit;
 
+/** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
+ *  Backlog can be scanned by shape as well as by name. See itemIcons.ts for the mapping. */
 export function CategoryIcon({ item, className }: { item: BacklogItem; className?: string }) {
-  if (item.category === 'epic') return <Layers className={className} />;
-  if (item.category === 'enclosure') return <Boxes className={className} />;
-  if (item.category === 'flora') return <Trees className={className} />;
-  if (item.category === 'amenity') return item.services === 'food' ? <Coffee className={className} /> : <Plus className={className} />;
-  return <Fish className={className} />;
+  const Icon = ICONS[iconKey(item)];
+  return <Icon className={className} />;
 }
 
 /** Refine an epic: tick the members to split out into their own PBIs (each animal becomes
@@ -298,43 +297,35 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
     const on = selected?.has(it.id);
     const why = notReady(it); // null once it meets the Definition of Ready
     const isOpen = expandedItems.has(it.id);
+    // Whether the item is Ready is a fact ABOUT the item, so it reads with the badges; what you can
+    // do about it is a button, and sits with the actions. Keeping them apart is what lets a row fit
+    // in the narrow Backlog rail. In Planning an unready item cannot be forecast until it is put
+    // right - the Guide allows refining here ("The Scrum Team may refine these items during this
+    // process"), but a Backlog refined during the last Sprint would not need it.
+    const status = why ? (
+      <span title={mode === 'plan' ? `${why}. You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
+        className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        <AlertCircle className="h-3 w-3" /> Not ready
+      </span>
+    ) : mode === 'view' || mode === 'refine' ? (
+      <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
+    ) : null;
     const action =
-      // Sizing is refinement, not planning: in Planning an unready item says why, and cannot be
-      // pulled in. You fix it by refining - which is where the Developers size things.
-      mode === 'view' ? (
-        // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
-        why ? (
-          <span title={why} className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            <AlertCircle className="h-3 w-3" /> Not ready
-          </span>
-        ) : (
-          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
-        )
-      ) : mode === 'plan' && why ? (
-        // You CAN refine in Sprint Planning - the Guide: "The Scrum Team may refine these items
-        // during this process, which increases understanding and confidence." But if the Backlog
-        // has been refined as it should be, you will not need to, and doing it here eats Planning.
-        <span className="flex shrink-0 items-center gap-1.5">
-          <span title={`${why}. You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning's time.`}
-            className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            <AlertCircle className="h-3 w-3" /> Not ready
-          </span>
-          {it.category === 'epic' ? (
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
-          ) : it.unsized ? (
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
-          ) : null}
-        </span>
-      ) : it.category === 'epic' ? (
+      // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
+      mode === 'view' ? null
+      : it.category === 'epic' ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
-      ) : mode === 'refine' ? (
-        <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
-      ) : mode === 'plan' ? (
-        <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 shrink-0 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
-          {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</>}
-        </Button>
+      ) : mode === 'refine' ? null
+      : mode === 'plan' ? (
+        // Sizing is refinement, not planning, so an item that is not ready for another reason has
+        // no button here: it is fixed by refining it.
+        why ? null : (
+          <Button size="sm" variant={on ? 'secondary' : 'default'} className="h-7 shrink-0 px-2 text-xs" onClick={() => onToggle?.(it.id)}>
+            {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</>}
+          </Button>
+        )
       ) : (
         <Button size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</Button>
       );
@@ -350,7 +341,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           on && categoryStyle(it).edge, it.unsized && categoryStyle(it).edge, dragId === it.id && 'opacity-50')}>
         {/* Collapsed by default: one line - reorder handle, expand toggle, name, points, primary action.
             Reorder stays visible while collapsed (drag the card, or use the arrows). */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-start gap-1.5">
           {onReorder && (
             <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
               <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
@@ -359,18 +350,24 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             </div>
           )}
           <button type="button" onClick={() => toggleItem(it.id)} title={isOpen ? 'Collapse' : 'Expand'} aria-expanded={isOpen}
-            className="shrink-0 text-muted-foreground hover:text-foreground">
+            className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground">
             <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
           </button>
-          <CategoryIcon item={it} className={cn('h-4 w-4 shrink-0', categoryStyle(it).icon)} />
-          <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 text-left font-semibold leading-tight hover:text-foreground">{it.name}</button>
-          <span className={cn('hidden shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide sm:inline', categoryStyle(it).chip)}>{categoryStyle(it).label}</span>
-          {it.carriedOver && <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400" title={`Carried over unfinished - re-estimate the work that's left (was ${it.estimate} pts)`}>carried over</span>}
-          <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold',
-            it.unsized ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'bg-muted text-muted-foreground')}
-            title={it.unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
-            {it.unsized ? '? pts' : `${it.estimate} pts`}
-          </span>
+          <CategoryIcon item={it} className={cn('mt-0.5 h-4 w-4 shrink-0', categoryStyle(it).icon)} />
+          {/* The name and its badges wrap together, so in the narrow Backlog rail the badges drop
+              under the name instead of being squeezed into it - which is what made the text
+              collide. The action stays pinned to the right on the first line. */}
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+            <button type="button" onClick={() => toggleItem(it.id)} className="min-w-0 flex-1 basis-28 break-words text-left font-semibold leading-tight hover:text-foreground">{it.name}</button>
+            <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide', categoryStyle(it).chip)}>{categoryStyle(it).label}</span>
+            {it.carriedOver && <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400" title={`Carried over unfinished - re-estimate the work that's left (was ${it.estimate} pts)`}>carried over</span>}
+            <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold',
+              it.unsized ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'bg-muted text-muted-foreground')}
+              title={it.unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
+              {it.unsized ? '? pts' : `${it.estimate} pts`}
+            </span>
+            {status}
+          </div>
           {action}
         </div>
         {isOpen && (
