@@ -816,6 +816,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     ],
     water: [...landFeats('river'), ...landFeats('pond')].map(rectOf),
     crossings: landFeats('bridge').map(rectOf),
+    // Things you go round, not through: the buildings, the habitats and the rockeries. Guests were
+    // walking straight through the kiosk to the next exhibit.
+    solid: [
+      ...features.filter((f) => f.item.category === 'amenity' || f.item.category === 'enclosure').map(rectOf),
+      ...landFeats('rocks').map(rectOf),
+    ],
   };
 
   return (

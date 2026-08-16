@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildNav, routeAcross, wet, type NavInput, type Pt } from './parkNav';
+import { buildNav, routeAcross, throughSolid, wet, type NavInput, type Pt } from './parkNav';
 
 const river = { x0: 0, y0: 200, x1: 880, y1: 250 };          // spans the park, fence to fence
 const bridge = { x0: 400, y0: 190, x1: 480, y1: 260 };        // the one way over it
@@ -74,5 +74,41 @@ describe('routeAcross', () => {
       at = p;
     }
     expect(crossed || route.some((p) => p.y > river.y0 && p.y < river.y1)).toBe(true);
+  });
+});
+
+describe('parkNav: buildings are walked around, not through', () => {
+  // A kiosk sitting square in the middle, with a path that goes round it.
+  const kiosk = { x0: 380, y0: 260, x1: 460, y1: 340 };
+  const nav = () => buildNav({
+    paths: [
+      [{ x: 100, y: 300 }, { x: 360, y: 300 }, { x: 360, y: 200 }, { x: 480, y: 200 }, { x: 480, y: 300 }, { x: 800, y: 300 }],
+    ],
+    water: [], crossings: [], solid: [kiosk],
+  });
+
+  it('will not cut a straight line through a building', () => {
+    const n = nav();
+    expect(throughSolid({ x: 100, y: 300 }, { x: 800, y: 300 }, n.input)).toBe(true);
+    const route = routeAcross(n, { x: 100, y: 300 }, { x: 800, y: 300 })!;
+    expect(route).not.toBeNull();
+    let at = { x: 100, y: 300 };
+    for (const p of route) { expect(throughSolid(at, p, n.input)).toBe(false); at = p; }
+    expect(route.some((p) => p.y < kiosk.y0)).toBe(true); // it went round the top
+  });
+
+  it('lets a guest reach the building they are heading for', () => {
+    const n = nav();
+    const counter = { x: 420, y: 300 }; // inside the kiosk
+    expect(throughSolid({ x: 100, y: 300 }, counter, n.input)).toBe(false);
+    expect(routeAcross(n, { x: 100, y: 300 }, counter)).not.toBeNull();
+    // ...and back out again
+    expect(routeAcross(n, counter, { x: 800, y: 300 })).not.toBeNull();
+  });
+
+  it('never strands a guest when there is no way round', () => {
+    // No path at all, just a building between the two points: they walk, rather than disappear.
+    const n = buildNav({ paths: [], water: [], crossings: [], solid: [kiosk] });
+    expect(routeAcross(n, { x: 100, y: 300 }, { x: 800, y: 300 })).not.toBeNull();
   });
 });
