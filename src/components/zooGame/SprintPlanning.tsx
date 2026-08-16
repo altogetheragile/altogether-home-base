@@ -194,7 +194,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             </section>
           )}
 
-          <div className={cn('grid gap-4 lg:items-start', wideBacklog ? 'lg:grid-cols-[440px_minmax(0,1fr)]' : 'lg:grid-cols-[280px_minmax(0,1fr)]')}>
+          <div className={cn('grid gap-4 lg:items-start', // The park rail is not shown during Planning, so the Backlog can have the room: at 280px a
+            // PBI row had to wrap three deep to fit its badges and its button.
+            wideBacklog ? 'lg:grid-cols-[520px_minmax(0,1fr)]' : 'lg:grid-cols-[360px_minmax(0,1fr)]')}>
             <ProductBacklogSidebar onWidth={setWideBacklog} state={state} mode="plan" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
               onSetUseStories={onSetUseStories} onEstimate={onEstimate} selected={selected} onToggle={toggle}
               onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />

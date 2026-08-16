@@ -154,6 +154,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
   const tab = parkTab ?? localTab;
   const setTab = onSetTab ?? setLocalTab;
   const open = state.backlog.filter((it) => it.status === 'open').length;
+  // Where the park earns a rail beside the work: you are building into it, or inspecting it as
+  // the Increment. Elsewhere the work is the Backlog, and the Park tab is enough.
+  const railHere = state.phase === 'sprint' || state.phase === 'review' || state.phase === 'final';
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
@@ -258,9 +261,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
       )}
 
       {/* Body: fills the remaining height and scrolls INTERNALLY so the page never scrolls.
-          Narrow/portrait: one pane at a time via the tabs. Wide (xl), Work tab: the work pane
-          and a persistent Park rail sit side by side, so you can watch the zoo fill while you
-          build. Wide (xl), Park tab: the park expands to the full width for a large view.
+          Narrow/portrait: one pane at a time via the tabs. Wide (xl), Park tab: the park expands
+          to the full width. Wide (xl), Work tab: the park sits alongside as a rail ONLY where the
+          park is what the work acts on - building and deploying during the Sprint, and inspecting
+          the Increment at the Review. In the events that work on the Backlog (refinement, Planning,
+          the Retrospective) the rail is just the Park tab said twice, and it steals the width the
+          Backlog needs, so the tab carries it alone.
           Both panes stay mounted (toggled with CSS) so the day clock / studio work survive. */}
       <div className="min-h-0 flex-1 overflow-hidden xl:flex">
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3 xl:min-w-0 xl:flex-1', tab === 'park' && 'hidden')}>
@@ -272,7 +278,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
           </div>
         </div>
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3',
-          tab !== 'park' && 'hidden xl:block',
+          tab !== 'park' && (railHere ? 'hidden xl:block' : 'hidden'),
           tab === 'work' && 'xl:w-[360px] xl:shrink-0 xl:border-l xl:border-border',
           tab === 'park' && 'xl:flex-1 xl:min-w-0')}>
           <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />

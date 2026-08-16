@@ -7,7 +7,7 @@ import { carParkLayout, carCapacity, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, Trees, Fish, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -1142,8 +1142,8 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
   const statsBar = (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5">
       <Stat icon={LayoutGrid} value={`${activeZones.size}/${zones.length}`} label="zones" />
-      <Stat icon={Fish} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
-      <Stat icon={Trees} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
+      <Stat icon={PawPrint} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
+      <Stat icon={Store} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
       <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors" />
       <Stat icon={Smile} value={happiness === null ? '—' : `${happiness}`} label="happiness" title={happiness === null ? 'Measured at the Sprint Review' : undefined} />
     </div>
