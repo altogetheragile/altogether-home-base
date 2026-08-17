@@ -25,40 +25,40 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-5">
         {onBack && (
           <button type="button" onClick={onBack} className="self-start text-[11px] text-muted-foreground underline-offset-2 hover:underline">
             &larr; Scrum on one page
           </button>
         )}
 
-        {/* 1. What this is */}
-        <header className="space-y-2 text-center">
+        {/* 1. What this is - said once, briefly, because the thing to DO is below it. */}
+        <header className="space-y-1 text-center">
           <h1 className="text-3xl font-bold md:text-4xl">Build a Zoo</h1>
-          <p className="mx-auto max-w-xl text-muted-foreground">
-            Run a zoo in Sprints. Plan what to build, deliver it to your Definition of Done, open it to
-            visitors, and hear what they think at the Review. Learn Scrum by doing it: forecast, inspect,
-            and adapt as the visitors tell you what they value.
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
+            Run a zoo in Sprints, and learn Scrum by doing it: forecast, build to your Definition of Done,
+            open it to visitors, and adapt as they tell you what they value.
           </p>
         </header>
 
-        {/* 2. How a Sprint goes */}
-        <section className="rounded-lg bg-muted/50 p-5">
-          <h2 className="mb-1.5 text-lg font-semibold">Each Sprint</h2>
-          <ul className="grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-            <li><strong>Plan:</strong> forecast the exhibits and amenities you can finish.</li>
-            <li><strong>Build:</strong> deliver each to the Definition of Done.</li>
-            <li><strong>Open:</strong> release Done work to visitors whenever you like.</li>
-            <li><strong>Review:</strong> the visitors turn up and tell you what worked.</li>
-            <li><strong>Retro:</strong> pick one improvement, then plan the next Sprint.</li>
-          </ul>
-        </section>
-
-        {/* 3. What a Product Goal is, before being asked to write one */}
-        {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+        {/* 2. How a Sprint goes, and what a Product Goal is - side by side, so the Goal itself stays
+               above the fold. It is the one thing this page asks you to write. */}
+        <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+          <section className="rounded-lg border border-border bg-muted/40 p-3">
+            <h2 className="mb-1 text-sm font-semibold">Each Sprint</h2>
+            <ul className="space-y-0.5 text-[13px] leading-snug text-muted-foreground">
+              <li><strong className="text-foreground">Plan</strong> - forecast the exhibits and amenities you can finish.</li>
+              <li><strong className="text-foreground">Build</strong> - deliver each to the Definition of Done.</li>
+              <li><strong className="text-foreground">Open</strong> - release Done work to visitors whenever you like.</li>
+              <li><strong className="text-foreground">Review</strong> - the visitors turn up and tell you what worked.</li>
+              <li><strong className="text-foreground">Retro</strong> - pick one improvement, then plan the next Sprint.</li>
+            </ul>
+          </section>
+          {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+        </div>
 
         {/* 4. The Product Goal itself: the one thing written here, so it gets the weight. */}
-        <section className="space-y-2 rounded-lg border-2 border-primary/40 bg-primary/5 p-5">
+        <section className="space-y-1.5 rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Target className="h-4 w-4 shrink-0 text-primary" />
             <h2 className="text-lg font-semibold">Your Product Goal</h2>
@@ -66,7 +66,7 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
               Commitment of the Product Backlog
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] leading-snug text-muted-foreground">
             You are the Product Owner, so this one is yours to write. Shape it into a single clear outcome -
             a park that [who] love, so that [outcome] - and every Sprint will aim at it.
           </p>
@@ -86,15 +86,17 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
           <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in the header.</p>
         </section>
 
-        <div className="flex flex-col items-center gap-2 pb-4">
-          <Button size="lg" className="px-8 py-6 text-lg" onClick={() => { onSetGoal(goal); onStart(); }}>
-            Start
-          </Button>
-          {onOpenSaves && (
-            <button type="button" onClick={onOpenSaves} className="text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+        {/* Floating, like every other primary action in the game. */}
+        <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
+          {onOpenSaves ? (
+            <button type="button" onClick={onOpenSaves}
+              className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground">
               Resume a saved game
             </button>
-          )}
+          ) : <span />}
+          <Button size="lg" className="rounded-full px-6" onClick={() => { onSetGoal(goal); onStart(); }}>
+            Start building &rarr;
+          </Button>
         </div>
       </div>
     </div>
