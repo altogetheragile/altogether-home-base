@@ -316,6 +316,9 @@ export interface ZooGameState {
    *  adding/refining PBIs) while a Sprint is running - it eats into the build clock. Resets
    *  each day. Refinement in the Refinement/Planning phases is free (0 here). */
   refinePenalty: number;
+  /** Decided at Sprint Planning topic three: the Scrum Team has set time aside in THIS Sprint to
+   *  refine the Product Backlog, so every day of it starts with some of the clock already spent. */
+  plannedRefinement?: boolean;
   /** The look of the park paths/roads: a key into PATH_STYLES (surface + colour). The
    *  entrance promenade and the spurs to each enclosure both use it, so they stay consistent.
    *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
@@ -339,7 +342,7 @@ export type ZooAction =
   | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
-  | { type: 'PLAN_SPRINT'; ids: string[] }
+  | { type: 'PLAN_SPRINT'; ids: string[]; plannedRefinement?: boolean }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }

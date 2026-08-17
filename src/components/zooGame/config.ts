@@ -29,6 +29,10 @@ export const DAY_SECONDS = 90;
  *  real work with a cost). Each action spends this many seconds of the current day. In the
  *  Refinement/Planning phases it is free - that is the dedicated time to refine. */
 export const REFINE_COSTS = { estimate: 8, split: 12, addPbi: 6, refinePbi: 5 } as const;
+/** Planning refinement INTO a Sprint (topic three) costs this much of every day of it. The Guide
+ *  does not budget refinement; the game does, because a team that never feels the trade-off learns
+ *  that refinement is free. */
+export const PLANNED_REFINE_SECONDS = 10;
 /** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */
 export const IMPEDIMENT_CHANCE = 0.55;
 /** A held Daily Scrum takes a little of the next day (the event is timeboxed). */

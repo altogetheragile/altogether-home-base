@@ -29,7 +29,7 @@ function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'ACCEPT_SIGNAL':
       return acceptSignal(state, action.index);
     case 'PLAN_SPRINT':
-      return planSprint(state, action.ids);
+      return planSprint(state, action.ids, action.plannedRefinement);
     case 'ESTIMATE_ITEM':
       return estimateItem(state, action.id, action.points);
     case 'SET_TASKS':
@@ -181,7 +181,7 @@ export function useZooGame(gameSeed?: number) {
   const setDor = useCallback((dor: string[]) => dispatch({ type: 'SET_DOR', dor }), []);
   const setDod = useCallback((dod: string[]) => dispatch({ type: 'SET_DOD', dod }), []);
   const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
-  const plan = useCallback((ids: string[]) => dispatch({ type: 'PLAN_SPRINT', ids }), []);
+  const plan = useCallback((ids: string[], plannedRefinement?: boolean) => dispatch({ type: 'PLAN_SPRINT', ids, plannedRefinement }), []);
   const estimate = useCallback((id: string, points: number) => dispatch({ type: 'ESTIMATE_ITEM', id, points }), []);
   const setTasks = useCallback((id: string, tasks: SprintTask[]) => dispatch({ type: 'SET_TASKS', id, tasks }), []);
   const toggleTask = useCallback((id: string, taskId: string) => dispatch({ type: 'TOGGLE_TASK', id, taskId }), []);
