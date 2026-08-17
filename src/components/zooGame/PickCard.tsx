@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { BacklogItem } from './types';
 import { CategoryIcon } from './Board';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix }: {
   onPick: () => void;
   onFix?: () => void;
 }) {
+  const [open, setOpen] = useState(false);
   const card = (
     <div className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors',
       why ? 'border-dashed border-border bg-muted/20 text-muted-foreground'
@@ -37,7 +39,9 @@ export function PickCard({ item, chosen, why, note, onPick, onFix }: {
   );
   if (!why) return <button type="button" onClick={onPick} className="w-full text-left">{card}</button>;
   return (
-    <Popover>
+    // Controlled, because pressing Split or Estimate opens a panel BENEATH this popover - and a
+    // popover that stays put over the thing it just opened is worse than no popover at all.
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild><button type="button" className="w-full text-left">{card}</button></PopoverTrigger>
       <PopoverContent align="start" className="w-72">
         <div className="space-y-2">
@@ -53,7 +57,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix }: {
           )}
           {note && <p className="text-[11px] text-muted-foreground/70">{note}</p>}
           {onFix && (
-            <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onFix}>
+            <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={() => { setOpen(false); onFix(); }}>
               {item.category === 'epic' ? <><Scissors className="mr-1 h-3.5 w-3.5" /> Split it</> : <><Wand2 className="mr-1 h-3.5 w-3.5" /> Estimate it</>}
             </Button>
           )}

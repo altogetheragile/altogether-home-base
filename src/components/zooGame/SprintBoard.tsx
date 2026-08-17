@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
@@ -225,6 +225,9 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
   const backlog = availableItems(state);
   const available = backlog.length; // shown on the collapsed tab, so it still tells you what is waiting
   const fixingItem = fixing ? backlog.find((i) => i.id === fixing) : null;
+  // Same as Planning: the refine panel comes to you rather than opening somewhere off screen.
+  const fixRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (fixing) fixRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [fixing]);
 
   // Drag a card to the next column, as an alternative to its button. The columns are the
   // workflow, but a card's column is derived from its real state, so a drag runs the same
@@ -403,6 +406,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
+                {fixingItem && <div ref={fixRef} />}
                 {fixingItem && (fixingItem.category === 'epic'
                   ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} onCancel={() => setFixing(null)} />
                   : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
