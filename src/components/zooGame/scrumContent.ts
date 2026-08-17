@@ -218,7 +218,9 @@ export const CARDS_BY_PHASE: Record<string, string[]> = {
   refine: ['product-backlog', 'pbi', 'refinement', 'definition-of-done'],
   planning: ['sprint-planning', 'sprint-goal', 'sprint-backlog'],
   sprint: ['sprint', 'daily-scrum', 'increment', 'developers'],
-  review: ['sprint-review', 'product-owner'],
+  // Empiricism is met at the Review, where inspection and adaptation are actually happening -
+  // the one-pager teaches it, but the one-pager is skippable and nothing repeated it during play.
+  review: ['sprint-review', 'empiricism', 'product-owner'],
   retro: ['sprint-retrospective', 'scrum-master'],
 };
 

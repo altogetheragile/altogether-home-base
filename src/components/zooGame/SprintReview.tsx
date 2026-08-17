@@ -19,7 +19,7 @@ const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
 /** What the Guide says about the Review - behind the "?", not on the page. */
 const DETAIL: Record<Step, string[]> = {
   done: [
-    'The Sprint Review inspects the outcome of the Sprint and determines future adaptations. It is a working session, not a release gate: anything Done could have been released the moment it was Done.',
+    'Not a release gate: anything Done could have been released the moment it was Done. What is inspected here is the Increment, whether it went live this morning or a fortnight ago.',
     'The Sprint Goal is the Sprint Backlog\u2019s commitment. Dropping less essential scope to protect it is a win, not a miss.',
     'Velocity is measured, not fixed. It is a common forecasting practice rather than part of Scrum, and a forecast was never a promise.',
   ],
@@ -28,7 +28,7 @@ const DETAIL: Record<Step, string[]> = {
     'This is the feedback loop the whole framework is built on: real people meeting the actual Increment, not a status report about it.',
   ],
   next: [
-    'The attendees collaborate on what to do next, and the Product Backlog may be adjusted to meet new opportunities. That adjustment is the Review\u2019s output.',
+    'The attendees collaborate on what to do next. That collaboration - not the demonstration - is what the event is for.',
     'The Product Owner decides whether the Product Goal has been met. There is no set number of Sprints - the product runs until the Goal is reached or abandoned.',
   ],
 };

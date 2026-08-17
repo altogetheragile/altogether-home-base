@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
-import { SprintLengthPicker } from './PhaseHeader';
+import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { retroQuestions } from './engine';

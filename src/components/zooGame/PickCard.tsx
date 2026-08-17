@@ -43,6 +43,14 @@ export function PickCard({ item, chosen, why, note, onPick, onFix }: {
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-sm font-semibold"><Lock className="h-3.5 w-3.5" /> Not ready</div>
           <p className="text-[12px] text-muted-foreground">{why}</p>
+          {item.category === 'epic' && (
+            // The model reserves "not Scrum" labelling for practices the game uses anyway, and an
+            // epic is one of them: the Guide has one kind of thing on a Product Backlog.
+            <p className="text-[11px] text-muted-foreground/70">
+              &ldquo;Epic&rdquo; is a common word for an item too big to finish in a Sprint. The Scrum Guide does not define it -
+              it has Product Backlog items, and says a ready one can be Done inside a Sprint.
+            </p>
+          )}
           {note && <p className="text-[11px] text-muted-foreground/70">{note}</p>}
           {onFix && (
             <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onFix}>

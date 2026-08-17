@@ -338,7 +338,6 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
               body={[
                 'The Sprint is the container the other events live in: a fixed length, one after another, so progress can be inspected on a rhythm.',
                 'The Developers own this board. They decide the order they pick work up in, and they adapt the plan every day toward the Sprint Goal.',
-                'Scope may be renegotiated with the Product Owner as more is learned, but nothing may endanger the Sprint Goal or quality. A Sprint is never extended to finish work.',
                 'Anything Done can be released the moment it is Done - you do not wait for the Sprint Review.',
               ]} />
           </div>
