@@ -5,7 +5,7 @@ import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAccept
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, DEFAULT_WIP_LIMIT, zooCapacity } from './config';
+import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -676,7 +676,7 @@ export function readyHorizon(state: ZooGameState): number {
   return cap > 0 ? Math.round((pts / cap) * 10) / 10 : 0;
 }
 
-export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
+export function planSprint(state: ZooGameState, ids: string[], plannedRefinement = false): ZooGameState {
   // Only Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
   // and with acceptance criteria. Anything else has to go back through Refinement first.
   const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && isReady(it)).map((it) => it.id));
@@ -690,7 +690,11 @@ export function planSprint(state: ZooGameState, ids: string[]): ZooGameState {
     sprintForecast: zooCapacity(state.velocity),
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
     burndown: [committedPts],
-    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null, refinePenalty: 0,
+    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
+    // Topic three's decision: refinement planned into this Sprint costs every day of it, starting
+    // with the first.
+    plannedRefinement,
+    refinePenalty: plannedRefinement ? PLANNED_REFINE_SECONDS : 0,
   };
 }
 
@@ -974,7 +978,7 @@ export function endDay(state: ZooGameState): ZooGameState {
   if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
-    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0 };
+    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: s.plannedRefinement ? PLANNED_REFINE_SECONDS : 0 };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
   return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber) };
@@ -987,7 +991,7 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
   // A new day gets a fresh build clock, so the refinement spend resets too.
-  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0 };
+  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: state.plannedRefinement ? PLANNED_REFINE_SECONDS : 0 };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */
@@ -1199,6 +1203,9 @@ export function retroQuestions(state: ZooGameState): string[] {
 
   // Always leave the team with something to build on.
   const general = [
+    // The Guide's first two inspection targets are individuals and interactions - ask about them
+    // before process, or a Retrospective quietly becomes a delivery post-mortem.
+    'How well did you work together this Sprint - who needed help, and did they get it?',
     'What went well this Sprint that you want to keep doing?',
     'What would make the biggest difference to how the team works next Sprint?',
     'When did you first sense how this Sprint would go?',

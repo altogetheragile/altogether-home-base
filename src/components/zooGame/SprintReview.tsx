@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, GOAL_HAPPINESS_TARGET } from './engine';
+import { productGoalProgress, availableItems, readyHorizon, GOAL_HAPPINESS_TARGET } from './engine';
+import { CategoryIcon } from './Board';
 import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
+import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
@@ -59,6 +61,8 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
   const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
 
   const [step, setStep] = useState<Step>('done');
+  const [taken, setTaken] = useState(0); // signals turned into Backlog items in this Review
+  const upNext = availableItems(state).slice(0, 6);
   const current = STEPS.find((s) => s.key === step)!;
   const seen = STEPS.findIndex((s) => s.key === step);
   const goTo = (k: Step) => setStep(k);
@@ -80,6 +84,31 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       </header>
 
       {step === 'done' && (<>
+      {/* Progress toward the Product Goal opens the Review: the widest question first, before the
+          Sprint that just ran. The Product Owner's decision on it comes at the end, once the
+          visitors have been heard. */}
+      <section className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Product Goal &middot; progress</span>
+          <span className="text-[11px] text-muted-foreground">Sprint {state.sprintNumber} &middot; no set number of Sprints</span>
+        </div>
+        <p className="text-sm font-medium">{state.productGoal}</p>
+        <div className="flex items-center gap-2">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+            <div className={cn('h-full rounded-full', progress >= 80 ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
+          </div>
+          <span className="font-mono text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">{progress}%</span>
+        </div>
+        {history.length > 1 && (
+          <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="uppercase tracking-wide">Happiness by Sprint</span>
+            {history.map((h, i) => (
+              <span key={i} className={cn('rounded-full px-1.5 py-0.5 font-mono', i === history.length - 1 ? 'bg-primary/10 font-semibold text-primary' : 'bg-muted')}>{h}</span>
+            ))}
+            <span>&middot; target {GOAL_HAPPINESS_TARGET}</span>
+          </div>
+        )}
+      </section>
       {state.sprintGoal.trim() && (
         <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3',
           state.sprintGoalMet ? 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/20' : 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20')}>
@@ -164,7 +193,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
                 <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
                   <span className="flex-1">{sig.suggestion}</span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
-                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onTakeSignal(i)}>Add to Backlog</Button>
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to Backlog</Button>
                 </div>
               ))}
             </section>
@@ -175,29 +204,36 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
             </p>
           )}
 
-      {/* The Product Goal, and the one decision only the Product Owner makes: is it met? There is no
-          set number of Sprints - the zoo runs until the PO says the Goal is reached. */}
-      <section className="space-y-2 rounded-lg border border-border bg-card px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Product Goal &middot; the Product Owner&rsquo;s call</span>
-          <span className="text-[11px] text-muted-foreground">Sprint {state.sprintNumber} &middot; no set number of Sprints</span>
+      {/* What is next: the top of the Backlog as it stands after this conversation. The Guide has the
+          attendees collaborating on what to do next, and "next" is a list you can point at. */}
+      <section className="space-y-1.5 rounded-lg border border-border bg-muted/20 px-4 py-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-sm font-semibold">What is next</h3>
+          <span className="text-[11px] text-muted-foreground">
+            {taken > 0 ? `${taken} item${taken === 1 ? '' : 's'} added from what the visitors said` : 'Nothing added this time'}
+            {' \u00b7 '}about {readyHorizon(state)} Sprint{readyHorizon(state) === 1 ? '' : 's'} of ready work
+          </span>
         </div>
-        <p className="text-sm font-medium">{state.productGoal}</p>
-        <div className="flex items-center gap-2">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-            <div className={cn('h-full rounded-full', progress >= 80 ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
-          </div>
-          <span className="font-mono text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">{progress}%</span>
-        </div>
-        {history.length > 1 && (
-          <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="uppercase tracking-wide">Happiness by Sprint</span>
-            {history.map((h, i) => (
-              <span key={i} className={cn('rounded-full px-1.5 py-0.5 font-mono', i === history.length - 1 ? 'bg-primary/10 font-semibold text-primary' : 'bg-muted')}>{h}</span>
+        <div className="grid gap-1.5 sm:grid-cols-2">
+          {upNext.length === 0
+            ? <p className="text-[12px] text-muted-foreground">Nothing ready. The next Sprint starts with refinement.</p>
+            : upNext.map((it) => (
+              <div key={it.id} className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-[13px]">
+                <CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate">{it.name}</span>
+                <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>
+              </div>
             ))}
-            <span>&middot; target {GOAL_HAPPINESS_TARGET}</span>
-          </div>
-        )}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          The order is yours as Product Owner, and it is not settled here - the next Sprint Planning forecasts from whatever
+          is ready by then.
+        </p>
+      </section>
+
+      {/* The one decision only the Product Owner makes, after the visitors have been heard. */}
+      <section className="space-y-2 rounded-lg border border-border bg-card px-4 py-3">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Is the Product Goal met? &middot; the Product Owner&rsquo;s call</span>
         <p className="text-[11px] text-muted-foreground">
           {progress >= 80
             ? 'Visitors love the zoo. If you judge the Product Goal met, wrap up - or keep going and make it better.'
@@ -215,14 +251,11 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
 
       </>)}
 
-      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-        <div className="min-w-0">
-          {step !== 'done' && <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button>}
-        </div>
+      <ActionBar left={step !== 'done' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button> : undefined}>
         {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
           : step === 'visitors' ? <Button onClick={() => setStep('next')}>Next: what we do about it &rarr;</Button>
             : <Button onClick={onContinue}>Retrospective &rarr;</Button>}
-      </div>
+      </ActionBar>
     </div>
   );
 }

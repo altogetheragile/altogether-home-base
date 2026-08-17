@@ -1,6 +1,7 @@
 import type { ZooGameState } from './types';
 import { openZoo } from './engine';
 import { Button } from '@/components/ui/button';
+import { ActionBar } from './ActionBar';
 
 interface ZooFinalProps {
   state: ZooGameState;
@@ -27,7 +28,7 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
         <Stat label="Happiness" value={r ? `${r.overallHappiness}` : '0'} />
       </div>
       <p className="max-w-md text-sm text-muted-foreground">Velocity across the Sprints: {state.velocity.join(', ') || 'none'}. The visitors kept telling you what they valued - and you built a zoo around it.</p>
-      <Button size="lg" onClick={onReset}>Build another zoo</Button>
+      <ActionBar><Button onClick={onReset}>Build another zoo &rarr;</Button></ActionBar>
     </div>
   );
 }

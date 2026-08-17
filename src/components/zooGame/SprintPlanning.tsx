@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ZooGameState, SprintTask } from './types';
-import { availableItems, goalCandidates, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
+import { availableItems, goalCandidates, readyHorizon, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
 import { NewHere } from './NewHere';
 import { zooCapacity } from './config';
 
@@ -9,6 +9,7 @@ import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
+import { ActionBar } from './ActionBar';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,7 +27,7 @@ import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-
 
 interface SprintPlanningProps {
   state: ZooGameState;
-  onPlan: (ids: string[]) => void;
+  onPlan: (ids: string[], plannedRefinement?: boolean) => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   onToggleGoalCritical: (id: string) => void;
@@ -117,6 +118,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fixing, setFixing] = useState<string | null>(null);   // refining an item mid-Planning
   const [openPlan, setOpenPlan] = useState<string | null>(null); // which item's task plan is open
+  // Topic three's other question, which the Guide asks and the game did not: does the state of the
+  // Backlog mean refinement has to be planned INTO this Sprint?
+  const [planRefine, setPlanRefine] = useState(false);
 
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
@@ -135,6 +139,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const candidates = goalCandidates(state);
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
   const stars = revealed(state, 'essentials');
+  const horizon = readyHorizon(state);
+  const totalSteps = chosen.reduce((n, i) => n + (i.tasks ?? []).filter((t) => t.label.trim()).length, 0);
 
   const toggle = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
@@ -253,7 +259,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                     className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">Refine the Backlog</button>
                 )}
               </div>
-              <div className="space-y-1.5">
+              <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
                   <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
                     note={"You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
@@ -265,7 +271,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               <Meter committed={committed} capacity={capacity} count={chosen.length} />
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
               {chosen.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
-              <div className="space-y-1.5">
+              <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">
                 {chosen.map((it) => (
                   <PickCard key={it.id} item={it} chosen why={null} onPick={() => toggle(it.id)} />
                 ))}
@@ -302,6 +308,36 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             </Button>
           </div>
 
+          {/* The state of the Backlog, and the decision it forces. */}
+          <section className={cn('rounded-lg border px-3 py-2.5', planRefine ? 'border-primary/40 bg-primary/5' : 'border-border bg-muted/20')}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold">Does the Backlog need refining this Sprint?</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
+                  {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
+                    : horizon > 3 ? ' That is plenty - build instead.'
+                      : ' Enough for now, but it burns down as you go.'}
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-1.5">
+                {[false, true].map((v) => (
+                  <button key={String(v)} type="button" onClick={() => setPlanRefine(v)}
+                    className={cn('rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      planRefine === v ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+                    {v ? 'Plan it in' : 'Not this Sprint'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {planRefine && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Time set aside for the whole Scrum Team to refine together. It comes out of every day&rsquo;s build time -
+                that is the trade-off - and what it prepares is later Sprints, not this one.
+              </p>
+            )}
+          </section>
+
           <div className="space-y-2">
             {chosen.map((it) => {
               const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
@@ -337,10 +373,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       )}
 
       {/* One primary action, always in the same place. */}
-      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-        <div className="min-w-0">
-          {step !== 'why' && <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>← Back</Button>}
-        </div>
+      <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>
         <div className="flex items-center gap-2.5">
           {step === 'why' && (
             <>
@@ -354,9 +387,18 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               <Button disabled={!hasWhat} onClick={() => setStep('how')}>Next: how <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
-          {step === 'how' && <Button onClick={() => onPlan([...selected])}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>}
+          {step === 'how' && (
+            <>
+              {/* What the three topics just produced, said at the moment it comes into being. The
+                  Sprint Backlog is the output of the event, and the learner should watch it appear. */}
+              <span className="hidden text-[11px] text-muted-foreground lg:inline">
+                Creates the <strong className="text-foreground">Sprint Backlog</strong>: your Sprint Goal, {chosen.length} item{chosen.length === 1 ? '' : 's'} ({committed} pts){totalSteps > 0 ? `, ${totalSteps} steps` : ''}
+              </span>
+              <Button onClick={() => onPlan([...selected], planRefine)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
+            </>
+          )}
         </div>
-      </div>
+      </ActionBar>
     </div>
   );
 }

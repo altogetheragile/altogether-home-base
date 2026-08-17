@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
@@ -2056,5 +2056,31 @@ describe('zoo game: one idea at a time', () => {
     const s = setWipLimit(initialZooState(1), 1);
     expect(revealed(s, 'wip')).toBe(true);
     expect(activeWipLimit(s)).toBe(1);
+  });
+});
+
+describe('zoo game: refinement can be planned into the Sprint (topic three)', () => {
+  it('costs every day of the Sprint it was planned into', () => {
+    const plain = planSprint(bigCatsSplit(1), ['lion-enc']);
+    const withRefine = planSprint(bigCatsSplit(1), ['lion-enc'], true);
+    expect(plain.plannedRefinement).toBeFalsy();
+    expect(plain.refinePenalty).toBe(0);
+    expect(withRefine.plannedRefinement).toBe(true);
+    expect(withRefine.refinePenalty).toBe(PLANNED_REFINE_SECONDS);
+    // ...and it does not wear off after the first day
+    const nextDay = startDay(endDay(withRefine));
+    expect(nextDay.refinePenalty).toBe(PLANNED_REFINE_SECONDS);
+  });
+
+  it('is a decision per Sprint, not a setting that sticks', () => {
+    const s = startNextSprint(reviewSprint(planSprint(bigCatsSplit(1), ['lion-enc'], true)), 'Finish fewer things properly, rather than starting more');
+    expect(planSprint({ ...s, phase: 'planning' }, []).plannedRefinement).toBe(false);
+  });
+});
+
+describe('zoo game: the Retrospective asks about people', () => {
+  it('always offers a question about how the team worked together', () => {
+    const reviewed = reviewSprint(buildAndOpen(bigCatsSplit(1), ['lion-enc']));
+    expect(retroQuestions(reviewed).some((q) => /together|help/i.test(q))).toBe(true);
   });
 });
