@@ -45,6 +45,10 @@ export function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem;
         <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
       <p className="text-[11px] text-muted-foreground">Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). Untick anything you don&rsquo;t want yet - the epic stays for the rest.</p>
+      <p className="text-[11px] text-muted-foreground/70">
+        &ldquo;Epic&rdquo; and splitting are common practice, not Scrum. The Guide has one kind of thing on a Product Backlog and
+        asks only that an item you forecast can be Done inside a Sprint - splitting is how you get there.
+      </p>
       <ul className="space-y-1.5">
         {members.map((mem) => (
           <li key={mem.id}>

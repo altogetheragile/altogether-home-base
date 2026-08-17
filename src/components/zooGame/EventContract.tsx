@@ -25,7 +25,14 @@ export function EventContractStrip({ phase }: { phase: string }) {
   if (c.adapts.length) parts.push({ label: 'Adapting', text: names(c.adapts), cls: ROLE_STYLE.adapts.cls });
   if (c.creates.length) parts.push({ label: 'Creating', text: names(c.creates), cls: ROLE_STYLE.creates.cls });
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border bg-muted/30 px-2.5 py-1.5 text-[11px]">
+    <div className="space-y-1 rounded-md border border-border bg-muted/30 px-2.5 py-1.5 text-[11px]">
+      {/* Why these strips exist at all: the events are the formal chances to inspect and adapt, and
+          what they inspect and adapt are the artifacts. Naming the pillars here ties the machinery
+          the learner can see to the idea it serves. */}
+      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/80">
+        Inspect and adapt &middot; transparency, inspection, adaptation
+      </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <span className="font-semibold text-muted-foreground">{c.who}</span>
       {parts.map((p) => (
         <span key={p.label} className={cn('rounded-full px-1.5 py-0.5 font-semibold', p.cls)}>
@@ -33,6 +40,7 @@ export function EventContractStrip({ phase }: { phase: string }) {
         </span>
       ))}
       {c.also && <span className="text-muted-foreground">{c.also}</span>}
+      </div>
     </div>
   );
 }

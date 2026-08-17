@@ -1,5 +1,5 @@
 import type { ZooGameState, PbiDraft } from './types';
-import { SprintLengthPicker } from './PhaseHeader';
+import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { availableItems, readyHorizon } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';

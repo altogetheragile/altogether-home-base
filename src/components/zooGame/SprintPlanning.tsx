@@ -57,8 +57,7 @@ const DETAIL: Record<Step, { title: string; body: string[] }> = {
   why: {
     title: 'Topic one: why this Sprint is valuable',
     body: [
-      'The Product Owner proposes how the product could increase its value, and the whole Scrum Team then collaborates to define the Sprint Goal. It is not handed down.',
-      'The Sprint Goal is the commitment of the Sprint Backlog: one objective, which stays fixed even when the scope around it flexes.',
+      'The Sprint Goal is the commitment of the Sprint Backlog: one objective, which stays fixed even when the scope around it flexes. It is what you protect when something has to give.',
       'You write it looking at the top of the Product Backlog, which is what the Product Owner is proposing value from.',
     ],
   },
