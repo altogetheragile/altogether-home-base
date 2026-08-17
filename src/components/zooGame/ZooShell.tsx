@@ -77,11 +77,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
   const tab = parkTab ?? localTab;
   const setTab = onSetTab ?? setLocalTab;
   const open = state.backlog.filter((it) => it.status === 'open').length;
-  // Where the park earns a rail beside the work. Only at the Review and the wrap-up, where the park
-  // IS the thing being inspected. During the Sprint the work is the board, and a 300px park squeezed
-  // beside it is neither useful nor legible - the Park tab gives it the whole width, and placing an
-  // item takes you there by itself.
-  const railHere = state.phase === 'review' || state.phase === 'final';
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
@@ -181,12 +176,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
       )}
 
       {/* Body: fills the remaining height and scrolls INTERNALLY so the page never scrolls.
-          Narrow/portrait: one pane at a time via the tabs. Wide (xl), Park tab: the park expands
-          to the full width. Wide (xl), Work tab: the park sits alongside as a rail ONLY where the
-          park is what the work acts on - building and deploying during the Sprint, and inspecting
-          the Increment at the Review. In the events that work on the Backlog (refinement, Planning,
-          the Retrospective) the rail is just the Park tab said twice, and it steals the width the
-          Backlog needs, so the tab carries it alone.
+          One pane at a time, at every size: the work, or the park. There is no park rail beside the
+          work - the Park tab does that job, and a park squeezed into 300px beside a board was the
+          same thing said twice while stealing the width the work needed. Placing an item takes you
+          to the Park tab by itself.
           Both panes stay mounted (toggled with CSS) so the day clock / studio work survive. */}
       <div className="min-h-0 flex-1 overflow-hidden xl:flex">
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3 xl:min-w-0 xl:flex-1', tab === 'park' && 'hidden')}>
@@ -198,9 +191,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
           </div>
         </div>
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3',
-          tab !== 'park' && (railHere ? 'hidden xl:block' : 'hidden'),
-          tab === 'work' && 'xl:w-[360px] xl:shrink-0 xl:border-l xl:border-border',
-          tab === 'park' && 'xl:flex-1 xl:min-w-0')}>
+          tab === 'park' ? 'xl:min-w-0 xl:flex-1' : 'hidden')}>
           <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
         </div>
       </div>
