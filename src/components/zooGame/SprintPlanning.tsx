@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ZooGameState, SprintTask } from './types';
 import { availableItems, goalCandidates, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
 import { NewHere } from './NewHere';
@@ -127,6 +127,10 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const hasWhat = chosen.length > 0;
   const essentials = chosen.filter((i) => i.goalCritical).length;
   const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
+  // Refining opens a panel above the columns; bring it into view so it is not something you have to
+  // go looking for after the popover that offered it has closed.
+  const fixRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (fixing) fixRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [fixing]);
   // What a Goal would be about before anything is picked: the top of the Backlog, capped at a Sprint.
   const candidates = goalCandidates(state);
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
@@ -230,7 +234,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           )}
 
           {fixingItem && (
-            <div>
+            <div ref={fixRef}>
               {fixingItem.category === 'epic'
                 ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} onCancel={() => setFixing(null)} />
                 : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
