@@ -7,6 +7,7 @@ import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
+import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
@@ -250,14 +251,11 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
 
       </>)}
 
-      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-        <div className="min-w-0">
-          {step !== 'done' && <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button>}
-        </div>
+      <ActionBar left={step !== 'done' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button> : undefined}>
         {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
           : step === 'visitors' ? <Button onClick={() => setStep('next')}>Next: what we do about it &rarr;</Button>
             : <Button onClick={onContinue}>Retrospective &rarr;</Button>}
-      </div>
+      </ActionBar>
     </div>
   );
 }

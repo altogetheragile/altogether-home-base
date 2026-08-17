@@ -1,5 +1,6 @@
 import type { ZooGameState, PbiDraft } from './types';
 import { SprintLengthPicker } from './SprintLengthPicker';
+import { ActionBar } from './ActionBar';
 import { ExplainButton } from './Explain';
 import { availableItems, readyHorizon } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
@@ -42,7 +43,7 @@ export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, on
   const horizon = readyHorizon(state);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-3">
+    <div className="mx-auto flex max-w-3xl flex-col gap-3">
       {/* The first pass through the Backlog is not the same conversation as the ones after it: nothing
           has been built, nothing is ready, and there is no Sprint yet to be "in". Either way what
           refining costs comes out of the Sprint you are about to forecast, not one you are inside. */}
@@ -80,13 +81,16 @@ export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, on
         </span>
       </div>
 
+      {/* The list scrolls inside itself, so the question, the Sprint length and the readiness bar
+          stay put - nothing important goes below the fold just because the Backlog is long. */}
+      <div className="max-h-[42vh] overflow-y-auto pr-1">
       <ProductBacklogSidebar state={state} mode="refine" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
         onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
-
-      <div className="sticky bottom-4 flex flex-col items-end gap-1">
-        {!canPlan && <span className="text-[11px] text-muted-foreground">Estimate at least one item so it is Ready to plan.</span>}
-        <Button size="lg" disabled={!canPlan} onClick={onPlan}>Go to Sprint Planning →</Button>
       </div>
+
+      <ActionBar hint={!canPlan ? 'Estimate at least one item so it is Ready to plan' : undefined}>
+        <Button disabled={!canPlan} onClick={onPlan}>Go to Sprint Planning &rarr;</Button>
+      </ActionBar>
     </div>
   );
 }

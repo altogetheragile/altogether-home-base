@@ -497,7 +497,8 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
       {isExhibit && <p className="mt-3 text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
 
-      <div className="mt-3 flex items-center justify-end gap-2">
+      {/* Sticky inside the modal: a tall build should never put "Finish the build" below a scroll. */}
+      <div className="sticky bottom-0 -mx-4 -mb-4 mt-3 flex items-center justify-end gap-2 rounded-b-lg border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
         {/* A close within reach of the primary action - the top "Back" scrolls out of view. */}
         {blocker && <span className="mr-1 text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</span>}
         <Button variant="outline" size="sm" onClick={onCancel}>Close</Button>

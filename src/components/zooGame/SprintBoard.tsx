@@ -6,6 +6,7 @@ import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
+import { ActionBar } from './ActionBar';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
@@ -357,17 +358,6 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
           )}
           {!dayStarting && <RefineChip horizon={readyHorizon(state)} onOpen={() => setShowBacklog(true)} />}
           <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
-          {!dayStarting && (
-            // Say which day's Daily Scrum is coming: held at the day's START it belongs to the NEXT
-            // day, which otherwise reads as though the Scrum is an end-of-day event.
-            <Button size="sm" className="h-8" onClick={onEndDay}>
-              {state.dayNumber === state.sprintDays
-                ? 'End day → Review'
-                : state.dailyScrumAt === 'start'
-                  ? `End Day ${state.dayNumber} → Day ${state.dayNumber + 1} Scrum`
-                  : `End Day ${state.dayNumber} → its Scrum`}
-            </Button>
-          )}
         </div>
       </div>
 
@@ -530,6 +520,21 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
             </div>
           </div>
         </>
+      )}
+
+      {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
+          Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads
+          as though the Scrum is an end-of-day event. */}
+      {!dayStarting && (
+        <ActionBar>
+          <Button onClick={onEndDay}>
+            {state.dayNumber === state.sprintDays
+              ? 'End day \u2192 Review'
+              : state.dailyScrumAt === 'start'
+                ? `End Day ${state.dayNumber} \u2192 Day ${state.dayNumber + 1} Scrum`
+                : `End Day ${state.dayNumber} \u2192 its Scrum`}
+          </Button>
+        </ActionBar>
       )}
 
       {/* The studio opens as a modal OVER the board, so the Scrum board stays in view

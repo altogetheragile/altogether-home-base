@@ -9,6 +9,7 @@ import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
+import { ActionBar } from './ActionBar';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -258,7 +259,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                     className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">Refine the Backlog</button>
                 )}
               </div>
-              <div className="space-y-1.5">
+              <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
                   <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
                     note={"You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
@@ -270,7 +271,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               <Meter committed={committed} capacity={capacity} count={chosen.length} />
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
               {chosen.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
-              <div className="space-y-1.5">
+              <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">
                 {chosen.map((it) => (
                   <PickCard key={it.id} item={it} chosen why={null} onPick={() => toggle(it.id)} />
                 ))}
@@ -372,10 +373,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
       )}
 
       {/* One primary action, always in the same place. */}
-      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
-        <div className="min-w-0">
-          {step !== 'why' && <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>← Back</Button>}
-        </div>
+      <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>
         <div className="flex items-center gap-2.5">
           {step === 'why' && (
             <>
@@ -400,7 +398,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
             </>
           )}
         </div>
-      </div>
+      </ActionBar>
     </div>
   );
 }

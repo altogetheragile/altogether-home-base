@@ -3,6 +3,7 @@ import type { ZooGameState } from './types';
 import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
+import { ActionBar } from './ActionBar';
 import { retroQuestions } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
@@ -85,8 +86,11 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       )}
 
       {step === 'adapt' && (<>
-      {/* The Retrospective is where the team inspects and adapts the Definition of Done. */}
-      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+      {/* The Retrospective is where the team inspects and adapts the Definition of Done. It is a
+          long editor, so it scrolls inside itself rather than pushing the improvements off screen. */}
+      <div className="max-h-[22vh] overflow-y-auto pr-1">
+        <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+      </div>
 
       {/* ...and the only place the Sprint's own length changes, because a fixed container is the
           point of it. Never in Planning, where the box would just be sized to the work. */}
@@ -98,7 +102,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
         <h3 className="text-sm font-semibold">Pick one improvement</h3>
         <p className="text-[11px] text-muted-foreground">Inspect-and-adapt has teeth: some improvements change how the Scrum Team works next Sprint. Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · Daily Scrums are efficient' : ''}.</p>
       </div>
-      <div className="space-y-2">
+      <div className="max-h-[22vh] space-y-2 overflow-y-auto pr-1">
         {IMPROVEMENTS.map((imp) => (
           <button key={imp.text} type="button" onClick={() => setSelected(imp.text)}
             className={cn('w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
@@ -118,17 +122,12 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
 
       </>)}
 
-      {/* A normal in-flow action row (not sticky), so a long, coached DoD editor is never
-          overlapped by a floating bar. */}
-      <div className="mt-2 flex items-center justify-between gap-3 border-t border-border pt-4">
-        <div>{step === 'adapt' && <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button>}</div>
+      <ActionBar left={step === 'adapt' ? <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button> : undefined}
+        hint={step === 'adapt' && !selected ? 'Pick one improvement to carry forward' : undefined}>
         {step === 'inspect'
           ? <Button onClick={() => setStep('adapt')}>Next: what we will change &rarr;</Button>
-          : <>
-            {!selected && <span className="hidden text-[11px] text-muted-foreground sm:inline">Pick one improvement to carry forward</span>}
-            <Button disabled={!selected} onClick={() => selected && onNextSprint(selected)}>Start Sprint {state.sprintNumber + 1} &rarr;</Button>
-          </>}
-      </div>
+          : <Button disabled={!selected} onClick={() => selected && onNextSprint(selected)}>Start Sprint {state.sprintNumber + 1} &rarr;</Button>}
+      </ActionBar>
     </div>
   );
 }
