@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT } from './config';
 import {
   planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -855,7 +855,8 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
 describe('zoo game: WIP limit and improvements with teeth', () => {
   it('the WIP limit blocks starting more items than the limit allows', () => {
     // Their enclosures are built first, so the WIP limit is what gates starting (not the habitat).
-    let s = withEnclosuresBuilt(flat(bigCatsSplit(1)), 'lion-enc', 'tiger-enc', 'leopard-enc', 'penguin-enc');
+    // Sprint 2, because a limit the player has not met yet is not enforced - see "one idea at a time".
+    let s = { ...withEnclosuresBuilt(flat(bigCatsSplit(1)), 'lion-enc', 'tiger-enc', 'leopard-enc', 'penguin-enc'), sprintNumber: 2 };
     s = planSprint(s, ['lion', 'tiger', 'leopard', 'penguins']);
     expect(s.wipLimit).toBe(3);
     const doing = () => s.backlog.filter((i) => i.status === 'committed' && i.started).length;
@@ -2023,5 +2024,37 @@ describe('zoo game: the coach says only what the screens do not', () => {
     const thin = { ...bigCatsSplit(1), phase: 'planning' as const,
       backlog: bigCatsSplit(1).backlog.map((it) => (it.status === 'backlog' ? { ...it, unsized: true } : it)) };
     expect(nextNudge(thin)?.id).toBe('refine-late');
+  });
+});
+
+describe('zoo game: one idea at a time', () => {
+  it('leaves Sprint 1 as the plain loop', () => {
+    const s = initialZooState(1);
+    expect(revealed(s, 'wip')).toBe(false);
+    expect(revealed(s, 'burndown')).toBe(false);
+    expect(revealed(s, 'essentials')).toBe(false);
+    expect(activeWipLimit(s)).toBe(0); // and an unmet rule is not enforced either
+  });
+
+  it('does not block a first-Sprint player on a limit they have never been told about', () => {
+    // Three items started in Sprint 1 - the default limit would have stopped the third.
+    let s = planSprint(bigCatsSplit(1), ['lion-enc', 'paths', 'trees']);
+    for (const id of ['lion-enc', 'paths', 'trees']) s = startItem(s, id);
+    expect(s.backlog.filter((i) => i.started).length).toBe(3);
+    expect(DEFAULT_WIP_LIMIT).toBeLessThan(3 + 1); // the limit exists; it just has not been met yet
+  });
+
+  it('turns them on from Sprint 2, once there is a Sprint to compare against', () => {
+    const s = { ...initialZooState(1), sprintNumber: 2 };
+    expect(revealed(s, 'wip')).toBe(true);
+    expect(revealed(s, 'burndown')).toBe(true);
+    expect(revealed(s, 'essentials')).toBe(true);
+    expect(activeWipLimit(s)).toBe(s.wipLimit);
+  });
+
+  it('turns the WIP limit on early for a player who goes looking for it', () => {
+    const s = setWipLimit(initialZooState(1), 1);
+    expect(revealed(s, 'wip')).toBe(true);
+    expect(activeWipLimit(s)).toBe(1);
   });
 });

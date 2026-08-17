@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, isSignOffTask, signOffReady } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
+import { NewHere } from './NewHere';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
@@ -217,7 +218,10 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
   // Deploy = built to the Definition of Done, awaiting release; Done = deployed (live to visitors).
   const deploy = committed.filter((it) => it.status === 'done');
   const done = committed.filter((it) => it.status === 'open');
-  const atWipLimit = doing.length >= state.wipLimit;
+  const atWipLimit = activeWipLimit(state) > 0 && doing.length >= activeWipLimit(state);
+  // Ideas that waited for the Sprint where they matter introduce themselves in the Sprint they
+  // arrive in, and then stop shouting.
+  const fresh = state.sprintNumber === 2;
   const backlog = availableItems(state);
   const available = backlog.length; // shown on the collapsed tab, so it still tells you what is waiting
   const fixingItem = fixing ? backlog.find((i) => i.id === fixing) : null;
@@ -259,7 +263,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
       const it = todo.find((x) => x.id === id);
       if (!it) return;
       if (!enclosureReady(state, it)) { toast.error(`Build ${enclosureOf(state, it)?.name ?? 'its enclosure'} first - the animal goes in once its habitat is ready.`); return; }
-      if (atWipLimit) { toast.error(`WIP limit ${state.wipLimit} reached - finish something in Doing first.`); return; }
+      if (atWipLimit) { toast.error(`WIP limit ${activeWipLimit(state)} reached - finish something in Doing first.`); return; }
       onStartItem(id);
     } else if (o === 'open') {
       if (!deployReady(id)) { toast.error('Place it on the park and confirm its criteria - the Product Owner signs off once they are all met.'); return; }
@@ -340,7 +344,15 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          {!dayStarting && <BurndownChip state={state} />}
+          {!dayStarting && revealed(state, 'burndown') && (
+            <span className="flex items-center gap-1">
+              <BurndownChip state={state} />
+              {fresh && <NewHere title="A burndown">
+                <p>How much of the forecast is left, day by day. It needed a Sprint behind it to be worth anything.</p>
+                <p>It is a common practice, not part of Scrum - and it is for the Developers to see their own progress, not a report to anyone.</p>
+              </NewHere>}
+            </span>
+          )}
           {!dayStarting && <RefineChip horizon={readyHorizon(state)} onOpen={() => setShowBacklog(true)} />}
           <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
           {!dayStarting && (
@@ -426,7 +438,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                     const encName = enclosureOf(state, it)?.name ?? 'its enclosure';
                     const blocked = atWipLimit || needsEnc;
                     const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
-                      : atWipLimit ? `WIP limit ${state.wipLimit} reached - finish something in Doing first` : undefined;
+                      : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
                       <ItemCard item={it}
@@ -450,7 +462,13 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                 </BoardColumn>
                 </div>
                 <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow', dropClass('doing'))}>
-                <BoardColumn title="Doing" count={doing.length} limit={state.wipLimit || undefined} hint="Nothing in progress">
+                <BoardColumn title="Doing" count={doing.length} limit={activeWipLimit(state) || undefined} hint="Nothing in progress"
+                  note={fresh && revealed(state, 'wip') ? (
+                    <NewHere title="A work-in-progress limit">
+                      <p>The Developers start no more than {activeWipLimit(state)} items at once, and swarm to finish rather than starting more.</p>
+                      <p>You have run a Sprint now, so it means something: things finish sooner when fewer are in flight. It is Lean thinking rather than part of Scrum, it is the Developers&rsquo; own agreement, and you can change or switch it off in board settings.</p>
+                    </NewHere>
+                  ) : undefined}>
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (

@@ -109,7 +109,13 @@ are the rules the screens now follow, so the next one does not have to be correc
    say, which is what makes it worth reading.
 6. **Progressive disclosure by default.** The Product Backlog is tucked away during the Sprint; a
    plan opens when you ask for it; the artifacts live in one panel with their commitments.
-7. **Shared parts for shared meaning**: `StepTrack` for "how far through am I", `PickCard` for
+7. **One idea at a time.** Sprint 1 is the plain loop - forecast, build, deploy, inspect, adapt.
+   A work-in-progress limit, a burndown and marking the Goal's essentials arrive at Sprint 2, when
+   there is a Sprint behind you to compare against, and each introduces itself with a "New" chip
+   saying why it has turned up now (`revealed()` in engine.ts, `NewHere.tsx`). An idea that has not
+   been met is not enforced either - a rule nobody has explained, quietly blocking a button, is the
+   worst of both. A player who goes looking (setting a WIP limit themselves) turns it on early.
+8. **Shared parts for shared meaning**: `StepTrack` for "how far through am I", `PickCard` for
    choosing work, `ExplainButton` for "where are the words". If two screens do the same thing they
    look the same doing it.
 

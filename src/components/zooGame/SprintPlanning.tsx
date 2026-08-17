@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, SprintTask } from './types';
-import { availableItems, goalCandidates, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady } from './engine';
+import { availableItems, goalCandidates, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
+import { NewHere } from './NewHere';
 import { zooCapacity } from './config';
 
 import { CategoryIcon, TaskEditor, SplitEpicPanel } from './Board';
@@ -129,6 +130,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
   // What a Goal would be about before anything is picked: the top of the Backlog, capped at a Sprint.
   const candidates = goalCandidates(state);
+  // Marking what the Goal rests on means nothing until you have watched a Sprint run.
+  const stars = revealed(state, 'essentials');
 
   const toggle = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
@@ -277,9 +280,17 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
           <GoalBanner goal={state.sprintGoal} onEdit={() => setStep('why')} />
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[12px] text-muted-foreground">
-              <Star className="mr-1 inline h-3.5 w-3.5 text-amber-500" />
-              Star what the Goal depends on{essentials > 0 ? ` (${essentials} starred)` : ''}, and break each item into steps.
+            <p className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted-foreground">
+              {stars ? <>
+                <Star className="inline h-3.5 w-3.5 text-amber-500" />
+                Star what the Goal depends on{essentials > 0 ? ` (${essentials} starred)` : ''}, and break each item into steps.
+                {state.sprintNumber === 2 && (
+                  <NewHere title="Marking the essentials">
+                    <p>Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.</p>
+                    <p>It appears now because you have watched a Sprint end. Protecting the Goal by dropping scope is a win, not a miss - but only if you have said what the Goal actually rests on.</p>
+                  </NewHere>
+                )}
+              </> : <>Break each item into the steps that build it.</>}
             </p>
             <Button variant="outline" size="sm" className="h-7 px-2 text-xs"
               onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
@@ -294,15 +305,17 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               return (
                 <div key={it.id}>
                   {open ? (
-                    <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={onToggleGoalCritical} onClose={() => setOpenPlan(null)} />
+                    <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
                   ) : (
                     <div onClick={() => setOpenPlan(it.id)}
                       className={cn('flex cursor-pointer items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-sm transition-colors hover:border-primary/60',
                         it.goalCritical ? 'border-amber-400/70' : 'border-border')}>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
-                        title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
-                        <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
-                      </button>
+                      {stars && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
+                          title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
+                          <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
+                        </button>
+                      )}
                       <CategoryIcon item={it} className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 flex-1 truncate font-medium">{it.name}</span>
                       <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.estimate} pts</span>

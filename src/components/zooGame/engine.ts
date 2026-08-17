@@ -5,7 +5,7 @@ import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAccept
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, zooCapacity } from './config';
+import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, DEFAULT_WIP_LIMIT, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -223,6 +223,33 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
   return [...build, ...workflow].map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
 }
 
+// ============= Meeting one idea at a time =============
+//
+// Everything the game can teach used to be on screen from the first minute: a work-in-progress
+// limit before anything had been started, a burndown with nothing to burn, essentials to star
+// before the learner had watched a Sprint miss its Goal. Each is worth teaching, and none of them
+// is worth teaching FIRST.
+//
+// So a few of them wait for the Sprint where they start to mean something. This is not hiding the
+// game: nothing here changes what Scrum is, and the learner can switch any of it on themselves. It
+// is the order a team meets these ideas anyway - you do not agree a WIP limit before you have felt
+// what starting everything at once does to you.
+
+export type Reveal = 'wip' | 'burndown' | 'essentials' | 'velocity';
+
+/** Whether an idea has been met yet. Sprint 1 is the plain loop: forecast, build, deploy, inspect,
+ *  adapt. The rest arrive from Sprint 2, once there is a Sprint behind you to compare against. */
+export function revealed(state: ZooGameState, what: Reveal): boolean {
+  if (state.sprintNumber > 1) return true;
+  // ...unless the player has gone looking: setting a WIP limit yourself in Sprint 1 turns it on.
+  if (what === 'wip') return state.wipLimit !== DEFAULT_WIP_LIMIT;
+  return false;
+}
+
+/** The WIP limit actually in force. An unmet idea is not enforced either - a rule the learner has
+ *  never been told about, quietly blocking a button, is the worst of both. */
+export const activeWipLimit = (state: ZooGameState): number => (revealed(state, 'wip') ? state.wipLimit : 0);
+
 /** Whether a PBI's whole plan is complete (an empty plan counts as complete). */
 export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
 
@@ -327,7 +354,8 @@ export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean 
 export function startItem(state: ZooGameState, id: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || item.status !== 'committed' || item.started) return state;
-  if (state.wipLimit > 0 && doingCount(state) >= state.wipLimit) return state; // WIP limit reached (0 = no limit)
+  const wip = activeWipLimit(state);
+  if (wip > 0 && doingCount(state) >= wip) return state; // WIP limit reached (0 = no limit, or not met yet)
   if (!enclosureReady(state, item)) return state; // build the enclosure before the animals
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
