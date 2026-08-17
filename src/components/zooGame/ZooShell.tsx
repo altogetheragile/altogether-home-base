@@ -157,7 +157,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
             Work shows the work pane + the Park rail; Park expands the park to the full width. */}
         <div className="mt-1 flex gap-1">
           <Tab active={tab === 'work'} onClick={() => setTab('work')} icon={ClipboardList} label={WORK_TAB[state.phase] ?? 'Work'} />
-          <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label="Park" badge={open ? String(open) : undefined} />
+          {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
+              Increment. A learner who never connects the two is playing a building game. */}
+          <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label={"Park \u00b7 the product"} badge={open ? String(open) : undefined} />
         </div>
       </header>
 

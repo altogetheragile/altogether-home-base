@@ -101,6 +101,10 @@ export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: 
       </PopoverTrigger>
       <PopoverContent align="end" className="max-h-[75vh] w-96 overflow-y-auto">
         <div className="space-y-2">
+          <p className="text-[11px] text-muted-foreground">
+            Scrum has three artifacts. Each holds one kind of truth about the work, and each carries a commitment that says
+            what &ldquo;good&rdquo; means for it. This is all of it, whatever screen you are on.
+          </p>
           {artifacts.map((a) => {
             const Icon = ICON[a.id];
             const role = roleFor(state.phase, a.id);
