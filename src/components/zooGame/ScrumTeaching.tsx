@@ -14,6 +14,15 @@ const KIND_LABEL: Record<CardKind, string> = {
 /** A commitment belongs to an artifact, so the label says which: "Commitment of the Product Backlog". */
 const kindLabel = (c: ScrumCard) => (c.kind === 'commitment' && c.of ? `Commitment of the ${c.of}` : KIND_LABEL[c.kind]);
 
+/** The reference, in Scrum's own shape: who the team is, what they do, what they produce, and the
+ *  ideas underneath it all. */
+const REFERENCE_GROUPS: [string, CardKind[]][] = [
+  ['The Scrum Team', ['accountability']],
+  ['The events', ['event']],
+  ['The artifacts and their commitments', ['artifact', 'commitment']],
+  ['The ideas underneath', ['concept']],
+];
+
 function CardBody({ card }: { card: ScrumCard }) {
   return (
     <div className="space-y-1.5 text-[11px] leading-snug">
@@ -62,7 +71,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="max-h-[70vh] w-96 overflow-y-auto">
-        <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="mb-1 flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum reference</span>
           {onSetTeaching && (
             <button type="button" onClick={() => onSetTeaching(!teaching)}
@@ -71,19 +80,32 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
             </button>
           )}
         </div>
-        <div className="space-y-1">
-          {SCRUM_CARDS.map((c) => (
-            <div key={c.id} className="rounded-md border border-border bg-card">
-              <button type="button" onClick={() => setOpen((o) => (o === c.id ? null : c.id))}
-                className="flex w-full items-start gap-2 px-2 py-1.5 text-left">
-                <span className="mt-0.5 shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{KIND_LABEL[c.kind]}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-semibold">{c.title}</span>
-                  {open !== c.id && <span className="block text-[11px] leading-snug text-muted-foreground">{c.summary}</span>}
-                </span>
-              </button>
-              {open === c.id && <div className="border-t border-border px-2 py-1.5"><CardBody card={c} /></div>}
-            </div>
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Every element of Scrum and what it is for. Open one for why it exists, who it belongs to, when it happens and how it works.
+        </p>
+        {/* Grouped the way Scrum is structured, not the order the cards happen to be written in: the
+            team, then what they do, then what they produce, then the ideas underneath. A flat list of
+            seventeen reads as jumble however good each card is. */}
+        <div className="space-y-3">
+          {REFERENCE_GROUPS.map(([heading, kinds]) => (
+            <section key={heading}>
+              <h4 className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">{heading}</h4>
+              <div className="space-y-1">
+                {SCRUM_CARDS.filter((c) => kinds.includes(c.kind)).map((c) => (
+                  <div key={c.id} className="rounded-md border border-border bg-card">
+                    <button type="button" onClick={() => setOpen((o) => (o === c.id ? null : c.id))}
+                      className="flex w-full items-start gap-2 px-2 py-1.5 text-left">
+                      <span className="mt-0.5 shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{kindLabel(c)}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-xs font-semibold">{c.title}</span>
+                        {open !== c.id && <span className="block text-[11px] leading-snug text-muted-foreground">{c.summary}</span>}
+                      </span>
+                    </button>
+                    {open === c.id && <div className="border-t border-border px-2 py-1.5"><CardBody card={c} /></div>}
+                  </div>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       </PopoverContent>

@@ -170,7 +170,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                 <span className="text-sm font-bold">Sprint Goal</span>
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Commitment of the Sprint Backlog</span>
               </div>
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
+              <Button variant="secondary" size="sm" className="h-8 border border-primary/30 bg-primary/10 px-2.5 text-xs font-semibold text-primary hover:bg-primary/20"
+                onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
                 title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
@@ -295,7 +296,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                 )}
               </> : <>Break each item into the steps that build it.</>}
             </p>
-            <Button variant="outline" size="sm" className="h-7 px-2 text-xs"
+            <Button variant="secondary" size="sm" className="h-8 border border-primary/30 bg-primary/10 px-2.5 text-xs font-semibold text-primary hover:bg-primary/20"
               onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
               <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
             </Button>

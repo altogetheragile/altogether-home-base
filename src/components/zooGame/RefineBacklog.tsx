@@ -49,6 +49,7 @@ export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, on
       {/* One question, like every other screen. What refinement is, who does it and how much is
           enough sits behind the "?" rather than as a paragraph over the work. */}
       <header className="space-y-1">
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Backlog Refinement</div>
         <div className="flex items-center gap-2">
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'What could we build first?' : 'What is ready for the Sprints ahead?'}</h2>
           <ExplainButton title="Product Backlog refinement" phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught}

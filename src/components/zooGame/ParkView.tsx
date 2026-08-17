@@ -1169,7 +1169,11 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
           {/* Everything above the park image stays pinned to the top of the scroll area, so the
               stats, the description and the toolbar are always visible while you scroll the park. */}
           <div className="sticky top-0 z-30 -mx-2 -mt-3 space-y-2 border-b border-border bg-background/95 px-2 pb-2 pt-3 backdrop-blur-sm sm:-mx-3 sm:px-3">
-          <p className="text-[11px] text-muted-foreground">The park shows the work you have delivered. Drag an enclosure, building or planting to lay out your zoo - animals move with their enclosure.</p>
+          <p className="text-[11px] text-muted-foreground">
+            <strong className="text-foreground">The park is your product.</strong> Everything live here is the sum of the
+            Increments you have delivered - each Sprint adds to it. Drag an enclosure, building or planting to lay out your
+            zoo; animals move with their enclosure.
+          </p>
           {statsBar}
           <div className="flex flex-wrap items-center justify-between gap-2">
             {features.length > 0 && onPlaceItem ? (
