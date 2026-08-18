@@ -29,7 +29,14 @@ export interface ScrumCard {
 }
 
 /** The one-page introduction: what Scrum is made of, before a single zoo item is built. */
-export const SCRUM_INTRO = {
+export const SCRUM_INTRO: {
+  what: string;
+  foundations: { name: string; text: string }[];
+  accountabilities: { name: string; text: string }[];
+  artifacts: { name: string; commitment: string; text: string }[];
+  events: { name: string; text: string }[];
+  values: { name: string; text: string }[];
+} = {
   what: 'Scrum is a lightweight framework that helps people, teams and organisations generate value through adaptive solutions for complex problems. It is deliberately incomplete: it defines only the parts needed to make empiricism work, and leaves how you do the work to you.',
   foundations: [
     { name: 'Empiricism', text: 'Knowledge comes from experience, and decisions are made on what is observed. Its three pillars are transparency, inspection and adaptation.' },

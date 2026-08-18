@@ -1189,29 +1189,40 @@ export function productGoalProgress(state: ZooGameState): number {
  *  Sprint. Deliberately open (What / How / When) and non-judgemental - a facilitator evoking
  *  reflection, not a scorecard - so "why" (which invites justification) is avoided. Returns up
  *  to three: the specific ones that fit, topped up with general ones so there is always a prompt. */
+/** The Retrospective's open questions, as editable data. The conditional ones are drawn from what
+ *  actually happened in the Sprint; the general ones always have something to offer. */
+export interface RetroQuestion { id: string; when: string; text: string; applies?: (s: ZooGameState) => boolean }
+
+export const RETRO_QUESTIONS: RetroQuestion[] = [
+  { id: 'goal-missed', when: 'When the Sprint Goal was not met',
+    applies: (s) => s.sprintGoalMet === false,
+    text: 'What got in the way of the Sprint Goal, and what is within your control to change next Sprint?' },
+  { id: 'over-forecast', when: 'When more was forecast than delivered',
+    applies: (s) => s.sprintForecast > (s.velocity[s.velocity.length - 1] ?? 0),
+    text: 'How will you decide what to pull into the next Sprint, having forecast more than you finished?' },
+  { id: 'delivery-fell', when: 'When delivery fell against the Sprint before',
+    applies: (s) => { const d = s.velocity[s.velocity.length - 1] ?? 0; const p = s.velocity[s.velocity.length - 2]; return p != null && d < p; },
+    text: 'What is the story behind your delivery falling this Sprint?' },
+  { id: 'unhappy-visitors', when: 'When visitor happiness is below 50',
+    applies: (s) => (s.lastReview?.overallHappiness ?? null) != null && (s.lastReview?.overallHappiness ?? 0) < 50,
+    text: 'What did the visitors tell you, and what is the smallest change that would lift how they felt?' },
+  { id: 'signals-waiting', when: 'When visitor signals are waiting to be acted on',
+    applies: (s) => s.signals.length > 0,
+    text: 'How will you choose which of your visitors\u2019 signals to act on?' },
+  // The Guide's first two inspection targets are individuals and interactions - ask about them
+  // before process, or a Retrospective quietly becomes a delivery post-mortem.
+  { id: 'together', when: 'Always offered', text: 'How well did you work together this Sprint - who needed help, and did they get it?' },
+  { id: 'went-well', when: 'Always offered', text: 'What went well this Sprint that you want to keep doing?' },
+  { id: 'biggest-difference', when: 'Always offered', text: 'What would make the biggest difference to how the team works next Sprint?' },
+  { id: 'first-sense', when: 'Always offered', text: 'When did you first sense how this Sprint would go?' },
+];
+
 export function retroQuestions(state: ZooGameState): string[] {
-  const qs: string[] = [];
-  const delivered = state.velocity[state.velocity.length - 1] ?? 0;
-  const previous = state.velocity[state.velocity.length - 2];
-  const happiness = state.lastReview?.overallHappiness ?? null;
-
-  if (state.sprintGoalMet === false) qs.push('What got in the way of the Sprint Goal, and what is within your control to change next Sprint?');
-  if (state.sprintForecast > delivered) qs.push('How will you decide what to pull into the next Sprint, having forecast more than you finished?');
-  if (previous != null && delivered < previous) qs.push('What is the story behind your delivery falling this Sprint?');
-  if (happiness != null && happiness < 50) qs.push('What did the visitors tell you, and what is the smallest change that would lift how they felt?');
-  if (state.signals.length > 0) qs.push('How will you choose which of your visitors’ signals to act on?');
-
-  // Always leave the team with something to build on.
-  const general = [
-    // The Guide's first two inspection targets are individuals and interactions - ask about them
-    // before process, or a Retrospective quietly becomes a delivery post-mortem.
-    'How well did you work together this Sprint - who needed help, and did they get it?',
-    'What went well this Sprint that you want to keep doing?',
-    'What would make the biggest difference to how the team works next Sprint?',
-    'When did you first sense how this Sprint would go?',
-  ];
-  for (const g of general) { if (qs.length >= 3) break; qs.push(g); }
-  return qs.slice(0, 3);
+  // What happened this Sprint first, then the standing questions - three in all, so the team has
+  // something to talk about rather than a form to fill in.
+  const fromThisSprint = RETRO_QUESTIONS.filter((q) => q.applies?.(state));
+  const general = RETRO_QUESTIONS.filter((q) => !q.applies);
+  return [...fromThisSprint, ...general].slice(0, 3).map((q) => q.text);
 }
 
 // ============= The coach: one gentle nudge at a time =============
@@ -1223,40 +1234,59 @@ export function retroQuestions(state: ZooGameState): string[] {
  *
  *  Pure and ordered: the first matching rule wins, so the earliest unmet thing is what you hear
  *  about. `seen` lets the UI hide ones the player has waved away this session. */
+/** What the coach can see when deciding whether to speak. */
+interface NudgeContext { state: ZooGameState; readyCount: number; epicCount: number; inSprintCount: number; horizon: number; exhibitsReady: number; doneWaiting: boolean }
+
+/** The coach's lines, as editable data rather than strings buried in a function - `{horizon}` is
+ *  filled in when the line is shown. `where` tells the in-game copy editor which screen to list it
+ *  under; `when` decides whether it has anything to say. */
+export interface CoachNudge { id: string; where: string; phases: string[]; text: string; when: (c: NudgeContext) => boolean }
+
+export const COACH_NUDGES: CoachNudge[] = [
+  // The scenery starts ready, but the zoo's value is locked inside the epics - so the opening
+  // nudge is about those, not about how many points happen to be sized.
+  { id: 'over-refined', where: 'Refinement, when the Backlog is refined too far ahead', phases: ['refine'],
+    when: (c) => c.state.phase === 'refine' && c.horizon > 3,
+    text: 'That is roughly {horizon} Sprints of work refined in detail. Analysing work you may never build is waste - what you learn from opening the first exhibits will change it. Build something first.' },
+  { id: 'refine-first', where: 'Refinement, first Sprint, when the animals are still inside epics', phases: ['refine'],
+    when: (c) => c.state.phase === 'refine' && c.state.sprintNumber === 1 && c.epicCount > 0 && c.exhibitsReady < 3,
+    text: 'The paths and benches are ready to build, but the animals are all locked inside epics - and visitors come for the exhibits. Split one into pieces you could actually build, and size them: enough to fill a Sprint or two, not the whole zoo.' },
+  { id: 'refine-enough', where: 'Refinement, when there is enough ready work to start', phases: ['refine'],
+    when: (c) => c.state.phase === 'refine' && c.horizon >= 1 && c.horizon <= 3,
+    text: 'You have about {horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Backlog better than more analysis now.' },
+  { id: 'refine-ahead', where: 'The Sprint board, when less than a Sprint of ready work is left', phases: ['sprint'],
+    when: (c) => c.state.phase === 'sprint' && c.horizon < 1 && c.inSprintCount > 0,
+    text: 'Less than a Sprint of ready work is left. Get the whole Scrum Team round the Backlog while this Sprint runs - the PO brings the value, the Developers bring what it would take. It costs build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },
+  // Refinement is a Scrum Team activity, not a PO chore and not a separate meeting the Developers
+  // are summoned to. Ask for it partway through the Sprint, once the build is under way.
+  { id: 'refine-midsprint', where: 'The Sprint board, from day two', phases: ['sprint'],
+    when: (c) => c.state.phase === 'sprint' && c.state.dayNumber > 1 && c.horizon <= 2 && c.inSprintCount > 0,
+    text: 'About {horizon} Sprints of work is ready. Take some time this Sprint to refine together - the whole Scrum Team, not the PO alone - so the Backlog stays a couple of Sprints ahead of you.' },
+  { id: 'refine-late', where: 'Sprint Planning, when nothing is ready to forecast', phases: ['planning'],
+    when: (c) => c.state.phase === 'planning' && c.readyCount === 0,
+    text: 'Nothing is Ready to forecast. You can refine now, but this is late - refinement is meant to happen during the Sprint before, keeping a couple of Sprints ready ahead of you.' },
+  // No "agree the Goal", "now pull in the work" or "start one" nudge: the screens ask exactly those
+  // questions themselves, and a coach who repeats a heading is noise. What is left is what the
+  // screens do NOT say - which is why the coach is worth reading when it does speak.
+  { id: 'deploy-it', where: 'The Sprint board, once something is built and waiting', phases: ['sprint'],
+    when: (c) => c.state.phase === 'sprint' && c.doneWaiting,
+    text: 'You do not have to wait for the Review - anything Done can go live now, and only then is it worth anything to a visitor.' },
+];
+
 export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new Set()): { id: string; text: string } | null {
   const ready = availableItems(state).filter(isReady);
-  const epics = availableItems(state).filter((it) => it.category === 'epic');
   const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
-  const horizon = readyHorizon(state); // Sprints' worth of Ready work waiting
-  const exhibitsReady = ready.filter((it) => it.category === 'exhibit' || it.category === 'enclosure').length;
-  const nudges: { id: string; when: boolean; text: string }[] = [
-    // The scenery starts ready, but the zoo's value is locked inside the epics - so the opening
-    // nudge is about those, not about how many points happen to be sized.
-    { id: 'over-refined', when: state.phase === 'refine' && horizon > 3,
-      text: `That is roughly ${horizon} Sprints of work refined in detail. Analysing work you may never build is waste - what you learn from opening the first exhibits will change it. Build something first.` },
-    { id: 'refine-first', when: state.phase === 'refine' && state.sprintNumber === 1 && epics.length > 0 && exhibitsReady < 3,
-      text: 'The paths and benches are ready to build, but the animals are all locked inside epics - and visitors come for the exhibits. Split one into pieces you could actually build, and size them: enough to fill a Sprint or two, not the whole zoo.' },
-    { id: 'refine-enough', when: state.phase === 'refine' && horizon >= 1 && horizon <= 3,
-      text: `You have about ${horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Backlog better than more analysis now.` },
-    { id: 'refine-ahead', when: state.phase === 'sprint' && horizon < 1 && !!inSprint.length,
-      text: 'Less than a Sprint of ready work is left. Get the whole Scrum Team round the Backlog while this Sprint runs - the PO brings the value, the Developers bring what it would take. It costs build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },
-    // Refinement is a Scrum Team activity, not a PO chore and not a separate meeting the Developers
-    // are summoned to. Ask for it partway through the Sprint, once the build is under way.
-    { id: 'refine-midsprint', when: state.phase === 'sprint' && state.dayNumber > 1 && horizon <= 2 && !!inSprint.length,
-      text: `About ${horizon} Sprints of work is ready. Take some time this Sprint to refine together - the whole Scrum Team, not the PO alone - so the Backlog stays a couple of Sprints ahead of you.` },
-    { id: 'refine-late', when: state.phase === 'planning' && ready.length === 0,
-      text: 'Nothing is Ready to forecast. You can refine now, but this is late - refinement is meant to happen during the Sprint before, keeping a couple of Sprints ready ahead of you.' },
-    // No "agree the Goal" or "now pull in the work" nudge: Sprint Planning asks exactly that as its
-    // own heading, one topic at a time, and a coach who repeats the question on screen is noise.
-    // No "start one" nudge: every To Do card carries a Start button, and a card that cannot start
-    // says why on its face. The deploy nudge stays, trimmed to the part the board does NOT say.
-    { id: 'deploy-it', when: state.phase === 'sprint' && inSprint.some((it) => it.status === 'done'),
-      text: 'You do not have to wait for the Review - anything Done can go live now, and only then is it worth anything to a visitor.' },
-    // Nothing for the Review or the Retrospective: both now walk their own agenda, question by
-    // question, and a coach who repeats the heading is noise. What is left below is what the
-    // screens do NOT say - which is why the coach is worth reading when it does speak.
-  ];
-  return nudges.find((n) => n.when && !seen.has(n.id)) ?? null;
+  const c: NudgeContext = {
+    state,
+    readyCount: ready.length,
+    epicCount: availableItems(state).filter((it) => it.category === 'epic').length,
+    inSprintCount: inSprint.length,
+    horizon: readyHorizon(state),
+    exhibitsReady: ready.filter((it) => it.category === 'exhibit' || it.category === 'enclosure').length,
+    doneWaiting: inSprint.some((it) => it.status === 'done'),
+  };
+  const nudge = COACH_NUDGES.find((n) => n.when(c) && !seen.has(n.id));
+  return nudge ? { id: nudge.id, text: nudge.text.replace(/\{horizon\}/g, String(c.horizon)) } : null;
 }
 
 // ============= The refinement conversation =============
