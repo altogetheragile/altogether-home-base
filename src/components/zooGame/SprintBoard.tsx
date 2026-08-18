@@ -12,7 +12,9 @@ import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ExplainButton } from './Explain';
-import { BoardColumn, ItemCard, CardDetail, SplitEpicPanel } from './Board';
+import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
+import { PbiCard } from './PbiCard';
+import { Chip } from './ui/Chip';
 import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
@@ -434,7 +436,8 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                       : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
-                      <ItemCard item={it}
+                      <PbiCard item={it} state="forecast" density="card"
+                        badges={<Chip>{it.zone}</Chip>}
                         lead={onReorderSprint && todo.length > 1 && (
                           // The order to pick things up in is the Developers' plan, so they can change it.
                           <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Re-order what to pick up next">
@@ -444,11 +447,13 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                               onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'down'); }} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
                           </div>
                         )}
-                        subtitle={<>
-                          {needsEnc && <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">Needs {encName} built first</div>}
+                        note={needsEnc ? `Needs ${encName} built first` : undefined}
+                        detail={<>
                           <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
-                        </>}
-                        actions={<Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>} />
+                          <div className="mt-1.5 flex justify-end">
+                            <Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>
+                          </div>
+                        </>} />
                       </div>
                     );
                   })}
@@ -466,11 +471,14 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'doing')} className="cursor-grab active:cursor-grabbing">
-                      <ItemCard item={it}
-                        badge={it.design
-                          ? <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-medium text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">built{left ? ` · ${left} task${left === 1 ? '' : 's'} left` : ''}</span>
-                          : <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">in progress</span>}
-                        subtitle={<>
+                      <PbiCard item={it} state="doing" density="card"
+                        badges={<>
+                          <Chip>{it.zone}</Chip>
+                          {it.design
+                            ? <Chip tone="coach">built{left ? ` · ${left} left` : ''}</Chip>
+                            : <Chip tone="attention">in progress</Chip>}
+                        </>}
+                        detail={<>
                           {/* Collapsed by default so the card stays compact - tap "Plan · AC" to see
                               and tick the detail. The real building + ticking happens in the studio. */}
                           <CardDetail item={it} interactive showAcceptance built={!!it.design} onToggleTask={onToggleTask} />
@@ -478,8 +486,10 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
                           </div>
-                        </>}
-                        actions={<Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : it.draftDesign ? 'Resume build' : 'Design & build'}</Button>} />
+                          <div className="mt-1.5 flex justify-end">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : it.draftDesign ? 'Resume build' : 'Design & build'}</Button>
+                          </div>
+                        </>} />
                       </div>
                     );
                   })}
@@ -489,17 +499,21 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                 <BoardColumn title="Deploy" count={deploy.length} hint="Place on the park, then Deploy complete">
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
-                    <ItemCard item={it}
+                    <PbiCard item={it} state="built" density="card"
                       // Built in an earlier Sprint and still not released: say so, so a finished
                       // Increment waiting on deployment does not read as this Sprint's work.
-                      badge={it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber ? (
-                        <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400"
-                          title={`Built in Sprint ${it.sprintNumber} and Done - it is waiting to be released, not work forecast for this Sprint`}>
-                          built in Sprint {it.sprintNumber}
-                        </span>
-                      ) : undefined}
-                      subtitle={<CardDetail item={it} interactive showAcceptance built onToggleTask={onToggleTask} />}
-                      actions={deployActions(it)} />
+                      badges={<>
+                        <Chip>{it.zone}</Chip>
+                        {it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber && (
+                          <Chip tone="coach" title={`Built in Sprint ${it.sprintNumber} and Done - it is waiting to be released, not work forecast for this Sprint`}>
+                            built in Sprint {it.sprintNumber}
+                          </Chip>
+                        )}
+                      </>}
+                      detail={<>
+                        <CardDetail item={it} interactive showAcceptance built onToggleTask={onToggleTask} />
+                        <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">{deployActions(it)}</div>
+                      </>} />
                     </div>
                   ))}
                 </BoardColumn>
@@ -509,9 +523,11 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                   {done.map((it) => (
                     // data-done-card lets the delivery celebration burst confetti from this card.
                     <div key={it.id} data-done-card={it.id}>
-                      <ItemCard item={it} className="bg-emerald-50/50 dark:bg-emerald-950/20"
-                        subtitle={<CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />}
-                        actions={doneActions(it)} />
+                      <PbiCard item={it} state="live" density="card" badges={<Chip>{it.zone}</Chip>}
+                        detail={<>
+                          <CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />
+                          <div className="mt-1.5 flex items-center justify-end gap-1.5">{doneActions(it)}</div>
+                        </>} />
                     </div>
                   ))}
                 </BoardColumn>

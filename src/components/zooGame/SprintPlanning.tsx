@@ -4,7 +4,8 @@ import { availableItems, goalCandidates, readyHorizon, suggestSprintGoal, sugges
 import { NewHere } from './NewHere';
 import { zooCapacity } from './config';
 
-import { CategoryIcon, TaskEditor, SplitEpicPanel } from './Board';
+import { TaskEditor, SplitEpicPanel } from './Board';
+import { PbiCard } from './PbiCard';
 import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
@@ -194,20 +195,14 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               <span className="text-[11px] text-muted-foreground/70">ordered by the Product Owner &middot; highlighted is about a Sprint&rsquo;s worth</span>
             </div>
             <div className="grid gap-1.5 sm:grid-cols-2">
-              {items.slice(0, 8).map((it) => {
+              {items.slice(0, 8).map((it) => (
                 // The items the Goal would most likely be about, marked so the suggestion and the
                 // list agree on screen: the Goal comes off the top of the Backlog, as far down as a
                 // Sprint reaches.
-                const inReach = candidates.some((c) => c.id === it.id);
-                return (
-                  <div key={it.id} className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm',
-                    inReach ? 'border-primary/40 bg-primary/5 font-medium' : 'border-border bg-card text-muted-foreground')}>
-                    <CategoryIcon item={it} className={cn('h-4 w-4 shrink-0', inReach ? 'text-primary' : 'text-muted-foreground/60')} />
-                    <span className="min-w-0 flex-1 truncate">{it.name}</span>
-                    <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>
-                  </div>
-                );
-              })}
+                <PbiCard key={it.id} item={it}
+                  state={candidates.some((c) => c.id === it.id) ? 'forecast' : 'backlog'}
+                  className={candidates.some((c) => c.id === it.id) ? undefined : 'opacity-70'} />
+              ))}
             </div>
           </section>
         </div>
@@ -347,23 +342,19 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                   {open ? (
                     <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
                   ) : (
-                    <div onClick={() => setOpenPlan(it.id)}
-                      className={cn('flex cursor-pointer items-center gap-2 rounded-lg border bg-card px-2.5 py-2 text-sm transition-colors hover:border-primary/60',
-                        it.goalCritical ? 'border-amber-400/70' : 'border-border')}>
-                      {stars && (
+                    <PbiCard item={it} state="forecast" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
+                      className={it.goalCritical ? 'border-amber-400/70' : undefined}
+                      lead={stars ? (
                         <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
                           title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
                           <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
                         </button>
-                      )}
-                      <CategoryIcon item={it} className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate font-medium">{it.name}</span>
-                      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.estimate} pts</span>
-                      <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
-                        onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
-                        {tasks.length ? `${tasks.length} steps` : 'Plan it'}
-                      </Button>
-                    </div>
+                      ) : undefined}
+                      trailing={
+                        <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
+                          onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
+                          {tasks.length ? `${tasks.length} steps` : 'Plan it'}
+                        </Button>} />
                   )}
                 </div>
               );

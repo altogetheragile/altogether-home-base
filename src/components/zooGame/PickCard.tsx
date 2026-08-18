@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import type { BacklogItem } from './types';
-import { CategoryIcon } from './Board';
+import { PbiCard } from './PbiCard';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
 import { Lock, Plus, X, Scissors, Wand2 } from 'lucide-react';
 
 /** One Backlog item, as a card you pick up.
@@ -26,16 +25,10 @@ export function PickCard({ item, chosen, why, note, onPick, onFix }: {
 }) {
   const [open, setOpen] = useState(false);
   const card = (
-    <div className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors',
-      why ? 'border-dashed border-border bg-muted/20 text-muted-foreground'
-        : chosen ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/60 hover:bg-primary/5')}>
-      <CategoryIcon item={item} className={cn('h-4 w-4 shrink-0', why ? 'text-muted-foreground/60' : 'text-muted-foreground')} />
-      <span className="min-w-0 flex-1 truncate font-medium">{item.name}</span>
-      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.unsized ? '?' : item.estimate}</span>
-      {why ? <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+    <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'}
+      trailing={why ? undefined
         : chosen ? <X className="h-4 w-4 shrink-0 text-muted-foreground" />
-          : <Plus className="h-4 w-4 shrink-0 text-primary" />}
-    </div>
+          : <Plus className="h-4 w-4 shrink-0 text-primary" />} />
   );
   if (!why) return <button type="button" onClick={onPick} className="w-full text-left">{card}</button>;
   return (
