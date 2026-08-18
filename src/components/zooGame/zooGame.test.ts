@@ -10,6 +10,7 @@ import type { ItemDesign } from './design';
 import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
+import { copyEntries, applyCopyOverrides } from './copy';
 import { iconKey } from './itemIcons';
 
 /** Big Cats arrives as an epic now, so tests that use its animals split it up front - which is
@@ -2082,5 +2083,41 @@ describe('zoo game: the Retrospective asks about people', () => {
   it('always offers a question about how the team worked together', () => {
     const reviewed = reviewSprint(buildAndOpen(bigCatsSplit(1), ['lion-enc']));
     expect(retroQuestions(reviewed).some((q) => /together|help/i.test(q))).toBe(true);
+  });
+});
+
+describe('zoo game: the teaching copy is editable without a deploy', () => {
+  it('offers every card, the one-pager, the coach and the Retro questions', () => {
+    const entries = copyEntries();
+    const groups = new Set(entries.map((e) => e.group));
+    expect(groups).toContain('Teaching cards');
+    expect(groups).toContain('Scrum on one page');
+    expect(groups).toContain('The coach');
+    expect(groups).toContain('Retrospective questions');
+    expect(entries.length).toBeGreaterThan(120);
+    expect(entries.every((e) => e.value.trim().length > 0)).toBe(true);
+  });
+
+  it('keys are unique and stable, so overrides cannot collide or orphan', () => {
+    const keys = copyEntries().map((e) => e.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toContain('card.sprint-planning.why');
+    expect(keys).toContain('nudge.deploy-it');
+  });
+
+  it('an override replaces the shipped wording, and an unknown key is ignored', () => {
+    const before = cardFor('sprint-review')!.why;
+    applyCopyOverrides({ 'card.sprint-review.why': 'Because the visitors will tell you the truth.', 'card.nonsense.why': 'x' });
+    expect(cardFor('sprint-review')!.why).toBe('Because the visitors will tell you the truth.');
+    applyCopyOverrides({ 'card.sprint-review.why': before }); // put it back for the other tests
+    expect(cardFor('sprint-review')!.why).toBe(before);
+  });
+
+  it('scopes copy to the screen it appears on, so the in-game editor can be contextual', () => {
+    const entries = copyEntries();
+    expect(entries.filter((e) => e.phases.includes('retro')).length).toBeGreaterThan(0);
+    expect(entries.filter((e) => e.phases.includes('planning')).length).toBeGreaterThan(0);
+    // Artifacts sit in the header on every screen, so they belong to no single phase.
+    expect(entries.some((e) => e.key.startsWith('artifact.') && e.phases.length === 0)).toBe(true);
   });
 });

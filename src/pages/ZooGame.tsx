@@ -22,6 +22,7 @@ import { pathWidthPx, isDeployAcceptance } from '@/components/zooGame/design';
 import { nextNudge } from '@/components/zooGame/engine';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
+import { useZooCopy } from '@/components/zooGame/useZooCopy';
 
 /** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
  *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
@@ -181,11 +182,26 @@ export default function ZooGame() {
 
   // Sprint Planning shows its teaching inside the "?" beside the question rather than as a card on
   // the page, so the shell must not also render it - the whole point is that nothing is said twice.
+  // Saved teaching copy, laid over the defaults before anything renders - no flash of old wording,
+  // and no game at all until we know which words to use.
+  const zooCopy = useZooCopy();
+  // What has been edited in this session, laid over what was loaded - derived rather than mirrored
+  // into state, so there is no effect chasing an effect.
+  const [copyEdits, setCopyEdits] = useState<Record<string, string>>({});
+  const copyProps = {
+    overrides: (() => {
+      const m = { ...zooCopy.overrides };
+      for (const [k, v] of Object.entries(copyEdits)) { if (v) m[k] = v; else delete m[k]; }
+      return m;
+    })(),
+    onChanged: (key: string, value: string) => setCopyEdits((e) => ({ ...e, [key]: value })),
+  };
+
   const cardFor = (phase: string) => ((state.teaching ?? true)
     ? (CARDS_BY_PHASE[phase] ?? []).find((id) => !(state.taught ?? []).includes(id)) ?? null
     : null);
 
-  const shellProps = { parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onAddCopy: addCopy, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { copy: copyProps, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onAddCopy: addCopy, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
@@ -224,7 +240,9 @@ export default function ZooGame() {
     // The marketing footer is omitted here to reclaim the full screen for the game.
     <div className="flex h-dvh flex-col overflow-hidden">
       <GameTopBar />
-      <main className="min-h-0 flex-1 overflow-hidden">{render()}</main>
+      {/* Hold the game for the one query that decides which words it uses. A blank half-second
+          beats a visible flash of superseded wording in front of a class. */}
+      <main className="min-h-0 flex-1 overflow-hidden">{zooCopy.ready ? render() : null}</main>
       <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
       <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
       <Celebration trigger={celebrate} origin={celebrateOrigin} />
