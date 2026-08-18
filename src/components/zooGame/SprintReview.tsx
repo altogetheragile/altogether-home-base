@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, availableItems, readyHorizon, GOAL_HAPPINESS_TARGET } from './engine';
-import { CategoryIcon } from './Board';
+import { productGoalProgress, availableItems, readyHorizon, notReady, GOAL_HAPPINESS_TARGET } from './engine';
+import { PbiCard } from './PbiCard';
 import { zooCapacity } from './config';
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
@@ -217,13 +217,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
         <div className="grid gap-1.5 sm:grid-cols-2">
           {upNext.length === 0
             ? <p className="text-[12px] text-muted-foreground">Nothing ready. The next Sprint starts with refinement.</p>
-            : upNext.map((it) => (
-              <div key={it.id} className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-[13px]">
-                <CategoryIcon item={it} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{it.name}</span>
-                <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>
-              </div>
-            ))}
+            : upNext.map((it) => <PbiCard key={it.id} item={it} state={notReady(it) ? 'locked' : 'backlog'} />)}
         </div>
         <p className="text-[11px] text-muted-foreground">
           The order is yours as Product Owner, and it is not settled here - the next Sprint Planning forecasts from whatever
