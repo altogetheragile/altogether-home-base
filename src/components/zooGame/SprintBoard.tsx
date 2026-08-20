@@ -567,11 +567,10 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
 
       {/* The studio opens as a modal OVER the board, so the Scrum board stays in view
           (the card sits in Doing behind it) while you build. */}
-      {/* The build sits beside the park, not over it: colour a wall and watch it land on the ground
-          the thing will occupy. A modal here would hide the one thing you are working on.
-          Portalled to the body because the dock it is rendered from uses backdrop-blur, and a
-          filtered ancestor becomes the containing block for `fixed` - the panel would hang from the
-          dock rather than the window. */}
+      {/* The build sits beside the park, and the Sprint Backlog stands aside while it is open - two
+          panels over one park left a strip of grass and nowhere to put the board's own Hide handle.
+          Portalled to the body because the dock it renders from uses backdrop-blur, and a filtered
+          ancestor becomes the containing block for `fixed`. */}
       {designItem && !dayStarting && createPortal(
         <div className="fixed right-0 top-0 z-40 flex h-full w-[min(520px,94vw)] flex-col border-l border-border bg-background shadow-2xl">
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
