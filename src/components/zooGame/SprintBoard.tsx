@@ -332,14 +332,13 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
     <div className="space-y-3">
       {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
           pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
-      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Sprint {state.sprintNumber} &middot; Day {state.dayNumber} of {state.sprintDays}</span>
+            {/* The shell's header already says which Sprint and which day, and the dock says what
+                this is - so on the canvas the board leads with its question and nothing else. */}
+            <h2 className="text-lg font-bold leading-tight tracking-tight">What can we finish today?</h2>
             <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
-          </div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold leading-tight tracking-tight">What can we finish today?</h2>
             <ExplainButton title="The Sprint" phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught}
               body={[
                 'The Sprint is the container the other events live in: a fixed length, one after another, so progress can be inspected on a rhythm.',
