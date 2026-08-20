@@ -663,18 +663,23 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const newId = () => `conn-${connectors.length}-${idc.current++}`;
   // What can be picked up and worked on: something under construction, or something built and
   // placed but not yet released. Once it is live it is the product, not the work.
+  // Set by a feature's own pointerdown so the park underneath knows the press was already handled.
+  // It has to be a flag rather than stopPropagation: Radix listens on the DOCUMENT for the click
+  // that dismisses a popover, so swallowing the event left every colour palette stuck open.
+  const handled = useRef(false);
   const selectable = (f: Feature) => !!onOpenBuild && !!edit && (f.kind === 'site' || f.item.status === 'done');
   // The design as it stands: what was built, or the draft so far, or the shape it starts from - so
   // a site shows the real thing from the moment it is started rather than an empty plot.
   const workingDesign = (it: BacklogItem) => it.design ?? it.draftDesign ?? presetFor(it);
 
   const auto = autoLayout(features);
-  const posOf = (f: Feature) => {
-    if (drag?.id === f.item.id) return drag.pos;
+  /** Where a feature sits when nothing is being dragged - its committed spot. */
+  const restPos = (f: Feature) => {
     const base = f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD };
     // A river starts life running across the middle; from there it can be dragged and turned.
     return landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
   };
+  const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
   const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
 
@@ -781,12 +786,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     // Without stopping the event here it reached the park behind, which cleared the selection - so
     // nudging an enclosure an inch to the left put the whole board back up over the park.
     if (selectable(f)) {
-      e.stopPropagation();
+      handled.current = true;
       if (building !== f.item.id) onOpenBuild?.(f.item.id);
     }
     if (!onPlaceItem || tool !== 'none') return; // in connect mode, clicks draw connectors
     e.preventDefault();
-    e.stopPropagation();
+    handled.current = true;
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const startX = e.clientX, startY = e.clientY;
     const origin = posOf(f);
@@ -955,7 +960,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     <div ref={viewport} className="relative w-full overflow-auto" style={{ height: sceneH * fit * Math.min(zoom, 1) }}>
     <div ref={outer} className="relative" style={{ width: CANVAS_W * scale, height: sceneH * scale, margin: '0 auto' }}>
       <div ref={inner}
-        onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => { onSelectConn?.(null); onOpenBuild?.(null); } : undefined)}
+        onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => { if (handled.current) { handled.current = false; return; } onSelectConn?.(null); onOpenBuild?.(null); } : undefined)}
         onPointerMove={tool === 'connect' ? (e) => setCursor(ptOf(e)) : undefined}
         // Dropping a card from the Sprint Backlog starts it here: the plot it lands on becomes its
         // construction site. The engine decides whether it may start at all.
@@ -1056,6 +1061,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         {/* Features - each absolutely positioned at its centre and draggable. */}
         {features.map((f) => {
           const p = posOf(f);
+          const rest = restPos(f);
           const dragging = drag?.id === f.item.id;
           const queued = improving?.has(f.item.id);
           const isLand = f.kind === 'plot' && f.item.category === 'flora' && isLandscapeType(landType(f.item));
@@ -1067,7 +1073,13 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               // thing, rather than the thing being taken to a panel.
               onClick={selectable(f) ? (e) => { e.stopPropagation(); onOpenBuild?.(f.item.id); } : undefined}
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30', justOpened === f.item.id && 'zoo-pop-in')}
-              style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
+              // A drag MOVES the element rather than re-laying it out. Setting left/top every frame
+              // made the browser re-lay-out and repaint the whole park sixty times a second, and
+              // Safari left the old paint behind as trails. Translating a promoted layer is one
+              // composite step and leaves nothing behind.
+              style={dragging
+                ? { left: rest.x, top: rest.y, transform: `translate(-50%,-50%) translate3d(${p.x - rest.x}px,${p.y - rest.y}px,0)`, touchAction: 'none', willChange: 'transform', backfaceVisibility: 'hidden', filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' }
+                : { left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
               {/* Selected: the same blue frame a drawing tool puts round the thing you are working on. */}
               {building === f.item.id && f.kind !== 'site' && (
                 <div className="pointer-events-none absolute -inset-1.5 z-20 rounded-lg border-2 border-sky-500" aria-hidden />
@@ -1173,10 +1185,20 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         const f = features.find((x) => x.item.id === building);
         if (!f || !selectable(f)) return null;
         const p = posOf(f);
-        const top = (p.y - f.h / 2) * scale - 12;
+        const rest = restPos(f);
+        const moving = drag?.id === f.item.id;
+        const anchor = (at: { x: number; y: number }) => ({
+          left: clamp(at.x * scale, Math.min(330, CANVAS_W * scale / 2), Math.max(330, CANVAS_W * scale - 330)),
+          top: Math.max(48, (at.y - f.h / 2) * scale - 12),
+        });
+        const home = anchor(rest), now = anchor(p);
         return (
+          // It follows the thing it belongs to, and while that thing is moving it follows by
+          // translating - same reason as the feature itself: laying it out every frame smears.
           <div className="absolute z-40 flex -translate-x-1/2 -translate-y-full justify-center"
-            style={{ left: clamp(p.x * scale, Math.min(330, CANVAS_W * scale / 2), Math.max(330, CANVAS_W * scale - 330)), top: Math.max(48, top) }}
+            style={moving
+              ? { ...home, transform: `translate(-50%,-100%) translate3d(${now.left - home.left}px,${now.top - home.top}px,0)`, willChange: 'transform', backfaceVisibility: 'hidden' }
+              : now}
             onPointerDown={(e) => e.stopPropagation()}>
             <ItemToolbar
               item={f.item}
