@@ -429,18 +429,26 @@ interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot' | 'site'; w: n
 
 /** Work under way, on the ground it will occupy: hoardings round a plot, with the item's name on
  *  the board. Visitors never see inside - the Definition of Done is what takes the hoardings down. */
-function ConstructionSite({ item, w, h }: { item: BacklogItem; w: number; h: number }) {
+function ConstructionSite({ item, w, h, selected }: { item: BacklogItem; w: number; h: number; selected?: boolean }) {
+  // What has been made so far, drawn inside the hoardings: colour a wall in the inspector and the
+  // change lands here, on the ground it will occupy. That is the whole point of building in place.
+  const draft = item.draftDesign;
   return (
-    <div className="relative flex items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-amber-500/70"
+    <div className={cn('relative flex items-center justify-center overflow-hidden rounded-md border-2 border-dashed',
+      selected ? 'border-primary ring-2 ring-primary/40' : 'border-amber-500/70')}
       style={{
         width: w, height: h,
         // Hazard stripes, quietly - it should read as "being built", not shout over the park.
         backgroundImage: 'repeating-linear-gradient(45deg, rgba(245,158,11,0.16) 0 8px, rgba(245,158,11,0.05) 8px 16px)',
       }}>
-      <div className="pointer-events-none max-w-full px-1 text-center">
-        <div className="truncate text-[9px] font-bold uppercase tracking-wide text-amber-800/90 dark:text-amber-300/90">Building</div>
-        <div className="truncate text-[10px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
-      </div>
+      {draft
+        ? <div className="pointer-events-none opacity-90"><Plot item={{ ...item, design: draft }} cell={3} /></div>
+        : (
+          <div className="pointer-events-none max-w-full px-1 text-center">
+            <div className="truncate text-[9px] font-bold uppercase tracking-wide text-amber-800/90 dark:text-amber-300/90">Building</div>
+            <div className="truncate text-[10px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
+          </div>
+        )}
     </div>
   );
 }
@@ -543,7 +551,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, building, onOpenBuild, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -554,6 +562,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   connectors: ZooConnector[];
   selectedConn: string | null;
   newConn: { thickness: number; color: string };
+  /** The item whose build inspector is open, so its site can show it is selected. */
+  building?: string | null;
+  /** Open the build inspector for a construction site. */
+  onOpenBuild?: (id: string) => void;
   /** Start a Sprint Backlog item by dropping its card here. */
   onStartHere?: (id: string, pos: { x: number; y: number }) => void;
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
@@ -972,10 +984,13 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
+              // A tap on a construction site opens its build - the controls come to the thing,
+              // rather than the thing being taken to a modal.
+              onClick={f.kind === 'site' && onOpenBuild ? (e) => { e.stopPropagation(); onOpenBuild(f.item.id); } : undefined}
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30', justOpened === f.item.id && 'zoo-pop-in')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
               {f.kind === 'site'
-                ? <ConstructionSite item={f.item} w={f.w} h={f.h - LABEL_H} />
+                ? <ConstructionSite item={f.item} w={f.w} h={f.h - LABEL_H} selected={building === f.item.id} />
                 : f.kind === 'enclosure'
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
@@ -1115,6 +1130,10 @@ function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; 
 
 interface ParkViewProps {
   state: ZooGameState;
+  /** The item whose build inspector is open. */
+  building?: string | null;
+  /** Open the build inspector for a construction site. */
+  onOpenBuild?: (id: string) => void;
   /** Start a Sprint Backlog item by dropping its card on the park. */
   onStartHere?: (id: string, pos: { x: number; y: number }) => void;
   compact?: boolean;
@@ -1163,7 +1182,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, building, onOpenBuild, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1311,7 +1330,7 @@ export function ParkView({ state, compact = false, large = false, onStartHere, o
             </div>
           )}
           </div>
-          <FreeScene onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
+          <FreeScene building={building} onOpenBuild={onOpenBuild} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
