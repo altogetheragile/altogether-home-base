@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { PencilLine, X, RotateCcw, Check, Loader2 } from 'lucide-react';
+import { PencilLine, X, RotateCcw, Check, Loader2, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,10 +48,11 @@ function EditRow({ entry, current, onSaved }: { entry: CopyEntry; current?: stri
       </div>
       <p className="mb-1 text-[10px] text-muted-foreground/80">{entry.where}</p>
       {entry.long
-        ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={4}
-          className="w-full resize-y rounded border border-border bg-background px-2 py-1 text-[12px] leading-snug outline-none focus:border-primary" />
+        ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)}
+          rows={Math.min(16, Math.max(3, Math.ceil(draft.length / 80) + 1))}
+          className="w-full resize-y rounded border border-border bg-background px-2 py-1.5 text-[13px] leading-relaxed outline-none focus:border-primary" />
         : <input value={draft} onChange={(e) => setDraft(e.target.value)}
-          className="w-full rounded border border-border bg-background px-2 py-1 text-[12px] outline-none focus:border-primary" />}
+          className="w-full rounded border border-border bg-background px-2 py-1.5 text-[13px] outline-none focus:border-primary" />}
       {error && <p className="mt-1 text-[10px] text-destructive">{error}</p>}
       {dirty && (
         <div className="mt-1 flex items-center justify-end gap-1.5">
@@ -75,6 +76,7 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
   const { data: role } = useUserRole();
   const [open, setOpen] = useState(false);
   const [all, setAll] = useState(false);
+  const [wide, setWide] = useState(false);
   const [q, setQ] = useState('');
 
   const entries = useMemo(() => copyEntries(), []);
@@ -103,13 +105,22 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
 
       {open && (
         // A side panel rather than a modal: you keep looking at the screen you are editing.
-        <div className="fixed right-0 top-0 z-50 flex h-full w-[380px] max-w-full flex-col border-l border-border bg-background shadow-2xl">
+        <div className={cn('fixed right-0 top-0 z-50 flex h-full flex-col border-l border-border bg-background shadow-2xl',
+          // Editing prose in a 380px rail was miserable. Wide enough to see a paragraph as the
+          // learner will, and wider still for a long polishing session.
+          wide ? 'w-[min(1000px,96vw)]' : 'w-[min(640px,94vw)]')}>
           <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
             <div>
               <h2 className="text-sm font-semibold">Teaching copy</h2>
               <p className="text-[11px] text-muted-foreground">Edits go live for everyone. Reset returns the shipped wording.</p>
             </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            <div className="flex shrink-0 items-center gap-1">
+              <button type="button" onClick={() => setWide((w) => !w)} aria-label={wide ? 'Narrower' : 'Wider'} title={wide ? 'Narrower' : 'Wider'}
+                className="rounded border border-border p-1 text-muted-foreground hover:text-foreground">
+                {wide ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
+              </button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -127,7 +138,7 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
             {groups.map((g) => (
               <section key={g}>
                 <h3 className="mb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">{g}</h3>
-                <div className="space-y-1.5">
+                <div className={cn('gap-1.5', wide ? 'columns-2 [&>*]:mb-1.5 [&>*]:break-inside-avoid' : 'space-y-1.5')}>
                   {shown.filter((e) => e.group === g).map((e) => (
                     <EditRow key={e.key} entry={e} current={overrides[e.key]} onSaved={onChanged} />
                   ))}
