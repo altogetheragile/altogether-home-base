@@ -7,6 +7,7 @@ import { NewHere } from './NewHere';
 import { TaskEditor, SplitEpicPanel } from './Board';
 import { PbiCard } from './PbiCard';
 import { ShapeChooser } from './ShapeChooser';
+import { Workspace } from './ui/Workspace';
 import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
@@ -250,12 +251,15 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
           )}
 
           {fixingItem && (
-            <div ref={fixRef}>
+            <Workspace wide={fixingItem.category === 'epic'}
+              title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}
+              subtitle="Refining here is allowed, but a Backlog refined during the last Sprint would not need it - and this is Planning's time."
+              onClose={() => setFixing(null)}>
               {fixingItem.category === 'epic'
-                ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} onCancel={() => setFixing(null)} />
+                ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} />
                 : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
-                  onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} onCancel={() => setFixing(null)} />}
-            </div>
+                  onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
+            </Workspace>
           )}
 
           {/* Pick from the left, and watch the Sprint fill on the right. */}

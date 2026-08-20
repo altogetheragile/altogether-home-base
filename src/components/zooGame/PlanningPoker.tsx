@@ -12,24 +12,19 @@ interface PlanningPokerProps {
   state: ZooGameState;
   seed: number;
   onCommit: (points: number) => void;
-  onCancel: () => void;
 }
 
 /** Estimate a Backlog item by planning poker: the Developers each reveal a card, and the
  *  forecast is the most common value (ties rounding up). The Product Owner commits a
  *  size - a shared forecast from size and complexity, not a promise. */
-export function PlanningPoker({ item, state, seed, onCommit, onCancel }: PlanningPokerProps) {
+export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProps) {
   const hand = useMemo(() => pokerHand(item, seed), [item, seed]);
   const suggestion = useMemo(() => estimateSuggestion(hand), [hand]);
   const [pick, setPick] = useState(suggestion);
   const talk = useMemo(() => refinementTalk(state, item), [state, item]);
 
   return (
-    <div className="rounded-lg border border-primary/40 bg-primary/5 p-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h4 className="text-sm font-semibold">Estimate {item.name}</h4>
-        <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
-      </div>
+    <div className="space-y-2">
       {/* Product Backlog refinement is a conversation. The Scrum Guide: "The Developers who will be
           doing the work are responsible for the sizing. The Product Owner may influence the
           Developers by helping them understand and select trade-offs." */}

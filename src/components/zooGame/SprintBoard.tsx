@@ -14,6 +14,7 @@ import { DailyScrum } from './DailyScrum';
 import { ExplainButton } from './Explain';
 import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
 import { PbiCard } from './PbiCard';
+import { Workspace } from './ui/Workspace';
 import { Chip } from './ui/Chip';
 import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
@@ -398,10 +399,17 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                 </div>
                 <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
                 {fixingItem && <div ref={fixRef} />}
-                {fixingItem && (fixingItem.category === 'epic'
-                  ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} onCancel={() => setFixing(null)} />
+                {fixingItem && (
+                  <Workspace wide={fixingItem.category === 'epic'}
+                    title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}
+                    subtitle="Refining together costs the day's build time - what it prepares is later Sprints."
+                    onClose={() => setFixing(null)}>
+                    {fixingItem.category === 'epic'
+                  ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} />
                   : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
-                    onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} onCancel={() => setFixing(null)} />)}
+                    onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
+                  </Workspace>
+                )}
                 <div className="space-y-1.5">
                   {backlog.map((it) => (
                     <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => onPull(it.id)} onFix={() => setFixing(it.id)}
