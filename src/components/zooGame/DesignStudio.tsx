@@ -11,7 +11,7 @@ import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, X } from 'lucide-react';
 
 /** Live "who will love this" read-out for an exhibit, so design choices (bright vs muted, busy vs
  *  calm, distinctive markings, finish) show their payoff as you build. Surfaces appealFromDesign. */
@@ -143,20 +143,40 @@ function EnclosurePreview({ item, design, selectedFlora, onSelectFlora, onSetWat
   );
 }
 
-/** A colour control: a native picker (fully editable) plus quick-pick swatches. */
+/** A colour control: quick-pick swatches plus a native picker for anything else.
+ *
+ *  The label sits on its own line and the swatches run the full width. Side by side they only fit
+ *  two per row in the studio's column, which turned every colour into five rows of height and made
+ *  a three-colour animal taller than the screen. */
 function ColourPickerRow({ label, value, onChange, disabled }: { label: string; value?: string; onChange: (hex: string) => void; disabled?: boolean }) {
   return (
-    <div className={cn('flex items-center gap-2', disabled && 'opacity-40')}>
-      <span className="w-24 shrink-0 text-xs text-muted-foreground">{label}</span>
-      <input type="color" value={value ?? '#cccccc'} disabled={disabled} onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-9 shrink-0 cursor-pointer rounded border border-border bg-transparent p-0.5 disabled:cursor-not-allowed" aria-label={`${label} colour`} />
-      <div className="flex flex-wrap gap-1">
+    <div className={cn('space-y-1', disabled && 'opacity-40')}>
+      <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+      <div className="flex flex-wrap items-center gap-1">
         {SWATCHES.map((s) => (
           <button key={s} type="button" disabled={disabled} title={s} onClick={() => onChange(s)}
-            className={cn('h-5 w-5 rounded-sm border', value?.toLowerCase() === s ? 'border-foreground' : 'border-border/60')} style={{ background: s }} />
+            className={cn('h-6 w-6 rounded-md border transition-transform hover:scale-110',
+              value?.toLowerCase() === s ? 'border-2 border-foreground' : 'border-border/60')} style={{ background: s }} />
         ))}
+        <input type="color" value={value ?? '#cccccc'} disabled={disabled} onChange={(e) => onChange(e.target.value)}
+          title="Any other colour"
+          className="ml-1 h-6 w-8 shrink-0 cursor-pointer rounded-md border border-border bg-transparent p-0.5 disabled:cursor-not-allowed" aria-label={`${label} colour`} />
       </div>
     </div>
+  );
+}
+
+/** A named block of controls, so the column reads as a few labelled things rather than one long
+ *  run of chips. */
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-1.5">
+      <div className="flex items-baseline gap-2">
+        <h4 className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{title}</h4>
+        {hint && <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground/70" title={hint}>{hint}</span>}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -230,17 +250,21 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
     : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Finish the plan');
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
+    // The studio is a column beside the park, so it is built as one: a header that stays, a body
+    // that scrolls, and the actions always on screen. Nothing here uses a viewport breakpoint -
+    // the column is 560px wide however wide the window is, and `lg:` two-columned it into a pair
+    // of 230px slivers.
+    <div className="flex h-full min-h-0 flex-col bg-card">
       {/* One question, like every other screen: this is where an item is taken to Done. What Done
           means, and how the plan, the acceptance criteria and the Definition of Done differ, is
           behind the "?" rather than spread across the page. */}
-      <div className="mb-3 flex items-start justify-between gap-2">
+      <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-4 py-2.5">
         <div className="min-w-0">
           <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
             Sprint Backlog &middot; {item.estimate} pts &middot; {item.zone}
           </div>
           <div className="flex items-center gap-2">
-            <h3 className="text-xl font-bold leading-tight">{editing ? 'Edit' : 'Build'} the {item.name.toLowerCase()}</h3>
+            <h3 className="text-lg font-bold leading-tight">{editing ? 'Edit' : 'Build'} the {item.name.toLowerCase()}</h3>
             <ExplainButton title="Building it to Done"
               body={[
                 'How the work gets done is at the sole discretion of the Developers. This is your workshop: the design is yours, and so is the plan beside it.',
@@ -250,51 +274,16 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
           </div>
           <p className="text-[11px] text-muted-foreground">{isEnclosure ? 'Build the habitat first, then add animals' : isExhibit ? 'One animal, one Product Backlog item' : isLand ? 'Colour it, then size it on the Park' : isFlora ? 'Pick a plant and colour it' : isPath ? 'Drawn on the Park when you deploy it' : 'Set the colours and add a sign'}</p>
         </div>
-        <Button variant="ghost" size="sm" onClick={onCancel}>Back</Button>
+        <button type="button" onClick={onCancel} aria-label="Close the studio" title="Close the studio"
+          className="shrink-0 rounded-md border border-border p-1 text-muted-foreground transition-colors hover:text-foreground">
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
-      {copySources.length > 0 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Copy className="mr-1 inline h-3 w-3" />Start from a copy</span>
-          {copySources.map((s) => (
-            <button key={s.id} type="button" onClick={() => copyFrom(s)}
-              className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs hover:border-primary/60">
-              <Preview item={item} design={s.design} cell={3} /> {s.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {isEnclosure && onSetEnclosure && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Footprint</span>
-          {(['small', 'medium', 'large'] as const).map((size) => {
-            const on = (item.enclosureSize ?? 'medium') === size;
-            return (
-              <button key={size} type="button" onClick={() => onSetEnclosure(size)}
-                className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{size}</button>
-            );
-          })}
-          <span className="text-[11px] text-muted-foreground/70">A bigger habitat holds more animals - each one is drawn to scale inside it.</span>
-        </div>
-      )}
-
-      {isEnclosure && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-border bg-muted/20 px-3 py-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Shape</span>
-          {ENCLOSURE_SHAPES.map((s) => {
-            const on = (design.parts.shape ?? 'rounded') === s.key;
-            return (
-              <button key={s.key} type="button" onClick={() => setPart('shape', s.key)}
-                className={cn('rounded-full border px-2.5 py-0.5 text-xs', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{s.label}</button>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
-        {/* Live preview */}
-        <div className="flex min-h-[120px] items-center justify-center rounded-md bg-gradient-to-b from-sky-100/50 to-emerald-50/40 p-3 dark:from-sky-950/30 dark:to-emerald-950/20">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* The thing you are making, pinned to the top of the scroll: colouring an animal you have
+          scrolled past is guessing. */}
+      <div className="sticky top-0 z-10 flex min-h-[132px] items-center justify-center border-b border-border bg-gradient-to-b from-sky-100/70 to-emerald-50/60 p-3 dark:from-sky-950/40 dark:to-emerald-950/30">
           {isEnclosure ? <EnclosurePreview item={item} design={design} selectedFlora={selectedFlora} onSelectFlora={setSelectedFlora} onSetWater={setWater} onSetFlora={setFlora} />
             : isPath ? (
               <div className="flex w-full max-w-[240px] flex-col items-center gap-2">
@@ -312,6 +301,48 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
               })()
             : <Preview item={item} design={design} cell={cell} />}
         </div>
+
+      <div className="space-y-4 px-4 py-3">
+        {copySources.length > 0 && (
+          <Section title="Start from a copy" hint="then tailor it">
+            <div className="flex flex-wrap gap-1.5">
+              {copySources.map((s) => (
+                <button key={s.id} type="button" onClick={() => copyFrom(s)}
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs hover:border-primary/60">
+                  <Copy className="h-3 w-3 text-muted-foreground" /><Preview item={item} design={s.design} cell={3} /> {s.name}
+                </button>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {isEnclosure && onSetEnclosure && (
+          <Section title="Footprint" hint="Each animal is drawn to scale inside it">
+            <div className="flex flex-wrap gap-1.5">
+              {(['small', 'medium', 'large'] as const).map((size) => {
+                const on = (item.enclosureSize ?? 'medium') === size;
+                return (
+                  <button key={size} type="button" onClick={() => onSetEnclosure(size)}
+                    className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{size}</button>
+                );
+              })}
+            </div>
+          </Section>
+        )}
+
+        {isEnclosure && (
+          <Section title="Shape">
+            <div className="flex flex-wrap gap-1.5">
+              {ENCLOSURE_SHAPES.map((s) => {
+                const on = (design.parts.shape ?? 'rounded') === s.key;
+                return (
+                  <button key={s.key} type="button" onClick={() => setPart('shape', s.key)}
+                    className={cn('rounded-full border px-2.5 py-0.5 text-xs', on ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{s.label}</button>
+                );
+              })}
+            </div>
+          </Section>
+        )}
 
         {/* Controls */}
         {isEnclosure ? (
@@ -444,25 +475,18 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
             </label>
           </div>
         )}
-      </div>
 
-      {/* What has to be true before this is Done, in two columns so the difference between your plan
-          and the Product Owner's criteria is visible without a paragraph explaining it. */}
-      <div className="mt-4 grid gap-3">
+      {/* What has to be true before this is Done. Separated by a rule from the making, because the
+          difference between your plan and the Product Owner's criteria is the lesson. */}
+      <div className="space-y-4 border-t border-border pt-3">
         {onToggleTask && (item.tasks ?? []).some((t) => t.label.trim()) && (
-          <div className="space-y-1.5">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Your plan <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the Developers&rsquo;</span>
-            </div>
+          <Section title="Your plan" hint="the Developers&rsquo;">
             <TaskChecklist item={item} onToggle={onToggleTask} />
-          </div>
+          </Section>
         )}
 
         {acceptance.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Acceptance criteria <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the PO&rsquo;s</span>
-            </div>
+          <Section title="Acceptance criteria" hint="the Product Owner&rsquo;s">
             <ul className="space-y-1">
               {buildAcceptance.map((c, i) => {
                 const on = confirmed.has(i);
@@ -490,19 +514,19 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
                 <p className="mt-1 text-[11px] text-muted-foreground/70">Confirmed when you place it on the Park - you cannot accept placement before you have placed it.</p>
               </div>
             )}
-          </div>
+          </Section>
         )}
-
       </div>
 
-      {isExhibit && <p className="mt-3 text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
+      {isExhibit && <p className="text-[11px] text-muted-foreground">Your choices shape who values this most - families like it bright and lively, comfort seekers calm and muted, enthusiasts a distinctive, well finished animal.</p>}
+      </div>
+      </div>
 
-      {/* Sticky inside the modal: a tall build should never put "Finish the build" below a scroll. */}
-      <div className="sticky bottom-0 -mx-4 -mb-4 mt-3 flex items-center justify-end gap-2 rounded-b-lg border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
-        {/* A close within reach of the primary action - the top "Back" scrolls out of view. */}
-        {blocker && <span className="mr-1 text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</span>}
-        <Button variant="outline" size="sm" onClick={onCancel}>Close</Button>
-        <Button size="sm" disabled={!done} onClick={() => onFinish(design)}>{editing ? 'Save changes' : 'Finish the build'}</Button>
+      {/* The actions never scroll: a tall build should never put "Finish the build" out of reach,
+          and the one thing left to do is named beside it rather than left to a disabled button. */}
+      <div className="shrink-0 border-t border-border bg-card px-4 py-2.5">
+        {blocker && <p className="mb-1.5 text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</p>}
+        <Button className="w-full" disabled={!done} onClick={() => onFinish(design)}>{editing ? 'Save changes' : 'Finish the build'}</Button>
       </div>
     </div>
   );
