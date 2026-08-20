@@ -155,7 +155,7 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
               <input type="checkbox" checked={t.done} disabled={readOnly || signOff} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
               <span className={cn(t.done && 'text-muted-foreground line-through', signOff && !t.done && 'text-muted-foreground')}>
                 {t.label}
-                {signOff && !t.done && <span className="block text-[10px] text-muted-foreground/70">Once every acceptance criterion is met - place it on the park first.</span>}
+                {signOff && !t.done && <span className="block text-[10px] text-muted-foreground/70">Once every acceptance criterion is met, including where it stands on the park.</span>}
               </span>
             </label>
           );

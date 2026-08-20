@@ -357,7 +357,12 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   const wip = activeWipLimit(state);
   if (wip > 0 && doingCount(state) >= wip) return state; // WIP limit reached (0 = no limit, or not met yet)
   if (!enclosureReady(state, item)) return state; // build the enclosure before the animals
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
+  // Starting work puts it ON the park - that is where it gets built. Dropped onto a spot it keeps
+  // that spot; started from its card it takes the next free one, laid out in rows away from the
+  // park's edges so there is room around it and room above it for its toolbar.
+  const taken = state.backlog.filter((it) => it.pos && it.id !== id).length;
+  const pos = item.pos ?? { x: 300 + (taken % 3) * 280, y: 170 + Math.floor(taken / 3) * 210 };
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true, pos } : it)) };
 }
 
 /** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */

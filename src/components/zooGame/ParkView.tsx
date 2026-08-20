@@ -1,13 +1,14 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
-import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign } from './design';
+import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
+import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
 import { carParkLayout, carCapacity, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, Palette } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -335,9 +336,9 @@ function AnimalName({ name, onRename }: { name: string; onRename?: (name: string
   );
 }
 
-function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
+function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, building, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; design?: ItemDesign; onSetDesign?: (d: ItemDesign) => void; building?: boolean; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
-  const d = enc.design;
+  const d = design ?? enc.design;
   const ground = d?.colors.ground ?? theme.plot;
   const fence = d?.colors.fence ?? theme.plotBorder;
   const n = animals.length;
@@ -382,16 +383,47 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
     <div className="relative flex flex-col items-center">
       <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence} boxRef={boxRef}>
         <EnclosureSign name={enc.name} onRename={onRename ? (name) => onRename(enc.id, name) : undefined} />
-        {d && enclosureWater(d).map((wf, i) => (
-          <div key={i} className="absolute" style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, borderRadius: 999, background: d.colors.water ?? '#5aa9c8' }} />
-        ))}
-        {/* Studio-placed planting: decorative flora that is part of the enclosure design. */}
-        {d && enclosureFlora(d).map((fl, i) => (
-          <div key={`fl-${i}`} className="absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: `translate(-50%,-50%) scale(${fl.s})`, transformOrigin: 'center', zIndex: 0 }}>
-            <FloraSprite type={fl.type} foliage={fl.foliage ?? floraDefaultColors(fl.type).foliage} trunk={fl.trunk ?? floraDefaultColors(fl.type).trunk} cell={cell} />
-          </div>
-        ))}
-        {n === 0 && plants.length === 0 && (!d || enclosureFlora(d).length === 0) && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {/* Water and planting are arranged HERE, in the habitat, at the size they will really be -
+            drag to move, drag the corner to resize, hover for the ×. While the item is being built
+            they are editable; once it is live they are just part of the park. */}
+        {d && enclosureWater(d).map((wf, i) => {
+          const water = enclosureWater(d);
+          const set = (next: WaterFeature[]) => onSetDesign?.({ ...d, water: next });
+          return (
+            <div key={i} className={cn('group absolute', onSetDesign && 'z-[2]')}
+              style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, touchAction: onSetDesign ? 'none' : undefined }}>
+              <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(water.map((w2, j) => j !== i ? w2 : { ...w2, x: clampF(wf.x + dx, 0, 1 - wf.w), y: clampF(wf.y + dy, 0, 1 - wf.h) }))) : undefined}
+                className={cn('h-full w-full rounded-full', onSetDesign && 'cursor-grab active:cursor-grabbing')}
+                style={{ background: d.colors.water ?? '#5aa9c8', boxShadow: onSetDesign ? 'inset 0 0 0 2px rgba(255,255,255,.3)' : undefined }} />
+              {onSetDesign && <>
+                <button type="button" aria-label="Remove water feature" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); set(water.filter((_, j) => j !== i)); }}
+                  className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
+                <div onPointerDown={dragFraction(cfg, (dx, dy) => set(water.map((w2, j) => j !== i ? w2 : { ...w2, w: clampF(wf.w + dx, 0.08, 1 - wf.x), h: clampF(wf.h + dy, 0.08, 1 - wf.y) })))}
+                  className="absolute -bottom-0.5 -right-0.5 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-sky-600 bg-white group-hover:block" />
+              </>}
+            </div>
+          );
+        })}
+        {/* Planting and habitat features that are part of the enclosure's own design. */}
+        {d && enclosureFlora(d).map((fl, i) => {
+          const flora = enclosureFlora(d);
+          const set = (next: EnclosureFlora[]) => onSetDesign?.({ ...d, flora: next });
+          return (
+            <div key={`fl-${i}`} className="group absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: 'translate(-50%,-50%)', zIndex: onSetDesign ? 2 : 0, touchAction: onSetDesign ? 'none' : undefined }}>
+              <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(flora.map((f2, j) => j !== i ? f2 : { ...f2, x: clampF(fl.x + dx, 0.05, 0.95), y: clampF(fl.y + dy, 0.08, 0.95) }))) : undefined}
+                className={cn(onSetDesign && 'cursor-grab active:cursor-grabbing')} style={{ transform: `scale(${fl.s})`, transformOrigin: 'center' }}>
+                <FloraSprite type={fl.type} foliage={fl.foliage ?? floraDefaultColors(fl.type).foliage} trunk={fl.trunk ?? floraDefaultColors(fl.type).trunk} cell={cell} />
+              </div>
+              {onSetDesign && <>
+                <button type="button" aria-label="Remove planting" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); set(flora.filter((_, j) => j !== i)); }}
+                  className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
+                <div onPointerDown={dragFraction(cfg, (dx, dy) => set(flora.map((f2, j) => j !== i ? f2 : { ...f2, s: clampF(fl.s + (dx + dy) * 1.5, 0.5, 2.6) })))}
+                  className="absolute -bottom-1 -right-1 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-emerald-600 bg-white group-hover:block" />
+              </>}
+            </div>
+          );
+        })}
+        {!building && n === 0 && plants.length === 0 && (!d || enclosureFlora(d).length === 0) && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
         {/* Planting sits behind the animals; drag it within, or out of the fence to remove it. */}
         {plants.map((pl) => {
           const p = drag?.id === pl.id ? { left: drag.x * 100, top: drag.y * 100 } : { left: (pl.spot?.x ?? 0.5) * 100, top: (pl.spot?.y ?? 0.4) * 100 };
@@ -423,32 +455,60 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
   );
 }
 
+/** Designing in place. The park owns the surface; the game owns what a change means, so the toolbar
+ *  hands every edit straight back rather than keeping a copy of the design to reconcile later. */
+export interface EditApi {
+  onDesign: (id: string, design: ItemDesign) => void;
+  onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
+  onToggleTask: (id: string, taskId: string) => void;
+  onConfirmAc: (id: string, index: number, value: boolean) => void;
+  onFinishBuild: (id: string) => void;
+  onRelease: (id: string) => void;
+  copySources: (item: BacklogItem) => CopySource[];
+}
+
+const clampF = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+/** Drag a thing that lives INSIDE a habitat, where its position is a fraction of the box. Reports
+ *  the movement as fractions of the habitat's own width and height, so it behaves the same whatever
+ *  footprint the habitat has. stopPropagation keeps the whole enclosure from moving with it. */
+function dragFraction(cfg: { w: number; h: number }, apply: (dx: number, dy: number) => void) {
+  return (e: ReactPointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sx = e.clientX, sy = e.clientY;
+    const move = (ev: globalThis.PointerEvent) => apply((ev.clientX - sx) / cfg.w, (ev.clientY - sy) / cfg.h);
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+}
+
 // ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
 
 interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot' | 'site'; w: number; h: number; animals: BacklogItem[]; plants: BacklogItem[]; theme: ZoneTheme }
 
 /** Work under way, on the ground it will occupy: hoardings round a plot, with the item's name on
  *  the board. Visitors never see inside - the Definition of Done is what takes the hoardings down. */
-function ConstructionSite({ item, w, h, selected }: { item: BacklogItem; w: number; h: number; selected?: boolean }) {
-  // What has been made so far, drawn inside the hoardings: colour a wall in the inspector and the
-  // change lands here, on the ground it will occupy. That is the whole point of building in place.
-  const draft = item.draftDesign;
+function ConstructionSite({ item, w, h, selected, children }: { item: BacklogItem; w: number; h: number; selected?: boolean; children?: ReactNode }) {
+  // What has been made so far, drawn full size inside the hoardings: change a colour on the toolbar
+  // and it lands here, on the ground it will occupy. That is the whole point of building in place -
+  // there is no preview, because the thing itself is what you are looking at.
   return (
-    <div className={cn('relative flex items-center justify-center overflow-hidden rounded-md border-2 border-dashed',
-      selected ? 'border-primary ring-2 ring-primary/40' : 'border-amber-500/70')}
-      style={{
-        width: w, height: h,
-        // Hazard stripes, quietly - it should read as "being built", not shout over the park.
-        backgroundImage: 'repeating-linear-gradient(45deg, rgba(245,158,11,0.16) 0 8px, rgba(245,158,11,0.05) 8px 16px)',
-      }}>
-      {draft
-        ? <div className="pointer-events-none opacity-90"><Plot item={{ ...item, design: draft }} cell={3} /></div>
-        : (
+    <div className="relative" style={{ width: w, height: h }}>
+      {/* The hoardings: they stand AROUND the work rather than over it, and they come down when it
+          is Done and released. Visitors never see inside. */}
+      <div className={cn('absolute -inset-1.5 rounded-lg border-2 border-dashed', selected ? 'border-primary' : 'border-amber-500/70')}
+        style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(245,158,11,0.14) 0 8px, rgba(245,158,11,0.04) 8px 16px)' }} aria-hidden />
+      <span className={cn('absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 text-[9px] font-bold uppercase tracking-wide text-white shadow',
+        selected ? 'bg-primary' : 'bg-amber-500')}>Building</span>
+      <div className="relative flex h-full w-full items-center justify-center">
+        {children ?? (
           <div className="pointer-events-none max-w-full px-1 text-center">
-            <div className="truncate text-[9px] font-bold uppercase tracking-wide text-amber-800/90 dark:text-amber-300/90">Building</div>
             <div className="truncate text-[10px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
           </div>
         )}
+      </div>
     </div>
   );
 }
@@ -491,7 +551,10 @@ function buildFeatures(state: ZooGameState): Feature[] {
   // Work under way: an item started on the canvas holds its plot as a construction site. It is
   // visible to the team and invisible to visitors - the hoardings come down when it is Done and
   // released, which is the Definition of Done made into something you watch happen.
-  for (const w of state.backlog.filter((it) => it.status === 'committed' && it.started && it.pos && !it.enhancesId)) {
+  // No `pos` needed: an item that has been STARTED is on the park, full stop. Dropped onto a spot
+  // it holds that spot; started from its card it is laid out with the rest. Either way the work is
+  // visible on the product from the moment it begins.
+  for (const w of state.backlog.filter((it) => it.status === 'committed' && it.started && !it.enhancesId)) {
     const cfg = w.category === 'enclosure' ? ENCLOSURE[w.enclosureSize ?? 'medium'] : null;
     const sz = w.category === 'flora' && isLandscapeType(landType(w)) ? landSize(w) : null;
     feats.push({
@@ -551,7 +614,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, building, onOpenBuild, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, building, onOpenBuild, edit, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -564,8 +627,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   newConn: { thickness: number; color: string };
   /** The item whose build inspector is open, so its site can show it is selected. */
   building?: string | null;
-  /** Open the build inspector for a construction site. */
-  onOpenBuild?: (id: string) => void;
+  /** Select an item on the park - its toolbar appears above it. */
+  onOpenBuild?: (id: string | null) => void;
+  /** Designing in place: what the toolbar for the selected item commits back to the game. */
+  edit?: EditApi;
   /** Start a Sprint Backlog item by dropping its card here. */
   onStartHere?: (id: string, pos: { x: number; y: number }) => void;
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
@@ -596,6 +661,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const idc = useRef(0);
   const newId = () => `conn-${connectors.length}-${idc.current++}`;
+  // What can be picked up and worked on: something under construction, or something built and
+  // placed but not yet released. Once it is live it is the product, not the work.
+  const selectable = (f: Feature) => !!onOpenBuild && !!edit && (f.kind === 'site' || f.item.status === 'done');
+  // The design as it stands: what was built, or the draft so far, or the shape it starts from - so
+  // a site shows the real thing from the moment it is started rather than an empty plot.
+  const workingDesign = (it: BacklogItem) => it.design ?? it.draftDesign ?? presetFor(it);
 
   const auto = autoLayout(features);
   const posOf = (f: Feature) => {
@@ -876,7 +947,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     <div ref={viewport} className="relative w-full overflow-auto" style={{ height: sceneH * fit * Math.min(zoom, 1) }}>
     <div ref={outer} className="relative" style={{ width: CANVAS_W * scale, height: sceneH * scale, margin: '0 auto' }}>
       <div ref={inner}
-        onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => onSelectConn?.(null) : undefined)}
+        onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => { onSelectConn?.(null); onOpenBuild?.(null); } : undefined)}
         onPointerMove={tool === 'connect' ? (e) => setCursor(ptOf(e)) : undefined}
         // Dropping a card from the Sprint Backlog starts it here: the plot it lands on becomes its
         // construction site. The engine decides whether it may start at all.
@@ -984,15 +1055,30 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
-              // A tap on a construction site opens its build - the controls come to the thing,
-              // rather than the thing being taken to a modal.
-              onClick={f.kind === 'site' && onOpenBuild ? (e) => { e.stopPropagation(); onOpenBuild(f.item.id); } : undefined}
+              // A tap selects it, and the toolbar for it appears above - the controls come to the
+              // thing, rather than the thing being taken to a panel.
+              onClick={selectable(f) ? (e) => { e.stopPropagation(); onOpenBuild?.(f.item.id); } : undefined}
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30', justOpened === f.item.id && 'zoo-pop-in')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
+              {/* Selected: the same blue frame a drawing tool puts round the thing you are working on. */}
+              {building === f.item.id && f.kind !== 'site' && (
+                <div className="pointer-events-none absolute -inset-1.5 z-20 rounded-lg border-2 border-sky-500" aria-hidden />
+              )}
               {f.kind === 'site'
-                ? <ConstructionSite item={f.item} w={f.w} h={f.h - LABEL_H} selected={building === f.item.id} />
+                ? (
+                  <ConstructionSite item={f.item} w={f.w} h={f.h - LABEL_H} selected={building === f.item.id}>
+                    {f.item.category === 'enclosure'
+                      ? <Enclosure enc={f.item} animals={[]} plants={[]} theme={f.theme} design={workingDesign(f.item)} building
+                        onSetDesign={edit && building === f.item.id ? (d) => edit.onDesign(f.item.id, d) : undefined} onRename={onRename} />
+                      : isLandscapeType(landType(f.item))
+                      ? <LandscapePlot item={{ ...f.item, design: workingDesign(f.item) }} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
+                      : <Plot item={{ ...f.item, design: workingDesign(f.item) }} cell={4} />}
+                  </ConstructionSite>
+                )
                 : f.kind === 'enclosure'
-                ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
+                ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme}
+                  onSetDesign={edit && building === f.item.id && f.item.status === 'done' ? (d) => edit.onDesign(f.item.id, d) : undefined}
+                  onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                 : <Plot item={f.item} cell={4} />}
               {/* Resize a landscape feature: the right-edge handle sets its length (drag it across the
@@ -1026,18 +1112,6 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   style={{ left: '50%', top: -14, touchAction: 'none' }}>
                   <RotateCw className="h-3 w-3 text-emerald-700" />
                 </div>
-              )}
-              {/* Built and placed, but not yet released: the work is still yours, so the way back
-                  into its build is on the thing itself. Always visible, not on hover - it is the
-                  answer to "how do I get back to the studio from here", and hover is no answer at
-                  all on a tablet. */}
-              {f.kind !== 'site' && f.item.status === 'done' && onOpenBuild && tool === 'none' && !dragging && (
-                <button type="button" title={`Open the build for ${f.item.name}`}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => { e.stopPropagation(); onOpenBuild(f.item.id); }}
-                  className="absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow hover:bg-amber-600">
-                  <Palette className="h-3 w-3" /> Edit build
-                </button>
               )}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this LIVE item (self as PO).
                   Nothing to improve about a construction site, and nothing to improve about work
@@ -1083,6 +1157,39 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           arrive from its cars and walk the park to the live exhibits. Drawn over the (unscaled) outer
           box so they stay crisp at any zoom. Always mounted so the lot shows even before opening. */}
       <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={sceneH} carPark={carPark} nav={nav} />
+
+      {/* The toolbar for whatever is selected, floating just above it. It lives in the OUTER box,
+          which is not transformed, so it stays its natural size however far the park is zoomed -
+          controls that shrink with the drawing are not controls. */}
+      {edit && building && onOpenBuild && (() => {
+        const f = features.find((x) => x.item.id === building);
+        if (!f || !selectable(f)) return null;
+        const p = posOf(f);
+        const top = (p.y - f.h / 2) * scale - 12;
+        return (
+          <div className="absolute z-40 flex -translate-x-1/2 -translate-y-full justify-center"
+            style={{ left: clamp(p.x * scale, Math.min(330, CANVAS_W * scale / 2), Math.max(330, CANVAS_W * scale - 330)), top: Math.max(48, top) }}
+            onPointerDown={(e) => e.stopPropagation()}>
+            <ItemToolbar
+              item={f.item}
+              design={f.item.category === 'enclosure'
+                // Until a colour is chosen the habitat is drawn in its zone's colours, so that is
+                // what the swatch has to show - a grey square for a tan fence is a lie.
+                ? { ...workingDesign(f.item), colors: { ground: f.theme.plot, fence: f.theme.plotBorder, ...workingDesign(f.item).colors } }
+                : workingDesign(f.item)}
+              editing={f.item.status === 'done'}
+              copySources={edit.copySources(f.item)}
+              onDesign={(d) => edit.onDesign(f.item.id, d)}
+              onSetEnclosure={f.item.category === 'enclosure' ? (size) => edit.onSetEnclosure(f.item.id, size) : undefined}
+              onToggleTask={(taskId) => edit.onToggleTask(f.item.id, taskId)}
+              onConfirmAc={(i, v) => edit.onConfirmAc(f.item.id, i, v)}
+              onFinish={() => edit.onFinishBuild(f.item.id)}
+              onRelease={() => edit.onRelease(f.item.id)}
+              onClose={() => onOpenBuild(null)}
+            />
+          </div>
+        );
+      })()}
     </div>
     </div>
   );
@@ -1145,8 +1252,10 @@ interface ParkViewProps {
   state: ZooGameState;
   /** The item whose build inspector is open. */
   building?: string | null;
-  /** Open the build inspector for a construction site. */
-  onOpenBuild?: (id: string) => void;
+  /** Select an item on the park - its toolbar appears above it. */
+  onOpenBuild?: (id: string | null) => void;
+  /** Designing in place: what the toolbar for the selected item commits back to the game. */
+  edit?: EditApi;
   /** Start a Sprint Backlog item by dropping its card on the park. */
   onStartHere?: (id: string, pos: { x: number; y: number }) => void;
   compact?: boolean;
@@ -1195,7 +1304,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1343,7 +1452,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             </div>
           )}
           </div>
-          <FreeScene building={building} onOpenBuild={onOpenBuild} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
+          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>

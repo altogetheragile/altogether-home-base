@@ -18,7 +18,7 @@ import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState } from '@/components/zooGame/types';
-import { pathWidthPx, isDeployAcceptance } from '@/components/zooGame/design';
+import { pathWidthPx, isDeployAcceptance, presetFor, type ItemDesign } from '@/components/zooGame/design';
 import { nextNudge } from '@/components/zooGame/engine';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
@@ -89,6 +89,32 @@ export default function ZooGame() {
   // Ending a day (clock ran out or "End Day") moves to the Daily Scrum or the Sprint Review, which
   // live in the work pane - so focus it, or the transition is invisible when you're on the Park tab.
   const endDay = () => { closeDay(); setParkTab('work'); };
+
+  // Designing in place. The toolbar above the selected item on the park hands every change straight
+  // back here, so the park is not showing a copy of the design - it IS the design. A build in
+  // progress saves as a draft (it survives the day ending); an already-built item is edited outright.
+  const edit = {
+    onDesign: (id: string, design: ItemDesign) => {
+      const it = state.backlog.find((x) => x.id === id);
+      if (it?.status === 'committed') saveDraftDesign(id, design); else editBuild(id, design);
+    },
+    onSetEnclosure: setEnclosureSize,
+    onToggleTask: toggleTask,
+    onConfirmAc: confirmAc,
+    onFinishBuild: (id: string) => {
+      const it = state.backlog.find((x) => x.id === id);
+      if (it?.status !== 'committed') return;
+      build(id, it.draftDesign ?? presetFor(it));
+      // It was built where it stands, so it is already placed. Marking it so skips a step that only
+      // ever made sense when the building happened somewhere else.
+      placeOnPark(id);
+    },
+    onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
+    // Something of the same kind you have already built, to start from rather than begin again.
+    copySources: (item: { id: string; category: string }) => state.backlog
+      .filter((x) => x.id !== item.id && x.category === item.category && x.design)
+      .map((x) => ({ id: x.id, name: x.name, design: x.design! })),
+  };
   const enterDeploy = (id: string) => {
     const it = state.backlog.find((x) => x.id === id);
     // An improvement re-delivers its target; deploy against the target's name.
@@ -205,7 +231,7 @@ export default function ZooGame() {
     ? (CARDS_BY_PHASE[phase] ?? []).find((id) => !(state.taught ?? []).includes(id)) ?? null
     : null);
 
-  const shellProps = { copy: copyProps, building: buildingId, onOpenBuild: setBuildingId, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onAddCopy: addCopy, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { copy: copyProps, building: buildingId, onOpenBuild: setBuildingId, edit, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onConfirmDeployAc: (index: number, value: boolean) => { if (deployId) confirmAc(deployId, index, value); }, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onAddCopy: addCopy, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
@@ -227,7 +253,7 @@ export default function ZooGame() {
       case 'planning':
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onBuild={build} onDraftChange={saveDraftDesign} onEditBuild={editBuild} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetEnclosure={setEnclosureSize} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onAssignDev={assignDev} onRenameMember={renameMember} building={buildingId} onBuilding={setBuildingId} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onSplitEpic={splitEpic} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={setBuildingId} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':
