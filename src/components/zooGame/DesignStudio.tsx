@@ -448,7 +448,7 @@ export function DesignStudio({ item, editing, onFinish, onCancel, initial, onCha
 
       {/* What has to be true before this is Done, in two columns so the difference between your plan
           and the Product Owner's criteria is visible without a paragraph explaining it. */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:items-start">
+      <div className="mt-4 grid gap-3">
         {onToggleTask && (item.tasks ?? []).some((t) => t.label.trim()) && (
           <div className="space-y-1.5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
@@ -55,6 +56,9 @@ interface SprintBoardProps {
   onHoldDailyScrum: () => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
+  /** The item whose build is open, shared with the park so a tap on its site opens it here. */
+  building: string | null;
+  onBuilding: (id: string | null) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -196,8 +200,9 @@ function RefineChip({ horizon, onOpen }: { horizon: number; onOpen: () => void }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, teachCard, onMarkTaught }: SprintBoardProps) {
-  const [designing, setDesigning] = useState<string | null>(null);
+export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, building, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
+  const designing = building;
+  const setDesigning = onBuilding;
   const [showBacklog, setShowBacklog] = useState(false); // the Backlog tucks away during the Sprint
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
@@ -562,9 +567,14 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
 
       {/* The studio opens as a modal OVER the board, so the Scrum board stays in view
           (the card sits in Doing behind it) while you build. */}
-      {designItem && !dayStarting && (
-        <div className="fixed inset-0 z-40 flex overflow-y-auto bg-black/50 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true">
-          <div className="m-auto w-full max-w-3xl">
+      {/* The build sits beside the park, not over it: colour a wall and watch it land on the ground
+          the thing will occupy. A modal here would hide the one thing you are working on.
+          Portalled to the body because the dock it is rendered from uses backdrop-blur, and a
+          filtered ancestor becomes the containing block for `fixed` - the panel would hang from the
+          dock rather than the window. */}
+      {designItem && !dayStarting && createPortal(
+        <div className="fixed right-0 top-0 z-40 flex h-full w-[min(520px,94vw)] flex-col border-l border-border bg-background shadow-2xl">
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
             <DesignStudio
               item={designItem}
               editing={editing}
@@ -577,7 +587,8 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
               onCancel={() => setDesigning(null)}
             />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
     </div>
