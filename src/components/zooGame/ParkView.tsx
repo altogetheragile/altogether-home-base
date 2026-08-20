@@ -777,8 +777,16 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const [dropping, setDropping] = useState(false);
 
   const startDrag = (e: ReactPointerEvent, f: Feature) => {
+    // Touching something you can work on selects it, and it STAYS selected while you move it.
+    // Without stopping the event here it reached the park behind, which cleared the selection - so
+    // nudging an enclosure an inch to the left put the whole board back up over the park.
+    if (selectable(f)) {
+      e.stopPropagation();
+      if (building !== f.item.id) onOpenBuild?.(f.item.id);
+    }
     if (!onPlaceItem || tool !== 'none') return; // in connect mode, clicks draw connectors
     e.preventDefault();
+    e.stopPropagation();
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const startX = e.clientX, startY = e.clientY;
     const origin = posOf(f);
