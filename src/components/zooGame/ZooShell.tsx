@@ -85,12 +85,16 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   // While a build is open, or an item is being placed, the board stands aside: two panels over one
   // park left a strip of grass, and the build panel covered the handle you would use to close the
   // board yourself. Both are things you do ON the park, so the park gets the room.
-  const busy = building ? 'building' : deployMode ? 'placing' : null;
+  // Building happens during the build stage. At the Daily Scrum the event is what you are in, so
+  // the park lets go of whatever was selected rather than floating a toolbar over it.
+  const onPark = state.phase !== 'sprint' || dayStage === 'building';
+  const selected = onPark ? building : null;
+  const busy = selected ? 'building' : deployMode ? 'placing' : null;
   const dockOpen = dock && !busy;
   // ...which means the handle has to be the way back, or it is a button that does nothing: with the
   // board forced aside, toggling `dock` would change nothing you can see.
   const toggleDock = () => {
-    if (building) { onOpenBuild?.(null); return; }
+    if (selected) { onOpenBuild?.(null); return; }
     if (deployMode) { onFinishDeploy?.(); return; }
     setDock((d) => !d);
   };
@@ -209,7 +213,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
       <div className="relative min-h-0 flex-1 overflow-hidden">
         {/* The park: the whole body during a Sprint, and the Park tab elsewhere. */}
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', !canvas && tab !== 'park' && 'hidden')}>
-          <ParkView state={state} large building={building} onOpenBuild={onOpenBuild} edit={edit} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
+          <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
         </div>
 
         {/* The work. In canvas mode it is a dock over the park; otherwise it is the pane itself. */}

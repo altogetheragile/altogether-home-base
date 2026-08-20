@@ -126,7 +126,6 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
   // It is already in place - there is nothing to "place", which is the point of building in place.
   const released = item.status === 'open';
   const deployAll = deployAcceptance.every((a) => !!item.acConfirmed?.[a.i]);
-  const signOff = (item.tasks ?? []).find((t) => isSignOffTask(t.label));
   const built = isDesignDone(item, design);
   const acAll = buildAcceptance.every((a) => !!item.acConfirmed?.[a.i]);
   // The Definition of Done is the bar; the Product Owner's sign-off is deliberately not part of this
@@ -139,9 +138,11 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
     : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Finish the plan');
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <h4 className="text-sm font-semibold">Taking it to Done</h4>
+    // Compact on purpose. This hangs off a toolbar button over the thing it is about, so it has to
+    // clear the way for the park rather than become the panel we just got rid of.
+    <div className="max-h-[62vh] space-y-2 overflow-y-auto">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Taking it to Done</h4>
         <ExplainButton title="Building it to Done"
           body={[
             'How the work gets done is at the sole discretion of the Developers. The design is yours, and so is the plan beside it.',
@@ -150,80 +151,64 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
           ]} />
       </div>
 
+      {/* Your plan. The checklist carries its own "Plan n/m", so nothing is captioned twice. */}
       {(item.tasks ?? []).some((t) => t.label.trim()) && (
-        <div className="space-y-1.5">
-          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            Your plan <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the Developers&rsquo;</span>
-          </div>
-          <TaskChecklist item={item} onToggle={(_id, taskId) => onToggleTask(taskId)} />
-        </div>
+        <TaskChecklist item={item} onToggle={(_id, taskId) => onToggleTask(taskId)} />
       )}
 
       {acceptance.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-            Acceptance criteria <span className="font-normal normal-case tracking-normal text-muted-foreground/70">the Product Owner&rsquo;s</span>
+        <div className="space-y-1 border-t border-border pt-2">
+          <div className="flex items-baseline gap-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Acceptance <span className="normal-case tracking-normal text-muted-foreground/70">the Product Owner&rsquo;s</span>
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {buildAcceptance.map((a) => {
               const on = !!item.acConfirmed?.[a.i];
               return (
                 <li key={a.i}>
-                  <button type="button" onClick={() => onConfirmAc(a.i, !on)} className="flex w-full items-center gap-2 text-left text-[13px]">
-                    <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-3 w-3" />}</span>
-                    <span className={cn(on ? 'text-foreground' : 'text-muted-foreground')}>{a.label}</span>
+                  <button type="button" onClick={() => onConfirmAc(a.i, !on)} className="flex w-full items-start gap-1.5 text-left text-[11px]">
+                    <span className={cn('mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
+                    <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{a.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+            {/* Where it stands is judged on the park, with it standing there - so before it is built
+                these sit in the same list, dashed and out of reach. */}
+            {deployAcceptance.map((a) => {
+              const on = !!item.acConfirmed?.[a.i];
+              return (
+                <li key={a.i}>
+                  <button type="button" disabled={!editing} onClick={() => onConfirmAc(a.i, !on)}
+                    title={editing ? 'Drag it where it belongs, then confirm' : 'Judged once it is built and standing on the park'}
+                    className="flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default">
+                    <span className={cn('mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full',
+                      on ? 'bg-emerald-500 text-white' : editing ? 'border border-border' : 'border border-dashed border-muted-foreground/50')}>{on && <Check className="h-2.5 w-2.5" />}</span>
+                    <span className={cn(on ? 'text-muted-foreground line-through' : editing ? 'text-foreground' : 'text-muted-foreground/60')}>{a.label}</span>
                   </button>
                 </li>
               );
             })}
           </ul>
-          <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it.</p>
-          {deployAcceptance.length > 0 && (
-            // Where it stands is judged on the park, with it standing there. Before it is built you
-            // cannot judge it at all, so these stay dashed out until then.
-            <div className={cn('rounded-md border p-2', editing ? 'border-border bg-background' : 'border-dashed border-border bg-muted/20')}>
-              <ul className="space-y-1">
-                {deployAcceptance.map((a) => {
-                  const on = !!item.acConfirmed?.[a.i];
-                  return (
-                    <li key={a.i}>
-                      <button type="button" disabled={!editing} onClick={() => onConfirmAc(a.i, !on)}
-                        className="flex w-full items-center gap-2 text-left text-[12px] disabled:cursor-default">
-                        <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
-                          on ? 'bg-emerald-500 text-white' : editing ? 'border border-border' : 'border border-dashed border-muted-foreground/50')}>{on && <Check className="h-3 w-3" />}</span>
-                        <span className={cn(on ? 'text-foreground' : 'text-muted-foreground')}>{a.label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="mt-1 text-[11px] text-muted-foreground/70">
-                {editing ? 'Drag it where it belongs, then confirm - the Product Owner signs off once every criterion is met.'
-                  : 'Judged once it is built and standing on the park.'}
-              </p>
-            </div>
-          )}
         </div>
       )}
 
       {/* Built, and standing where it will stand. All that is left is the sign-off and the opening. */}
-      {editing && !released ? (
-        <>
-          <p className="text-[11px] text-muted-foreground">
-            {!deployAll ? 'Next: confirm where it stands'
-              : signOff && !signOff.done ? 'The Product Owner has signed it off.'
-              : 'Ready. Opening it takes the hoardings down.'}
-          </p>
-          <Button size="sm" className="w-full" disabled={!deployAll} onClick={onRelease}>Open it to visitors</Button>
-        </>
-      ) : released ? (
-        <p className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-4 w-4" /> Live to visitors</p>
-      ) : (
-        <>
-          {blocker && <p className="text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</p>}
-          <Button size="sm" className="w-full" disabled={!done} onClick={onFinish}>Finish the build</Button>
-        </>
-      )}
+      <div className="space-y-1 border-t border-border pt-2">
+        {released ? (
+          <p className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Live to visitors</p>
+        ) : editing ? (
+          <>
+            <p className="text-[11px] text-muted-foreground">{deployAll ? 'Ready. Opening it takes the hoardings down.' : 'Next: confirm where it stands'}</p>
+            <Button size="sm" className="h-7 w-full text-xs" disabled={!deployAll} onClick={onRelease}>Open it to visitors</Button>
+          </>
+        ) : (
+          <>
+            {blocker && <p className="text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</p>}
+            <Button size="sm" className="h-7 w-full text-xs" disabled={!done} onClick={onFinish}>Finish the build</Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -388,7 +373,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
             <ListChecks className="h-3.5 w-3.5 text-primary" /> Done? <span className="tabular-nums text-muted-foreground">{ticked}/{tasks.length}</span> <ChevronDown className="h-3 w-3" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-80">
+        <PopoverContent align="start" sideOffset={6} className="w-72 p-2.5">
           <DonePanel {...props} />
         </PopoverContent>
       </Popover>
