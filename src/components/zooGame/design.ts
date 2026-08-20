@@ -605,7 +605,7 @@ export function floraColors(type?: string): { key: string; label: string }[] {
     case 'carpark': return [{ key: 'foliage', label: 'Tarmac' }, { key: 'trunk', label: 'Markings' }];
     case 'signpost': return [{ key: 'foliage', label: 'Sign' }, { key: 'trunk', label: 'Post' }];
     case 'flowers': return [{ key: 'foliage', label: 'Flowers' }, { key: 'trunk', label: 'Bed' }];
-    default: return [{ key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' }];
+    default: return [{ key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk' }];
   }
 }
 /** Quick colour suggestions offered next to each picker (still fully editable). */

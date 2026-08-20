@@ -1207,7 +1207,7 @@ describe('zoo game: the toolbox', () => {
     // a trunk - and shows only the colours it uses.
     expect(floraColors('river')).toEqual([{ key: 'foliage', label: 'Water' }]);
     expect(floraColors('carpark').map((c) => c.label)).toEqual(['Tarmac', 'Markings']);
-    expect(floraColors('tree').map((c) => c.label)).toEqual(['Foliage', 'Trunk / bed']);
+    expect(floraColors('tree').map((c) => c.label)).toEqual(['Foliage', 'Trunk']);
     // A landscape PBI's plan has no "choose the plant type" step - it is scenery you colour and
     // then size on the park.
     // suggestTasks only reads category + template, both of which a toolbox draft carries.
