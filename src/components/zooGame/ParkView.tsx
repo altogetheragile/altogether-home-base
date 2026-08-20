@@ -336,7 +336,7 @@ function AnimalName({ name, onRename }: { name: string; onRename?: (name: string
   );
 }
 
-function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, building, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; design?: ItemDesign; onSetDesign?: (d: ItemDesign) => void; building?: boolean; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
+function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSelectPart, building, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; design?: ItemDesign; onSetDesign?: (d: ItemDesign) => void; onSelectPart?: (key: string) => void; building?: boolean; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = design ?? enc.design;
   const ground = d?.colors.ground ?? theme.plot;
@@ -382,6 +382,12 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, buil
   return (
     <div className="relative flex flex-col items-center">
       <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence} boxRef={boxRef}>
+        {/* Pick a part by touching it. The rim is the fence, the middle is the ground - both sit
+            behind the animals and the planting, so they only catch what nothing else wanted. */}
+        {onSelectPart && <>
+          <div className="absolute inset-0 z-0" title="Fence" onPointerDown={(e) => { e.stopPropagation(); onSelectPart('fence'); }} />
+          <div className="absolute inset-[11px] z-0" title="Ground" onPointerDown={(e) => { e.stopPropagation(); onSelectPart('ground'); }} />
+        </>}
         <EnclosureSign name={enc.name} onRename={onRename ? (name) => onRename(enc.id, name) : undefined} />
         {/* Water and planting are arranged HERE, in the habitat, at the size they will really be -
             drag to move, drag the corner to resize, hover for the ×. While the item is being built
@@ -392,7 +398,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, buil
           return (
             <div key={i} className={cn('group absolute', onSetDesign && 'z-[2]')}
               style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, touchAction: onSetDesign ? 'none' : undefined }}>
-              <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(water.map((w2, j) => j !== i ? w2 : { ...w2, x: clampF(wf.x + dx, 0, 1 - wf.w), y: clampF(wf.y + dy, 0, 1 - wf.h) }))) : undefined}
+              <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(water.map((w2, j) => j !== i ? w2 : { ...w2, x: clampF(wf.x + dx, 0, 1 - wf.w), y: clampF(wf.y + dy, 0, 1 - wf.h) })), () => onSelectPart?.('water')) : undefined}
                 className={cn('h-full w-full rounded-full', onSetDesign && 'cursor-grab active:cursor-grabbing')}
                 style={{ background: d.colors.water ?? '#5aa9c8', boxShadow: onSetDesign ? 'inset 0 0 0 2px rgba(255,255,255,.3)' : undefined }} />
               {onSetDesign && <>
@@ -410,7 +416,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, buil
           const set = (next: EnclosureFlora[]) => onSetDesign?.({ ...d, flora: next });
           return (
             <div key={`fl-${i}`} className="group absolute" style={{ left: `${fl.x * 100}%`, top: `${fl.y * 100}%`, transform: 'translate(-50%,-50%)', zIndex: onSetDesign ? 2 : 0, touchAction: onSetDesign ? 'none' : undefined }}>
-              <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(flora.map((f2, j) => j !== i ? f2 : { ...f2, x: clampF(fl.x + dx, 0.05, 0.95), y: clampF(fl.y + dy, 0.08, 0.95) }))) : undefined}
+              <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(flora.map((f2, j) => j !== i ? f2 : { ...f2, x: clampF(fl.x + dx, 0.05, 0.95), y: clampF(fl.y + dy, 0.08, 0.95) })), () => onSelectPart?.(`flora:${i}:foliage`)) : undefined}
                 className={cn(onSetDesign && 'cursor-grab active:cursor-grabbing')} style={{ transform: `scale(${fl.s})`, transformOrigin: 'center' }}>
                 <FloraSprite type={fl.type} foliage={fl.foliage ?? floraDefaultColors(fl.type).foliage} trunk={fl.trunk ?? floraDefaultColors(fl.type).trunk} cell={cell} />
               </div>
@@ -472,10 +478,11 @@ const clampF = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, 
 /** Drag a thing that lives INSIDE a habitat, where its position is a fraction of the box. Reports
  *  the movement as fractions of the habitat's own width and height, so it behaves the same whatever
  *  footprint the habitat has. stopPropagation keeps the whole enclosure from moving with it. */
-function dragFraction(cfg: { w: number; h: number }, apply: (dx: number, dy: number) => void) {
+function dragFraction(cfg: { w: number; h: number }, apply: (dx: number, dy: number) => void, onPick?: () => void) {
   return (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onPick?.();
     const sx = e.clientX, sy = e.clientY;
     const move = (ev: globalThis.PointerEvent) => apply((ev.clientX - sx) / cfg.w, (ev.clientY - sy) / cfg.h);
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
@@ -667,6 +674,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // It has to be a flag rather than stopPropagation: Radix listens on the DOCUMENT for the click
   // that dismisses a popover, so swallowing the event left every colour palette stuck open.
   const handled = useRef(false);
+  // Which part of the selected thing is picked out - kept with the item's id so it does not carry
+  // over to the next thing you select.
+  const [part, setPart] = useState<{ id: string; key: string } | null>(null);
   const selectable = (f: Feature) => !!onOpenBuild && !!edit && (f.kind === 'site' || f.item.status === 'done');
   // The design as it stands: what was built, or the draft so far, or the shape it starts from - so
   // a site shows the real thing from the moment it is started rather than an empty plot.
@@ -1089,7 +1099,8 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   <ConstructionSite item={f.item} w={f.w} h={f.h - LABEL_H} selected={building === f.item.id}>
                     {f.item.category === 'enclosure'
                       ? <Enclosure enc={f.item} animals={[]} plants={[]} theme={f.theme} design={workingDesign(f.item)} building
-                        onSetDesign={edit && building === f.item.id ? (d) => edit.onDesign(f.item.id, d) : undefined} onRename={onRename} />
+                        onSetDesign={edit && building === f.item.id ? (d) => edit.onDesign(f.item.id, d) : undefined}
+                        onSelectPart={edit && building === f.item.id ? (key) => setPart({ id: f.item.id, key }) : undefined} onRename={onRename} />
                       : isLandscapeType(landType(f.item))
                       ? <LandscapePlot item={{ ...f.item, design: workingDesign(f.item) }} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                       : <Plot item={{ ...f.item, design: workingDesign(f.item) }} cell={4} />}
@@ -1098,6 +1109,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                 : f.kind === 'enclosure'
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme}
                   onSetDesign={edit && building === f.item.id && f.item.status === 'done' ? (d) => edit.onDesign(f.item.id, d) : undefined}
+                  onSelectPart={edit && building === f.item.id && f.item.status === 'done' ? (key) => setPart({ id: f.item.id, key }) : undefined}
                   onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                 : <Plot item={f.item} cell={4} />}
@@ -1215,7 +1227,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               onConfirmAc={(i, v) => edit.onConfirmAc(f.item.id, i, v)}
               onFinish={() => edit.onFinishBuild(f.item.id)}
               onRelease={() => edit.onRelease(f.item.id)}
-              onClose={() => onOpenBuild(null)}
+              focus={part?.id === f.item.id ? part.key : null}
+              onFocus={(key) => setPart(key ? { id: f.item.id, key } : null)}
+              onClose={() => { setPart(null); onOpenBuild(null); }}
             />
           </div>
         );
