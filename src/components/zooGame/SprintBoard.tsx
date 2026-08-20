@@ -572,20 +572,18 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
           Portalled to the body because the dock it renders from uses backdrop-blur, and a filtered
           ancestor becomes the containing block for `fixed`. */}
       {designItem && !dayStarting && createPortal(
-        <div className="fixed right-0 top-0 z-40 flex h-full w-[min(520px,94vw)] flex-col border-l border-border bg-background shadow-2xl">
-          <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            <DesignStudio
-              item={designItem}
-              editing={editing}
-              copySources={copySources}
-              onToggleTask={onToggleTask}
-              onSetEnclosure={(size) => onSetEnclosure(designItem.id, size)}
-              initial={editing ? undefined : designItem.draftDesign}
-              onChange={(d) => { if (!editing) onDraftChange(designItem.id, d); }}
-              onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); }}
-              onCancel={() => setDesigning(null)}
-            />
-          </div>
+        <div className="fixed right-0 top-0 z-40 h-full w-[min(560px,96vw)] border-l border-border shadow-2xl">
+          <DesignStudio
+            item={designItem}
+            editing={editing}
+            copySources={copySources}
+            onToggleTask={onToggleTask}
+            onSetEnclosure={(size) => onSetEnclosure(designItem.id, size)}
+            initial={editing ? undefined : designItem.draftDesign}
+            onChange={(d) => { if (!editing) onDraftChange(designItem.id, d); }}
+            onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); }}
+            onCancel={() => setDesigning(null)}
+          />
         </div>,
         document.body,
       )}

@@ -7,7 +7,7 @@ import { carParkLayout, carCapacity, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, Palette } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -1027,9 +1027,22 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   <RotateCw className="h-3 w-3 text-emerald-700" />
                 </div>
               )}
+              {/* Built and placed, but not yet released: the work is still yours, so the way back
+                  into its build is on the thing itself. Always visible, not on hover - it is the
+                  answer to "how do I get back to the studio from here", and hover is no answer at
+                  all on a tablet. */}
+              {f.kind !== 'site' && f.item.status === 'done' && onOpenBuild && tool === 'none' && !dragging && (
+                <button type="button" title={`Open the build for ${f.item.name}`}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); onOpenBuild(f.item.id); }}
+                  className="absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow hover:bg-amber-600">
+                  <Palette className="h-3 w-3" /> Edit build
+                </button>
+              )}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this LIVE item (self as PO).
-                  Nothing to improve about a construction site - it is not built yet. */}
-              {onImprove && f.kind !== 'site' && tool === 'none' && !dragging && (
+                  Nothing to improve about a construction site, and nothing to improve about work
+                  that has not been released yet - you are still building that one. */}
+              {onImprove && f.kind !== 'site' && f.item.status === 'open' && tool === 'none' && !dragging && (
                 queued ? (
                   <span className="pointer-events-none absolute -top-2 -right-1 z-40 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">Improving…</span>
                 ) : (
