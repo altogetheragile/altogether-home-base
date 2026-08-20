@@ -9,7 +9,7 @@ import { TeachingCard, ScrumReference } from './ScrumTeaching';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -78,6 +78,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
   const tab = parkTab ?? localTab;
   const setTab = onSetTab ?? setLocalTab;
   const open = state.backlog.filter((it) => it.status === 'open').length;
+  // During a Sprint the park is the working surface and the board docks over it.
+  const canvas = state.phase === 'sprint';
+  const dayStage = state.dayStage;
+  const [dock, setDock] = useState(true);
+  const sprintCount = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status !== 'backlog').length;
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
@@ -157,14 +162,16 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
             <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} />
           </div>
         </div>
-        {/* Tabs at every size. Narrow/portrait: they switch the single visible pane. Wide (xl):
-            Work shows the work pane + the Park rail; Park expands the park to the full width. */}
-        <div className="mt-1 flex gap-1">
-          <Tab active={tab === 'work'} onClick={() => setTab('work')} icon={ClipboardList} label={WORK_TAB[state.phase] ?? 'Work'} />
-          {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
-              Increment. A learner who never connects the two is playing a building game. */}
-          <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label={"Park \u00b7 the product"} badge={open ? String(open) : undefined} />
-        </div>
+        {/* Tabs where the park is somewhere you visit. During a Sprint it is the surface you work
+            on and the board docks over it, so there is nothing to switch between. */}
+        {!canvas && (
+          <div className="mt-1 flex gap-1">
+            <Tab active={tab === 'work'} onClick={() => setTab('work')} icon={ClipboardList} label={WORK_TAB[state.phase] ?? 'Work'} />
+            {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
+                Increment. A learner who never connects the two is playing a building game. */}
+            <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label={"Park \u00b7 the product"} badge={open ? String(open) : undefined} />
+          </div>
+        )}
       </header>
 
       {/* What the Scrum Team changed in the last refinement session, and who changed it. */}
@@ -182,23 +189,45 @@ export function ZooShell({ state, children, parkTab, onSetTab, onPlaceItem, onSe
       )}
 
       {/* Body: fills the remaining height and scrolls INTERNALLY so the page never scrolls.
-          One pane at a time, at every size: the work, or the park. There is no park rail beside the
-          work - the Park tab does that job, and a park squeezed into 300px beside a board was the
-          same thing said twice while stealing the width the work needed. Placing an item takes you
-          to the Park tab by itself.
+          During the SPRINT the park is the surface you work on, not a place you visit: it fills the
+          body and the Sprint Backlog sits in a dock over it, pulled up to pick the next thing and
+          pushed down while you build. Everywhere else it is one pane at a time via the tabs, because
+          those screens are events and the park is not what they act on.
           Both panes stay mounted (toggled with CSS) so the day clock / studio work survive. */}
-      <div className="min-h-0 flex-1 overflow-hidden xl:flex">
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3 xl:min-w-0 xl:flex-1', tab === 'park' && 'hidden')}>
-          <div className={cn('space-y-3', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>
-            {/* One card at a time, for the element they have just arrived at, once each. */}
-            {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-            {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
-            {children}
-          </div>
-        </div>
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3',
-          tab === 'park' ? 'xl:min-w-0 xl:flex-1' : 'hidden')}>
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        {/* The park: the whole body during a Sprint, and the Park tab elsewhere. */}
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', !canvas && tab !== 'park' && 'hidden')}>
           <ParkView state={state} large onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
+        </div>
+
+        {/* The work. In canvas mode it is a dock over the park; otherwise it is the pane itself. */}
+        <div className={cn(
+          canvas
+            ? 'absolute inset-x-0 bottom-0 z-30 flex flex-col border-t border-border bg-background/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-[height] duration-200'
+            : 'h-full overflow-y-auto px-2 py-3 sm:px-3',
+          canvas && (dayStage === 'building' ? (dock ? 'h-[52vh]' : 'h-11') : 'h-full'),
+          !canvas && tab === 'park' && 'hidden')}>
+          {canvas && dayStage === 'building' && (
+            // The handle: what is in the dock, and how much of the park you want to see.
+            <button type="button" onClick={() => setDock((d) => !d)}
+              className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2 text-left hover:bg-muted/50">
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <ClipboardList className="h-4 w-4 text-primary" /> Sprint Backlog
+                <span className="font-normal text-muted-foreground">{sprintCount} item{sprintCount === 1 ? '' : 's'}</span>
+              </span>
+              <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                {dock ? 'Hide' : 'Show'} {dock ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+              </span>
+            </button>
+          )}
+          <div className={cn('min-h-0 flex-1 overflow-y-auto', canvas ? 'px-2 py-2 sm:px-3' : '')}>
+            <div className={cn('space-y-3', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>
+              {/* One card at a time, for the element they have just arrived at, once each. */}
+              {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+              {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
+              {children}
+            </div>
+          </div>
         </div>
       </div>
     </div>
