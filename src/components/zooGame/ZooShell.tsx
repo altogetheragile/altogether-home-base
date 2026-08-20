@@ -82,6 +82,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   const canvas = state.phase === 'sprint';
   const dayStage = state.dayStage;
   const [dock, setDock] = useState(true);
+  // While a build is open the board stands aside: two panels over one park left a strip of grass,
+  // and the build panel covered the handle you would use to close the board yourself.
+  const dockOpen = dock && !building;
   const sprintCount = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status !== 'backlog').length;
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
@@ -205,7 +208,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
           canvas
             ? 'absolute inset-x-0 bottom-0 z-30 flex flex-col border-t border-border bg-background/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-[height] duration-200'
             : 'h-full overflow-y-auto px-2 py-3 sm:px-3',
-          canvas && (dayStage === 'building' ? (dock ? 'h-[52vh]' : 'h-11') : 'h-full'),
+          canvas && (dayStage === 'building' ? (dockOpen ? 'h-[52vh]' : 'h-11') : 'h-full'),
           !canvas && tab === 'park' && 'hidden')}>
           {canvas && dayStage === 'building' && (
             // The handle: what is in the dock, and how much of the park you want to see.
@@ -216,7 +219,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 <span className="font-normal text-muted-foreground">{sprintCount} item{sprintCount === 1 ? '' : 's'}</span>
               </span>
               <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                {dock ? 'Hide' : 'Show'} {dock ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+                {building ? 'Building - board hidden' : dockOpen ? 'Hide' : 'Show'} {dockOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
               </span>
             </button>
           )}
