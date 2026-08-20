@@ -3,7 +3,7 @@ import type { BacklogItem } from './types';
 import {
   isDesignDone, designCriteria, designSatisfiesTask, isDeployAcceptance,
   EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
-  ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureWater,
+  ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureWater, enclosureFlora,
   addWaterTo, addFloraTo, isLandscapeType, type ItemDesign,
 } from './design';
 import { isSignOffTask } from './engine';
@@ -12,7 +12,7 @@ import { ExplainButton } from './Explain';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Sprout, X, ListChecks } from 'lucide-react';
+import { Check, ChevronDown, Copy, Droplets, Sprout, X, ListChecks, Trash2 } from 'lucide-react';
 
 // ============= Building on the canvas =============
 //
@@ -83,14 +83,25 @@ function Colours({ value, onChange, onPicked }: { value?: string; onChange: (hex
 
 /** A colour straight on the toolbar - a swatch you press, like the fill and border squares in a
  *  drawing tool. */
-function ColourButton({ label, value, onChange }: { label: string; value?: string; onChange: (hex: string) => void }) {
-  const [open, setOpen] = useState(false);
+function ColourButton({ label, value, onChange, part, focus, onFocus, onClosed }: {
+  label: string; value?: string; onChange: (hex: string) => void;
+  /** Which part of the thing this colours, so clicking that part on the park opens this. */
+  part?: string; focus?: string | null; onFocus?: (key: string | null) => void; onClosed?: string | null;
+}) {
+  const [own, setOwn] = useState(false);
+  const controlled = !!part && !!onFocus;
+  const open = controlled ? focus === part : own;
+  const setOpen = (o: boolean) => (controlled ? onFocus!(o ? part! : (onClosed ?? null)) : setOwn(o));
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" title={label} aria-label={label}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted">
+        {/* The square alone told you nothing: two brown-ish squares side by side could be anything.
+            It is named, and clicking the ground or the fence out on the park opens the right one. */}
+        <button type="button" title={`${label} colour`} aria-label={`${label} colour`}
+          className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-1.5 text-xs font-medium transition-colors',
+            open ? 'bg-primary/10 text-primary' : 'hover:bg-muted')}>
           <span className="h-5 w-5 rounded border-2 border-border/70 shadow-sm" style={{ background: value ?? '#cccccc' }} />
+          {label}
         </button>
       </PopoverTrigger>
       <PopoverContent align="center" className="w-auto p-2">
@@ -118,6 +129,11 @@ interface ItemToolbarProps {
   onRelease: () => void;
   onClose: () => void;
   copySources?: CopySource[];
+  /** Which part of the thing is selected on the park - 'ground', 'fence', 'water', 'flora:2'.
+   *  Clicking a part out there opens the control for it in here, which is the only way the two
+   *  brown squares were ever going to explain themselves. */
+  focus?: string | null;
+  onFocus?: (key: string | null) => void;
 }
 
 /** What has to be true before this item is Done, and the button that takes it there. */
@@ -218,7 +234,12 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
 
 /** The floating toolbar for the selected item: only the controls this kind of thing needs. */
 export function ItemToolbar(props: ItemToolbarProps) {
-  const { item, design, onDesign, onSetEnclosure, onToggleTask, onClose, copySources = [] } = props;
+  const { item, design, onDesign, onSetEnclosure, onToggleTask, onClose, copySources = [], focus, onFocus } = props;
+  // A plant or habitat feature picked out on the park: its own colours join the toolbar while it is
+  // selected, and leave again when it is not. `flora:2` selects it, `flora:2:trunk` opens a palette.
+  const floraIdx = focus?.startsWith('flora:') ? Number(focus.split(':')[1]) : null;
+  const flora = enclosureFlora(design);
+  const selectedFlora = floraIdx != null && flora[floraIdx] ? flora[floraIdx] : null;
   const isExhibit = item.category === 'exhibit';
   const isEnclosure = item.category === 'enclosure';
   const isFlora = item.category === 'flora';
@@ -274,9 +295,27 @@ export function ItemToolbar(props: ItemToolbarProps) {
               labels={Object.fromEntries(ENCLOSURE_SHAPES.map((s) => [s.key, s.label]))} />
           )}</Menu>
           <Divider />
-          <ColourButton label="Ground" value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
-          <ColourButton label="Fence" value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
-          {enclosureWater(design).length > 0 && <ColourButton label="Water" value={design.colors.water} onChange={(hex) => setColor('water', hex)} />}
+          <ColourButton label="Ground" part="ground" focus={focus} onFocus={onFocus} value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
+          <ColourButton label="Fence" part="fence" focus={focus} onFocus={onFocus} value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
+          {enclosureWater(design).length > 0 && <ColourButton label="Water" part="water" focus={focus} onFocus={onFocus} value={design.colors.water} onChange={(hex) => setColor('water', hex)} />}
+          {selectedFlora && (
+            <>
+              <Divider />
+              <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold capitalize text-primary-foreground">{selectedFlora.type}</span>
+              {floraColors(selectedFlora.type).map((c) => {
+                const key = c.key as 'foliage' | 'trunk';
+                return (
+                  <ColourButton key={key} label={c.label} part={`flora:${floraIdx}:${key}`} focus={focus} onFocus={onFocus} onClosed={`flora:${floraIdx}`}
+                    value={selectedFlora[key] ?? floraDefaultColors(selectedFlora.type)[key]}
+                    onChange={(hex) => onDesign({ ...design, flora: flora.map((f, j) => (j === floraIdx ? { ...f, [key]: hex } : f)) })} />
+                );
+              })}
+              <button type="button" className={BTN} title={`Remove this ${selectedFlora.type}`}
+                onClick={() => { onDesign({ ...design, flora: flora.filter((_, j) => j !== floraIdx) }); onFocus?.(null); }}>
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              </button>
+            </>
+          )}
           <Divider />
           <button type="button" className={BTN} title="Add a water feature, then drag it inside the habitat"
             onClick={() => onDesign({ ...design, water: addWaterTo(design) })}>
