@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ZooGameState, SprintTask } from './types';
-import { availableItems, goalCandidates, readyHorizon, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
+import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
 import { NewHere } from './NewHere';
-import { zooCapacity } from './config';
+
 
 import { TaskEditor, SplitEpicPanel } from './Board';
 import { PbiCard } from './PbiCard';
@@ -99,7 +99,7 @@ function GoalBanner({ goal, onEdit }: { goal: string; onEdit: () => void }) {
 }
 
 /** How full the Sprint is. The one number that matters while selecting, said as a picture. */
-function Meter({ committed, capacity, count }: { committed: number; capacity: number; count: number }) {
+function Meter({ committed, capacity, count, basis }: { committed: number; capacity: number; count: number; basis: { estimated: boolean; measuredSprints: number; discarded: number } }) {
   const over = committed > capacity;
   const pct = Math.min(100, capacity ? (committed / capacity) * 100 : 0);
   return (
@@ -108,6 +108,13 @@ function Meter({ committed, capacity, count }: { committed: number; capacity: nu
         <span className="text-sm font-semibold">{count} item{count === 1 ? '' : 's'} in this Sprint</span>
         <span className={cn('font-mono text-sm font-semibold', over ? 'text-destructive' : 'text-foreground')}>{committed}<span className="text-muted-foreground"> / {capacity} pts</span></span>
       </div>
+      {/* Never call a guess "velocity". Velocity is measured, and until a Sprint of this length has
+          run there is nothing measured to go on. */}
+      <p className="text-[11px] text-muted-foreground">
+        {basis.estimated
+          ? <><strong className="text-foreground">Estimated velocity</strong> - nothing measured at this Sprint length yet{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
+          : <><strong className="text-foreground">Velocity</strong> - measured over your last {basis.measuredSprints} Sprint{basis.measuredSprints === 1 ? '' : 's'} of this length{basis.discarded > 0 ? `, ignoring ${basis.discarded} at a different length` : ''}.</>}
+      </p>
       <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
         <div className={cn('h-full rounded-full transition-all', over ? 'bg-destructive' : pct > 80 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${pct}%` }} />
       </div>
@@ -130,7 +137,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
-  const capacity = zooCapacity(state.velocity);
+  const cap = sprintCapacity(state);
+  const capacity = cap.points;
   const over = committed > capacity;
   const hasGoal = isDraftedGoal(state.sprintGoal);
   const hasWhat = chosen.length > 0;
@@ -269,7 +277,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
             </section>
 
             <section className="space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3">
-              <Meter committed={committed} capacity={capacity} count={chosen.length} />
+              <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
               {chosen.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">

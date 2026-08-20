@@ -275,8 +275,16 @@ export function initialZooState(gameSeed = 1): ZooGameState {
 
 /** How many points the team can realistically take on: the average of the last few Sprints'
  *  actual delivered velocity (a rolling window), or the first-Sprint guess before any exists. */
-export function zooCapacity(velocity: number[]): number {
-  if (!velocity.length) return STARTER_CAPACITY;
+export function zooCapacity(velocity: number[], sprintDays: number = SPRINT_DAYS): number {
+  // Nothing measured yet: an estimate, scaled to the length of Sprint the team chose. A 2-day and
+  // a 5-day Sprint forecasting the same number would be a poor first lesson.
+  if (!velocity.length) return estimatedVelocity(sprintDays);
   const recent = velocity.slice(-VELOCITY_WINDOW);
   return Math.round(recent.reduce((s, v) => s + v, 0) / recent.length);
 }
+
+/** The starting guess, before a single Sprint has been measured. Deliberately a rate per day
+ *  rather than a fixed number, because the only thing we know is how long the Sprint is. It is
+ *  never called velocity in the UI - velocity is measured, and this has measured nothing. */
+export const estimatedVelocity = (sprintDays: number): number =>
+  Math.max(1, Math.round(sprintDays * (STARTER_CAPACITY / SPRINT_DAYS)));
