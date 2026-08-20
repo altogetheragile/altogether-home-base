@@ -425,7 +425,25 @@ function Enclosure({ enc, animals, plants = [], theme, onSetSpot, onUnnest, onRe
 
 // ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
 
-interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot'; w: number; h: number; animals: BacklogItem[]; plants: BacklogItem[]; theme: ZoneTheme }
+interface Feature { item: BacklogItem; kind: 'enclosure' | 'plot' | 'site'; w: number; h: number; animals: BacklogItem[]; plants: BacklogItem[]; theme: ZoneTheme }
+
+/** Work under way, on the ground it will occupy: hoardings round a plot, with the item's name on
+ *  the board. Visitors never see inside - the Definition of Done is what takes the hoardings down. */
+function ConstructionSite({ item, w, h }: { item: BacklogItem; w: number; h: number }) {
+  return (
+    <div className="relative flex items-center justify-center overflow-hidden rounded-md border-2 border-dashed border-amber-500/70"
+      style={{
+        width: w, height: h,
+        // Hazard stripes, quietly - it should read as "being built", not shout over the park.
+        backgroundImage: 'repeating-linear-gradient(45deg, rgba(245,158,11,0.16) 0 8px, rgba(245,158,11,0.05) 8px 16px)',
+      }}>
+      <div className="pointer-events-none max-w-full px-1 text-center">
+        <div className="truncate text-[9px] font-bold uppercase tracking-wide text-amber-800/90 dark:text-amber-300/90">Building</div>
+        <div className="truncate text-[10px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
+      </div>
+    </div>
+  );
+}
 
 /** Everything currently shown in the park, as positionable features. An enclosure appears
  *  once BUILT (Done or Open) - the habitat is there before its animals are released - with
@@ -461,6 +479,19 @@ function buildFeatures(state: ZooGameState): Feature[] {
     } else {
       feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
     }
+  }
+  // Work under way: an item started on the canvas holds its plot as a construction site. It is
+  // visible to the team and invisible to visitors - the hoardings come down when it is Done and
+  // released, which is the Definition of Done made into something you watch happen.
+  for (const w of state.backlog.filter((it) => it.status === 'committed' && it.started && it.pos && !it.enhancesId)) {
+    const cfg = w.category === 'enclosure' ? ENCLOSURE[w.enclosureSize ?? 'medium'] : null;
+    const sz = w.category === 'flora' && isLandscapeType(landType(w)) ? landSize(w) : null;
+    feats.push({
+      item: w, kind: 'site',
+      w: cfg?.w ?? sz?.w ?? 64,
+      h: (cfg?.h ?? sz?.h ?? 60) + LABEL_H,
+      animals: [], plants: [], theme: theme(w.zone),
+    });
   }
   return feats;
 }
@@ -512,7 +543,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -523,6 +554,8 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   connectors: ZooConnector[];
   selectedConn: string | null;
   newConn: { thickness: number; color: string };
+  /** Start a Sprint Backlog item by dropping its card here. */
+  onStartHere?: (id: string, pos: { x: number; y: number }) => void;
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   onImprove?: (id: string) => void;
   improving?: Set<string>;
@@ -658,6 +691,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
 
   // Scenery that is naturally a set. A river spans the park, so one is all there is.
   const canCopy = (f: Feature) => f.kind === 'plot' && f.item.category === 'flora' && landType(f.item) !== 'river';
+  const [dropping, setDropping] = useState(false);
 
   const startDrag = (e: ReactPointerEvent, f: Feature) => {
     if (!onPlaceItem || tool !== 'none') return; // in connect mode, clicks draw connectors
@@ -832,7 +866,23 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
       <div ref={inner}
         onPointerDown={tool === 'connect' ? connectClick : (tool === 'none' ? () => onSelectConn?.(null) : undefined)}
         onPointerMove={tool === 'connect' ? (e) => setCursor(ptOf(e)) : undefined}
-        className="absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm"
+        // Dropping a card from the Sprint Backlog starts it here: the plot it lands on becomes its
+        // construction site. The engine decides whether it may start at all.
+        onDragOver={onStartHere ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDropping(true); } : undefined}
+        onDragLeave={onStartHere ? () => setDropping(false) : undefined}
+        onDrop={onStartHere ? (e) => {
+          e.preventDefault();
+          setDropping(false);
+          const id = e.dataTransfer.getData('text/plain');
+          const box = inner.current?.getBoundingClientRect();
+          if (!id || !box) return;
+          const s2 = box.width / CANVAS_W;
+          onStartHere(id, {
+            x: clamp((e.clientX - box.left) / s2, 40, CANVAS_W - 40),
+            y: clamp((e.clientY - box.top) / s2, 40, canvasH - PATH_H - 40),
+          });
+        } : undefined}
+        className={cn('absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm', dropping && 'ring-4 ring-primary/40')}
         style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left', cursor: tool === 'connect' ? 'crosshair' : undefined,
           borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
 
@@ -924,7 +974,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               onPointerDown={(e) => startDrag(e, f)}
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30', justOpened === f.item.id && 'zoo-pop-in')}
               style={{ left: p.x, top: p.y, transform: 'translate(-50%,-50%)', touchAction: 'none', filter: dragging ? 'drop-shadow(0 6px 8px rgba(0,0,0,.25))' : undefined }}>
-              {f.kind === 'enclosure'
+              {f.kind === 'site'
+                ? <ConstructionSite item={f.item} w={f.w} h={f.h - LABEL_H} />
+                : f.kind === 'enclosure'
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme} onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                 : <Plot item={f.item} cell={4} />}
@@ -960,8 +1012,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   <RotateCw className="h-3 w-3 text-emerald-700" />
                 </div>
               )}
-              {/* Feedback-driven improvement: raise an "Improve" PBI for this live item (self as PO). */}
-              {onImprove && tool === 'none' && !dragging && (
+              {/* Feedback-driven improvement: raise an "Improve" PBI for this LIVE item (self as PO).
+                  Nothing to improve about a construction site - it is not built yet. */}
+              {onImprove && f.kind !== 'site' && tool === 'none' && !dragging && (
                 queued ? (
                   <span className="pointer-events-none absolute -top-2 -right-1 z-40 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">Improving…</span>
                 ) : (
@@ -1062,6 +1115,8 @@ function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; 
 
 interface ParkViewProps {
   state: ZooGameState;
+  /** Start a Sprint Backlog item by dropping its card on the park. */
+  onStartHere?: (id: string, pos: { x: number; y: number }) => void;
   compact?: boolean;
   fill?: boolean;
   large?: boolean;
@@ -1108,7 +1163,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1256,7 +1311,7 @@ export function ParkView({ state, compact = false, large = false, onPlaceItem, o
             </div>
           )}
           </div>
-          <FreeScene features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
+          <FreeScene onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
