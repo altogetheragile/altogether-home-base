@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { BacklogItem } from './types';
 import {
   isDesignDone, designCriteria, designSatisfiesTask, isDeployAcceptance,
@@ -31,10 +31,12 @@ function Divider() {
   return <span className="mx-0.5 h-6 w-px shrink-0 bg-border" aria-hidden />;
 }
 
-/** A toolbar button that opens a small panel of choices. */
-function Menu({ label, swatch, children, title }: { label: string; swatch?: string; children: ReactNode; title?: string }) {
+/** A toolbar button that opens a small panel of choices. Children are given a `close` so a menu
+ *  that asks one question can answer it and get out of the way. */
+function Menu({ label, swatch, children, title }: { label: string; swatch?: string; children: (close: () => void) => ReactNode; title?: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button type="button" title={title ?? label} className={BTN}>
           {swatch !== undefined && (
@@ -44,7 +46,7 @@ function Menu({ label, swatch, children, title }: { label: string; swatch?: stri
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="center" className="w-auto max-w-[20rem] p-2">{children}</PopoverContent>
+      <PopoverContent align="center" className="w-auto max-w-[20rem] p-2">{children(() => setOpen(false))}</PopoverContent>
     </Popover>
   );
 }
@@ -65,11 +67,11 @@ function Options({ options, value, onPick, labels }: { options: readonly string[
 }
 
 /** A colour: the square shows what it is now, and opens the palette. */
-function Colours({ value, onChange }: { value?: string; onChange: (hex: string) => void }) {
+function Colours({ value, onChange, onPicked }: { value?: string; onChange: (hex: string) => void; onPicked?: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-1">
       {SWATCHES.map((s) => (
-        <button key={s} type="button" title={s} onClick={() => onChange(s)}
+        <button key={s} type="button" title={s} onClick={() => { onChange(s); onPicked?.(); }}
           className={cn('h-6 w-6 rounded-md border transition-transform hover:scale-110',
             value?.toLowerCase() === s ? 'border-2 border-foreground' : 'border-border/60')} style={{ background: s }} />
       ))}
@@ -82,8 +84,9 @@ function Colours({ value, onChange }: { value?: string; onChange: (hex: string) 
 /** A colour straight on the toolbar - a swatch you press, like the fill and border squares in a
  *  drawing tool. */
 function ColourButton({ label, value, onChange }: { label: string; value?: string; onChange: (hex: string) => void }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button type="button" title={label} aria-label={label}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted">
@@ -92,7 +95,7 @@ function ColourButton({ label, value, onChange }: { label: string; value?: strin
       </PopoverTrigger>
       <PopoverContent align="center" className="w-auto p-2">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
-        <Colours value={value} onChange={onChange} />
+        <Colours value={value} onChange={onChange} onPicked={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
   );
@@ -244,16 +247,16 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {copySources.length > 0 && (
         <>
-          <Menu label="Copy" title="Start from one you have already built">
+          <Menu label="Copy" title="Start from one you have already built">{(close) => (
             <div className="space-y-1">
               {copySources.map((s) => (
-                <button key={s.id} type="button" onClick={() => onDesign({ parts: { ...s.design.parts }, colors: { ...s.design.colors } })}
+                <button key={s.id} type="button" onClick={() => { onDesign({ parts: { ...s.design.parts }, colors: { ...s.design.colors } }); close(); }}
                   className="flex w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:border-primary/60">
                   <Copy className="h-3 w-3 text-muted-foreground" /> {s.name}
                 </button>
               ))}
             </div>
-          </Menu>
+          )}</Menu>
           <Divider />
         </>
       )}
@@ -261,15 +264,15 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isEnclosure && (
         <>
           {onSetEnclosure && (
-            <Menu label={item.enclosureSize ?? 'medium'} title="Footprint - each animal is drawn to scale inside it">
-              <Options options={['small', 'medium', 'large']} value={item.enclosureSize ?? 'medium'} onPick={(o) => onSetEnclosure(o as 'small' | 'medium' | 'large')} />
+            <Menu label={item.enclosureSize ?? 'medium'} title="Footprint - each animal is drawn to scale inside it">{(close) => (<>
+              <Options options={['small', 'medium', 'large']} value={item.enclosureSize ?? 'medium'} onPick={(o) => { onSetEnclosure(o as 'small' | 'medium' | 'large'); close(); }} />
               <p className="mt-1.5 max-w-[14rem] text-[11px] text-muted-foreground">A bigger habitat holds more animals.</p>
-            </Menu>
+            </>)}</Menu>
           )}
-          <Menu label={ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'Shape'} title="Shape">
-            <Options options={ENCLOSURE_SHAPES.map((s) => s.key)} value={design.parts.shape ?? 'rounded'} onPick={(o) => setPart('shape', o)}
+          <Menu label={ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'Shape'} title="Shape">{(close) => (
+            <Options options={ENCLOSURE_SHAPES.map((s) => s.key)} value={design.parts.shape ?? 'rounded'} onPick={(o) => { setPart('shape', o); close(); }}
               labels={Object.fromEntries(ENCLOSURE_SHAPES.map((s) => [s.key, s.label]))} />
-          </Menu>
+          )}</Menu>
           <Divider />
           <ColourButton label="Ground" value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
           <ColourButton label="Fence" value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
@@ -279,7 +282,8 @@ export function ItemToolbar(props: ItemToolbarProps) {
             onClick={() => onDesign({ ...design, water: addWaterTo(design) })}>
             <Droplets className="h-3.5 w-3.5 text-sky-600" /> Water
           </button>
-          <Menu label="Plant" title="Plants and habitat features">
+          {/* This one does NOT close on a pick: you usually want three trees, not one. */}
+          <Menu label="Plant" title="Plants and habitat features">{() => (
             <div className="space-y-2">
               <div>
                 <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Planting</div>
@@ -291,33 +295,33 @@ export function ItemToolbar(props: ItemToolbarProps) {
               </div>
               <p className="max-w-[16rem] text-[11px] text-muted-foreground">Drag them inside the habitat to arrange, drag a corner to resize, hover for &times;.</p>
             </div>
-          </Menu>
+          )}</Menu>
         </>
       )}
 
       {isExhibit && EXHIBIT_PARTS.map((p) => {
         const opt = design.parts[p.key] ?? p.options[0];
         return (
-          <Menu key={p.key} label={opt} title={p.label} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>
+          <Menu key={p.key} label={opt} title={p.label} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
             <div className="space-y-2">
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label}</div>
               <Options options={p.options} value={opt} onPick={(o) => setPart(p.key, o)} />
               {opt !== 'none' && (
                 <>
                   <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label} colour</div>
-                  <Colours value={design.colors[p.colorKey]} onChange={(hex) => setColor(p.colorKey, hex)} />
+                  <Colours value={design.colors[p.colorKey]} onChange={(hex) => setColor(p.colorKey, hex)} onPicked={close} />
                 </>
               )}
             </div>
-          </Menu>
+          )}</Menu>
         );
       })}
 
       {isFlora && !isLand && (
         <>
-          <Menu label={design.parts.type ?? item.template ?? 'tree'} title="What kind">
-            <Options options={FLORA_TYPES} value={design.parts.type ?? 'tree'} onPick={(o) => setPart('type', o)} />
-          </Menu>
+          <Menu label={design.parts.type ?? item.template ?? 'tree'} title="What kind">{(close) => (
+            <Options options={FLORA_TYPES} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
+          )}</Menu>
           <Divider />
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key] ?? floraDefaultColors(design.parts.type ?? item.template ?? 'tree')[c.key as 'foliage' | 'trunk']}
@@ -339,10 +343,10 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isPath && (
         <>
-          <Menu label={PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'Width'} title="Width">
-            <Options options={PATH_WIDTHS.map((w) => w.key)} value={design.parts.thickness ?? 'medium'} onPick={(o) => setPart('thickness', o)}
+          <Menu label={PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'Width'} title="Width">{(close) => (
+            <Options options={PATH_WIDTHS.map((w) => w.key)} value={design.parts.thickness ?? 'medium'} onPick={(o) => { setPart('thickness', o); close(); }}
               labels={Object.fromEntries(PATH_WIDTHS.map((w) => [w.key, w.label]))} />
-          </Menu>
+          )}</Menu>
           <ColourButton label="Path colour" value={design.colors.path} onChange={(hex) => setColor('path', hex)} />
           <span className="shrink-0 px-1 text-[11px] text-muted-foreground">You draw the route when you deploy it.</span>
         </>
@@ -350,9 +354,9 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {item.category === 'amenity' && (
         <>
-          <Menu label={design.parts.type ?? 'shop'} title="What kind of building">
-            <Options options={BUILDING_TYPES} value={design.parts.type ?? 'shop'} onPick={(o) => setPart('type', o)} />
-          </Menu>
+          <Menu label={design.parts.type ?? 'shop'} title="What kind of building">{(close) => (
+            <Options options={BUILDING_TYPES} value={design.parts.type ?? 'shop'} onPick={(o) => { setPart('type', o); close(); }} />
+          )}</Menu>
           <Divider />
           {AMENITY_COLORS.map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key]}
