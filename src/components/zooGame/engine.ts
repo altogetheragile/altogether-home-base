@@ -489,6 +489,26 @@ export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' 
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
 }
 
+/** Decide, at Sprint Planning topic three, what KIND of thing an item will be: how big the habitat
+ *  is, which habitat an animal lives in, what sort of building or planting it is.
+ *
+ *  These are planning decisions - they shape the work, its order and its dependencies - as opposed
+ *  to the craft, which is colour, features and where exactly it sits, and belongs in the build with
+ *  the thing in front of you. Nothing here is settled: the Developers can change any of it during
+ *  the Sprint, because the plan is theirs and it is adapted daily.
+ */
+export function planItemShape(state: ZooGameState, id: string, patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string }): ZooGameState {
+  return {
+    ...state,
+    backlog: state.backlog.map((it) => (it.id === id ? {
+      ...it,
+      ...(patch.enclosureSize ? { enclosureSize: patch.enclosureSize } : {}),
+      ...(patch.enclosureId !== undefined ? { enclosureId: patch.enclosureId || undefined } : {}),
+      ...(patch.template !== undefined ? { template: patch.template || undefined } : {}),
+    } : it)),
+  };
+}
+
 /** Set a feature's free-placement position in the park (from dragging on the Park tab). */
 export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };

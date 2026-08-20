@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS } from './config';
 import {
-  planSprint, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
+  planSprint, planItemShape, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
   endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
@@ -2119,5 +2119,33 @@ describe('zoo game: the teaching copy is editable without a deploy', () => {
     expect(entries.filter((e) => e.phases.includes('planning')).length).toBeGreaterThan(0);
     // Artifacts sit in the header on every screen, so they belong to no single phase.
     expect(entries.some((e) => e.key.startsWith('artifact.') && e.phases.length === 0)).toBe(true);
+  });
+});
+
+describe('zoo game: topic three decides what shape a thing takes', () => {
+  it('sets the habitat footprint, and it is the Developers’ to change later', () => {
+    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
+    s = planItemShape(s, 'lion-enc', { enclosureSize: 'large' });
+    expect(s.backlog.find((i) => i.id === 'lion-enc')!.enclosureSize).toBe('large');
+    // Changed again mid-Sprint: nothing decided at Planning is settled.
+    s = setEnclosureSize(s, 'lion-enc', 'small');
+    expect(s.backlog.find((i) => i.id === 'lion-enc')!.enclosureSize).toBe('small');
+  });
+
+  it('assigning an animal to a habitat is what creates the build order', () => {
+    let s = planSprint(bigCatsSplit(1), ['lion', 'lion-enc']);
+    s = planItemShape(s, 'lion', { enclosureId: 'lion-enc' });
+    const lion = s.backlog.find((i) => i.id === 'lion')!;
+    expect(lion.enclosureId).toBe('lion-enc');
+    expect(enclosureReady(s, lion)).toBe(false);      // the habitat is not built, so the animal waits
+    expect(startItem(s, 'lion').backlog.find((i) => i.id === 'lion')!.started).toBeFalsy();
+  });
+
+  it('chooses the kind of building or planting, and can unset an assignment', () => {
+    let s = planSprint(bigCatsSplit(1), ['kiosk']);
+    s = planItemShape(s, 'kiosk', { template: 'cafe' });
+    expect(s.backlog.find((i) => i.id === 'kiosk')!.template).toBe('cafe');
+    s = planItemShape(s, 'kiosk', { enclosureId: '' });
+    expect(s.backlog.find((i) => i.id === 'kiosk')!.enclosureId).toBeUndefined();
   });
 });

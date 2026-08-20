@@ -6,6 +6,7 @@ import { zooCapacity } from './config';
 
 import { TaskEditor, SplitEpicPanel } from './Board';
 import { PbiCard } from './PbiCard';
+import { ShapeChooser } from './ShapeChooser';
 import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
@@ -31,6 +32,8 @@ interface SprintPlanningProps {
   onPlan: (ids: string[], plannedRefinement?: boolean) => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
+  /** Topic three's shape decisions: how big, which habitat, what kind of building or planting. */
+  onPlanShape: (id: string, patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string }) => void;
   onToggleGoalCritical: (id: string) => void;
   /** Re-order the forecast itself - the Developers arranging the plan they are making. */
   onReorderForecast?: (id: string, dir: 'up' | 'down', picked: string[]) => void;
@@ -51,7 +54,7 @@ type Step = 'why' | 'what' | 'how';
 const STEPS: { key: Step; n: number; label: string; question: string; lead: string }[] = [
   { key: 'why', n: 1, label: 'Why', question: 'Why is this Sprint valuable?', lead: 'Agree one objective the whole Sprint aims at.' },
   { key: 'what', n: 2, label: 'What', question: 'What can we build?', lead: 'Pull in the work you believe you can finish.' },
-  { key: 'how', n: 3, label: 'How', question: 'How will we get it done?', lead: 'Break each item into the steps that build it.' },
+  { key: 'how', n: 3, label: 'How', question: 'How will we get it done?', lead: 'Decide what each item will be, and the steps that build it.' },
 ];
 
 /** What the Guide says about this topic - shown on request, not on the page. */
@@ -76,7 +79,8 @@ const DETAIL: Record<Step, { title: string; body: string[] }> = {
     title: 'Topic three: how the work gets done',
     body: [
       'The Developers plan how they will turn the selected items into an Increment meeting the Definition of Done. How this is done is at their sole discretion - no one else tells them how.',
-      'The plan is theirs to change every day of the Sprint. It is a starting point, not a contract.',
+      'Deciding what shape a thing takes - how big the habitat is, which habitat an animal lives in, what kind of building it is - is part of that plan, because it decides the work and its order. Colour, features and exactly where it sits are the craft, and they are done in the build with the thing in front of you.',
+      'Plan in as much detail as you need and no more. The plan is theirs to change every day of the Sprint: it is a starting point, not a contract.',
       'Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.',
     ],
   },
@@ -113,7 +117,7 @@ function Meter({ committed, capacity, count }: { committed: number; capacity: nu
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -142,6 +146,8 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
   const stars = revealed(state, 'essentials');
   const horizon = readyHorizon(state);
   const totalSteps = chosen.reduce((n, i) => n + (i.tasks ?? []).filter((t) => t.label.trim()).length, 0);
+  // Habitats an animal can be assigned to: anything in the Backlog that is an enclosure.
+  const habitats = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
   const toggle = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
@@ -295,7 +301,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
                     <p>It appears now because you have watched a Sprint end. Protecting the Goal by dropping scope is a win, not a miss - but only if you have said what the Goal actually rests on.</p>
                   </NewHere>
                 )}
-              </> : <>Break each item into the steps that build it.</>}
+              </> : <>Open each item to decide what it will be, and the steps that build it.</>}
             </p>
             <Button variant="secondary" size="sm" className="h-8 border border-primary/30 bg-primary/10 px-2.5 text-xs font-semibold text-primary hover:bg-primary/20"
               onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
@@ -340,7 +346,15 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onToggle
               return (
                 <div key={it.id}>
                   {open ? (
-                    <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
+                    <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
+                      {/* What kind of thing, before how it gets built - the first "how" is what shape
+                          it takes, and it decides the order of the Sprint. */}
+                      {(() => {
+                        const shape = <ShapeChooser item={it} enclosures={habitats} onPlan={(patch) => onPlanShape(it.id, patch)} />;
+                        return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
+                      })()}
+                      <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
+                    </div>
                   ) : (
                     <PbiCard item={it} state="forecast" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
                       className={it.goalCritical ? 'border-amber-400/70' : undefined}
