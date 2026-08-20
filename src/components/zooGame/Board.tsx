@@ -11,6 +11,7 @@ import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDow
 import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
+import { Workspace } from './ui/Workspace';
 import { isDeployAcceptance } from './design';
 
 /** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
@@ -22,17 +23,13 @@ export function CategoryIcon({ item, className }: { item: BacklogItem; className
 
 /** Refine an epic: tick the members to split out into their own PBIs (each animal becomes
  *  an enclosure + the animal that depends on it; each facility becomes an amenity). */
-export function SplitEpicPanel({ epic, onSplit, onCancel }: { epic: BacklogItem; onSplit: (memberIds: string[]) => void; onCancel: () => void }) {
+export function SplitEpicPanel({ epic, onSplit }: { epic: BacklogItem; onSplit: (memberIds: string[]) => void }) {
   const members = epic.epicMembers ?? [];
   const [picked, setPicked] = useState<Set<string>>(() => new Set(members.map((m) => m.id)));
   const toggle = (id: string) => setPicked((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const count = members.filter((m) => picked.has(m.id)).reduce((n, m) => n + (m.kind === 'exhibit' ? 2 : 1), 0);
   return (
-    <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold"><Scissors className="mr-1 inline h-3.5 w-3.5" />Split &ldquo;{epic.name}&rdquo; into Product Backlog items</h3>
-        <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
-      </div>
+    <div className="space-y-3">
       <p className="text-[11px] text-muted-foreground">Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). Untick anything you don&rsquo;t want yet - the epic stays for the rest.</p>
       <p className="text-[11px] text-muted-foreground/70">
         &ldquo;Epic&rdquo; and splitting are common practice, not Scrum. The Guide has one kind of thing on a Product Backlog and
@@ -260,12 +257,6 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const toggleItem = (id: string) => setExpandedItems((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // two-step delete guard
-  // The estimate/refine/split panels open at the top of the list; if the clicked item was
-  // scrolled down, bring the panel into view so you don't have to scroll up to find it.
-  const editorRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (editingPbi || estimating || splitting) editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [editingPbi, estimating, splitting]);
   const items = availableItems(state);
   const horizon = readyHorizon(state); // Sprints' worth of Ready work - refinement aims to keep 1-3
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
@@ -433,25 +424,35 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             : 'Pull a Ready item in by agreement, if it will not put the Sprint Goal at risk. Refining here is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints.'}
       </p>
 
-      <div ref={editorRef}>
+      {/* Each of these is its own conversation, so each takes over rather than being squeezed into
+          the top of a list that scrolls inside a fixed height. */}
       {editingPbi && (
-        <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
-          useStories={state.useUserStories} onToggleStories={onSetUseStories}
-          onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
-          onEstimate={editingPbi !== 'new' ? (pts) => onEstimate?.(editingPbi.id, pts) : undefined}
-          onCancel={() => setEditingPbi(null)} />
+        <Workspace title={editingPbi === 'new' ? 'A new Product Backlog item' : `Refine ${editingPbi.name}`}
+          subtitle="What it is, who it is for, and how you will know it is done."
+          onClose={() => setEditingPbi(null)}>
+          <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
+            useStories={state.useUserStories} onToggleStories={onSetUseStories}
+            onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
+            onEstimate={editingPbi !== 'new' ? (pts) => onEstimate?.(editingPbi.id, pts) : undefined}
+            onCancel={() => setEditingPbi(null)} />
+        </Workspace>
       )}
       {splitting && (
-        <SplitEpicPanel epic={splitting}
-          onSplit={(ids) => { onSplitEpic?.(splitting.id, ids); setSplitting(null); }}
-          onCancel={() => setSplitting(null)} />
+        <Workspace wide title={`Split ${splitting.name}`}
+          subtitle="Too big to finish in a Sprint, so break it into pieces you could actually build."
+          onClose={() => setSplitting(null)}>
+          <SplitEpicPanel epic={splitting}
+            onSplit={(ids) => { onSplitEpic?.(splitting.id, ids); setSplitting(null); }} />
+        </Workspace>
       )}
       {estimatingItem && (
-        <PlanningPoker item={estimatingItem} state={state} seed={state.gameSeed}
-          onCommit={(pts) => { onEstimate?.(estimatingItem.id, pts); setEstimating(null); }}
-          onCancel={() => setEstimating(null)} />
+        <Workspace title={`Size ${estimatingItem.name}`}
+          subtitle="The Developers size the work, because they are the ones who will do it."
+          onClose={() => setEstimating(null)}>
+          <PlanningPoker item={estimatingItem} state={state} seed={state.gameSeed}
+            onCommit={(pts) => { onEstimate?.(estimatingItem.id, pts); setEstimating(null); }} />
+        </Workspace>
       )}
-      </div>
 
       <div className="space-y-2.5">
         {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
