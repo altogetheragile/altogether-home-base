@@ -65,12 +65,13 @@ function EditRow({ entry, current, onSaved }: { entry: CopyEntry; current?: stri
   );
 }
 
-/** The pencil in the game's header, and the panel it opens. Only shown to an admin. */
-export function CopyEditor({ phase, overrides, onChanged }: {
-  phase: string;
+export interface CopyEditorProps {
   overrides: Record<string, string>;
   onChanged: (key: string, value: string) => void;
-}) {
+}
+
+/** The pencil in the game's header, and the panel it opens. Only shown to an admin. */
+export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { phase: string }) {
   const { data: role } = useUserRole();
   const [open, setOpen] = useState(false);
   const [all, setAll] = useState(false);

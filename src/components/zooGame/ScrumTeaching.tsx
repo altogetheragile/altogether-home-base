@@ -3,6 +3,7 @@ import { BookOpen, X, GraduationCap, Clock, Users, Boxes, Heart, Microscope, Rec
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
+import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 
 // The teaching, on screen. Three pieces: a card shown in context the first time an element is met,
 // a reference panel that is always to hand, and the one-page introduction before play. All of it can
@@ -158,7 +159,7 @@ const ART_ICON = [ClipboardList, ListTodo, Package];
 const EVENT_ICON = [CalendarRange, ClipboardCheck, Sunrise, Presentation, MessageCircleQuestion];
 
 /** The one page of Scrum a player meets before building anything. Skippable. */
-export function ScrumOnePager({ onDone, onSkipTeaching, onBack }: { onDone: () => void; onSkipTeaching: () => void; onBack?: () => void }) {
+export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone: () => void; onSkipTeaching: () => void; onBack?: () => void; copy?: CopyEditorProps }) {
   return (
     // The game frame never scrolls, so every screen inside it has to scroll itself - this one is
     // taller than a viewport, and without its own overflow the foot of it is simply unreachable.
@@ -170,7 +171,10 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack }: { onDone: () =
             &larr; Back
           </button>
         )}
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
+          {copy && <CopyEditor phase="intro" {...copy} />}
+        </div>
         <h2 className="text-2xl font-bold leading-tight">Scrum on one page</h2>
         <p className="text-[13px] leading-snug text-muted-foreground">{SCRUM_INTRO.what}</p>
       </header>
