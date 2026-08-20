@@ -687,12 +687,34 @@ export function reorderInZone(state: ZooGameState, id: string, dir: 'up' | 'down
 const withPlan = (item: BacklogItem): BacklogItem =>
   (item.tasks ?? []).filter((t) => t.label.trim()).length ? item : { ...item, tasks: suggestTasks(item) };
 
+/** What the team can forecast, and how much that number is worth.
+ *
+ *  Velocity is measured, never calculated - so the game does not recompute capacity when the Sprint
+ *  length changes. It does something more honest: it stops counting Sprints of a different length,
+ *  because their delivery says nothing about this one. Change the Sprint length and you are back to
+ *  an estimate until you have measured the new one, which is exactly what it costs a real team.
+ */
+export function sprintCapacity(state: ZooGameState): { points: number; estimated: boolean; measuredSprints: number; discarded: number } {
+  const days = state.velocityDays ?? [];
+  // Only Sprints of the current length are comparable. Where the lengths were never recorded (an
+  // older save), take every figure rather than pretending to know better.
+  const comparable = days.length === state.velocity.length
+    ? state.velocity.filter((_, i) => days[i] === state.sprintDays)
+    : state.velocity;
+  return {
+    points: zooCapacity(comparable, state.sprintDays),
+    estimated: comparable.length === 0,
+    measuredSprints: Math.min(comparable.length, 3),
+    discarded: state.velocity.length - comparable.length,
+  };
+}
+
 /** How far ahead the Backlog is actually prepared, in Sprints' worth of Ready work. Refinement aims
  *  to keep a couple of Sprints ready - enough that Planning has a real choice, not so much that the
  *  team has analysed work it may never build. */
 export function readyHorizon(state: ZooGameState): number {
   const pts = availableItems(state).filter(isReady).reduce((n, it) => n + it.estimate, 0);
-  const cap = zooCapacity(state.velocity);
+  const cap = sprintCapacity(state).points;
   return cap > 0 ? Math.round((pts / cap) * 10) / 10 : 0;
 }
 
@@ -707,7 +729,7 @@ export function planSprint(state: ZooGameState, ids: string[], plannedRefinement
   return {
     ...state, phase: 'sprint', committedIds: [...committed], backlog,
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
-    sprintForecast: zooCapacity(state.velocity),
+    sprintForecast: sprintCapacity(state).points,
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
     burndown: [committedPts],
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
@@ -907,7 +929,7 @@ export const isDraftedGoal = (goal: string): boolean => goal.trim().length >= GO
  *  most of - which is how a Backlog headed by the Big Cats produced a Goal about the Grounds.
  */
 export function goalCandidates(state: ZooGameState): BacklogItem[] {
-  const cap = zooCapacity(state.velocity);
+  const cap = sprintCapacity(state).points;
   const picked: BacklogItem[] = [];
   let pts = 0;
   for (const it of availableItems(state)) {
@@ -1109,6 +1131,9 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     ...state,
     phase: 'review',
     velocity: [...state.velocity, velocityPts],
+    // Remember how long the Sprint was that produced this figure - a 5-day Sprint's delivery says
+    // nothing about a 3-day one.
+    velocityDays: [...(state.velocityDays ?? []), state.sprintDays],
     attendance: result.nextAttendance,
     lastReview: result,
     happiness: [...(state.happiness ?? []), result.overallHappiness],

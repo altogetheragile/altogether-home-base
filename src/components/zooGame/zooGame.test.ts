@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, estimatedVelocity } from './config';
 import {
   planSprint, planItemShape, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -2147,5 +2147,43 @@ describe('zoo game: topic three decides what shape a thing takes', () => {
     expect(s.backlog.find((i) => i.id === 'kiosk')!.template).toBe('cafe');
     s = planItemShape(s, 'kiosk', { enclosureId: '' });
     expect(s.backlog.find((i) => i.id === 'kiosk')!.enclosureId).toBeUndefined();
+  });
+});
+
+describe('zoo game: the first forecast is an estimate, and it scales with the Sprint length', () => {
+  it('scales the starting guess by how long the Sprint is', () => {
+    expect(estimatedVelocity(SPRINT_DAYS)).toBe(STARTER_CAPACITY);
+    expect(estimatedVelocity(2)).toBeLessThan(STARTER_CAPACITY);
+    expect(estimatedVelocity(5)).toBeGreaterThan(STARTER_CAPACITY);
+    // A 2-day and a 5-day Sprint must not open with the same number.
+    expect(estimatedVelocity(2)).not.toBe(estimatedVelocity(5));
+  });
+
+  it('says it is an estimate until a Sprint of this length has been measured', () => {
+    const fresh = sprintCapacity(initialZooState(1));
+    expect(fresh.estimated).toBe(true);
+    expect(fresh.measuredSprints).toBe(0);
+    const measured = sprintCapacity({ ...initialZooState(1), velocity: [18], velocityDays: [SPRINT_DAYS] });
+    expect(measured.estimated).toBe(false);
+    expect(measured.points).toBe(18);
+  });
+
+  it('stops counting Sprints run at a different length', () => {
+    // Three Sprints measured at 3 days, then the team moves to 5.
+    const s: ZooGameState = { ...initialZooState(1), velocity: [20, 22, 24], velocityDays: [3, 3, 3], sprintDays: 5 };
+    const cap = sprintCapacity(s);
+    expect(cap.estimated).toBe(true);          // nothing measured at 5 days yet
+    expect(cap.discarded).toBe(3);
+    expect(cap.points).toBe(estimatedVelocity(5)); // back to an estimate, scaled to the new length
+    // ...and one Sprint at the new length is enough to be measuring again.
+    const after = sprintCapacity({ ...s, velocity: [20, 22, 24, 33], velocityDays: [3, 3, 3, 5] });
+    expect(after.estimated).toBe(false);
+    expect(after.points).toBe(33);
+    expect(after.discarded).toBe(3);
+  });
+
+  it('records the Sprint length alongside each measured velocity', () => {
+    const reviewed = reviewSprint(buildAndOpen(bigCatsSplit(1), ['lion-enc']));
+    expect(reviewed.velocityDays).toEqual([reviewed.sprintDays]);
   });
 });

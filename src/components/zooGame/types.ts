@@ -316,6 +316,9 @@ export interface ZooGameState {
    *  adding/refining PBIs) while a Sprint is running - it eats into the build clock. Resets
    *  each day. Refinement in the Refinement/Planning phases is free (0 here). */
   refinePenalty: number;
+  /** The Sprint length each recorded velocity was measured at, alongside `velocity`. Changing the
+   *  Sprint length makes earlier figures incomparable, and this is how the game knows. */
+  velocityDays?: number[];
   /** Decided at Sprint Planning topic three: the Scrum Team has set time aside in THIS Sprint to
    *  refine the Product Backlog, so every day of it starts with some of the clock already spent. */
   plannedRefinement?: boolean;
