@@ -52,16 +52,16 @@ export function copyEntries(): CopyEntry[] {
   // The Why / Who / When / How cards - the largest block, and the one most worth owning.
   for (const card of SCRUM_CARDS) {
     out.push({
-      key: `card.${card.id}.title`, group: 'Teaching cards', label: `${card.title} - title`,
-      where: `The ${card.title} card`, value: card.title, phases: cardPhase[card.id] ?? [],
+      key: `card.${card.id}.title`, group: 'Teaching cards', label: 'Title',
+      where: `${card.title} card`, value: card.title, phases: cardPhase[card.id] ?? [],
       apply: (v) => { card.title = v; },
     });
     for (const [field, label, long] of CARD_FIELDS) {
       const current = card[field];
       if (current === undefined) continue;
       out.push({
-        key: `card.${card.id}.${field}`, group: 'Teaching cards', label: `${card.title} - ${label}`,
-        where: `The ${card.title} card`, value: current, long, phases: cardPhase[card.id] ?? [],
+        key: `card.${card.id}.${field}`, group: 'Teaching cards', label,
+        where: `${card.title} card`, value: current, long, phases: cardPhase[card.id] ?? [],
         apply: (v) => { (card as unknown as Record<string, string>)[field] = v; },
       });
     }

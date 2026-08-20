@@ -47,6 +47,13 @@ export const TONE = {
     strong: 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
     chip: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
   },
+  /** Reflection: the Retrospective's own voice - looking back rather than pushing forward. */
+  reflect: {
+    text: 'text-rose-700 dark:text-rose-300',
+    soft: 'border-rose-500/25 bg-rose-500/5',
+    strong: 'border-rose-400 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+    chip: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+  },
   /** Quiet: structure, meta, anything that should recede. */
   quiet: {
     text: 'text-muted-foreground',
