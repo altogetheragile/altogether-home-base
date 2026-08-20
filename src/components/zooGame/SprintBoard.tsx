@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
-import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
-import type { ItemDesign } from './design';
 import { isDeployAcceptance } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
-import { DesignStudio, type CopySource } from './DesignStudio';
 import { DailyScrum } from './DailyScrum';
 import { ExplainButton } from './Explain';
 import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
@@ -26,11 +23,6 @@ import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, S
 
 interface SprintBoardProps {
   state: ZooGameState;
-  onBuild: (id: string, design?: ItemDesign) => void;
-  /** Save the in-progress design as it changes in the studio, so partial work survives the studio
-   *  closing and the Sprint rolling over. */
-  onDraftChange: (id: string, design: ItemDesign) => void;
-  onEditBuild: (id: string, design: ItemDesign) => void;
   onAddAnother: (id: string) => void;
   onEstimate: (id: string, points: number) => void;
   onToggleTask: (id: string, taskId: string) => void;
@@ -39,7 +31,6 @@ interface SprintBoardProps {
   onCancelSprint?: () => void;
   /** Re-order what to pick up next - the Developers arranging their own Sprint Backlog. */
   onReorderSprint?: (id: string, dir: 'up' | 'down') => void;
-  onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onSetLearnMode: (on: boolean) => void;
   /** The WIP limit is the Developers' own agreement, so they can change it or switch it off. */
   onSetWipLimit?: (n: number) => void;
@@ -56,8 +47,7 @@ interface SprintBoardProps {
   onHoldDailyScrum: () => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
-  /** The item whose build is open, shared with the park so a tap on its site opens it here. */
-  building: string | null;
+  /** Selecting an item on the park, so starting one takes you straight to building it there. */
   onBuilding: (id: string | null) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
@@ -200,8 +190,7 @@ function RefineChip({ horizon, onOpen }: { horizon: number; onOpen: () => void }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetEnclosure, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, building, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
-  const designing = building;
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   const [showBacklog, setShowBacklog] = useState(false); // the Backlog tucks away during the Sprint
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
@@ -215,8 +204,6 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
     // even though it was built earlier. Without this it would drop off the board on deployment.
     || (it.status === 'open' && it.openedIn === state.sprintNumber),
   );
-  const designItem = designing ? committed.find((it) => it.id === designing) : null;
-  const editing = !!designItem && designItem.status !== 'committed';
   const cut = Math.round((1 - state.dayTimeMult) * 100);
 
   // Columns follow the item's real state: To Do (not started) -> Doing (started: being
@@ -297,11 +284,6 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
     onDrop: (e: DragEvent) => { e.preventDefault(); handleDrop(to); },
   });
   const dropClass = (to: string) => (!drag || dropCol !== to ? '' : willSucceed(drag.from, to, drag.id) ? 'rounded-lg ring-2 ring-emerald-400' : 'rounded-lg ring-2 ring-amber-400');
-
-  // Built animals you can copy from when designing another of the same kind.
-  const copySources: CopySource[] = designItem
-    ? state.backlog.filter((it) => it.id !== designItem.id && it.category === designItem.category && it.design).map((it) => ({ id: it.id, name: it.name, design: it.design! }))
-    : [];
 
   if (state.dayStage === 'dailyScrum') {
     return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
@@ -463,7 +445,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                         detail={<>
                           <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex justify-end">
-                            <Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => onStartItem(it.id)}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>
+                            <Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => { onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>
                           </div>
                         </>} />
                       </div>
@@ -499,7 +481,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
                           </div>
                           <div className="mt-1.5 flex justify-end">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Edit design' : it.draftDesign ? 'Resume build' : 'Design & build'}</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Build it on the park</Button>
                           </div>
                         </>} />
                       </div>
@@ -508,7 +490,7 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
                 </BoardColumn>
                 </div>
                 <div {...dropProps('deploy')} className={cn('min-w-0 transition-shadow', dropClass('deploy'))}>
-                <BoardColumn title="Deploy" count={deploy.length} hint="Place on the park, then Deploy complete">
+                <BoardColumn title="Deploy" count={deploy.length} hint="Built and standing on the park, waiting to be opened">
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
                     <PbiCard item={it} state="built" density="card"
@@ -565,28 +547,6 @@ export function SprintBoard({ state, onBuild, onDraftChange, onEditBuild, onAddA
         </ActionBar>
       )}
 
-      {/* The studio opens as a modal OVER the board, so the Scrum board stays in view
-          (the card sits in Doing behind it) while you build. */}
-      {/* The build sits beside the park, and the Sprint Backlog stands aside while it is open - two
-          panels over one park left a strip of grass and nowhere to put the board's own Hide handle.
-          Portalled to the body because the dock it renders from uses backdrop-blur, and a filtered
-          ancestor becomes the containing block for `fixed`. */}
-      {designItem && !dayStarting && createPortal(
-        <div className="fixed right-0 top-0 z-40 h-full w-[min(560px,96vw)] border-l border-border shadow-2xl">
-          <DesignStudio
-            item={designItem}
-            editing={editing}
-            copySources={copySources}
-            onToggleTask={onToggleTask}
-            onSetEnclosure={(size) => onSetEnclosure(designItem.id, size)}
-            initial={editing ? undefined : designItem.draftDesign}
-            onChange={(d) => { if (!editing) onDraftChange(designItem.id, d); }}
-            onFinish={(d) => { if (editing) onEditBuild(designItem.id, d); else onBuild(designItem.id, d); setDesigning(null); }}
-            onCancel={() => setDesigning(null)}
-          />
-        </div>,
-        document.body,
-      )}
 
     </div>
   );
