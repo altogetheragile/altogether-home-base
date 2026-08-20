@@ -347,6 +347,7 @@ export type ZooAction =
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[]; plannedRefinement?: boolean }
   | { type: 'PLAN_ITEM_SHAPE'; id: string; patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string } }
+  | { type: 'START_ITEM_AT'; id: string; pos: { x: number; y: number } }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }

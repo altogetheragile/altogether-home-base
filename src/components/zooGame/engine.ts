@@ -509,6 +509,19 @@ export function planItemShape(state: ZooGameState, id: string, patch: { enclosur
   };
 }
 
+/** Start an item by dropping it on the park: it moves into Doing and takes the plot you dropped it
+ *  on, which stands as a construction site until it is Done and released.
+ *
+ *  Placing it now rather than at deploy is the point of building on the canvas - you size a habitat
+ *  against its neighbours while you build it, not after. The Definition of Done still gates what
+ *  visitors see: a site is hoardings, not an exhibit. If the item cannot start - the WIP limit, or a
+ *  habitat that is not built yet - nothing happens, because the rule is the lesson. */
+export function startItemAt(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
+  const started = startItem(state, id);
+  if (started === state) return state;
+  return setItemPos(started, id, pos);
+}
+
 /** Set a feature's free-placement position in the park (from dragging on the Park tab). */
 export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };

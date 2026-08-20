@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, estimatedVelocity } from './config';
 import {
-  planSprint, planItemShape, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
+  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
   endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
@@ -2185,5 +2185,32 @@ describe('zoo game: the first forecast is an estimate, and it scales with the Sp
   it('records the Sprint length alongside each measured velocity', () => {
     const reviewed = reviewSprint(buildAndOpen(bigCatsSplit(1), ['lion-enc']));
     expect(reviewed.velocityDays).toEqual([reviewed.sprintDays]);
+  });
+});
+
+describe('zoo game: starting an item by dropping it on the park', () => {
+  it('starts it and gives it the plot it landed on', () => {
+    const s = startItemAt(planSprint(bigCatsSplit(1), ['lion-enc']), 'lion-enc', { x: 300, y: 200 });
+    const it = s.backlog.find((i) => i.id === 'lion-enc')!;
+    expect(it.started).toBe(true);
+    expect(it.status).toBe('committed');   // started, not Done - it is a construction site
+    expect(it.pos).toEqual({ x: 300, y: 200 });
+  });
+
+  it('refuses when the item may not start, and places nothing', () => {
+    // An animal whose habitat is not built cannot start, so dropping it changes nothing at all.
+    let s = planSprint(bigCatsSplit(1), ['lion', 'lion-enc']);
+    s = planItemShape(s, 'lion', { enclosureId: 'lion-enc' });
+    const after = startItemAt(s, 'lion', { x: 100, y: 100 });
+    expect(after).toBe(s);
+    expect(after.backlog.find((i) => i.id === 'lion')!.pos).toBeUndefined();
+  });
+
+  it('holds the WIP limit, once the limit has been met', () => {
+    let s = { ...withEnclosuresBuilt(flat(bigCatsSplit(1)), 'lion-enc', 'tiger-enc', 'leopard-enc', 'penguin-enc'), sprintNumber: 2 };
+    s = planSprint(s, ['lion', 'tiger', 'leopard', 'penguins']);
+    for (const id of ['lion', 'tiger', 'leopard']) s = startItemAt(s, id, { x: 200, y: 200 });
+    const blocked = startItemAt(s, 'penguins', { x: 400, y: 300 });
+    expect(blocked).toBe(s);
   });
 });
