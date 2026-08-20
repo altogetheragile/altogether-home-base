@@ -211,13 +211,13 @@ export default function ZooGame() {
         // just had the taught session, or who has turned it off already).
         if (onePager && (state.teaching ?? true)) {
           return <ScrumOnePager onDone={() => setOnePager(false)} onSkipTeaching={() => { setTeaching(false); setOnePager(false); }}
-            onBack={onePagerSeen ? () => setOnePager(false) : undefined} />;
+            onBack={onePagerSeen ? () => setOnePager(false) : undefined} copy={copyProps} />;
         }
         return <ZooIntro productGoal={state.productGoal} onSetGoal={setGoal} onStart={start}
           teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
           onMarkTaught={markTaught}
           onBack={(state.teaching ?? true) ? () => { setOnePagerSeen(true); setOnePager(true); } : undefined}
-          onOpenSaves={user ? () => setSavesOpen(true) : undefined} />;
+          onOpenSaves={user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'refine':
         return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onSetSprintDays={setSprintDays} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onPlan={() => setPhase('planning')} teachCard={cardFor('refine')} onMarkTaught={markTaught} /></ZooShell>;
       case 'planning':

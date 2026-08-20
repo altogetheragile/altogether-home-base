@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Target, Pencil } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
+import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
 
 interface ZooIntroProps {
@@ -14,23 +15,28 @@ interface ZooIntroProps {
   onStart: () => void;
   /** Signed-in players can resume a saved game. */
   onOpenSaves?: () => void;
+  /** Editing the teaching copy, for an admin polishing it in place. */
+  copy?: CopyEditorProps;
 }
 
 /** Landing screen, read top to bottom as it narrows: what this is, how a Sprint goes, what a Product
  *  Goal is, and then the Product Goal itself - which is the one thing the player writes before they
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
-export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGoal, onStart, onOpenSaves }: ZooIntroProps) {
+export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGoal, onStart, onOpenSaves, copy }: ZooIntroProps) {
   const [goal, setGoal] = useState(productGoal);
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-5">
-        {onBack && (
-          <button type="button" onClick={onBack} className="self-start text-[11px] text-muted-foreground underline-offset-2 hover:underline">
-            &larr; Scrum on one page
-          </button>
-        )}
+        <div className="flex items-center justify-between gap-2">
+          {onBack ? (
+            <button type="button" onClick={onBack} className="text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+              &larr; Scrum on one page
+            </button>
+          ) : <span />}
+          {copy && <CopyEditor phase="intro" {...copy} />}
+        </div>
 
         {/* 1. What this is - said once, briefly, because the thing to DO is below it. */}
         <header className="space-y-1 text-center">
