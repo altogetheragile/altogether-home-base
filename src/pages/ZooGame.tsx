@@ -211,8 +211,14 @@ export default function ZooGame() {
   // The deploy-time acceptance criteria (sizing/placement) of the item being deployed, with their
   // confirmed state - shown on the park so you accept placement once it is actually placed & sized.
   const deployItem = deployId ? state.backlog.find((x) => x.id === deployId) : undefined;
+  // ALL of the item's acceptance criteria, not just the placement one. Showing one criterion under
+  // the heading "Acceptance criteria" read as though that was the whole set, and a lion has four.
+  // The ones already accepted in the build come too, ticked and out of reach - the picture is only
+  // honest if you can see what has been accepted as well as what is left.
   const deployAcs = deployItem
-    ? deployItem.acceptance.map((label, index) => ({ index, label, confirmed: !!deployItem.acConfirmed?.[index] })).filter((a) => isDeployAcceptance(a.label))
+    ? deployItem.acceptance.map((label, index) => ({
+      index, label, confirmed: !!deployItem.acConfirmed?.[index], placement: isDeployAcceptance(label),
+    }))
     : [];
 
   // Sprint Planning shows its teaching inside the "?" beside the question rather than as a card on

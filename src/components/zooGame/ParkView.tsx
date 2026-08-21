@@ -931,14 +931,19 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // with an appeal per segment averaged from their animals), the food stops that satisfy hunger, and
   // the entrance they arrive at. Fed to the guest layer drawn over the park.
   const norm = (v: number, n: number) => Math.max(0.15, Math.min(1, v / n / 8));
+  // Only what is OPEN draws a crowd. The park shows an item that is built and standing in place so
+  // you can position it, but visitors were turning up to see it before anyone had opened it - which
+  // taught the opposite of the thing the hoardings are there to teach. Done is not released.
+  const live = (it: BacklogItem) => it.status === 'open';
   const attractions: Attraction[] = features
-    .filter((f) => f.kind === 'enclosure' && f.animals.length > 0)
-    .map((f) => {
-      const c = posOf(f), n = f.animals.length, a = { families: 0, enthusiasts: 0, comfortSeekers: 0 };
-      for (const an of f.animals) { const g = an.appeal; if (g) { a.families += g.families; a.enthusiasts += g.enthusiasts; a.comfortSeekers += g.comfortSeekers; } }
+    .map((f) => ({ f, animals: f.animals.filter(live) }))
+    .filter(({ f, animals }) => f.kind === 'enclosure' && live(f.item) && animals.length > 0)
+    .map(({ f, animals }) => {
+      const c = posOf(f), n = animals.length, a = { families: 0, enthusiasts: 0, comfortSeekers: 0 };
+      for (const an of animals) { const g = an.appeal; if (g) { a.families += g.families; a.enthusiasts += g.enthusiasts; a.comfortSeekers += g.comfortSeekers; } }
       return { x: c.x, y: c.y, hh: f.h / 2, appeal: { families: norm(a.families, n), enthusiasts: norm(a.enthusiasts, n), comfortSeekers: norm(a.comfortSeekers, n) } };
     });
-  const foodPts = features.filter((f) => f.item.category === 'amenity').map((f) => { const c = posOf(f); return { x: c.x, y: c.y }; });
+  const foodPts = features.filter((f) => f.item.category === 'amenity' && live(f.item)).map((f) => { const c = posOf(f); return { x: c.x, y: c.y }; });
   const visitorEntrance = { x: CANVAS_W / 2, y: canvasH - PATH_H / 2 };
   // The car park is the frame outside the fence: an apron pinned below the entrance, full width, no
   // matter how tall the park grows. It starts empty and fills as the zoo opens more to see - roughly
@@ -1344,7 +1349,7 @@ interface ParkViewProps {
   deployStyle?: { thickness: number; color: string } | null;
   /** Deploy-time acceptance criteria (sizing/placement) for the item being deployed - confirmed here
    *  on the park, as you place & size it, since they can't be judged before it is placed. */
-  deployAcs?: { index: number; label: string; confirmed: boolean }[];
+  deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[];
   onConfirmDeployAc?: (index: number, value: boolean) => void;
   onFinishDeploy?: () => void;
   /** The id of a just-delivered feature, so it can pop in celebratorily. */
@@ -1470,13 +1475,20 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               </div>
               {acs.length > 0 && (
                 <div className="rounded border border-emerald-500/30 bg-background/60 px-2 py-1">
-                  <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">Acceptance criteria - confirm now it is placed &amp; sized, then mark it Deploy complete on its card</div>
+                  <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">
+                    Acceptance criteria &middot; the Product Owner&rsquo;s &mdash; the last one is where it stands
+                  </div>
                   <ul className="space-y-0.5">
                     {acs.map((a) => (
                       <li key={a.index}>
-                        <button type="button" onClick={() => onConfirmDeployAc?.(a.index, !a.confirmed)} className="flex w-full items-center gap-2 text-left">
-                          <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full', a.confirmed ? 'bg-emerald-500 text-white' : 'border border-emerald-500/60')}>{a.confirmed && <Check className="h-3 w-3" />}</span>
-                          <span className={cn(a.confirmed ? 'text-foreground' : 'text-muted-foreground')}>{a.label}</span>
+                        {/* The build ones were accepted while building it and are shown for
+                            completeness, not to be re-judged. Only where it stands is live here. */}
+                        <button type="button" disabled={!a.placement} onClick={() => onConfirmDeployAc?.(a.index, !a.confirmed)}
+                          title={a.placement ? undefined : 'Accepted while you were building it'}
+                          className="flex w-full items-center gap-2 text-left disabled:cursor-default">
+                          <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
+                            a.confirmed ? 'bg-emerald-500 text-white' : 'border border-emerald-500/60')}>{a.confirmed && <Check className="h-3 w-3" />}</span>
+                          <span className={cn(!a.placement ? 'text-muted-foreground/60 line-through' : a.confirmed ? 'text-foreground' : 'font-medium text-foreground')}>{a.label}</span>
                         </button>
                       </li>
                     ))}
