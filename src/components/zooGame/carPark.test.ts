@@ -1,18 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { carParkLayout, walkToGate, CAR_BAYS, COACH_BAYS } from './carPark';
+import { carParkLayout, walkToGate, CAR_BAYS, COACH_BAYS, CAR_PARK_H } from './carPark';
 
 describe('carParkLayout', () => {
   it('starts empty and fills front-to-back as the count grows', () => {
+    // An empty lot lays out ONE row and no coach lay-by: a zoo with nothing open does not need a
+    // second row of bays, and drawing them anyway is a screenful of empty tarmac.
     const empty = carParkLayout(880, 400, 0, 0);
     expect(empty.spots.length).toBe(0);
-    // every space is drawn as a marked-out empty (16 car bays + 2 coach spaces)
-    expect(empty.empties.length).toBe(CAR_BAYS + COACH_BAYS);
+    expect(empty.empties.length).toBe(CAR_BAYS / 2);
+    expect(empty.empties.every((e) => !e.bus)).toBe(true);
 
     const few = carParkLayout(880, 400, 3, 0);
     expect(few.spots.filter((s) => !s.bus).length).toBe(3);
     // the first cars are in the front row (smallest y among all bay rows)
     const rowY = Math.min(...few.empties.filter((e) => !e.bus).map((e) => e.y));
     expect(few.spots.every((s) => s.y <= rowY)).toBe(true);
+  });
+
+  it('grows as the zoo does: a second row when the first fills, a lay-by when a coach comes', () => {
+    const quiet = carParkLayout(880, 400, 2, 0);
+    const busy = carParkLayout(880, 400, 99, 0);
+    const coaches = carParkLayout(880, 400, 99, 2);
+    expect(quiet.height).toBeLessThan(busy.height);
+    expect(busy.height).toBeLessThan(coaches.height);
+    // ...and the lot never grows past the biggest it has ever needed to be
+    expect(coaches.height).toBe(CAR_PARK_H);
   });
 
   it('caps at capacity', () => {
