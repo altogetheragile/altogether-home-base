@@ -19,7 +19,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks } from 'lucide-react';
+import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -207,7 +207,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
   // caveat that pulling more in is a negotiation, not a default, is written on it.
-  const [showBacklog, setShowBacklog] = useState(true);
+  const [showBacklog, setShowBacklog] = useState(false);
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -331,7 +331,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   );
 
   return (
-    <div className="space-y-3">
+    <div className="relative flex min-h-full flex-1 flex-col gap-3">
       {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
           pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
@@ -353,6 +353,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 <p>It is a common practice, not part of Scrum - and it is for the Developers to see their own progress, not a report to anyone.</p>
               </NewHere>}
             </span>
+          )}
+          {!dayStarting && (
+            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" onClick={() => setShowBacklog(true)}>
+              <ClipboardList className="h-3.5 w-3.5" /> Product Backlog <span className="text-muted-foreground">({available})</span>
+            </Button>
           )}
           {!dayStarting && <RefineChip horizon={readyHorizon(state)} planned={state.sprintRefinement} onOpen={() => setShowBacklog(true)} />}
           <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
@@ -383,50 +388,19 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               working on - so it tucks away and gives the columns the whole width when you don't need it. */}
           {/* Three columns, left to right, in the order the work moves: the Product Backlog you pull
               from, the Sprint Backlog you pulled it into, and the park you build it on. */}
-          <div className="grid grid-cols-2 gap-3 lg:items-start">
-            {showBacklog ? (
-              // The same pick-cards as Sprint Planning: tap to pull one in, a padlock on anything
-              // that is not ready. Choosing work looks the same wherever you do it.
-              <div className="min-w-0 space-y-1.5 rounded-lg border border-border bg-card/40 p-2">
-                <button type="button" onClick={() => setShowBacklog(false)} className="flex w-full items-center justify-between gap-2 text-left">
-                  <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></h3>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                </button>
-                <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
-                {fixingItem && <div ref={fixRef} />}
-                {fixingItem && (
-                  <Workspace wide={fixingItem.category === 'epic'}
-                    title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}
-                    subtitle="Refining together costs the day's build time - what it prepares is later Sprints."
-                    onClose={() => setFixing(null)}>
-                    {fixingItem.category === 'epic'
-                  ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} />
-                  : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
-                    onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
-                  </Workspace>
-                )}
-                <div className="max-h-[62vh] space-y-1.5 overflow-y-auto pr-1">
-                  {backlog.map((it) => (
-                    <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => onPull(it.id)} onFix={() => setFixing(it.id)}
-                      note={"Refining now is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints."} />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <button type="button" onClick={() => setShowBacklog(true)} title="Show the Product Backlog"
-                className="flex w-full items-center justify-between gap-1.5 rounded-lg border border-border bg-card/40 px-2 py-1.5 text-left transition-colors hover:bg-muted/50">
-                <span className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">pull from it <ChevronDown className="h-3.5 w-3.5 -rotate-90" /></span>
-              </button>
-            )}
-
+          {/* The Sprint Backlog fills the bottom of the half, laid out the way a board is: To Do,
+              Doing, Done, left to right. The Product Backlog is not a column here - it is a panel
+              you open when you want to pull something in, and close again. Most of a Sprint you are
+              working the Sprint Backlog, and a permanent Product Backlog column beside it invites
+              exactly the mid-Sprint scope creep the Guide asks you to negotiate rather than assume. */}
+          <div className="mt-auto">
             <div className="min-w-0 space-y-2">
               <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({sprintTotal})</span></h3>
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
               {/* Four equal columns at sm+ (a 2x2 grid on mobile) - uniform, whatever each holds. */}
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-3 gap-2 items-start">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
@@ -570,6 +544,39 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             </div>
           </div>
         </>
+      )}
+
+      {/* Pulling something in mid-Sprint is a negotiation, so it is something you go and do rather
+          than something sitting open beside the work. The panel covers the left half while it is
+          open and gets out of the way when it is not. */}
+      {showBacklog && !dayStarting && (
+        <div className="absolute inset-0 z-30 flex flex-col rounded-lg border border-border bg-background/98 shadow-xl backdrop-blur">
+          <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-3 py-2">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></h3>
+              <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
+            </div>
+            <button type="button" onClick={() => setShowBacklog(false)} aria-label="Close the Product Backlog"
+              className="shrink-0 rounded-md border border-border p-1 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+          </div>
+          {fixingItem && (
+            <Workspace wide={fixingItem.category === 'epic'}
+              title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}
+              subtitle="Refining together costs the day's build time - what it prepares is later Sprints."
+              onClose={() => setFixing(null)}>
+              {fixingItem.category === 'epic'
+                ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} />
+                : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
+                  onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
+            </Workspace>
+          )}
+          <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
+            {backlog.map((it) => (
+              <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => { onPull(it.id); setShowBacklog(false); }} onFix={() => setFixing(it.id)}
+                note={"Refining now is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints."} />
+            ))}
+          </div>
+        </div>
       )}
 
       {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
