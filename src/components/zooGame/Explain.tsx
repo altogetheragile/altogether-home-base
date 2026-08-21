@@ -1,7 +1,7 @@
 import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { TeachingCard } from './ScrumTeaching';
+import { TeachingCard, ExplainCard } from './ScrumTeaching';
 import { EventContractStrip } from './EventContract';
 
 /** The one place words live on a screen.
@@ -11,11 +11,11 @@ import { EventContractStrip } from './EventContract';
  *  event inspects and adapts, and the teaching card the first time through. The button pulses while
  *  there is something new in it, and is quiet afterwards - available in a breath, never in the way.
  */
-export function ExplainButton({ title, body, phase, teachCard, onMarkTaught }: {
-  /** What this screen is about, as a heading inside the panel. */
-  title: string;
-  /** A paragraph each - what the Scrum Guide says, in the game's words. */
-  body: string[];
+export function ExplainButton({ cards, phase, teachCard, onMarkTaught }: {
+  /** The teaching, by card id. Every screen's "?" reads from the Teaching Cards rather than holding
+   *  its own prose: the screens had drifted into saying the same things in slightly different words,
+   *  and only one of those copies was editable. One concept, one wording, one place to change it. */
+  cards: string[];
   /** The game phase, so the panel can say what this event inspects and adapts. */
   phase?: string;
   /** The teaching card for this phase, if the learner has not read it yet. */
@@ -38,10 +38,7 @@ export function ExplainButton({ title, body, phase, teachCard, onMarkTaught }: {
       <PopoverContent align="end" className="max-h-[70vh] w-96 overflow-y-auto">
         <div className="space-y-2.5">
           {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-          <div>
-            <h4 className="text-sm font-semibold">{title}</h4>
-            {body.map((p) => <p key={p} className="mt-1.5 text-[12px] leading-snug text-muted-foreground">{p}</p>)}
-          </div>
+          {cards.filter((id) => id !== teachCard).map((id) => <ExplainCard key={id} id={id} />)}
           {phase && <EventContractStrip phase={phase} />}
         </div>
       </PopoverContent>

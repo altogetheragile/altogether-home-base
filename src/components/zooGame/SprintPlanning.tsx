@@ -63,33 +63,12 @@ const STEPS: { key: Step; n: number; label: string; topic: string; question: str
   { key: 'how', n: 3, label: 'How', topic: 'Topic Three', question: 'How will the chosen work get done?', lead: 'Decide what each item will be, and the steps that build it.' },
 ];
 
-/** What the Guide says about this topic - shown on request, not on the page. */
-const DETAIL: Record<Step, { title: string; body: string[] }> = {
-  why: {
-    title: 'Topic one: why this Sprint is valuable',
-    body: [
-      'The Sprint Goal is the commitment of the Sprint Backlog: one objective, which stays fixed even when the scope around it flexes. It is what you protect when something has to give.',
-      'You write it looking at the top of the Product Backlog, which is what the Product Owner is proposing value from.',
-    ],
-  },
-  what: {
-    title: 'Topic two: what can be Done',
-    body: [
-      'Through discussion with the Product Owner, the Developers select items from the Product Backlog to include in the Sprint. The work is pulled, never pushed.',
-      'Only items that are ready can be selected - ready means the Scrum Team could get them Done inside one Sprint.',
-      'Capacity here comes from your recent velocity. Velocity is a common forecasting practice, not part of Scrum, and a forecast is not a promise: finishing a few things well beats starting many.',
-      'You may refine an item here to make it ready, but a Backlog refined during the last Sprint would not need it, and the time comes out of Planning.',
-    ],
-  },
-  how: {
-    title: 'Topic three: how the work gets done',
-    body: [
-      'The Developers plan how they will turn the selected items into an Increment meeting the Definition of Done. How this is done is at their sole discretion - no one else tells them how.',
-      'Deciding what shape a thing takes - how big the habitat is, which habitat an animal lives in, what kind of building it is - is part of that plan, because it decides the work and its order. Colour, features and exactly where it sits are the craft, and they are done in the build with the thing in front of you.',
-      'Plan in as much detail as you need and no more. The plan is theirs to change every day of the Sprint: it is a starting point, not a contract.',
-      'Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.',
-    ],
-  },
+// Which Teaching Cards each topic is about. The prose that used to live here said the same things
+// the cards say, in slightly different words, and only the cards were editable.
+const TOPIC_CARDS: Record<Step, string[]> = {
+  why: ['sprint-goal', 'sprint-planning'],
+  what: ['sprint-backlog', 'velocity', 'pbi'],
+  how: ['sprint-backlog', 'developers'],
 };
 
 /** The shape every topic of Sprint Planning takes: the Product Backlog on the left, the Sprint you
@@ -196,7 +175,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} caption="The three topics of Sprint Planning" />
-          <ExplainButton title={DETAIL[step].title} body={DETAIL[step].body} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
+          <ExplainButton cards={TOPIC_CARDS[step]} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <div>
           {/* Named as the Guide names it. Sprint Planning has three topics, and saying which one you

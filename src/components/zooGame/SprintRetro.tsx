@@ -17,17 +17,8 @@ const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
   { key: 'adapt', label: 'Adapt', question: 'What will we change?', lead: 'One improvement you will actually make, and the agreements you own.' },
 ];
 /** What the Guide says about the Retrospective - behind the "?", not on the page. */
-const DETAIL: Record<Step, string[]> = {
-  inspect: [
-    'The Sprint Retrospective inspects how the last Sprint went with regard to individuals, interactions, processes, tools and the Definition of Done.',
-    'It is the Scrum Team inspecting itself - the only event that does. What it inspects is not an artifact, which is why nothing here is being adapted yet.',
-    'Inspected elements often vary with the domain of work. Assumptions that led the team astray are identified and their origins explored.',
-  ],
-  adapt: [
-    'The Scrum Team identifies the most helpful changes to improve its effectiveness, and the most impactful are addressed as soon as possible - they may even be added to the Sprint Backlog for the next Sprint.',
-    'This is where the Definition of Done is adapted, and the only place the Sprint length changes - a fixed-length container is the point of a Sprint, so it is never resized to fit the work.',
-  ],
-};
+// Which Teaching Cards each step is about - one source for the teaching, and an editable one.
+const STEP_CARDS: Record<Step, string[]> = { inspect: ['sprint-retrospective'], adapt: ['sprint-retrospective', 'definition-of-done'] };
 
 interface SprintRetroProps {
   state: ZooGameState;
@@ -63,8 +54,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <StepTrack steps={STEPS} current={step} done={(k) => k === 'inspect' && step === 'adapt'} onGo={setStep} />
-          <ExplainButton title={`Sprint Retrospective \u00b7 Sprint ${state.sprintNumber}`} body={DETAIL[step]} phase="retro"
-            teachCard={teachCard} onMarkTaught={onMarkTaught} />
+          <ExplainButton cards={STEP_CARDS[step]} phase="retro" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <div>
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>

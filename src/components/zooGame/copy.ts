@@ -1,4 +1,4 @@
-import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE } from './scrumContent';
+import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE, INTRO_COPY } from './scrumContent';
 import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 
 // ============= The teaching copy, as data you can edit =============
@@ -13,7 +13,7 @@ import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 // edit there breaks a screen rather than improving a sentence.
 
 /** Where a piece of copy appears, so the admin list can be grouped the way the game is played. */
-export type CopyGroup = 'Teaching cards' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
+export type CopyGroup = 'Teaching cards' | 'The front page' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
 
 export interface CopyEntry {
   /** Stable id - the database key. Never renamed once shipped, or overrides orphan. */
@@ -48,6 +48,20 @@ export function copyEntries(): CopyEntry[] {
   // Which phase shows which card, so a card can be found where it is met.
   const cardPhase: Record<string, string[]> = {};
   for (const [phase, ids] of Object.entries(CARDS_BY_PHASE)) for (const id of ids) (cardPhase[id] ??= []).push(phase);
+
+  // The front page: the first words anyone reads, and until now the only ones a trainer could not
+  // touch. Not Scrum teaching, but the same job - saying what this is.
+  out.push(
+    { key: 'intro.title', group: 'The front page', label: 'Title', where: 'The front page', value: INTRO_COPY.title, phases: ['intro'], apply: (v) => { INTRO_COPY.title = v; } },
+    { key: 'intro.strapline', group: 'The front page', label: 'Strapline', where: 'The front page', value: INTRO_COPY.strapline, long: true, phases: ['intro'], apply: (v) => { INTRO_COPY.strapline = v; } },
+    { key: 'intro.loopTitle', group: 'The front page', label: 'The Sprint loop - heading', where: 'The front page', value: INTRO_COPY.loopTitle, phases: ['intro'], apply: (v) => { INTRO_COPY.loopTitle = v; } },
+  );
+  INTRO_COPY.loop.forEach((l, i) => {
+    out.push({
+      key: `intro.loop.${i}`, group: 'The front page', label: l.step, where: 'The front page - each Sprint',
+      value: l.text, phases: ['intro'], apply: (v) => { INTRO_COPY.loop[i].text = v; },
+    });
+  });
 
   // The Why / Who / When / How cards - the largest block, and the one most worth owning.
   for (const card of SCRUM_CARDS) {

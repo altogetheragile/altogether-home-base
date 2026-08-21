@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pencil, FolderOpen, Trophy } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
+import { INTRO_COPY } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
 
@@ -40,24 +41,19 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
 
         {/* 1. What this is - said once, briefly, because the thing to DO is below it. */}
         <header className="space-y-1 text-center">
-          <h1 className="text-3xl font-bold md:text-4xl">Build a Zoo</h1>
-          <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
-            Run a zoo in Sprints, and learn Scrum by doing it: forecast, build to your Definition of Done,
-            open it to visitors, and adapt as they tell you what they value.
-          </p>
+          <h1 className="text-3xl font-bold md:text-4xl">{INTRO_COPY.title}</h1>
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground">{INTRO_COPY.strapline}</p>
         </header>
 
         {/* 2. How a Sprint goes, and what a Product Goal is - side by side, so the Goal itself stays
                above the fold. It is the one thing this page asks you to write. */}
         <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
           <section className="rounded-lg border border-border bg-muted/40 p-3">
-            <h2 className="mb-1 text-sm font-semibold">Each Sprint</h2>
+            <h2 className="mb-1 text-sm font-semibold">{INTRO_COPY.loopTitle}</h2>
             <ul className="space-y-0.5 text-[13px] leading-snug text-muted-foreground">
-              <li><strong className="text-foreground">Plan</strong> - forecast the exhibits and amenities you can finish.</li>
-              <li><strong className="text-foreground">Build</strong> - deliver each to the Definition of Done.</li>
-              <li><strong className="text-foreground">Open</strong> - release Done work to visitors whenever you like.</li>
-              <li><strong className="text-foreground">Review</strong> - the visitors turn up and tell you what worked.</li>
-              <li><strong className="text-foreground">Retro</strong> - pick one improvement, then plan the next Sprint.</li>
+              {INTRO_COPY.loop.map((l) => (
+                <li key={l.step}><strong className="text-foreground">{l.step}</strong> - {l.text}</li>
+              ))}
             </ul>
           </section>
           {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}

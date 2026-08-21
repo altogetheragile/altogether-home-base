@@ -29,12 +29,9 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
 }) {
   const [open, setOpen] = useState(false);
   const [reading, setReading] = useState(false);
-  const card = (
-    <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'}
-      trailing={why || readOnly ? undefined
-        : chosen ? <X className="h-4 w-4 shrink-0 text-muted-foreground" />
-          : <Plus className="h-4 w-4 shrink-0 text-primary" />} />
-  );
+  // No trailing mark on the card itself: the button beside it is the one that adds or removes, and
+  // two plus signs on one row is one too many.
+  const card = <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'} />;
 
   // Reading before choosing. Selecting an item you have not read is guessing, and a card that pulls
   // itself into the Sprint the moment you touch it gives you nowhere to look first. The body opens

@@ -19,21 +19,8 @@ const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
   { key: 'next', label: 'What next', question: 'So what do we do next?', lead: 'Adapt the Product Backlog, and judge how far the Product Goal has come.' },
 ];
 /** What the Guide says about the Review - behind the "?", not on the page. */
-const DETAIL: Record<Step, string[]> = {
-  done: [
-    'Not a release gate: anything Done could have been released the moment it was Done. What is inspected here is the Increment, whether it went live this morning or a fortnight ago.',
-    'The Sprint Goal is the Sprint Backlog\u2019s commitment. Dropping less essential scope to protect it is a win, not a miss.',
-    'Velocity is measured, not fixed. It is a common forecasting practice rather than part of Scrum, and a forecast was never a promise.',
-  ],
-  visitors: [
-    'The Scrum Team presents the results of their work to the key stakeholders and progress toward the Product Goal is discussed.',
-    'This is the feedback loop the whole framework is built on: real people meeting the actual Increment, not a status report about it.',
-  ],
-  next: [
-    'The attendees collaborate on what to do next. That collaboration - not the demonstration - is what the event is for.',
-    'The Product Owner decides whether the Product Goal has been met. There is no set number of Sprints - the product runs until the Goal is reached or abandoned.',
-  ],
-};
+// Which Teaching Cards each step is about - one source for the teaching, and an editable one.
+const STEP_CARDS: Record<Step, string[]> = { done: ['sprint-review', 'increment'], visitors: ['sprint-review', 'empiricism'], next: ['sprint-review', 'product-backlog'] };
 
 interface SprintReviewProps {
   state: ZooGameState;
@@ -74,8 +61,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <StepTrack steps={STEPS} current={step} done={(k) => STEPS.findIndex((x) => x.key === k) < seen} onGo={goTo} />
-          <ExplainButton title={`Sprint Review \u00b7 Sprint ${state.sprintNumber}`} body={DETAIL[step]} phase="review"
-            teachCard={teachCard} onMarkTaught={onMarkTaught} />
+          <ExplainButton cards={STEP_CARDS[step]} phase="review" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <div>
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>

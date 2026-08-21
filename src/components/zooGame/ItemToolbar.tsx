@@ -162,12 +162,7 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
     <div className="max-h-[62vh] space-y-2 overflow-y-auto">
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Taking it to Done</h4>
-        <ExplainButton title="Building it to Done"
-          body={[
-            'How the work gets done is at the sole discretion of the Developers. The design is yours, and so is the plan beside it.',
-            'Three different things have to line up. Your PLAN is how you will build it - yours to change. The ACCEPTANCE CRITERIA came with the item and say what the Product Owner asked for. The DEFINITION OF DONE is the product-wide bar every item clears, and it is in the Artifacts panel in the header.',
-            'Nothing is Done until it meets the Definition of Done. An Increment is the sum of everything that has.',
-          ]} />
+        <ExplainButton cards={['definition-of-done', 'increment']} />
       </div>
 
       {/* Your plan. The checklist carries its own "Plan n/m", so nothing is captioned twice. */}

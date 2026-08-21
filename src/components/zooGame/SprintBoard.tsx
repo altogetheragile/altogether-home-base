@@ -340,12 +340,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                 this is - so on the canvas the board leads with its question and nothing else. */}
             <h2 className="text-lg font-bold leading-tight tracking-tight">What can we finish today?</h2>
             <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
-            <ExplainButton title="The Sprint" phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught}
-              body={[
-                'The Sprint is the container the other events live in: a fixed length, one after another, so progress can be inspected on a rhythm.',
-                'The Developers own this board. They decide the order they pick work up in, and they adapt the plan every day toward the Sprint Goal.',
-                'Anything Done can be released the moment it is Done - you do not wait for the Sprint Review.',
-              ]} />
+            <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} />
           </div>
         </div>
         <div className="flex items-center gap-1.5">
