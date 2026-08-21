@@ -584,10 +584,13 @@ function buildFeatures(state: ZooGameState): Feature[] {
   return feats;
 }
 
-const CANVAS_W = 1180; // the park's design width - wide enough to lay a zoo out, and zoomable
+// The park is one of three columns now - Product Backlog, Sprint Backlog, product - so it is taller
+// than it is wide. A landscape park squeezed into a third of the screen is a postage stamp; a
+// portrait one uses the height it has. These are design pixels, scaled to whatever room it gets.
+const CANVAS_W = 720;
 // A river is cut long enough to cross the park from any angle (past the corners on the diagonal)
 // and is clipped by the park's edges, so turning it never leaves a gap at the ends.
-const RIVER_LEN = 1700;
+const RIVER_LEN = 1040;
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
 const PAD = 20;
 const GAP = 18;
@@ -701,7 +704,8 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   };
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
-  const canvasH = Math.max(440, Math.round(contentBottom + PAD)) + PATH_H;
+  // Portrait: the park starts taller than it is wide and grows downward as the zoo fills.
+  const canvasH = Math.max(960, Math.round(contentBottom + PAD)) + PATH_H;
 
   // The visible body box of a feature (the enclosure box / building tile, excluding the name label),
   // used for both its perimeter path and where connectors attach.
@@ -787,15 +791,6 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
 
-  useLayoutEffect(() => {
-    const v = viewport.current;
-    if (!v) return;
-    const update = () => setFit(v.clientWidth / CANVAS_W);
-    const ro = new ResizeObserver(update);
-    ro.observe(v);
-    update();
-    return () => ro.disconnect();
-  }, []);
 
   // Scenery that is naturally a set. A river spans the park, so one is all there is.
   const canCopy = (f: Feature) => f.kind === 'plot' && f.item.category === 'flora' && landType(f.item) !== 'river';
@@ -957,6 +952,28 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // a coach lay-by as the zoo gets busy. Using the constant drew a quarter-screen of empty tarmac
   // under a park with nothing in it.
   const sceneH = canvasH + carPark.height;
+
+  // Fit the WHOLE park, not just its width. Fitting to width alone meant a portrait park in a tall
+  // column ran off the bottom, so you were scrolling to see your own zoo. The scale is whichever of
+  // the two dimensions runs out first; zoom is what the player asks for on top of that.
+  useLayoutEffect(() => {
+    const v = viewport.current;
+    if (!v) return;
+    const update = () => {
+      const byWidth = v.clientWidth / CANVAS_W;
+      // The room left below the park's own toolbar, in the pane it lives in.
+      const pane = v.closest('.overflow-y-auto') as HTMLElement | null;
+      const room = pane ? pane.getBoundingClientRect().bottom - v.getBoundingClientRect().top - 12 : 0;
+      const byHeight = room > 140 ? room / sceneH : Infinity;
+      setFit(Math.min(byWidth, byHeight));
+    };
+    const ro = new ResizeObserver(update);
+    ro.observe(v);
+    const pane = v.closest('.overflow-y-auto');
+    if (pane) ro.observe(pane);
+    update();
+    return () => ro.disconnect();
+  }, [sceneH]);
 
   // What the guests can walk on, and what they cannot. The paths are the ones actually drawn on the
   // park - the promenade, the boundary walk, each feature's perimeter, and the connectors the player

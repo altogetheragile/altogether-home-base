@@ -373,7 +373,7 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   // that spot; started from its card it takes the next free one, laid out in rows away from the
   // park's edges so there is room around it and room above it for its toolbar.
   const taken = state.backlog.filter((it) => it.pos && it.id !== id).length;
-  const pos = item.pos ?? { x: 300 + (taken % 3) * 280, y: 170 + Math.floor(taken / 3) * 210 };
+  const pos = item.pos ?? { x: 220 + (taken % 2) * 280, y: 170 + Math.floor(taken / 2) * 200 };
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true, pos } : it)) };
 }
 
