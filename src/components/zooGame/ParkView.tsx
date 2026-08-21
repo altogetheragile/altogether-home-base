@@ -587,10 +587,10 @@ function buildFeatures(state: ZooGameState): Feature[] {
 // The park is one of three columns now - Product Backlog, Sprint Backlog, product - so it is taller
 // than it is wide. A landscape park squeezed into a third of the screen is a postage stamp; a
 // portrait one uses the height it has. These are design pixels, scaled to whatever room it gets.
-const CANVAS_W = 720;
+const CANVAS_W = 820;
 // A river is cut long enough to cross the park from any angle (past the corners on the diagonal)
 // and is clipped by the park's edges, so turning it never leaves a gap at the ends.
-const RIVER_LEN = 1040;
+const RIVER_LEN = 1180;
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
 const PAD = 20;
 const GAP = 18;
@@ -705,7 +705,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
   // Portrait: the park starts taller than it is wide and grows downward as the zoo fills.
-  const canvasH = Math.max(960, Math.round(contentBottom + PAD)) + PATH_H;
+  // Sized so the WIDTH is what runs out first in a half-page pane: the park then fills its half
+  // instead of sitting in a centred strip with slack either side. It still grows downward as the
+  // zoo fills, at which point the height takes over and the whole thing scales down to stay in view.
+  const canvasH = Math.max(540, Math.round(contentBottom + PAD)) + PATH_H;
 
   // The visible body box of a feature (the enclosure box / building tile, excluding the name label),
   // used for both its perimeter path and where connectors attach.
@@ -1456,7 +1459,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           {/* Everything above the park image stays pinned to the top of the scroll area, so the
               stats, the description and the toolbar are always visible while you scroll the park. */}
           <div className="sticky top-0 z-30 -mx-2 -mt-3 space-y-2 border-b border-border bg-background/95 px-2 pb-2 pt-3 backdrop-blur-sm sm:-mx-3 sm:px-3">
-          <p className="text-[11px] text-muted-foreground">
+          <p className="max-w-prose text-left text-[11px] text-muted-foreground">
             <strong className="text-foreground">The park is your product.</strong> Everything live here is the sum of the
             Increments you have delivered - each Sprint adds to it. Drag an enclosure, building or planting to lay out your
             zoo; animals move with their enclosure.

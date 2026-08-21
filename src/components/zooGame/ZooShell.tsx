@@ -9,7 +9,7 @@ import { TeachingCard, ScrumReference } from './ScrumTeaching';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -70,7 +70,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, boardOpen, onSetBoardOpen, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, onSetTeaching, onMarkTaught, onBack, copy }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; boardOpen?: boolean; onSetBoardOpen?: (open: boolean) => void; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onAddCopy?: (id: string, pos: { x: number; y: number }) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void } }) {
+export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, onSetTeaching, onMarkTaught, onBack, copy }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onAddCopy?: (id: string, pos: { x: number; y: number }) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void } }) {
   // `tab` is controlled from above when provided, so an event (place & open) can switch to
   // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
   // position the released item there.
@@ -81,17 +81,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   // During a Sprint the park is the working surface and the board docks over it.
   const canvas = state.phase === 'sprint';
   const dayStage = state.dayStage;
-  // Whether the board is up is a decision, not something derived from what is selected. Deriving it
-  // meant that clicking away from an enclosure - which only means "I have finished with this one" -
-  // threw the whole board back over the park. It now stays where you left it: picking something up
-  // on the park puts the board away, and only the handle brings it back.
-  const board = boardOpen ?? true;
-  const setDock = (o: boolean) => onSetBoardOpen?.(o);
   // Building happens during the build stage. At the Daily Scrum the event is what you are in, so
   // the park lets go of whatever was selected rather than floating a toolbar over it.
   const onPark = state.phase !== 'sprint' || dayStage === 'building';
   const selected = onPark ? building : null;
-  const sprintCount = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status !== 'backlog').length;
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
@@ -210,30 +203,18 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
           // The board used to sit UNDER the park in a dock, which put the thing you pull from below
           // the thing you build on and made "where does work come from" a question about geography.
           <div className="flex h-full min-h-0">
-            {board ? (
-              <div className="flex min-h-0 w-[min(64%,54rem)] shrink-0 flex-col border-r border-border">
-                <button type="button" onClick={() => setDock(false)}
-                  className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-1.5 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
-                  <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                    <ClipboardList className="h-4 w-4 text-primary" /> The work
-                  </span>
-                  <span className="flex items-center gap-1"><PanelLeftClose className="h-3.5 w-3.5" /> Hide</span>
-                </button>
-                <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-                  <div className="space-y-3 pb-24">
-                    {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
-                    {children}
-                  </div>
+            {/* Half and half: the work on the left, the product on the right. The board fills its
+                half rather than being a rail, so the Sprint Backlog can lay its columns out the way
+                a board does - To Do, Doing, Done, left to right. */}
+            <div className="relative flex min-h-0 w-1/2 shrink-0 flex-col border-r border-border">
+              <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+                <div className="flex min-h-full flex-col gap-3 pb-24">
+                  {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
+                  {children}
                 </div>
               </div>
-            ) : (
-              <button type="button" onClick={() => setDock(true)} title="Show the Sprint Backlog"
-                className="flex shrink-0 items-center gap-2 border-r border-border bg-card px-1.5 py-3 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
-                <PanelLeftOpen className="h-4 w-4 shrink-0" />
-                <span className="[writing-mode:vertical-rl]">The work &middot; {sprintCount} item{sprintCount === 1 ? '' : 's'}</span>
-              </button>
-            )}
-            <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-20 pt-3 sm:px-3">
+            </div>
+            <div className="min-h-0 w-1/2 overflow-y-auto px-2 pb-20 pt-3 sm:px-3">
               <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
             </div>
           </div>
