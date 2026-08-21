@@ -26,7 +26,18 @@ export interface PbiDraft {
   enclosureId?: string;
 }
 
-export type ZooPhase = 'intro' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
+/** What the Scrum Team decided about the zoo before there was a Product Backlog. The wizard asks
+ *  these three things; the answers shape what it writes. */
+export interface ZooBrief {
+  /** The areas the zoo will have. Each becomes an epic, except the one you open first. */
+  zones: string[];
+  /** Who the zoo is mainly for, which is what orders the Backlog by value. */
+  audience: 'families' | 'enthusiasts' | 'comfortSeekers';
+  /** The area to open first: it arrives refined and ready, the rest arrive as epics. */
+  firstZone: string;
+}
+
+export type ZooPhase = 'intro' | 'brief' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
 /** The single-player AI Product Owner's refinement decisions (from the zoo-po-refine edge
  *  function). The PO orders by value, splits epics, adds items and clarifies acceptance -
@@ -77,7 +88,10 @@ export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora
 export interface EpicMember {
   id: string;
   name: string;
-  kind: 'exhibit' | 'amenity';
+  /** Scenery belongs to a zone too: a zone's paths and its planting are part of opening that zone,
+   *  not park-wide work that happens some other time. Splitting an area gives you everything you
+   *  need to open it. */
+  kind: 'exhibit' | 'amenity' | 'path' | 'flora';
   /** Exhibits: the species shape and its enclosure. */
   template?: string;
   appeal?: [number, number, number];
@@ -87,6 +101,8 @@ export interface EpicMember {
   habitat?: string;
   /** Amenities: which need it serves. */
   services?: 'food' | 'toilet' | 'rest';
+  /** Flora: what kind of planting (tree, bush, flowers...). */
+  flora?: string;
   /** Intended size in points (the hidden trueSize the estimate clusters around). */
   size: number;
 }
@@ -329,6 +345,8 @@ export interface ZooGameState {
   /** Whether the Scrum Team has looked at the Definition of Done and agreed it. Nothing can be Done
    *  against a bar nobody has read, so the first Sprint does not start until they have. */
   dodAgreed?: boolean;
+  /** What the Scrum Team said the zoo would be, before there was a Product Backlog for it. */
+  brief?: ZooBrief;
   /** The look of the park paths/roads: a key into PATH_STYLES (surface + colour). The
    *  entrance promenade and the spurs to each enclosure both use it, so they stay consistent.
    *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
@@ -355,6 +373,7 @@ export type ZooAction =
   | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number }
   | { type: 'HOLD_REFINEMENT' }
   | { type: 'AGREE_DOD' }
+  | { type: 'WRITE_BACKLOG'; brief: ZooBrief }
   | { type: 'PLAN_ITEM_SHAPE'; id: string; patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string } }
   | { type: 'START_ITEM_AT'; id: string; pos: { x: number; y: number } }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }

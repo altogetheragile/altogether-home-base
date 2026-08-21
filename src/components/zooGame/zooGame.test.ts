@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -978,7 +978,15 @@ describe('zoo game: enclosures are built before their animals', () => {
   it('splitting an epic creates an enclosure + animal per species (and facilities), removing the epic', () => {
     let s = initialZooState(1);
     expect(find(s, 'waterside').category).toBe('epic');
+    // An area carries its own paths and planting, so opening it is a whole slice of zoo - splitting
+    // out only the animals and the facility leaves the ground they stand on behind.
     s = splitEpic(s, 'waterside', ['penguins', 'reef', 'wc']);
+    expect(find(s, 'waterside').category).toBe('epic');
+    expect(find(s, 'waterside').epicMembers?.map((m) => m.id)).toEqual(['waterside-paths', 'waterside-planting']);
+    s = splitEpic(s, 'waterside', ['waterside-paths', 'waterside-planting']);
+    expect(find(s, 'waterside-paths').category).toBe('path');
+    expect(find(s, 'waterside-paths').zone).toBe('Waterside');
+    expect(find(s, 'waterside-planting').category).toBe('flora');
     expect(s.backlog.some((i) => i.id === 'waterside')).toBe(false); // fully split -> epic gone
     expect(find(s, 'penguin-enc').category).toBe('enclosure');
     expect(find(s, 'penguin-enc').name).toBe('Penguin Habitat'); // bespoke habitat name, not "Penguins Enclosure"
@@ -1913,7 +1921,7 @@ describe('zoo game: an item looks like what it is', () => {
 describe('zoo game: the seeded Backlog reads correctly', () => {
   it('gives every starting item an icon that matches what it is', () => {
     const want: Record<string, string> = {
-      'Lion Enclosure': 'fence', Lion: 'cat', Pathways: 'path', Trees: 'tree', Flowerbed: 'flower',
+      'Lion Enclosure': 'fence', Lion: 'cat', 'Main Pathways': 'path', 'Big Cats Paths': 'path', Trees: 'tree', Flowerbed: 'flower',
       Rockery: 'rocks', River: 'river', Bridge: 'bridge', Signposts: 'signpost', Fountain: 'fountain',
       Toilets: 'toilets', 'Gift Shop': 'shop', 'Seating Area': 'seating',
     };
@@ -2057,6 +2065,45 @@ describe('zoo game: one idea at a time', () => {
     const s = setWipLimit(initialZooState(1), 1);
     expect(revealed(s, 'wip')).toBe(true);
     expect(activeWipLimit(s)).toBe(1);
+  });
+});
+
+describe('zoo game: the Product Backlog is written, not handed over', () => {
+  const blank = { ...initialZooState(1), backlog: [] };
+
+  it('writes only the areas the Scrum Team asked for', () => {
+    const s = writeBacklog(blank, { zones: ['Big Cats', 'Forest'], audience: 'families', firstZone: 'Big Cats' });
+    expect(s.backlog.some((i) => i.id === 'forest')).toBe(true);
+    expect(s.backlog.some((i) => i.id === 'savanna')).toBe(false);
+    expect(s.backlog.some((i) => i.id === 'waterside')).toBe(false);
+    expect(s.phase).toBe('refine');
+  });
+
+  it('gives every area its OWN paths and planting, so opening one is a whole slice of zoo', () => {
+    const s = writeBacklog(blank, { zones: ['Big Cats', 'Forest'], audience: 'families', firstZone: 'Big Cats' });
+    // The area you open first arrives refined: habitat, animal, and the ground around them.
+    expect(s.backlog.find((i) => i.id === 'bigcats-paths')?.category).toBe('path');
+    expect(s.backlog.find((i) => i.id === 'bigcats-planting')?.zone).toBe('Big Cats');
+    // The others carry theirs inside the epic, so refining an area yields them.
+    const forest = s.backlog.find((i) => i.id === 'forest');
+    expect(forest?.epicMembers?.map((m) => m.id)).toContain('forest-paths');
+    expect(forest?.epicMembers?.map((m) => m.id)).toContain('forest-planting');
+  });
+
+  it('opens whichever area the Scrum Team chose, not always the same one', () => {
+    const s = writeBacklog(blank, { zones: ['Big Cats', 'Savanna'], audience: 'enthusiasts', firstZone: 'Savanna' });
+    expect(s.backlog.find((i) => i.id === 'giraffe')?.unsized).toBeFalsy();
+    expect(s.backlog.find((i) => i.id === 'savanna-paths')?.category).toBe('path');
+    // Big Cats is now the epic, and it carries its own scenery.
+    expect(s.backlog.find((i) => i.id === 'bigcats')?.category).toBe('epic');
+    expect(s.backlog.find((i) => i.id === 'bigcats')?.epicMembers?.map((m) => m.id)).toContain('bigcats-paths');
+  });
+
+  it('orders it by what the chosen visitors value, which is the Product Owner\'s job', () => {
+    const forFamilies = writeBacklog(blank, { zones: ['Savanna'], audience: 'families', firstZone: 'Savanna' });
+    const withAppeal = forFamilies.backlog.filter((i) => i.appeal);
+    const scores = withAppeal.map((i) => i.appeal!.families);
+    expect(scores).toEqual([...scores].sort((a, b) => b - a));
   });
 });
 

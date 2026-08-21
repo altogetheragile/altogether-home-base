@@ -8,6 +8,7 @@ import { useZooProductOwner } from '@/components/zooGame/useZooProductOwner';
 import { useAuth } from '@/contexts/AuthContext';
 import { ZooIntro } from '@/components/zooGame/ZooIntro';
 import { RefineBacklog } from '@/components/zooGame/RefineBacklog';
+import { BacklogWizard } from '@/components/zooGame/BacklogWizard';
 import { SprintPlanning } from '@/components/zooGame/SprintPlanning';
 import { SprintBoard } from '@/components/zooGame/SprintBoard';
 import { SprintReview } from '@/components/zooGame/SprintReview';
@@ -49,7 +50,7 @@ function GameTopBar() {
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addCopy, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addCopy, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -256,6 +257,9 @@ export default function ZooGame() {
           onMarkTaught={markTaught}
           onBack={(state.teaching ?? true) ? () => { setOnePagerSeen(true); setOnePager(true); } : undefined}
           onOpenSaves={user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
+      case 'brief':
+        // No shell: there is nothing to put in a header yet - no Sprint, no Backlog, no park.
+        return <div className="h-full overflow-y-auto px-4 py-5"><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} /></div>;
       case 'refine':
         return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onSetSprintDays={setSprintDays} onSetDod={setDod} onAgreeDod={agreeDod} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onPlan={() => setPhase('planning')} teachCard={cardFor('refine')} onMarkTaught={markTaught} /></ZooShell>;
       case 'planning':

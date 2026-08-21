@@ -1,4 +1,4 @@
-import type { BacklogItem, ZooGameState, EpicMember } from './types';
+import type { BacklogItem, ZooGameState, EpicMember, ZooBrief } from './types';
 import type { ZooItem } from './simulation/types';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
@@ -94,50 +94,113 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 // other areas arrive as EPICS: a single themed PBI that is too big to build and must be
 // refined by splitting it into its animals (each an enclosure + animal, with the animal
 // depending on its enclosure) and facilities. Every species has its own enclosure.
-const STARTING_BACKLOG: BacklogItem[] = [
-  // Big Cats is where you start, so it arrives as one ready enclosure and its animal - enough to
-  // build something in Sprint 1 - with the rest of the zone still an epic to be refined. Every
-  // other area is an epic too: refining them into buildable pieces is the work.
-  enc('lion-enc', 'Lion Enclosure', 'Big Cats', 5, 'large'),
-  ex('lion', 'Lion', 'Big Cats', 8, [8, 7, 6], 'lion-enc'),
-  epic('bigcats', 'Big Cats', 'Big Cats', [
+/** Every area the zoo could have, with the animals and the facility that belong to it. Scenery is
+ *  NOT listed here - every zone gets the same two scenery items, because every zone needs paths to
+ *  walk and something growing, and saying so once is better than saying it four times. */
+export const ZOO_AREAS: { zone: string; members: EpicMember[] }[] = [
+  { zone: 'Big Cats', members: [
     m('tiger', 'Tiger', 'tiger-enc', [8, 7, 6], 'large', 8, 'Tiger Enclosure'),
     m('leopard', 'Leopard', 'leopard-enc', [7, 8, 5], 'medium', 8, 'Leopard Enclosure'),
     ma('kiosk', 'Kiosk', 'food', 5),
-  ]),
-  epic('waterside', 'Waterside', 'Waterside', [
+  ] },
+  { zone: 'Waterside', members: [
     m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 8, 'Penguin Habitat'),
     m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 5, 'Reef Tank'),
     ma('wc', 'Toilets', 'toilet', 3),
-  ]),
-  epic('savanna', 'Savanna', 'Savanna', [
+  ] },
+  { zone: 'Savanna', members: [
     m('elephant', 'Elephant', 'elephant-enc', [9, 8, 7], 'large', 10, 'Elephant Reserve'),
     m('giraffe', 'Giraffe', 'giraffe-enc', [8, 8, 6], 'large', 8, 'Giraffe Paddock'),
     m('zebra', 'Zebra', 'zebra-enc', [7, 6, 6], 'medium', 5, 'Zebra Paddock'),
     m('rhino', 'Rhino', 'rhino-enc', [6, 8, 5], 'large', 8, 'Rhino Reserve'),
     ma('cafe', 'Cafe', 'food', 5),
-  ]),
-  epic('forest', 'Forest', 'Forest', [
+  ] },
+  { zone: 'Forest', members: [
     m('bear', 'Bear', 'bear-enc', [8, 7, 6], 'large', 8, 'Bear Habitat'),
     m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 5, 'Monkey Habitat'),
     ma('picnic', 'Picnic area', 'rest', 3),
-  ]),
-  // Park grounds: the scenery and wayfinding that make the place a park - paths to walk, water to
-  // cross, and greenery. Small pieces, ready to build alongside the exhibits.
-  pth('paths', 'Pathways', 'Grounds', 3),
-  flr('trees', 'Trees', 'Grounds', 'tree', 2),
-  flr('flowerbed', 'Flowerbed', 'Grounds', 'flowers', 2),
-  flr('rocks', 'Rockery', 'Grounds', 'rocks', 2),
-  flr('river', 'River', 'Grounds', 'river', 3),
-  flr('bridge', 'Bridge', 'Grounds', 'bridge', 3),
-  flr('signposts', 'Signposts', 'Grounds', 'signpost', 2),
-  flr('fountain', 'Fountain', 'Grounds', 'fountain', 3),
-  // Facilities: a day out needs somewhere to eat, somewhere to go and somewhere to sit. These are
-  // their own PBIs rather than something buried inside an animal epic.
-  am('main-wc', 'Toilets', 'Facilities', 3, 'toilet'),
-  am('gift-shop', 'Gift Shop', 'Facilities', 5, 'food'),
-  am('benches', 'Seating Area', 'Facilities', 3, 'rest'),
+  ] },
 ];
+
+/** The animal that opens a zone: its habitat and the animal itself, ready to build. Whichever zone
+ *  the Scrum Team opens first arrives like this rather than as an epic. */
+const FLAGSHIP: Record<string, { id: string; name: string; appeal: [number, number, number]; size: number; footprint: 'small' | 'medium' | 'large' }> = {
+  'Big Cats': { id: 'lion', name: 'Lion', appeal: [8, 7, 6], size: 8, footprint: 'large' },
+  Waterside: { id: 'penguins', name: 'Penguins', appeal: [8, 6, 6], size: 8, footprint: 'medium' },
+  Savanna: { id: 'giraffe', name: 'Giraffe', appeal: [8, 8, 6], size: 8, footprint: 'large' },
+  Forest: { id: 'monkey', name: 'Monkey', appeal: [8, 6, 6], size: 5, footprint: 'medium' },
+};
+
+/** Stable ids per area, so a saved game and the ids the rest of the game knows survive. */
+const ZONE_ID: Record<string, string> = { 'Big Cats': 'bigcats', Waterside: 'waterside', Savanna: 'savanna', Forest: 'forest' };
+const slug = (zone: string) => ZONE_ID[zone] ?? zone.toLowerCase().replace(/[^a-z]+/g, '-');
+
+/** A zone's own paths and planting, as epic members. Every area needs them, and they belong to the
+ *  area: you lay the Big Cats paths when you open Big Cats, not in some park-wide tidy-up later.
+ *  That is what makes an area a slice you can actually deliver. */
+function sceneryFor(zone: string): EpicMember[] {
+  return [
+    { id: `${slug(zone)}-paths`, name: `${zone} Paths`, kind: 'path', size: 3 },
+    { id: `${slug(zone)}-planting`, name: `${zone} Planting`, kind: 'flora', flora: 'tree', size: 2 },
+  ];
+}
+
+/** Write a Product Backlog for the brief. Rough and partial on purpose: it grows and changes from
+ *  play, because signals from the Sprint Review add to it.
+ *
+ *  Granularity is mixed deliberately. The area the Scrum Team opens first arrives REFINED - its
+ *  habitat, its animal, its paths and its planting, all ready - which is enough to deliver a whole
+ *  slice of zoo in Sprint 1. Every other area arrives as an EPIC: one themed item too big to build,
+ *  which has to be split into the pieces that open it. */
+export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
+  const zones = ZOO_AREAS.filter((a) => brief.zones.includes(a.zone));
+  const first = zones.find((a) => a.zone === brief.firstZone) ?? zones[0];
+  const items: BacklogItem[] = [];
+
+  if (first) {
+    // The opening area, already refined: a habitat, its animal, and the ground around them.
+    const flag = FLAGSHIP[first.zone] ?? FLAGSHIP['Big Cats'];
+    items.push(enc(`${flag.id}-enc`, `${flag.name} Enclosure`, first.zone, 5, flag.footprint));
+    items.push(ex(flag.id, flag.name, first.zone, flag.size, flag.appeal, `${flag.id}-enc`));
+    items.push(pth(`${slug(first.zone)}-paths`, `${first.zone} Paths`, first.zone, 3));
+    items.push(flr(`${slug(first.zone)}-planting`, `${first.zone} Planting`, first.zone, 'tree', 2));
+    // What is left of the opening area is still an epic - opening it is not finishing it.
+    const rest = first.members.filter((mem) => mem.id !== flag.id);
+    if (rest.length) items.push(epic(slug(first.zone), first.zone, first.zone, rest));
+  }
+
+  for (const area of zones) {
+    if (area === first) continue;
+    items.push(epic(slug(area.zone), area.zone, area.zone, [...area.members, ...sceneryFor(area.zone)]));
+  }
+
+  // The park's own fabric: the spine everyone walks, the water that crosses it, and the greenery
+  // that is nobody's zone in particular. Small pieces, ready alongside the exhibits.
+  items.push(
+    pth('paths', 'Main Pathways', 'Grounds', 3),
+    flr('river', 'River', 'Grounds', 'river', 3),
+    flr('bridge', 'Bridge', 'Grounds', 'bridge', 3),
+    flr('signposts', 'Signposts', 'Grounds', 'signpost', 2),
+    flr('fountain', 'Fountain', 'Grounds', 'fountain', 3),
+    flr('rocks', 'Rockery', 'Grounds', 'rocks', 2),
+    flr('trees', 'Trees', 'Grounds', 'tree', 2),
+    flr('flowerbed', 'Flowerbed', 'Grounds', 'flowers', 2),
+  );
+
+  // Facilities: a day out needs somewhere to eat, somewhere to go and somewhere to sit. Their own
+  // PBIs rather than something buried inside an animal epic. The audience decides which comes first.
+  const facilities = [
+    am('main-wc', 'Toilets', 'Facilities', 3, 'toilet'),
+    am('gift-shop', 'Gift Shop', 'Facilities', 5, 'food'),
+    am('benches', 'Seating Area', 'Facilities', 3, 'rest'),
+  ];
+  const wanted = brief.audience === 'families' ? 'food' : brief.audience === 'comfortSeekers' ? 'rest' : 'toilet';
+  items.push(...facilities.sort((a, b) => Number(b.services === wanted) - Number(a.services === wanted)));
+  return items;
+}
+
+/** The brief the game assumes when nobody has answered the wizard - the zoo as it has always been. */
+export const DEFAULT_BRIEF: ZooBrief = { zones: ZOO_AREAS.map((a) => a.zone), audience: 'families', firstZone: 'Big Cats' };
 
 /** An epic member that is an animal (exhibit): splits into its enclosure + the animal.
  *  `habitat` is the bespoke name for the enclosure the split creates. */
@@ -220,9 +283,10 @@ export function toZooItem(it: BacklogItem): ZooItem {
  *  game is not guaranteed in the next). */
 export function initialZooState(gameSeed = 1): ZooGameState {
   // Apply per-game taste jitter to the starting exhibits' appeal.
-  const jittered = jitterItems(STARTING_BACKLOG.map(toZooItem), DEFAULT_CONFIG, gameSeed);
+  const seed = starterBacklog();
+  const jittered = jitterItems(seed.map(toZooItem), DEFAULT_CONFIG, gameSeed);
   const appealById = new Map(jittered.map((z) => [z.id, z.appeal]));
-  const backlog = STARTING_BACKLOG.map((it) => (it.appeal ? { ...it, appeal: appealById.get(it.id) ?? it.appeal } : { ...it }));
+  const backlog = seed.map((it) => (it.appeal ? { ...it, appeal: appealById.get(it.id) ?? it.appeal } : { ...it }));
 
   return {
     phase: 'intro',
