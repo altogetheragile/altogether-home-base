@@ -1370,7 +1370,6 @@ interface ParkViewProps {
   /** Deploy-time acceptance criteria (sizing/placement) for the item being deployed - confirmed here
    *  on the park, as you place & size it, since they can't be judged before it is placed. */
   deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[];
-  onConfirmDeployAc?: (index: number, value: boolean) => void;
   onFinishDeploy?: () => void;
   /** The id of a just-delivered feature, so it can pop in celebratorily. */
   justOpened?: string | null;
@@ -1396,7 +1395,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1495,21 +1494,17 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               </div>
               {acs.length > 0 && (
                 <div className="rounded border border-emerald-500/30 bg-background/60 px-2 py-1">
+                  {/* Shown, not ticked. Accepting a criterion belongs on the item's own card - the
+                      park is where you put the thing, not where you judge it. */}
                   <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">
-                    Acceptance criteria &middot; the Product Owner&rsquo;s &mdash; the last one is where it stands
+                    Acceptance criteria &middot; ticked on its card
                   </div>
                   <ul className="space-y-0.5">
                     {acs.map((a) => (
-                      <li key={a.index}>
-                        {/* The build ones were accepted while building it and are shown for
-                            completeness, not to be re-judged. Only where it stands is live here. */}
-                        <button type="button" disabled={!a.placement} onClick={() => onConfirmDeployAc?.(a.index, !a.confirmed)}
-                          title={a.placement ? undefined : 'Accepted while you were building it'}
-                          className="flex w-full items-center gap-2 text-left disabled:cursor-default">
-                          <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
-                            a.confirmed ? 'bg-emerald-500 text-white' : 'border border-emerald-500/60')}>{a.confirmed && <Check className="h-3 w-3" />}</span>
-                          <span className={cn(!a.placement ? 'text-muted-foreground/60 line-through' : a.confirmed ? 'text-foreground' : 'font-medium text-foreground')}>{a.label}</span>
-                        </button>
+                      <li key={a.index} className="flex items-center gap-2">
+                        <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
+                          a.confirmed ? 'bg-emerald-500 text-white' : 'border border-emerald-500/60')}>{a.confirmed && <Check className="h-3 w-3" />}</span>
+                        <span className={cn(a.confirmed ? 'text-muted-foreground line-through' : a.placement ? 'font-medium text-foreground' : 'text-muted-foreground')}>{a.label}</span>
                       </li>
                     ))}
                   </ul>

@@ -137,7 +137,7 @@ interface ItemToolbarProps {
 }
 
 /** What has to be true before this item is Done, and the button that takes it there. */
-function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish, onRelease }: Omit<ItemToolbarProps, 'onDesign' | 'onSetEnclosure' | 'onClose' | 'copySources'>) {
+function DonePanel({ item, design, editing, onToggleTask, onFinish, onRelease }: Omit<ItemToolbarProps, 'onDesign' | 'onSetEnclosure' | 'onClose' | 'copySources'>) {
   const acceptance = item.acceptance ?? [];
   const buildAcceptance = acceptance.map((label, i) => ({ label, i })).filter((a) => !isDeployAcceptance(a.label));
   const deployAcceptance = acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
@@ -153,7 +153,7 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
   const done = built && acAll && planDone;
   const blocker = done ? null
     : !built ? (designCriteria(item, design).find((c) => !c.pass)?.label ?? 'Finish the design')
-    : !acAll ? 'Accept the criteria your build meets'
+    : !acAll ? 'Accept the criteria on its card'
     : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Finish the plan');
 
   return (
@@ -171,50 +171,23 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
       )}
 
       {acceptance.length > 0 && (
+        // Shown, not ticked. Accepting a criterion is something you do to the Product Backlog item,
+        // so it happens on the item's card - here it is a reminder of what the build has to meet.
         <div className="space-y-1 border-t border-border pt-2">
           <div className="flex items-baseline gap-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Acceptance <span className="normal-case tracking-normal text-muted-foreground/70">the Product Owner&rsquo;s</span>
+            Acceptance <span className="normal-case tracking-normal text-muted-foreground/70">ticked on its card</span>
           </div>
           <ul className="space-y-0.5">
-            {buildAcceptance.map((a) => {
-              const on = !!item.acConfirmed?.[a.i];
+            {acceptance.map((label, i) => {
+              const on = !!item.acConfirmed?.[i];
               return (
-                <li key={a.i}>
-                  <button type="button" onClick={() => onConfirmAc(a.i, !on)} className="flex w-full items-start gap-1.5 text-left text-[11px]">
-                    <span className={cn('mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
-                    <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{a.label}</span>
-                  </button>
-                </li>
-              );
-            })}
-            {/* Where it stands is judged on the park, with it standing there - so before it is built
-                these sit in the same list, dashed and out of reach. */}
-            {deployAcceptance.map((a) => {
-              const on = !!item.acConfirmed?.[a.i];
-              return (
-                <li key={a.i}>
-                  <button type="button" disabled={!editing} onClick={() => onConfirmAc(a.i, !on)}
-                    title={editing ? 'Drag it where it belongs, then confirm' : 'Judged once it is built and standing on the park'}
-                    className="flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default">
-                    <span className={cn('mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full',
-                      on ? 'bg-emerald-500 text-white' : editing ? 'border border-border' : 'border border-dashed border-muted-foreground/50')}>{on && <Check className="h-2.5 w-2.5" />}</span>
-                    <span className={cn(on ? 'text-muted-foreground line-through' : editing ? 'text-foreground' : 'text-muted-foreground/60')}>{a.label}</span>
-                  </button>
+                <li key={i} className="flex items-start gap-1.5 text-[11px]">
+                  <span className={cn('mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
+                  <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
                 </li>
               );
             })}
           </ul>
-          {/* Accepting is a judgement - that is the lesson, and auto-ticking would teach that
-              acceptance is automatic. But once the build is finished, making it three separate
-              clicks is busywork rather than teaching, so it can be one. */}
-          {built && !acAll ? (
-            <button type="button" onClick={() => buildAcceptance.forEach((a) => { if (!item.acConfirmed?.[a.i]) onConfirmAc(a.i, true); })}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300">
-              <Check className="h-3.5 w-3.5" /> The build meets them all - accept
-            </button>
-          ) : (
-            <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it.</p>
-          )}
         </div>
       )}
 

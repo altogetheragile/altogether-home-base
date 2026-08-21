@@ -170,8 +170,12 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
  *  (Build) card expanded; `interactive` allows ticking tasks. `built` marks the acceptance
  *  criteria green (met) - an item that has been built to the studio has met them all; a card
  *  still in Build/To Do shows them pending. Each card keeps its own open state. */
-export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, built = false, onToggleTask }:
-  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; built?: boolean; onToggleTask: (id: string, taskId: string) => void }) {
+export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, built = false, onToggleTask, onConfirmAc }:
+  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; built?: boolean; onToggleTask: (id: string, taskId: string) => void;
+    /** Accepting a criterion. It belongs HERE, on the item's own card, not on a toolbar floating
+     *  over the park or in a banner - the card is the Product Backlog item, and accepting is
+     *  something you do to the item. */
+    onConfirmAc?: (id: string, index: number, value: boolean) => void }) {
   const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
   const criteria = showAcceptance ? item.acceptance.filter(Boolean) : [];
   const [open, setOpen] = useState(defaultOpen);
@@ -180,7 +184,9 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
   // A built item has met its BUILD criteria (it could not leave the studio otherwise). The
   // placement ones are only met once they are confirmed on the park, so the count must not claim
   // them early - that count is what the Product Owner's sign-off waits on.
-  const met = (label: string, i: number) => built && (!isDeployAcceptance(label) || !!item.acConfirmed?.[i]);
+  // Accepted is accepted: whatever has been ticked, plus - for a built item - the build criteria it
+  // could not have left the build without meeting.
+  const met = (label: string, i: number) => !!item.acConfirmed?.[i] || (built && !isDeployAcceptance(label));
   const acMet = criteria.filter(met).length;
   const acAll = criteria.length > 0 && acMet === criteria.length;
   return (
@@ -195,14 +201,20 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
         <div className="mt-1 space-y-1.5">
           {criteria.length > 0 && (
             <div>
-              <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Acceptance criteria</div>
+              <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                Acceptance criteria{interactive && onConfirmAc ? ' - tick what your build meets' : ''}
+              </div>
               <ul className="space-y-0.5">
                 {criteria.map((c, i) => {
                   const ok = met(c, i);
+                  const canTick = interactive && !!onConfirmAc;
                   return (
-                    <li key={i} className="flex items-start gap-1.5 text-[11px]">
-                      <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full', ok ? 'bg-emerald-500 text-white' : 'border border-border')}>{ok && <Check className="h-2 w-2" />}</span>
-                      <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
+                    <li key={i}>
+                      <button type="button" disabled={!canTick} onClick={(e) => { e.stopPropagation(); onConfirmAc!(item.id, i, !item.acConfirmed?.[i]); }}
+                        className="flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default">
+                        <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full', ok ? 'bg-emerald-500 text-white' : 'border border-border')}>{ok && <Check className="h-2 w-2" />}</span>
+                        <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
+                      </button>
                     </li>
                   );
                 })}
