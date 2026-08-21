@@ -8,7 +8,7 @@ import { ProductBacklogSidebar } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, TONE, type Tone } from './ui/tokens';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
 
@@ -21,6 +21,32 @@ function Figure({ value, label, tone, icon: Icon, title }: { value: number | str
       <span className={cn('text-base font-bold leading-none tabular-nums', TONE[tone].text)}>{value}</span>
       <span className="text-[11px] leading-tight text-muted-foreground">{label}</span>
     </span>
+  );
+}
+
+/** One of the numbered things this screen asks for. All three are built from this, because when
+ *  they were three hand-written headings they were three slightly different headings - the middle
+ *  one was not even a panel, so its number sat at a different place on the page from the other two. */
+function Step({ n, title, note, done, right, children }: {
+  n: number; title: string; note?: string; done?: boolean;
+  /** Shown on the heading row, hard against the right - a summary, or a collapse control. */
+  right?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <section className={cn('rounded-lg border-2 p-2.5', done ? 'border-emerald-400/60 bg-emerald-500/[0.05]' : 'border-primary/30 bg-primary/[0.04]')}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className={cn(EYEBROW, 'flex items-center gap-1.5', done ? 'text-emerald-700 dark:text-emerald-400' : 'text-primary')}>
+          <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white', done ? 'bg-emerald-500' : 'bg-primary')}>
+            {done ? <Check className="h-3 w-3" /> : n}
+          </span>
+          {title}
+          {note && <span className="font-normal normal-case tracking-normal text-muted-foreground">{note}</span>}
+        </h3>
+        {right}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -61,6 +87,17 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const canPlan = ready.length > 0;
   const first = state.sprintNumber === 1 && state.velocity.length === 0; // the very first pass, before any Sprint
   const horizon = readyHorizon(state);
+  // The counts, built once - they sit on step two's heading row during setup and on their own after
+  // that, and they should be the same numbers either way.
+  const figures = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Figure value={items.length} label="in the Product Backlog" tone="quiet" />
+      <Figure value={`${horizon}`} label={`Sprint${horizon === 1 ? '' : 's'} ready`} tone={horizon > 3 ? 'attention' : horizon >= 1 ? 'done' : 'attention'}
+        title="How far ahead the Product Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use." />
+      {unsized > 0 && <Figure value={unsized} label="to estimate" tone="coach" />}
+      <Figure value={ready.length} label="Ready" tone="done" icon={CheckCircle2} />
+    </div>
+  );
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-3">
@@ -83,61 +120,36 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {/* Agreed once and then in the way. It folds down to what was agreed, and opens again if the
           Scrum Team wants to change its mind before the first Sprint starts. */}
       {first && onSetSprintDays && (
-        <section className="rounded-lg border-2 border-primary/30 bg-primary/[0.04] p-2.5">
-          <button type="button" onClick={() => setLengthOpen((o) => !o)} className="flex w-full items-center justify-between gap-2">
-            <h3 className={cn(EYEBROW, 'flex items-center gap-1.5 text-primary')}>
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">1</span>
-              First, agree how long a Sprint is
-            </h3>
-            <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              {!lengthOpen && <strong className="text-foreground">{state.sprintDays} days</strong>}
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !lengthOpen && '-rotate-90')} />
-            </span>
-          </button>
+        <Step n={1} title="First, agree how long a Sprint is"
+          right={<button type="button" onClick={() => setLengthOpen((o) => !o)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+            {!lengthOpen && <strong className="text-foreground">{state.sprintDays} days</strong>}
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !lengthOpen && '-rotate-90')} />
+          </button>}>
           {lengthOpen && (
             <div className="mt-1.5">
               <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
             </div>
           )}
-        </section>
+        </Step>
       )}
 
       {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
           Each one is now a labelled figure in the colour of what it means. */}
-      <div className="flex flex-wrap items-stretch gap-2">
-        {first && (
-          <span className={cn(EYEBROW, 'flex items-center gap-1.5 self-center text-primary')}>
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">2</span>
-            Then get the top ready
-          </span>
-        )}
-        <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
-          <Figure value={items.length} label="in the Product Backlog" tone="quiet" />
-          <Figure value={`${horizon}`} label={`Sprint${horizon === 1 ? '' : 's'} ready`} tone={horizon > 3 ? 'attention' : horizon >= 1 ? 'done' : 'attention'}
-            title="How far ahead the Product Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use." />
-          {unsized > 0 && <Figure value={unsized} label="to estimate" tone="coach" />}
-          <Figure value={ready.length} label="Ready" tone="done" icon={CheckCircle2} />
-        </div>
-      </div>
+      {first ? (
+        <Step n={2} title="Then get the top ready" right={figures} />
+      ) : (
+        <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
+      )}
 
       {/* Nothing can be Done against a bar nobody has read. The Definition of Done is the Increment's
           commitment and it belongs to the whole Scrum Team, so it is agreed here - before the first
           Sprint - rather than discovered halfway through one. */}
       {first && onSetDod && (
-        <section className={cn('rounded-lg border-2 p-2.5', state.dodAgreed ? 'border-emerald-400/60 bg-emerald-500/[0.05]' : 'border-primary/30 bg-primary/[0.04]')}>
-          <button type="button" onClick={() => setDodOpen((o) => !o)} className="flex w-full items-center justify-between gap-2">
-            <h3 className={cn(EYEBROW, 'flex items-center gap-1.5', state.dodAgreed ? 'text-emerald-700 dark:text-emerald-400' : 'text-primary')}>
-              <span className={cn('flex h-4 w-4 items-center justify-center rounded-full text-[9px] text-white', state.dodAgreed ? 'bg-emerald-500' : 'bg-primary')}>
-                {state.dodAgreed ? <Check className="h-2.5 w-2.5" /> : '3'}
-              </span>
-              And agree the Definition of Done
-              <span className="font-normal normal-case tracking-normal text-muted-foreground">the Increment&rsquo;s commitment</span>
-            </h3>
-            <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              {!dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>}
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
-            </span>
-          </button>
+        <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
+          right={<button type="button" onClick={() => setDodOpen((o) => !o)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+            {!dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>}
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
+          </button>}>
           {dodOpen && (
             <div className="mt-1.5 space-y-2">
               <p className="text-[11px] text-muted-foreground">
@@ -153,7 +165,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
               )}
             </div>
           )}
-        </section>
+        </Step>
       )}
 
       {/* The list scrolls inside itself, so the question, the Sprint length and the readiness bar
