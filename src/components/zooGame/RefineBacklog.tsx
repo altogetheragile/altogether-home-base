@@ -73,14 +73,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
         <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Backlog Refinement</div>
         <div className="flex items-center gap-2">
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Build a Product Backlog for the Product Goal' : 'What is ready for the Sprints ahead?'}</h2>
-          <ExplainButton title="Product Backlog refinement" phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught}
-            body={[
-              'Refinement breaks Product Backlog items into smaller, more precise ones, and adds detail: what it is, the order it sits in, and how big it is. The Developers who will do the work are the ones who size it.',
-              first
-                ? 'This first pass is discovery, not a plan for the whole product. A Sprint or two of ready work is enough - what you learn from building the first exhibits will change the rest of it, and detailed analysis of work that may never be built is waste.'
-                : 'Refinement is ongoing work during a Sprint, done by the whole Scrum Team. It prepares later Sprints - typically two or three ahead - and it does not settle what goes into the next one. That is decided at Sprint Planning, from whatever is ready by then.',
-              'It is not an event, and there is no gap between Sprints for it to happen in.',
-            ]} />
+          <ExplainButton cards={['refinement', 'product-backlog', 'pbi']} phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <p className="text-sm text-muted-foreground">Split what is too big, size what is not sized, and order it by value.</p>
       </header>

@@ -1539,12 +1539,45 @@ describe('zoo game: every event inspects and adapts an artifact', () => {
   });
 });
 
+describe('zoo game: every word of teaching comes from a Teaching Card', () => {
+  it('has a card behind every "?" panel in the game, by id', () => {
+    // The screens used to carry their own prose about Scrum, which drifted from the cards and was
+    // not editable. Each "?" now names cards instead. If one of these ids ever stops existing, a
+    // screen silently explains nothing - so they are checked here rather than discovered by a player.
+    const referenced = [
+      'product-backlog', 'product-goal', 'definition-of-done', 'increment', 'refinement', 'pbi',
+      'sprint', 'sprint-backlog', 'daily-scrum', 'sprint-goal', 'sprint-planning', 'velocity',
+      'developers', 'sprint-retrospective', 'sprint-review', 'empiricism',
+    ];
+    for (const id of referenced) {
+      expect(SCRUM_CARDS.find((c) => c.id === id), id).toBeTruthy();
+    }
+  });
+
+  it('makes every card field editable, so nothing taught is locked in code', () => {
+    const keys = new Set(copyEntries().map((e) => e.key));
+    for (const c of SCRUM_CARDS) {
+      for (const field of ['title', 'summary', 'why', 'who', 'when', 'how']) {
+        expect(keys.has(`card.${c.id}.${field}`), `${c.id}.${field}`).toBe(true);
+      }
+    }
+  });
+
+  it('makes the front page editable too - it is the first thing anyone reads', () => {
+    const keys = new Set(copyEntries().map((e) => e.key));
+    expect(keys.has('intro.title')).toBe(true);
+    expect(keys.has('intro.strapline')).toBe(true);
+  });
+});
+
 describe('zoo game: teaching Scrum while you play it', () => {
   it('has a card for every element, answering why, who, when and how', () => {
     expect(SCRUM_CARDS.length).toBeGreaterThan(12);
     for (const c of SCRUM_CARDS) {
-      for (const field of [c.title, c.summary, c.why, c.who, c.when, c.how]) {
-        expect(field.trim().length).toBeGreaterThan(9);
+      // A title can be one word ("Velocity"); the answers cannot be.
+      expect(c.title.trim().length, c.id).toBeGreaterThan(4);
+      for (const field of [c.summary, c.why, c.who, c.when, c.how]) {
+        expect(field.trim().length, c.id).toBeGreaterThan(9);
       }
     }
     // the three artifacts, the five events and the three accountabilities are all covered

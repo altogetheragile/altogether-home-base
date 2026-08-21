@@ -67,10 +67,10 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 
 | # | Note | Done |
 |---|------|------|
-| 3 | The Build a Zoo title and strapline cannot be edited | |
+| 3 | The Build a Zoo title and strapline cannot be edited | yes |
 | 5 | Show the trophy icon the Product Goal hint refers to | yes |
 | 6 | The Product Goal wants its template as a placeholder, and a "Word it for me" wizard | |
-| 13 | The refinement teaching text is not in the editable copy, and differs from the card. Should all teaching text be Teaching Cards? | |
+| 13 | The refinement teaching text is not in the editable copy, and differs from the card. Should all teaching text be Teaching Cards? | yes |
 
 ## 7. Follow-ups from the walk-through
 
@@ -85,3 +85,5 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 | Planned refinement should be an estimated item in the plan, and you should be prompted to do it | yes |
 | The Product Backlog should start EMPTY; a wizard fills it; then the player refines | yes |
 | Paths, trees and so on should be split by zone, so the zoo can be built incrementally | yes |
+
+All thirty-nine notes addressed.

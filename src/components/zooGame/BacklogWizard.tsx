@@ -71,12 +71,7 @@ export function BacklogWizard({ productGoal, onBuild }: { productGoal: string; o
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <StepTrack steps={STEPS} current={step} done={done} onGo={setStep} caption="Writing the Product Backlog" />
-          <ExplainButton title="Where a Product Backlog comes from"
-            body={[
-              'The Product Backlog is an emergent, ordered list of what is needed to improve the product. It is the single source of work: nothing gets built that is not on it.',
-              'The Product Owner is accountable for it - for what is on it, what it says, and the order it is in. Ordering it is how value gets decided, which is why who your visitors are matters here.',
-              'It starts rough. Items near the top are small and clear; items further down can stay vague, because you will learn things from building the first ones that change the rest.',
-            ]} />
+          <ExplainButton cards={['product-backlog', 'product-goal']} />
         </div>
         <div>
           <div className={cn(EYEBROW, 'text-primary')}>Before there is a Backlog</div>

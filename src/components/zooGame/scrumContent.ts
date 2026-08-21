@@ -170,7 +170,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'To inspect the outcome of the Sprint and work out what to do next, with the people the product is for.',
     who: 'The Scrum Team and the stakeholders they invite.',
     when: 'At the end of the Sprint, before the Retrospective.',
-    how: 'There is no mandated format. A common pattern: progress toward the Product Goal, the Sprint Goal and why it mattered, a demonstration inviting feedback, how the Sprint went, and a look ahead. It is a working session, not a presentation, and what comes out of it can change the Product Backlog.',
+    how: 'There is no mandated format. A common pattern: progress toward the Product Goal, the Sprint Goal and why it mattered, a demonstration inviting feedback, how the Sprint went, and a look ahead. It is a working session, not a presentation, and what comes out of it can change the Product Backlog. It is not a release gate: anything Done could have been released the moment it was Done.',
     timebox: 'Up to 4 hours for a one-month Sprint',
   },
   {
@@ -179,7 +179,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'To increase quality and effectiveness. It is where the way of working itself gets better.',
     who: 'The Scrum Team.',
     when: 'At the end of the Sprint, after the Review, closing the Sprint.',
-    how: 'Inspect individuals, interactions, process, tools and the Definition of Done. Discuss what went well, what did not, and how problems were solved. Pick the most helpful improvements and actually do them.',
+    how: 'Inspect individuals, interactions, process, tools and the Definition of Done. Discuss what went well, what did not, and how problems were solved. Pick the most helpful improvements and actually do them - the most impactful may even go into the next Sprint Backlog. This is where the Definition of Done is adapted, and the only place the Sprint length changes: a fixed-length container is the point of a Sprint, so it is never resized to fit the work.',
     timebox: 'Up to 3 hours for a one-month Sprint',
   },
   {
@@ -205,6 +205,15 @@ export const SCRUM_CARDS: ScrumCard[] = [
     who: 'A true leader who serves the Scrum Team, the Product Owner and the organisation.',
     when: 'Throughout.',
     how: 'Coach self-management and cross-functionality, help focus on valuable Increments, cause impediments to be removed, and ensure the events happen and are productive. They do not assign work, and they are not a project manager.',
+  },
+  {
+    id: 'velocity', kind: 'concept', title: 'Velocity',
+    summary: 'How many points a Scrum Team actually finished, per Sprint, recently.',
+    why: 'It turns a guess about capacity into something measured. Without it, "what can we finish?" is answered by optimism.',
+    who: 'The Developers. It is theirs to know and nobody else\u2019s to set as a target - the moment it becomes one, it stops measuring anything.',
+    when: 'Measured at the end of each Sprint, from what actually reached Done. Work that was nearly finished counts for nothing.',
+    how: 'Average the last few Sprints of the same length. Compare it with what you forecast, and let the difference inform the next forecast rather than judge the last one.',
+    notScrum: 'Velocity and story points are common forecasting practices, not part of Scrum. A forecast was never a promise.',
   },
   {
     id: 'empiricism', kind: 'concept', title: 'Empiricism',
@@ -342,3 +351,18 @@ export function roleFor(phase: string, id: string): ArtifactRole {
   if (c.inspects.includes(id)) return 'inspects';
   return null;
 }
+
+/** The front page's own words. Not Scrum teaching, but the first thing anyone reads, so it belongs
+ *  with the copy a trainer can polish rather than in a component nobody can edit. */
+export const INTRO_COPY = {
+  title: 'Build a Zoo',
+  strapline: 'Run a zoo in Sprints, and learn Scrum by doing it: forecast, build to your Definition of Done, open it to visitors, and adapt as they tell you what they value.',
+  loopTitle: 'Each Sprint',
+  loop: [
+    { step: 'Plan', text: 'forecast the exhibits and amenities you can finish.' },
+    { step: 'Build', text: 'deliver each to the Definition of Done.' },
+    { step: 'Open', text: 'release Done work to visitors whenever you like.' },
+    { step: 'Review', text: 'the visitors turn up and tell you what worked.' },
+    { step: 'Retro', text: 'pick one improvement, then plan the next Sprint.' },
+  ],
+};

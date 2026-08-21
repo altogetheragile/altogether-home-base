@@ -38,6 +38,23 @@ function CardBody({ card }: { card: ScrumCard }) {
   );
 }
 
+/** The same card, read on request rather than offered: no dismiss, no violet frame competing with
+ *  the teaching card above it. Used by every screen's "?" button. */
+export function ExplainCard({ id }: { id: string }) {
+  const card = cardFor(id);
+  if (!card) return null;
+  return (
+    <div>
+      <div className="flex items-baseline gap-1.5">
+        <h4 className="text-sm font-semibold leading-tight">{card.title}</h4>
+        <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{kindLabel(card)}</span>
+      </div>
+      <p className="mb-1.5 text-[12px] text-muted-foreground">{card.summary}</p>
+      <CardBody card={card} />
+    </div>
+  );
+}
+
 /** One element, explained where the player meets it. Dismissed for good once it is read. */
 export function TeachingCard({ id, onDismiss }: { id: string; onDismiss: (id: string) => void }) {
   const card = cardFor(id);
