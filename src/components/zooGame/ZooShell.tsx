@@ -211,7 +211,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
           // the thing you build on and made "where does work come from" a question about geography.
           <div className="flex h-full min-h-0">
             {board ? (
-              <div className="flex min-h-0 w-[min(46%,30rem)] shrink-0 flex-col border-r border-border">
+              <div className="flex min-h-0 w-[min(64%,54rem)] shrink-0 flex-col border-r border-border">
                 <button type="button" onClick={() => setDock(false)}
                   className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-1.5 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
@@ -233,7 +233,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 <span className="[writing-mode:vertical-rl]">The work &middot; {sprintCount} item{sprintCount === 1 ? '' : 's'}</span>
               </button>
             )}
-            <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3 sm:px-3">
+            <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-20 pt-3 sm:px-3">
               <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
             </div>
           </div>

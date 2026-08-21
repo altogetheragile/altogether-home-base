@@ -379,10 +379,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
           {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
           {/* The Product Backlog is there to pull from mid-Sprint, but the board is the thing you are
               working on - so it tucks away and gives the columns the whole width when you don't need it. */}
-          {/* Product Backlog above, Sprint Backlog below, park to the right: the work flows down
-              this rail and then out onto the product. Side by side in a rail this narrow, neither
-              was readable. */}
-          <div className="flex flex-col gap-3">
+          {/* Three columns, left to right, in the order the work moves: the Product Backlog you pull
+              from, the Sprint Backlog you pulled it into, and the park you build it on. */}
+          <div className="grid grid-cols-2 gap-3 lg:items-start">
             {showBacklog ? (
               // The same pick-cards as Sprint Planning: tap to pull one in, a padlock on anything
               // that is not ready. Choosing work looks the same wherever you do it.
@@ -404,7 +403,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                     onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
                   </Workspace>
                 )}
-                <div className="max-h-[28vh] space-y-1.5 overflow-y-auto pr-1">
+                <div className="max-h-[62vh] space-y-1.5 overflow-y-auto pr-1">
                   {backlog.map((it) => (
                     <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => onPull(it.id)} onFix={() => setFixing(it.id)}
                       note={"Refining now is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints."} />
