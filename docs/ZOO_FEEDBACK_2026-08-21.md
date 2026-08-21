@@ -83,4 +83,5 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 | The Sprint length section should be collapsible | yes |
 | The RAG colour should go around the whole edge | yes |
 | Planned refinement should be an estimated item in the plan, and you should be prompted to do it | yes |
-| The Product Backlog should start EMPTY; a wizard fills it; then the player refines | |
+| The Product Backlog should start EMPTY; a wizard fills it; then the player refines | yes |
+| Paths, trees and so on should be split by zone, so the zoo can be built incrementally | yes |

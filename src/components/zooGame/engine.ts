@@ -1,11 +1,11 @@
-import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector } from './types';
+import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, isDeployAcceptance, isLandscapeType } from './design';
+import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isDeployAcceptance, isLandscapeType } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, zooCapacity } from './config';
+import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -137,6 +137,18 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
         acceptance: exhibitAcceptance(mem.name),
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
         appeal: mem.appeal ? { families: mem.appeal[0], enthusiasts: mem.appeal[1], comfortSeekers: mem.appeal[2] } : undefined, capacity: 320,
+      });
+    } else if (mem.kind === 'path') {
+      created.push({
+        id: mem.id, name: mem.name, category: 'path', zone,
+        acceptance: pathAcceptance(),
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+      });
+    } else if (mem.kind === 'flora') {
+      created.push({
+        id: mem.id, name: mem.name, category: 'flora', zone, template: mem.flora ?? 'tree',
+        acceptance: floraAcceptance(mem.flora ?? 'tree'),
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
       });
     } else {
       created.push({
@@ -758,6 +770,26 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     plannedRefinement: refinementPoints > 0,
     sprintRefinement: refinementPoints > 0 ? { points: refinementPoints, done: false } : undefined,
     refinePenalty: 0,
+  };
+}
+
+/** Write the Product Backlog from the brief. The game starts with none, because a Backlog that is
+ *  simply there teaches that a Product Backlog is a thing you are handed. This is the moment it
+ *  comes into existence, and the answers decide what is in it and what order it is in. */
+export function writeBacklog(state: ZooGameState, brief: ZooBrief): ZooGameState {
+  const items = starterBacklog(brief);
+  const order = ['families', 'enthusiasts', 'comfortSeekers'] as const;
+  const idx = order.indexOf(brief.audience);
+  // Ordering the Product Backlog is the Product Owner's job and it is done by value - so the items
+  // this audience values most rise, and the Scrum Team can reorder from there.
+  const value = (it: BacklogItem) => (it.appeal ? [it.appeal.families, it.appeal.enthusiasts, it.appeal.comfortSeekers][idx] ?? 0 : 0);
+  const ranked = [...items].sort((a, b) => value(b) - value(a));
+  return {
+    ...state,
+    phase: 'refine',
+    zones: [...new Set(ranked.map((it) => it.zone))],
+    backlog: ranked,
+    brief,
   };
 }
 
