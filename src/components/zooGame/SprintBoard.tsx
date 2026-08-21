@@ -26,6 +26,8 @@ interface SprintBoardProps {
   onAddAnother: (id: string) => void;
   onEstimate: (id: string, points: number) => void;
   onToggleTask: (id: string, taskId: string) => void;
+  /** Accepting a criterion, on the card the criterion belongs to. */
+  onConfirmAc: (id: string, index: number, value: boolean) => void;
   onStartItem: (id: string) => void;
   /** The Product Owner cancelling the Sprint - only they can, and only if the Goal is obsolete. */
   onCancelSprint?: () => void;
@@ -200,7 +202,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -508,7 +510,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                         detail={<>
                           {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
                               and tick the detail. The real building happens on the park. */}
-                          <CardDetail item={it} interactive showAcceptance built={!!it.design} onToggleTask={onToggleTask} />
+                          <CardDetail item={it} interactive showAcceptance built={!!it.design} onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
@@ -540,7 +542,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                         )}
                       </>}
                       detail={<>
-                        <CardDetail item={it} interactive showAcceptance built onToggleTask={onToggleTask} />
+                        <CardDetail item={it} interactive showAcceptance built onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                         <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">{deployActions(it)}</div>
                       </>} />
                     </div>
