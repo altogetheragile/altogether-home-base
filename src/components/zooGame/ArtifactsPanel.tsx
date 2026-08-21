@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Boxes, ClipboardList, ListTodo, Package, Pencil, Check, Eye, Sparkles } from 'lucide-react';
+import { Boxes, ClipboardList, ListTodo, Package, Pencil, Check, Eye, Sparkles, Trophy } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import type { ZooGameState } from './types';
@@ -126,7 +126,10 @@ export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: 
 
                 {/* The commitment, on the artifact it belongs to. */}
                 <div className={cn('mt-1.5 rounded-md border px-2 py-1.5', a.commitmentMet ? 'border-primary/30 bg-primary/5' : 'border-dashed border-border')}>
-                  <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Commitment &middot; {prov.commitment}</div>
+                  <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">
+                    {a.id === 'product-backlog' && <Trophy className="h-3 w-3 text-amber-500" />}
+                    Commitment &middot; {prov.commitment}
+                  </div>
                   {a.id === 'product-backlog'
                     ? <div className="mt-0.5"><GoalEditor goal={state.productGoal} onSetGoal={onSetProductGoal} /></div>
                     : a.id === 'increment'

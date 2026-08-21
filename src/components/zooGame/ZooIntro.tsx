@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Target, Pencil, FolderOpen } from 'lucide-react';
+import { Pencil, FolderOpen, Trophy } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,9 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
         {/* 4. The Product Goal itself: the one thing written here, so it gets the weight. */}
         <section className="space-y-1.5 rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Target className="h-4 w-4 shrink-0 text-primary" />
+            {/* The Product Goal's own mark. It is the thing every Sprint aims at, so it gets a
+                symbol you can then recognise in the header rather than another target among targets. */}
+            <Trophy className="h-5 w-5 shrink-0 text-amber-500" />
             <h2 className="text-lg font-semibold">Your Product Goal</h2>
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
               Commitment of the Product Backlog
@@ -89,7 +91,7 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
               />
             </span>
           </label>
-          <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from Artifacts in the header.</p>
+          <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
         </section>
 
         {/* Floating, like every other primary action in the game. */}

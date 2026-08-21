@@ -736,7 +736,7 @@ export function readyHorizon(state: ZooGameState): number {
   return cap > 0 ? Math.round((pts / cap) * 10) / 10 : 0;
 }
 
-export function planSprint(state: ZooGameState, ids: string[], plannedRefinement = false): ZooGameState {
+export function planSprint(state: ZooGameState, ids: string[], refinementPoints = 0): ZooGameState {
   // Only Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
   // and with acceptance criteria. Anything else has to go back through Refinement first.
   const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && isReady(it)).map((it) => it.id));
@@ -751,10 +751,30 @@ export function planSprint(state: ZooGameState, ids: string[], plannedRefinement
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
     burndown: [committedPts],
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
-    // Topic three's decision: refinement planned into this Sprint costs every day of it, starting
-    // with the first.
-    plannedRefinement,
-    refinePenalty: plannedRefinement ? PLANNED_REFINE_SECONDS : 0,
+    // Topic three's decision. Refinement planned into a Sprint is work in the plan, with a size,
+    // that somebody has to actually hold - not a tax quietly docked from every day whether or not
+    // anyone does it. It takes capacity from building, which is the trade-off, and it is not Done
+    // until it is held.
+    plannedRefinement: refinementPoints > 0,
+    sprintRefinement: refinementPoints > 0 ? { points: refinementPoints, done: false } : undefined,
+    refinePenalty: 0,
+  };
+}
+
+/** The Scrum Team has read the Definition of Done and agreed it is the bar. */
+export function agreeDefinitionOfDone(state: ZooGameState): ZooGameState {
+  return { ...state, dodAgreed: true };
+}
+
+/** Hold the refinement the Scrum Team planned into this Sprint. It is the whole Scrum Team's work
+ *  and it costs the day it is held on - proportional to the size they set aside for it. */
+export function holdPlannedRefinement(state: ZooGameState): ZooGameState {
+  const planned = state.sprintRefinement;
+  if (!planned || planned.done) return state;
+  return {
+    ...state,
+    sprintRefinement: { ...planned, done: true },
+    refinePenalty: state.refinePenalty + PLANNED_REFINE_SECONDS * planned.points,
   };
 }
 
@@ -1038,7 +1058,7 @@ export function endDay(state: ZooGameState): ZooGameState {
   if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
-    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: s.plannedRefinement ? PLANNED_REFINE_SECONDS : 0 };
+    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0 };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
   return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber) };
@@ -1051,7 +1071,7 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
   // A new day gets a fresh build clock, so the refinement spend resets too.
-  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: state.plannedRefinement ? PLANNED_REFINE_SECONDS : 0 };
+  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0 };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */

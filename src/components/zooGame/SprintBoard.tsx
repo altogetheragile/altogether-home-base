@@ -47,6 +47,8 @@ interface SprintBoardProps {
   onHoldDailyScrum: () => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
+  /** Hold the refinement the Scrum Team planned into this Sprint at topic three. */
+  onHoldRefinement?: () => void;
   /** Selecting an item on the park, so starting one takes you straight to building it there. */
   onBuilding: (id: string | null) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
@@ -148,16 +150,18 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
  *  ask for it while the Sprint runs, not offer it as a tidy-up between Sprints. The chip is quiet
  *  when the Backlog is a Sprint or two ahead and speaks up when it is not, which is the whole
  *  lesson: you refine to keep the next Planning worth holding, and it costs today's build time. */
-function RefineChip({ horizon, onOpen }: { horizon: number; onOpen: () => void }) {
+function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () => void; planned?: { points: number; done: boolean } }) {
   const thin = horizon < 1, deep = horizon > 3;
+  const owed = !!planned && !planned.done;
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="How many Sprints of ready work are waiting"
           className={cn('flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
-            thin || deep ? 'border-amber-400/70 bg-amber-500/10 text-amber-700 dark:text-amber-400'
-              : 'border-border bg-background text-muted-foreground hover:text-foreground')}>
-          <ListChecks className="h-3.5 w-3.5" /> {horizon} ready
+            owed ? 'border-violet-400 bg-violet-500/10 text-violet-700 dark:text-violet-300'
+              : thin || deep ? 'border-amber-400/70 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                : 'border-border bg-background text-muted-foreground hover:text-foreground')}>
+          <ListChecks className="h-3.5 w-3.5" /> {owed ? 'Refinement planned' : `${horizon} ready`}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80">
@@ -178,6 +182,12 @@ function RefineChip({ horizon, onOpen }: { horizon: number; onOpen: () => void }
             Developers bring what it would take and the size. It is not an event, and doing it now costs the day&rsquo;s
             build time. What it prepares is later Sprints, not this one.
           </p>
+          {owed && (
+            <p className="rounded-md border border-violet-400/50 bg-violet-500/10 px-2 py-1.5 text-[12px] text-violet-800 dark:text-violet-200">
+              You set aside <strong>{planned!.points} point{planned!.points === 1 ? '' : 's'}</strong> for this at Sprint
+              Planning and have not held it yet. It is on the board in To Do.
+            </p>
+          )}
           <Button size="sm" className="h-7 w-full px-2 text-xs" onClick={onOpen}>Refine the Product Backlog</Button>
         </div>
       </PopoverContent>
@@ -190,7 +200,7 @@ function RefineChip({ horizon, onOpen }: { horizon: number; onOpen: () => void }
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   const [showBacklog, setShowBacklog] = useState(false); // the Backlog tucks away during the Sprint
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
@@ -215,6 +225,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
   const deploy = committed.filter((it) => it.status === 'done');
   const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = activeWipLimit(state) > 0 && doing.length >= activeWipLimit(state);
+  // Refinement planned in at topic three: on the board until somebody holds it.
+  const refineTodo = !!state.sprintRefinement && !state.sprintRefinement.done;
+  const refineDone = !!state.sprintRefinement?.done;
   // Ideas that waited for the Sprint where they matter introduce themselves in the Sprint they
   // arrive in, and then stop shouting.
   const fresh = state.sprintNumber === 2;
@@ -345,7 +358,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
               </NewHere>}
             </span>
           )}
-          {!dayStarting && <RefineChip horizon={readyHorizon(state)} onOpen={() => setShowBacklog(true)} />}
+          {!dayStarting && <RefineChip horizon={readyHorizon(state)} planned={state.sprintRefinement} onOpen={() => setShowBacklog(true)} />}
           <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
         </div>
       </div>
@@ -419,7 +432,34 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
               {/* Four equal columns at sm+ (a 2x2 grid on mobile) - uniform, whatever each holds. */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:items-start">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
-                <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
+                <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
+                  {refineTodo && (
+                    // Refinement the Scrum Team put in the plan, sitting on the board like the work
+                    // it is. It is not a Product Backlog item - nothing about it reaches a visitor -
+                    // so it does not wear a PBI's clothes.
+                    <div className="rounded-lg border-2 border-violet-400/70 bg-violet-500/[0.07] p-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 text-[13px] font-semibold">
+                            <ListChecks className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                            Refine the Product Backlog
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">Planned into this Sprint &middot; the whole Scrum Team</p>
+                        </div>
+                        <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
+                      </div>
+                      <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                        It costs the day you hold it, and what it prepares is later Sprints. Skip it and the next
+                        Planning has less to choose from.
+                      </p>
+                      <div className="mt-1.5 flex justify-end">
+                        <Button size="sm" className="h-7 bg-violet-600 px-2 text-xs text-white hover:bg-violet-700"
+                          onClick={() => { setShowBacklog(true); onHoldRefinement?.(); }}>
+                          Hold it now
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {todo.map((it, i) => {
                     // You build the habitat before its animals: an animal can't start until
                     // its enclosure is built.
@@ -513,7 +553,14 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                 </BoardColumn>
                 </div>
                 <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={done.length} hint="Nothing live yet" tone="done">
+                <BoardColumn title="Done ✓" count={done.length + (refineDone ? 1 : 0)} hint="Nothing live yet" tone="done">
+                  {refineDone && (
+                    <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2 py-1.5 text-[12px]">
+                      <Check className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                      <span className="font-medium">Refined the Product Backlog</span>
+                      <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
+                    </div>
+                  )}
                   {done.map((it) => (
                     // data-done-card lets the delivery celebration burst confetti from this card.
                     <div key={it.id} data-done-card={it.id}>
