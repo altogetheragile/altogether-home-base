@@ -7,12 +7,11 @@ import {
   addWaterTo, addFloraTo, isLandscapeType, type ItemDesign,
 } from './design';
 import { isSignOffTask } from './engine';
-import { TaskChecklist } from './Board';
 import { ExplainButton } from './Explain';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Sprout, X, ListChecks, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2 } from 'lucide-react';
 
 // ============= Building on the canvas =============
 //
@@ -136,15 +135,13 @@ interface ItemToolbarProps {
   onFocus?: (key: string | null) => void;
 }
 
-/** What has to be true before this item is Done, and the button that takes it there. */
-function DonePanel({ item, design, editing, onToggleTask, onFinish, onRelease }: Omit<ItemToolbarProps, 'onDesign' | 'onSetEnclosure' | 'onClose' | 'copySources'>) {
+/** Whether this item can leave the build, and why not if it cannot. The plan and the acceptance
+ *  criteria are ticked on the item's card - repeating them here made the toolbar a second place to
+ *  look for the same facts, and a second place to keep in step. */
+function finishState(item: BacklogItem, design: ItemDesign) {
   const acceptance = item.acceptance ?? [];
   const buildAcceptance = acceptance.map((label, i) => ({ label, i })).filter((a) => !isDeployAcceptance(a.label));
   const deployAcceptance = acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
-  // Built and standing on the park: what is left is where it stands, and the sign-off that follows.
-  // It is already in place - there is nothing to "place", which is the point of building in place.
-  const released = item.status === 'open';
-  const deployAll = deployAcceptance.every((a) => !!item.acConfirmed?.[a.i]);
   const built = isDesignDone(item, design);
   const acAll = buildAcceptance.every((a) => !!item.acConfirmed?.[a.i]);
   // The Definition of Done is the bar; the Product Owner's sign-off is deliberately not part of this
@@ -154,61 +151,12 @@ function DonePanel({ item, design, editing, onToggleTask, onFinish, onRelease }:
   const blocker = done ? null
     : !built ? (designCriteria(item, design).find((c) => !c.pass)?.label ?? 'Finish the design')
     : !acAll ? 'Accept the criteria on its card'
-    : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Finish the plan');
-
-  return (
-    // Compact on purpose. This hangs off a toolbar button over the thing it is about, so it has to
-    // clear the way for the park rather than become the panel we just got rid of.
-    <div className="max-h-[62vh] space-y-2 overflow-y-auto">
-      <div className="flex items-center justify-between gap-2">
-        <h4 className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Taking it to Done</h4>
-        <ExplainButton cards={['definition-of-done', 'increment']} />
-      </div>
-
-      {/* Your plan. The checklist carries its own "Plan n/m", so nothing is captioned twice. */}
-      {(item.tasks ?? []).some((t) => t.label.trim()) && (
-        <TaskChecklist item={item} onToggle={(_id, taskId) => onToggleTask(taskId)} />
-      )}
-
-      {acceptance.length > 0 && (
-        // Shown, not ticked. Accepting a criterion is something you do to the Product Backlog item,
-        // so it happens on the item's card - here it is a reminder of what the build has to meet.
-        <div className="space-y-1 border-t border-border pt-2">
-          <div className="flex items-baseline gap-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Acceptance <span className="normal-case tracking-normal text-muted-foreground/70">ticked on its card</span>
-          </div>
-          <ul className="space-y-0.5">
-            {acceptance.map((label, i) => {
-              const on = !!item.acConfirmed?.[i];
-              return (
-                <li key={i} className="flex items-start gap-1.5 text-[11px]">
-                  <span className={cn('mt-px flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
-                  <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-
-      {/* Built, and standing where it will stand. All that is left is the sign-off and the opening. */}
-      <div className="space-y-1 border-t border-border pt-2">
-        {released ? (
-          <p className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Live to visitors</p>
-        ) : editing ? (
-          <>
-            <p className="text-[11px] text-muted-foreground">{deployAll ? 'Ready. Opening it takes the hoardings down.' : 'Next: confirm where it stands'}</p>
-            <Button size="sm" className="h-7 w-full text-xs" disabled={!deployAll} onClick={onRelease}>Open it to visitors</Button>
-          </>
-        ) : (
-          <>
-            {blocker && <p className="text-[11px] text-muted-foreground">Next: {blocker.toLowerCase()}</p>}
-            <Button size="sm" className="h-7 w-full text-xs" disabled={!done} onClick={onFinish}>Finish the build</Button>
-          </>
-        )}
-      </div>
-    </div>
-  );
+    : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Tick the plan on its card');
+  return {
+    done, blocker,
+    released: item.status === 'open',
+    deployAll: deployAcceptance.every((a) => !!item.acConfirmed?.[a.i]),
+  };
 }
 
 /** The floating toolbar for the selected item: only the controls this kind of thing needs. */
@@ -237,11 +185,11 @@ export function ItemToolbar(props: ItemToolbarProps) {
     }
   }, [design, item, onToggleTask]);
 
-  const tasks = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
-  const ticked = tasks.filter((t) => t.done).length;
 
   return (
-    <div className="flex max-w-[min(94vw,60rem)] items-center gap-0.5 overflow-x-auto rounded-xl border border-border bg-background/98 px-1.5 py-1 shadow-xl">
+    // Wraps rather than scrolls: clipped at both edges it read as broken, and a toolbar you have to
+    // scroll sideways is a toolbar with things hidden in it.
+    <div className="flex flex-wrap items-center gap-0.5 rounded-xl border border-border bg-background/98 px-1.5 py-1 shadow-xl">
       <span className="mr-1 max-w-[10rem] shrink-0 truncate px-1 text-xs font-semibold" title={item.name}>{item.name}</span>
       <Divider />
 
@@ -388,17 +336,23 @@ export function ItemToolbar(props: ItemToolbarProps) {
       )}
 
       <Divider />
-      {/* The Scrum, one button wide: the plan, the criteria and the gate they guard. */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <button type="button" className={cn(BTN, 'border border-border bg-muted/60')} title="Your plan and the acceptance criteria - what has to be true before this is Done">
-            <ListChecks className="h-3.5 w-3.5 text-primary" /> Done? <span className="tabular-nums text-muted-foreground">{ticked}/{tasks.length}</span> <ChevronDown className="h-3 w-3" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent side="top" align="end" sideOffset={6} className="w-72 p-2.5">
-          <DonePanel {...props} />
-        </PopoverContent>
-      </Popover>
+      {/* The one thing only this toolbar can offer: ending the build. Everything it used to explain
+          is on the card, where it is ticked. */}
+      {(() => {
+        const st = finishState(item, design);
+        if (st.released) return <span className="flex shrink-0 items-center gap-1 px-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Live</span>;
+        if (props.editing) return (
+          <Button size="sm" className="h-8 shrink-0 px-3 text-xs" disabled={!st.deployAll} onClick={props.onRelease}
+            title={st.deployAll ? undefined : 'Confirm where it stands, on its card'}>Open it to visitors</Button>
+        );
+        return (
+          <Button size="sm" className="h-8 shrink-0 px-3 text-xs" disabled={!st.done} onClick={props.onFinish}
+            title={st.blocker ? `Next: ${st.blocker.toLowerCase()}` : undefined}>
+            {st.blocker ? <span className="max-w-[12rem] truncate font-normal">Next: {st.blocker.toLowerCase()}</span> : 'Finish the build'}
+          </Button>
+        );
+      })()}
+      <ExplainButton cards={['definition-of-done', 'increment']} compact />
       <button type="button" onClick={onClose} aria-label="Deselect" title="Deselect"
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
         <X className="h-4 w-4" />

@@ -1258,10 +1258,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         return (
           // It follows the thing it belongs to, and while that thing is moving it follows by
           // translating - same reason as the feature itself: laying it out every frame smears.
-          <div ref={toolbar} className="absolute z-40 flex w-max -translate-x-1/2 -translate-y-full justify-center"
-            style={moving
+          <div ref={toolbar} className="absolute z-40 flex -translate-x-1/2 -translate-y-full justify-center"
+            // Never wider than the park it belongs to, so it wraps inside it instead of running off
+            // both sides of a half-page column.
+            style={{ maxWidth: CANVAS_W * scale - 16, ...(moving
               ? { ...home, transform: `translate(-50%,-100%) translate3d(${now.left - home.left}px,${now.top - home.top}px,0)`, willChange: 'transform', backfaceVisibility: 'hidden' }
-              : now}
+              : now) }}
             onPointerDown={(e) => e.stopPropagation()}>
             <ItemToolbar
               item={f.item}
