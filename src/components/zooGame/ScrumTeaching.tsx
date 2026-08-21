@@ -120,18 +120,24 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
 
 /** Each part of Scrum gets its own quiet colour and its own icon, so the page reads as four things
  *  rather than one wall - and so the same colour can mean the same thing wherever it turns up. */
+// A tint at 5% and a border at 25% is a colour you have to look for. Each part of Scrum now carries
+// its colour three times over - a solid spine down the left, a filled title, and a tint you can
+// actually see - so the page reads as five separate things at a glance rather than one grey wall.
+// Five colours and no more: the discipline is what keeps it from becoming noise.
 const TONE = {
-  founded: 'border-sky-500/25 bg-sky-500/5 text-sky-700 dark:text-sky-300',
-  team: 'border-violet-500/25 bg-violet-500/5 text-violet-700 dark:text-violet-300',
-  artifacts: 'border-amber-500/25 bg-amber-500/5 text-amber-700 dark:text-amber-400',
-  events: 'border-emerald-500/25 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300',
-  values: 'border-rose-500/25 bg-rose-500/5 text-rose-700 dark:text-rose-300',
+  founded: { wrap: 'border-sky-500/40 bg-sky-500/[0.08]', spine: 'bg-sky-500', chip: 'bg-sky-600 text-white dark:bg-sky-500' },
+  team: { wrap: 'border-violet-500/40 bg-violet-500/[0.08]', spine: 'bg-violet-500', chip: 'bg-violet-600 text-white dark:bg-violet-500' },
+  artifacts: { wrap: 'border-amber-500/45 bg-amber-500/[0.10]', spine: 'bg-amber-500', chip: 'bg-amber-600 text-white dark:bg-amber-500' },
+  events: { wrap: 'border-emerald-500/40 bg-emerald-500/[0.08]', spine: 'bg-emerald-500', chip: 'bg-emerald-600 text-white dark:bg-emerald-500' },
+  values: { wrap: 'border-rose-500/40 bg-rose-500/[0.08]', spine: 'bg-rose-500', chip: 'bg-rose-600 text-white dark:bg-rose-500' },
 } as const;
 
 function Section({ title, tone, icon: Icon, children }: { title: string; tone: keyof typeof TONE; icon: typeof Users; children: ReactNode }) {
+  const t = TONE[tone];
   return (
-    <section className={cn('space-y-1.5 rounded-lg border p-3', TONE[tone])}>
-      <h3 className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em]">
+    <section className={cn('relative space-y-2 overflow-hidden rounded-lg border py-2.5 pl-4 pr-3', t.wrap)}>
+      <span className={cn('absolute inset-y-0 left-0 w-1.5', t.spine)} aria-hidden />
+      <h3 className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] shadow-sm', t.chip)}>
         <Icon className="h-3.5 w-3.5 shrink-0" /> {title}
       </h3>
       <div className="space-y-1.5">{children}</div>
@@ -207,8 +213,11 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
           foot of the page, and the "turn the teaching off" escape is a real button rather than grey
           text nobody sees. */}
       <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
+        {/* An escape you cannot see is not an escape. Bordered, in the foreground colour, with the
+            icon that says what it does. */}
         <button type="button" onClick={onSkipTeaching}
-          className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground">
+          className="flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted">
+          <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
           I have covered this - turn the teaching off
         </button>
         <button type="button" onClick={onDone}

@@ -7,7 +7,20 @@ import { SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductBacklogSidebar } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { EYEBROW, TONE, type Tone } from './ui/tokens';
 import { CheckCircle2 } from 'lucide-react';
+
+/** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
+ *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
+function Figure({ value, label, tone, icon: Icon, title }: { value: number | string; label: string; tone: Tone; icon?: typeof CheckCircle2; title?: string }) {
+  return (
+    <span title={title} className={cn('flex items-center gap-1.5 rounded-lg border px-2.5 py-1', TONE[tone].soft, title && 'cursor-help')}>
+      {Icon && <Icon className={cn('h-4 w-4 shrink-0', TONE[tone].text)} />}
+      <span className={cn('text-base font-bold leading-none tabular-nums', TONE[tone].text)}>{value}</span>
+      <span className="text-[11px] leading-tight text-muted-foreground">{label}</span>
+    </span>
+  );
+}
 
 interface RefineBacklogProps {
   state: ZooGameState;
@@ -65,20 +78,34 @@ export function RefineBacklog({ state, onSetSprintDays, onEstimate, onAddPbi, on
         <p className="text-sm text-muted-foreground">Split what is too big, size what is not sized, and order it by value.</p>
       </header>
 
+      {/* This screen asks for two things in order, and nothing said so. Numbering them is the whole
+          fix: agree the cadence, then get the top of the Backlog ready. */}
       {first && onSetSprintDays && (
-        <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
+        <section className="rounded-lg border-2 border-primary/30 bg-primary/[0.04] p-2.5">
+          <h3 className={cn(EYEBROW, 'mb-1.5 flex items-center gap-1.5 text-primary')}>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">1</span>
+            First, agree how long a Sprint is
+          </h3>
+          <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
+        </section>
       )}
 
-      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2 text-xs">
-        <span className="text-muted-foreground">{items.length} in the Backlog</span>
-        <span className={cn('font-medium', horizon > 3 ? 'text-amber-700 dark:text-amber-400' : horizon >= 1 ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}
-          title="How far ahead the Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use.">
-          {horizon} {horizon === 1 ? 'Sprint' : 'Sprints'} ready
-        </span>
-        <span className="flex items-center gap-3">
-          {unsized > 0 && <span className="text-sky-700 dark:text-sky-400">{unsized} to estimate</span>}
-          <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> {ready.length} Ready</span>
-        </span>
+      {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
+          Each one is now a labelled figure in the colour of what it means. */}
+      <div className="flex flex-wrap items-stretch gap-2">
+        {first && (
+          <span className={cn(EYEBROW, 'flex items-center gap-1.5 self-center text-primary')}>
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">2</span>
+            Then get the top ready
+          </span>
+        )}
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+          <Figure value={items.length} label="in the Product Backlog" tone="quiet" />
+          <Figure value={`${horizon}`} label={`Sprint${horizon === 1 ? '' : 's'} ready`} tone={horizon > 3 ? 'attention' : horizon >= 1 ? 'done' : 'attention'}
+            title="How far ahead the Product Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use." />
+          {unsized > 0 && <Figure value={unsized} label="to estimate" tone="coach" />}
+          <Figure value={ready.length} label="Ready" tone="done" icon={CheckCircle2} />
+        </div>
       </div>
 
       {/* The list scrolls inside itself, so the question, the Sprint length and the readiness bar

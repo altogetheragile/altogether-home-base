@@ -295,7 +295,9 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
       // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
       mode === 'view' ? null
       : it.category === 'epic' ? (
-        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split</Button>
+        // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
+        // the work this screen is asking for, so it asks.
+        <Button size="sm" className="h-7 shrink-0 bg-rose-600 px-2 text-xs text-white hover:bg-rose-700" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
       ) : mode === 'refine' ? null
@@ -320,7 +322,13 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
         className={cn(dragId === it.id && 'opacity-50')}>
         {/* The same card as everywhere else, with this screen's controls on it: re-order handles
             and an expand toggle in front, the action behind. */}
+        {/* Red, amber, green down the left edge: an epic nobody has split is red, an item waiting to
+            be sized is amber, an item that meets the Definition of Ready is green. One glance tells
+            you what is left to do, which is the question this screen is asking. */}
         <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'}
+          className={mode === 'refine' || mode === 'plan'
+            ? cn('border-l-4', it.category === 'epic' ? 'border-l-rose-500' : why ? 'border-l-amber-500' : 'border-l-emerald-500')
+            : undefined}
           lead={<>
             {onReorder && (
               <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
