@@ -46,7 +46,7 @@ function Menu({ label, swatch, children, title }: { label: string; swatch?: stri
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="center" className="w-auto max-w-[20rem] p-2">{children(() => setOpen(false))}</PopoverContent>
+      <PopoverContent side="top" sideOffset={6} align="center" className="w-auto max-w-[20rem] p-2">{children(() => setOpen(false))}</PopoverContent>
     </Popover>
   );
 }
@@ -104,7 +104,7 @@ function ColourButton({ label, value, onChange, part, focus, onFocus, onClosed }
           {label}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="center" className="w-auto p-2">
+      <PopoverContent side="top" sideOffset={6} align="center" className="w-auto p-2">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
         <Colours value={value} onChange={onChange} onPicked={() => setOpen(false)} />
       </PopoverContent>
@@ -416,7 +416,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
             <ListChecks className="h-3.5 w-3.5 text-primary" /> Done? <span className="tabular-nums text-muted-foreground">{ticked}/{tasks.length}</span> <ChevronDown className="h-3 w-3" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" sideOffset={6} className="w-72 p-2.5">
+        <PopoverContent side="top" align="end" sideOffset={6} className="w-72 p-2.5">
           <DonePanel {...props} />
         </PopoverContent>
       </Popover>

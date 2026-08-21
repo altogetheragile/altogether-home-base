@@ -70,7 +70,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, onSetTeaching, onMarkTaught, onBack, copy }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean }[]; onConfirmDeployAc?: (index: number, value: boolean) => void; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onAddCopy?: (id: string, pos: { x: number; y: number }) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void } }) {
+export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, boardOpen, onSetBoardOpen, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onConfirmDeployAc, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetSize, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, onSetTeaching, onMarkTaught, onBack, copy }: { state: ZooGameState; children: ReactNode; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; boardOpen?: boolean; onSetBoardOpen?: (open: boolean) => void; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean }[]; onConfirmDeployAc?: (index: number, value: boolean) => void; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onAddCopy?: (id: string, pos: { x: number; y: number }) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void } }) {
   // `tab` is controlled from above when provided, so an event (place & open) can switch to
   // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
   // position the released item there.
@@ -81,22 +81,23 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   // During a Sprint the park is the working surface and the board docks over it.
   const canvas = state.phase === 'sprint';
   const dayStage = state.dayStage;
-  const [dock, setDock] = useState(true);
-  // While a build is open, or an item is being placed, the board stands aside: two panels over one
-  // park left a strip of grass, and the build panel covered the handle you would use to close the
-  // board yourself. Both are things you do ON the park, so the park gets the room.
+  // Whether the board is up is a decision, not something derived from what is selected. Deriving it
+  // meant that clicking away from an enclosure - which only means "I have finished with this one" -
+  // threw the whole board back over the park. It now stays where you left it: picking something up
+  // on the park puts the board away, and only the handle brings it back.
+  const dockOpen = boardOpen ?? true;
+  const setDock = (o: boolean) => onSetBoardOpen?.(o);
   // Building happens during the build stage. At the Daily Scrum the event is what you are in, so
   // the park lets go of whatever was selected rather than floating a toolbar over it.
   const onPark = state.phase !== 'sprint' || dayStage === 'building';
   const selected = onPark ? building : null;
   const busy = selected ? 'building' : deployMode ? 'placing' : null;
-  const dockOpen = dock && !busy;
-  // ...which means the handle has to be the way back, or it is a button that does nothing: with the
-  // board forced aside, toggling `dock` would change nothing you can see.
+  // The handle is also the way back from a build or a placement, or it would be a button that does
+  // nothing: with something in hand on the park, the board is not what you want first.
   const toggleDock = () => {
-    if (selected) { onOpenBuild?.(null); return; }
-    if (deployMode) { onFinishDeploy?.(); return; }
-    setDock((d) => !d);
+    if (selected) { onOpenBuild?.(null); setDock(true); return; }
+    if (deployMode) { onFinishDeploy?.(); setDock(true); return; }
+    setDock(!dockOpen);
   };
   const sprintCount = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status !== 'backlog').length;
 
