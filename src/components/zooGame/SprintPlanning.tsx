@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask } from './types';
 import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
 import { NewHere } from './NewHere';
@@ -18,7 +18,7 @@ import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
+import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight, ListChecks } from 'lucide-react';
 import { EYEBROW } from './ui/tokens';
 
 // ============= Sprint Planning =============
@@ -92,15 +92,30 @@ const DETAIL: Record<Step, { title: string; body: string[] }> = {
   },
 };
 
-/** The Sprint Goal, once you have written it: one line, always in view, click to reopen it. */
-function GoalBanner({ goal, onEdit }: { goal: string; onEdit: () => void }) {
+/** The shape every topic of Sprint Planning takes: the Product Backlog on the left, the Sprint you
+ *  are assembling on the right. Topic two was the one screen that read well, and this is why - the
+ *  thing you are choosing from and the thing you are building are side by side, and you can see one
+ *  fill as the other empties. The other two topics now stand in the same frame, so moving between
+ *  them is moving through one event rather than arriving somewhere new. */
+function PlanColumns({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
-    <button type="button" onClick={onEdit} title="Back to the Sprint Goal"
-      className="flex w-full items-center gap-2 rounded-lg border-2 border-primary/40 bg-primary/5 px-3 py-2 text-left transition-colors hover:border-primary/70">
-      <Target className="h-4 w-4 shrink-0 text-primary" />
-      <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Sprint Goal</span>
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{goal}</span>
-    </button>
+    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      <section className="min-w-0 space-y-1.5">{left}</section>
+      <section className="min-w-0 space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3">{right}</section>
+    </div>
+  );
+}
+
+/** The left column's heading, so all three topics label it the same way. */
+function BacklogHeading({ count, note, onRefine }: { count: number; note?: string; onRefine?: () => void }) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+      <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({count})</span></h3>
+      {onRefine
+        ? <button type="button" onClick={onRefine} title="Sizing and splitting belong in refinement, during the Sprint before this one."
+          className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">Refine the Backlog</button>
+        : note && <span className="text-[11px] text-muted-foreground/70">{note}</span>}
+    </div>
   );
 }
 
@@ -148,7 +163,6 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
   const over = committed > capacity;
   const hasGoal = isDraftedGoal(state.sprintGoal);
   const hasWhat = chosen.length > 0;
-  const essentials = chosen.filter((i) => i.goalCritical).length;
   const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
   // Refining opens a panel above the columns; bring it into view so it is not something you have to
   // go looking for after the popover that offered it has closed.
@@ -195,9 +209,23 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
 
       {/* ---- WHY ---- */}
       {step === 'why' && (
-        <div className="space-y-3">
-          <div className="rounded-xl border-2 border-primary/50 bg-primary/5 p-4 shadow-sm">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <PlanColumns
+          left={<>
+            <BacklogHeading count={items.length} note="ordered by the Product Owner - open one to read it" />
+            <p className="text-[11px] text-muted-foreground/70">
+              What the Product Owner is proposing value from. The marked items are about a Sprint&rsquo;s worth off the
+              top, which is what a Sprint Goal is usually about.
+            </p>
+            <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
+              {items.map((it) => (
+                <div key={it.id} className={cn(candidates.some((c) => c.id === it.id) ? 'border-l-4 border-l-primary pl-1' : 'pl-1 opacity-60')}>
+                  <PickCard item={it} why={notReady(it)} readOnly onPick={() => {}} />
+                </div>
+              ))}
+            </div>
+          </>}
+          right={<>
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <Target className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold">Sprint Goal</span>
@@ -211,40 +239,21 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
             </div>
-            <textarea value={state.sprintGoal} onChange={(e) => onSetSprintGoal(e.target.value)} rows={2} autoFocus
+            <textarea value={state.sprintGoal} onChange={(e) => onSetSprintGoal(e.target.value)} rows={3} autoFocus
               placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo;"
               className="w-full resize-none rounded-lg border-2 border-primary/40 bg-background px-3 py-2 text-lg font-medium leading-snug outline-none focus:border-primary" />
-          </div>
-
-          {/* What the Product Owner is proposing value from: the top of the Backlog, in order. */}
-          <section>
-            <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
-              <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top of the Product Backlog</h3>
-              <span className="text-[11px] text-muted-foreground/70">ordered by the Product Owner &middot; highlighted is about a Sprint&rsquo;s worth</span>
+            {/* The right-hand column is the Sprint. At topic one it is empty on purpose, and saying
+                so is better than leaving a blank panel: the Goal comes before the work, not after. */}
+            <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
+              <p className="text-[12px] font-medium text-muted-foreground">Nothing forecast yet</p>
+              <p className="text-[11px] text-muted-foreground/70">The Sprint Backlog fills at topic two, once you know what this Sprint is for.</p>
             </div>
-            <div className="grid gap-1.5 sm:grid-cols-2">
-              {items.slice(0, 8).map((it) => (
-                // The items the Goal would most likely be about, marked so the suggestion and the
-                // list agree on screen: the Goal comes off the top of the Backlog, as far down as a
-                // Sprint reaches.
-                // Highlighting six items out of eight in full orange is not a highlight, it is a
-                // wash - and it is the same colour the primary action wears. A spine down the side
-                // says "the Goal is likely about these" without shouting it.
-                <PbiCard key={it.id} item={it} state="backlog"
-                  className={candidates.some((c) => c.id === it.id)
-                    ? 'border-l-4 border-l-primary'
-                    : 'opacity-60'} />
-              ))}
-            </div>
-          </section>
-        </div>
+          </>} />
       )}
 
       {/* ---- WHAT ---- */}
       {step === 'what' && (
         <div className="space-y-3">
-          <GoalBanner goal={state.sprintGoal} onEdit={() => setStep('why')} />
-
           {state.signals.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
@@ -280,24 +289,17 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
           )}
 
           {/* Pick from the left, and watch the Sprint fill on the right. */}
-          <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-            <section className="space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({items.length - chosen.length})</span></h3>
-                {onRefine && (
-                  <button type="button" onClick={onRefine} title="Sizing and splitting belong in refinement, during the Sprint before this one."
-                    className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">Refine the Backlog</button>
-                )}
-              </div>
+          <PlanColumns
+            left={<>
+              <BacklogHeading count={items.length - chosen.length} onRefine={onRefine} />
               <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
                   <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
                     note={"You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
                 ))}
               </div>
-            </section>
-
-            <section className="space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3">
+            </>}
+            right={<>
               <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
               {chosen.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
@@ -309,106 +311,122 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
               {chosen.length > 1 && onReorderForecast && (
                 <p className="text-[10px] text-muted-foreground/70">You can arrange the order of work on the board once the Sprint starts.</p>
               )}
-            </section>
-          </div>
+            </>} />
         </div>
       )}
 
       {/* ---- HOW ---- */}
       {step === 'how' && (
         <div className="space-y-3">
-          <GoalBanner goal={state.sprintGoal} onEdit={() => setStep('why')} />
+          <PlanColumns
+            left={<>
+              <BacklogHeading count={items.length - chosen.length} note="what you did NOT take - still the Product Owner's to order" />
+              <p className="text-[11px] text-muted-foreground/70">
+                Left where it was. Seeing it beside the Sprint is the point: this is what the next Planning will choose
+                from, and it is the reason refining costs you something now.
+              </p>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted-foreground">
-              {stars ? <>
-                <Star className="inline h-3.5 w-3.5 text-amber-500" />
-                Star what the Goal depends on{essentials > 0 ? ` (${essentials} starred)` : ''}, and break each item into steps.
-                {state.sprintNumber === 2 && (
-                  <NewHere title="Marking the essentials">
-                    <p>Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.</p>
-                    <p>It appears now because you have watched a Sprint end. Protecting the Goal by dropping scope is a win, not a miss - but only if you have said what the Goal actually rests on.</p>
-                  </NewHere>
-                )}
-              </> : <>Open each item to decide what it will be, and the steps that build it.</>}
-            </p>
-            <Button size="sm" className="h-8 gap-1 bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
-              onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
-              <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
-            </Button>
-          </div>
-
-          {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
-              somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
-          <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.07]' : 'border-border bg-muted/20')}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="min-w-0">
+              {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
+                  somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
+              <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.07]' : 'border-border bg-muted/20')}>
                 <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
                   About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
                   {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
                     : horizon > 3 ? ' That is plenty - build instead.'
                       : ' Enough for now, but it burns down as you go.'}
                 </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                {REFINE_POINT_OPTIONS.map((v) => (
-                  <button key={v} type="button" onClick={() => setRefinePts(v)}
-                    className={cn('rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border text-muted-foreground hover:text-foreground')}>
-                    {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
-                  </button>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  {REFINE_POINT_OPTIONS.map((v) => (
+                    <button key={v} type="button" onClick={() => setRefinePts(v)}
+                      className={cn('rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                        refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border text-muted-foreground hover:text-foreground')}>
+                      {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
+                    </button>
+                  ))}
+                </div>
+                {refinePts > 0 && (
+                  <p className="mt-1.5 text-[11px] text-muted-foreground">
+                    {refinePts} point{refinePts === 1 ? '' : 's'} set aside for the whole Scrum Team to refine together. It
+                    goes on the board like any other work and it is not Done until you have held it.
+                  </p>
+                )}
+              </section>
+
+              <div className="max-h-[32vh] space-y-1.5 overflow-y-auto pr-1">
+                {items.filter((i) => !selected.has(i.id)).map((it) => (
+                  <PickCard key={it.id} item={it} why={notReady(it)} readOnly onPick={() => {}} />
                 ))}
               </div>
-            </div>
-            {refinePts > 0 && (
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                {refinePts} point{refinePts === 1 ? '' : 's'} of this Sprint set aside for the whole Scrum Team to refine
-                together. It goes on the board like any other work, it takes capacity from building - that is the
-                trade-off - and it is not Done until you have held it. What it prepares is later Sprints, not this one.
-              </p>
-            )}
-          </section>
-
-          <div className="space-y-2">
-            {chosen.map((it) => {
-              const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
-              const open = openPlan === it.id;
-              return (
-                <div key={it.id}>
-                  {open ? (
-                    <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
-                      {/* What kind of thing, before how it gets built - the first "how" is what shape
-                          it takes, and it decides the order of the Sprint. */}
-                      {(() => {
-                        const shape = <ShapeChooser item={it} enclosures={habitats} onPlan={(patch) => onPlanShape(it.id, patch)} />;
-                        return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
-                      })()}
-                      <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
-                    </div>
-                  ) : (
-                    // Everything here is already in the Sprint, so tinting every row orange says
-                    // nothing. What differs between these rows is whether they have been planned -
-                    // so THAT is what carries the colour.
-                    <PbiCard item={it} state="backlog" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
-                      className={cn(it.goalCritical && 'border-l-4 border-l-amber-400',
-                        tasks.length ? 'border-emerald-400/60 bg-emerald-500/[0.04]' : 'border-dashed')}
-                      lead={stars ? (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
-                          title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
-                          <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
-                        </button>
-                      ) : undefined}
-                      trailing={
-                        <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
-                          onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
-                          {tasks.length ? `${tasks.length} steps` : 'Plan it'}
-                        </Button>} />
-                  )}
+            </>}
+            right={<>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({chosen.length})</span></h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    {stars ? 'Star what the Goal depends on, and break each item into steps.' : 'Open each item to decide what it will be, and the steps that build it.'}
+                    {' '}<strong className="text-foreground">{totalSteps} step{totalSteps === 1 ? '' : 's'}</strong> so far.
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+                <Button size="sm" className="h-8 gap-1 bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+                  onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
+                  <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
+                </Button>
+              </div>
+              {stars && state.sprintNumber === 2 && (
+                <NewHere title="Marking the essentials">
+                  <p>Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.</p>
+                  <p>It appears now because you have watched a Sprint end. Protecting the Goal by dropping scope is a win, not a miss - but only if you have said what the Goal actually rests on.</p>
+                </NewHere>
+              )}
+
+              <div className="max-h-[46vh] space-y-2 overflow-y-auto pr-1">
+                {chosen.map((it) => {
+                  const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
+                  const open = openPlan === it.id;
+                  return (
+                    <div key={it.id}>
+                      {open ? (
+                        <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
+                          {/* What kind of thing, before how it gets built - the first "how" is what shape
+                              it takes, and it decides the order of the Sprint. */}
+                          {(() => {
+                            const shape = <ShapeChooser item={it} enclosures={habitats} onPlan={(patch) => onPlanShape(it.id, patch)} />;
+                            return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
+                          })()}
+                          <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
+                        </div>
+                      ) : (
+                        // Everything here is already in the Sprint, so tinting every row orange says
+                        // nothing. What differs between these rows is whether they have been planned -
+                        // so THAT is what carries the colour.
+                        <PbiCard item={it} state="backlog" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
+                          className={cn(it.goalCritical && 'border-l-4 border-l-amber-400',
+                            tasks.length ? 'border-emerald-400/60 bg-emerald-500/[0.04]' : 'border-dashed')}
+                          lead={stars ? (
+                            <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
+                              title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
+                              <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
+                            </button>
+                          ) : undefined}
+                          trailing={
+                            <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
+                              onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
+                              {tasks.length ? `${tasks.length} steps` : 'Plan it'}
+                            </Button>} />
+                      )}
+                    </div>
+                  );
+                })}
+                {refinePts > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/60 bg-violet-500/[0.07] px-2 py-1.5 text-[12px]">
+                    <ListChecks className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                    <span className="min-w-0 flex-1 font-medium">Refine the Product Backlog</span>
+                    <span className="shrink-0 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">{refinePts} pts</span>
+                  </div>
+                )}
+              </div>
+            </>} />
         </div>
       )}
 

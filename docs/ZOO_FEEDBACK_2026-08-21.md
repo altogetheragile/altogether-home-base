@@ -37,10 +37,10 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 
 | # | Screen | Note | Done |
 |---|--------|------|------|
-| 18 | Planning 1 | Use the two-column layout even when the right-hand side is empty | |
-| 24 | Planning 3 | The split view showing Product Backlog and Sprint Backlog is better | |
-| 20 | Planning | Model all of Sprint Planning on topic 2 | |
-| 21 | Planning 2 | Can I open and read a PBI before selecting it for the Sprint? | |
+| 18 | Planning 1 | Use the two-column layout even when the right-hand side is empty | yes |
+| 24 | Planning 3 | The split view showing Product Backlog and Sprint Backlog is better | yes |
+| 20 | Planning | Model all of Sprint Planning on topic 2 | yes |
+| 21 | Planning 2 | Can I open and read a PBI before selecting it for the Sprint? | yes |
 | 25 | Planning 3 | If I plan in refinement, should I not be prompted to do it during the Sprint? | yes |
 | 26 | Planning 3 | I should not be able to move forward without having planned my steps | yes |
 
