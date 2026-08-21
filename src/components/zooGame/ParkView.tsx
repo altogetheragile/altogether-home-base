@@ -8,7 +8,7 @@ import { carParkLayout, carCapacity, CAR_PARK_H } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -511,10 +511,14 @@ function ConstructionSite({ item, w, h, selected, children }: { item: BacklogIte
           is Done and released. Visitors never see inside. */}
       <div className={cn('absolute -inset-1.5 rounded-lg border-2 border-dashed', selected ? 'border-primary' : 'border-amber-500/70')}
         style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(245,158,11,0.14) 0 8px, rgba(245,158,11,0.04) 8px 16px)' }} aria-hidden />
-      {/* Clear of the box, sitting on the hoarding rather than over the fence - the top rim has to
-          be reachable too, and it is the fence. */}
-      <span className={cn('absolute -top-4 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 text-[9px] font-bold uppercase tracking-wide text-white shadow',
-        selected ? 'bg-primary' : 'bg-amber-500')}>Building</span>
+      {/* The kit that says "site" without a word on it: hazard posts at the corners and a cone at
+          the gate. It all comes down when the item is released, which is the point - you can see
+          from across the park what is finished and what is still being worked on. */}
+      {[['-left-2.5 -top-2.5'], ['-right-2.5 -top-2.5'], ['-left-2.5 -bottom-2.5'], ['-right-2.5 -bottom-2.5']].map(([at]) => (
+        <span key={at} className={cn('absolute h-2.5 w-2.5 rounded-[2px]', at)} aria-hidden
+          style={{ backgroundImage: 'repeating-linear-gradient(45deg,#f59e0b 0 3px,#fff 3px 6px)', boxShadow: '0 1px 0 rgba(0,0,0,.2)' }} />
+      ))}
+      <TrafficCone className="absolute -bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 text-amber-500 drop-shadow-sm" aria-hidden />
       <div className="relative flex h-full w-full items-center justify-center">
         {children ?? (
           <div className="pointer-events-none max-w-full px-1 text-center">

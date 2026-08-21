@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Target, Pencil } from 'lucide-react';
+import { Target, Pencil, FolderOpen } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
@@ -89,15 +89,17 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
               />
             </span>
           </label>
-          <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in the header.</p>
+          <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from Artifacts in the header.</p>
         </section>
 
         {/* Floating, like every other primary action in the game. */}
         <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
           {onOpenSaves ? (
+            // Grey text on a white pill is not a button anyone finds. Bordered, in the foreground
+            // colour, with the icon that says what it does.
             <button type="button" onClick={onOpenSaves}
-              className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground">
-              Resume a saved game
+              className="flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted">
+              <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Resume a saved game
             </button>
           ) : <span />}
           <Button size="lg" className="rounded-full px-6" onClick={() => { onSetGoal(goal); onStart(); }}>

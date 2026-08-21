@@ -93,7 +93,10 @@ export default function ZooGame() {
   // Is the Sprint Backlog board up over the park? Owned here because both the park and the board
   // itself start work on an item, and picking something up puts the board away either way.
   const [boardOpen, setBoardOpen] = useState(true);
-  const selectOnPark = (id: string | null) => { if (id) setBoardOpen(false); setBuildingId(id); };
+  // Nothing here closes the board. Doing it automatically meant pressing Start swept the board away
+  // before you could see the card change column - and watching work move across the board is most of
+  // what a board is for. It opens and closes when you say so.
+  const selectOnPark = (id: string | null) => setBuildingId(id);
 
   // Designing in place. The toolbar above the selected item on the park hands every change straight
   // back here, so the park is not showing a copy of the design - it IS the design. A build in
@@ -121,7 +124,6 @@ export default function ZooGame() {
       .map((x) => ({ id: x.id, name: x.name, design: x.design! })),
   };
   const enterDeploy = (id: string) => {
-    setBoardOpen(false);
     const it = state.backlog.find((x) => x.id === id);
     // An improvement re-delivers its target; deploy against the target's name.
     const shownId = it?.enhancesId ?? id;
