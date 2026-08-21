@@ -19,7 +19,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -202,7 +202,10 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
 export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
-  const [showBacklog, setShowBacklog] = useState(false); // the Backlog tucks away during the Sprint
+  // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
+  // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
+  // caveat that pulling more in is a negotiation, not a default, is written on it.
+  const [showBacklog, setShowBacklog] = useState(true);
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
@@ -226,6 +229,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
   const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = activeWipLimit(state) > 0 && doing.length >= activeWipLimit(state);
   // Refinement planned in at topic three: on the board until somebody holds it.
+  const sprintTotal = todo.length + doing.length + deploy.length + done.length;
   const refineTodo = !!state.sprintRefinement && !state.sprintRefinement.done;
   const refineDone = !!state.sprintRefinement?.done;
   // Ideas that waited for the Sprint where they matter introduce themselves in the Sprint they
@@ -328,12 +332,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
     <div className="space-y-3">
       {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
           pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {/* The shell's header already says which Sprint and which day, and the dock says what
                 this is - so on the canvas the board leads with its question and nothing else. */}
-            <h2 className="text-lg font-bold leading-tight tracking-tight">What can we finish today?</h2>
+            <h2 className="text-base font-bold leading-tight tracking-tight">What can we finish today?</h2>
             <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
             <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} />
           </div>
@@ -375,18 +379,18 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
           {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
           {/* The Product Backlog is there to pull from mid-Sprint, but the board is the thing you are
               working on - so it tucks away and gives the columns the whole width when you don't need it. */}
-          <div className={cn('grid gap-4 lg:items-start', showBacklog ? 'lg:grid-cols-[280px_minmax(0,1fr)]' : 'lg:grid-cols-[auto_minmax(0,1fr)]')}>
+          {/* Product Backlog above, Sprint Backlog below, park to the right: the work flows down
+              this rail and then out onto the product. Side by side in a rail this narrow, neither
+              was readable. */}
+          <div className="flex flex-col gap-3">
             {showBacklog ? (
               // The same pick-cards as Sprint Planning: tap to pull one in, a padlock on anything
               // that is not ready. Choosing work looks the same wherever you do it.
-              <div className="min-w-0 space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 space-y-1.5 rounded-lg border border-border bg-card/40 p-2">
+                <button type="button" onClick={() => setShowBacklog(false)} className="flex w-full items-center justify-between gap-2 text-left">
                   <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></h3>
-                  <button type="button" onClick={() => setShowBacklog(false)} title="Hide the Product Backlog" aria-label="Hide the Product Backlog"
-                    className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:text-foreground">
-                    <PanelLeftClose className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </button>
                 <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
                 {fixingItem && <div ref={fixRef} />}
                 {fixingItem && (
@@ -400,7 +404,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                     onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
                   </Workspace>
                 )}
-                <div className="space-y-1.5">
+                <div className="max-h-[28vh] space-y-1.5 overflow-y-auto pr-1">
                   {backlog.map((it) => (
                     <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => onPull(it.id)} onFix={() => setFixing(it.id)}
                       note={"Refining now is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints."} />
@@ -408,19 +412,20 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                 </div>
               </div>
             ) : (
-              <button type="button" onClick={() => setShowBacklog(true)} title="Show the Product Backlog" aria-label="Show the Product Backlog"
-                className="flex h-fit items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground lg:flex-col lg:gap-2 lg:px-1.5 lg:py-3">
-                <PanelLeftOpen className="h-4 w-4 shrink-0" />
-                <span className="lg:[writing-mode:vertical-rl]">Product Backlog ({available})</span>
+              <button type="button" onClick={() => setShowBacklog(true)} title="Show the Product Backlog"
+                className="flex w-full items-center justify-between gap-1.5 rounded-lg border border-border bg-card/40 px-2 py-1.5 text-left transition-colors hover:bg-muted/50">
+                <span className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></span>
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">pull from it <ChevronDown className="h-3.5 w-3.5 -rotate-90" /></span>
               </button>
             )}
 
-            <div className="min-w-0 space-y-3">
+            <div className="min-w-0 space-y-2">
+              <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({sprintTotal})</span></h3>
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
               {/* Four equal columns at sm+ (a 2x2 grid on mobile) - uniform, whatever each holds. */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-start">
+              <div className="grid grid-cols-1 gap-2">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
@@ -460,7 +465,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                       : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
-                      <PbiCard item={it} state="forecast" density="card"
+                      <PbiCard item={it} state="forecast" density="row"
                         badges={<Chip>{it.zone}</Chip>}
                         lead={onReorderSprint && todo.length > 1 && (
                           // The order to pick things up in is the Developers' plan, so they can change it.
@@ -472,12 +477,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                           </div>
                         )}
                         note={needsEnc ? `Needs ${encName} built first` : undefined}
-                        detail={<>
-                          <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
-                          <div className="mt-1.5 flex justify-end">
-                            <Button size="sm" className="h-7 px-2 text-xs" disabled={blocked} title={why} onClick={() => { onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>
-                          </div>
-                        </>} />
+                        trailing={<Button size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={blocked} title={why}
+                          onClick={(e) => { e.stopPropagation(); onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>}
+                        detail={<CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />} />
                       </div>
                     );
                   })}
@@ -495,23 +497,22 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'doing')} className="cursor-grab active:cursor-grabbing">
-                      <PbiCard item={it} state="doing" density="card"
+                      <PbiCard item={it} state="doing" density="row"
                         badges={<>
                           <Chip>{it.zone}</Chip>
                           {it.design
                             ? <Chip tone="coach">built{left ? ` · ${left} left` : ''}</Chip>
                             : <Chip tone="attention">in progress</Chip>}
                         </>}
+                        trailing={<Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs"
+                          onClick={(e) => { e.stopPropagation(); setDesigning(it.id); }}><Palette className="mr-1 h-3.5 w-3.5" /> Build</Button>}
                         detail={<>
-                          {/* Collapsed by default so the card stays compact - tap "Plan · AC" to see
-                              and tick the detail. The real building + ticking happens in the studio. */}
+                          {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
+                              and tick the detail. The real building happens on the park. */}
                           <CardDetail item={it} interactive showAcceptance built={!!it.design} onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
-                          </div>
-                          <div className="mt-1.5 flex justify-end">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDesigning(it.id)}><Palette className="mr-1 h-3.5 w-3.5" /> Build it on the park</Button>
                           </div>
                         </>} />
                       </div>
@@ -527,7 +528,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                       building happens on the park, the card passed through it unseen. */}
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
-                    <PbiCard item={it} state="built" density="card"
+                    <PbiCard item={it} state="built" density="row"
                       // Built in an earlier Sprint and still not released: say so, so a finished
                       // Increment waiting on deployment does not read as this Sprint's work.
                       badges={<>
@@ -555,7 +556,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                   {done.map((it) => (
                     // data-done-card lets the delivery celebration burst confetti from this card.
                     <div key={it.id} data-done-card={it.id}>
-                      <PbiCard item={it} state="live" density="card" badges={<Chip>{it.zone}</Chip>}
+                      <PbiCard item={it} state="live" density="row" badges={<Chip>{it.zone}</Chip>}
                         detail={<>
                           <CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex items-center justify-end gap-1.5">{doneActions(it)}</div>

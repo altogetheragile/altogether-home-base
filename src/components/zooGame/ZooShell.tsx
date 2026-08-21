@@ -9,7 +9,7 @@ import { TeachingCard, ScrumReference } from './ScrumTeaching';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
+import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -85,17 +85,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   // meant that clicking away from an enclosure - which only means "I have finished with this one" -
   // threw the whole board back over the park. It now stays where you left it: picking something up
   // on the park puts the board away, and only the handle brings it back.
-  const dockOpen = boardOpen ?? true;
+  const board = boardOpen ?? true;
   const setDock = (o: boolean) => onSetBoardOpen?.(o);
   // Building happens during the build stage. At the Daily Scrum the event is what you are in, so
   // the park lets go of whatever was selected rather than floating a toolbar over it.
   const onPark = state.phase !== 'sprint' || dayStage === 'building';
   const selected = onPark ? building : null;
-  // The handle does one thing: show the board or hide it. It used to double as "finish what you are
-  // doing on the park", which made sense only while the board hid itself - now that opening and
-  // closing it is the player's call, a control that sometimes means something else is just a trap.
-  // Letting go of a selection is the toolbar's own X, or a tap on empty grass.
-  const toggleDock = () => setDock(!dockOpen);
   const sprintCount = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status !== 'backlog').length;
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
@@ -209,45 +204,55 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
           those screens are events and the park is not what they act on.
           Both panes stay mounted (toggled with CSS) so the day clock / studio work survive. */}
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        {/* The park: the whole body during a Sprint, and the Park tab elsewhere. */}
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', !canvas && tab !== 'park' && 'hidden')}>
-          <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
-        </div>
-
-        {/* The work. In canvas mode it is a dock over the park; otherwise it is the pane itself. */}
-        <div className={cn(
-          canvas
-            ? 'absolute inset-x-0 bottom-0 z-30 flex flex-col border-t border-border bg-background/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.35)] backdrop-blur transition-[height] duration-200'
-            : 'h-full overflow-y-auto px-2 py-3 sm:px-3',
-          canvas && (dayStage === 'building' ? (dockOpen ? 'h-[52vh]' : 'h-11') : 'h-full'),
-          !canvas && tab === 'park' && 'hidden')}>
-          {canvas && dayStage === 'building' && (
-            // The handle: what is in the dock, and how much of the park you want to see.
-            <button type="button" onClick={toggleDock}
-              className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2 text-left transition-colors hover:bg-muted/50">
-              <span className="flex min-w-0 items-center gap-2 text-sm font-semibold">
-                <ClipboardList className="h-4 w-4 shrink-0 text-primary" /> Sprint Backlog
-                <span className="truncate font-normal text-muted-foreground">{sprintCount} item{sprintCount === 1 ? '' : 's'}</span>
-                {selected && <span className="truncate text-[11px] font-normal text-muted-foreground">working on the park</span>}
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                {dockOpen ? 'Hide' : 'Show'} {dockOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-              </span>
-            </button>
-          )}
-          <div className={cn('min-h-0 flex-1 overflow-y-auto', canvas ? 'px-2 py-2 sm:px-3' : '')}>
-            {/* Room below the last child, so the floating action bar has something to stick
-                against. Without it the bar is the final element in its own containing block, there
-                is nothing under it to scroll past, and it simply sits at the foot of a long page
-                where you cannot see it. */}
-            <div className={cn('space-y-3 pb-20', state.phase === 'planning' || state.phase === 'sprint' ? 'w-full' : 'mx-auto max-w-3xl')}>
-              {/* One card at a time, for the element they have just arrived at, once each. */}
-              {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-              {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
-              {children}
+        {canvas ? (
+          // During a Sprint the screen reads left to right, the way the work flows: the Product
+          // Backlog you pull from, the Sprint Backlog you pulled into, and the park you build on.
+          // The board used to sit UNDER the park in a dock, which put the thing you pull from below
+          // the thing you build on and made "where does work come from" a question about geography.
+          <div className="flex h-full min-h-0">
+            {board ? (
+              <div className="flex min-h-0 w-[min(46%,30rem)] shrink-0 flex-col border-r border-border">
+                <button type="button" onClick={() => setDock(false)}
+                  className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-1.5 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                    <ClipboardList className="h-4 w-4 text-primary" /> The work
+                  </span>
+                  <span className="flex items-center gap-1"><PanelLeftClose className="h-3.5 w-3.5" /> Hide</span>
+                </button>
+                <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+                  <div className="space-y-3 pb-24">
+                    {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
+                    {children}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setDock(true)} title="Show the Sprint Backlog"
+                className="flex shrink-0 items-center gap-2 border-r border-border bg-card px-1.5 py-3 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground">
+                <PanelLeftOpen className="h-4 w-4 shrink-0" />
+                <span className="[writing-mode:vertical-rl]">The work &middot; {sprintCount} item{sprintCount === 1 ? '' : 's'}</span>
+              </button>
+            )}
+            <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3 sm:px-3">
+              <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* The park: a place you visit, on its own tab. */}
+            <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'park' && 'hidden')}>
+              <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onConfirmDeployAc={onConfirmDeployAc} onFinishDeploy={onFinishDeploy} justOpened={justOpened} onImprove={onImprove} onSetSpot={onSetSpot} onSetSize={onSetSize} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename} />
+            </div>
+            <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab === 'park' && 'hidden')}>
+              <div className="mx-auto max-w-3xl space-y-3 pb-24">
+                {/* One card at a time, for the element they have just arrived at, once each. */}
+                {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+                {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
+                {children}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
