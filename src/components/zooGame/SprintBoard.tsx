@@ -41,7 +41,7 @@ interface SprintBoardProps {
   onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
   /** Put a built item on the park to place & size it (for items with placement acceptance criteria)
-   *  before marking it Deploy complete. */
+   *  before releasing it to visitors. */
   onPlaceOnPark: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
@@ -243,7 +243,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
   // gated transition the button would: To Do -> Build starts it (needs the enclosure + WIP
   // room); Deploy -> Done places & opens it. Build -> Deploy stays in the studio - you can't
   // drag your way through building an animal - so that drop points you there. Buttons still work.
-  const COLS = ['todo', 'doing', 'deploy', 'done'];
+  const COLS = ['todo', 'doing', 'done'];
   const [drag, setDrag] = useState<{ id: string; from: string } | null>(null);
   const [dropCol, setDropCol] = useState<string | null>(null);
   const dropOutcome = (from: string, to: string): 'start' | 'open' | 'studio' | 'far' | 'none' => {
@@ -251,7 +251,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
     if (ti <= fi) return 'none';
     if (ti > fi + 1) return 'far';
     if (from === 'todo') return 'start';
-    if (from === 'deploy') return 'open';
     return 'studio';
   };
   const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
@@ -264,7 +263,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
   };
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
-    return (o === 'open' && deployReady(id)) || (o === 'start' && canStart(id));
+    return o === 'start' && canStart(id);
   };
   const handleDrop = (to: string) => {
     if (!drag) return;
@@ -277,11 +276,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
       if (!enclosureReady(state, it)) { toast.error(`Build ${enclosureOf(state, it)?.name ?? 'its enclosure'} first - the animal goes in once its habitat is ready.`); return; }
       if (atWipLimit) { toast.error(`WIP limit ${activeWipLimit(state)} reached - finish something in Doing first.`); return; }
       onStartItem(id);
-    } else if (o === 'open') {
-      if (!deployReady(id)) { toast.error('Place it on the park and confirm its criteria - the Product Owner signs off once they are all met.'); return; }
-      onOpen(id);
     } else if (o === 'studio') {
-      toast('Open "Design & build" to finish it - it moves to Deploy once it is built and the plan is ticked off.');
+      toast('Build it on the park to finish it - it moves to Done once it is built and the plan is ticked off.');
     } else if (o === 'far') {
       toast('One column at a time - a card moves to the next stage, not past it.');
     }
@@ -303,10 +299,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
   }
   const dayStarting = state.dayStage === 'dayStart';
 
-  // Deploy column: every item follows the same two steps, so deploying is consistent - "Place on the
-  // park" to position & size it (and confirm any placement acceptance criteria, e.g. a river "Sized
-  // to fit the space"), then "Deploy complete" releases it to visitors and moves it to Done. Build
-  // acceptance (appearance) was already accepted in the studio; this step is only about placement.
+  // A card that is Done but not yet open. It was built on the park, so it is already standing where
+  // it will stand: what is left is confirming where that is, and opening it. "Deploy complete" was
+  // the language of a column that no longer exists - this is releasing it to visitors.
   const deployActions = (it: BacklogItem) => {
     const deployAcs = it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
     const acsDone = deployAcs.every((a) => !!it.acConfirmed?.[a.i]);
@@ -315,8 +310,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
       : !acsDone ? 'Confirm its placement criteria on the park - the Product Owner signs off once every criterion is met'
       : !ready ? 'Waiting on the Product Owner\u2019s sign-off' : undefined;
     return <>
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> {it.placed ? 'Adjust on park' : 'Place on the park'}</Button>
-      <Button size="sm" className="h-7 px-2 text-xs" disabled={!ready} title={why} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Deploy complete</Button>
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> Show me on the park</Button>
+      <Button size="sm" className="h-7 px-2 text-xs" disabled={!ready} title={why} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Open it to visitors</Button>
       <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
       {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
     </>;
@@ -425,7 +420,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
               {/* Four equal columns at sm+ (a 2x2 grid on mobile) - uniform, whatever each holds. */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:items-start">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-start">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
@@ -524,8 +519,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                   })}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('deploy')} className={cn('min-w-0 transition-shadow', dropClass('deploy'))}>
-                <BoardColumn title="Deploy" count={deploy.length} hint="Built and standing on the park, waiting to be opened">
+                <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
+                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet" tone="done">
+                  {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
+                      separate decision about the same card - you may release the moment it is Done,
+                      or hold it. A whole column for "Done but not opened" said that badly: since the
+                      building happens on the park, the card passed through it unseen. */}
                   {deploy.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
                     <PbiCard item={it} state="built" density="card"
@@ -533,6 +532,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                       // Increment waiting on deployment does not read as this Sprint's work.
                       badges={<>
                         <Chip>{it.zone}</Chip>
+                        <Chip tone="attention">not open yet</Chip>
                         {it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber && (
                           <Chip tone="coach" title={`Built in Sprint ${it.sprintNumber} and Done - it is waiting to be released, not work forecast for this Sprint`}>
                             built in Sprint {it.sprintNumber}
@@ -545,10 +545,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                       </>} />
                     </div>
                   ))}
-                </BoardColumn>
-                </div>
-                <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={done.length + (refineDone ? 1 : 0)} hint="Nothing live yet" tone="done">
                   {refineDone && (
                     <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2 py-1.5 text-[12px]">
                       <Check className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />

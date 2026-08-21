@@ -391,7 +391,9 @@ export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameStat
 export function setSprintDays(state: ZooGameState, days: number): ZooGameState {
   const settingUp = state.phase === 'refine' && state.sprintNumber === 1 && state.velocity.length === 0;
   if (!settingUp && state.phase !== 'retro') return state;
-  return { ...state, sprintDays: Math.max(1, Math.round(days)) };
+  // Choosing it - even choosing the length it already was - is the agreement. The default is a
+  // suggestion, and a cadence nobody picked is not one anybody will keep.
+  return { ...state, sprintDays: Math.max(1, Math.round(days)), sprintDaysAgreed: true };
 }
 
 /** Toggle learn mode: pause the day clock so there is no real-time pressure. */

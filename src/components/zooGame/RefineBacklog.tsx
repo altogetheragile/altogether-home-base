@@ -27,15 +27,20 @@ function Figure({ value, label, tone, icon: Icon, title }: { value: number | str
 /** One of the numbered things this screen asks for. All three are built from this, because when
  *  they were three hand-written headings they were three slightly different headings - the middle
  *  one was not even a panel, so its number sat at a different place on the page from the other two. */
-function Step({ n, title, note, done, right, children }: {
+function Step({ n, title, note, done, right, onToggle, children }: {
   n: number; title: string; note?: string; done?: boolean;
   /** Shown on the heading row, hard against the right - a summary, or a collapse control. */
   right?: ReactNode;
+  /** If the step folds away, the WHOLE heading row opens it. A chevron on its own is a target the
+   *  width of a thumbnail at the far end of a wide panel. */
+  onToggle?: () => void;
   children?: ReactNode;
 }) {
+  const Head = onToggle ? 'button' : 'div';
   return (
     <section className={cn('rounded-lg border-2 p-2.5', done ? 'border-emerald-400/60 bg-emerald-500/[0.05]' : 'border-primary/30 bg-primary/[0.04]')}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <Head {...(onToggle ? { type: 'button' as const, onClick: onToggle } : {})}
+        className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
         <h3 className={cn(EYEBROW, 'flex items-center gap-1.5', done ? 'text-emerald-700 dark:text-emerald-400' : 'text-primary')}>
           <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white', done ? 'bg-emerald-500' : 'bg-primary')}>
             {done ? <Check className="h-3 w-3" /> : n}
@@ -44,7 +49,7 @@ function Step({ n, title, note, done, right, children }: {
           {note && <span className="font-normal normal-case tracking-normal text-muted-foreground">{note}</span>}
         </h3>
         {right}
-      </div>
+      </Head>
       {children}
     </section>
   );
@@ -119,12 +124,14 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           fix: agree the cadence, then get the top of the Backlog ready. */}
       {/* Agreed once and then in the way. It folds down to what was agreed, and opens again if the
           Scrum Team wants to change its mind before the first Sprint starts. */}
+      {/* Green when it is settled, like the Definition of Done below - the three steps then read as
+          a checklist you are working through rather than three panels that always look the same. */}
       {first && onSetSprintDays && (
-        <Step n={1} title="First, agree how long a Sprint is"
-          right={<button type="button" onClick={() => setLengthOpen((o) => !o)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
-            {!lengthOpen && <strong className="text-foreground">{state.sprintDays} days</strong>}
+        <Step n={1} title="First, agree how long a Sprint is" done={state.sprintDaysAgreed} onToggle={() => setLengthOpen((o) => !o)}
+          right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+            <strong className="text-foreground">{state.sprintDays} days</strong>
             <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !lengthOpen && '-rotate-90')} />
-          </button>}>
+          </span>}>
           {lengthOpen && (
             <div className="mt-1.5">
               <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
@@ -135,8 +142,9 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
 
       {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
           Each one is now a labelled figure in the colour of what it means. */}
+      {/* A Sprint's worth of Ready work is what step two is FOR, so that is when it is done. */}
       {first ? (
-        <Step n={2} title="Then get the top ready" right={figures} />
+        <Step n={2} title="Then get the top ready" done={horizon >= 1} right={figures} />
       ) : (
         <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
       )}
@@ -146,10 +154,11 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           Sprint - rather than discovered halfway through one. */}
       {first && onSetDod && (
         <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
-          right={<button type="button" onClick={() => setDodOpen((o) => !o)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+          onToggle={() => setDodOpen((o) => !o)}
+          right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
             {!dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>}
             <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
-          </button>}>
+          </span>}>
           {dodOpen && (
             <div className="mt-1.5 space-y-2">
               <p className="text-[11px] text-muted-foreground">

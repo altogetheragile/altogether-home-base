@@ -345,6 +345,9 @@ export interface ZooGameState {
   /** Whether the Scrum Team has looked at the Definition of Done and agreed it. Nothing can be Done
    *  against a bar nobody has read, so the first Sprint does not start until they have. */
   dodAgreed?: boolean;
+  /** Whether the Scrum Team has actively agreed the Sprint length, rather than inherited the
+   *  default. A cadence nobody chose is not a cadence anybody keeps. */
+  sprintDaysAgreed?: boolean;
   /** What the Scrum Team said the zoo would be, before there was a Product Backlog for it. */
   brief?: ZooBrief;
   /** The look of the park paths/roads: a key into PATH_STYLES (surface + colour). The
