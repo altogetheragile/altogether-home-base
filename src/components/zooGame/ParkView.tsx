@@ -293,7 +293,11 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
   const commit = () => { setEditing(false); onRename?.(val); };
   const cls = 'max-w-[132px] truncate rounded-md border-2 border-amber-900/70 bg-amber-200 px-1.5 py-0.5 text-center text-[10px] font-bold leading-tight text-amber-950 shadow-sm dark:bg-amber-300';
   return (
-    <div className="absolute left-1/2 top-1 z-20 -translate-x-1/2">
+    // Below the habitat, not on it. Sitting at the top-centre it covered the fence exactly where
+    // you would reach for it, and on a construction site it fought the BUILDING badge. Absolutely
+    // positioned so it stays out of the flow - the habitat box still centres on the feature's
+    // position, which is what the perimeter paths and connector anchors are measured from.
+    <div className="absolute left-1/2 top-full z-20 mt-0.5 -translate-x-1/2">
       {editing ? (
         <input autoFocus value={val} onPointerDown={stop}
           onChange={(e) => setVal(e.target.value)} onBlur={commit}
@@ -388,7 +392,6 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
           <div className="absolute inset-0 z-0" title="Fence" onPointerDown={(e) => { e.stopPropagation(); onSelectPart('fence'); }} />
           <div className="absolute inset-[11px] z-0" title="Ground" onPointerDown={(e) => { e.stopPropagation(); onSelectPart('ground'); }} />
         </>}
-        <EnclosureSign name={enc.name} onRename={onRename ? (name) => onRename(enc.id, name) : undefined} />
         {/* Water and planting are arranged HERE, in the habitat, at the size they will really be -
             drag to move, drag the corner to resize, hover for the ×. While the item is being built
             they are editable; once it is live they are just part of the park. */}
@@ -457,6 +460,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
           );
         })}
       </EnclosureBox>
+      <EnclosureSign name={enc.name} onRename={onRename ? (name) => onRename(enc.id, name) : undefined} />
     </div>
   );
 }
@@ -507,7 +511,9 @@ function ConstructionSite({ item, w, h, selected, children }: { item: BacklogIte
           is Done and released. Visitors never see inside. */}
       <div className={cn('absolute -inset-1.5 rounded-lg border-2 border-dashed', selected ? 'border-primary' : 'border-amber-500/70')}
         style={{ backgroundImage: 'repeating-linear-gradient(45deg, rgba(245,158,11,0.14) 0 8px, rgba(245,158,11,0.04) 8px 16px)' }} aria-hidden />
-      <span className={cn('absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 text-[9px] font-bold uppercase tracking-wide text-white shadow',
+      {/* Clear of the box, sitting on the hoarding rather than over the fence - the top rim has to
+          be reachable too, and it is the fence. */}
+      <span className={cn('absolute -top-4 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 text-[9px] font-bold uppercase tracking-wide text-white shadow',
         selected ? 'bg-primary' : 'bg-amber-500')}>Building</span>
       <div className="relative flex h-full w-full items-center justify-center">
         {children ?? (
@@ -790,6 +796,18 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // Scenery that is naturally a set. A river spans the park, so one is all there is.
   const canCopy = (f: Feature) => f.kind === 'plot' && f.item.category === 'flora' && landType(f.item) !== 'river';
   const [dropping, setDropping] = useState(false);
+  // The toolbar's real width, so it can be kept inside the park. It changes with what is selected -
+  // picking a plant adds that plant's colours - so a guessed half-width sent it off the left edge.
+  const toolbar = useRef<HTMLDivElement>(null);
+  const [tbW, setTbW] = useState(0);
+  useLayoutEffect(() => {
+    const el = toolbar.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setTbW(el.offsetWidth));
+    ro.observe(el);
+    setTbW(el.offsetWidth);
+    return () => ro.disconnect();
+  }, [building, part]);
 
   const startDrag = (e: ReactPointerEvent, f: Feature) => {
     // Touching something you can work on selects it, and it STAYS selected while you move it.
@@ -1199,15 +1217,16 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         const p = posOf(f);
         const rest = restPos(f);
         const moving = drag?.id === f.item.id;
+        const half = Math.min(tbW / 2, CANVAS_W * scale / 2);
         const anchor = (at: { x: number; y: number }) => ({
-          left: clamp(at.x * scale, Math.min(330, CANVAS_W * scale / 2), Math.max(330, CANVAS_W * scale - 330)),
+          left: clamp(at.x * scale, half, Math.max(half, CANVAS_W * scale - half)),
           top: Math.max(48, (at.y - f.h / 2) * scale - 12),
         });
         const home = anchor(rest), now = anchor(p);
         return (
           // It follows the thing it belongs to, and while that thing is moving it follows by
           // translating - same reason as the feature itself: laying it out every frame smears.
-          <div className="absolute z-40 flex -translate-x-1/2 -translate-y-full justify-center"
+          <div ref={toolbar} className="absolute z-40 flex w-max -translate-x-1/2 -translate-y-full justify-center"
             style={moving
               ? { ...home, transform: `translate(-50%,-100%) translate3d(${now.left - home.left}px,${now.top - home.top}px,0)`, willChange: 'transform', backfaceVisibility: 'hidden' }
               : now}
