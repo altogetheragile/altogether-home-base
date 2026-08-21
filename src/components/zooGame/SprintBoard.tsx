@@ -339,7 +339,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onS
                 this is - so on the canvas the board leads with its question and nothing else. */}
             <h2 className="text-base font-bold leading-tight tracking-tight">What can we finish today?</h2>
             <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
-            <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} />
+            <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
           </div>
         </div>
         <div className="flex items-center gap-1.5">

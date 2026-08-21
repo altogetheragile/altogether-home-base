@@ -4,7 +4,7 @@ import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, 
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
-import { carParkLayout, carCapacity, CAR_PARK_H } from './carPark';
+import { carParkLayout, carCapacity } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -953,7 +953,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const carCount = Math.min(carCapacity(CANVAS_W), built * 3);
   const busCount = built >= 5 ? 2 : built >= 3 ? 1 : 0;
   const carPark = carParkLayout(CANVAS_W, canvasH, carCount, busCount);
-  const sceneH = canvasH + CAR_PARK_H;
+  // The lot's own depth, not a constant: it is one row of bays on day one and grows a second row and
+  // a coach lay-by as the zoo gets busy. Using the constant drew a quarter-screen of empty tarmac
+  // under a park with nothing in it.
+  const sceneH = canvasH + carPark.height;
 
   // What the guests can walk on, and what they cannot. The paths are the ones actually drawn on the
   // park - the promenade, the boundary walk, each feature's perimeter, and the connectors the player
