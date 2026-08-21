@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
+import { EYEBROW } from './ui/tokens';
 
 // ============= Sprint Planning =============
 //
@@ -52,10 +53,13 @@ interface SprintPlanningProps {
 }
 
 type Step = 'why' | 'what' | 'how';
-const STEPS: { key: Step; n: number; label: string; question: string; lead: string }[] = [
-  { key: 'why', n: 1, label: 'Why', question: 'Why is this Sprint valuable?', lead: 'Agree one objective the whole Sprint aims at.' },
-  { key: 'what', n: 2, label: 'What', question: 'What can we build?', lead: 'Pull in the work you believe you can finish.' },
-  { key: 'how', n: 3, label: 'How', question: 'How will we get it done?', lead: 'Decide what each item will be, and the steps that build it.' },
+// The Guide's three topics, worded as the Guide words them. A learner who meets "What can we build?"
+// here and "What can be Done this Sprint?" in the exam has been taught two things, one of which is
+// wrong; `topic` carries the Guide's phrasing and `label` is only the short chip on the step track.
+const STEPS: { key: Step; n: number; label: string; topic: string; question: string; lead: string }[] = [
+  { key: 'why', n: 1, label: 'Why', topic: 'Topic One', question: 'Why is this Sprint valuable?', lead: 'Agree one objective the whole Sprint aims at.' },
+  { key: 'what', n: 2, label: 'What', topic: 'Topic Two', question: 'What can be Done this Sprint?', lead: 'Pull in the work you believe you can finish.' },
+  { key: 'how', n: 3, label: 'How', topic: 'Topic Three', question: 'How will the chosen work get done?', lead: 'Decide what each item will be, and the steps that build it.' },
 ];
 
 /** What the Guide says about this topic - shown on request, not on the page. */
@@ -155,6 +159,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
   const stars = revealed(state, 'essentials');
   const horizon = readyHorizon(state);
   const totalSteps = chosen.reduce((n, i) => n + (i.tasks ?? []).filter((t) => t.label.trim()).length, 0);
+  // How the work gets done is topic three's whole job, so an item with no steps is topic three left
+  // undone. "Suggest steps for all" is one press away if you would rather not write them yourself.
+  const unplanned = chosen.filter((i) => !(i.tasks ?? []).some((t) => t.label.trim())).length;
   // Habitats an animal can be assigned to: anything in the Backlog that is an enclosure.
   const habitats = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
@@ -173,10 +180,13 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
       {/* Where you are, what you are being asked, and where the words are. Nothing else. */}
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} />
+          <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} caption="The three topics of Sprint Planning" />
           <ExplainButton title={DETAIL[step].title} body={DETAIL[step].body} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
         <div>
+          {/* Named as the Guide names it. Sprint Planning has three topics, and saying which one you
+              are on is the difference between three screens and one event with three parts. */}
+          <div className={cn(EYEBROW, 'text-primary')}>{current.topic} of Sprint Planning</div>
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
           <p className="text-sm text-muted-foreground">{current.lead}</p>
         </div>
@@ -192,7 +202,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 <span className="text-sm font-bold">Sprint Goal</span>
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">Commitment of the Sprint Backlog</span>
               </div>
-              <Button variant="secondary" size="sm" className="h-8 border border-primary/30 bg-primary/10 px-2.5 text-xs font-semibold text-primary hover:bg-primary/20"
+              {/* The wizards are the game offering to do a piece of work for you, so they read as an
+                  offer: filled, not a tinted ghost of the primary action. */}
+              <Button size="sm" className="h-8 gap-1 bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
                 onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
                 title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
@@ -214,9 +226,13 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 // The items the Goal would most likely be about, marked so the suggestion and the
                 // list agree on screen: the Goal comes off the top of the Backlog, as far down as a
                 // Sprint reaches.
-                <PbiCard key={it.id} item={it}
-                  state={candidates.some((c) => c.id === it.id) ? 'forecast' : 'backlog'}
-                  className={candidates.some((c) => c.id === it.id) ? undefined : 'opacity-70'} />
+                // Highlighting six items out of eight in full orange is not a highlight, it is a
+                // wash - and it is the same colour the primary action wears. A spine down the side
+                // says "the Goal is likely about these" without shouting it.
+                <PbiCard key={it.id} item={it} state="backlog"
+                  className={candidates.some((c) => c.id === it.id)
+                    ? 'border-l-4 border-l-primary'
+                    : 'opacity-60'} />
               ))}
             </div>
           </section>
@@ -315,7 +331,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 )}
               </> : <>Open each item to decide what it will be, and the steps that build it.</>}
             </p>
-            <Button variant="secondary" size="sm" className="h-8 border border-primary/30 bg-primary/10 px-2.5 text-xs font-semibold text-primary hover:bg-primary/20"
+            <Button size="sm" className="h-8 gap-1 bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
               onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
               <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
             </Button>
@@ -325,7 +341,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
           <section className={cn('rounded-lg border px-3 py-2.5', planRefine ? 'border-primary/40 bg-primary/5' : 'border-border bg-muted/20')}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold">Does the Backlog need refining this Sprint?</h3>
+                <h3 className="text-sm font-semibold">Does the Product Backlog need refining this Sprint?</h3>
                 <p className="text-[11px] text-muted-foreground">
                   About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
                   {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
@@ -368,8 +384,12 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                       <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
                     </div>
                   ) : (
-                    <PbiCard item={it} state="forecast" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
-                      className={it.goalCritical ? 'border-amber-400/70' : undefined}
+                    // Everything here is already in the Sprint, so tinting every row orange says
+                    // nothing. What differs between these rows is whether they have been planned -
+                    // so THAT is what carries the colour.
+                    <PbiCard item={it} state="backlog" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
+                      className={cn(it.goalCritical && 'border-l-4 border-l-amber-400',
+                        tasks.length ? 'border-emerald-400/60 bg-emerald-500/[0.04]' : 'border-dashed')}
                       lead={stars ? (
                         <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
                           title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
@@ -406,12 +426,20 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
           )}
           {step === 'how' && (
             <>
-              {/* What the three topics just produced, said at the moment it comes into being. The
-                  Sprint Backlog is the output of the event, and the learner should watch it appear. */}
-              <span className="hidden text-[11px] text-muted-foreground lg:inline">
-                Creates the <strong className="text-foreground">Sprint Backlog</strong>: your Sprint Goal, {chosen.length} item{chosen.length === 1 ? '' : 's'} ({committed} pts){totalSteps > 0 ? `, ${totalSteps} steps` : ''}
-              </span>
-              <Button onClick={() => onPlan([...selected], planRefine)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
+              {/* Topic three is where the Developers plan HOW. Letting the Sprint start with nothing
+                  planned makes the topic optional, which teaches that it is. It is not. */}
+              {unplanned > 0 ? (
+                <span className="text-[11px] text-muted-foreground">
+                  {unplanned} item{unplanned === 1 ? ' has' : 's have'} no steps yet
+                </span>
+              ) : (
+                // What the three topics just produced, said at the moment it comes into being. The
+                // Sprint Backlog is the output of the event, and the learner should watch it appear.
+                <span className="hidden text-[11px] text-muted-foreground lg:inline">
+                  Creates the <strong className="text-foreground">Sprint Backlog</strong>: your Sprint Goal, {chosen.length} item{chosen.length === 1 ? '' : 's'} ({committed} pts){totalSteps > 0 ? `, ${totalSteps} steps` : ''}
+                </span>
+              )}
+              <Button disabled={unplanned > 0} onClick={() => onPlan([...selected], planRefine)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
         </div>
