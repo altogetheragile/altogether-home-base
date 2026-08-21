@@ -12,6 +12,7 @@ import { PickCard } from './PickCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
+import { REFINE_POINT_OPTIONS } from './config';
 import { ActionBar } from './ActionBar';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ import { EYEBROW } from './ui/tokens';
 
 interface SprintPlanningProps {
   state: ZooGameState;
-  onPlan: (ids: string[], plannedRefinement?: boolean) => void;
+  onPlan: (ids: string[], refinementPoints?: number) => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   /** Topic three's shape decisions: how big, which habitat, what kind of building or planting. */
@@ -137,7 +138,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
   const [openPlan, setOpenPlan] = useState<string | null>(null); // which item's task plan is open
   // Topic three's other question, which the Guide asks and the game did not: does the state of the
   // Backlog mean refinement has to be planned INTO this Sprint?
-  const [planRefine, setPlanRefine] = useState(false);
+  const [refinePts, setRefinePts] = useState(0);
 
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
@@ -337,11 +338,12 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
             </Button>
           </div>
 
-          {/* The state of the Backlog, and the decision it forces. */}
-          <section className={cn('rounded-lg border px-3 py-2.5', planRefine ? 'border-primary/40 bg-primary/5' : 'border-border bg-muted/20')}>
+          {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
+              somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
+          <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.07]' : 'border-border bg-muted/20')}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold">Does the Product Backlog need refining this Sprint?</h3>
+                <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
                 <p className="text-[11px] text-muted-foreground">
                   About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
                   {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
@@ -349,20 +351,21 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                       : ' Enough for now, but it burns down as you go.'}
                 </p>
               </div>
-              <div className="flex shrink-0 gap-1.5">
-                {[false, true].map((v) => (
-                  <button key={String(v)} type="button" onClick={() => setPlanRefine(v)}
+              <div className="flex shrink-0 items-center gap-1.5">
+                {REFINE_POINT_OPTIONS.map((v) => (
+                  <button key={v} type="button" onClick={() => setRefinePts(v)}
                     className={cn('rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      planRefine === v ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
-                    {v ? 'Plan it in' : 'Not this Sprint'}
+                      refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border text-muted-foreground hover:text-foreground')}>
+                    {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
                   </button>
                 ))}
               </div>
             </div>
-            {planRefine && (
+            {refinePts > 0 && (
               <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Time set aside for the whole Scrum Team to refine together. It comes out of every day&rsquo;s build time -
-                that is the trade-off - and what it prepares is later Sprints, not this one.
+                {refinePts} point{refinePts === 1 ? '' : 's'} of this Sprint set aside for the whole Scrum Team to refine
+                together. It goes on the board like any other work, it takes capacity from building - that is the
+                trade-off - and it is not Done until you have held it. What it prepares is later Sprints, not this one.
               </p>
             )}
           </section>
@@ -439,7 +442,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                   Creates the <strong className="text-foreground">Sprint Backlog</strong>: your Sprint Goal, {chosen.length} item{chosen.length === 1 ? '' : 's'} ({committed} pts){totalSteps > 0 ? `, ${totalSteps} steps` : ''}
                 </span>
               )}
-              <Button disabled={unplanned > 0} onClick={() => onPlan([...selected], planRefine)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
+              <Button disabled={unplanned > 0} onClick={() => onPlan([...selected], refinePts)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
         </div>

@@ -41,14 +41,14 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 | 24 | Planning 3 | The split view showing Product Backlog and Sprint Backlog is better | |
 | 20 | Planning | Model all of Sprint Planning on topic 2 | |
 | 21 | Planning 2 | Can I open and read a PBI before selecting it for the Sprint? | |
-| 25 | Planning 3 | If I plan in refinement, should I not be prompted to do it during the Sprint? | |
+| 25 | Planning 3 | If I plan in refinement, should I not be prompted to do it during the Sprint? | yes |
 | 26 | Planning 3 | I should not be able to move forward without having planned my steps | yes |
 
 ## 4. Refinement
 
 | # | Note | Done |
 |---|------|------|
-| 8 | The Sprint-length hint can move up and right of the day buttons. Add a custom duration | |
+| 8 | The Sprint-length hint can move up and right of the day buttons. Add a custom duration | yes |
 | 11 | It is not obvious we are asking the player to refine the larger PBIs | yes |
 | 12 | Splitting an item is cramped - paging up and down to split and estimate | |
 
@@ -71,3 +71,16 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 | 5 | Show the trophy icon the Product Goal hint refers to | yes |
 | 6 | The Product Goal wants its template as a placeholder, and a "Word it for me" wizard | |
 | 13 | The refinement teaching text is not in the editable copy, and differs from the card. Should all teaching text be Teaching Cards? | |
+
+## 7. Follow-ups from the walk-through
+
+| Note | Done |
+|------|------|
+| The trophy icon is not on the initial Product Goal page | yes |
+| The Sprint length hint has not moved; there is no custom length | yes |
+| The Definition of Done needs reviewing and agreeing before Sprints start | yes |
+| "What could we build first?" is not a useful title - it is about building a Product Backlog to meet the Product Goal | yes |
+| The Sprint length section should be collapsible | yes |
+| The RAG colour should go around the whole edge | yes |
+| Planned refinement should be an estimated item in the plan, and you should be prompted to do it | yes |
+| The Product Backlog should start EMPTY; a wizard fills it; then the player refines | |

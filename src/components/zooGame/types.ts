@@ -322,6 +322,13 @@ export interface ZooGameState {
   /** Decided at Sprint Planning topic three: the Scrum Team has set time aside in THIS Sprint to
    *  refine the Product Backlog, so every day of it starts with some of the clock already spent. */
   plannedRefinement?: boolean;
+  /** Refinement planned INTO this Sprint at topic three: an estimated piece of work in the plan,
+   *  not a flag. It takes capacity like anything else, it sits on the board, and it is not Done
+   *  until the Scrum Team has actually held it. */
+  sprintRefinement?: { points: number; done: boolean };
+  /** Whether the Scrum Team has looked at the Definition of Done and agreed it. Nothing can be Done
+   *  against a bar nobody has read, so the first Sprint does not start until they have. */
+  dodAgreed?: boolean;
   /** The look of the park paths/roads: a key into PATH_STYLES (surface + colour). The
    *  entrance promenade and the spurs to each enclosure both use it, so they stay consistent.
    *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
@@ -345,7 +352,9 @@ export type ZooAction =
   | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
-  | { type: 'PLAN_SPRINT'; ids: string[]; plannedRefinement?: boolean }
+  | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number }
+  | { type: 'HOLD_REFINEMENT' }
+  | { type: 'AGREE_DOD' }
   | { type: 'PLAN_ITEM_SHAPE'; id: string; patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string } }
   | { type: 'START_ITEM_AT'; id: string; pos: { x: number; y: number } }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }

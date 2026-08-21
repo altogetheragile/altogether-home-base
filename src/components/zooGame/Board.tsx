@@ -327,7 +327,9 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             you what is left to do, which is the question this screen is asking. */}
         <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'}
           className={mode === 'refine' || mode === 'plan'
-            ? cn('border-l-4', it.category === 'epic' ? 'border-l-rose-500' : why ? 'border-l-amber-500' : 'border-l-emerald-500')
+            ? cn('border-2', it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
+              : why ? 'border-amber-400 bg-amber-500/[0.05]'
+              : 'border-emerald-400 bg-emerald-500/[0.04]')
             : undefined}
           lead={<>
             {onReorder && (
