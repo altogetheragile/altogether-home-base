@@ -13,7 +13,7 @@ alongside it: **do not trade that for cognitive overload**.
 |---|--------|------|------|
 | 1 | Scrum on one page | Sections should pop more - the colouring is subtle | yes |
 | 2 | Scrum on one page | "I have covered this - turn the teaching off" is almost invisible | yes |
-| 4 | Intro | "Resume a saved game" is almost invisible | |
+| 4 | Intro | "Resume a saved game" is almost invisible | yes |
 | 7 | Refinement | Should be obvious that Sprint length is the first task and refinement the second | yes |
 | 9 | Refinement | The counts row (17 in the Backlog / 2 Sprints ready / 13 Ready) is almost invisible, and useful | yes |
 | 10 | Refinement | Separate PBIs need to be more obvious - maybe RAG by how ready they are | yes |
@@ -56,11 +56,11 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 
 | # | Note | Done |
 |---|------|------|
-| 28 | Clicking Start closes the Sprint Backlog, so you never see the card change column. Opening and closing the board should be manual | |
-| 29 | The size and shape menus should be labelled Size and Shape | |
-| 30 | The BUILDING label is pointless (and it collides with the toolbar) | |
-| 31 | Can acceptance criteria tick themselves off as they are met? | |
-| 32 | Under-construction artifacts on the site before it opens | |
+| 28 | Clicking Start closes the Sprint Backlog, so you never see the card change column. Opening and closing the board should be manual | yes |
+| 29 | The size and shape menus should be labelled Size and Shape | yes |
+| 30 | The BUILDING label is pointless (and it collides with the toolbar) | yes |
+| 31 | Can acceptance criteria tick themselves off as they are met? | yes |
+| 32 | Under-construction artifacts on the site before it opens | yes |
 | 33 | Can the park default to a fitted view of the whole park? | |
 
 ## 6. Editable copy
@@ -68,6 +68,6 @@ Topic 2 is "the best screen in the whole game. Compact and understandable."
 | # | Note | Done |
 |---|------|------|
 | 3 | The Build a Zoo title and strapline cannot be edited | |
-| 5 | Show the trophy icon the Product Goal hint refers to | |
+| 5 | Show the trophy icon the Product Goal hint refers to | yes |
 | 6 | The Product Goal wants its template as a placeholder, and a "Word it for me" wizard | |
 | 13 | The refinement teaching text is not in the editable copy, and differs from the card. Should all teaching text be Teaching Cards? | |

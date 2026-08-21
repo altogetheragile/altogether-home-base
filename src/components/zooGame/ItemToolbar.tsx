@@ -209,6 +209,17 @@ function DonePanel({ item, design, editing, onToggleTask, onConfirmAc, onFinish,
               );
             })}
           </ul>
+          {/* Accepting is a judgement - that is the lesson, and auto-ticking would teach that
+              acceptance is automatic. But once the build is finished, making it three separate
+              clicks is busywork rather than teaching, so it can be one. */}
+          {built && !acAll ? (
+            <button type="button" onClick={() => buildAcceptance.forEach((a) => { if (!item.acConfirmed?.[a.i]) onConfirmAc(a.i, true); })}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300">
+              <Check className="h-3.5 w-3.5" /> The build meets them all - accept
+            </button>
+          ) : (
+            <p className="text-[11px] text-muted-foreground/70">Tick each once your build meets it.</p>
+          )}
         </div>
       )}
 
@@ -285,12 +296,12 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isEnclosure && (
         <>
           {onSetEnclosure && (
-            <Menu label={item.enclosureSize ?? 'medium'} title="Footprint - each animal is drawn to scale inside it">{(close) => (<>
+            <Menu label={`Size: ${item.enclosureSize ?? 'medium'}`} title="How big the habitat is - each animal is drawn to scale inside it">{(close) => (<>
               <Options options={['small', 'medium', 'large']} value={item.enclosureSize ?? 'medium'} onPick={(o) => { onSetEnclosure(o as 'small' | 'medium' | 'large'); close(); }} />
               <p className="mt-1.5 max-w-[14rem] text-[11px] text-muted-foreground">A bigger habitat holds more animals.</p>
             </>)}</Menu>
           )}
-          <Menu label={ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'Shape'} title="Shape">{(close) => (
+          <Menu label={`Shape: ${ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'rounded'}`} title="What shape the habitat is">{(close) => (
             <Options options={ENCLOSURE_SHAPES.map((s) => s.key)} value={design.parts.shape ?? 'rounded'} onPick={(o) => { setPart('shape', o); close(); }}
               labels={Object.fromEntries(ENCLOSURE_SHAPES.map((s) => [s.key, s.label]))} />
           )}</Menu>
