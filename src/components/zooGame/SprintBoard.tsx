@@ -15,6 +15,8 @@ import { PbiCard } from './PbiCard';
 import { Workspace } from './ui/Workspace';
 import { Chip } from './ui/Chip';
 import { PickCard } from './PickCard';
+import { DesignBench } from './DesignBench';
+import type { EditApi } from './ParkView';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -55,6 +57,13 @@ interface SprintBoardProps {
   onHoldRefinement?: () => void;
   /** Selecting an item on the park, so starting one takes you straight to building it there. */
   onBuilding: (id: string | null) => void;
+  /** The item currently on the bench - the same selection the park highlights. */
+  building?: string | null;
+  /** Design controls for it. Given, the bench appears under the board and the park stops floating
+   *  a toolbar over the thing it is about. */
+  edit?: EditApi;
+  part?: { id: string; key: string } | null;
+  onPart?: (p: { id: string; key: string } | null) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -204,7 +213,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -420,7 +429,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               you open when you want to pull something in, and close again. Most of a Sprint you are
               working the Sprint Backlog, and a permanent Product Backlog column beside it invites
               exactly the mid-Sprint scope creep the Guide asks you to negotiate rather than assume. */}
-          <div className="mt-auto">
+          <div>
             <div className="min-w-0 space-y-2">
               <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({sprintTotal})</span></h3>
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
@@ -578,6 +587,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               </div>
             </div>
           </div>
+
+          {/* Under the board, where the empty half of the screen used to be: the thing you are
+              building, in detail. The board says where the work IS; the bench is the work. */}
+          {edit && (
+            <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
+              onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
+          )}
         </>
       )}
 

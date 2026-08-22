@@ -169,15 +169,19 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
  *  (Build) card expanded; `interactive` allows ticking tasks. A criterion is green only once
  *  somebody has ticked it; a card
  *  still in Build/To Do shows them pending. Each card keeps its own open state. */
-export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, onToggleTask, onConfirmAc }:
-  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; onToggleTask: (id: string, taskId: string) => void;
+export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, bare = false, onToggleTask, onConfirmAc }:
+  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean;
+    /** On the design bench there is nothing to save by collapsing this - it IS the work, and a row
+     *  of pips you have to open to act on is a step between you and the only thing on the screen. */
+    bare?: boolean; onToggleTask: (id: string, taskId: string) => void;
     /** Accepting a criterion. It belongs HERE, on the item's own card, not on a toolbar floating
      *  over the park or in a banner - the card is the Product Backlog item, and accepting is
      *  something you do to the item. */
     onConfirmAc?: (id: string, index: number, value: boolean) => void }) {
   const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
   const criteria = showAcceptance ? item.acceptance.filter(Boolean) : [];
-  const [open, setOpen] = useState(defaultOpen);
+  const [ownOpen, setOpen] = useState(defaultOpen);
+  const open = bare || ownOpen;
   if (tasks.length === 0 && criteria.length === 0) return null;
   const done = tasks.filter((t) => t.done).length;
   // Met means somebody said so. Nothing here ticks itself: the game used to mark the build criteria
@@ -188,14 +192,14 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
   const acMet = criteria.filter(met).length;
   const acAll = criteria.length > 0 && acMet === criteria.length;
   return (
-    <div className="mt-1.5">
+    <div className={bare ? undefined : 'mt-1.5'}>
       {/* Progress as pips, the way the Flow Game shows it: you can read how far a card has got
           without opening it, and the numbers only matter when you are working on it. Shape carries
           the ownership - squares are the Developers' plan, circles are the Product Owner's criteria -
           so two rows of the same colour do not read as one long row. */}
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+      {!bare && <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={ownOpen}
         className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground hover:text-foreground">
-        <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !open && '-rotate-90')} />
+        <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !ownOpen && '-rotate-90')} />
         {tasks.length > 0 && (
           <span className="flex items-center gap-1" title={`Plan: ${done} of ${tasks.length} steps done`}>
             <ListChecks className={cn('h-3 w-3 shrink-0', done === tasks.length && 'text-emerald-600 dark:text-emerald-400')} />
@@ -218,9 +222,9 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
             </span>
           </span>
         )}
-      </button>
+      </button>}
       {open && (
-        <div className="mt-1 space-y-1.5">
+        <div className={cn('space-y-1.5', !bare && 'mt-1')}>
           {criteria.length > 0 && (
             <div>
               <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">

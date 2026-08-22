@@ -129,11 +129,14 @@ interface ItemToolbarProps {
    *  brown squares were ever going to explain themselves. */
   focus?: string | null;
   onFocus?: (key: string | null) => void;
+  /** Docked in the design bench rather than floating over the park: no pill, no shadow, and no name
+   *  or close button, because the panel it sits in already says what is being worked on. */
+  docked?: boolean;
 }
 
 /** The floating toolbar for the selected item: only the controls this kind of thing needs. */
 export function ItemToolbar(props: ItemToolbarProps) {
-  const { item, design, onDesign, onSetEnclosure, onToggleTask, onClose, copySources = [], focus, onFocus } = props;
+  const { item, design, onDesign, onSetEnclosure, onToggleTask, onClose, copySources = [], focus, onFocus, docked = false } = props;
   // A plant or habitat feature picked out on the park: its own colours join the toolbar while it is
   // selected, and leave again when it is not. `flora:2` selects it, `flora:2:trunk` opens a palette.
   const floraIdx = focus?.startsWith('flora:') ? Number(focus.split(':')[1]) : null;
@@ -161,9 +164,12 @@ export function ItemToolbar(props: ItemToolbarProps) {
   return (
     // Wraps rather than scrolls: clipped at both edges it read as broken, and a toolbar you have to
     // scroll sideways is a toolbar with things hidden in it.
-    <div className="flex flex-wrap items-center gap-0.5 rounded-xl border border-border bg-background/98 px-1.5 py-1 shadow-xl">
-      <span className="mr-1 max-w-[10rem] shrink-0 truncate px-1 text-xs font-semibold" title={item.name}>{item.name}</span>
-      <Divider />
+    <div className={cn('flex flex-wrap items-center gap-0.5',
+      docked ? 'gap-y-1' : 'rounded-xl border border-border bg-background/98 px-1.5 py-1 shadow-xl')}>
+      {!docked && <>
+        <span className="mr-1 max-w-[10rem] shrink-0 truncate px-1 text-xs font-semibold" title={item.name}>{item.name}</span>
+        <Divider />
+      </>}
 
       {copySources.length > 0 && (
         <>
@@ -306,46 +312,51 @@ export function ItemToolbar(props: ItemToolbarProps) {
         </>
       )}
 
-      <Divider />
-      {/* The Product Owner's criteria, right where you are making the thing they are about. */}
-      {(item.acceptance ?? []).length > 0 && (() => {
-        const met = (item.acceptance ?? []).filter((_, i) => !!item.acConfirmed?.[i]).length;
-        const all = (item.acceptance ?? []).length;
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button type="button" className={cn(BTN, 'border', met === all ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-border bg-muted/60')}
-                title="What the Product Owner asked for">
-                <Check className="h-3.5 w-3.5" /> Accepted <span className="tabular-nums">{met}/{all}</span> <ChevronDown className="h-3 w-3" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent side="top" align="end" sideOffset={6} className="w-72 p-2.5">
-              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
-                Acceptance criteria <span className="font-normal normal-case tracking-normal">the Product Owner&rsquo;s</span>
-              </div>
-              <ul className="space-y-1">
-                {(item.acceptance ?? []).map((label, i) => {
-                  const on = !!item.acConfirmed?.[i];
-                  return (
-                    <li key={i}>
-                      <button type="button" onClick={() => props.onConfirmAc(i, !on)} className="flex w-full items-start gap-1.5 text-left text-[12px]">
-                        <span className={cn('mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
-                        <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="mt-1.5 text-[11px] text-muted-foreground/70">Also on the item&rsquo;s card - it is the same list.</p>
-            </PopoverContent>
-          </Popover>
-        );
-      })()}
-      <ExplainButton cards={['definition-of-done', 'increment']} compact />
-      <button type="button" onClick={onClose} aria-label="Deselect" title="Deselect"
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-        <X className="h-4 w-4" />
-      </button>
+      {/* Floating over the park these came along for the ride, because the card was a screen
+          away. Docked under the board they would be a second copy of what the bench already
+          shows open below, and the way out is the park itself. */}
+      {!docked && <>
+        <Divider />
+        {/* The Product Owner's criteria, right where you are making the thing they are about. */}
+        {(item.acceptance ?? []).length > 0 && (() => {
+          const met = (item.acceptance ?? []).filter((_, i) => !!item.acConfirmed?.[i]).length;
+          const all = (item.acceptance ?? []).length;
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button type="button" className={cn(BTN, 'border', met === all ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-border bg-muted/60')}
+                  title="What the Product Owner asked for">
+                  <Check className="h-3.5 w-3.5" /> Accepted <span className="tabular-nums">{met}/{all}</span> <ChevronDown className="h-3 w-3" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="end" sideOffset={6} className="w-72 p-2.5">
+                <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                  Acceptance criteria <span className="font-normal normal-case tracking-normal">the Product Owner&rsquo;s</span>
+                </div>
+                <ul className="space-y-1">
+                  {(item.acceptance ?? []).map((label, i) => {
+                    const on = !!item.acConfirmed?.[i];
+                    return (
+                      <li key={i}>
+                        <button type="button" onClick={() => props.onConfirmAc(i, !on)} className="flex w-full items-start gap-1.5 text-left text-[12px]">
+                          <span className={cn('mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
+                          <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-1.5 text-[11px] text-muted-foreground/70">Also on the item&rsquo;s card - it is the same list.</p>
+              </PopoverContent>
+            </Popover>
+          );
+        })()}
+        <ExplainButton cards={['definition-of-done', 'increment']} compact />
+        <button type="button" onClick={onClose} aria-label="Deselect" title="Deselect"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          <X className="h-4 w-4" />
+        </button>
+      </>}
     </div>
   );
 }

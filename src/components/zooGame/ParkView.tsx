@@ -8,6 +8,7 @@ import { carParkLayout, carCapacity } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { themeFor, type ZoneTheme } from './zoneTheme';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone } from 'lucide-react';
 
 // ============= The Park View =============
@@ -55,19 +56,6 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
       </PopoverContent>
     </Popover>
   );
-}
-
-interface ZoneTheme { plot: string; plotBorder: string }
-const THEMES: Record<string, ZoneTheme> = {
-  savanna: { plot: '#d9b98a', plotBorder: '#b7965f' },
-  water: { plot: '#6db6d8', plotBorder: '#4f9cbf' },
-  forest: { plot: '#93c977', plotBorder: '#6b8f4e' },
-};
-const ORDER = ['forest', 'savanna', 'water'];
-function themeFor(zone: string, idx: number): ZoneTheme {
-  if (zone === 'Big Cats') return THEMES.savanna;
-  if (zone === 'Waterside') return THEMES.water;
-  return THEMES[ORDER[idx % ORDER.length]];
 }
 
 /** Render one design (a creature or building) at a small scale. */
@@ -638,7 +626,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, building, onOpenBuild, edit, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -672,6 +660,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   onAddConnector?: (c: ZooConnector) => void;
   onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void;
   onSelectConn?: (id: string | null) => void;
+  /** Which part of the selected thing is picked out. Lifted out of here when the controls live off
+   *  the park, so touching the ground out here still opens the ground's swatches over there. */
+  part?: { id: string; key: string } | null;
+  onPart?: (p: { id: string; key: string } | null) => void;
+  /** The design controls live in a bench beside the park, so do not float them over it as well. */
+  benched?: boolean;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const outer = useRef<HTMLDivElement>(null);
@@ -693,7 +687,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const handled = useRef(false);
   // Which part of the selected thing is picked out - kept with the item's id so it does not carry
   // over to the next thing you select.
-  const [part, setPart] = useState<{ id: string; key: string } | null>(null);
+  const [ownPart, setOwnPart] = useState<{ id: string; key: string } | null>(null);
+  const part = onPart ? partProp ?? null : ownPart;
+  const setPart = onPart ?? setOwnPart;
   const selectable = (f: Feature) => !!onOpenBuild && !!edit && (f.kind === 'site' || f.item.status === 'done');
   // The design as it stands: what was built, or the draft so far, or the shape it starts from - so
   // a site shows the real thing from the moment it is started rather than an empty plot.
@@ -1262,7 +1258,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
       {/* The toolbar for whatever is selected, floating just above it. It lives in the OUTER box,
           which is not transformed, so it stays its natural size however far the park is zoomed -
           controls that shrink with the drawing are not controls. */}
-      {edit && building && onOpenBuild && (() => {
+      {edit && building && onOpenBuild && !benched && (() => {
         const f = features.find((x) => x.item.id === building);
         if (!f || !selectable(f)) return null;
         const p = posOf(f);
@@ -1407,6 +1403,11 @@ interface ParkViewProps {
   onFinishDeploy?: () => void;
   /** The id of a just-delivered feature, so it can pop in celebratorily. */
   justOpened?: string | null;
+  /** Which part of the selected thing is picked out, when the design controls live off the park. */
+  part?: { id: string; key: string } | null;
+  onPart?: (p: { id: string; key: string } | null) => void;
+  /** The design controls are docked in a bench beside the park - do not float them over it too. */
+  benched?: boolean;
   /** On the big Park tab, raise a feedback-driven "Improve X" PBI for a delivered feature. */
   onImprove?: (id: string) => void;
   /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
@@ -1429,7 +1430,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1580,7 +1581,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             </div>
           )}
           </div>
-          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
+          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
