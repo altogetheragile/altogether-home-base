@@ -209,7 +209,10 @@ function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; 
 
 /** A single feature on the grounds. Amenities (buildings) sit on a plot tile; planting (flora)
  *  is drawn as just the plant - a tree or bush needs no surround. */
-function Plot({ item, cell }: { item: BacklogItem; cell: number }) {
+function Plot({ item, cell, named = true }: { item: BacklogItem; cell: number;
+  /** Extra placements of the same item say the name once, on the first one. Three trees from one
+   *  PBI wearing three copies of "Big Cats Planting" is a label overlapping a label. */
+  named?: boolean }) {
   const isFlora = item.category === 'flora';
   return (
     <div className="relative flex flex-col items-center">
@@ -219,7 +222,7 @@ function Plot({ item, cell }: { item: BacklogItem; cell: number }) {
           : { background: '#cfd4d8', border: '2px solid #9aa3ab', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell }}>
         <Sprite item={item} design={item.design ?? presetFor(item)} cell={cell} />
       </div>
-      <FeatureName name={item.name} />
+      {named && <FeatureName name={item.name} />}
     </div>
   );
 }
@@ -706,7 +709,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     return landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
   };
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
-  const contentBottom = features.reduce((m, f) => Math.max(m, posOf(f).y + f.h / 2), 0);
+  // Measured from where things REST, never from where one is being dragged. Measuring the live
+  // position made the park breathe under your hand: drag a tree downward, the canvas grew to
+  // contain it, the whole scene rescaled to fit the new height, and the thing you were holding
+  // moved out from under the pointer. The park is the product - it does not change size because
+  // you picked something up.
+  const contentBottom = features.reduce((m, f) => Math.max(m, restPos(f).y + f.h / 2), 0);
   // Portrait: the park starts taller than it is wide and grows downward as the zoo fills.
   // Sized so the WIDTH is what runs out first in a half-page pane: the park then fills its half
   // instead of sitting in a centred strip with slack either side. It still grows downward as the
@@ -799,7 +807,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
 
 
   // Scenery that is naturally a set. A river spans the park, so one is all there is.
-  const canCopy = (f: Feature) => f.kind === 'plot' && f.item.category === 'flora' && landType(f.item) !== 'river';
+  // A set can be put down more than once, and that includes WHILE it is being built - a PBI called
+  // "Trees" is plural, and waiting until it is live to plant the second one is a rule nobody asked
+  // for. Only a river is the exception: there is one, and it spans the park.
+  const canCopy = (f: Feature) => (f.kind === 'plot' || f.kind === 'site') && f.item.category === 'flora' && landType(f.item) !== 'river';
   const [dropping, setDropping] = useState(false);
   // The toolbar's real width, so it can be kept inside the park. It changes with what is selected -
   // picking a plant adds that plant's colours - so a guessed half-width sent it off the left edge.
@@ -841,7 +852,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     // is meant to run off the edges, so it is only held by its centre.
     const spans = f.w > CANVAS_W - 8;
     const minX = spans ? 8 : f.w / 2 + 4, maxX = spans ? CANVAS_W - 8 : CANVAS_W - f.w / 2 - 4;
-    const minY = spans ? 8 : f.h / 2 + 4, maxY = canvasH - PATH_H - (spans ? 8 : f.h / 2);
+    // Keep the same PAD below the lowest thing that sets the canvas height above it, so dropping
+    // something at the very bottom cannot push the floor down and grow the park a notch every time.
+    const minY = spans ? 8 : f.h / 2 + 4, maxY = canvasH - PATH_H - PAD - (spans ? 0 : f.h / 2);
     const at = (ev: PointerEvent) => ({
       x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
       y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
@@ -1198,10 +1211,15 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               {/* Some scenery is a set - signposts at the junctions, trees along a path - so one
                   delivered PBI can be put down more than once. */}
               {canCopy(f) && onAddCopy && tool === 'none' && !dragging && (
+                // Shown outright on the thing you are working on, and only on hover for everything
+                // else. Hidden until hover it may as well not exist: a 40px tree is not somewhere
+                // anyone thinks to go looking for a button, and "how do I plant a second tree" is
+                // not a question the park should answer only to a mouse that happens to pass over.
                 <button type="button" title={`Put down another ${f.item.name}`} aria-label={`Put down another ${f.item.name}`}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); onAddCopy(f.item.id, { x: clamp(p.x + f.w / 2 + 26, 8, CANVAS_W - 8), y: p.y }); }}
-                  className="absolute -bottom-2 -right-1 z-40 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-600 bg-white text-emerald-700 opacity-0 shadow transition-opacity group-hover:opacity-100">
+                  className={cn('absolute -bottom-2 -right-1 z-40 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-600 bg-white text-emerald-700 shadow transition-opacity',
+                    building === f.item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
                   <Plus className="h-3 w-3" />
                 </button>
               )}
@@ -1240,7 +1258,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             style={{ left: c.x, top: c.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
             {f.item.category === 'flora' && isLandscapeType(landType(f.item))
               ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
-              : <Plot item={f.item} cell={4} />}
+              : <Plot item={f.item} cell={4} named={false} />}
             {onRemoveCopy && tool === 'none' && (
               <button type="button" title={`Remove this ${f.item.name}`} aria-label={`Remove this ${f.item.name}`}
                 onPointerDown={(e) => e.stopPropagation()}

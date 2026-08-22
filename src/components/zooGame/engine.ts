@@ -216,10 +216,14 @@ export function estimateItem(state: ZooGameState, id: string, points: number): Z
 /** A coached default breakdown of how a PBI gets built, by kind - the design work and
  *  then opening it. It is a starting point the Developers edit, not a fixed template. */
 export function suggestTasks(item: BacklogItem): SprintTask[] {
-  // The plan reflects the Definition of Done - the work to take this item to Done. First the
-  // BUILD steps (meeting the acceptance criteria), then the standing workflow steps the DoD
-  // requires of every item: peer review and the PO's sign-off. Placing & opening is the Deploy
-  // action (the Open button on a Done item), not a task, so it is not in the plan.
+  // The plan reflects the Definition of Done - the work to take this item to Done: the BUILD steps
+  // that meet the acceptance criteria, and then the Product Owner's sign-off. Placing & opening is
+  // the Deploy action (the Open button on a Done item), not a task, so it is not in the plan.
+  //
+  // Peer review used to be here too and is not any more. It is in the Definition of Done, where it
+  // belongs and where the team agreed to it; as a task it was a box the same person ticked about
+  // their own work, on every single item, teaching that a review is a checkbox. Nothing in the game
+  // could tell whether it had happened, which is the definition of a tick worth nothing.
   const build = item.category === 'path'
     ? ['Set its width and colour']             // the route itself is drawn on the park at deployment
     : item.category === 'enclosure'
@@ -231,7 +235,7 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
       : isLandscapeType(item.template)
       ? ['Colour it']                            // its footprint is sized on the park at deployment
       : ['Choose the plant type', 'Colour the foliage'];
-  const workflow = ['Peer-review it', "Get the PO's sign-off"];
+  const workflow = ["Get the PO's sign-off"];
   return [...build, ...workflow].map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
 }
 

@@ -173,7 +173,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {copySources.length > 0 && (
         <>
-          <Menu label="Copy" title="Start from one you have already built">{(close) => (
+          <Menu label="Copy from" title="Start from one you have already built">{(close) => (
             <div className="space-y-1">
               {copySources.map((s) => (
                 <button key={s.id} type="button" onClick={() => { onDesign({ parts: { ...s.design.parts }, colors: { ...s.design.colors } }); close(); }}
@@ -226,7 +226,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
             <Droplets className="h-3.5 w-3.5 text-sky-600" /> Water
           </button>
           {/* This one does NOT close on a pick: you usually want three trees, not one. */}
-          <Menu label="Plant" title="Plants and habitat features">{() => (
+          <Menu label="Add planting" title="Plants and habitat features">{() => (
             <div className="space-y-2">
               <div>
                 <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Planting</div>
@@ -245,7 +245,10 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isExhibit && EXHIBIT_PARTS.map((p) => {
         const opt = design.parts[p.key] ?? p.options[0];
         return (
-          <Menu key={p.key} label={opt} title={p.label} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
+          // "round" tells you nothing about which round thing it is. A menu says what it configures
+          // first and what it is set to second - the way Size and Shape already did on a habitat -
+          // so a row of them reads as a list of parts rather than a list of adjectives.
+          <Menu key={p.key} label={`${p.label}: ${opt}`} title={p.label} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
             <div className="space-y-2">
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label}</div>
               <Options options={p.options} value={opt} onPick={(o) => setPart(p.key, o)} />
@@ -262,7 +265,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isFlora && !isLand && (
         <>
-          <Menu label={design.parts.type ?? item.template ?? 'tree'} title="What kind">{(close) => (
+          <Menu label={`Type: ${design.parts.type ?? item.template ?? 'tree'}`} title="What kind of planting this is">{(close) => (
             <Options options={FLORA_TYPES} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
@@ -286,7 +289,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isPath && (
         <>
-          <Menu label={PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'Width'} title="Width">{(close) => (
+          <Menu label={`Width: ${(PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'medium').toLowerCase()}`} title="How wide the path is">{(close) => (
             <Options options={PATH_WIDTHS.map((w) => w.key)} value={design.parts.thickness ?? 'medium'} onPick={(o) => { setPart('thickness', o); close(); }}
               labels={Object.fromEntries(PATH_WIDTHS.map((w) => [w.key, w.label]))} />
           )}</Menu>
@@ -297,7 +300,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {item.category === 'amenity' && (
         <>
-          <Menu label={design.parts.type ?? 'shop'} title="What kind of building">{(close) => (
+          <Menu label={`Kind: ${design.parts.type ?? 'shop'}`} title="What kind of building">{(close) => (
             <Options options={BUILDING_TYPES} value={design.parts.type ?? 'shop'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
