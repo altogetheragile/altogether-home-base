@@ -8,7 +8,7 @@ import { Chip } from './ui/Chip';
 import { ExplainButton } from './Explain';
 import { cn } from '@/lib/utils';
 import { EYEBROW } from './ui/tokens';
-import { Hammer } from 'lucide-react';
+import { Hammer, Spline } from 'lucide-react';
 
 // ============= Where you design the thing you are building =============
 //
@@ -41,7 +41,7 @@ function Empty({ next }: { next?: BacklogItem }) {
 
 /** The design bench: the controls for whatever is being built, plus its plan and the Product
  *  Owner's criteria - everything you need to finish one item, in one place under the board. */
-export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, onConfirmAc, nextUp }: {
+export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
@@ -52,6 +52,10 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
   onConfirmAc: (id: string, index: number, value: boolean) => void;
   /** The next thing in To Do, so the empty bench can name it. */
   nextUp?: BacklogItem;
+  /** Laying a pathway's route. The pen belongs here with the rest of the thing's controls; the park
+   *  is where you use it, the way the park is where you drag a habitat into place. */
+  drawing?: boolean;
+  onDrawing?: (on: boolean) => void;
 }) {
   const item = itemId ? state.backlog.find((i) => i.id === itemId) : undefined;
 
@@ -95,6 +99,16 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
               focus={part?.id === item.id ? part.key : null}
               onFocus={(key) => onPart?.(key ? { id: item.id, key } : null)}
               onClose={() => onPart?.(null)} />
+            {/* A pathway's one remaining control. Drawing the route is how a path is laid out, so the
+                button that starts it belongs with the rest of the thing's controls - the park is
+                where you use it, the way the park is where you drag a habitat into place. */}
+            {item.category === 'path' && onDrawing && (
+              <button type="button" onClick={() => onDrawing(!drawing)} aria-pressed={!!drawing}
+                className={cn('mt-2 flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
+                  drawing ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted')}>
+                <Spline className="h-3.5 w-3.5" /> {drawing ? 'Drawing on the park - click Done there' : 'Draw its route'}
+              </button>
+            )}
             <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
               Touch a part of it on the park to open that part&rsquo;s controls here. Where it stands is
               settled out there, by dragging it.

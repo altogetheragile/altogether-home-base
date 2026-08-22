@@ -10,7 +10,7 @@ import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2, Maximize2, Shapes, Store, Ruler, Cat, PawPrint, Ear, Circle, Palette, type LucideIcon } from 'lucide-react';
 
 // ============= Building on the canvas =============
 //
@@ -31,12 +31,15 @@ function Divider() {
 
 /** A toolbar button that opens a small panel of choices. Children are given a `close` so a menu
  *  that asks one question can answer it and get out of the way. */
-function Menu({ label, swatch, children, title }: { label: string; swatch?: string; children: (close: () => void) => ReactNode; title?: string }) {
+function Menu({ label, swatch, icon: Icon, children, title }: { label: string; swatch?: string; icon?: LucideIcon; children: (close: () => void) => ReactNode; title?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button type="button" title={title ?? label} className={BTN}>
+          {/* A picture of the part, or the colour it is wearing. A row of identical grey words is
+              hard to aim at; a row where each control looks like the thing it changes is not. */}
+          {swatch === undefined && Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />}
           {swatch !== undefined && (
             <span className="h-4 w-4 rounded border border-border/70" style={{ background: swatch }} aria-hidden />
           )}
@@ -110,6 +113,16 @@ function ColourButton({ label, value, onChange, part, focus, onFocus, onClosed }
   );
 }
 
+/** A picture for each part of a creature, so the five menus are told apart by shape as well as by
+ *  reading them. Nothing here is literal - there is no lucide icon for "tail". */
+const PART_ICON: Record<string, LucideIcon> = { body: Cat, head: Circle, ears: Ear, tail: PawPrint, markings: Palette };
+
+/** A line of guidance under the controls. It takes a whole line: as one more shrink-0 item in a
+ *  wrapping row of buttons, a sentence simply ran out past the edge of the panel. */
+function Hint({ children }: { children: ReactNode }) {
+  return <span className="basis-full px-1 pt-0.5 text-[11px] leading-snug text-muted-foreground">{children}</span>;
+}
+
 export interface CopySource { id: string; name: string; design: ItemDesign }
 
 interface ItemToolbarProps {
@@ -173,7 +186,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {copySources.length > 0 && (
         <>
-          <Menu label="Copy from" title="Start from one you have already built">{(close) => (
+          <Menu label="Copy from" icon={Copy} title="Start from one you have already built">{(close) => (
             <div className="space-y-1">
               {copySources.map((s) => (
                 <button key={s.id} type="button" onClick={() => { onDesign({ parts: { ...s.design.parts }, colors: { ...s.design.colors } }); close(); }}
@@ -190,12 +203,12 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isEnclosure && (
         <>
           {onSetEnclosure && (
-            <Menu label="Size" title={`How big the habitat is - ${item.enclosureSize ?? 'medium'}. Each animal is drawn to scale inside it.`}>{(close) => (<>
+            <Menu label="Size" icon={Maximize2} title={`How big the habitat is - ${item.enclosureSize ?? 'medium'}. Each animal is drawn to scale inside it.`}>{(close) => (<>
               <Options options={['small', 'medium', 'large']} value={item.enclosureSize ?? 'medium'} onPick={(o) => { onSetEnclosure(o as 'small' | 'medium' | 'large'); close(); }} />
               <p className="mt-1.5 max-w-[14rem] text-[11px] text-muted-foreground">A bigger habitat holds more animals.</p>
             </>)}</Menu>
           )}
-          <Menu label="Shape" title={`What shape the habitat is - ${ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'rounded'}`}>{(close) => (
+          <Menu label="Shape" icon={Shapes} title={`What shape the habitat is - ${ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'rounded'}`}>{(close) => (
             <Options options={ENCLOSURE_SHAPES.map((s) => s.key)} value={design.parts.shape ?? 'rounded'} onPick={(o) => { setPart('shape', o); close(); }}
               labels={Object.fromEntries(ENCLOSURE_SHAPES.map((s) => [s.key, s.label]))} />
           )}</Menu>
@@ -226,7 +239,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
             <Droplets className="h-3.5 w-3.5 text-sky-600" /> Water
           </button>
           {/* This one does NOT close on a pick: you usually want three trees, not one. */}
-          <Menu label="Add planting" title="Plants and habitat features">{() => (
+          <Menu label="Add planting" icon={Sprout} title="Plants and habitat features">{() => (
             <div className="space-y-2">
               <div>
                 <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Planting</div>
@@ -249,7 +262,8 @@ export function ItemToolbar(props: ItemToolbarProps) {
           // Fence, Head, Tail - so the row reads as a list of the thing's parts. It used to be
           // labelled with its current setting, which gave you "round", "maned", "tufted": a row of
           // adjectives with no nouns, where the two colour buttons beside them said what they were.
-          <Menu key={p.key} label={p.label} title={`${p.label} - ${opt}`} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
+          <Menu key={p.key} label={p.label} icon={PART_ICON[p.key] ?? Circle} title={`${p.label} - ${opt}`}
+            swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
             <div className="space-y-2">
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label}</div>
               <Options options={p.options} value={opt} onPick={(o) => setPart(p.key, o)} />
@@ -266,7 +280,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isFlora && !isLand && (
         <>
-          <Menu label="Type" title={`What kind of planting this is - ${design.parts.type ?? item.template ?? 'tree'}`}>{(close) => (
+          <Menu label="Type" icon={Sprout} title={`What kind of planting this is - ${design.parts.type ?? item.template ?? 'tree'}`}>{(close) => (
             <Options options={FLORA_TYPES} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
@@ -284,24 +298,24 @@ export function ItemToolbar(props: ItemToolbarProps) {
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />
           ))}
-          <span className="shrink-0 px-1 text-[11px] text-muted-foreground">Drag its edge on the park to size it.</span>
+          <Hint>Drag its edge on the park to size it.</Hint>
         </>
       )}
 
       {isPath && (
         <>
-          <Menu label="Width" title={`How wide the path is - ${(PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'medium').toLowerCase()}`}>{(close) => (
+          <Menu label="Width" icon={Ruler} title={`How wide the path is - ${(PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'medium').toLowerCase()}`}>{(close) => (
             <Options options={PATH_WIDTHS.map((w) => w.key)} value={design.parts.thickness ?? 'medium'} onPick={(o) => { setPart('thickness', o); close(); }}
               labels={Object.fromEntries(PATH_WIDTHS.map((w) => [w.key, w.label]))} />
           )}</Menu>
           <ColourButton label="Path colour" value={design.colors.path} onChange={(hex) => setColor('path', hex)} />
-          <span className="shrink-0 px-1 text-[11px] text-muted-foreground">Draw the route on the park - every run is laid at this width and colour.</span>
+          <Hint>Every run is laid at this width and colour.</Hint>
         </>
       )}
 
       {item.category === 'amenity' && (
         <>
-          <Menu label="Kind" title={`What kind of building - ${design.parts.type ?? 'shop'}`}>{(close) => (
+          <Menu label="Kind" icon={Store} title={`What kind of building - ${design.parts.type ?? 'shop'}`}>{(close) => (
             <Options options={BUILDING_TYPES} value={design.parts.type ?? 'shop'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
