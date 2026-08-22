@@ -476,6 +476,23 @@ export const PLANTING_TYPES = ['tree', 'bush', 'flowers', 'hedge'];
 export const HABITAT_FEATURE_TYPES = ['rocks', 'pond'];
 export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
 
+/** Scenery, grouped by what KIND of thing it is.
+ *
+ *  A Product Backlog item has already settled what it is: "Trees" is planting, "River" is water,
+ *  "Signposts" is wayfinding. What is still open is which sort - a tree or a hedge, a pond or a
+ *  fountain. Offering the whole catalogue on every one of them meant a PBI called Trees could be
+ *  turned into a car park, which is not a design decision, it is a different item.
+ */
+const FLORA_FAMILIES: string[][] = [
+  ['tree', 'bush', 'flowers', 'hedge'],       // planting
+  ['pond', 'river', 'fountain'],              // water
+  ['rocks', 'bridge', 'signpost', 'entrance', 'carpark'], // built and laid features
+];
+/** The sorts this thing could reasonably be instead - its own family, never the whole catalogue. */
+export function floraFamily(type?: string): string[] {
+  return FLORA_FAMILIES.find((f) => f.includes(type ?? 'tree')) ?? FLORA_FAMILIES[0];
+}
+
 /** Path widths a Pathway can be designed at; the px is the connector thickness it deploys with. */
 export const PATH_WIDTHS: { key: string; label: string; px: number }[] = [
   { key: 'thin', label: 'Thin', px: 5 },

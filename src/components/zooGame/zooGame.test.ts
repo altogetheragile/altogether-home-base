@@ -7,7 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
-import { presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
+import { floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 import { copyEntries, applyCopyOverrides } from './copy';
@@ -1792,6 +1792,17 @@ describe('zoo game: enclosure planting (flora added in the studio, like water)',
       expect(FLORA_TYPES).toContain(f.type);
     }
     expect(FLORA_TYPES).toContain('signpost');
+  });
+
+  it('offers a scenery item the other sorts of ITS OWN KIND, never the whole catalogue', () => {
+    // "Trees" is planting. Which sort is still open - a hedge, a bush - but a car park is not a
+    // design decision about trees, it is a different Product Backlog item.
+    expect(floraFamily('tree')).toEqual(['tree', 'bush', 'flowers', 'hedge']);
+    expect(floraFamily('tree')).not.toContain('carpark');
+    expect(floraFamily('river')).toEqual(['pond', 'river', 'fountain']);
+    expect(floraFamily('signpost')).toContain('entrance');
+    // Every sort belongs to exactly one family, so nothing can fall out of the menu entirely.
+    for (const t of FLORA_TYPES) expect(floraFamily(t)).toContain(t);
   });
 });
 
