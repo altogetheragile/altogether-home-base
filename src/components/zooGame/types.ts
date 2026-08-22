@@ -37,6 +37,17 @@ export interface ZooBrief {
   firstZone: string;
 }
 
+/** How a Product Goal has been written down. The Scrum Guide says a Product Goal describes a future
+ *  state of the product and nothing about its shape - so all three of these are the Scrum Team's
+ *  own choice, and two of them are practices borrowed from elsewhere entirely. */
+export type GoalShape = 'outcome' | 'okr' | 'epic';
+
+/** One observable measure of the Product Goal, in something the park actually counts. Free text
+ *  would let you write a measure nobody could check, which is the failure mode these formats exist
+ *  to avoid: a key result you cannot observe is an opinion with a number next to it. */
+export interface GoalMeasure { metric: GoalMetric; target: number }
+export type GoalMetric = 'happiness' | 'visitors' | 'exhibits' | 'zones' | 'amenities';
+
 export type ZooPhase = 'intro' | 'brief' | 'refine' | 'planning' | 'sprint' | 'review' | 'retro' | 'final';
 
 /** The single-player AI Product Owner's refinement decisions (from the zoo-po-refine edge
@@ -350,6 +361,10 @@ export interface ZooGameState {
   sprintDaysAgreed?: boolean;
   /** What the Scrum Team said the zoo would be, before there was a Product Backlog for it. */
   brief?: ZooBrief;
+  /** How the Product Goal is written, and what it is measured by. Neither is required: the default
+   *  is a plain sentence, which is all the Guide asks for. */
+  productGoalShape?: GoalShape;
+  productGoalMeasures?: GoalMeasure[];
   /** The look of the park paths/roads: a key into PATH_STYLES (surface + colour). The
    *  entrance promenade and the spurs to each enclosure both use it, so they stay consistent.
    *  Defaults to 'gravel'. Older saves without it fall back to the default at render time. */
@@ -377,6 +392,7 @@ export type ZooAction =
   | { type: 'HOLD_REFINEMENT' }
   | { type: 'AGREE_DOD' }
   | { type: 'WRITE_BACKLOG'; brief: ZooBrief }
+  | { type: 'SET_GOAL_FORM'; shape: GoalShape; goal: string; measures: GoalMeasure[] }
   | { type: 'PLAN_ITEM_SHAPE'; id: string; patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string } }
   | { type: 'START_ITEM_AT'; id: string; pos: { x: number; y: number } }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }

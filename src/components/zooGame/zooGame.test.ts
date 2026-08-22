@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -2099,6 +2099,31 @@ describe('zoo game: one idea at a time', () => {
     const s = setWipLimit(initialZooState(1), 1);
     expect(revealed(s, 'wip')).toBe(true);
     expect(activeWipLimit(s)).toBe(1);
+  });
+});
+
+describe('zoo game: a Product Goal can be written in other shapes - none of them Scrum', () => {
+  it('keeps the plain sentence as the one text everything else reads', () => {
+    const s = setGoalForm(initialZooState(1), 'okr', 'People come back for the big cats', [{ metric: 'happiness', target: 70 }]);
+    expect(s.productGoal).toBe('People come back for the big cats');
+    expect(s.productGoalShape).toBe('okr');
+  });
+
+  it('measures only things the park actually counts, so the Review can check them', () => {
+    // A key result nobody can observe is an opinion with a number next to it, so the shape of a
+    // measure is a metric the game computes plus a target - never free text.
+    for (const g of GOAL_METRICS) expect(typeof g.of(initialZooState(1))).toBe('number');
+    const s = setGoalForm(initialZooState(1), 'okr', 'Loved', [
+      { metric: 'exhibits', target: 2 }, { metric: 'happiness', target: 70 },
+    ]);
+    const checks = goalMeasures(s);
+    expect(checks.map((c) => c.metric)).toEqual(['exhibits', 'happiness']);
+    expect(checks.every((c) => c.met)).toBe(false); // nothing built yet
+  });
+
+  it('is optional: a plain outcome carries no measures at all', () => {
+    const s = setGoalForm(initialZooState(1), 'outcome', 'Open a zoo people love', []);
+    expect(goalMeasures(s)).toEqual([]);
   });
 });
 

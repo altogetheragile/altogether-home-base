@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pencil, FolderOpen, Trophy } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
 import { INTRO_COPY } from './scrumContent';
+import { GoalShapes } from './GoalShapes';
+import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
 
@@ -13,6 +15,10 @@ interface ZooIntroProps {
   /** Back to the one page of Scrum, for a player who wants to read it again. */
   onBack?: () => void;
   onSetGoal: (goal: string) => void;
+  /** Writing the Goal in one of the other shapes - optional, and none of them Scrum. */
+  goalShape?: GoalShape;
+  goalMeasures?: GoalMeasure[];
+  onSetGoalShape?: (shape: GoalShape, goal: string, measures: GoalMeasure[]) => void;
   onStart: () => void;
   /** Signed-in players can resume a saved game. */
   onOpenSaves?: () => void;
@@ -24,12 +30,12 @@ interface ZooIntroProps {
  *  Goal is, and then the Product Goal itself - which is the one thing the player writes before they
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
-export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGoal, onStart, onOpenSaves, copy }: ZooIntroProps) {
+export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy }: ZooIntroProps) {
   const [goal, setGoal] = useState(productGoal);
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 py-5">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 pb-28 pt-5">
         <div className="flex items-center justify-between gap-2">
           {onBack ? (
             <button type="button" onClick={onBack} className="text-[11px] text-muted-foreground underline-offset-2 hover:underline">
@@ -88,6 +94,12 @@ export function ZooIntro({ productGoal, teachCard, onMarkTaught, onBack, onSetGo
             </span>
           </label>
           <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
+          {onSetGoalShape && (
+            <div className="mt-2">
+              <GoalShapes goal={goal} shape={goalShape} measures={goalMeasures}
+                onSet={(shape, text, ms) => { setGoal(text); onSetGoalShape(shape, text, ms); }} />
+            </div>
+          )}
         </section>
 
         {/* Floating, like every other primary action in the game. */}
