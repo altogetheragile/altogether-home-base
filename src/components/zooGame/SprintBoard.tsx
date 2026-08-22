@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
-import { isDeployAcceptance, isDesignDone, presetFor } from './design';
+import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
@@ -276,14 +276,16 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const readyForDone = (it: BacklogItem) =>
     isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))
     && (it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i])
-    && (it.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
+    // The whole plan, sign-off included. It ticks itself once every criterion is accepted, so this
+    // is not an extra hoop - it is the reason the card cannot reach Done without the Product Owner.
+    && (it.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
   // tooltip nobody sees on a tablet.
   const whyNotDone = (it: BacklogItem) => {
     if (!isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))) return 'Next: build it on the park';
     const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
-    const task = (it.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done);
+    const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);
     return task ? `Next: ${task.label.toLowerCase()}` : 'Next: finish the plan';
   };
   const willSucceed = (from: string, to: string, id: string) => {
@@ -335,11 +337,10 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // it will stand: what is left is confirming where that is, and opening it. "Deploy complete" was
   // the language of a column that no longer exists - this is releasing it to visitors.
   const deployActions = (it: BacklogItem) => {
-    const deployAcs = it.acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
-    const acsDone = deployAcs.every((a) => !!it.acConfirmed?.[a.i]);
+    const acsDone = it.acceptance.every((_, i) => !!it.acConfirmed?.[i]);
     const ready = deployReady(it.id);
     const why = !it.placed ? 'Place it on the park first'
-      : !acsDone ? 'Confirm its placement criteria on the park - the Product Owner signs off once every criterion is met'
+      : !acsDone ? 'Tick off its acceptance criteria on the card - the Product Owner signs off once every one is met'
       : !ready ? 'Waiting on the Product Owner\u2019s sign-off' : undefined;
     return <>
       <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> Show me on the park</Button>
@@ -518,7 +519,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         detail={<>
                           {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
                               and tick the detail. The real building happens on the park. */}
-                          <CardDetail item={it} interactive showAcceptance built={!!it.design} onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                          <CardDetail item={it} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
@@ -550,7 +551,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         )}
                       </>}
                       detail={<>
-                        <CardDetail item={it} interactive showAcceptance built onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                        <CardDetail item={it} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                         <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">{deployActions(it)}</div>
                       </>} />
                     </div>
@@ -567,7 +568,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     <div key={it.id} data-done-card={it.id}>
                       <PbiCard item={it} state="live" density="row" badges={<Chip>{it.zone}</Chip>}
                         detail={<>
-                          <CardDetail item={it} showAcceptance built onToggleTask={onToggleTask} />
+                          <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex items-center justify-end gap-1.5">{doneActions(it)}</div>
                         </>} />
                     </div>

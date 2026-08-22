@@ -1,7 +1,7 @@
 import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isDeployAcceptance, isLandscapeType } from './design';
+import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -278,8 +278,15 @@ export const buildTasksDone = (item: BacklogItem): boolean =>
  *  placement criteria are confirmed on the park, which cannot happen until the item is placed. So
  *  the sign-off is only in reach once the thing exists in the park, which is the point of it. */
 export function signOffReady(item: BacklogItem): boolean {
-  if (item.status !== 'done' && item.status !== 'open') return false; // still being built
-  return item.acceptance.every((label, i) => !isDeployAcceptance(label) || !!item.acConfirmed?.[i]);
+  // EVERY criterion, not just the placement ones. That exception dates from when the build criteria
+  // were accepted somewhere else and only placement was left to judge; they are all ticked on the
+  // card now, so the sign-off waits for all of them.
+  //
+  // And it no longer waits for the item to be Done, because that was circular: an item reaches Done
+  // by way of the sign-off, so requiring Done first meant the sign-off could never tick and you
+  // could move a card to Done with the Product Owner's approval still outstanding.
+  if (item.status === 'backlog') return false;
+  return item.acceptance.length > 0 && item.acceptance.every((_, i) => !!item.acConfirmed?.[i]);
 }
 
 /** Keep the sign-off task in step with the acceptance criteria, wherever they were changed. It is

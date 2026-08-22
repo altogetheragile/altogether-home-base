@@ -35,11 +35,12 @@ function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIG
   return accept(s, id);
 }
 
-/** The deploy step: place it on the park and confirm every placement acceptance criterion. */
+/** Place it on the park and accept it - every criterion, which is what a player has to do before the
+ *  Product Owner's sign-off ticks and the card may be moved to Done. */
 function accept(state: ZooGameState, id: string): ZooGameState {
   let s = placeOnPark(state, id);
   const it = s.backlog.find((x) => x.id === id);
-  (it?.acceptance ?? []).forEach((label, i) => { if (isDeployAcceptance(label)) s = confirmAcceptance(s, id, i, true); });
+  (it?.acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, id, i, true); });
   return s;
 }
 
@@ -1979,7 +1980,7 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
   };
   const signOff = (s: ZooGameState, id: string) => (s.backlog.find((x) => x.id === id)!.tasks ?? []).find((t) => isSignOffTask(t.label))!;
 
-  it('is not ticked when the build is finished - the placement criterion is still open', () => {
+  it('is not ticked when the build is finished - the criteria are still open', () => {
     const { s: start, id } = path();
     let s = start;
     s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
@@ -2005,12 +2006,17 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
     s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
     for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
     s = placeOnPark(s, id);
-    expect(signOff(s, id).done).toBe(false); // placed, but the criterion is not accepted yet
-    const i = s.backlog.find((x) => x.id === id)!.acceptance.findIndex(isDeployAcceptance);
-    s = confirmAcceptance(s, id, i, true);
+    expect(signOff(s, id).done).toBe(false); // placed, but nothing is accepted yet
+    // Every criterion, not merely the one about placement: a thing that is in the right spot and
+    // wrong in every other way has not been accepted by anybody.
+    const acs = s.backlog.find((x) => x.id === id)!.acceptance;
+    expect(acs.length).toBeGreaterThan(1);
+    acs.forEach((_, i) => { if (i < acs.length - 1) s = confirmAcceptance(s, id, i, true); });
+    expect(signOff(s, id).done).toBe(false); // all but one
+    s = confirmAcceptance(s, id, acs.length - 1, true);
     expect(signOff(s, id).done).toBe(true);
-    // ...and comes back off if the criterion is withdrawn, taking the release with it.
-    const back = confirmAcceptance(s, id, i, false);
+    // ...and comes back off if a criterion is withdrawn, taking the release with it.
+    const back = confirmAcceptance(s, id, 0, false);
     expect(signOff(back, id).done).toBe(false);
     expect(openItem(back, id).backlog.find((x) => x.id === id)!.status).toBe('done');
   });

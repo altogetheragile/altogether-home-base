@@ -387,10 +387,14 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
     <div className="relative flex flex-col items-center">
       <EnclosureBox shape={d?.parts.shape ?? 'rounded'} w={cfg.w} h={cfg.h} ground={ground} fence={fence} boxRef={boxRef}>
         {/* Pick a part by touching it. The rim is the fence, the middle is the ground - both sit
-            behind the animals and the planting, so they only catch what nothing else wanted. */}
+            behind the animals and the planting, so they only catch what nothing else wanted.
+            These deliberately do NOT stop the event: it has to carry on up to the enclosure, which
+            is what starts a drag. Swallowing it here made the whole habitat undraggable - every
+            pointer landing inside the fence chose a part instead of picking the thing up, so an
+            enclosure could only be moved by the few pixels of its own label. */}
         {onSelectPart && <>
-          <div className="absolute inset-0 z-0" title="Fence" onPointerDown={(e) => { e.stopPropagation(); onSelectPart('fence'); }} />
-          <div className="absolute inset-[11px] z-0" title="Ground" onPointerDown={(e) => { e.stopPropagation(); onSelectPart('ground'); }} />
+          <div className="absolute inset-0 z-0" title="Fence" onPointerDown={() => onSelectPart('fence')} />
+          <div className="absolute inset-[11px] z-0" title="Ground" onPointerDown={() => onSelectPart('ground')} />
         </>}
         {/* Water and planting are arranged HERE, in the habitat, at the size they will really be -
             drag to move, drag the corner to resize, hover for the ×. While the item is being built
@@ -805,7 +809,8 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   useLayoutEffect(() => {
     const el = toolbar.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setTbW(el.offsetWidth));
+    // Ignore sub-pixel churn: a measurement that feeds a position must not react to noise.
+    const ro = new ResizeObserver(() => setTbW((w) => (Math.abs(el.offsetWidth - w) > 1 ? el.offsetWidth : w)));
     ro.observe(el);
     setTbW(el.offsetWidth);
     return () => ro.disconnect();
@@ -1249,21 +1254,24 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         const p = posOf(f);
         const rest = restPos(f);
         const moving = drag?.id === f.item.id;
-        const half = Math.min(tbW / 2, CANVAS_W * scale / 2);
-        const anchor = (at: { x: number; y: number }) => ({
-          left: clamp(at.x * scale, half, Math.max(half, CANVAS_W * scale - half)),
-          top: Math.max(48, (at.y - f.h / 2) * scale - 12),
-        });
-        const home = anchor(rest), now = anchor(p);
+        // The toolbar sits in a band the full width of the park and is nudged sideways by a
+        // TRANSFORM, never by `left`.
+        //
+        // It used to be positioned with `left`, clamped by its own measured width. Near the park's
+        // edge that is a feedback loop with nothing to damp it: `left` limits how much room an
+        // absolutely positioned box has, so the toolbar wraps, so it measures narrower, so the clamp
+        // lets it move outward, so it has room again, so it unwraps - and it shivers, several times a
+        // second, but only ever at the boundary. A transform moves a box without changing the space
+        // it was laid out in, so the width it measures no longer depends on where it ended up.
+        const band = CANVAS_W * scale - 16;
+        const shift = (at: { x: number; y: number }) => clamp((at.x - CANVAS_W / 2) * scale, -(band - tbW) / 2, (band - tbW) / 2);
+        const topOf = (at: { x: number; y: number }) => Math.max(48, (at.y - f.h / 2) * scale - 12);
+        const dx = moving ? shift(p) : shift(rest);
+        const top = moving ? topOf(p) : topOf(rest);
         return (
-          // It follows the thing it belongs to, and while that thing is moving it follows by
-          // translating - same reason as the feature itself: laying it out every frame smears.
-          <div ref={toolbar} className="absolute z-40 flex -translate-x-1/2 -translate-y-full justify-center"
-            // Never wider than the park it belongs to, so it wraps inside it instead of running off
-            // both sides of a half-page column.
-            style={{ maxWidth: CANVAS_W * scale - 16, ...(moving
-              ? { ...home, transform: `translate(-50%,-100%) translate3d(${now.left - home.left}px,${now.top - home.top}px,0)`, willChange: 'transform', backfaceVisibility: 'hidden' }
-              : now) }}
+          <div className="pointer-events-none absolute inset-x-2 z-40 flex justify-center" style={{ top }}>
+          <div ref={toolbar} className="pointer-events-auto flex justify-center"
+            style={{ maxWidth: band, transform: `translate(${dx}px,-100%)`, ...(moving ? { willChange: 'transform' } : {}) }}
             onPointerDown={(e) => e.stopPropagation()}>
             <ItemToolbar
               item={f.item}
@@ -1281,6 +1289,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               onFocus={(key) => setPart(key ? { id: f.item.id, key } : null)}
               onClose={() => { setPart(null); onOpenBuild(null); }}
             />
+          </div>
           </div>
         );
       })()}

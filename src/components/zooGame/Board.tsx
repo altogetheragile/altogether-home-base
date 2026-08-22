@@ -12,7 +12,6 @@ import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
-import { isDeployAcceptance } from './design';
 
 /** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
  *  Backlog can be scanned by shape as well as by name. See itemIcons.ts for the mapping. */
@@ -167,11 +166,11 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
 
 /** A board card's detail (acceptance criteria + the task plan), collapsed behind a one-line
  *  toggle by default so cards stay short in narrow columns. `defaultOpen` keeps the active
- *  (Build) card expanded; `interactive` allows ticking tasks. `built` marks the acceptance
- *  criteria green (met) - an item that has been built to the studio has met them all; a card
+ *  (Build) card expanded; `interactive` allows ticking tasks. A criterion is green only once
+ *  somebody has ticked it; a card
  *  still in Build/To Do shows them pending. Each card keeps its own open state. */
-export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, built = false, onToggleTask, onConfirmAc }:
-  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; built?: boolean; onToggleTask: (id: string, taskId: string) => void;
+export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, onToggleTask, onConfirmAc }:
+  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean; onToggleTask: (id: string, taskId: string) => void;
     /** Accepting a criterion. It belongs HERE, on the item's own card, not on a toolbar floating
      *  over the park or in a banner - the card is the Product Backlog item, and accepting is
      *  something you do to the item. */
@@ -181,12 +180,11 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
   const [open, setOpen] = useState(defaultOpen);
   if (tasks.length === 0 && criteria.length === 0) return null;
   const done = tasks.filter((t) => t.done).length;
-  // A built item has met its BUILD criteria (it could not leave the studio otherwise). The
-  // placement ones are only met once they are confirmed on the park, so the count must not claim
-  // them early - that count is what the Product Owner's sign-off waits on.
-  // Accepted is accepted: whatever has been ticked, plus - for a built item - the build criteria it
-  // could not have left the build without meeting.
-  const met = (label: string, i: number) => !!item.acConfirmed?.[i] || (built && !isDeployAcceptance(label));
+  // Met means somebody said so. Nothing here ticks itself: the game used to mark the build criteria
+  // green the moment an item had a design, on the reasoning that it could not have left the studio
+  // otherwise - but there is no studio now, you build on the park, and a criterion nobody looked at
+  // is not a criterion that has been met. This count is what the Product Owner's sign-off waits on.
+  const met = (_label: string, i: number) => !!item.acConfirmed?.[i];
   const acMet = criteria.filter(met).length;
   const acAll = criteria.length > 0 && acMet === criteria.length;
   return (
