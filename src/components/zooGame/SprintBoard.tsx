@@ -5,7 +5,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
-import { ActionBar } from './ActionBar';
+import { ActionBar, DOCKED_BAR_H } from './ActionBar';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
@@ -406,7 +406,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           past the window and the bench stays pinned to its foot. The bench covers the last stretch
           of it, which the padding at the end gives back: a card at the bottom of To Do can always be
           scrolled out from behind it. */}
-      <div className={cn('min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5', onBench ? 'pb-[19.5rem]' : 'pb-16')}>
+      <div className={cn('min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5', onBench ? 'pb-[22.5rem]' : 'pb-20')}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : (
@@ -607,9 +607,10 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {edit && !dayStarting && (
         // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
         // fault rather than depth.
-        <div className={cn('absolute inset-x-0 bottom-0 z-20 flex flex-col border-t border-border bg-background',
-          onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}>
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-14 pt-2">
+        <div className={cn('absolute inset-x-0 z-20 flex flex-col border-t border-border bg-background',
+          onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}
+          style={{ bottom: DOCKED_BAR_H }}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
             <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
           </div>
@@ -653,7 +654,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads
           as though the Scrum is an end-of-day event. */}
       {!dayStarting && (
-        <ActionBar>
+        <ActionBar docked>
           <Button onClick={onEndDay}>
             {state.dayNumber === state.sprintDays
               ? 'End day \u2192 Review'
