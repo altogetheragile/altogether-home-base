@@ -790,11 +790,14 @@ describe('zoo game: product goal progress is an OUTCOME, not backlog burn', () =
 describe('zoo game: the plan (task decomposition) gates Done', () => {
   const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
 
-  it('the plan reflects the DoD: build steps + review + PO sign-off, but not placing/opening', () => {
+  it('the plan is the build steps and the PO sign-off - not peer review, and not placing/opening', () => {
     const tasks = suggestTasks(initialZooState(1).backlog.find((i) => i.id === 'lion')!);
     expect(tasks.length).toBeGreaterThan(0);
     expect(tasks.every((t) => !t.done)).toBe(true);
-    expect(tasks.some((t) => /peer-review/i.test(t.label))).toBe(true);
+    // Peer review lives in the Definition of Done, which the team agreed to. As a task it was a box
+    // you ticked about your own work on every item, and nothing in the game could tell whether it
+    // had happened.
+    expect(tasks.some((t) => /peer-review/i.test(t.label))).toBe(false);
     expect(tasks.some((t) => /sign-off/i.test(t.label))).toBe(true);
     // Placing & opening is the Deploy action (the Open button), not a plan task.
     expect(tasks.some((t) => /open|place/i.test(t.label))).toBe(false);
@@ -1161,7 +1164,7 @@ describe('zoo game: the toolbox', () => {
     expect(pathWidthPx(preset.parts.thickness)).toBe(9);
     // Its plan is the width/colour design + the standing workflow (no route step - the route is drawn at deploy).
     const tasks = suggestTasks(item).map((t) => t.label);
-    expect(tasks).toEqual(['Set its width and colour', 'Peer-review it', "Get the PO's sign-off"]);
+    expect(tasks).toEqual(['Set its width and colour', "Get the PO's sign-off"]);
     // Building it (no design) with its plan complete takes it to Done.
     s = estimateItem(s, item.id, 3);
     s = planSprint(s, [item.id]);
