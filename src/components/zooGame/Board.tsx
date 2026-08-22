@@ -191,11 +191,35 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
   const acAll = criteria.length > 0 && acMet === criteria.length;
   return (
     <div className="mt-1.5">
+      {/* Progress as pips, the way the Flow Game shows it: you can read how far a card has got
+          without opening it, and the numbers only matter when you are working on it. Shape carries
+          the ownership - squares are the Developers' plan, circles are the Product Owner's criteria -
+          so two rows of the same colour do not read as one long row. */}
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+        className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground hover:text-foreground">
         <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !open && '-rotate-90')} />
-        {tasks.length > 0 && <span className="flex items-center gap-0.5"><ListChecks className="h-3 w-3" /> Plan {done}/{tasks.length}</span>}
-        {criteria.length > 0 && <span className={cn(acAll && 'text-emerald-600 dark:text-emerald-400')}>{tasks.length > 0 ? '· ' : ''}AC {acMet}/{criteria.length}</span>}
+        {tasks.length > 0 && (
+          <span className="flex items-center gap-1" title={`Plan: ${done} of ${tasks.length} steps done`}>
+            <ListChecks className={cn('h-3 w-3 shrink-0', done === tasks.length && 'text-emerald-600 dark:text-emerald-400')} />
+            <span className="flex gap-0.5">
+              {tasks.map((t, i) => (
+                // Emerald means done, everywhere in this game. Orange is the thing to do NEXT, and a
+                // finished step wearing it read as "act on me".
+                <span key={t.id ?? i} className={cn('h-2 w-1.5 rounded-[1px]', t.done ? 'bg-emerald-500' : 'bg-muted-foreground/25')} />
+              ))}
+            </span>
+          </span>
+        )}
+        {criteria.length > 0 && (
+          <span className="flex items-center gap-1" title={`Acceptance criteria: ${acMet} of ${criteria.length} met`}>
+            <Check className={cn('h-3 w-3 shrink-0', acAll && 'text-emerald-600 dark:text-emerald-400')} />
+            <span className="flex gap-0.5">
+              {criteria.map((c, i) => (
+                <span key={i} className={cn('h-2 w-2 rounded-full', met(c, i) ? 'bg-emerald-500' : 'border border-muted-foreground/30')} />
+              ))}
+            </span>
+          </span>
+        )}
       </button>
       {open && (
         <div className="mt-1 space-y-1.5">
