@@ -460,8 +460,8 @@ export interface PartSpec { key: string; label: string; options: string[]; color
 export const EXHIBIT_PARTS: PartSpec[] = [
   { key: 'body', label: 'Body', options: ['round', 'long', 'upright', 'bulky', 'tall', 'finned'], colorKey: 'body' },
   { key: 'head', label: 'Head', options: ['round', 'maned', 'beaked', 'horned', 'crested', 'tusked', 'trunk', 'none'], colorKey: 'head' },
-  { key: 'ears', label: 'Ears / mane', options: ['none', 'round', 'pointed', 'floppy'], colorKey: 'ears', optional: true },
-  { key: 'tail', label: 'Tail / fin', options: ['none', 'tufted', 'long', 'bushy', 'fin'], colorKey: 'tail', optional: true },
+  { key: 'ears', label: 'Ears', options: ['none', 'round', 'pointed', 'floppy'], colorKey: 'ears', optional: true },
+  { key: 'tail', label: 'Tail', options: ['none', 'tufted', 'long', 'bushy', 'fin'], colorKey: 'tail', optional: true },
   { key: 'markings', label: 'Markings', options: ['none', 'stripes', 'spots', 'dapples', 'saddle', 'patches'], colorKey: 'markings', optional: true },
 ];
 export const AMENITY_COLORS: { key: string; label: string }[] = [

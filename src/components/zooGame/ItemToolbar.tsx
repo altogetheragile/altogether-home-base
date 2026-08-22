@@ -190,12 +190,12 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isEnclosure && (
         <>
           {onSetEnclosure && (
-            <Menu label={`Size: ${item.enclosureSize ?? 'medium'}`} title="How big the habitat is - each animal is drawn to scale inside it">{(close) => (<>
+            <Menu label="Size" title={`How big the habitat is - ${item.enclosureSize ?? 'medium'}. Each animal is drawn to scale inside it.`}>{(close) => (<>
               <Options options={['small', 'medium', 'large']} value={item.enclosureSize ?? 'medium'} onPick={(o) => { onSetEnclosure(o as 'small' | 'medium' | 'large'); close(); }} />
               <p className="mt-1.5 max-w-[14rem] text-[11px] text-muted-foreground">A bigger habitat holds more animals.</p>
             </>)}</Menu>
           )}
-          <Menu label={`Shape: ${ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'rounded'}`} title="What shape the habitat is">{(close) => (
+          <Menu label="Shape" title={`What shape the habitat is - ${ENCLOSURE_SHAPES.find((s) => s.key === (design.parts.shape ?? 'rounded'))?.label ?? 'rounded'}`}>{(close) => (
             <Options options={ENCLOSURE_SHAPES.map((s) => s.key)} value={design.parts.shape ?? 'rounded'} onPick={(o) => { setPart('shape', o); close(); }}
               labels={Object.fromEntries(ENCLOSURE_SHAPES.map((s) => [s.key, s.label]))} />
           )}</Menu>
@@ -245,10 +245,11 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isExhibit && EXHIBIT_PARTS.map((p) => {
         const opt = design.parts[p.key] ?? p.options[0];
         return (
-          // "round" tells you nothing about which round thing it is. A menu says what it configures
-          // first and what it is set to second - the way Size and Shape already did on a habitat -
-          // so a row of them reads as a list of parts rather than a list of adjectives.
-          <Menu key={p.key} label={`${p.label}: ${opt}`} title={p.label} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
+          // Every control on this bar is named for the part it belongs to and nothing else - Ground,
+          // Fence, Head, Tail - so the row reads as a list of the thing's parts. It used to be
+          // labelled with its current setting, which gave you "round", "maned", "tufted": a row of
+          // adjectives with no nouns, where the two colour buttons beside them said what they were.
+          <Menu key={p.key} label={p.label} title={`${p.label} - ${opt}`} swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
             <div className="space-y-2">
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label}</div>
               <Options options={p.options} value={opt} onPick={(o) => setPart(p.key, o)} />
@@ -265,7 +266,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isFlora && !isLand && (
         <>
-          <Menu label={`Type: ${design.parts.type ?? item.template ?? 'tree'}`} title="What kind of planting this is">{(close) => (
+          <Menu label="Type" title={`What kind of planting this is - ${design.parts.type ?? item.template ?? 'tree'}`}>{(close) => (
             <Options options={FLORA_TYPES} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
@@ -289,7 +290,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isPath && (
         <>
-          <Menu label={`Width: ${(PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'medium').toLowerCase()}`} title="How wide the path is">{(close) => (
+          <Menu label="Width" title={`How wide the path is - ${(PATH_WIDTHS.find((w) => w.key === (design.parts.thickness ?? 'medium'))?.label ?? 'medium').toLowerCase()}`}>{(close) => (
             <Options options={PATH_WIDTHS.map((w) => w.key)} value={design.parts.thickness ?? 'medium'} onPick={(o) => { setPart('thickness', o); close(); }}
               labels={Object.fromEntries(PATH_WIDTHS.map((w) => [w.key, w.label]))} />
           )}</Menu>
@@ -300,7 +301,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {item.category === 'amenity' && (
         <>
-          <Menu label={`Kind: ${design.parts.type ?? 'shop'}`} title="What kind of building">{(close) => (
+          <Menu label="Kind" title={`What kind of building - ${design.parts.type ?? 'shop'}`}>{(close) => (
             <Options options={BUILDING_TYPES} value={design.parts.type ?? 'shop'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
