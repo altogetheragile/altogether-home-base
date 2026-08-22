@@ -594,6 +594,12 @@ const CANVAS_W = 820;
 // and is clipped by the park's edges, so turning it never leaves a gap at the ends.
 const RIVER_LEN = 1180;
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
+// The park's own height, and it does not change. It used to be measured from wherever the lowest
+// thing had ended up, which meant the park grew when you added a gift shop and the whole scene
+// rescaled to fit the new height - so laying down one more thing resized everything you had already
+// laid down. A zoo does not get bigger because you built a kiosk in it. Big enough for a full zoo
+// laid out in rows, and everything is kept inside it.
+const PLAY_H = 700;
 const PAD = 20;
 const GAP = 18;
 const PERIM = 8;        // how far a perimeter path sits outside a feature's body
@@ -608,7 +614,9 @@ function autoLayout(features: Feature[]): Map<string, { x: number; y: number }> 
   let x = PAD, y = PAD, rowH = 0;
   for (const f of features) {
     if (x + f.w > CANVAS_W - PAD && x > PAD) { x = PAD; y += rowH + GAP; rowH = 0; }
-    pos.set(f.item.id, { x: x + f.w / 2, y: y + f.h / 2 });
+    // Inside the park, always. A row that would run off the bottom stacks against it instead - the
+    // park has a size and things go in it; they do not make it taller by arriving.
+    pos.set(f.item.id, { x: x + f.w / 2, y: clamp(y + f.h / 2, PAD + f.h / 2, PLAY_H - PAD - f.h / 2) });
     x += f.w + GAP;
     rowH = Math.max(rowH, f.h);
   }
@@ -713,17 +721,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     return landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
   };
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
-  // Measured from where things REST, never from where one is being dragged. Measuring the live
-  // position made the park breathe under your hand: drag a tree downward, the canvas grew to
-  // contain it, the whole scene rescaled to fit the new height, and the thing you were holding
-  // moved out from under the pointer. The park is the product - it does not change size because
-  // you picked something up.
-  const contentBottom = features.reduce((m, f) => Math.max(m, restPos(f).y + f.h / 2), 0);
-  // Portrait: the park starts taller than it is wide and grows downward as the zoo fills.
-  // Sized so the WIDTH is what runs out first in a half-page pane: the park then fills its half
-  // instead of sitting in a centred strip with slack either side. It still grows downward as the
-  // zoo fills, at which point the height takes over and the whole thing scales down to stay in view.
-  const canvasH = Math.max(540, Math.round(contentBottom + PAD)) + PATH_H;
+  const canvasH = PLAY_H + PATH_H;
 
   // The visible body box of a feature (the enclosure box / building tile, excluding the name label),
   // used for both its perimeter path and where connectors attach.
