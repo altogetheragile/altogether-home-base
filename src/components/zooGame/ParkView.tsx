@@ -806,13 +806,21 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // picking a plant adds that plant's colours - so a guessed half-width sent it off the left edge.
   const toolbar = useRef<HTMLDivElement>(null);
   const [tbW, setTbW] = useState(0);
+  // And its height, so it can flip below the thing it belongs to when there is no room above.
+  // Safe to measure and act on, unlike the width: the height follows from the width, and the width
+  // is the park's, not the toolbar's position.
+  const [tbH, setTbH] = useState(0);
   useLayoutEffect(() => {
     const el = toolbar.current;
     if (!el) return;
     // Ignore sub-pixel churn: a measurement that feeds a position must not react to noise.
-    const ro = new ResizeObserver(() => setTbW((w) => (Math.abs(el.offsetWidth - w) > 1 ? el.offsetWidth : w)));
+    const measure = () => {
+      setTbW((w) => (Math.abs(el.offsetWidth - w) > 1 ? el.offsetWidth : w));
+      setTbH((h) => (Math.abs(el.offsetHeight - h) > 1 ? el.offsetHeight : h));
+    };
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setTbW(el.offsetWidth);
+    measure();
     return () => ro.disconnect();
   }, [building, part]);
 
@@ -839,7 +847,13 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
       x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
       y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
     });
-    const move = (ev: PointerEvent) => setDrag({ id: f.item.id, pos: at(ev) });
+    const move = (ev: PointerEvent) => {
+      // Touching the ground to pick a habitat up chooses the ground as a part, which is right for a
+      // tap and wrong the moment you start moving: nobody drags an enclosure across the park in
+      // order to recolour its floor. Once it is genuinely moving, put the swatches away.
+      if (Math.abs(ev.clientX - startX) > 4 || Math.abs(ev.clientY - startY) > 4) setPart(null);
+      setDrag({ id: f.item.id, pos: at(ev) });
+    };
     const up = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
@@ -1265,13 +1279,22 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         // it was laid out in, so the width it measures no longer depends on where it ended up.
         const band = CANVAS_W * scale - 16;
         const shift = (at: { x: number; y: number }) => clamp((at.x - CANVAS_W / 2) * scale, -(band - tbW) / 2, (band - tbW) / 2);
-        const topOf = (at: { x: number; y: number }) => Math.max(48, (at.y - f.h / 2) * scale - 12);
-        const dx = moving ? shift(p) : shift(rest);
-        const top = moving ? topOf(p) : topOf(rest);
+        // Above the item by preference, below it when the top wall is in the way. Sitting above and
+        // being clipped by the park's own edge is the one thing it must not do: a habitat pushed
+        // against the top wall took its toolbar off the top of the park with it, and all you could
+        // see was the last row of a menu you could no longer reach.
+        const above = (at: { x: number; y: number }) => (at.y - f.h / 2) * scale - 12; // its bottom edge
+        // Further below than above, because the thing's name tag hangs off its bottom edge.
+        const below = (at: { x: number; y: number }) => (at.y + f.h / 2) * scale + 32; // its top edge
+        const flip = (at: { x: number; y: number }) => above(at) - tbH < 4;
+        const at = moving ? p : rest;
+        const dx = shift(at);
+        const down = flip(at);
+        const top = down ? below(at) : above(at);
         return (
           <div className="pointer-events-none absolute inset-x-2 z-40 flex justify-center" style={{ top }}>
           <div ref={toolbar} className="pointer-events-auto flex justify-center"
-            style={{ maxWidth: band, transform: `translate(${dx}px,-100%)`, ...(moving ? { willChange: 'transform' } : {}) }}
+            style={{ maxWidth: band, transform: `translate(${dx}px,${down ? '0' : '-100%'})`, ...(moving ? { willChange: 'transform' } : {}) }}
             onPointerDown={(e) => e.stopPropagation()}>
             <ItemToolbar
               item={f.item}
