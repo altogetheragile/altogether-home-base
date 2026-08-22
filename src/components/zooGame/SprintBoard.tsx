@@ -369,7 +369,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   );
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col gap-3">
+    <div className="relative flex min-h-0 flex-1 flex-col gap-3">
       {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
           pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
@@ -402,6 +402,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
         </div>
       </div>
 
+      {/* Everything but the day bar scrolls in here, inside the half, so the half itself never grows
+          past the window and the bench stays pinned to its foot. The bench covers the last stretch
+          of it, which the padding at the end gives back: a card at the bottom of To Do can always be
+          scrolled out from behind it. */}
+      <div className={cn('min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5', onBench ? 'pb-[19.5rem]' : 'pb-16')}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : (
@@ -590,11 +595,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             </div>
           </div>
 
-          {/* Room for the bench to stand in front of, so nothing at the foot of the board is stuck
-              underneath it. */}
-          {edit && <div aria-hidden className={onBench ? 'h-[19.5rem] shrink-0' : 'h-16 shrink-0'} />}
         </>
       )}
+      </div>
 
       {/* The bench floats over the foot of the board rather than sitting under it in the flow. Under
           it, a bench big enough to work in pushed the board off the top of the screen, and building
@@ -602,7 +605,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           the bottom of the half it is always there and the board is always there, and neither has
           to move. It gives most of its height back when there is nothing on it. */}
       {edit && !dayStarting && (
-        <div className={cn('absolute inset-x-0 bottom-0 z-20 flex flex-col border-t border-border bg-background/97 backdrop-blur',
+        // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
+        // fault rather than depth.
+        <div className={cn('absolute inset-x-0 bottom-0 z-20 flex flex-col border-t border-border bg-background',
           onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}>
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-14 pt-2">
             <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
