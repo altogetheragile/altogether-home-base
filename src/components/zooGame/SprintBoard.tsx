@@ -277,10 +277,15 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
     isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))
     && (it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i])
     && (it.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
-  const whyNotDone = (it: BacklogItem) =>
-    !isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it)) ? 'Build it on the park first'
-      : !(it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i]) ? 'Accept every criterion on this card - including where it stands'
-        : 'Tick the rest of the plan';
+  // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
+  // tooltip nobody sees on a tablet.
+  const whyNotDone = (it: BacklogItem) => {
+    if (!isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))) return 'Next: build it on the park';
+    const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
+    if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
+    const task = (it.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done);
+    return task ? `Next: ${task.label.toLowerCase()}` : 'Next: finish the plan';
+  };
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
     if (o === 'start') return canStart(id);
@@ -503,6 +508,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         // Two states, never both: while there is building left to do, the way to the
                         // park; once the plan and the criteria are ticked, the move to Done. Dragging
                         // the card there does the same thing.
+                        note={readyForDone(it) ? undefined : whyNotDone(it)}
                         trailing={readyForDone(it)
                           ? <Button size="sm" className="h-7 shrink-0 bg-emerald-600 px-2 text-xs text-white hover:bg-emerald-700"
                             onClick={(e) => { e.stopPropagation(); onFinishItem(it.id); }}

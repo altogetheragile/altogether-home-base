@@ -504,20 +504,25 @@ export function floraAcceptance(type?: string): string[] {
 /** Build + placement acceptance criteria for an enclosure (habitat). The footprint is a studio
  *  (build) decision; where it sits in the park is the deploy one. */
 export function enclosureAcceptance(): string[] {
-  return ['Securely fenced and escape-proof', 'Big enough for its animals', 'Ground, shelter and water set up', 'Placed in its zone with room around it'];
+  // Outcomes, not build steps. These used to read almost word for word like the Developers' plan
+  // ("Fence it securely" / "Securely fenced"), so the player met two near-identical lists and only
+  // one of them ticked itself - which reads as busywork rather than as the difference between how
+  // you build a thing and what the Product Owner asked for. The plan is the work; these are what
+  // somebody would notice if the work were not done.
+  return ['No animal could get out of it', 'The animals have room to roam', 'It looks like somewhere an animal would live', 'Placed in its zone with room around it'];
 }
 
 /** Build + placement acceptance criteria for an exhibit (animal): built to look right, then settled
  *  into its enclosure. Handles plural names ("Penguins" -> "recognisable as penguins"). */
 export function exhibitAcceptance(name: string): string[] {
-  const looksLike = `Recognisable as ${/s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase()}`;
-  return [looksLike, 'Uses at least two colours', 'No bare patches', 'Placed in its enclosure'];
+  const looksLike = `A visitor would know it is ${/s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase()}`;
+  return [looksLike, 'It stands out from across the park', 'It looks finished, not half-painted', 'Placed in its enclosure'];
 }
 
 /** Build + placement acceptance criteria for a pathway: designed as a width + colour in the studio,
  *  then routed (placed) on the park to link things - the route can only be judged once drawn. */
 export function pathAcceptance(): string[] {
-  return ['The right width and colour', 'Placed to link the right features'];
+  return ['Wide enough to walk side by side', 'Placed to link the right features'];
 }
 
 /** Whether an acceptance criterion is a DEPLOY-time one - about how the item is sized or placed,

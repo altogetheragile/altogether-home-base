@@ -1111,7 +1111,8 @@ describe('zoo game: the toolbox', () => {
     const item = s.backlog.find((i) => i.template === 'lion' && i.status === 'backlog')!;
     expect(item.category).toBe('exhibit');
     expect(item.unsized).toBe(true);
-    expect(item.acceptance.some((a) => /recognisable/i.test(a))).toBe(true);
+    // The criteria are outcomes a visitor would notice, not a restatement of the build steps.
+    expect(item.acceptance.some((a) => /would know it is a lion/i.test(a))).toBe(true);
     // presetFor uses the template, not the id, so a maned lion shape is the starting point
     expect(presetFor(item).parts.head).toBe('maned');
   });
@@ -1146,9 +1147,9 @@ describe('zoo game: the toolbox', () => {
     expect(pathway.category).toBe('path');
     const draft = toolboxDraft(pathway);
     // Build AC (studio: width + colour) plus a deploy AC (routed on the park) - split correctly.
-    expect(draft.acceptance).toContain('The right width and colour');
+    expect(draft.acceptance).toContain('Wide enough to walk side by side');
     expect(draft.acceptance.some((a) => isDeployAcceptance(a))).toBe(true);
-    expect(draft.acceptance.filter((a) => !isDeployAcceptance(a))).toEqual(['The right width and colour']);
+    expect(draft.acceptance.filter((a) => !isDeployAcceptance(a))).toEqual(['Wide enough to walk side by side']);
     let s = addPbi(initialZooState(1), draft);
     const item = s.backlog.find((i) => i.category === 'path')!;
     // A path is designed as a width and a colour (both preset, so the design is ready to build).

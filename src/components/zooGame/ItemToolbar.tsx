@@ -10,7 +10,7 @@ import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { ChevronDown, Copy, Droplets, Sprout, X, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2 } from 'lucide-react';
 
 // ============= Building on the canvas =============
 //
@@ -118,6 +118,9 @@ interface ItemToolbarProps {
   onDesign: (design: ItemDesign) => void;
   onSetEnclosure?: (size: 'small' | 'medium' | 'large') => void;
   onToggleTask: (taskId: string) => void;
+  /** Accepting a criterion. The card is still where they live, but ticking them ONLY there meant an
+   *  eye round-trip across the screen for every one: you colour on the park and judge on the board.
+   *  The same list, the same state, reachable from whichever end you happen to be at. */
   onConfirmAc: (index: number, value: boolean) => void;
   onClose: () => void;
   copySources?: CopySource[];
@@ -304,6 +307,40 @@ export function ItemToolbar(props: ItemToolbarProps) {
       )}
 
       <Divider />
+      {/* The Product Owner's criteria, right where you are making the thing they are about. */}
+      {(item.acceptance ?? []).length > 0 && (() => {
+        const met = (item.acceptance ?? []).filter((_, i) => !!item.acConfirmed?.[i]).length;
+        const all = (item.acceptance ?? []).length;
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" className={cn(BTN, 'border', met === all ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-border bg-muted/60')}
+                title="What the Product Owner asked for">
+                <Check className="h-3.5 w-3.5" /> Accepted <span className="tabular-nums">{met}/{all}</span> <ChevronDown className="h-3 w-3" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="end" sideOffset={6} className="w-72 p-2.5">
+              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Acceptance criteria <span className="font-normal normal-case tracking-normal">the Product Owner&rsquo;s</span>
+              </div>
+              <ul className="space-y-1">
+                {(item.acceptance ?? []).map((label, i) => {
+                  const on = !!item.acConfirmed?.[i];
+                  return (
+                    <li key={i}>
+                      <button type="button" onClick={() => props.onConfirmAc(i, !on)} className="flex w-full items-start gap-1.5 text-left text-[12px]">
+                        <span className={cn('mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
+                        <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-1.5 text-[11px] text-muted-foreground/70">Also on the item&rsquo;s card - it is the same list.</p>
+            </PopoverContent>
+          </Popover>
+        );
+      })()}
       <ExplainButton cards={['definition-of-done', 'increment']} compact />
       <button type="button" onClick={onClose} aria-label="Deselect" title="Deselect"
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
