@@ -1,4 +1,4 @@
-import type { ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
+import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isDeployAcceptance, isLandscapeType } from './design';
@@ -793,6 +793,32 @@ export function writeBacklog(state: ZooGameState, brief: ZooBrief): ZooGameState
     backlog: ranked,
     brief,
   };
+}
+
+/** What each measurable thing is called, and where its number comes from. Only things the park
+ *  really counts: a measure you cannot observe is not a measure. */
+export const GOAL_METRICS: { key: GoalMetric; label: string; unit?: string; of: (s: ZooGameState) => number }[] = [
+  { key: 'happiness', label: 'Visitor happiness', unit: '/100', of: (s) => Math.round(s.lastReview?.overallHappiness ?? 0) },
+  { key: 'visitors', label: 'Visitors a Sprint', of: (s) => Math.round(s.lastReview?.totalAttendance ?? 0) },
+  { key: 'exhibits', label: 'Animals open', of: (s) => s.backlog.filter((it) => it.status === 'open' && it.category === 'exhibit').length },
+  { key: 'zones', label: 'Zones open', of: (s) => new Set(s.backlog.filter((it) => it.status === 'open').map((it) => it.zone)).size },
+  { key: 'amenities', label: 'Facilities open', of: (s) => s.backlog.filter((it) => it.status === 'open' && it.category === 'amenity').length },
+];
+
+/** How the Product Goal's own measures are doing, if the Scrum Team wrote any. This is what makes
+ *  the Review's "progress toward the Product Goal" a fact rather than a feeling. */
+export function goalMeasures(state: ZooGameState): { metric: GoalMetric; label: string; unit?: string; target: number; actual: number; met: boolean }[] {
+  return (state.productGoalMeasures ?? []).map((m) => {
+    const spec = GOAL_METRICS.find((g) => g.key === m.metric) ?? GOAL_METRICS[0];
+    const actual = spec.of(state);
+    return { metric: m.metric, label: spec.label, unit: spec.unit, target: m.target, actual, met: actual >= m.target };
+  });
+}
+
+/** Write the Product Goal in whichever shape the Scrum Team chose, with the measures that go with
+ *  it. The text stays the one canonical sentence everything else reads. */
+export function setGoalForm(state: ZooGameState, shape: GoalShape, goal: string, measures: GoalMeasure[]): ZooGameState {
+  return { ...state, productGoal: goal.trim() || state.productGoal, productGoalShape: shape, productGoalMeasures: measures };
 }
 
 /** The Scrum Team has read the Definition of Done and agreed it is the bar. */

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, availableItems, readyHorizon, notReady, sprintCapacity, GOAL_HAPPINESS_TARGET } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, GOAL_HAPPINESS_TARGET } from './engine';
 import { PbiCard } from './PbiCard';
 
 import { CoachTip } from './CoachTip';
@@ -10,7 +10,7 @@ import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed } from 'lucide-react';
+import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check } from 'lucide-react';
 
 type Step = 'done' | 'visitors' | 'next';
 const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
@@ -43,6 +43,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const progress = Math.round(productGoalProgress(state) * 100);
+  const goalChecks = goalMeasures(state);
   const history = (state.happiness ?? []).slice(-6);
   // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
   const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
@@ -85,6 +86,29 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
           </div>
           <span className="font-mono text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">{progress}%</span>
         </div>
+        {/* If the Scrum Team wrote measures with their Goal, this is where they pay for themselves:
+            the Review stops being a feeling about progress and becomes a comparison. Every one of
+            them is something the park counts, so none of it is anybody's opinion. */}
+        {goalChecks.length > 0 && (
+          <div className="space-y-1 rounded-md border border-border bg-muted/30 px-2.5 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Its measures <span className="font-normal normal-case tracking-normal">- what you said would tell you it had happened</span>
+            </div>
+            <ul className="space-y-0.5">
+              {goalChecks.map((m) => (
+                <li key={m.metric} className="flex items-center gap-2 text-[12px]">
+                  <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full', m.met ? 'bg-emerald-500 text-white' : 'border border-border')}>
+                    {m.met && <Check className="h-2.5 w-2.5" />}
+                  </span>
+                  <span className={cn('min-w-0 flex-1', m.met ? 'text-muted-foreground' : 'text-foreground')}>{m.label}</span>
+                  <span className={cn('shrink-0 font-mono text-[11px]', m.met ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
+                    {m.actual}{m.unit ?? ''} <span className="text-muted-foreground/70">/ {m.target}{m.unit ?? ''}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {history.length > 1 && (
           <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
             <span className="uppercase tracking-wide">Happiness by Sprint</span>
