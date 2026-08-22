@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
 /** How tall the docked bar is, so whatever it sits under can leave room for it. */
-export const DOCKED_BAR_H = '3.25rem';
+export const DOCKED_BAR_PX = 52;
+export const DOCKED_BAR_H = `${DOCKED_BAR_PX}px`;
 
 /** The one primary action, in the one place it always is.
  *

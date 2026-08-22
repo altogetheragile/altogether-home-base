@@ -1426,6 +1426,10 @@ interface ParkViewProps {
    *  somewhere, so this is how you lay one out: the pen comes out, at the width and colour it was
    *  designed at, for as long as that item is the one being built. */
   drawRoute?: { name: string; style: { thickness: number; color: string } } | null;
+  /** Whether the pen is out. Owned by the design bench for a pathway - the controls for a thing
+   *  being built belong with the rest of that thing's controls, not scattered over the product. */
+  drawing?: boolean;
+  onDrawing?: (on: boolean) => void;
   /** Deploy-time acceptance criteria (sizing/placement) for the item being deployed - confirmed here
    *  on the park, as you place & size it, since they can't be judged before it is placed. */
   deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[];
@@ -1459,7 +1463,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1470,7 +1474,9 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   const [tool, setTool] = useState<'none' | 'connect' | null>(null);
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1); // 1 = the park fits the width it is given
-  const effectiveTool: 'none' | 'connect' = !canConnect ? 'none' : (tool ?? (drawRoute ? 'connect' : 'none'));
+  // While a pathway is on the bench the bench holds the pen; otherwise it is the park's own toggle.
+  const effectiveTool: 'none' | 'connect' = !canConnect ? 'none' : (drawRoute ? (drawing ? 'connect' : 'none') : (tool ?? 'none'));
+  const stopDrawing = () => { setTool('none'); onDrawing?.(false); };
   // Style applied to a NEW connector; when deploying a Pathway it's the width/colour designed for
   // it, otherwise a sensible default. The toolbar still edits the selected one.
   const newConn = deployStyle ?? drawRoute?.style ?? { thickness: 8, color: '#c9a86a' };
@@ -1535,7 +1541,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             <div className="flex items-center gap-3">
               <ZoomControl zoom={zoom} onZoom={setZoom} />
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
-              {canConnect && onAddConnector && (
+              {canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
                   className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
                     effectiveTool === 'connect' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
@@ -1545,10 +1551,10 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             </div>
           </div>
           {/* Laying out a pathway: no plot, no hoardings - the route IS the thing. */}
-          {!deployMode && drawRoute && (
+          {!deployMode && drawRoute && effectiveTool !== 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/50 bg-primary/[0.06] px-2 py-1.5 text-[11px]">
               <Spline className="h-3.5 w-3.5 shrink-0 text-primary" />
-              <span className="font-medium">Laying <b>{drawRoute.name}</b>: click where it starts, then click a feature or another spot to finish the run. Draw as many runs as it needs.</span>
+              <span className="font-medium">Laying <b>{drawRoute.name}</b>. Pick up the pen on the design bench and draw its route here.</span>
             </div>
           )}
           {/* Deploy mode: placing an item is when you position it AND lay the paths that link it in. */}
@@ -1560,7 +1566,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                 <span className="font-medium text-emerald-700 dark:text-emerald-400">Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
                 {onFinishDeploy && (
                   <button type="button"
-                    onClick={() => { setTool('none'); setSelectedConn(null); onFinishDeploy(); }}
+                    onClick={() => { stopDrawing(); setSelectedConn(null); onFinishDeploy(); }}
                     className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700">
                     <Check className="h-3 w-3" /> Back to the board</button>
                 )}
@@ -1590,7 +1596,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           {canConnect && effectiveTool === 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
               <span className="font-medium text-primary">Click a start (an enclosure to attach, or empty grass to free-place), then click where it ends. It attaches if you finish on a feature.</span>
-              <button type="button" onClick={() => setTool('none')} className="ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Done</button>
+              <button type="button" onClick={stopDrawing} className="ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Done</button>
             </div>
           )}
           {/* Selected-connector toolbar: thickness, colour, delete. While a pathway is on the bench
@@ -1625,7 +1631,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           </div>
           <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
-            onAddConnector={(c) => { onAddConnector?.(c); setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
+            onAddConnector={(c) => { onAddConnector?.(c); if (!drawRoute) setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />

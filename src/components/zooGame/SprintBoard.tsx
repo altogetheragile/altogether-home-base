@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
 import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
-import { ActionBar, DOCKED_BAR_H } from './ActionBar';
+import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
 import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
@@ -64,6 +64,8 @@ interface SprintBoardProps {
   edit?: EditApi;
   part?: { id: string; key: string } | null;
   onPart?: (p: { id: string; key: string } | null) => void;
+  drawing?: boolean;
+  onDrawing?: (on: boolean) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -213,8 +215,22 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
+  // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
+  // it is how the board came to have less room reserved than the bench takes: with nothing on the
+  // bench there was no scroll at all and the last two cards were simply unreachable. Nothing here
+  // feeds back - the bench is positioned absolutely, so its height does not depend on this padding.
+  const benchWatch = useRef<ResizeObserver | null>(null);
+  const [benchH, setBenchH] = useState(0);
+  const benchRef = useCallback((el: HTMLDivElement | null) => {
+    benchWatch.current?.disconnect();
+    if (!el) { setBenchH(0); return; }
+    setBenchH(el.offsetHeight);
+    const ro = new ResizeObserver(() => setBenchH((h) => (Math.abs(el.offsetHeight - h) > 1 ? el.offsetHeight : h)));
+    ro.observe(el);
+    benchWatch.current = ro;
+  }, []);
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
   // caveat that pulling more in is a negotiation, not a default, is written on it.
@@ -338,7 +354,14 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const dropClass = (to: string) => (!drag || dropCol !== to ? '' : willSucceed(drag.from, to, drag.id) ? 'rounded-lg ring-2 ring-emerald-400' : 'rounded-lg ring-2 ring-amber-400');
 
   if (state.dayStage === 'dailyScrum') {
-    return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
+    // Its own scroll box. The half is exactly the window now, so anything returned straight out of
+    // here with nowhere to scroll simply ran off the bottom of it - and the Daily Scrum is longer
+    // than a screen, so the button that ends it was off the end of a page that would not turn.
+    return (
+      <div className="min-h-0 flex-1 overflow-y-auto pb-4 pr-0.5">
+        <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />
+      </div>
+    );
   }
   const dayStarting = state.dayStage === 'dayStart';
   // Something actually on the bench: it takes the room it needs then, and steps back when it is idle.
@@ -406,7 +429,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           past the window and the bench stays pinned to its foot. The bench covers the last stretch
           of it, which the padding at the end gives back: a card at the bottom of To Do can always be
           scrolled out from behind it. */}
-      <div className={cn('min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5', onBench ? 'pb-[22.5rem]' : 'pb-20')}>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5"
+        style={{ paddingBottom: benchH + DOCKED_BAR_PX + 12 }}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : (
@@ -607,11 +631,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {edit && !dayStarting && (
         // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
         // fault rather than depth.
-        <div className={cn('absolute inset-x-0 z-20 flex flex-col border-t border-border bg-background',
+        <div ref={benchRef} className={cn('absolute inset-x-0 z-20 flex flex-col border-t border-border bg-background',
           onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}
           style={{ bottom: DOCKED_BAR_H }}>
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
             <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
+              drawing={drawing} onDrawing={onDrawing}
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
           </div>
         </div>
