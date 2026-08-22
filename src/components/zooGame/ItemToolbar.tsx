@@ -291,7 +291,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
               labels={Object.fromEntries(PATH_WIDTHS.map((w) => [w.key, w.label]))} />
           )}</Menu>
           <ColourButton label="Path colour" value={design.colors.path} onChange={(hex) => setColor('path', hex)} />
-          <span className="shrink-0 px-1 text-[11px] text-muted-foreground">You draw the route when you deploy it.</span>
+          <span className="shrink-0 px-1 text-[11px] text-muted-foreground">Draw the route on the park - every run is laid at this width and colour.</span>
         </>
       )}
 
