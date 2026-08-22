@@ -341,6 +341,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
     return <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />;
   }
   const dayStarting = state.dayStage === 'dayStart';
+  // Something actually on the bench: it takes the room it needs then, and steps back when it is idle.
+  const onBench = !!building && state.backlog.some((i) => i.id === building);
 
   // A card that is Done but not yet open. It was built on the park, so it is already standing where
   // it will stand: what is left is confirming where that is, and opening it. "Deploy complete" was
@@ -588,13 +590,25 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             </div>
           </div>
 
-          {/* Under the board, where the empty half of the screen used to be: the thing you are
-              building, in detail. The board says where the work IS; the bench is the work. */}
-          {edit && (
+          {/* Room for the bench to stand in front of, so nothing at the foot of the board is stuck
+              underneath it. */}
+          {edit && <div aria-hidden className={onBench ? 'h-[19.5rem] shrink-0' : 'h-16 shrink-0'} />}
+        </>
+      )}
+
+      {/* The bench floats over the foot of the board rather than sitting under it in the flow. Under
+          it, a bench big enough to work in pushed the board off the top of the screen, and building
+          one thing meant scrolling up to see where it was and down again to work on it. Pinned to
+          the bottom of the half it is always there and the board is always there, and neither has
+          to move. It gives most of its height back when there is nothing on it. */}
+      {edit && !dayStarting && (
+        <div className={cn('absolute inset-x-0 bottom-0 z-20 flex flex-col border-t border-border bg-background/97 backdrop-blur',
+          onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}>
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-14 pt-2">
             <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
-          )}
-        </>
+          </div>
+        </div>
       )}
 
       {/* Pulling something in mid-Sprint is a negotiation, so it is something you go and do rather

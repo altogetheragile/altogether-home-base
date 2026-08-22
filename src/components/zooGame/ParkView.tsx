@@ -209,7 +209,11 @@ function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; 
 
 /** A single feature on the grounds. Amenities (buildings) sit on a plot tile; planting (flora)
  *  is drawn as just the plant - a tree or bush needs no surround. */
-function Plot({ item, cell, named = true }: { item: BacklogItem; cell: number;
+function Plot({ item, cell, named = true, design }: { item: BacklogItem; cell: number;
+  /** The design to draw it in. Given, it wins over the item's committed one - so a second tree put
+   *  down while the first is still being built wears the colours you are choosing right now, rather
+   *  than sitting there in the preset greys waiting for the item to be Done. */
+  design?: ItemDesign;
   /** Extra placements of the same item say the name once, on the first one. Three trees from one
    *  PBI wearing three copies of "Big Cats Planting" is a label overlapping a label. */
   named?: boolean }) {
@@ -220,7 +224,7 @@ function Plot({ item, cell, named = true }: { item: BacklogItem; cell: number;
         style={isFlora
           ? { padding: cell }
           : { background: '#cfd4d8', border: '2px solid #9aa3ab', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell }}>
-        <Sprite item={item} design={item.design ?? presetFor(item)} cell={cell} />
+        <Sprite item={item} design={design ?? item.design ?? presetFor(item)} cell={cell} />
       </div>
       {named && <FeatureName name={item.name} />}
     </div>
@@ -1258,7 +1262,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             style={{ left: c.x, top: c.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
             {f.item.category === 'flora' && isLandscapeType(landType(f.item))
               ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
-              : <Plot item={f.item} cell={4} named={false} />}
+              : <Plot item={f.item} cell={4} named={false} design={workingDesign(f.item)} />}
             {onRemoveCopy && tool === 'none' && (
               <button type="button" title={`Remove this ${f.item.name}`} aria-label={`Remove this ${f.item.name}`}
                 onPointerDown={(e) => e.stopPropagation()}
