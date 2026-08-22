@@ -1,17 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { BacklogItem } from './types';
 import {
-  isDesignDone, designCriteria, designSatisfiesTask, isDeployAcceptance,
+  designSatisfiesTask,
   EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
-  ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureWater, enclosureFlora,
+  ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureFlora,
   addWaterTo, addFloraTo, isLandscapeType, type ItemDesign,
 } from './design';
 import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2 } from 'lucide-react';
+import { ChevronDown, Copy, Droplets, Sprout, X, Trash2 } from 'lucide-react';
 
 // ============= Building on the canvas =============
 //
@@ -116,16 +115,10 @@ export interface CopySource { id: string; name: string; design: ItemDesign }
 interface ItemToolbarProps {
   item: BacklogItem;
   design: ItemDesign;
-  /** True when this is an already-built item being changed rather than a build in progress. */
-  editing: boolean;
   onDesign: (design: ItemDesign) => void;
   onSetEnclosure?: (size: 'small' | 'medium' | 'large') => void;
   onToggleTask: (taskId: string) => void;
   onConfirmAc: (index: number, value: boolean) => void;
-  onFinish: () => void;
-  /** Release it: the hoardings come down and visitors can see it. Only once the Product Owner has
-   *  signed off, which means every acceptance criterion - including where it stands. */
-  onRelease: () => void;
   onClose: () => void;
   copySources?: CopySource[];
   /** Which part of the thing is selected on the park - 'ground', 'fence', 'water', 'flora:2'.
@@ -133,30 +126,6 @@ interface ItemToolbarProps {
    *  brown squares were ever going to explain themselves. */
   focus?: string | null;
   onFocus?: (key: string | null) => void;
-}
-
-/** Whether this item can leave the build, and why not if it cannot. The plan and the acceptance
- *  criteria are ticked on the item's card - repeating them here made the toolbar a second place to
- *  look for the same facts, and a second place to keep in step. */
-function finishState(item: BacklogItem, design: ItemDesign) {
-  const acceptance = item.acceptance ?? [];
-  const buildAcceptance = acceptance.map((label, i) => ({ label, i })).filter((a) => !isDeployAcceptance(a.label));
-  const deployAcceptance = acceptance.map((label, i) => ({ label, i })).filter((a) => isDeployAcceptance(a.label));
-  const built = isDesignDone(item, design);
-  const acAll = buildAcceptance.every((a) => !!item.acConfirmed?.[a.i]);
-  // The Definition of Done is the bar; the Product Owner's sign-off is deliberately not part of this
-  // gate - it comes after the item is on the park and its placement criteria are met.
-  const planDone = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
-  const done = built && acAll && planDone;
-  const blocker = done ? null
-    : !built ? (designCriteria(item, design).find((c) => !c.pass)?.label ?? 'Finish the design')
-    : !acAll ? 'Accept the criteria on its card'
-    : ((item.tasks ?? []).find((t) => t.label.trim() && !isSignOffTask(t.label) && !t.done)?.label ?? 'Tick the plan on its card');
-  return {
-    done, blocker,
-    released: item.status === 'open',
-    deployAll: deployAcceptance.every((a) => !!item.acConfirmed?.[a.i]),
-  };
 }
 
 /** The floating toolbar for the selected item: only the controls this kind of thing needs. */
@@ -224,7 +193,6 @@ export function ItemToolbar(props: ItemToolbarProps) {
           <Divider />
           <ColourButton label="Ground" part="ground" focus={focus} onFocus={onFocus} value={design.colors.ground} onChange={(hex) => setColor('ground', hex)} />
           <ColourButton label="Fence" part="fence" focus={focus} onFocus={onFocus} value={design.colors.fence} onChange={(hex) => setColor('fence', hex)} />
-          {enclosureWater(design).length > 0 && <ColourButton label="Water" part="water" focus={focus} onFocus={onFocus} value={design.colors.water} onChange={(hex) => setColor('water', hex)} />}
           {selectedFlora && (
             <>
               <Divider />
@@ -336,22 +304,6 @@ export function ItemToolbar(props: ItemToolbarProps) {
       )}
 
       <Divider />
-      {/* The one thing only this toolbar can offer: ending the build. Everything it used to explain
-          is on the card, where it is ticked. */}
-      {(() => {
-        const st = finishState(item, design);
-        if (st.released) return <span className="flex shrink-0 items-center gap-1 px-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Live</span>;
-        if (props.editing) return (
-          <Button size="sm" className="h-8 shrink-0 px-3 text-xs" disabled={!st.deployAll} onClick={props.onRelease}
-            title={st.deployAll ? undefined : 'Confirm where it stands, on its card'}>Open it to visitors</Button>
-        );
-        return (
-          <Button size="sm" className="h-8 shrink-0 px-3 text-xs" disabled={!st.done} onClick={props.onFinish}
-            title={st.blocker ? `Next: ${st.blocker.toLowerCase()}` : undefined}>
-            {st.blocker ? <span className="max-w-[12rem] truncate font-normal">Next: {st.blocker.toLowerCase()}</span> : 'Finish the build'}
-          </Button>
-        );
-      })()}
       <ExplainButton cards={['definition-of-done', 'increment']} compact />
       <button type="button" onClick={onClose} aria-label="Deselect" title="Deselect"
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem } from './types';
-import { isDeployAcceptance } from './design';
+import { isDeployAcceptance, isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
@@ -28,6 +28,8 @@ interface SprintBoardProps {
   onToggleTask: (id: string, taskId: string) => void;
   /** Accepting a criterion, on the card the criterion belongs to. */
   onConfirmAc: (id: string, index: number, value: boolean) => void;
+  /** Move it to Done: built, standing where it stands, and open to visitors. */
+  onFinishItem: (id: string) => void;
   onStartItem: (id: string) => void;
   /** The Product Owner cancelling the Sprint - only they can, and only if the Goal is obsolete. */
   onCancelSprint?: () => void;
@@ -202,7 +204,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -252,11 +254,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const COLS = ['todo', 'doing', 'done'];
   const [drag, setDrag] = useState<{ id: string; from: string } | null>(null);
   const [dropCol, setDropCol] = useState<string | null>(null);
-  const dropOutcome = (from: string, to: string): 'start' | 'open' | 'studio' | 'far' | 'none' => {
+  const dropOutcome = (from: string, to: string): 'start' | 'finish' | 'studio' | 'far' | 'none' => {
     const fi = COLS.indexOf(from), ti = COLS.indexOf(to);
     if (ti <= fi) return 'none';
     if (ti > fi + 1) return 'far';
     if (from === 'todo') return 'start';
+    if (from === 'doing') return 'finish';
     return 'studio';
   };
   const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
@@ -267,9 +270,22 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
     const it = deploy.find((x) => x.id === id);
     return !!it && !!it.placed && signOffReady(it) && !(it.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done);
   };
+  // Everything the Definition of Done asks of this item: it is built, the Developers' plan is
+  // ticked, and the Product Owner's criteria are accepted. The sign-off task follows the criteria
+  // rather than being ticked by hand, so it is not part of the gate.
+  const readyForDone = (it: BacklogItem) =>
+    isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))
+    && (it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i])
+    && (it.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
+  const whyNotDone = (it: BacklogItem) =>
+    !isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it)) ? 'Build it on the park first'
+      : !(it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i]) ? 'Accept every criterion on this card - including where it stands'
+        : 'Tick the rest of the plan';
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
-    return o === 'start' && canStart(id);
+    if (o === 'start') return canStart(id);
+    if (o === 'finish') { const it = doing.find((x) => x.id === id); return !!it && readyForDone(it); }
+    return false;
   };
   const handleDrop = (to: string) => {
     if (!drag) return;
@@ -282,6 +298,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       if (!enclosureReady(state, it)) { toast.error(`Build ${enclosureOf(state, it)?.name ?? 'its enclosure'} first - the animal goes in once its habitat is ready.`); return; }
       if (atWipLimit) { toast.error(`WIP limit ${activeWipLimit(state)} reached - finish something in Doing first.`); return; }
       onStartItem(id);
+    } else if (o === 'finish') {
+      const it = doing.find((x) => x.id === id);
+      if (!it) return;
+      if (!readyForDone(it)) { toast.error(whyNotDone(it)); return; }
+      onFinishItem(id);
     } else if (o === 'studio') {
       toast('Build it on the park to finish it - it moves to Done once it is built and the plan is ticked off.');
     } else if (o === 'far') {
@@ -479,8 +500,15 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                             ? <Chip tone="coach">built{left ? ` · ${left} left` : ''}</Chip>
                             : <Chip tone="attention">in progress</Chip>}
                         </>}
-                        trailing={<Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs"
-                          onClick={(e) => { e.stopPropagation(); setDesigning(it.id); }}><Palette className="mr-1 h-3.5 w-3.5" /> Build</Button>}
+                        // Two states, never both: while there is building left to do, the way to the
+                        // park; once the plan and the criteria are ticked, the move to Done. Dragging
+                        // the card there does the same thing.
+                        trailing={readyForDone(it)
+                          ? <Button size="sm" className="h-7 shrink-0 bg-emerald-600 px-2 text-xs text-white hover:bg-emerald-700"
+                            onClick={(e) => { e.stopPropagation(); onFinishItem(it.id); }}
+                            title="Built, accepted and open to visitors">Move to Done</Button>
+                          : <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" title={whyNotDone(it)}
+                            onClick={(e) => { e.stopPropagation(); setDesigning(it.id); }}><Palette className="mr-1 h-3.5 w-3.5" /> Build</Button>}
                         detail={<>
                           {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
                               and tick the detail. The real building happens on the park. */}
@@ -496,7 +524,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 </BoardColumn>
                 </div>
                 <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet" tone="done">
+                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open" tone="done">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
                       or hold it. A whole column for "Done but not opened" said that badly: since the

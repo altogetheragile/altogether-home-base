@@ -1272,14 +1272,11 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                 // what the swatch has to show - a grey square for a tan fence is a lie.
                 ? { ...workingDesign(f.item), colors: { ground: f.theme.plot, fence: f.theme.plotBorder, ...workingDesign(f.item).colors } }
                 : workingDesign(f.item)}
-              editing={f.item.status === 'done'}
               copySources={edit.copySources(f.item)}
               onDesign={(d) => edit.onDesign(f.item.id, d)}
               onSetEnclosure={f.item.category === 'enclosure' ? (size) => edit.onSetEnclosure(f.item.id, size) : undefined}
               onToggleTask={(taskId) => edit.onToggleTask(f.item.id, taskId)}
               onConfirmAc={(i, v) => edit.onConfirmAc(f.item.id, i, v)}
-              onFinish={() => edit.onFinishBuild(f.item.id)}
-              onRelease={() => edit.onRelease(f.item.id)}
               focus={part?.id === f.item.id ? part.key : null}
               onFocus={(key) => setPart(key ? { id: f.item.id, key } : null)}
               onClose={() => { setPart(null); onOpenBuild(null); }}
