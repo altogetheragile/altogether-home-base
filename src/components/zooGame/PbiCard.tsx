@@ -72,26 +72,57 @@ export function PbiCard({
       aria-label={onClick ? label : undefined}
       onClick={onClick}
       className={cn(RADIUS.panel, 'border text-sm transition-colors', s.shell,
-        card ? 'p-2' : 'px-2.5 py-2', onClick && 'cursor-pointer', className)}>
-      <div className={cn('flex gap-2', card ? 'items-start' : 'items-center')}>
-        {lead}
-        <Icon className={cn('h-4 w-4 shrink-0', card && 'mt-0.5', s.icon)} />
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
-          <span className={cn('min-w-0 flex-1 basis-28 break-words font-medium leading-tight', card && 'truncate')}>{item.name}</span>
-          {badges}
-          {state === 'live' && <Chip tone="done" icon={<Check className="h-2.5 w-2.5" />}>Live</Chip>}
-          <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold',
-            item.unsized ? TONE.attention.chip : 'bg-muted text-muted-foreground')}
-            title={item.unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
-            {item.unsized ? '?' : item.estimate}{card ? ' pts' : ''}
-          </span>
-          {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
+        card ? 'p-2' : 'px-2 py-1.5', onClick && 'cursor-pointer', className)}>
+      {/* A board column is a third of half a screen. Everything on one line meant the name wrapped
+          to two and pushed the chips onto a third, so four cards no longer fitted a column that
+          holds four; sharing the line with the button left the name a stub - "Big Cats...".
+          So: the NAME gets a line of its own, the width of the whole card, and the chips and the
+          action share the one below it. Two tidy lines, and the name is legible in both. */}
+      {card ? (
+        <div className="flex items-start gap-2">
+          {lead}
+          <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', s.icon)} />
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
+            <span title={item.name} className="min-w-0 flex-1 basis-28 truncate font-medium leading-tight">{item.name}</span>
+            {badges}
+            {state === 'live' && <Chip tone="done" icon={<Check className="h-2.5 w-2.5" />}>Live</Chip>}
+            <Points item={item} suffix />
+            {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
+          </div>
+          {trailing}
         </div>
-        {trailing}
-      </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5">
+            {lead}
+            <Icon className={cn('h-4 w-4 shrink-0', s.icon)} />
+            <span title={item.name} className="min-w-0 flex-1 truncate font-medium leading-tight">{item.name}</span>
+            {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
+          </div>
+          {/* Wraps: with three chips and a button in a third of half a screen there is not always
+              room for all four, and a button that runs out over the next column reads as broken. */}
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            {badges}
+            {state === 'live' && <Chip tone="done" icon={<Check className="h-2.5 w-2.5" />}>Live</Chip>}
+            <Points item={item} />
+            {trailing && <span className="ml-auto flex shrink-0 items-center gap-1.5">{trailing}</span>}
+          </div>
+        </div>
+      )}
       {note && <div className="mt-1 pl-6 text-[11px] font-medium text-amber-700 dark:text-amber-300">{note}</div>}
       {detail}
     </div>
+  );
+}
+
+/** Its size in points, or a "?" while the Developers have not sized it. */
+function Points({ item, suffix = false }: { item: BacklogItem; suffix?: boolean }) {
+  return (
+    <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold',
+      item.unsized ? TONE.attention.chip : 'bg-muted text-muted-foreground')}
+      title={item.unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
+      {item.unsized ? '?' : item.estimate}{suffix ? ' pts' : ''}
+    </span>
   );
 }
 

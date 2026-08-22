@@ -206,12 +206,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
             {/* Half and half: the work on the left, the product on the right. The board fills its
                 half rather than being a rail, so the Sprint Backlog can lay its columns out the way
                 a board does - To Do, Doing, Done, left to right. */}
-            <div className="relative flex min-h-0 w-1/2 shrink-0 flex-col border-r border-border">
-              <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-                <div className="flex min-h-full flex-col gap-3 pb-24">
-                  {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
-                  {children}
-                </div>
+            {/* The half is exactly the window, never taller. Its own scrolling belongs to the parts
+                inside it - the board's columns - so that the design bench can be pinned to the foot
+                of it and stay pinned. A pane that grows with its contents has no foot to pin to. */}
+            <div className="relative flex min-h-0 w-1/2 shrink-0 flex-col overflow-hidden border-r border-border">
+              <div className="flex h-full min-h-0 flex-col gap-3 px-2 py-2">
+                {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
+                {children}
               </div>
             </div>
             <div className="min-h-0 w-1/2 overflow-y-auto px-2 pb-20 pt-3 sm:px-3">
