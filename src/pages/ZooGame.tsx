@@ -107,13 +107,16 @@ export default function ZooGame() {
     onSetEnclosure: setEnclosureSize,
     onToggleTask: toggleTask,
     onConfirmAc: confirmAc,
+    // Moving a card to Done is the whole ending: it was built where it stands, so there is nothing
+    // to place, and Done means open. The Developers make that move when the plan and the criteria
+    // are ticked - it is not a button on the thing they are painting.
     onFinishBuild: (id: string) => {
       const it = state.backlog.find((x) => x.id === id);
       if (it?.status !== 'committed') return;
       build(id, it.draftDesign ?? presetFor(it));
-      // It was built where it stands, so it is already placed. Marking it so skips a step that only
-      // ever made sense when the building happened somewhere else.
       placeOnPark(id);
+      deployComplete(id);
+      setBuildingId(null);
     },
     onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
     // Something of the same kind you have already built, to start from rather than begin again.
@@ -268,7 +271,7 @@ export default function ZooGame() {
       case 'planning':
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onConfirmAc={confirmAc} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={selectOnPark} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onConfirmAc={confirmAc} onFinishItem={edit.onFinishBuild} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={selectOnPark} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':
