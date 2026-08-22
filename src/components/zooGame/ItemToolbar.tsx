@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { BacklogItem } from './types';
 import {
   designSatisfiesTask,
-  EXHIBIT_PARTS, AMENITY_COLORS, FLORA_TYPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
+  EXHIBIT_PARTS, AMENITY_COLORS, floraFamily, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
   ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureFlora,
   addWaterTo, addFloraTo, isLandscapeType, type ItemDesign,
 } from './design';
@@ -281,7 +281,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
       {isFlora && !isLand && (
         <>
           <Menu label="Type" icon={Sprout} title={`What kind of planting this is - ${design.parts.type ?? item.template ?? 'tree'}`}>{(close) => (
-            <Options options={FLORA_TYPES} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
+            <Options options={floraFamily(design.parts.type ?? item.template)} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
           {floraColors(design.parts.type ?? item.template).map((c) => (
