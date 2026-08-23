@@ -1207,14 +1207,13 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   // Visitor happiness comes from what the game actually models - the design quality of what
   // you delivered - not from the wording of the Definition of Done. The DoD's job is to be the
   // team's completion gate (the workflow every item follows to be Done), not a happiness dial.
-  // A closed zoo has no visitors, so it has no happiness and no word of mouth either. Feeding the
-  // simulation the real attendance while the gates were shut meant a park of paths and grass drew
-  // hundreds of people and then disappointed them, which taught the wrong thing twice over: that
-  // laying groundwork is releasable, and that visitors turn up for it.
-  const gatesOpen = zooIsOpen(state);
-  const arriving = gatesOpen ? state.attendance
-    : Object.fromEntries(Object.keys(state.attendance).map((k) => [k, 0])) as typeof state.attendance;
-  const result = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, arriving, seedFor(state));
+  // People turn up and are disappointed - they are not turned away at the gate. That is the more
+  // useful failure by a distance: a lockout tells you what you may not do, while a coachload of
+  // visitors walking round a park with no animal in it and going home unhappy is the feedback the
+  // Sprint Review exists to inspect. The simulation needs no help to do it - a visitor with nothing
+  // worth seeing scores zero joy - and word of mouth carries the disappointment into next Sprint's
+  // attendance, which is the part that really bites.
+  const result = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, state.attendance, seedFor(state));
 
   const committedThisSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
   const deliveredThisSprint = committedThisSprint.filter((it) => it.status === 'done' || it.status === 'open');

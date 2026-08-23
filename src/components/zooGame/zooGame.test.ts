@@ -2511,13 +2511,18 @@ describe('zoo game: paths and grass are a park, not a zoo', () => {
     expect(zooIsOpen(open(bare, 'lion-enc', 'lion', 'bigcats-paths'))).toBe(true);
   });
 
-  it('nobody visits a zoo that is not open, so it earns no happiness either', () => {
-    // The zoo used to draw its seeded crowd whatever was in it, which taught that groundwork is
-    // releasable and that people turn up for it.
-    const closed = reviewSprint({ ...initialZooState(1), phase: 'sprint' } as ZooGameState);
-    expect(Object.values(closed.attendance).reduce((a, b) => a + b, 0)).toBeGreaterThan(0); // the town is still there
-    expect(closed.lastReview!.totalAttendance).toBe(0);
-    expect(closed.happiness![closed.happiness!.length - 1]).toBe(0);
+  it('lets people turn up and be disappointed, rather than turning them away', () => {
+    // The more useful failure by a distance. A lockout tells you what you may not do; a coachload
+    // walking round a park with no animal in it and going home unhappy is the feedback the Review
+    // exists to inspect - and word of mouth carries it into next Sprint, which is the part that bites.
+    const before = { ...initialZooState(1), phase: 'sprint' } as ZooGameState;
+    const arrived = Object.values(before.attendance).reduce((a, b) => a + b, 0);
+    expect(arrived).toBeGreaterThan(0);
+    const after = reviewSprint(before);
+    expect(after.lastReview!.totalAttendance).toBe(arrived);   // they came
+    expect(after.happiness![after.happiness!.length - 1]).toBe(0); // and there was nothing to see
+    // Word of mouth: fewer of them next time.
+    expect(Object.values(after.attendance).reduce((a, b) => a + b, 0)).toBeLessThan(arrived);
   });
 
   it('opens to the public the moment one zone is a whole slice', () => {
