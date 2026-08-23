@@ -2683,10 +2683,27 @@ describe('zoo game: the park answers the criteria it can answer', () => {
     const s = initialZooState(1);
     const paths = s.backlog.find((i) => i.id === 'bigcats-paths')!;
     const none = checkCriterion(s, paths, 'Can I get to this zone without crossing the grass?');
-    expect(none).toEqual({ met: false, evidence: 'no path reaches anything here' });
+    // A "no" the player cannot overrule has to say what would make it a yes.
+    expect(none!.met).toBe(false);
+    expect(none!.evidence).toMatch(/^draw a run up to the /);
     const linked: ZooGameState = { ...s, connectors: [{ id: 'c1', a: { featureId: 'lion-enc', x: 0, y: 0 }, b: { x: 40, y: 40 }, bends: [], thickness: 9, color: '#c9a86a' }] };
     expect(checkCriterion(linked, paths, 'Can I get to this zone without crossing the grass?'))
       .toEqual({ met: true, evidence: 'a path runs to the Lion Enclosure' });
+
+    // And a run that finishes on the grass BESIDE the habitat counts too. It plainly reaches it,
+    // and this criterion is one the park answers - so being wrong about it left the card stuck with
+    // no way to say otherwise.
+    const placed: ZooGameState = {
+      ...s,
+      backlog: s.backlog.map((it) => (it.id === 'lion-enc' ? { ...it, pos: { x: 300, y: 300 } } : it)),
+      connectors: [{ id: 'c2', a: { x: 300, y: 380 }, b: { x: 300, y: 640 }, bends: [], thickness: 9, color: '#c9a86a' }],
+    };
+    expect(checkCriterion(placed, paths, 'Can I get to this zone without crossing the grass?'))
+      .toEqual({ met: true, evidence: 'a path runs to the Lion Enclosure' });
+
+    // Far away is still far away.
+    const away: ZooGameState = { ...placed, connectors: [{ id: 'c3', a: { x: 700, y: 60 }, b: { x: 760, y: 90 }, bends: [], thickness: 9, color: '#c9a86a' }] };
+    expect(checkCriterion(away, paths, 'Can I get to this zone without crossing the grass?')!.met).toBe(false);
   });
 });
 
