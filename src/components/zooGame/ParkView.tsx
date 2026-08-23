@@ -1,6 +1,6 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
-import { renderDesign, presetFor, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
+import { renderDesign, presetFor, pathWidthPx, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
@@ -640,7 +640,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -651,6 +651,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   connectors: ZooConnector[];
   selectedConn: string | null;
   newConn: { thickness: number; color: string };
+  /** The width and colour a run is laid at now - its pathway's, rather than whatever it was drawn
+   *  with. Resolved by the caller, which is the one that has the Backlog. */
+  runStyle: (c: ZooConnector) => { thickness: number; color: string };
   /** The item whose build inspector is open, so its site can show it is selected. */
   building?: string | null;
   /** Select an item on the park - its toolbar appears above it. */
@@ -728,9 +731,18 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // --- Connector geometry: resolve each end (its feature's perimeter edge, or a free point) + the polyline.
   const boxOf = (id: string) => { const f = features.find((x) => x.item.id === id); return f ? coreBox(f) : null; };
   const anchor = (end: ConnectorEnd) => { const b = end.featureId ? boxOf(end.featureId) : null; return b ? { x: b.cx, y: b.cy } : { x: end.x, y: end.y }; };
+  /** Only an enclosure or a building has a perimeter loop for a path to meet. Everything else - a
+   *  bridge, a pond, a plot - is met flush, because a path that stops eight pixels short of the
+   *  bridge it crosses to is a path with a gap in it. */
+  const hasPerimeter = (id: string) => {
+    const f = features.find((x) => x.item.id === id);
+    return !!f && (f.kind === 'enclosure' || f.item.category === 'amenity');
+  };
   const resolveEnd = (end: ConnectorEnd, toward: { x: number; y: number }) => {
     const b = end.featureId ? boxOf(end.featureId) : null;
-    return b ? boxEdge(b.cx, b.cy, b.hw + PERIM, b.hh + PERIM, toward.x, toward.y) : { x: end.x, y: end.y };
+    if (!b) return { x: end.x, y: end.y };
+    const out = end.featureId && hasPerimeter(end.featureId) ? PERIM : 0;
+    return boxEdge(b.cx, b.cy, b.hw + out, b.hh + out, toward.x, toward.y);
   };
   // A feature's perimeter path (a loop just outside its body), following its shape. Enclosures use
   // their chosen shape; buildings use a rounded rectangle. Only enclosures and buildings get one.
@@ -839,11 +851,16 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     // Touching something you can work on selects it, and it STAYS selected while you move it.
     // Without stopping the event here it reached the park behind, which cleared the selection - so
     // nudging an enclosure an inch to the left put the whole board back up over the park.
+    // While a route is being drawn, a click on a habitat means "attach the path here" - it must not
+    // also pick the habitat up onto the design bench, because that knocks the pathway off it and
+    // stops the drawing. Attaching a path to anything was impossible for exactly this reason: every
+    // attempt swapped the bench over and left you with a run floating in the grass.
+    if (tool !== 'none') return;
     if (selectable(f)) {
       handled.current = true;
       if (building !== f.item.id) onOpenBuild?.(f.item.id);
     }
-    if (!onPlaceItem || tool !== 'none') return; // in connect mode, clicks draw connectors
+    if (!onPlaceItem) return;
     e.preventDefault();
     handled.current = true;
     const s = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
@@ -1079,7 +1096,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             all tan bodies - so where paths meet, the bodies merge cleanly instead of one outline
             cutting through another. */}
         {(() => {
-          const drawn = connectors.map((c) => ({ c, d: toD(connPoints(c)) }));
+          // A run wears its pathway's width and colour as they are NOW, not as they were when it
+          // was drawn. Changing the width on the bench and watching the path you already laid stay
+          // stubbornly thin is the sort of thing that makes a control feel broken.
+          const drawn = connectors.map((c) => ({ c: { ...c, ...runStyle(c) }, d: toD(connPoints(c)) }));
           return (
             <svg className="absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} style={{ pointerEvents: 'none' }}>
               {/* Outlines */}
@@ -1098,7 +1118,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                 <polyline points={toD(connPoints(selected))} fill="none" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" />
               )}
               {/* Selection hit-lines (only while deploying, i.e. editable). */}
-              {editable && tool === 'none' && onSelectConn && drawn.map(({ c, d }) => (
+              {/* Selectable whether or not anything is being drawn: picking a path up to look at it
+                  is not editing it, and a delivered route you cannot even point at is one you have
+                  no way to ask about. */}
+              {tool === 'none' && onSelectConn && drawn.map(({ c, d }) => (
                 <polyline key={`h-${c.id}`} points={d} fill="none" stroke="transparent" strokeWidth={Math.max(20, c.thickness + 12)} strokeLinecap="round" strokeLinejoin="round"
                   style={{ pointerEvents: 'stroke', cursor: 'pointer' }} onPointerDown={(e) => { e.stopPropagation(); onSelectConn(c.id); }} />
               ))}
@@ -1162,8 +1185,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
               // A tap selects it, and the toolbar for it appears above - the controls come to the
-              // thing, rather than the thing being taken to a panel.
-              onClick={selectable(f) ? (e) => { e.stopPropagation(); onOpenBuild?.(f.item.id); } : undefined}
+              // thing, rather than the thing being taken to a panel. Except while a route is being
+              // drawn, when a tap means "attach the path here": there are two handlers on this box
+              // and both had to be told, which is why guarding only the pointerdown was not enough.
+              onClick={selectable(f) && tool === 'none' ? (e) => { e.stopPropagation(); onOpenBuild?.(f.item.id); } : undefined}
               className={cn('group absolute z-10 select-none', onPlaceItem ? 'cursor-grab active:cursor-grabbing' : '', dragging && 'z-30', justOpened === f.item.id && 'zoo-pop-in')}
               // A drag MOVES the element rather than re-laying it out. Setting left/top every frame
               // made the browser re-lay-out and repaint the whole park sixty times a second, and
@@ -1477,6 +1502,15 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   // Style applied to a NEW connector; when deploying a Pathway it's the width/colour designed for
   // it, otherwise a sensible default. The toolbar still edits the selected one.
   const newConn = deployStyle ?? drawRoute?.style ?? { thickness: 8, color: '#c9a86a' };
+  /** A run wears its pathway's width and colour as they stand, not as they were when it was drawn.
+   *  Changing the width on the bench and watching the path you already laid stay stubbornly thin is
+   *  the sort of thing that makes a control feel broken. A run that belongs to nothing keeps what
+   *  it was drawn with. */
+  const runStyle = (c: ZooConnector): { thickness: number; color: string } => {
+    const owner = c.itemId ? state.backlog.find((it) => it.id === c.itemId) : undefined;
+    const d = owner ? owner.design ?? owner.draftDesign : undefined;
+    return d ? { thickness: pathWidthPx(d.parts.thickness), color: d.colors.path ?? c.color } : { thickness: c.thickness, color: c.color };
+  };
   const selected = canConnect ? (connectors.find((c) => c.id === selectedConn) ?? null) : null;
   const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
   // Ids of live features that already have an improvement in flight (so we don't stack PBIs).
@@ -1620,10 +1654,32 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               its width and colour are the ITEM's, chosen once over there and applied to every run -
               two sets of the same two controls, one per run and one per item, is how you end up with
               a zoo of paths that do not match each other. Deleting a wrong run stays. */}
-          {canConnect && effectiveTool === 'none' && selected && onUpdateConnector && (
+          {effectiveTool === 'none' && selected && (
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-blue-400/50 bg-blue-500/5 px-2 py-1.5 text-[11px]">
-              {drawRoute && <span className="font-medium text-muted-foreground">This run of <b className="text-foreground">{drawRoute.name}</b>. Its width and colour come from the design bench.</span>}
-              {!drawRoute && <span className="flex items-center gap-1.5">
+              {(() => {
+                // Three cases, and they are genuinely different. A run of the pathway on the bench
+                // is yours to change. A run of a DELIVERED pathway is part of the Increment, so it
+                // changes the way anything else delivered changes - through the Backlog. And a run
+                // nobody owns is a leftover from the old free-draw step, which anyone may tidy away.
+                const owner = state.backlog.find((it) => it.id === selected.itemId);
+                const onBench = !!drawRoute && drawRoute.id === selected.itemId;
+                if (onBench) return <span className="font-medium text-muted-foreground">This run of <b className="text-foreground">{drawRoute.name}</b>. Its width and colour come from the design bench.</span>;
+                if (owner) return (
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-muted-foreground">A run of <b className="text-foreground">{owner.name}</b>, delivered.
+                      Re-routing it is a change to the product, so it goes through the Backlog.</span>
+                    {onImprove && !improving?.has(owner.id) && (
+                      <button type="button" onClick={() => { onImprove(owner.id); setSelectedConn(null); }}
+                        className="flex items-center gap-1 rounded border border-primary/60 bg-background px-1.5 py-0.5 font-semibold text-primary hover:bg-primary/10">
+                        <Sparkles className="h-3 w-3" /> Improve {owner.name}
+                      </button>
+                    )}
+                    {improving?.has(owner.id) && <span className="rounded bg-amber-500/10 px-1.5 py-0.5 font-medium text-amber-700 dark:text-amber-300">Already on the Backlog to improve</span>}
+                  </span>
+                );
+                return <span className="font-medium text-muted-foreground">A run left over from an earlier way of drawing paths. Nothing owns it.</span>;
+              })()}
+              {!drawRoute && onUpdateConnector && !selected.itemId && <span className="flex items-center gap-1.5">
                 <span className="font-medium text-muted-foreground">Thickness</span>
                 {[4, 8, 14].map((t) => (
                   <button key={t} type="button" onClick={() => onUpdateConnector(selected.id, { thickness: t })} title={`${t}px`} aria-pressed={selected.thickness === t}
@@ -1632,21 +1688,21 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                   </button>
                 ))}
               </span>}
-              {!drawRoute && <span className="flex items-center gap-1.5">
+              {!drawRoute && onUpdateConnector && !selected.itemId && <span className="flex items-center gap-1.5">
                 <span className="font-medium text-muted-foreground">Colour</span>
                 {CONNECTOR_COLORS.map((c) => (
                   <button key={c} type="button" onClick={() => onUpdateConnector(selected.id, { color: c })} title={c}
                     className={cn('h-5 w-5 rounded-full border', selected.color.toLowerCase() === c ? 'border-foreground ring-2 ring-foreground/30' : 'border-border/60')} style={{ background: c }} />
                 ))}
               </span>}
-              {onDeleteConnector && (
-                <button type="button" onClick={() => { onDeleteConnector(selected.id); setSelectedConn(null); }} title="Delete connector"
-                  className="ml-auto flex items-center gap-1 rounded border border-destructive/50 bg-background px-1.5 py-0.5 font-medium text-destructive hover:bg-destructive/10"><Trash2 className="h-3 w-3" /> Delete</button>
+              {onDeleteConnector && (!selected.itemId || drawRoute?.id === selected.itemId) && (
+                <button type="button" onClick={() => { onDeleteConnector(selected.id); setSelectedConn(null); }} title="Take this run back up"
+                  className="ml-auto flex items-center gap-1 rounded border border-destructive/50 bg-background px-1.5 py-0.5 font-medium text-destructive hover:bg-destructive/10"><Trash2 className="h-3 w-3" /> Take it up</button>
               )}
             </div>
           )}
           </div>
-          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
+          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             // Every run drawn for a pathway carries that pathway's id, so the item can list its own
             // runs and take one back off. A route you cannot edit is a route you have to get right
