@@ -222,12 +222,12 @@ export const ImportUploader: React.FC = () => {
         </div>
 
         {file && (
-          <div className="bg-info/10 border border-info/20 rounded-md p-4">
+          <div className="bg-primary/10 border border-primary/20 rounded-md p-4">
             <div className="flex items-start space-x-3">
-              <AlertTriangle className="h-5 w-5 text-info mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-primary mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-info">Preview Before Processing</p>
-                <p className="text-info/80 mt-1">
+                <p className="font-medium text-primary">Preview Before Processing</p>
+                <p className="text-primary/80 mt-1">
                   After uploading, you'll be able to preview the data and configure column mappings 
                   before processing it into the main database tables.
                 </p>

@@ -30,7 +30,7 @@ const ImportManager: React.FC = () => {
       case 'processing':
         return <Clock className="h-4 w-4 text-warning animate-spin" />;
       case 'uploaded':
-        return <AlertTriangle className="h-4 w-4 text-info" />;
+        return <AlertTriangle className="h-4 w-4 text-primary" />;
       case 'cancelled':
         return <XCircle className="h-4 w-4 text-muted" />;
       default:

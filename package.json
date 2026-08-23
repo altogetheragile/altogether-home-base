@@ -10,7 +10,7 @@
     "dev": "vite",
     "export:kb": "node scripts/export-kb-json.mjs",
     "prebuild": "node scripts/export-kb-json.mjs",
-    "build": "tsc -b && vite build && node scripts/prerender.mjs",
+    "build": "tsc -b && vite build && node scripts/check-tailwind-opacity.mjs && node scripts/prerender.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint . --max-warnings 134",
     "preview": "vite preview",
@@ -35,7 +35,8 @@
     "bdd:report": "cucumber-js --config cucumber.mjs --format html:cucumber-report.html",
     "bdd:ci": "cucumber-js --config cucumber.mjs --tags \"not @skip\" --parallel 2 --format pretty --format html:cucumber-report.html",
     "check:routes": "node scripts/check-sitemap-routes.mjs",
-    "audit:artifacts": "tsx scripts/audit-artifact-contracts.ts"
+    "audit:artifacts": "tsx scripts/audit-artifact-contracts.ts",
+    "check:css": "node scripts/check-tailwind-opacity.mjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
