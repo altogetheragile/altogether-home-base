@@ -442,6 +442,37 @@ function floraGrid(design: ItemDesign): (string | null)[][] {
     return g;
   }
   if (type === 'bush') { paintShaded(g, ellipse(8, 9, 4.2, 3.4).filter(([, y]) => y >= 6), foliage, 22, -20); return g; }
+
+  // Trees come in kinds. A round crown on a stick was every tree in the park, so a Forest and a
+  // Waterside were the same planting in different places.
+  const piece = design.parts.piece;
+  if (piece === 'pine') {
+    for (let y = 10; y <= 13; y++) { g[y][7] = trunk; g[y][8] = shade(trunk, -14); }
+    // Tiers, narrow at the top - drawn back to front so each skirt overlaps the one above.
+    for (const [cy, half] of [[3, 1], [5, 2], [7, 3], [9, 4]] as [number, number][]) {
+      for (let dy = 0; dy < 2; dy++) for (let x = 8 - half - dy; x <= 8 + half + dy; x++) {
+        if (x >= 0 && x < GRID_W && cy + dy < GRID_H) g[cy + dy][x] = shade(foliage, dy ? -12 : 8);
+      }
+    }
+    return g;
+  }
+  if (piece === 'palm') {
+    for (let y = 6; y <= 13; y++) { const x = 8 + (y < 9 ? 1 : 0); g[y][x] = trunk; g[y][x - 1] = shade(trunk, -14); }
+    // Fronds, drooping away from the crown on both sides.
+    for (const [dx, dy] of [[-4, 0], [-3, -1], [-2, -1], [4, 0], [3, -1], [2, -1]] as Cell[]) {
+      const x = 9 + dx, y = 5 + dy;
+      if (x >= 0 && x < GRID_W && y >= 0) { g[y][x] = shade(foliage, dx < 0 ? 10 : -6); if (y + 1 < GRID_H) g[y + 1][x] = shade(foliage, -16); }
+    }
+    set(g, ellipse(9, 4, 1.6, 1), shade(foliage, 16));
+    return g;
+  }
+  if (piece === 'bare') {
+    const bark = design.colors.trunk ?? '#7a5228';
+    for (let y = 6; y <= 13; y++) { g[y][7] = bark; g[y][8] = shade(bark, -14); }
+    for (const [x, y] of [[5, 6], [4, 5], [10, 6], [11, 5], [6, 4], [9, 4], [7, 3], [8, 3]] as Cell[]) setCell(g, x, y, shade(bark, 8));
+    return g;
+  }
+
   paintShaded(g, ellipse(8, 6, 4.4, 4).filter(([, y]) => y <= 10), foliage, 24, -22); // crown
   for (let y = 10; y <= 13; y++) { g[y][7] = trunk; g[y][8] = shade(trunk, -14); } // trunk
   return g;
@@ -642,6 +673,74 @@ export function amenityAcceptance(name: string, services?: string): string[] {
   // ...and then the one that can only be answered once it is standing in the park.
   return [...build, 'Can I find it from the entrance?'];
 }
+// ============= Ready pieces =============
+//
+// Choosing "green" from a grid of swatches is a weak decision: no answer is wrong, none of them is
+// obviously better than the default, and what comes out rarely looks like anything. Choosing an oak
+// is a real one - it is faster, it looks better, and you can have an opinion about it.
+//
+// So scenery is picked from finished pieces with their colours already right, and the colour wells
+// stay one level down as TAILORING, for the player who wants an autumn oak. Same catalogue whatever
+// zone the item belongs to: an oak is an oak wherever it is planted. The zone belongs to the
+// Product Backlog item, not to the piece.
+//
+// A piece is a type plus a look. `parts.type` still says what the thing IS - that is what the
+// renderer and the visitors' pathfinding read - and `parts.piece` says which of that type it is.
+
+export interface FloraPiece {
+  key: string;
+  label: string;
+  /** What it is - the renderer's type, unchanged. */
+  type: string;
+  colors: Record<string, string>;
+}
+
+export const FLORA_PIECES: FloraPiece[] = [
+  // Planting
+  { key: 'oak', label: 'Oak', type: 'tree', colors: { foliage: '#4e9146', trunk: '#7a5228' } },
+  { key: 'pine', label: 'Pine', type: 'tree', colors: { foliage: '#2f6b3b', trunk: '#6b4a25' } },
+  { key: 'palm', label: 'Palm', type: 'tree', colors: { foliage: '#5ca352', trunk: '#8a6134' } },
+  { key: 'blossom', label: 'Blossom', type: 'tree', colors: { foliage: '#e8a6c0', trunk: '#7a5228' } },
+  { key: 'bare', label: 'Bare', type: 'tree', colors: { foliage: '#8a6134', trunk: '#7a5228' } },
+  { key: 'bush', label: 'Bush', type: 'bush', colors: { foliage: '#4f8f3a', trunk: '#7a5230' } },
+  { key: 'flowers', label: 'Flowerbed', type: 'flowers', colors: { foliage: '#e05c5c', trunk: '#8a6134' } },
+  { key: 'hedge', label: 'Hedge', type: 'hedge', colors: { foliage: '#4f8f3a', trunk: '#3a6b2a' } },
+  // Landscape
+  { key: 'pond', label: 'Pond', type: 'pond', colors: { foliage: '#5aa9c8', trunk: '#b7965f' } },
+  { key: 'stream', label: 'Stream', type: 'river', colors: { foliage: '#5aa9c8', trunk: '#b7965f' } },
+  { key: 'fountain', label: 'Fountain', type: 'fountain', colors: { foliage: '#5aa9c8', trunk: '#c9cdd2' } },
+  { key: 'boulders', label: 'Boulders', type: 'rocks', colors: { foliage: '#9aa1a8', trunk: '#6f757b' } },
+  // Infrastructure - one piece each, so the catalogue still shows what it is
+  { key: 'signpost', label: 'Signpost', type: 'signpost', colors: { foliage: '#c8873b', trunk: '#7a5230' } },
+  { key: 'bridge', label: 'Bridge', type: 'bridge', colors: { foliage: '#c8965a', trunk: '#7a5230' } },
+  { key: 'entrance', label: 'Entrance', type: 'entrance', colors: { foliage: '#e6842a', trunk: '#8a5a2b' } },
+  { key: 'carpark', label: 'Car park', type: 'carpark', colors: { foliage: '#8a8f96', trunk: '#eaeaea' } },
+];
+
+/** The pieces this item could be - the ones of its own kind, never the whole catalogue. */
+export function piecesFor(type?: string): FloraPiece[] {
+  const family = floraFamily(type);
+  return FLORA_PIECES.filter((p) => family.includes(p.type));
+}
+
+/** Which piece a design is showing: the one it was given, or the first of its type. */
+export function pieceOf(design: ItemDesign, template?: string): FloraPiece | undefined {
+  const key = design.parts.piece;
+  if (key) return FLORA_PIECES.find((p) => p.key === key);
+  const type = design.parts.type ?? template;
+  return FLORA_PIECES.find((p) => p.type === type);
+}
+
+/** Choosing a piece sets what it is AND how it looks - that is what makes it a finished piece
+ *  rather than a shape you then have to paint. Tailoring afterwards is the player's business. */
+export function applyPiece(design: ItemDesign, piece: FloraPiece): ItemDesign {
+  return {
+    ...design,
+    parts: { ...design.parts, type: piece.type, piece: piece.key },
+    colors: { ...design.colors, ...piece.colors },
+  };
+}
+
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
 ];

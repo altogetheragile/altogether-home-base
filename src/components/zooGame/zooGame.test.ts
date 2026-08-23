@@ -9,7 +9,7 @@ import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen } from './engine';
-import { floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
+import { FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 import { copyEntries, applyCopyOverrides } from './copy';
@@ -2526,5 +2526,44 @@ describe('zoo game: paths and grass are a park, not a zoo', () => {
     const s = open({ ...initialZooState(1), phase: 'sprint' } as ZooGameState, 'lion-enc', 'lion', 'bigcats-paths');
     const after = reviewSprint(s);
     expect(after.lastReview!.totalAttendance).toBeGreaterThan(0);
+  });
+});
+
+describe('zoo game: scenery is picked as a finished piece', () => {
+  const gridOf = (piece: { type: string; key: string; colors: Record<string, string> }) =>
+    renderDesign({ category: 'flora', template: piece.type } as never, { parts: { type: piece.type, piece: piece.key }, colors: piece.colors })
+      .map((row) => row.map((c) => c ?? '.').join('')).join('|');
+
+  it('offers the pieces of its own kind, with their colours already right', () => {
+    const planting = piecesFor('tree').map((p) => p.label);
+    expect(planting).toContain('Oak');
+    expect(planting).toContain('Pine');
+    expect(planting).not.toContain('Pond');
+    expect(piecesFor('river').map((p) => p.label)).toEqual(['Pond', 'Stream', 'Fountain']);
+    // Every piece arrives dressed - that is what makes it a piece rather than a shape to paint.
+    for (const p of FLORA_PIECES) expect(Object.keys(p.colors).length, `${p.label} has colours`).toBeGreaterThan(0);
+  });
+
+  it('picking one sets what it is and how it looks in a single go', () => {
+    const pine = FLORA_PIECES.find((p) => p.key === 'pine')!;
+    const next = applyPiece({ parts: { type: 'tree' }, colors: { foliage: '#ff0000' } }, pine);
+    expect(next.parts.type).toBe('tree');       // still a tree, so the park still treats it as one
+    expect(next.parts.piece).toBe('pine');
+    expect(next.colors.foliage).toBe(pine.colors.foliage);  // and the red is gone
+  });
+
+  it('draws each tree as a different tree, which is the whole point', () => {
+    const trees = FLORA_PIECES.filter((p) => p.type === 'tree');
+    expect(trees.length).toBeGreaterThanOrEqual(4);
+    const drawn = trees.map(gridOf);
+    expect(new Set(drawn).size, 'every tree looks different').toBe(trees.length);
+    for (const [i, g] of drawn.entries()) expect(g.includes('#'), `${trees[i].label} renders something`).toBe(true);
+  });
+
+  it('keeps tailoring available, one level down', () => {
+    // Choosing a piece is the decision; the colour wells are still there for an autumn oak.
+    const oak = FLORA_PIECES.find((p) => p.key === 'oak')!;
+    const autumn = { ...applyPiece({ parts: {}, colors: {} }, oak), colors: { foliage: '#c2662d', trunk: '#7a5228' } };
+    expect(gridOf({ type: 'tree', key: 'oak', colors: autumn.colors })).not.toBe(gridOf(oak));
   });
 });

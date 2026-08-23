@@ -2,9 +2,10 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { BacklogItem } from './types';
 import {
   designSatisfiesTask,
-  EXHIBIT_PARTS, AMENITY_COLORS, floraFamily, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
+  EXHIBIT_PARTS, AMENITY_COLORS, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
   ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureFlora,
-  addWaterTo, addFloraTo, isLandscapeType, type ItemDesign,
+  addWaterTo, addFloraTo, isLandscapeType, piecesFor, pieceOf, applyPiece, renderDesign, GRID_W,
+  type ItemDesign, type FloraPiece,
 } from './design';
 import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
@@ -24,6 +25,16 @@ import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2, Maximize2, Shape
 // studio had, just no longer occupying half the screen while you pick a colour.
 
 const BTN = 'flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40';
+
+/** The line between choosing the thing and adjusting it. Everything after it is optional. */
+function Tailor() {
+  return (
+    <span className="mt-1 flex basis-full items-center gap-1.5 pt-1">
+      <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">Tailor</span>
+      <span className="h-px flex-1 bg-border" />
+    </span>
+  );
+}
 
 function Divider() {
   return <span className="mx-0.5 h-6 w-px shrink-0 bg-border" aria-hidden />;
@@ -110,6 +121,40 @@ function ColourButton({ label, value, onChange, part, focus, onFocus, onClosed }
         <Colours value={value} onChange={onChange} onPicked={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** The ready pieces for this kind of scenery, each drawn as itself. You pick the thing rather than
+ *  a colour for a shape - and the colours come with it, already right. */
+function Catalogue({ item, design, onPick }: { item: BacklogItem; design: ItemDesign; onPick: (p: FloraPiece) => void }) {
+  const pieces = piecesFor(design.parts.type ?? item.template);
+  const current = pieceOf(design, item.template)?.key;
+  if (pieces.length < 2) return null;
+  return (
+    <div className="flex basis-full flex-wrap gap-1">
+      {pieces.map((p) => (
+        <button key={p.key} type="button" onClick={() => onPick(p)} aria-pressed={p.key === current}
+          title={p.label}
+          className={cn('flex w-[3.9rem] flex-col items-center gap-0.5 rounded-lg border px-1 pb-1 pt-1.5 text-[11px] transition-colors',
+            p.key === current ? 'border-primary bg-primary/10 font-semibold text-primary' : 'border-border text-muted-foreground hover:border-primary/60 hover:text-foreground')}>
+          <PieceSprite piece={p} />
+          <span className="max-w-full truncate">{p.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One piece, drawn by the same renderer that draws it on the park - so what you pick is what you
+ *  get, rather than an icon that stands for it. */
+function PieceSprite({ piece }: { piece: FloraPiece }) {
+  const grid = renderDesign({ category: 'flora', template: piece.type } as BacklogItem, { parts: { type: piece.type, piece: piece.key }, colors: piece.colors });
+  return (
+    <span className="grid" style={{ gridTemplateColumns: `repeat(${GRID_W}, 2px)` }} aria-hidden>
+      {grid.flatMap((row, r) => row.map((c, i) => (
+        <span key={`${r}-${i}`} style={{ width: 2, height: 2, background: c ?? 'transparent' }} />
+      )))}
+    </span>
   );
 }
 
@@ -280,10 +325,8 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isFlora && !isLand && (
         <>
-          <Menu label="Type" icon={Sprout} title={`What kind of planting this is - ${design.parts.type ?? item.template ?? 'tree'}`}>{(close) => (
-            <Options options={floraFamily(design.parts.type ?? item.template)} value={design.parts.type ?? 'tree'} onPick={(o) => { setPart('type', o); close(); }} />
-          )}</Menu>
-          <Divider />
+          <Catalogue item={item} design={design} onPick={(p) => onDesign(applyPiece(design, p))} />
+          <Tailor />
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key] ?? floraDefaultColors(design.parts.type ?? item.template ?? 'tree')[c.key as 'foliage' | 'trunk']}
               onChange={(hex) => setColor(c.key, hex)} />
@@ -293,8 +336,8 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isLand && (
         <>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{design.parts.type ?? item.template}</span>
-          <Divider />
+          <Catalogue item={item} design={design} onPick={(p) => onDesign(applyPiece(design, p))} />
+          <Tailor />
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />
           ))}
