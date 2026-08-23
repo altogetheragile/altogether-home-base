@@ -59,3 +59,32 @@ export function autoLayout(boxes: LayoutBox[]): Map<string, { x: number; y: numb
   return pos;
 }
 
+
+/** Where a thing of this size is allowed to stand. One rule, used both while dragging and when a
+ *  saved position is read back - so a position can never be outside the park, whoever wrote it.
+ *
+ *  A river is cut longer than the park is wide and is meant to run off both edges, so it is held by
+ *  its centre rather than by its sides.
+ */
+export function parkBounds(box: { w: number; h: number }): { minX: number; maxX: number; minY: number; maxY: number } {
+  const spans = box.w > CANVAS_W - 8;
+  return {
+    minX: spans ? 8 : box.w / 2 + 4,
+    maxX: spans ? CANVAS_W - 8 : CANVAS_W - box.w / 2 - 4,
+    minY: spans ? 8 : box.h / 2 + 4,
+    maxY: PLAY_H - PAD - (spans ? 0 : box.h / 2),
+  };
+}
+
+/** A position brought inside the park.
+ *
+ *  Saved games are why this exists. The park used to GROW with its contents, so a habitat could
+ *  quite legally be standing at y=780 - and when the park became a fixed 700 tall, that position
+ *  was suddenly off the bottom of it. The item was still delivered, still on the Backlog, still
+ *  Done; it was simply drawn somewhere you could not look. Nobody's zoo should need a migration to
+ *  be visible, so every position is read through this.
+ */
+export function insidePark(box: { w: number; h: number }, pos: { x: number; y: number }): { x: number; y: number } {
+  const b = parkBounds(box);
+  return { x: clamp(pos.x, b.minX, b.maxX), y: clamp(pos.y, b.minY, b.maxY) };
+}

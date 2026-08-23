@@ -10,7 +10,7 @@ import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion } from './parkChecks';
-import { autoLayout, CANVAS_W, PLAY_H } from './parkLayout';
+import { autoLayout, insidePark, parkBounds, CANVAS_W, PLAY_H } from './parkLayout';
 import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -2756,5 +2756,43 @@ describe('zoo game: laying out a full zoo', () => {
     const many = autoLayout(zooBoxes(30));
     const spread = (m: Map<string, { x: number; y: number }>) => new Set([...m.values()].map((p) => p.y)).size;
     expect(spread(many)).toBeGreaterThan(spread(few));   // more rows, not one pile
+  });
+});
+
+describe('zoo game: a position saved when the park was a different size', () => {
+  const habitat = { w: 132, h: 90 };
+
+  it('brings a thing standing off the bottom back inside the park', () => {
+    // The bug a saved game kept alive. The park used to GROW with its contents, so y=780 was a
+    // perfectly legal place for a habitat - and when the park became a fixed 700 tall, that habitat
+    // was drawn below the bottom of it. Still delivered, still Done, still on the Backlog, and
+    // simply not anywhere you could look. Saving and reloading preserved it exactly.
+    const rescued = insidePark(habitat, { x: 400, y: 780 });
+    expect(rescued.y).toBeLessThanOrEqual(PLAY_H);
+    expect(rescued.y + habitat.h / 2).toBeLessThanOrEqual(PLAY_H);
+    expect(rescued.x).toBe(400); // and nothing else about it is moved
+  });
+
+  it('leaves a position that was already fine exactly where it was', () => {
+    expect(insidePark(habitat, { x: 300, y: 300 })).toEqual({ x: 300, y: 300 });
+  });
+
+  it('holds a river by its centre, because it is meant to run off both edges', () => {
+    const river = { w: 1180, h: 40 };
+    const b = parkBounds(river);
+    expect(b.minX).toBe(8);
+    expect(b.maxX).toBe(CANVAS_W - 8);
+    // A habitat, by contrast, is held by its sides.
+    expect(parkBounds(habitat).minX).toBe(habitat.w / 2 + 4);
+  });
+
+  it('keeps every corner of the park reachable', () => {
+    for (const [x, y] of [[-500, -500], [5000, 5000], [0, 5000], [5000, 0]]) {
+      const p = insidePark(habitat, { x, y });
+      expect(p.x - habitat.w / 2).toBeGreaterThanOrEqual(0);
+      expect(p.x + habitat.w / 2).toBeLessThanOrEqual(CANVAS_W);
+      expect(p.y - habitat.h / 2).toBeGreaterThanOrEqual(0);
+      expect(p.y + habitat.h / 2).toBeLessThanOrEqual(PLAY_H);
+    }
   });
 });
