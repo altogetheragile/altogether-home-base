@@ -1158,7 +1158,11 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           const rest = restPos(f);
           const dragging = drag?.id === f.item.id;
           const queued = improving?.has(f.item.id);
-          const isLand = f.kind === 'plot' && f.item.category === 'flora' && isLandscapeType(landType(f.item));
+          // A site as well as a plot: the handles that size and turn a landscape feature were only
+          // drawn once it was live, so a bridge could not be made long enough to cross the river
+          // while you were building the bridge. The footprint was always there - it is the same
+          // measurement either way - only the grips for it were missing.
+          const isLand = (f.kind === 'plot' || f.kind === 'site') && f.item.category === 'flora' && isLandscapeType(landType(f.item));
           const isRiver = isLand && landType(f.item) === 'river'; // spans the park; no length handle
           return (
             <div key={f.item.id}
