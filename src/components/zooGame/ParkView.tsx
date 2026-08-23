@@ -9,8 +9,8 @@ import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
-import { zoneSlices } from './engine';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone } from 'lucide-react';
+import { zoneSlices, zooIsOpen } from './engine';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -1498,7 +1498,9 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   const started = slices.filter((z) => !z.open && z.delivered > 0);
   const exhibits = open.filter((it) => it.category === 'exhibit').length;
   const amenities = open.filter((it) => it.category === 'amenity').length;
-  const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
+  // Nobody comes to a zoo with no animal anyone can reach, so the park does not claim they do.
+  const gatesOpen = zooIsOpen(state);
+  const total = gatesOpen ? Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0)) : 0;
   const happiness = state.lastReview?.overallHappiness ?? null;
 
   // Little visitors stroll once there is an exhibit to see.
@@ -1522,8 +1524,15 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           : 'A zone opens when it has an animal to see and a path to walk in on.'} />
       <Stat icon={PawPrint} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
       <Stat icon={Store} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
-      <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors" />
+      <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors"
+        title={gatesOpen ? undefined : 'The gates are shut: nobody visits a zoo with no animal they can walk to.'} />
       <Stat icon={Smile} value={happiness === null ? '—' : `${happiness}`} label="happiness" title={happiness === null ? 'Measured at the Sprint Review' : undefined} />
+      {!gatesOpen && (
+        <span className="flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300"
+          title="Paths and grass are a park. A zoo needs an animal.">
+          <Lock className="h-3 w-3 shrink-0" /> Not open yet
+        </span>
+      )}
     </div>
   );
 
