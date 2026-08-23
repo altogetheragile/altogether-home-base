@@ -66,6 +66,7 @@ interface SprintBoardProps {
   onPart?: (p: { id: string; key: string } | null) => void;
   drawing?: boolean;
   onDrawing?: (on: boolean) => void;
+  onRemoveRun?: (connectorId: string) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -215,7 +216,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
   // it is how the board came to have less room reserved than the bench takes: with nothing on the
@@ -636,7 +637,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           style={{ bottom: DOCKED_BAR_H }}>
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
             <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
-              drawing={drawing} onDrawing={onDrawing}
+              drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun}
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
           </div>
         </div>

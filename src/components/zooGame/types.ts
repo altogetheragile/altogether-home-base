@@ -239,6 +239,9 @@ export interface ConnectorEnd { featureId?: string; x: number; y: number }
  *  reflow when the feature moves. */
 export interface ZooConnector {
   id: string;
+  /** The Product Backlog item this run belongs to - the pathway you drew it for. Absent on runs
+   *  drawn before paths were attributed, and on the free-drawn ones from the old deploy step. */
+  itemId?: string;
   a: ConnectorEnd;
   b: ConnectorEnd;
   bends: { x: number; y: number }[];

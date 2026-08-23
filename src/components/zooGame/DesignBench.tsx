@@ -8,7 +8,7 @@ import { Chip } from './ui/Chip';
 import { ExplainButton } from './Explain';
 import { cn } from '@/lib/utils';
 import { EYEBROW } from './ui/tokens';
-import { Hammer, Spline } from 'lucide-react';
+import { Hammer, Spline, Trash2 } from 'lucide-react';
 
 // ============= Where you design the thing you are building =============
 //
@@ -23,6 +23,45 @@ import { Hammer, Spline } from 'lucide-react';
 // Touching a part out there still opens its controls in here. That link is the whole reason a row
 // of coloured squares is comprehensible at all: two brown squares labelled Ground and Fence explain
 // nothing until the moment you tap the ground and watch one of them light up.
+
+/** The runs this pathway is made of, and a way to take one back off.
+ *
+ *  A route you cannot edit is a route you have to get right first time, which is not how anyone
+ *  draws anything. The runs were editable in principle - click the line on the park, press Delete -
+ *  but that meant hitting a nine-pixel stroke after turning a mode off, which is not a way anybody
+ *  would find. They are listed here, with the rest of the pathway's controls.
+ */
+function Runs({ state, item, onRemove }: { state: ZooGameState; item: BacklogItem; onRemove?: (id: string) => void }) {
+  const runs = (state.connectors ?? []).filter((c) => c.itemId === item.id);
+  if (!runs.length) {
+    return <p className="text-[11px] text-muted-foreground">No route drawn yet - it is a path to nowhere until there is one.</p>;
+  }
+  return (
+    <div className="space-y-1">
+      <div className={cn(EYEBROW, 'text-muted-foreground')}>{runs.length} run{runs.length === 1 ? '' : 's'}</div>
+      <ul className="space-y-0.5">
+        {runs.map((c, i) => {
+          const to = (end: typeof c.a) => (end.featureId ? state.backlog.find((x) => x.id === end.featureId)?.name : null);
+          const from = to(c.a), dest = to(c.b);
+          const where = from && dest ? `${from} to ${dest}` : from ? `from the ${from}` : dest ? `to the ${dest}` : 'across the grass';
+          return (
+            <li key={c.id} className="flex items-center gap-1.5 text-[11px]">
+              <span className="h-1.5 w-4 shrink-0 rounded-full" style={{ background: c.color }} aria-hidden />
+              <span className="min-w-0 truncate text-muted-foreground">Run {i + 1} &middot; {where}</span>
+              {onRemove && (
+                <button type="button" onClick={() => onRemove(c.id)} title={`Take run ${i + 1} back up`}
+                  aria-label={`Take run ${i + 1} back up`}
+                  className="ml-auto shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 /** Nothing selected: say what the space is for rather than leaving a hole in the screen. */
 function Empty({ next }: { next?: BacklogItem }) {
@@ -41,7 +80,7 @@ function Empty({ next }: { next?: BacklogItem }) {
 
 /** The design bench: the controls for whatever is being built, plus its plan and the Product
  *  Owner's criteria - everything you need to finish one item, in one place under the board. */
-export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing }: {
+export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
@@ -56,6 +95,8 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
    *  is where you use it, the way the park is where you drag a habitat into place. */
   drawing?: boolean;
   onDrawing?: (on: boolean) => void;
+  /** Take one run of a pathway back up. */
+  onRemoveRun?: (connectorId: string) => void;
 }) {
   const item = itemId ? state.backlog.find((i) => i.id === itemId) : undefined;
 
@@ -103,11 +144,14 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
                 button that starts it belongs with the rest of the thing's controls - the park is
                 where you use it, the way the park is where you drag a habitat into place. */}
             {item.category === 'path' && onDrawing && (
-              <button type="button" onClick={() => onDrawing(!drawing)} aria-pressed={!!drawing}
-                className={cn('mt-2 flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
-                  drawing ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted')}>
-                <Spline className="h-3.5 w-3.5" /> {drawing ? 'Drawing on the park - click Done there' : 'Draw its route'}
-              </button>
+              <div className="mt-2 space-y-1.5">
+                <button type="button" onClick={() => onDrawing(!drawing)} aria-pressed={!!drawing}
+                  className={cn('flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
+                    drawing ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted')}>
+                  <Spline className="h-3.5 w-3.5" /> {drawing ? 'Drawing on the park - click Done there' : 'Draw its route'}
+                </button>
+                <Runs state={state} item={item} onRemove={onRemoveRun} />
+              </div>
             )}
             <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
               Touch a part of it on the park to open that part&rsquo;s controls here. Where it stands is
