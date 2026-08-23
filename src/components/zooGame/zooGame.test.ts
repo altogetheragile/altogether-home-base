@@ -1251,8 +1251,13 @@ describe('zoo game: the toolbox', () => {
     // then size on the park.
     // suggestTasks only reads category + template, both of which a toolbox draft carries.
     const riverPlan = suggestTasks(toolboxDraft(items.find((i) => i.name === 'River')!) as never).map((t) => t.label);
-    expect(riverPlan).toContain('Colour it');
-    expect(riverPlan.some((l) => /plant type/i.test(l))).toBe(false);
+    // Named for the parts a river actually has, not for a plant's.
+    expect(riverPlan).toEqual(['Colour the water', "Get the PO's sign-off"]);
+    expect(riverPlan.some((l) => /plant|foliage/i.test(l))).toBe(false);
+    // And a signpost is asked about its sign and its post, not about foliage - it fell through to
+    // the planting branch for months because it is filed as flora.
+    const signPlan = suggestTasks(toolboxDraft(items.find((i) => i.name === 'Signpost')!) as never).map((t) => t.label);
+    expect(signPlan).toEqual(['Colour the sign', 'Colour the post', "Get the PO's sign-off"]);
     // All the landscape sprites differ from each other.
     const shapes = ['river', 'pond', 'rocks', 'entrance', 'carpark', 'hedge', 'fountain'];
     const rendered = shapes.map((t) => JSON.stringify(renderDesign({ category: 'flora' } as never, { parts: { type: t }, colors: { foliage: '#5aa9c8', trunk: '#8a5a2b' } })));

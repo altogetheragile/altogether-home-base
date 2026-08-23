@@ -155,7 +155,13 @@ export default function ZooGame() {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const el = document.querySelector(`[data-done-card="${shownId}"]`);
       const r = el?.getBoundingClientRect();
-      setCelebrateOrigin(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null);
+      // Burst from the card - but only if the card is somewhere you can see. The board scrolls
+      // inside its own half now and the design bench covers the foot of it, so a delivered card can
+      // easily be out of view or behind the bench: aiming the confetti at it then threw the whole
+      // burst off-screen, and a celebration nobody sees is the same as no celebration.
+      const m = 60;
+      const onScreen = r && r.bottom > m && r.top < window.innerHeight - m && r.right > m && r.left < window.innerWidth - m;
+      setCelebrateOrigin(onScreen ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null);
       setCelebrate((c) => c + 1);
     }));
   };

@@ -1,7 +1,7 @@
 import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType } from './design';
+import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -215,6 +215,16 @@ export function estimateItem(state: ZooGameState, id: string, points: number): Z
 
 /** A coached default breakdown of how a PBI gets built, by kind - the design work and
  *  then opening it. It is a starting point the Developers edit, not a fixed template. */
+/** The build steps for a piece of scenery, named for its own parts: a signpost has a sign and a
+ *  post, a pond has water and a bank. Which SORT it is only worth asking about where there is a
+ *  choice - a Signposts item is a signpost, but a planting item could be an oak or a hedge. */
+function floraTasks(item: BacklogItem): string[] {
+  const type = item.template;
+  const parts = floraColors(type).map((c) => `Colour the ${c.label.toLowerCase()}`);
+  const oneOfMany = floraFamily(type).length > 1 && !isLandscapeType(type) && type !== 'signpost';
+  return oneOfMany ? ['Choose which planting', ...parts] : parts;
+}
+
 export function suggestTasks(item: BacklogItem): SprintTask[] {
   // The plan reflects the Definition of Done - the work to take this item to Done: the BUILD steps
   // that meet the acceptance criteria, and then the Product Owner's sign-off. Placing & opening is
@@ -233,9 +243,10 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
     ? ['Decide how many, and of what ages', 'Check they fit the habitat', 'Choose the coat']
     : item.category === 'amenity'
       ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
-      : isLandscapeType(item.template)
-      ? ['Colour it']                            // its footprint is sized on the park at deployment
-      : ['Choose the plant type', 'Colour the foliage'];
+      // Scenery: named for the parts THIS thing actually has. A signpost was being asked to choose
+      // a plant type and colour its foliage, because everything that was not landscape fell through
+      // to the planting branch - and a signpost is not planting, whatever the category says.
+      : floraTasks(item);
   const workflow = ["Get the PO's sign-off"];
   return [...build, ...workflow].map((label, i) => ({ id: `${item.id}-t${i}`, label, done: false }));
 }
