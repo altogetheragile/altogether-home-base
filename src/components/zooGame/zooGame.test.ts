@@ -8,7 +8,7 @@ import {
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
-import { zoneSlices, zonesOpenedSince } from './engine';
+import { zoneSlices, zonesOpenedSince, zooIsOpen } from './engine';
 import { floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -46,10 +46,25 @@ function accept(state: ZooGameState, id: string): ZooGameState {
   return s;
 }
 
-/** Commit ids, build them all to Done, and open (release) them. */
+/** Commit ids, build them all to Done, and open (release) them - along with the paths into any zone
+ *  they land in, because that is what it takes for anybody to visit.
+ *
+ *  A zoo is not open until an animal is there to be walked TO. A test that wants visitors is asking
+ *  for a zoo that has opened, so it has to deliver the whole slice; opening a lion in a habitat
+ *  nobody can reach is the layer, and the game is now honest about what that earns. Paths already
+ *  in the list, or missing from this Backlog, are skipped. */
 function buildAndOpen(state: ZooGameState, ids: string[]): ZooGameState {
-  let s = planSprint(state, ids);
-  for (const id of ids) s = openItem(finish(s, id), id);
+  const zoneSlug = (zone: string) => (zone === 'Big Cats' ? 'bigcats' : zone.toLowerCase().replace(/[^a-z]+/g, '-'));
+  const wanted = new Set(ids);
+  for (const id of ids) {
+    const it = state.backlog.find((x) => x.id === id);
+    if (!it || it.category !== 'exhibit') continue;
+    const paths = `${zoneSlug(it.zone)}-paths`;
+    if (state.backlog.some((x) => x.id === paths)) wanted.add(paths);
+  }
+  const all = [...wanted];
+  let s = planSprint(state, all);
+  for (const id of all) s = openItem(finish(s, id), id);
   return s;
 }
 
@@ -143,12 +158,14 @@ describe('zoo game: the Sprint loop', () => {
   it('plans, builds, opens, and reviews with a real visitor simulation', () => {
     let s = bigCatsSplit(1);
     s = buildAndOpen(s, ['lion', 'tiger', 'kiosk']);
-    expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'tiger']);
+    // The paths come with them: an animal nobody can walk to is not an open zoo.
+    expect(openZoo(s).map((i) => i.id).sort()).toEqual(['bigcats-paths', 'kiosk', 'lion', 'tiger']);
+    expect(zooIsOpen(s)).toBe(true);
     s = reviewSprint(s);
     expect(s.phase).toBe('review');
     expect(s.lastReview).not.toBeNull();
     expect(s.lastReview!.overallHappiness).toBeGreaterThan(0); // visitors enjoyed the exhibits
-    expect(s.velocity).toEqual([8 + 8 + 5]); // points delivered this Sprint
+    expect(s.velocity).toEqual([8 + 8 + 5 + 3]); // lion, tiger, kiosk and the paths in to them
     // Word of mouth moved attendance for next Sprint.
     expect(s.attendance).toEqual(s.lastReview!.nextAttendance);
   });
@@ -195,7 +212,10 @@ describe('zoo game: the Sprint loop', () => {
     expect(s.improvements).toHaveLength(1);
     s = reviewSprint(buildAndOpen(s, ['tiger', 'penguins']));
     expect(s.velocity).toHaveLength(2);
-    expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
+    // Two zones open, each with its own way in - two slices, not four animals in a field.
+    expect(openZoo(s).map((i) => i.id).sort())
+      .toEqual(['bigcats-paths', 'kiosk', 'lion', 'penguins', 'tiger', 'waterside-paths']);
+    expect(zoneSlices(s).filter((z) => z.open).map((z) => z.zone).sort()).toEqual(['Big Cats', 'Waterside']);
   });
 });
 
@@ -2476,5 +2496,35 @@ describe('zoo game: a zone is a slice of cake, not a layer', () => {
     const after = open(before, 'bigcats-paths');
     expect(zonesOpenedSince(before, after)).toEqual(['Big Cats']);
     expect(zonesOpenedSince(after, after)).toEqual([]);
+  });
+});
+
+describe('zoo game: paths and grass are a park, not a zoo', () => {
+  const open = (st: ZooGameState, ...ids: string[]): ZooGameState =>
+    ({ ...st, backlog: st.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'open' as const } : it)) });
+
+  it('keeps the gates shut until an animal is there to be walked to', () => {
+    const bare = initialZooState(1);
+    expect(zooIsOpen(bare)).toBe(false);
+    // Every bit of the park's fabric, delivered. Still not a zoo.
+    expect(zooIsOpen(open(bare, 'paths', 'river', 'bridge', 'signposts', 'trees', 'flowerbed'))).toBe(false);
+    // An animal nobody can walk to is not one either.
+    expect(zooIsOpen(open(bare, 'lion-enc', 'lion'))).toBe(false);
+    expect(zooIsOpen(open(bare, 'lion-enc', 'lion', 'bigcats-paths'))).toBe(true);
+  });
+
+  it('nobody visits a zoo that is not open, so it earns no happiness either', () => {
+    // The zoo used to draw its seeded crowd whatever was in it, which taught that groundwork is
+    // releasable and that people turn up for it.
+    const closed = reviewSprint({ ...initialZooState(1), phase: 'sprint' } as ZooGameState);
+    expect(Object.values(closed.attendance).reduce((a, b) => a + b, 0)).toBeGreaterThan(0); // the town is still there
+    expect(closed.lastReview!.totalAttendance).toBe(0);
+    expect(closed.happiness![closed.happiness!.length - 1]).toBe(0);
+  });
+
+  it('opens to the public the moment one zone is a whole slice', () => {
+    const s = open({ ...initialZooState(1), phase: 'sprint' } as ZooGameState, 'lion-enc', 'lion', 'bigcats-paths');
+    const after = reviewSprint(s);
+    expect(after.lastReview!.totalAttendance).toBeGreaterThan(0);
   });
 });

@@ -1206,7 +1206,14 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   // Visitor happiness comes from what the game actually models - the design quality of what
   // you delivered - not from the wording of the Definition of Done. The DoD's job is to be the
   // team's completion gate (the workflow every item follows to be Done), not a happiness dial.
-  const result = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, state.attendance, seedFor(state));
+  // A closed zoo has no visitors, so it has no happiness and no word of mouth either. Feeding the
+  // simulation the real attendance while the gates were shut meant a park of paths and grass drew
+  // hundreds of people and then disappointed them, which taught the wrong thing twice over: that
+  // laying groundwork is releasable, and that visitors turn up for it.
+  const gatesOpen = zooIsOpen(state);
+  const arriving = gatesOpen ? state.attendance
+    : Object.fromEntries(Object.keys(state.attendance).map((k) => [k, 0])) as typeof state.attendance;
+  const result = simulateSprint({ items: openItems, sprintNumber: state.sprintNumber }, DEFAULT_CONFIG, arriving, seedFor(state));
 
   const committedThisSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
   const deliveredThisSprint = committedThisSprint.filter((it) => it.status === 'done' || it.status === 'open');
@@ -1587,4 +1594,17 @@ export function zoneSlices(state: ZooGameState): ZoneSlice[] {
 export function zonesOpenedSince(before: ZooGameState, after: ZooGameState): string[] {
   const was = new Set(zoneSlices(before).filter((z) => z.open).map((z) => z.zone));
   return zoneSlices(after).filter((z) => z.open && !was.has(z.zone)).map((z) => z.zone);
+}
+
+/** Whether the gates are open at all.
+ *
+ *  Nobody visits a zoo for the paths and the grass - that is a park, and there is one at the end of
+ *  every road. The first launchable Increment of THIS product has an animal in it that somebody can
+ *  walk to, and until there is one the zoo is not open, however much has been delivered.
+ *
+ *  It is the same rule as a zone being a slice, applied to the whole product: the smallest thing
+ *  worth releasing is a whole thin slice, not a well-finished layer.
+ */
+export function zooIsOpen(state: ZooGameState): boolean {
+  return zoneSlices(state).some((z) => z.open);
 }
