@@ -156,8 +156,12 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
           {startedNotOpen.length > 0 && (
             <p className="text-muted-foreground">
               Still nobody can visit {startedNotOpen.map((z) => `${z.zone} (needs ${z.missing.join(' and ')})`).join(', ')}.
-              {openZones.length ? ' ' : ' All that work is real, and none of it is worth anything until somebody can walk to it. '}
+              {openZones.length ? ' ' : ' All that work is real. '}
               A zone is a slice of cake: it needs every layer before anyone can eat it.
+              {!openZones.length && r != null && r.totalAttendance > 0 && (
+                <> <strong className="text-foreground">{r.totalAttendance.toLocaleString()} people came anyway</strong> and
+                  found no animal on show. They will tell their friends, and fewer will come next Sprint.</>
+              )}
             </p>
           )}
         </div>
