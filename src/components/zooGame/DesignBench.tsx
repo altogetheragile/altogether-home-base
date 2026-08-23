@@ -118,7 +118,7 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
               where you are actually doing the work, they are the work. */}
           <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] p-2">
             <div className={cn(EYEBROW, 'mb-1.5 text-emerald-700 dark:text-emerald-300')}>What Done looks like</div>
-            <CardDetail item={item} interactive showAcceptance bare
+            <CardDetail item={item} state={state} interactive showAcceptance bare
               onToggleTask={(id, taskId) => onToggleTask(id, taskId)}
               onConfirmAc={(id, i, v) => onConfirmAc(id, i, v)} />
           </div>

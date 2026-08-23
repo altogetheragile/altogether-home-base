@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
 import { availableItems, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
+import { checkCriterion } from './parkChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
@@ -169,8 +170,11 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
  *  (Build) card expanded; `interactive` allows ticking tasks. A criterion is green only once
  *  somebody has ticked it; a card
  *  still in Build/To Do shows them pending. Each card keeps its own open state. */
-export function CardDetail({ item, showAcceptance = false, interactive = false, defaultOpen = false, bare = false, onToggleTask, onConfirmAc }:
-  { item: BacklogItem; showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean;
+export function CardDetail({ item, state, showAcceptance = false, interactive = false, defaultOpen = false, bare = false, onToggleTask, onConfirmAc }:
+  { item: BacklogItem;
+    /** Given, the park answers the criteria it can answer for itself, and shows its working. */
+    state?: ZooGameState;
+    showAcceptance?: boolean; interactive?: boolean; defaultOpen?: boolean;
     /** On the design bench there is nothing to save by collapsing this - it IS the work, and a row
      *  of pips you have to open to act on is a step between you and the only thing on the screen. */
     bare?: boolean; onToggleTask: (id: string, taskId: string) => void;
@@ -229,18 +233,41 @@ export function CardDetail({ item, showAcceptance = false, interactive = false, 
             <div>
               <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">
                 Acceptance criteria{interactive && onConfirmAc ? ' - tick what your build meets' : ''}
+                {state && criteria.some((c) => checkCriterion(state, item, c)) && (
+                  <span className="ml-1 font-normal normal-case tracking-normal text-muted-foreground/70">the park answers the ones it can</span>
+                )}
               </div>
               <ul className="space-y-0.5">
                 {criteria.map((c, i) => {
                   const ok = met(c, i);
-                  const canTick = interactive && !!onConfirmAc;
+                  // The park's own answer, where it has one. A fact is not something you agree to,
+                  // so it is not a button - it is a reading, with what it read beside it.
+                  const v = state ? checkCriterion(state, item, c) : null;
+                  const canTick = interactive && !!onConfirmAc && !v;
+                  const body = (
+                    <>
+                      <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full',
+                        ok ? 'bg-emerald-500 text-white' : 'border border-border')}>{ok && <Check className="h-2 w-2" />}</span>
+                      <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
+                      {v && (
+                        <span className={cn('ml-auto shrink-0 rounded px-1 text-[9px] font-medium',
+                          v.met ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400')}
+                          title="The park measured this one - it is not yours to tick">
+                          {v.evidence}
+                        </span>
+                      )}
+                    </>
+                  );
                   return (
                     <li key={i}>
-                      <button type="button" disabled={!canTick} onClick={(e) => { e.stopPropagation(); onConfirmAc!(item.id, i, !item.acConfirmed?.[i]); }}
-                        className="flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default">
-                        <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full', ok ? 'bg-emerald-500 text-white' : 'border border-border')}>{ok && <Check className="h-2 w-2" />}</span>
-                        <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
-                      </button>
+                      {v
+                        ? <span className="flex w-full items-start gap-1.5 text-left text-[11px]">{body}</span>
+                        : (
+                          <button type="button" disabled={!canTick} onClick={(e) => { e.stopPropagation(); onConfirmAc!(item.id, i, !item.acConfirmed?.[i]); }}
+                            className="flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default">
+                            {body}
+                          </button>
+                        )}
                     </li>
                   );
                 })}
