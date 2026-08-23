@@ -10,7 +10,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
 import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
-import { autoLayout, insidePark, parkBounds, CANVAS_W, PLAY_H, PAD } from './parkLayout';
+import { autoLayout, insidePark, parkBounds, shapeEdge, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { groupMembers } from './design';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock } from 'lucide-react';
 
@@ -621,16 +621,6 @@ const PATH_EDGE = 'rgba(0,0,0,.28)'; // the dark outline under every path
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
-/** The point on a feature's bounding box edge, on the ray from its centre toward a target - so a
- *  connector attaches to the edge nearest the thing it points at, not the middle of the sprite. */
-function boxEdge(cx: number, cy: number, hw: number, hh: number, tx: number, ty: number): { x: number; y: number } {
-  const dx = tx - cx, dy = ty - cy;
-  if (dx === 0 && dy === 0) return { x: cx, y: cy };
-  const t = 1 / Math.max(Math.abs(dx) / hw, Math.abs(dy) / hh);
-  if (t >= 1) return { x: tx, y: ty }; // target already inside the box
-  return { x: cx + dx * t, y: cy + dy * t };
-}
-
 /** Deterministic 0..1 from an index + channel (stable across renders). */
 const jitter = (n: number, k: number) => {
   const x = Math.sin((n + 1) * (k === 0 ? 12.9898 : 78.233)) * 43758.5453;
@@ -738,11 +728,17 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     const f = features.find((x) => x.item.id === id);
     return !!f && (f.kind === 'enclosure' || f.item.category === 'amenity');
   };
+  /** The shape the perimeter loop round this feature is drawn in. */
+  const shapeOf = (id: string) => {
+    const f = features.find((x) => x.item.id === id);
+    if (!f) return 'rounded';
+    return f.kind === 'enclosure' ? (f.item.design?.parts.shape ?? f.item.draftDesign?.parts.shape ?? 'rounded') : 'rounded';
+  };
   const resolveEnd = (end: ConnectorEnd, toward: { x: number; y: number }) => {
     const b = end.featureId ? boxOf(end.featureId) : null;
     if (!b) return { x: end.x, y: end.y };
     const out = end.featureId && hasPerimeter(end.featureId) ? PERIM : 0;
-    return boxEdge(b.cx, b.cy, b.hw + out, b.hh + out, toward.x, toward.y);
+    return shapeEdge(shapeOf(end.featureId!), b.cx, b.cy, b.hw + out, b.hh + out, toward.x, toward.y);
   };
   // A feature's perimeter path (a loop just outside its body), following its shape. Enclosures use
   // their chosen shape; buildings use a rounded rectangle. Only enclosures and buildings get one.

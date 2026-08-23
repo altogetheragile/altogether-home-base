@@ -242,7 +242,7 @@ export const VerticalStepper: React.FC<VerticalStepperProps> = ({
                                       style={{ width: `${completion}%` }}
                                     />
                                   </div>
-                                  <span className="text-xs text-current/70 font-medium">
+                                  <span className="text-xs opacity-70 font-medium">
                                     {completion}%
                                   </span>
                                 </div>

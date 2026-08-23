@@ -4,6 +4,8 @@
  *  interesting case - more rows than the park is tall - ever comes up.
  */
 
+import { enclosureShapePoints } from './design';
+
 /** Anything that takes up room in the park: an id and a footprint in design pixels. */
 export interface LayoutBox { id: string; w: number; h: number }
 
@@ -87,4 +89,54 @@ export function parkBounds(box: { w: number; h: number }): { minX: number; maxX:
 export function insidePark(box: { w: number; h: number }, pos: { x: number; y: number }): { x: number; y: number } {
   const b = parkBounds(box);
   return { x: clamp(pos.x, b.minX, b.maxX), y: clamp(pos.y, b.minY, b.maxY) };
+}
+
+/** Whether a point (relative to the centre) is inside a feature's perimeter, for the shape that
+ *  perimeter is actually drawn in. The loop round a habitat follows its chosen shape - an ellipse
+ *  for a round one, a polygon for a hexagon - while a path was being stopped at the bounding
+ *  RECTANGLE, which is outside the loop everywhere except the four cardinal points. Hence a gap at
+ *  the end of every path that arrived diagonally, and only on the habitats that are not rectangles.
+ */
+export function insideShape(shape: string, dx: number, dy: number, hw: number, hh: number): boolean {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (shape === 'circle') return (dx / hw) ** 2 + (dy / hh) ** 2 <= 1;
+  if (shape === 'pill') {
+    const r = hh, flat = Math.max(0, hw - r);
+    return ax <= flat ? ay <= r : Math.hypot(ax - flat, dy) <= r;
+  }
+  if (shape === 'hexagon' || shape === 'octagon') {
+    const pts = (enclosureShapePoints(shape, hw * 2, hh * 2, 0) ?? '').split(' ')
+      .map((p) => p.split(',').map(Number))
+      .map(([x, y]) => [x - hw, y - hh] as [number, number]);
+    if (pts.length < 3) return ax <= hw && ay <= hh;
+    // Even-odd crossing test against the polygon the loop is drawn from.
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > dy) !== (yj > dy) && dx < ((xj - xi) * (dy - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+  // The default loop is a rounded rectangle, corner radius 14.
+  const r = Math.min(14, hw, hh);
+  if (ax > hw || ay > hh) return false;
+  if (ax <= hw - r || ay <= hh - r) return true;
+  return Math.hypot(ax - (hw - r), ay - (hh - r)) <= r;
+}
+
+/** The point on a shaped perimeter along the ray from its centre toward a target. Marched rather
+ *  than solved, because one predicate per shape is a great deal less to get wrong than one closed
+ *  form per shape - and a pixel of precision is all a path needs. */
+export function shapeEdge(shape: string, cx: number, cy: number, hw: number, hh: number, tx: number, ty: number): { x: number; y: number } {
+  const dx = tx - cx, dy = ty - cy;
+  const len = Math.hypot(dx, dy);
+  if (!len) return { x: cx, y: cy };
+  const ux = dx / len, uy = dy / len;
+  const reach = Math.min(len, Math.hypot(hw, hh) + 2);
+  let last = 0;
+  for (let t = 0; t <= reach; t += 1) {
+    if (!insideShape(shape, ux * t, uy * t, hw, hh)) break;
+    last = t;
+  }
+  return { x: cx + ux * last, y: cy + uy * last };
 }
