@@ -3,8 +3,9 @@
 A proposal, 23 August 2026, answering two questions: should animals be built at all, and would
 picking ready-made things beat picking colours?
 
-> **Status.** Parts 3 and 4 below - the six kinds, and every criterion rewritten as a question -
-> shipped on 23 August. Parts 1 and 2 (stocking fauna, ready flora pieces) are still proposals.
+> **Status.** All of it shipped on 23 August: ready flora pieces, stocking fauna, the six kinds, and
+> every criterion rewritten as a question. What remains unbuilt is the last paragraph of part 4 -
+> letting the park auto-tick the criteria it can answer for itself.
 
 Short answer to both: **yes** - with one condition that decides whether the change helps or quietly
 guts the best teaching in the game.

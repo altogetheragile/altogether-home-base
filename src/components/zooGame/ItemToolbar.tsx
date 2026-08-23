@@ -2,16 +2,17 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { BacklogItem } from './types';
 import {
   designSatisfiesTask,
-  EXHIBIT_PARTS, AMENITY_COLORS, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
+  AMENITY_COLORS, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
   ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureFlora,
   addWaterTo, addFloraTo, isLandscapeType, piecesFor, pieceOf, applyPiece, renderDesign, GRID_W,
-  type ItemDesign, type FloraPiece,
+  AGES, COATS, DEFAULT_GROUP, ROOM, groupSize, roomNeeded, speciesColors,
+  type ItemDesign, type FloraPiece, type AnimalGroup,
 } from './design';
 import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2, Maximize2, Shapes, Store, Ruler, Cat, PawPrint, Ear, Circle, Palette, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2, Maximize2, Shapes, Store, Ruler, type LucideIcon } from 'lucide-react';
 
 // ============= Building on the canvas =============
 //
@@ -124,6 +125,91 @@ function ColourButton({ label, value, onChange, part, focus, onFocus, onClosed }
   );
 }
 
+/** What we are stocking: how many animals, of what ages, and in what coat.
+ *
+ *  This replaced five shape menus and five colour wells on an animal whose template had already
+ *  made it a lion. Choosing a lion's head shape was not a decision - the template had made it, and
+ *  the menu could only make it wrong. How many lions IS a decision, and it costs something: a
+ *  family needs a habitat that can hold one.
+ */
+function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemDesign; onDesign: (d: ItemDesign) => void }) {
+  const group = design.group ?? DEFAULT_GROUP;
+  const set = (next: Partial<AnimalGroup>) => onDesign({ ...design, group: { ...group, ...next } });
+  const preset = (g: AnimalGroup) => onDesign({ ...design, group: g });
+  const total = groupSize(group);
+  const room = ROOM[item.enclosureSize ?? 'medium'];
+  const needs = roomNeeded(group);
+  const roomy = needs <= room;
+  const shapes: { label: string; group: AnimalGroup }[] = [
+    { label: 'One', group: { adults: 1, juveniles: 0, cubs: 0 } },
+    { label: 'A pair', group: { adults: 2, juveniles: 0, cubs: 0 } },
+    { label: 'A family', group: { adults: 2, juveniles: 1, cubs: 2 } },
+  ];
+  const same = (a: AnimalGroup, b: AnimalGroup) => a.adults === b.adults && a.juveniles === b.juveniles && a.cubs === b.cubs;
+
+  return (
+    <div className="flex basis-full flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">How many</span>
+        <span className="inline-flex overflow-hidden rounded-lg border border-border">
+          {shapes.map((sh) => (
+            <button key={sh.label} type="button" onClick={() => preset(sh.group)} aria-pressed={same(group, sh.group)}
+              className={cn('border-r border-border px-2.5 py-1 text-xs font-medium last:border-r-0 transition-colors',
+                same(group, sh.group) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted')}>
+              {sh.label}
+            </button>
+          ))}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">Who is in it</span>
+        {AGES.map((age) => (
+          <span key={age} className="inline-flex items-center gap-1 rounded-lg border border-border px-1.5 py-0.5 text-xs capitalize">
+            {age}
+            <span className="min-w-[1ch] text-center font-mono font-semibold tabular-nums">{group[age]}</span>
+            <span className="flex flex-col leading-none">
+              <button type="button" aria-label={`One more ${age}`} onClick={() => set({ [age]: Math.min(9, group[age] + 1) } as Partial<AnimalGroup>)}
+                className="text-[9px] text-muted-foreground hover:text-foreground">&#9650;</button>
+              <button type="button" aria-label={`One fewer ${age}`} disabled={group[age] <= 0 || total <= 1}
+                onClick={() => set({ [age]: Math.max(0, group[age] - 1) } as Partial<AnimalGroup>)}
+                className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">&#9660;</button>
+            </span>
+          </span>
+        ))}
+      </div>
+
+      {/* The trade-off, said out loud. This is the only place in the game where one Backlog item's
+          design is measured against another's, and it is the reason stocking is worth doing. */}
+      <div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className={cn('h-full transition-all', roomy ? 'bg-emerald-500' : 'bg-amber-500')}
+            style={{ width: `${Math.min(100, Math.round((needs / room) * 100))}%` }} />
+        </div>
+        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+          {total} {total === 1 ? 'animal' : 'animals'} in {item.enclosureSize ?? 'a medium'} {item.enclosureSize ? 'habitat' : 'habitat'}
+          {roomy ? ' - room to roam.' : ' - crowded. Enlarge the habitat, or keep fewer.'}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">Coat</span>
+        {COATS.map((c) => (
+          // The coat has to change what you can SEE, not just what the design records - so picking
+          // one repaints the animal in that morph's colours there and then.
+          <button key={c.key} type="button"
+            onClick={() => onDesign({ ...design, parts: { ...design.parts, coat: c.key }, colors: { ...design.colors, ...speciesColors(item, c.key) } })}
+            aria-pressed={(design.parts.coat ?? 'common') === c.key}
+            className={cn('rounded-lg border px-2 py-1 text-xs font-medium transition-colors',
+              (design.parts.coat ?? 'common') === c.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+            {c.label}{c.rare ? ' - rare' : ''}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** The ready pieces for this kind of scenery, each drawn as itself. You pick the thing rather than
  *  a colour for a shape - and the colours come with it, already right. */
 function Catalogue({ item, design, onPick }: { item: BacklogItem; design: ItemDesign; onPick: (p: FloraPiece) => void }) {
@@ -157,10 +243,6 @@ function PieceSprite({ piece }: { piece: FloraPiece }) {
     </span>
   );
 }
-
-/** A picture for each part of a creature, so the five menus are told apart by shape as well as by
- *  reading them. Nothing here is literal - there is no lucide icon for "tail". */
-const PART_ICON: Record<string, LucideIcon> = { body: Cat, head: Circle, ears: Ear, tail: PawPrint, markings: Palette };
 
 /** A line of guidance under the controls. It takes a whole line: as one more shrink-0 item in a
  *  wrapping row of buttons, a sentence simply ran out past the edge of the panel. */
@@ -300,28 +382,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
         </>
       )}
 
-      {isExhibit && EXHIBIT_PARTS.map((p) => {
-        const opt = design.parts[p.key] ?? p.options[0];
-        return (
-          // Every control on this bar is named for the part it belongs to and nothing else - Ground,
-          // Fence, Head, Tail - so the row reads as a list of the thing's parts. It used to be
-          // labelled with its current setting, which gave you "round", "maned", "tufted": a row of
-          // adjectives with no nouns, where the two colour buttons beside them said what they were.
-          <Menu key={p.key} label={p.label} icon={PART_ICON[p.key] ?? Circle} title={`${p.label} - ${opt}`}
-            swatch={opt === 'none' ? undefined : design.colors[p.colorKey]}>{(close) => (
-            <div className="space-y-2">
-              <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label}</div>
-              <Options options={p.options} value={opt} onPick={(o) => setPart(p.key, o)} />
-              {opt !== 'none' && (
-                <>
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{p.label} colour</div>
-                  <Colours value={design.colors[p.colorKey]} onChange={(hex) => setColor(p.colorKey, hex)} onPicked={close} />
-                </>
-              )}
-            </div>
-          )}</Menu>
-        );
-      })}
+      {isExhibit && <Stocking item={item} design={design} onDesign={onDesign} />}
 
       {isFlora && !isLand && (
         <>
