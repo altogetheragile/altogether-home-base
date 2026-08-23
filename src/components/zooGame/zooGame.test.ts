@@ -11,7 +11,7 @@ import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion } from './parkChecks';
 import { lookAhead } from './lookAhead';
-import { autoLayout, insidePark, parkBounds, CANVAS_W, PLAY_H } from './parkLayout';
+import { autoLayout, insidePark, parkBounds, shapeEdge, insideShape, CANVAS_W, PLAY_H } from './parkLayout';
 import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -2926,5 +2926,49 @@ describe("zoo game: the Product Owner's sign-off follows the park's answers too"
     const undone = applyParkChecks({ ...s, connectors: [] });
     const paths = undone.backlog.find((x) => x.id === 'bigcats-paths')!;
     expect((paths.tasks ?? []).find((t) => isSignOffTask(t.label))!.done).toBe(false);
+  });
+});
+
+describe('zoo game: a path meets the habitat it runs to', () => {
+  // The perimeter loop round a habitat is drawn in its chosen SHAPE - an ellipse for a round one -
+  // while the path was stopped at the bounding RECTANGLE, which sits outside that loop everywhere
+  // except the four cardinal points. So every path arriving diagonally stopped short, and only at
+  // the habitats that are not rectangles.
+  const hw = 86, hh = 57;   // a large habitat, half-extents
+  const rectEdge = (ux: number, uy: number) => {
+    const t = 1 / Math.max(Math.abs(ux) / hw, Math.abs(uy) / hh);
+    return { x: ux * t, y: uy * t };
+  };
+  const d = Math.SQRT1_2;   // 45 degrees
+
+  it('stops on the ellipse of a round habitat, not on the box around it', () => {
+    const got = shapeEdge('circle', 0, 0, hw, hh, d * 500, d * 500);
+    // On the ellipse: (x/hw)^2 + (y/hh)^2 = 1.
+    expect((got.x / hw) ** 2 + (got.y / hh) ** 2).toBeCloseTo(1, 1);
+    // And that is a good way inside where the old rule stopped.
+    const was = rectEdge(d, d);
+    expect(Math.hypot(was.x - got.x, was.y - got.y), 'the gap the old rule left').toBeGreaterThan(10);
+  });
+
+  it('was never wrong straight out to the side, which is why some paths looked fine', () => {
+    const got = shapeEdge('circle', 0, 0, hw, hh, 500, 0);
+    expect(Math.abs(got.x - rectEdge(1, 0).x)).toBeLessThan(1.5);
+  });
+
+  it('follows the shape for every kind of habitat, and never overshoots it', () => {
+    for (const shape of ['rounded', 'pill', 'circle', 'hexagon', 'octagon']) {
+      for (const a of [0, 0.4, 0.8, 1.2, 2.0, 3.0, 4.5, 5.6]) {
+        const p = shapeEdge(shape, 0, 0, hw, hh, Math.cos(a) * 900, Math.sin(a) * 900);
+        expect(Math.abs(p.x), `${shape} at ${a}`).toBeLessThanOrEqual(hw + 1);
+        expect(Math.abs(p.y), `${shape} at ${a}`).toBeLessThanOrEqual(hh + 1);
+        expect(insideShape(shape, p.x, p.y, hw + 1.5, hh + 1.5), `${shape} at ${a} lands on the loop`).toBe(true);
+      }
+    }
+  });
+
+  it('puts the end further out for a rectangle than for the ellipse inside it', () => {
+    const round = shapeEdge('circle', 0, 0, hw, hh, d * 500, d * 500);
+    const boxy = shapeEdge('rounded', 0, 0, hw, hh, d * 500, d * 500);
+    expect(Math.hypot(boxy.x, boxy.y)).toBeGreaterThan(Math.hypot(round.x, round.y));
   });
 });
