@@ -9,7 +9,7 @@ import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen } from './engine';
-import { FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
+import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 import { copyEntries, applyCopyOverrides } from './copy';
@@ -1138,7 +1138,7 @@ describe('zoo game: the toolbox', () => {
     expect(item.category).toBe('exhibit');
     expect(item.unsized).toBe(true);
     // The criteria are outcomes a visitor would notice, not a restatement of the build steps.
-    expect(item.acceptance.some((a) => /tell it is a lion/i.test(a))).toBe(true);
+    expect(item.acceptance.some((a) => /tell they are a lion/i.test(a))).toBe(true);
     // presetFor uses the template, not the id, so a maned lion shape is the starting point
     expect(presetFor(item).parts.head).toBe('maned');
   });
@@ -1397,16 +1397,14 @@ describe('zoo game: richer studio kit', () => {
     }
   });
 
-  it('a crested / tusked head is the signature feature, coloured via the ears slot', () => {
-    for (const head of ['crested', 'tusked']) {
-      const design: ItemDesign = { parts: { body: 'round', head }, colors: { body: '#c8873b', head: '#8a5a2b' } };
-      const crit = designCriteria(exhibit(), design);
-      const feature = crit.find((c) => /crest|tusks/.test(c.label))!;
-      expect(feature).toBeDefined();
-      expect(feature.pass).toBe(false); // needs the ears-slot colour
-      design.colors.ears = '#efe6d0';
-      expect(designCriteria(exhibit(), design).find((c) => /crest|tusks/.test(c.label))!.pass).toBe(true);
-    }
+  it('gates an exhibit on stocking it and housing it, not on painting it', () => {
+    // It used to be five colours and a "distinctive feature" on a creature the template had already
+    // made a lion. What is actually open is how many lions, and whether they fit.
+    const unstocked = designCriteria(exhibit(), { parts: {}, colors: {} });
+    expect(unstocked.every((c) => !c.pass)).toBe(true);
+    expect(unstocked.map((c) => c.label)).toEqual(['Decide how many, and of what ages', 'They fit the habitat with room to roam']);
+    const pair = designCriteria(exhibit(), { parts: {}, colors: {}, group: { adults: 2, juveniles: 0, cubs: 0 } });
+    expect(pair.every((c) => c.pass)).toBe(true);
   });
 });
 
@@ -2565,5 +2563,67 @@ describe('zoo game: scenery is picked as a finished piece', () => {
     const oak = FLORA_PIECES.find((p) => p.key === 'oak')!;
     const autumn = { ...applyPiece({ parts: {}, colors: {} }, oak), colors: { foliage: '#c2662d', trunk: '#7a5228' } };
     expect(gridOf({ type: 'tree', key: 'oak', colors: autumn.colors })).not.toBe(gridOf(oak));
+  });
+});
+
+describe('zoo game: an exhibit is stocked, not built', () => {
+  const lionIn = (size: 'small' | 'medium' | 'large'): BacklogItem =>
+    ({ id: 'l', name: 'Lion', category: 'exhibit', zone: 'Big Cats', acceptance: [], status: 'backlog', sprintNumber: null, accessible: true, estimate: 5, enclosureSize: size });
+
+  it('draws every animal in the group, the young ones smaller', () => {
+    const family = groupMembers({ adults: 2, juveniles: 1, cubs: 2 });
+    expect(family).toHaveLength(5);
+    expect(family.filter((m) => m.age === 'cubs')).toHaveLength(2);
+    // Ages are worth choosing because they are not the same animal at a different number.
+    expect(AGE_SCALE.cubs).toBeLessThan(AGE_SCALE.juveniles);
+    expect(AGE_SCALE.juveniles).toBeLessThan(AGE_SCALE.adults);
+    // Nothing chosen yet still shows one animal rather than an empty habitat.
+    expect(groupMembers(undefined)).toHaveLength(1);
+  });
+
+  it('measures the group against the habitat somebody else built', () => {
+    const family = { adults: 2, juveniles: 1, cubs: 2 };
+    expect(hasRoomToRoam(family, 'large')).toBe(true);
+    expect(hasRoomToRoam(family, 'small')).toBe(false);
+    // A cub takes less room than an adult, which is the whole reason ages are a decision.
+    expect(roomNeeded({ adults: 3, juveniles: 0, cubs: 0 })).toBeGreaterThan(roomNeeded({ adults: 1, juveniles: 0, cubs: 3 }));
+  });
+
+  it('will not call an exhibit built until it has been stocked AND housed', () => {
+    const crowded = { parts: {}, colors: {}, group: { adults: 4, juveniles: 2, cubs: 2 } };
+    expect(isDesignDone(lionIn('small'), crowded)).toBe(false);   // eight lions in a small habitat
+    expect(isDesignDone(lionIn('medium'), crowded)).toBe(false);  // and too many for a medium one
+    expect(isDesignDone(lionIn('large'), crowded)).toBe(true);    // the biggest habitat can take a pride
+    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {}, group: { adults: 8, juveniles: 0, cubs: 0 } })).toBe(false);
+    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {}, group: { adults: 2, juveniles: 1, cubs: 2 } })).toBe(true);
+    // Undecided is not the same as fits - it would otherwise pass on the default of one animal.
+    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {} })).toBe(false);
+  });
+
+  it('every criterion an exhibit has can be failed', () => {
+    const acs = exhibitAcceptance('Lion');
+    expect(acs).toHaveLength(4);
+    // The two that used to be free: the template made it recognisable, colouring it made it finished.
+    expect(acs.some((a) => /group rather than one animal/.test(a))).toBe(true);
+    expect(acs.some((a) => /room to spare/.test(a))).toBe(true);
+    expect(acs.every((a) => a.startsWith('Can ') && a.endsWith('?'))).toBe(true);
+  });
+
+  it('makes a group worth more than a specimen, and a rare coat worth more again', () => {
+    const lion = { ...lionIn('large'), appeal: { families: 8, enthusiasts: 7, comfortSeekers: 6 } } as BacklogItem;
+    const at = (d: ItemDesign) => appealFromDesign(lion, d)!.families;
+    const one = at({ parts: {}, colors: { body: '#c8873b' }, group: { adults: 1, juveniles: 0, cubs: 0 } });
+    const family = at({ parts: {}, colors: { body: '#c8873b' }, group: { adults: 2, juveniles: 1, cubs: 2 } });
+    expect(family).toBeGreaterThan(one);
+    // A rare coat is what the enthusiasts come for; the families come for a lively group.
+    const keen = (d: ItemDesign) => appealFromDesign(lion, d)!.enthusiasts;
+    const plain = { parts: {}, colors: { body: '#c8873b' }, group: { adults: 1, juveniles: 0, cubs: 0 } };
+    expect(keen({ ...plain, parts: { coat: 'pale' } })).toBeGreaterThan(keen(plain));
+  });
+
+  it('plans the work as stocking rather than as pixel art', () => {
+    const tasks = suggestTasks(initialZooState(1).backlog.find((i) => i.id === 'lion')!).map((t) => t.label);
+    expect(tasks).toContain('Decide how many, and of what ages');
+    expect(tasks.some((t) => /sketch|markings/i.test(t))).toBe(false);
   });
 });

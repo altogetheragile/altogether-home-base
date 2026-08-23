@@ -21,7 +21,13 @@ export interface ItemDesign {
   /** Enclosure planting - decorative flora placed inside the habitat in the studio, just like
    *  water features (add / drag / resize / remove). Each is a plant type at a fractional spot. */
   flora?: EnclosureFlora[];
+  /** How many animals this exhibit holds, and of what ages. See STOCKING below. */
+  group?: AnimalGroup;
 }
+
+/** The animals in one exhibit. A zoo does not BUILD a lion - it decides how many lions, of what
+ *  ages, and whether it can house them. */
+export interface AnimalGroup { adults: number; juveniles: number; cubs: number }
 
 /** A water feature inside an enclosure: position and size as fractions of the habitat box. */
 export interface WaterFeature { x: number; y: number; w: number; h: number }
@@ -580,7 +586,14 @@ export function enclosureAcceptance(): string[] {
  *  into its enclosure. Handles plural names ("Penguins" -> "recognisable as penguins"). */
 export function exhibitAcceptance(name: string): string[] {
   const what = /s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase();
-  return [`Can I tell it is ${what} without reading the sign?`, 'Can I pick it out from across the park?', 'Can I see it fully coloured?', 'Can I find it in its habitat?'];
+  // All four can fail. Two of them used to be free - the template made it recognisable and colouring
+  // it in made it finished - which meant a criterion nobody could fail, and those teach nothing.
+  return [
+    `Can I tell they are ${what} without reading the sign?`,
+    'Can I see a group rather than one animal on its own?',
+    'Can I fit them in the habitat with room to spare?',
+    'Can I find them in their habitat?',
+  ];
 }
 
 /** Build + placement acceptance criteria for a pathway: designed as a width + colour in the studio,
@@ -596,7 +609,8 @@ export function pathAcceptance(): string[] {
  *  than a rule that keeps itself up to date, but not as bad as a rule that quietly stops matching. */
 const PLACEMENT_CRITERIA = new Set([
   'Can I walk right round it?',
-  'Can I find it in its habitat?',
+  'Can I find them in their habitat?',
+  'Can I find it in its habitat?',   // the wording before exhibits became groups
   'Can I still get past it?',
   'Can visitors still get round it?',
   'Can I tell which way to go from here?',
@@ -673,6 +687,62 @@ export function amenityAcceptance(name: string, services?: string): string[] {
   // ...and then the one that can only be answered once it is standing in the park.
   return [...build, 'Can I find it from the entrance?'];
 }
+// ============= Stocking, not modelling =============
+//
+// An animal used to be assembled from five shape menus and five colour wells - on a creature whose
+// template had already made it a lion. You were not designing a lion; you were re-specifying one
+// that was correct when it arrived, from menus that could only make it wrong. And it spent real
+// minutes of a ninety-second day on pixel art, in a game about Scrum.
+//
+// So an exhibit is a STOCKING decision: how many, of what ages. It has a trade-off in it, which the
+// part menus never did - a family draws more visitors than a specimen and needs more room to do it,
+// so the animal item and the habitat item finally depend on each other. Build one without thinking
+// about the other and the Product Owner's criteria say so.
+//
+// The species is still the species: `presetFor` gives a lion a lion's shape, and the coat is the
+// one thing left to choose, because a white tiger is a decision about value.
+
+export const AGES = ['adults', 'juveniles', 'cubs'] as const;
+export type Age = typeof AGES[number];
+
+/** How big each age is drawn, against a full-grown animal. */
+export const AGE_SCALE: Record<Age, number> = { adults: 1, juveniles: 0.72, cubs: 0.55 };
+
+export const DEFAULT_GROUP: AnimalGroup = { adults: 1, juveniles: 0, cubs: 0 };
+
+/** How many animals in total. */
+export const groupSize = (g?: AnimalGroup): number =>
+  (g?.adults ?? DEFAULT_GROUP.adults) + (g?.juveniles ?? 0) + (g?.cubs ?? 0);
+
+/** The group as one entry per animal, largest first so the little ones draw in front. */
+export function groupMembers(g?: AnimalGroup): { age: Age; scale: number }[] {
+  const grp = g ?? DEFAULT_GROUP;
+  return AGES.flatMap((age) => Array.from({ length: Math.max(0, grp[age]) }, () => ({ age, scale: AGE_SCALE[age] })));
+}
+
+/** How many animals a habitat of this size can hold with room to roam. A cub takes less room than a
+ *  full-grown adult, which is the whole reason ages are worth choosing. */
+export const ROOM: Record<'small' | 'medium' | 'large', number> = { small: 2, medium: 4, large: 7 };
+
+/** What the group costs in room, in adult-equivalents. */
+export const roomNeeded = (g?: AnimalGroup): number => {
+  const grp = g ?? DEFAULT_GROUP;
+  return grp.adults + grp.juveniles * 0.6 + grp.cubs * 0.35;
+};
+
+/** Whether they have room to roam in a habitat of this size - a criterion the park can answer for
+ *  itself, which is the point of asking it as a question. */
+export const hasRoomToRoam = (g: AnimalGroup | undefined, size: 'small' | 'medium' | 'large' | undefined): boolean =>
+  roomNeeded(g) <= ROOM[size ?? 'medium'];
+
+/** Coats a species can come in. The rare one is a real Product Owner decision: more appeal, and the
+ *  Backlog item costs the same either way. */
+export const COATS: { key: string; label: string; rare?: boolean }[] = [
+  { key: 'common', label: 'Common' },
+  { key: 'pale', label: 'Pale', rare: true },
+  { key: 'dark', label: 'Dark', rare: true },
+];
+
 // ============= Ready pieces =============
 //
 // Choosing "green" from a grid of swatches is a weak decision: no answer is wrong, none of them is
@@ -814,6 +884,39 @@ export const SPECIES_SHAPES: { key: string; label: string }[] = Object.keys(PART
 /** The starting design for an item: a recognisable shape (for exhibits) with no
  *  colours yet, so the player colours it in. Uses the item's toolbox template (falling
  *  back to its id) to pick the species shape. */
+/** What a species actually looks like. Nobody paints an animal any more - you stock it - so it has
+ *  to arrive wearing its own colours. A grey lion was the price of taking the colour wells away, and
+ *  it is not one worth paying: the template already knew it was a lion, and now it looks like one. */
+const SPECIES_COLORS: Record<string, Record<string, string>> = {
+  lion: { body: '#c9963f', head: '#a9702c', ears: '#7a4d1c', tail: '#7a4d1c' },
+  tiger: { body: '#d98338', head: '#d98338', ears: '#2a2622', tail: '#2a2622', markings: '#2a2622' },
+  leopard: { body: '#d9b45f', head: '#d9b45f', ears: '#5a4426', tail: '#5a4426', markings: '#3b3128' },
+  cheetah: { body: '#dcc07a', head: '#dcc07a', ears: '#5a4426', tail: '#5a4426', markings: '#3b3128' },
+  penguins: { body: '#2c2f36', head: '#f2f0ea', ears: '#e8a33d', tail: '#2c2f36', markings: '#f2f0ea' },
+  reef: { body: '#e2803c', head: '#e2803c', tail: '#f0c05a', markings: '#f2f0ea' },
+  seal: { body: '#6b7079', head: '#6b7079', tail: '#585d66' },
+  otter: { body: '#7d5a3a', head: '#7d5a3a', tail: '#5f4429' },
+  elephant: { body: '#9099a1', head: '#9099a1', ears: '#7d868e', tail: '#7d868e' },
+  giraffe: { body: '#e2be6a', head: '#e2be6a', ears: '#8a6134', tail: '#8a6134', markings: '#a4682c' },
+  zebra: { body: '#f0eee8', head: '#f0eee8', ears: '#2a2622', tail: '#2a2622', markings: '#2a2622' },
+  rhino: { body: '#8d9299', head: '#8d9299', ears: '#767b81', tail: '#767b81' },
+  bear: { body: '#6b4a2f', head: '#6b4a2f', ears: '#4f3620', tail: '#4f3620' },
+  monkey: { body: '#8a5f39', head: '#c79a6b', ears: '#c79a6b', tail: '#6f4b2c' },
+};
+const GENERIC_COLORS = { body: '#a6835a', head: '#8d6c46', ears: '#6f5334', tail: '#6f5334' };
+
+/** A coat shifts every colour the animal has. A pale morph is a real decision about value - the
+ *  enthusiasts come a long way for one - and it costs a Backlog item the same as a common coat. */
+export function coatColors(base: Record<string, string>, coat?: string): Record<string, string> {
+  if (!coat || coat === 'common') return base;
+  const by = coat === 'pale' ? 34 : -30;
+  return Object.fromEntries(Object.entries(base).map(([k, v]) => [k, shade(v, by)]));
+}
+
+export function speciesColors(item: BacklogItem, coat?: string): Record<string, string> {
+  return coatColors(SPECIES_COLORS[item.template ?? item.id] ?? GENERIC_COLORS, coat);
+}
+
 export function presetFor(item: BacklogItem): ItemDesign {
   if (item.category === 'path') return { parts: { thickness: 'medium' }, colors: { path: '#c9a86a' } };
   // A habitat starts as bare ground: water is something you choose to add, not something every
@@ -821,7 +924,7 @@ export function presetFor(item: BacklogItem): ItemDesign {
   if (item.category === 'enclosure') return { parts: {}, colors: {} };
   if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
   if (item.category === 'amenity') return { parts: { type: item.template ?? buildingTypeFor(item.name, item.services), sign: 'on' }, colors: {} };
-  return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: {} };
+  return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: speciesColors(item) };
 }
 export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 
@@ -830,6 +933,16 @@ export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
 
 export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
+  // An exhibit is stocked rather than built: how many animals, and whether the habitat can hold
+  // them. The second one is the only place in the game where one Backlog item's design is measured
+  // against another's, which is what makes an animal and its habitat a pair rather than two jobs.
+  if (item.category === 'exhibit') return [
+    { label: 'Decide how many, and of what ages', pass: !!design.group && groupSize(design.group) > 0 },
+    // Not decided is not the same as fits: an undecided exhibit would otherwise pass this on the
+    // default of one animal, which is a criterion that cannot be failed - the thing this whole
+    // rewrite was for.
+    { label: 'They fit the habitat with room to roam', pass: !!design.group && hasRoomToRoam(design.group, item.enclosureSize) },
+  ];
   // A path is designed as a width and a colour in the studio; the route itself is drawn on the
   // park when you deploy it.
   if (item.category === 'path') return [
@@ -855,40 +968,10 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
       { label: 'Add a sign so visitors can find it', pass: design.parts.sign === 'on' && !!design.colors.sign },
     ];
   }
-  // Criteria reflect the animal's ACTUAL parts, so they read sensibly per species
-  // (a penguin is not asked for a tail; a lion is asked to colour its mane).
-  const p = design.parts;
-  const fish = p.head === 'none';
-
-  // Heads whose feature (mane/horn/crest/tusks) is coloured through the ears slot.
-  const earFeature = p.head === 'maned' || p.head === 'horned' || p.head === 'crested' || p.head === 'tusked';
-
-  // Colourable parts this animal actually has.
-  const present: string[] = ['body'];
-  if (!fish) present.push('head');
-  if ((p.ears && p.ears !== 'none') || earFeature) present.push('ears');
-  if (p.tail && p.tail !== 'none') present.push('tail');
-  if (p.markings && p.markings !== 'none') present.push('markings');
-
-  // Its signature feature, named naturally for the criterion.
-  const markLabel: Record<string, string> = { stripes: 'stripes', spots: 'spots', dapples: 'dapples', saddle: 'saddle', patches: 'belly' };
-  let sig: { key: string; label: string } | null = null;
-  if (p.markings && p.markings !== 'none') sig = { key: 'markings', label: markLabel[p.markings] ?? 'markings' };
-  else if (p.head === 'maned') sig = { key: 'ears', label: 'mane' };
-  else if (p.head === 'horned') sig = { key: 'ears', label: 'horn' };
-  else if (p.head === 'crested') sig = { key: 'ears', label: 'crest' };
-  else if (p.head === 'tusked') sig = { key: 'ears', label: 'tusks' };
-  else if (p.ears && p.ears !== 'none') sig = { key: 'ears', label: 'ears' };
-  else if (p.tail && p.tail !== 'none') sig = { key: 'tail', label: fish ? 'fins' : 'tail' };
-
-  const list = [
-    { label: 'Colour its body', pass: !!design.colors.body },
-    { label: fish ? 'Colour its fins' : 'Colour its head', pass: !!design.colors[fish ? 'tail' : 'head'] },
-  ];
-  if (sig) list.push({ label: `Colour its ${sig.label}`, pass: !!design.colors[sig.key] });
-  else list.push({ label: 'Give it a distinctive feature (ears, a tail or markings)', pass: false });
-  list.push({ label: 'Finish every part it has', pass: present.every((k) => !!design.colors[k]) });
-  return list;
+  // Exhibits are handled at the top: an exhibit is stocked, not painted, so the criteria that used
+  // to be built out of its parts - colour the body, give it a distinctive feature - are gone rather
+  // than left behind. Dead code that still reads as the rule is worse than no code at all.
+  return [];
 }
 
 export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => designCriteria(item, design).every((x) => x.pass);
@@ -898,6 +981,14 @@ export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => 
  *  did. Matched loosely by keyword against the generated task labels; a custom/unmatched task
  *  returns false and stays a manual tick. */
 export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label: string): boolean {
+  if (item.category === 'exhibit') {
+    const s = label.toLowerCase();
+    if (/how many|ages|stock|group/.test(s)) return !!design.group && groupSize(design.group) > 0;
+    // Not decided is not the same as fits - it would otherwise tick itself before you had chosen.
+    if (/fit the habitat|room/.test(s)) return !!design.group && hasRoomToRoam(design.group, item.enclosureSize);
+    if (/coat/.test(s)) return !!design.parts.coat;
+    return false;
+  }
   const s = label.toLowerCase();
   const c = design.colors, p = design.parts;
   if (item.category === 'path') return !!p.thickness && !!c.path; // width + colour chosen
@@ -961,9 +1052,14 @@ function luminance(hex?: string): number {
 export function appealFromDesign(item: BacklogItem, design: ItemDesign): Record<SegmentId, number> | undefined {
   if (item.category !== 'exhibit' || !item.appeal) return item.appeal;
   const bright = (luminance(design.colors.body) + luminance(design.colors.markings ?? design.colors.body)) / 2;
-  const activeParts = ['ears', 'tail', 'markings'].filter((k) => (design.parts[k] ?? 'none') !== 'none').length;
-  const busy = activeParts / 3;
-  const distinctive = (design.parts.markings ?? 'none') !== 'none';
+  // A group is worth more than a specimen, and a rare coat is worth more than the common one. Both
+  // cost something - room, and the decision to spend a Backlog item on it - which is what makes
+  // them decisions rather than dials. Diminishing: the fourth lion adds less than the second.
+  const size = groupSize(design.group);
+  const crowd = clamp(Math.log2(1 + size) / 2, 0, 1);
+  const rare = COATS.find((c) => c.key === design.parts.coat)?.rare ? 1 : 0;
+  const busy = clamp(0.4 + 0.6 * crowd, 0, 1);
+  const distinctive = rare === 1;
   const finish = clamp(coloured(design) / 4, 0, 1);
   const mult: Record<SegmentId, number> = {
     families: clamp(0.7 + 0.5 * (0.5 * bright + 0.5 * busy), 0.5, 1.25),

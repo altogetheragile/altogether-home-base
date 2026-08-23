@@ -229,7 +229,8 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
     : item.category === 'enclosure'
     ? ['Set the footprint size', 'Fence it securely', 'Lay the ground, shelter and water']
     : item.category === 'exhibit'
-    ? [`Sketch the ${item.name.toLowerCase()}'s look`, 'Colour its body and head', 'Add its markings and features']
+    // Stocking, not modelling: how many and of what ages, and whether the habitat can hold them.
+    ? ['Decide how many, and of what ages', 'Check they fit the habitat', 'Choose the coat']
     : item.category === 'amenity'
       ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
       : isLandscapeType(item.template)

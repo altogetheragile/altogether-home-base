@@ -10,6 +10,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
 import { zoneSlices, zooIsOpen } from './engine';
+import { groupMembers } from './design';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock } from 'lucide-react';
 
 // ============= The Park View =============
@@ -341,8 +342,11 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
   const d = design ?? enc.design;
   const ground = d?.colors.ground ?? theme.plot;
   const fence = d?.colors.fence ?? theme.plotBorder;
-  const n = animals.length;
-  const cell = n >= 4 ? 1 : 2; // more animals share the space, so each is drawn smaller
+  // One exhibit item can hold a whole group, so the count is the animals in it rather than the
+  // number of Backlog items standing here.
+  const stock = animals.flatMap((a) => groupMembers((a.design ?? a.draftDesign)?.group).map((m, k) => ({ a, ...m, k })));
+  const n = stock.length;
+  const cell = n >= 6 ? 1 : 2; // more animals share the space, so each is drawn smaller
   const boxRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
   // A content item keeps its dragged spot; an animal without one auto-arranges along the floor.
@@ -445,17 +449,21 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
             </div>
           );
         })}
-        {animals.map((a, i) => {
-          const p = drag?.id === a.id ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i);
+        {stock.map(({ a, age, scale, k }, i) => {
+          // The first of a group keeps the item's dragged spot and wears the name; the rest of the
+          // family arrange themselves around it. Dragging the lion moves the pride.
+          const lead = k === 0;
+          const p = drag?.id === a.id && lead ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i);
           return (
-            <div key={a.id} className={cn('group absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
-              onPointerDown={(e) => startSpotDrag(e, a.id, false)}
-              style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot ? 'none' : undefined }}>
+            <div key={`${a.id}-${k}`} className={cn('group absolute', onSetSpot && lead && 'cursor-grab active:cursor-grabbing')}
+              onPointerDown={lead ? (e) => startSpotDrag(e, a.id, false) : undefined}
+              style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot && lead ? 'none' : undefined }}>
               {/* Gentle idle bob so the animals feel alive; each desynced by a stable per-animal delay. */}
               <div className={cn(drag?.id !== a.id && 'zoo-idle')} style={{ animationDelay: `-${(jitter(i, 1) * 2.4).toFixed(2)}s` }}>
-                <Sprite item={a} design={a.design ?? presetFor(a)} cell={cell} />
+                <Sprite item={a} design={a.design ?? a.draftDesign ?? presetFor(a)} cell={Math.max(1, Math.round(cell * scale * 10) / 10)} />
               </div>
-              <AnimalName name={a.name} onRename={onRename ? (nm) => onRename(a.id, nm) : undefined} />
+              {lead && <AnimalName name={a.name} onRename={onRename ? (nm) => onRename(a.id, nm) : undefined} />}
+              <span className="sr-only">{age}</span>
             </div>
           );
         })}
@@ -544,9 +552,13 @@ function buildFeatures(state: ZooGameState): Feature[] {
   // Planting dragged into a built enclosure lives inside that habitat, not loose on the grounds.
   const nestedFlora = (o: BacklogItem) => o.category === 'flora' && !!o.enclosureId && builtEnc.some((e) => e.id === o.enclosureId);
   const feats: Feature[] = [];
+  // An animal being STOCKED goes into its habitat too, not into a hoarding of its own. The whole
+  // point of choosing a family rather than assembling a lion is watching the family turn up, and it
+  // cannot turn up in a construction site next door to the habitat it belongs in.
+  const stocking = state.backlog.filter((it) => it.status === 'committed' && it.started && it.category === 'exhibit');
   for (const e of builtEnc) {
     const cfg = ENCLOSURE[e.enclosureSize ?? 'medium'];
-    const animals = open.filter((o) => o.category === 'exhibit' && o.enclosureId === e.id);
+    const animals = [...open, ...stocking].filter((o) => o.category === 'exhibit' && o.enclosureId === e.id);
     const plants = open.filter((o) => nestedFlora(o) && o.enclosureId === e.id);
     feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, plants, theme: theme(e.zone) });
   }
@@ -574,7 +586,9 @@ function buildFeatures(state: ZooGameState): Feature[] {
   // ...except a path, which has no plot. A pathway is a route between things, so there is nothing
   // to hoard off and no square of ground it occupies - it was being drawn as a little building with
   // its name on it, which is not what a path is. You lay it out by drawing the route.
-  for (const w of state.backlog.filter((it) => it.status === 'committed' && it.started && !it.enhancesId && it.category !== 'path')) {
+  const housed = new Set(stocking.filter((a) => builtEnc.some((e) => e.id === a.enclosureId)).map((a) => a.id));
+  for (const w of state.backlog.filter((it) => it.status === 'committed' && it.started && !it.enhancesId
+    && it.category !== 'path' && !housed.has(it.id))) {
     const cfg = w.category === 'enclosure' ? ENCLOSURE[w.enclosureSize ?? 'medium'] : null;
     const sz = w.category === 'flora' && isLandscapeType(landType(w)) ? landSize(w) : null;
     feats.push({
