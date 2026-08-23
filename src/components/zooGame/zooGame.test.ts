@@ -10,6 +10,7 @@ import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion } from './parkChecks';
+import { lookAhead } from './lookAhead';
 import { autoLayout, insidePark, parkBounds, CANVAS_W, PLAY_H } from './parkLayout';
 import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
@@ -2793,6 +2794,81 @@ describe('zoo game: a position saved when the park was a different size', () => 
       expect(p.x + habitat.w / 2).toBeLessThanOrEqual(CANVAS_W);
       expect(p.y - habitat.h / 2).toBeGreaterThanOrEqual(0);
       expect(p.y + habitat.h / 2).toBeLessThanOrEqual(PLAY_H);
+    }
+  });
+});
+
+describe('zoo game: the Product Owner looks ahead', () => {
+  const commit = (s: ZooGameState, ...ids: string[]): ZooGameState =>
+    ({ ...s, backlog: s.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber } : it)) });
+
+  it('says nothing when nothing is forecast', () => {
+    expect(lookAhead(initialZooState(1))).toEqual([]);
+  });
+
+  it('notices that a zone about to open has no way in, and offers to write one', () => {
+    const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
+    // No paths item, and no epic hiding one either: there is nothing to split, so write it.
+    const bare: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.id !== 'bigcats-paths' && it.category !== 'epic') };
+    const p = lookAhead(bare).find((x) => x.id === 'path:Big Cats');
+    expect(p).toBeTruthy();
+    expect(p!.why).toMatch(/path to walk in on/i);
+    expect(p!.kind).toBe('add');
+    if (p!.kind === 'add') {
+      expect(p!.draft.category).toBe('path');
+      expect(p!.draft.zone).toBe('Big Cats');
+    }
+  });
+
+  it('offers to SPLIT rather than duplicate when the thing is buried in an epic', () => {
+    // Forecast a Waterside habitat. The Waterside's paths exist - as a member of the Waterside epic,
+    // where nobody can size them or pull them into a Sprint. Adding a second one is not help.
+    const base = initialZooState(1);
+    const s: ZooGameState = { ...base, backlog: [...base.backlog, {
+      id: 'penguin-enc', name: 'Penguin Habitat', category: 'enclosure', zone: 'Waterside', estimate: 5,
+      acceptance: [], status: 'committed', sprintNumber: base.sprintNumber, accessible: true,
+    }] };
+    const p = lookAhead(s).find((x) => x.kind === 'split');
+    expect(p).toBeTruthy();
+    expect(p!.why).toMatch(/epic, where nobody can size it/);
+    if (p!.kind === 'split') expect(p!.memberIds.length).toBeGreaterThan(0);
+  });
+
+  it('says nothing about a zone that already has its paths in the Backlog', () => {
+    // bigcats-paths is right there, unbuilt but written - the Product Owner has nothing to add.
+    const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
+    expect(lookAhead(s).some((p) => p.id === 'paths:Big Cats')).toBe(false);
+  });
+
+  it('raises somewhere to eat before the visitors complain, not after', () => {
+    // Three exhibits open or forecast and nowhere to buy anything. The visitor signals already
+    // handle "after", and by then it has cost you a Sprint of unhappy visitors.
+    let s = bigCatsSplit(1);
+    s = { ...s, backlog: s.backlog.filter((it) => !(it.category === 'amenity')) };
+    s = { ...s, backlog: s.backlog.map((it) => (['lion', 'tiger', 'leopard'].includes(it.id) ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber } : it)) };
+    const food = lookAhead(s).find((p) => p.id === 'amenity:food');
+    expect(food).toBeTruthy();
+    expect(food!.kind).toBe('add');
+    if (food!.kind === 'add') expect(food!.draft.services).toBe('food');
+    expect(food!.why).toMatch(/3 exhibits/);
+  });
+
+  it('does not put the same suggestion twice once it has been turned down', () => {
+    const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
+    const noPaths: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.id !== 'bigcats-paths' && it.category !== 'epic') };
+    expect(lookAhead(noPaths).some((p) => p.id === 'path:Big Cats')).toBe(true);
+    const declined = { ...noPaths, declinedProposals: ['path:Big Cats'] };
+    expect(lookAhead(declined).some((p) => p.id === 'path:Big Cats')).toBe(false);
+  });
+
+  it('proposes items the Scrum Team still has to refine and size', () => {
+    const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
+    const noPaths: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.id !== 'bigcats-paths' && it.category !== 'epic') };
+    for (const p of lookAhead(noPaths)) {
+      expect(p.why.length, `${p.label} says why`).toBeGreaterThan(20);
+      if (p.kind !== 'add') continue;
+      expect(p.draft.acceptance.length, `${p.label} arrives with criteria`).toBeGreaterThan(0);
+      expect(p.draft.acceptance.every((a) => a.startsWith('Can ')), `${p.label} asks questions`).toBe(true);
     }
   });
 });

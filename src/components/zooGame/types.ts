@@ -382,6 +382,9 @@ export interface ZooGameState {
   /** Manual connectors drawn on the Park: attach an enclosure/building to another (or to a free
    *  point), route them by hand, and style each. Persist with the game. */
   connectors: ZooConnector[];
+  /** Proposals from the Product Owner's look-ahead that the player has turned down, so the same
+   *  suggestion is not put again every few seconds. Declining is a decision, and it sticks. */
+  declinedProposals?: string[];
 }
 
 export type ZooAction =
@@ -424,6 +427,7 @@ export type ZooAction =
   | { type: 'SET_TEACHING'; on: boolean }
   | { type: 'MARK_TAUGHT'; id: string }
   | { type: 'SET_DOR'; dor: string[] }
+  | { type: 'DECLINE_PROPOSAL'; proposalId: string }
   | { type: 'ADD_COPY'; id: string; pos: { x: number; y: number } }
   | { type: 'MOVE_COPY'; id: string; index: number; pos: { x: number; y: number } }
   | { type: 'REMOVE_COPY'; id: string; index: number }
