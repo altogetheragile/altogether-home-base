@@ -53,15 +53,31 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
   }
 
   if (label === 'Can I get to this zone without crossing the grass?') {
-    // A path runs to something in this zone. The visitors walk the connectors, so a zone nothing
-    // connects to is a zone they cannot reach, whatever else has been delivered there.
-    const here = new Set(state.backlog.filter((i) => i.zone === item.zone).map((i) => i.id));
-    const reached = (state.connectors ?? []).flatMap((c) => [c.a.featureId, c.b.featureId])
-      .filter((id): id is string => !!id && here.has(id));
-    const first = named(state, reached[0]);
-    return reached.length
-      ? { met: true, evidence: `a path runs to the ${first}` }
-      : { met: false, evidence: 'no path reaches anything here' };
+    // A path run reaches something in this zone - either snapped to it, or laid up against it.
+    //
+    // Only counting the snapped ones was wrong, and wrong in the worst direction: a run drawn right
+    // up to a habitat but finishing on the grass beside it counted for nothing, so the criterion
+    // said "no path reaches anything here" about a path that plainly did - and because the park
+    // answers this one, there was no way to say otherwise. A measurement you cannot argue with had
+    // better be right.
+    const here = state.backlog.filter((i) => i.zone === item.zone);
+    const ids = new Set(here.map((i) => i.id));
+    const NEAR = 110; // design px - about half the diagonal of the largest habitat
+    let reachedId: string | undefined;
+    for (const c of state.connectors ?? []) {
+      for (const end of [c.a, c.b]) {
+        if (end.featureId && ids.has(end.featureId)) { reachedId = end.featureId; break; }
+        const closest = here.find((i) => i.pos && Math.hypot(i.pos.x - end.x, i.pos.y - end.y) <= NEAR);
+        if (closest) { reachedId = closest.id; break; }
+      }
+      if (reachedId) break;
+    }
+    if (reachedId) return { met: true, evidence: `a path runs to the ${named(state, reachedId)}` };
+    // What is missing, not merely that something is. The park answers this one, so the player
+    // cannot tick it and move on - which makes "no" without a way forward a dead end rather than a
+    // criterion. Name the thing to run a path to.
+    const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => i.pos) ?? here[0];
+    return { met: false, evidence: target ? `draw a run up to the ${target.name}` : 'nothing here to reach yet' };
   }
 
   return null; // judgement: yours to make
