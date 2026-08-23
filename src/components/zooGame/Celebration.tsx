@@ -12,9 +12,14 @@ export function Celebration({ trigger, origin }: { trigger: number; origin?: { x
     if (!trigger) return;
     const canvas = ref.current;
     if (!canvas) return;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    // "Reduce motion" used to mean NO celebration at all, which is the wrong reading of it. The
+    // preference asks for less movement, not less feedback - and a great many people have it on
+    // without ever thinking about it, so a delivery they had worked three days for landed in
+    // silence. They get the confetti standing still, fading out: the moment is marked, nothing
+    // flies across the screen.
+    const still = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -42,17 +47,25 @@ export function Celebration({ trigger, origin }: { trigger: number; origin?: { x
       };
     });
 
+    // Standing still, the pieces are scattered where they would have flown to, so it still reads as
+    // a burst rather than a heap on one spot.
+    if (still) for (const p of parts) { p.x += p.vx * 9; p.y += p.vy * 9 + 26; }
+
     let raf = 0;
     const start = performance.now();
-    const DURATION = 1500;
+    const DURATION = still ? 900 : 1500;
     const tick = (now: number) => {
       const t = now - start;
       ctx.clearRect(0, 0, W, H);
-      const fade = t < DURATION - 400 ? 1 : Math.max(0, (DURATION - t) / 400);
+      const fade = still
+        ? Math.max(0, 1 - t / DURATION)
+        : (t < DURATION - 400 ? 1 : Math.max(0, (DURATION - t) / 400));
       for (const p of parts) {
-        p.vy += 0.28; // gravity
-        p.vx *= 0.99;
-        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        if (!still) {
+          p.vy += 0.28; // gravity
+          p.vx *= 0.99;
+          p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        }
         ctx.save();
         ctx.globalAlpha = fade;
         ctx.translate(p.x, p.y);

@@ -999,7 +999,11 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
     return false;
   }
   if (item.category === 'flora') {
-    if (/plant|type/.test(s)) return !!p.type;
+    // Match the task to the colour slot it names, so "Colour the post" checks the post and not
+    // whatever the first slot happens to be called.
+    const slot = floraColors(design.parts.type ?? item.template).find((c) => s.includes(c.label.toLowerCase()));
+    if (slot) return !!design.colors[slot.key];
+    if (/which planting|plant|type/.test(s)) return !!p.piece || !!p.type;
     if (/foliage|colou?r/.test(s)) return !!c.foliage;
     return false;
   }
