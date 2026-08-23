@@ -9,6 +9,7 @@ import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
+import { zoneSlices } from './engine';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone } from 'lucide-react';
 
 // ============= The Park View =============
@@ -1485,8 +1486,12 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   // done) - a transient state - not while it merely sits in the Backlog waiting to be pulled.
   const improving = new Set(state.backlog.filter((it) => it.enhancesId && (it.status === 'committed' || it.status === 'done')).map((it) => it.enhancesId!));
   const features = buildFeatures(state);
-  const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
-  const activeZones = new Set(features.map((f) => f.item.zone));
+  // Zones a visitor could actually walk into, not zones with something standing in them. A habitat
+  // with an animal in it and no path to it is work delivered and value not: that is the difference
+  // between a slice of the cake and a layer of it, and the number ought to say which you have.
+  const slices = zoneSlices(state);
+  const openSlices = slices.filter((z) => z.open);
+  const started = slices.filter((z) => !z.open && z.delivered > 0);
   const exhibits = open.filter((it) => it.category === 'exhibit').length;
   const amenities = open.filter((it) => it.category === 'amenity').length;
   const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
@@ -1504,7 +1509,13 @@ export function ParkView({ state, compact = false, large = false, building, onOp
 
   const statsBar = (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5">
-      <Stat icon={LayoutGrid} value={`${activeZones.size}/${zones.length}`} label="zones" />
+      <Stat icon={LayoutGrid} value={`${openSlices.length}/${slices.length}`} label="zones open"
+        title={openSlices.length || started.length
+          ? [
+            openSlices.length ? `Open: ${openSlices.map((z) => z.zone).join(', ')}.` : '',
+            started.length ? `Started but nobody can visit: ${started.map((z) => `${z.zone} (needs ${z.missing.join(' and ')})`).join('; ')}.` : '',
+          ].filter(Boolean).join(' ')
+          : 'A zone opens when it has an animal to see and a path to walk in on.'} />
       <Stat icon={PawPrint} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
       <Stat icon={Store} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
       <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors" />

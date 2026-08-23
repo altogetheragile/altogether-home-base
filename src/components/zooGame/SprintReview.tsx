@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, GOAL_HAPPINESS_TARGET } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, GOAL_HAPPINESS_TARGET } from './engine';
 import { PbiCard } from './PbiCard';
 
 import { CoachTip } from './CoachTip';
@@ -10,6 +10,7 @@ import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { EYEBROW } from './ui/tokens';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check } from 'lucide-react';
 
 type Step = 'done' | 'visitors' | 'next';
@@ -42,6 +43,11 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachCard, onMarkTaught }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
+  const slices = zoneSlices(state);
+  // A snapshot rather than a diff: the Review inspects the Increment as it stands, and "what a
+  // visitor can walk into today" is the honest version of that.
+  const openZones = slices.filter((z) => z.open).map((z) => z.zone);
+  const startedNotOpen = slices.filter((z) => !z.open && z.delivered > 0);
   const progress = Math.round(productGoalProgress(state) * 100);
   const goalChecks = goalMeasures(state);
   const history = (state.happiness ?? []).slice(-6);
@@ -130,6 +136,30 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
               ? <p className="text-[11px] text-muted-foreground">The work the Goal depended on was delivered - dropping less-essential scope to protect the Goal is a win, not a miss.</p>
               : <p className="text-[11px] text-muted-foreground">Work the Goal depended on was left unfinished. Inspect why, and adapt - protect the Goal by committing to less, or marking fewer items essential.</p>}
           </div>
+        </div>
+      )}
+
+      {/* Slices, not layers. Points delivered says how much was built; zones open says how much of it
+          anybody can visit, and the gap between the two is the lesson. The card explains it. */}
+      {velocity > 0 && (openZones.length > 0 || startedNotOpen.length > 0) && (
+        <div className={cn('rounded-lg border px-3 py-2.5 text-[13px]',
+          openZones.length ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5', openZones.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+            {openZones.length ? 'Open to visitors' : 'Nothing is open to visitors yet'}
+            <ExplainButton cards={['slices', 'increment']} compact />
+          </div>
+          {openZones.length > 0 && (
+            <p className="mb-1"><strong>{openZones.join(' and ')}</strong> {openZones.length === 1 ? 'is a zone' : 'are zones'} anyone
+              can walk into - somewhere to see an animal, an animal to see, and a path to walk in on. A slice of the zoo
+              rather than a layer of it.</p>
+          )}
+          {startedNotOpen.length > 0 && (
+            <p className="text-muted-foreground">
+              Still nobody can visit {startedNotOpen.map((z) => `${z.zone} (needs ${z.missing.join(' and ')})`).join(', ')}.
+              {openZones.length ? ' ' : ' All that work is real, and none of it is worth anything until somebody can walk to it. '}
+              A zone is a slice of cake: it needs every layer before anyone can eat it.
+            </p>
+          )}
         </div>
       )}
 

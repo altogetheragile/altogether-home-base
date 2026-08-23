@@ -1534,3 +1534,57 @@ export function artifactState(state: ZooGameState): {
     },
   ];
 }
+
+// ============= Slices of cake, not layers =============
+//
+// A slice has everything it needs to be consumed: sponge, filling, icing. A layer is a part - you
+// need the other layers before anyone can eat any of it. The same is true of a Product Backlog
+// item, and it is the thing about incremental delivery that is hardest to see from the inside.
+//
+// A park zone is a slice. Somewhere to see an animal, an animal to see, and a way to walk to it:
+// deliver those three and visitors can be let in and the zone is worth something. Deliver eight
+// habitats across six zones and you have laid a layer - all that work, nothing anyone can visit.
+//
+// This is not in the Scrum Guide. The Guide asks that an Increment be usable, and leaves how you
+// slice the work to the Developers - which is exactly why a game can teach it better than a rule
+// can: you build the layer, you open the gates, and nobody comes.
+
+export interface ZoneSlice {
+  zone: string;
+  /** A visitor could arrive, see something and get about. */
+  open: boolean;
+  /** Delivered items in this zone, whether or not anyone can consume them yet. */
+  delivered: number;
+  /** What it still needs, in the words the player would use. */
+  missing: string[];
+}
+
+/** Which zones are slices you could open, and what the unfinished ones are still missing.
+ *
+ *  Only zones with an animal in them can be a slice: the Grounds and the Facilities are the plate,
+ *  not the cake. They matter, and they are not what anyone comes for.
+ */
+export function zoneSlices(state: ZooGameState): ZoneSlice[] {
+  const holdsFauna = (zone: string) => state.backlog.some((it) => it.zone === zone
+    && (it.category === 'exhibit' || (it.category === 'epic' && (it.epicMembers ?? []).some((m) => m.kind === 'exhibit'))));
+  const zones = Array.from(new Set(state.backlog.map((it) => it.zone))).filter(holdsFauna);
+  const live = state.backlog.filter((it) => it.status === 'open');
+
+  return zones.map((zone) => {
+    const here = live.filter((it) => it.zone === zone);
+    const animal = here.some((it) => it.category === 'exhibit');
+    // Its OWN path. The park's main spine is the plate: it serves every zone and opens none of
+    // them, which is the whole point - laying it is not the same as finishing anything.
+    const wayIn = here.some((it) => it.category === 'path');
+    const missing: string[] = [];
+    if (!animal) missing.push('an animal to see');
+    if (!wayIn) missing.push('a path to walk in on');
+    return { zone, open: animal && wayIn, delivered: here.length, missing };
+  });
+}
+
+/** The zones that opened between two states - what a Sprint actually delivered, as slices. */
+export function zonesOpenedSince(before: ZooGameState, after: ZooGameState): string[] {
+  const was = new Set(zoneSlices(before).filter((z) => z.open).map((z) => z.zone));
+  return zoneSlices(after).filter((z) => z.open && !was.has(z.zone)).map((z) => z.zone);
+}
