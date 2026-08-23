@@ -61,14 +61,21 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
     items: [amenity('Kiosk', 'General', 'food', 'kiosk'), amenity('Cafe', 'General', 'food', 'cafe'), amenity('Gift Shop', 'General', 'food', 'shop'), amenity('Toilets', 'General', 'toilet', 'toilets'), amenity('Picnic Area', 'General', 'rest', 'stall'), amenity('Seating', 'General', 'rest', 'stall')],
   },
   {
-    group: 'Flora & decor',
-    items: [flora('Trees', 'tree'), flora('Bushes', 'bush'), flora('Flowerbed', 'flowers'), flora('Hedge', 'hedge'), flora('Fountain', 'fountain'), flora('Signpost', 'signpost')],
+    // Things that grow. Plantable inside a habitat, and put down as many times as the planting needs.
+    group: 'Flora',
+    items: [flora('Trees', 'tree'), flora('Bushes', 'bush'), flora('Flowerbed', 'flowers'), flora('Hedge', 'hedge')],
   },
   {
-    // Landscape & wayfinding: scenery and arrival features. Each is a Backlog item like any other -
-    // refine, estimate, build and deploy it. (Paths themselves are drawn when you deploy.)
-    group: 'Landscape & wayfinding',
-    items: [pathway('Pathway'), flora('River', 'river'), flora('Bridge', 'bridge'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Entrance', 'entrance')],
+    // Landscape: a footprint you resize and turn, and it changes where visitors can walk.
+    group: 'Landscape',
+    items: [flora('River', 'river'), flora('Pond', 'pond'), flora('Rocks', 'rocks'), flora('Fountain', 'fountain')],
+  },
+  {
+    // Infrastructure: how visitors get about and find their way. A bridge and a signpost were filed
+    // under planting, which is where this whole re-sort came from - a bridge is not a plant, it is
+    // the thing that lets a path cross water, and the visitors' pathfinding has always known that.
+    group: 'Infrastructure',
+    items: [pathway('Pathway'), flora('Bridge', 'bridge'), flora('Signpost', 'signpost'), flora('Entrance', 'entrance')],
   },
 ];
 

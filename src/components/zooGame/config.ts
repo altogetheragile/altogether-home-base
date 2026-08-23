@@ -216,7 +216,9 @@ function ma(id: string, name: string, services: 'food' | 'toilet' | 'rest', size
 function epic(id: string, name: string, zone: string, members: EpicMember[]): BacklogItem {
   return {
     id, name, category: 'epic', zone, estimate: 0, unsized: true, trueSize: 0,
-    acceptance: ['Every animal is recognisable and well built', 'Each species has its own secure enclosure', 'Facilities serve the visitors in this area'],
+    // Questions, like every other criterion - see ACCEPTANCE_FORM in design.ts. An epic's are about
+    // the zone as a whole, which is the only thing an epic ever delivers.
+    acceptance: ['Can I tell what every animal here is?', 'Can I see each species in a habitat of its own?', 'Can I eat, rest and find my way in this part of the park?'],
     status: 'backlog', sprintNumber: null, accessible: true, epicMembers: members,
   };
 }

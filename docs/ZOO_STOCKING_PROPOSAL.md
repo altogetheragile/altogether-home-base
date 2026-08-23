@@ -3,6 +3,9 @@
 A proposal, 23 August 2026, answering two questions: should animals be built at all, and would
 picking ready-made things beat picking colours?
 
+> **Status.** Parts 3 and 4 below - the six kinds, and every criterion rewritten as a question -
+> shipped on 23 August. Parts 1 and 2 (stocking fauna, ready flora pieces) are still proposals.
+
 Short answer to both: **yes** - with one condition that decides whether the change helps or quietly
 guts the best teaching in the game.
 
@@ -120,3 +123,47 @@ which nothing else on the list does.
 2. **Stocking animals.** Bigger, and it buys back the most time in the day.
 
 Both before the Scrum Master's turn, because both shorten the loop that everything else runs inside.
+
+---
+
+## 3. What kind of thing is it? (shipped)
+
+`category` says how a thing BEHAVES - what renders it, what can be dragged into it, what it blocks
+on. That is an engine concern and it has not changed. What the player sees is now a separate,
+honest taxonomy, because `flora` had become a bin for everything that was not an animal, a habitat,
+a building or a path - so the river, the bridge, the signposts and the car park were all filed as
+planting. A bridge is not planting.
+
+| Kind | What only it does |
+|---|---|
+| **Habitat** | a footprint you size, that contains other things |
+| **Fauna** | blocked on its habitat; what visitors come for |
+| **Flora** | plantable inside a habitat, and put down many times over |
+| **Landscape** | a footprint you resize and rotate; changes where visitors can walk |
+| **Facility** | serves a visitor need - food, rest, a lavatory |
+| **Infrastructure** | how visitors get about and find their way |
+
+**Not a seventh for "utilities".** A bridge and a signpost *are* the utilities of a park, and they
+belong beside the paths they serve - the visitor pathfinding already treats water as impassable
+except at a bridge, so infrastructure is exactly the set of things that decide where anyone can go.
+
+**Zoning belongs to the item, not the piece.** "Big Cats Planting" is zoned because that is how you
+deliver a zone at a time. An oak is an oak wherever it goes, so the catalogue is universal.
+
+## 4. Every criterion is a question (shipped)
+
+All of them now begin "Can I" and end in a question mark. Not a house style: a statement can be
+waved through, and a question has to be answered - which is what an acceptance criterion is for. It
+also forces you to say who is doing the looking, and the answer is always a visitor standing in the
+park rather than a developer reading a spec.
+
+It caught one that had been there since the first version. Planting had to meet **"Fits the
+planting"** - the planting fits the planting - which cannot be failed because it does not mean
+anything. In the question form it will not even write.
+
+**The dividend.** Several are now things the game itself could answer: *"Can I get to this zone
+without crossing the grass?"* is exactly what the visitors' pathfinding computes. That is the next
+piece of work, and it is worth doing carefully: about half of them are checkable and half are
+judgement, which is true of real acceptance criteria too. The ones the park can answer should
+arrive ticked with their evidence underneath; the rest stay yours, and the sign-off waits for all
+of them either way.

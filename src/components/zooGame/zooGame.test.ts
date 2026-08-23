@@ -7,6 +7,7 @@ import {
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
+import { itemKind, KIND_LABEL } from './itemKinds';
 import { floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -1116,7 +1117,7 @@ describe('zoo game: the toolbox', () => {
     expect(item.category).toBe('exhibit');
     expect(item.unsized).toBe(true);
     // The criteria are outcomes a visitor would notice, not a restatement of the build steps.
-    expect(item.acceptance.some((a) => /would know it is a lion/i.test(a))).toBe(true);
+    expect(item.acceptance.some((a) => /tell it is a lion/i.test(a))).toBe(true);
     // presetFor uses the template, not the id, so a maned lion shape is the starting point
     expect(presetFor(item).parts.head).toBe('maned');
   });
@@ -1151,9 +1152,9 @@ describe('zoo game: the toolbox', () => {
     expect(pathway.category).toBe('path');
     const draft = toolboxDraft(pathway);
     // Build AC (studio: width + colour) plus a deploy AC (routed on the park) - split correctly.
-    expect(draft.acceptance).toContain('Wide enough to walk side by side');
+    expect(draft.acceptance).toContain('Can two people walk it side by side?');
     expect(draft.acceptance.some((a) => isDeployAcceptance(a))).toBe(true);
-    expect(draft.acceptance.filter((a) => !isDeployAcceptance(a))).toEqual(['Wide enough to walk side by side']);
+    expect(draft.acceptance.filter((a) => !isDeployAcceptance(a))).toEqual(['Can two people walk it side by side?']);
     let s = addPbi(initialZooState(1), draft);
     const item = s.backlog.find((i) => i.category === 'path')!;
     // A path is designed as a width and a colour (both preset, so the design is ready to build).
@@ -1205,14 +1206,15 @@ describe('zoo game: the toolbox', () => {
       expect(grid.some((row) => row.some((c) => c)), `${name} renders`).toBe(true);
     }
     // Water features read as water, not "planting", and are sized to fit rather than "no bare patches".
-    expect(toolboxDraft(items.find((i) => i.name === 'River')!).acceptance).toEqual(['Reads as water', 'Sized to fit the space']);
-    expect(toolboxDraft(items.find((i) => i.name === 'Entrance')!).acceptance).toContain('Clearly marks the way in');
+    expect(toolboxDraft(items.find((i) => i.name === 'River')!).acceptance)
+      .toEqual(['Can I tell that is water at a glance?', 'Can I see it from across the park?', 'Can visitors still get round it?']);
+    expect(toolboxDraft(items.find((i) => i.name === 'Entrance')!).acceptance).toContain('Can I tell this is the way in?');
     // Landscape features are resizable: they carry a default footprint and take a saved size.
     expect(isLandscapeType('river')).toBe(true);
     expect(isLandscapeType('bridge')).toBe(true);
     expect(isLandscapeType('tree')).toBe(false);
     // A bridge is scenery you cross: it reads as a bridge (build) and is placed across the water (deploy).
-    expect(toolboxDraft(items.find((i) => i.name === 'Bridge')!).acceptance).toEqual(['Reads as a bridge you can cross', 'Placed across the water']);
+    expect(toolboxDraft(items.find((i) => i.name === 'Bridge')!).acceptance).toEqual(['Can I see it is something you cross?', 'Can I cross the water on it?']);
     expect(landscapeDefaultSize('river').w).toBeGreaterThan(landscapeDefaultSize('river').h); // a river starts wide
     const sized = setItemSize(initialZooState(1), 'lion', { w: 400, h: 40 });
     expect(sized.backlog.find((i) => i.id === 'lion')!.size).toEqual({ w: 400, h: 40 });
@@ -1237,7 +1239,7 @@ describe('zoo game: the toolbox', () => {
     // "Sized to fit the space" can only be judged once it is on the park, so it is a deploy-time AC;
     // appearance ACs are build-time (confirmed in the studio).
     expect(isDeployAcceptance('Sized to fit the space')).toBe(true);
-    expect(isDeployAcceptance('Reads as water')).toBe(false);
+    expect(isDeployAcceptance('Can I tell that is water at a glance?')).toBe(false);
     expect(isDeployAcceptance('Clearly marked out')).toBe(false);
     // Confirming an AC persists on the item, index-aligned with acceptance.
     let s = initialZooState(1);
@@ -1305,14 +1307,14 @@ describe('zoo game: the toolbox', () => {
 
   it('gives each building acceptance criteria that fit what it is (a gift shop does not serve food)', () => {
     const draft = (name: string) => toolboxDraft(TOOLBOX.flatMap((g) => g.items).find((i) => i.name === name)!);
-    expect(draft('Gift Shop').acceptance).toContain('Sells a range of souvenirs');
-    expect(draft('Gift Shop').acceptance).not.toContain('Serves food and drink');
-    expect(draft('Kiosk').acceptance).toContain('Serves food and drink');
-    expect(draft('Cafe').acceptance).toContain('Serves food and drink');
-    expect(draft('Toilets').acceptance).toContain('Has enough cubicles');
-    expect(draft('Seating').acceptance.some((a) => /seating/i.test(a))).toBe(true);
+    expect(draft('Gift Shop').acceptance).toContain('Can I buy something to take home?');
+    expect(draft('Gift Shop').acceptance).not.toContain('Can I buy food and a drink here?');
+    expect(draft('Kiosk').acceptance).toContain('Can I buy food and a drink here?');
+    expect(draft('Cafe').acceptance).toContain('Can I buy food and a drink here?');
+    expect(draft('Toilets').acceptance).toContain('Can I find a free cubicle at a busy time?');
+    expect(draft('Seating').acceptance.some((a) => /sit down/i.test(a))).toBe(true);
     // A food outlet raised from a visitor signal still reads as food, not retail.
-    expect(amenityAcceptance('Food outlet', 'food')).toContain('Serves food and drink');
+    expect(amenityAcceptance('Food outlet', 'food')).toContain('Can I buy food and a drink here?');
   });
 
   it('buildings come in distinct shapes, each carried from the toolbox and rendering differently', () => {
@@ -1336,7 +1338,7 @@ describe('zoo game: the toolbox', () => {
     expect(sign.template).toBe('signpost');
     const s = addPbi(initialZooState(1), toolboxDraft(sign));
     const item = s.backlog.find((i) => i.name === 'Signpost' && i.status === 'backlog')!;
-    expect(item.acceptance).toContain('Clearly readable'); // sign-appropriate ACs, not "planting"
+    expect(item.acceptance).toContain('Can I read it from a few steps away?'); // sign ACs, not planting ones
     expect(presetFor(item).parts.type).toBe('signpost'); // the flora template drives the shape
     // The signpost renders something (a non-empty grid), like the other flora shapes.
     const grid = renderDesign(item, { parts: { type: 'signpost' }, colors: { foliage: '#c8873b', trunk: '#7a5230' } });
@@ -2346,5 +2348,86 @@ describe('zoo game: starting an item by dropping it on the park', () => {
     for (const id of ['lion', 'tiger', 'leopard']) s = startItemAt(s, id, { x: 200, y: 200 });
     const blocked = startItemAt(s, 'penguins', { x: 400, y: 300 });
     expect(blocked).toBe(s);
+  });
+});
+
+describe('zoo game: what kind of thing a Backlog item is', () => {
+  it('files scenery by what it actually is, not all as planting', () => {
+    // `flora` had become a bin for everything that was not an animal, a habitat, a building or a
+    // path, so a bridge went about the park labelled "Planting".
+    const of = (template: string) => itemKind({ category: 'flora', template } as never);
+    expect(of('tree')).toBe('flora');
+    expect(of('hedge')).toBe('flora');
+    expect(of('river')).toBe('landscape');
+    expect(of('rocks')).toBe('landscape');
+    expect(of('bridge')).toBe('infrastructure');
+    expect(of('signpost')).toBe('infrastructure');
+    expect(of('carpark')).toBe('infrastructure');
+  });
+
+  it('takes the kind from the type the player CHOSE, not the one it started as', () => {
+    // Turn a Trees item into a hedge and it is still planting; the label follows the thing.
+    const asBuilt = { category: 'flora', template: 'tree', design: { parts: { type: 'hedge' }, colors: {} } };
+    expect(itemKind(asBuilt as never)).toBe('flora');
+  });
+
+  it('maps the other categories straight through, and names all six for the player', () => {
+    expect(itemKind({ category: 'enclosure' } as never)).toBe('habitat');
+    expect(itemKind({ category: 'exhibit' } as never)).toBe('fauna');
+    expect(itemKind({ category: 'amenity' } as never)).toBe('facility');
+    expect(itemKind({ category: 'path' } as never)).toBe('infrastructure');
+    for (const k of ['habitat', 'fauna', 'flora', 'landscape', 'facility', 'infrastructure'] as const) {
+      expect(KIND_LABEL[k], `${k} needs a name`).toBeTruthy();
+    }
+  });
+
+  it('groups the toolbox by kind, so what you pick from matches what you get', () => {
+    const named = (g: string) => TOOLBOX.find((x) => x.group === g)!;
+    for (const [group, kind] of [['Flora', 'flora'], ['Landscape', 'landscape'], ['Infrastructure', 'infrastructure']] as const) {
+      expect(named(group), `${group} exists`).toBeTruthy();
+      for (const t of named(group).items) {
+        expect(itemKind(t as never), `${t.name} belongs in ${group}`).toBe(kind);
+      }
+    }
+  });
+});
+
+describe('zoo game: every acceptance criterion is a question', () => {
+  // A statement can be waved through; a question has to be answered. It is also what caught "Fits
+  // the planting" - the planting fits the planting - which had passed for a year as a statement and
+  // will not even write as a question.
+  const everyCriterion = () => {
+    const all: { where: string; label: string }[] = [];
+    for (const t of TOOLBOX.flatMap((g) => g.items)) {
+      for (const label of toolboxDraft(t).acceptance) all.push({ where: t.name, label });
+    }
+    for (const it of initialZooState(1).backlog) {
+      for (const label of it.acceptance ?? []) all.push({ where: it.name, label });
+      // An epic's members carry no criteria of their own until they are split out into real PBIs.
+    }
+    return all;
+  };
+
+  it('asks, rather than asserts', () => {
+    const all = everyCriterion();
+    expect(all.length).toBeGreaterThan(30);
+    for (const { where, label } of all) {
+      expect(label.startsWith('Can '), `${where}: "${label}" should ask something`).toBe(true);
+      expect(label.endsWith('?'), `${where}: "${label}" should end in a question mark`).toBe(true);
+    }
+  });
+
+  it('still knows which one can only be answered on the park', () => {
+    // The old rule sniffed the wording for "placed" or "sized", which stopped matching the moment
+    // the criteria became questions. Every item still has exactly one placement criterion.
+    for (const t of TOOLBOX.flatMap((g) => g.items)) {
+      const acs = toolboxDraft(t).acceptance;
+      expect(acs.filter(isDeployAcceptance).length, `${t.name} has one placement criterion`).toBe(1);
+    }
+  });
+
+  it('keeps reading a zoo saved before the rewrite', () => {
+    expect(isDeployAcceptance('Placed in its zone with room around it')).toBe(true);
+    expect(isDeployAcceptance('Sized to fit the space')).toBe(true);
   });
 });

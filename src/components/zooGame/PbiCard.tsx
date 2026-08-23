@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import type { BacklogItem } from './types';
 import { ICONS, iconKey } from './itemIcons';
 import { Chip } from './ui/Chip';
+import { itemKind, KIND_LABEL } from './itemKinds';
 import { RADIUS, TONE } from './ui/tokens';
 
 // ============= One card for one Product Backlog item =============
@@ -37,9 +38,7 @@ const STATE_STYLE: Record<PbiState, { shell: string; icon: string }> = {
 };
 
 /** The category, as a word - what this item becomes in the park. */
-const CATEGORY_LABEL: Record<string, string> = {
-  epic: 'Epic', enclosure: 'Habitat', exhibit: 'Animal', amenity: 'Facility', flora: 'Planting', path: 'Path',
-};
+
 
 export function PbiCard({
   item, state = 'backlog', density = 'row', lead, trailing, badges, detail, note, onClick, label, className,
@@ -128,5 +127,7 @@ function Points({ item, suffix = false }: { item: BacklogItem; suffix?: boolean 
 
 /** The item's kind, as a chip - used where a list mixes habitats, animals and facilities. */
 export function CategoryChip({ item }: { item: BacklogItem }) {
-  return <Chip tone={item.category === 'epic' ? 'teach' : 'quiet'}>{CATEGORY_LABEL[item.category] ?? item.category}</Chip>;
+  // What KIND of thing it is, not what class renders it. `flora` was one word covering planting,
+  // water, rock, bridges, signposts and the car park, so a bridge went about labelled "Planting".
+  return <Chip tone={item.category === 'epic' ? 'teach' : 'quiet'}>{KIND_LABEL[itemKind(item)]}</Chip>;
 }
