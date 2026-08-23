@@ -9,6 +9,7 @@ import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen } from './engine';
+import { applyParkChecks, checkCriterion } from './parkChecks';
 import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -2630,5 +2631,54 @@ describe('zoo game: an exhibit is stocked, not built', () => {
     const tasks = suggestTasks(initialZooState(1).backlog.find((i) => i.id === 'lion')!).map((t) => t.label);
     expect(tasks).toContain('Decide how many, and of what ages');
     expect(tasks.some((t) => /sketch|markings/i.test(t))).toBe(false);
+  });
+});
+
+describe('zoo game: the park answers the criteria it can answer', () => {
+  const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
+  const stock = (s: ZooGameState, group: { adults: number; juveniles: number; cubs: number }): ZooGameState =>
+    applyParkChecks({ ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, draftDesign: { parts: {}, colors: {}, group } } : it)) });
+
+  it('leaves judgement alone and takes the measurements', () => {
+    const s = initialZooState(1);
+    // Yours: nobody can measure whether it looks like a lion.
+    expect(checkCriterion(s, lion(s), 'Can I tell they are a lion without reading the sign?')).toBeNull();
+    // The park's: it can count them.
+    expect(checkCriterion(s, lion(s), 'Can I see a group rather than one animal on its own?')).not.toBeNull();
+  });
+
+  it('counts the animals and says what it counted', () => {
+    const one = checkCriterion(stock(initialZooState(1), { adults: 1, juveniles: 0, cubs: 0 }), lion(initialZooState(1)), 'Can I see a group rather than one animal on its own?');
+    expect(one).toEqual({ met: false, evidence: 'one on its own' });
+    const s = stock(initialZooState(1), { adults: 2, juveniles: 1, cubs: 2 });
+    expect(checkCriterion(s, lion(s), 'Can I see a group rather than one animal on its own?')).toEqual({ met: true, evidence: '5 of them' });
+  });
+
+  it('ticks them for you, and unticks them when the fact changes', () => {
+    const family = stock(initialZooState(1), { adults: 2, juveniles: 1, cubs: 2 });
+    const groupCriterion = lion(family).acceptance.indexOf('Can I see a group rather than one animal on its own?');
+    expect(lion(family).acConfirmed?.[groupCriterion]).toBe(true);
+    // Take four of them away again and the criterion goes with them - a fact you ticked yesterday
+    // can stop being true today, which is the whole reason the park keeps its own answer.
+    const alone = stock(family, { adults: 1, juveniles: 0, cubs: 0 });
+    expect(lion(alone).acConfirmed?.[groupCriterion]).toBe(false);
+  });
+
+  it('will not let you tick a measurement by hand', () => {
+    const family = stock(initialZooState(1), { adults: 1, juveniles: 0, cubs: 0 });
+    const i = lion(family).acceptance.indexOf('Can I see a group rather than one animal on its own?');
+    // confirmAcceptance goes through the reducer, which lays the park's answer back over the top.
+    const lied = applyParkChecks(confirmAcceptance(family, 'lion', i, true));
+    expect(lion(lied).acConfirmed?.[i]).toBe(false);
+  });
+
+  it('answers whether a path reaches the zone, and names the thing it reaches', () => {
+    const s = initialZooState(1);
+    const paths = s.backlog.find((i) => i.id === 'bigcats-paths')!;
+    const none = checkCriterion(s, paths, 'Can I get to this zone without crossing the grass?');
+    expect(none).toEqual({ met: false, evidence: 'no path reaches anything here' });
+    const linked: ZooGameState = { ...s, connectors: [{ id: 'c1', a: { featureId: 'lion-enc', x: 0, y: 0 }, b: { x: 40, y: 40 }, bends: [], thickness: 9, color: '#c9a86a' }] };
+    expect(checkCriterion(linked, paths, 'Can I get to this zone without crossing the grass?'))
+      .toEqual({ met: true, evidence: 'a path runs to the Lion Enclosure' });
   });
 });

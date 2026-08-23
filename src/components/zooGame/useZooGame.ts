@@ -6,11 +6,25 @@ import {
   planSprint, holdPlannedRefinement, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
   reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
 } from './engine';
+import { applyParkChecks } from './parkChecks';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
 // /scrum-game. This slice is the core loop: plan, build, open (release), review
 // (with the visitor simulation), retro, next Sprint.
+/** Every action, and then the park's own answers laid over the result.
+ *
+ *  Half the acceptance criteria are facts rather than opinions now - whether a path reaches a zone,
+ *  whether the animals fit the habitat - and a fact has to be recomputed whenever anything that
+ *  could change it changes. Doing that here rather than in each reducer means there is no action
+ *  that can forget to: drag the last path away and the criterion unticks itself, the sign-off comes
+ *  off, and the card cannot go to Done, the way a build reruns its tests rather than trusting the
+ *  last green.
+ */
 function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
+  return applyParkChecks(step(state, action));
+}
+
+function step(state: ZooGameState, action: ZooAction): ZooGameState {
   switch (action.type) {
     case 'START':
       // There is no Product Backlog yet. The Scrum Team answers three questions about the zoo and

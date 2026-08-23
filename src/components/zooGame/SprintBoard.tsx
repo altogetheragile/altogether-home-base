@@ -521,7 +521,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         note={needsEnc ? `Needs ${encName} built first` : undefined}
                         trailing={<Button size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={blocked} title={why}
                           onClick={(e) => { e.stopPropagation(); onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>}
-                        detail={<CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />} />
+                        detail={<CardDetail item={it} state={state} showAcceptance onToggleTask={onToggleTask} />} />
                       </div>
                     );
                   })}
@@ -559,7 +559,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         detail={<>
                           {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
                               and tick the detail. The real building happens on the park. */}
-                          <CardDetail item={it} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                          <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[10px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
@@ -591,7 +591,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         )}
                       </>}
                       detail={<>
-                        <CardDetail item={it} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                        <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                         <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">{deployActions(it)}</div>
                       </>} />
                     </div>
@@ -608,7 +608,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     <div key={it.id} data-done-card={it.id}>
                       <PbiCard item={it} state="live" density="row" badges={<Chip>{it.zone}</Chip>}
                         detail={<>
-                          <CardDetail item={it} showAcceptance onToggleTask={onToggleTask} />
+                          <CardDetail item={it} state={state} showAcceptance onToggleTask={onToggleTask} />
                           <div className="mt-1.5 flex items-center justify-end gap-1.5">{doneActions(it)}</div>
                         </>} />
                     </div>
