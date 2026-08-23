@@ -294,6 +294,20 @@ export function signOffReady(item: BacklogItem): boolean {
   return item.acceptance.length > 0 && item.acceptance.every((_, i) => !!item.acConfirmed?.[i]);
 }
 
+/** Whether a finished thing is standing in the park.
+ *
+ *  It used to also require `placed`, which is a leftover from the days when you built an item
+ *  somewhere else and then went and placed it. You build ON the park now, so anything built is
+ *  already standing where it stands - and the flag was never set by the route most items take to
+ *  Done. Ticking the last task of a plan promotes an item to Done on the spot, without going near
+ *  `placeOnPark`, so a habitat you had just finished quietly disappeared off the park until you
+ *  pressed a button that had nothing to do with it.
+ *
+ *  An improvement is not shown separately: it re-delivers the thing it improves.
+ */
+export const standsOnPark = (item: BacklogItem): boolean =>
+  (item.status === 'open' || item.status === 'done') && !item.enhancesId;
+
 /** Keep the sign-off task in step with the acceptance criteria, wherever they were changed. It is
  *  derived, not ticked by hand: the Product Owner signs off when the criteria are met, and the
  *  sign-off comes back off if one is later withdrawn. */
