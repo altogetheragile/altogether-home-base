@@ -165,6 +165,14 @@ export const SCRUM_CARDS: ScrumCard[] = [
     how: 'It must be usable and additive to every Increment before it. It can be released during the Sprint: the Sprint Review is not a gate to releasing value.',
   },
   {
+    id: 'slices', kind: 'concept', title: 'Slices, not layers',
+    summary: 'A Backlog item should be a slice of the cake, not a layer of it.',
+    why: 'A slice has everything it needs to be eaten: sponge, filling, icing. A layer is a part - you need the others before anyone gets anything. Work sliced the second way looks like progress for weeks and delivers nothing, because none of it can be used until all of it is finished.',
+    who: 'The Developers slice the work; the Product Owner orders it by the value each slice would deliver.',
+    when: 'Whenever the Backlog is refined, and again at Sprint Planning when the Developers decide what they can actually finish.',
+    how: 'In this park a zone is a slice: somewhere to see an animal, an animal to see, and a path to walk in on. Deliver those and the gates open. Deliver eight habitats across six zones and you have laid a layer - real work, and nobody can visit any of it. Slicing is not in the Scrum Guide: the Guide asks that an Increment be usable and leaves the how to the Developers. This is one of the ways.',
+  },
+  {
     id: 'sprint-review', kind: 'event', title: 'The Sprint Review',
     summary: 'Inspect the Increment with stakeholders, and adapt the Product Backlog.',
     why: 'To inspect the outcome of the Sprint and work out what to do next, with the people the product is for.',
@@ -231,7 +239,9 @@ export const cardFor = (id: string): ScrumCard | undefined => SCRUM_CARDS.find((
 export const CARDS_BY_PHASE: Record<string, string[]> = {
   // The Product Goal is set on the opening screen, so it is explained there rather than later.
   intro: ['product-goal'],
-  refine: ['product-backlog', 'pbi', 'refinement', 'definition-of-done'],
+  // Slicing is met at Refinement, which is where the decision is actually taken - breaking an area
+  // into an enclosure, an animal and a path is slicing, and it is the moment to say so.
+  refine: ['product-backlog', 'pbi', 'refinement', 'slices', 'definition-of-done'],
   planning: ['sprint-planning', 'sprint-goal', 'sprint-backlog'],
   sprint: ['sprint', 'daily-scrum', 'increment', 'developers'],
   // Empiricism is met at the Review, where inspection and adaptation are actually happening -

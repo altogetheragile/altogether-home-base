@@ -8,6 +8,7 @@ import {
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
+import { zoneSlices, zonesOpenedSince } from './engine';
 import { floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -2429,5 +2430,51 @@ describe('zoo game: every acceptance criterion is a question', () => {
   it('keeps reading a zoo saved before the rewrite', () => {
     expect(isDeployAcceptance('Placed in its zone with room around it')).toBe(true);
     expect(isDeployAcceptance('Sized to fit the space')).toBe(true);
+  });
+});
+
+describe('zoo game: a zone is a slice of cake, not a layer', () => {
+  const open = (st: ZooGameState, ...ids: string[]): ZooGameState =>
+    ({ ...st, backlog: st.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'open' as const } : it)) });
+
+  it('counts only the zones with an animal in them - the Grounds are the plate, not the cake', () => {
+    const zones = zoneSlices(initialZooState(1)).map((z) => z.zone);
+    expect(zones).toContain('Big Cats');
+    expect(zones).not.toContain('Grounds');
+    expect(zones).not.toContain('Facilities');
+  });
+
+  it('does not open a zone for a habitat and an animal with no way to walk in', () => {
+    const s = open(initialZooState(1), 'lion-enc', 'lion');
+    const bigCats = zoneSlices(s).find((z) => z.zone === 'Big Cats')!;
+    expect(bigCats.delivered).toBe(2);           // real work, delivered
+    expect(bigCats.open).toBe(false);            // and nobody can get to it
+    expect(bigCats.missing).toEqual(['a path to walk in on']);
+  });
+
+  it('does not open a zone for a path with nothing at the end of it', () => {
+    const s = open(initialZooState(1), 'bigcats-paths');
+    const bigCats = zoneSlices(s).find((z) => z.zone === 'Big Cats')!;
+    expect(bigCats.open).toBe(false);
+    expect(bigCats.missing).toEqual(['an animal to see']);
+  });
+
+  it('opens the zone once there is something to see and a way to reach it', () => {
+    const s = open(initialZooState(1), 'lion-enc', 'lion', 'bigcats-paths');
+    expect(zoneSlices(s).find((z) => z.zone === 'Big Cats')!.open).toBe(true);
+  });
+
+  it('the park-wide spine opens no zone at all, which is what makes it a layer', () => {
+    // Deliver the Main Pathways, the river, the bridge and the signposts - the whole of the park's
+    // fabric - and not one zone is any nearer being visited.
+    const s = open(initialZooState(1), 'paths', 'river', 'bridge', 'signposts');
+    expect(zoneSlices(s).every((z) => !z.open)).toBe(true);
+  });
+
+  it('reports which zones a Sprint opened, so the Review can say what was really delivered', () => {
+    const before = open(initialZooState(1), 'lion-enc', 'lion');
+    const after = open(before, 'bigcats-paths');
+    expect(zonesOpenedSince(before, after)).toEqual(['Big Cats']);
+    expect(zonesOpenedSince(after, after)).toEqual([]);
   });
 });
