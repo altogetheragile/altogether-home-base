@@ -15,6 +15,9 @@ import { PbiCard } from './PbiCard';
 import { Workspace } from './ui/Workspace';
 import { Chip } from './ui/Chip';
 import { PickCard } from './PickCard';
+import { PbiEditor } from './PbiEditor';
+import { Toolbox } from './Toolbox';
+import { toolboxDraft } from './toolboxItems';
 import { DesignBench } from './DesignBench';
 import { PoLookAhead } from './PoLookAhead';
 import { lookAhead } from './lookAhead';
@@ -23,7 +26,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
+import { Boxes, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -69,6 +72,9 @@ interface SprintBoardProps {
   drawing?: boolean;
   onDrawing?: (on: boolean) => void;
   onRemoveRun?: (connectorId: string) => void;
+  /** Write a new Product Backlog item while refining mid-Sprint. */
+  onAddPbi?: (draft: PbiDraft) => void;
+  onSetUserStories?: (on: boolean) => void;
   /** The Product Owner's look-ahead: add what the forecast implies, or turn it down. */
   onAddProposal?: (draft: PbiDraft) => void;
   onDeclineProposal?: (proposalId: string) => void;
@@ -221,7 +227,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
   // it is how the board came to have less room reserved than the bench takes: with nothing on the
@@ -242,6 +248,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // caveat that pulling more in is a negotiation, not a default, is written on it.
   const [showBacklog, setShowBacklog] = useState(false);
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
+  const [writing, setWriting] = useState(false);              // writing a new one, mid-Sprint
+  const [showToolbox, setShowToolbox] = useState(false);
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const committed = state.backlog.filter((it) =>
@@ -662,15 +670,41 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           than something sitting open beside the work. The panel covers the left half while it is
           open and gets out of the way when it is not. */}
       {showBacklog && !dayStarting && (
-        <div className="absolute inset-0 z-30 flex flex-col rounded-lg border border-border bg-background/98 shadow-xl backdrop-blur">
+        // Opaque. It was bg-background/98, which is not a step on the opacity scale and so compiled
+        // to nothing at all - leaving a panel with no background over a busy board, held together by
+        // a backdrop blur. A modal you have to squint through is not a modal.
+        <div className="absolute inset-0 z-30 flex flex-col rounded-lg border border-border bg-background shadow-xl">
           <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-3 py-2">
             <div className="min-w-0">
               <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></h3>
-              <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk.</p>
+              <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk - or write something new.</p>
             </div>
+            {/* Refining is not only tidying what is there. Half of it is noticing what is missing and
+                writing it down, and there was nowhere to do that without leaving the Sprint. */}
+            {onAddPbi && (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setWriting(true)}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
+              </div>
+            )}
             <button type="button" onClick={() => setShowBacklog(false)} aria-label="Close the Product Backlog"
               className="shrink-0 rounded-md border border-border p-1 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
           </div>
+          {writing && onAddPbi && (
+            <Workspace title="Write a Product Backlog item"
+              subtitle="It arrives unsized, like anything the Product Owner writes - the Developers size it."
+              onClose={() => setWriting(false)}>
+              <PbiEditor zones={Array.from(new Set(state.backlog.map((it) => it.zone)))}
+                enclosures={state.backlog.filter((it) => it.category === 'enclosure')}
+                useStories={state.useUserStories}
+                onToggleStories={onSetUserStories ?? (() => {})}
+                onSave={(draft) => { onAddPbi(draft); setWriting(false); }}
+                onCancel={() => setWriting(false)} />
+            </Workspace>
+          )}
+          {showToolbox && onAddPbi && (
+            <Toolbox onPick={(t) => onAddPbi(toolboxDraft(t))} onClose={() => setShowToolbox(false)} />
+          )}
           {fixingItem && (
             <Workspace wide={fixingItem.category === 'epic'}
               title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}

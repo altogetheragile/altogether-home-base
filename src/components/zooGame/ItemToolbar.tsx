@@ -305,7 +305,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
     // Wraps rather than scrolls: clipped at both edges it read as broken, and a toolbar you have to
     // scroll sideways is a toolbar with things hidden in it.
     <div className={cn('flex flex-wrap items-center gap-0.5',
-      docked ? 'gap-y-1' : 'rounded-xl border border-border bg-background/98 px-1.5 py-1 shadow-xl')}>
+      docked ? 'gap-y-1' : 'rounded-xl border border-border bg-background px-1.5 py-1 shadow-xl')}>
       {!docked && <>
         <span className="mr-1 max-w-[10rem] shrink-0 truncate px-1 text-xs font-semibold" title={item.name}>{item.name}</span>
         <Divider />
