@@ -10,7 +10,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
 import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
-import { autoLayout, CANVAS_W, PLAY_H, PAD } from './parkLayout';
+import { autoLayout, insidePark, parkBounds, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { groupMembers } from './design';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock } from 'lucide-react';
 
@@ -714,7 +714,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const restPos = (f: Feature) => {
     const base = f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD };
     // A river starts life running across the middle; from there it can be dragged and turned.
-    return landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
+    const at = landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
+    // Read through the park's bounds, so a position saved when the park was a different size cannot
+    // leave a delivered thing drawn somewhere nobody can look.
+    return insidePark(f, at);
   };
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const canvasH = PLAY_H + PATH_H;
@@ -848,11 +851,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     const origin = posOf(f);
     // Keep a feature inside the park - except one cut longer than the park itself (a river), which
     // is meant to run off the edges, so it is only held by its centre.
-    const spans = f.w > CANVAS_W - 8;
-    const minX = spans ? 8 : f.w / 2 + 4, maxX = spans ? CANVAS_W - 8 : CANVAS_W - f.w / 2 - 4;
-    // Keep the same PAD below the lowest thing that sets the canvas height above it, so dropping
-    // something at the very bottom cannot push the floor down and grow the park a notch every time.
-    const minY = spans ? 8 : f.h / 2 + 4, maxY = canvasH - PATH_H - PAD - (spans ? 0 : f.h / 2);
+    const { minX, maxX, minY, maxY } = parkBounds(f);
     const at = (ev: PointerEvent) => ({
       x: clamp(origin.x + (ev.clientX - startX) / s, minX, maxX),
       y: clamp(origin.y + (ev.clientY - startY) / s, minY, maxY),
