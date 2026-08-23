@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { ZooGameState, BacklogItem } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
 import { NewHere } from './NewHere';
@@ -16,6 +16,8 @@ import { Workspace } from './ui/Workspace';
 import { Chip } from './ui/Chip';
 import { PickCard } from './PickCard';
 import { DesignBench } from './DesignBench';
+import { PoLookAhead } from './PoLookAhead';
+import { lookAhead } from './lookAhead';
 import type { EditApi } from './ParkView';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
@@ -67,6 +69,9 @@ interface SprintBoardProps {
   drawing?: boolean;
   onDrawing?: (on: boolean) => void;
   onRemoveRun?: (connectorId: string) => void;
+  /** The Product Owner's look-ahead: add what the forecast implies, or turn it down. */
+  onAddProposal?: (draft: PbiDraft) => void;
+  onDeclineProposal?: (proposalId: string) => void;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -216,7 +221,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
   // it is how the board came to have less room reserved than the bench takes: with nothing on the
@@ -436,6 +441,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
         <DayStart state={state} onStart={onStartDay} />
       ) : (
         <>
+          {/* Said while the Sprint runs, because that is when it is useful: the zone you are opening
+              is the one being built this minute. */}
+          {onAddProposal && onDeclineProposal && (
+            <PoLookAhead proposals={lookAhead(state)} onAdd={onAddProposal} onSplit={onSplitEpic} onDecline={onDeclineProposal} />
+          )}
+
           {state.carriedImpediment && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
               <div className="flex items-start gap-2.5">
@@ -578,7 +589,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                       or hold it. A whole column for "Done but not opened" said that badly: since the
                       building happens on the park, the card passed through it unseen. */}
                   {deploy.map((it) => (
-                    <div key={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
+                    // data-done-card here as well as on the released ones: the celebration bursts
+                    // from the card, and a card built-but-not-yet-open is the one you press "Open it
+                    // to visitors" on - so without this the confetti came from the middle of the
+                    // screen instead of from the thing you had just delivered.
+                    <div key={it.id} data-done-card={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
                     <PbiCard item={it} state="built" density="row"
                       // Built in an earlier Sprint and still not released: say so, so a finished
                       // Increment waiting on deployment does not read as this Sprint's work.

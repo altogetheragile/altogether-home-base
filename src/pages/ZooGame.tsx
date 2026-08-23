@@ -18,7 +18,7 @@ import { ZooShell } from '@/components/zooGame/ZooShell';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
-import type { ZooGameState } from '@/components/zooGame/types';
+import type { ZooGameState, PbiDraft } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance, presetFor, type ItemDesign } from '@/components/zooGame/design';
 import { nextNudge } from '@/components/zooGame/engine';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
@@ -50,7 +50,7 @@ function GameTopBar() {
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
 export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addCopy, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, setItemRot, addCopy, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -196,6 +196,14 @@ export default function ZooGame() {
     setSaveName(name);
     toast.success(`Resumed "${name}"`);
   };
+  // The Product Owner's look-ahead, accepted. It goes into the Backlog unsized, like anything the
+  // Product Owner writes - refining and sizing it is still the Scrum Team's, not a gift from the
+  // suggestion. And it says so on screen, because a Backlog that grows quietly teaches nothing.
+  const handleProposal = (draft: PbiDraft) => {
+    createPbi(draft);
+    toast.success(`Added "${draft.name}" to the Product Backlog - refine and size it when you are ready`);
+  };
+
   const handlePoRefine = async () => {
     if (!user) { toast.error('Sign in to hold an AI refinement session.'); return; }
     try {
@@ -289,7 +297,7 @@ export default function ZooGame() {
       case 'planning':
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
       case 'sprint':
-        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onConfirmAc={confirmAc} onFinishItem={edit.onFinishBuild} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} onPart={setPartFocus} drawing={drawing} onDrawing={setDrawing} onRemoveRun={deleteConnector} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={selectOnPark} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintBoard state={state} onAddAnother={addAnotherPbi} onEstimate={estimate} onToggleTask={toggleTask} onConfirmAc={confirmAc} onFinishItem={edit.onFinishBuild} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onOpen={deployComplete} onPlaceOnPark={placeOnParkAndEnter} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} onPart={setPartFocus} drawing={drawing} onDrawing={setDrawing} onRemoveRun={deleteConnector} onAddProposal={handleProposal} onDeclineProposal={declineProposal} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={selectOnPark} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':
