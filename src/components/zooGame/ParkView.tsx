@@ -9,7 +9,8 @@ import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
-import { zoneSlices, zooIsOpen } from './engine';
+import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
+import { autoLayout, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { groupMembers } from './design';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock } from 'lucide-react';
 
@@ -544,7 +545,7 @@ function ConstructionSite({ item, w, h, selected, children }: { item: BacklogIte
 function buildFeatures(state: ZooGameState): Feature[] {
   // Show live items (open) plus any built item currently being placed on the park (done + placed) -
   // so you can position it and confirm its placement before marking it Deploy complete.
-  const isShown = (it: BacklogItem) => (it.status === 'open' || (it.status === 'done' && it.placed)) && !it.enhancesId;
+  const isShown = standsOnPark;
   const open = state.backlog.filter(isShown);
   const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && isShown(it));
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
@@ -604,7 +605,6 @@ function buildFeatures(state: ZooGameState): Feature[] {
 // The park is one of three columns now - Product Backlog, Sprint Backlog, product - so it is taller
 // than it is wide. A landscape park squeezed into a third of the screen is a postage stamp; a
 // portrait one uses the height it has. These are design pixels, scaled to whatever room it gets.
-const CANVAS_W = 820;
 // A river is cut long enough to cross the park from any angle (past the corners on the diagonal)
 // and is clipped by the park's edges, so turning it never leaves a gap at the ends.
 const RIVER_LEN = 1180;
@@ -614,29 +614,10 @@ const PATH_H = 40; // promenade band along the foot, where visitors stroll
 // rescaled to fit the new height - so laying down one more thing resized everything you had already
 // laid down. A zoo does not get bigger because you built a kiosk in it. Big enough for a full zoo
 // laid out in rows, and everything is kept inside it.
-const PLAY_H = 700;
-const PAD = 20;
-const GAP = 18;
 const PERIM = 8;        // how far a perimeter path sits outside a feature's body
 const PERIM_W = 8;      // perimeter / park-boundary path thickness
 const PATH_TAN = '#c9a86a'; // the default path colour (perimeters, park boundary, new connectors)
 const PATH_EDGE = 'rgba(0,0,0,.28)'; // the dark outline under every path
-
-/** Default tidy layout for features without a saved position: shelf-pack left-to-right,
- *  wrapping within the canvas width. Returns each feature's CENTRE in design px. */
-function autoLayout(features: Feature[]): Map<string, { x: number; y: number }> {
-  const pos = new Map<string, { x: number; y: number }>();
-  let x = PAD, y = PAD, rowH = 0;
-  for (const f of features) {
-    if (x + f.w > CANVAS_W - PAD && x > PAD) { x = PAD; y += rowH + GAP; rowH = 0; }
-    // Inside the park, always. A row that would run off the bottom stacks against it instead - the
-    // park has a size and things go in it; they do not make it taller by arriving.
-    pos.set(f.item.id, { x: x + f.w / 2, y: clamp(y + f.h / 2, PAD + f.h / 2, PLAY_H - PAD - f.h / 2) });
-    x += f.w + GAP;
-    rowH = Math.max(rowH, f.h);
-  }
-  return pos;
-}
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
@@ -728,7 +709,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   // a site shows the real thing from the moment it is started rather than an empty plot.
   const workingDesign = (it: BacklogItem) => it.design ?? it.draftDesign ?? presetFor(it);
 
-  const auto = autoLayout(features);
+  const auto = autoLayout(features.map((f) => ({ id: f.item.id, w: f.w, h: f.h })));
   /** Where a feature sits when nothing is being dragged - its committed spot. */
   const restPos = (f: Feature) => {
     const base = f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD };

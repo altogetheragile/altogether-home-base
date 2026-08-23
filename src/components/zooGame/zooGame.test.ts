@@ -8,8 +8,9 @@ import {
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
-import { zoneSlices, zonesOpenedSince, zooIsOpen } from './engine';
+import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion } from './parkChecks';
+import { autoLayout, CANVAS_W, PLAY_H } from './parkLayout';
 import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
@@ -2680,5 +2681,80 @@ describe('zoo game: the park answers the criteria it can answer', () => {
     const linked: ZooGameState = { ...s, connectors: [{ id: 'c1', a: { featureId: 'lion-enc', x: 0, y: 0 }, b: { x: 40, y: 40 }, bends: [], thickness: 9, color: '#c9a86a' }] };
     expect(checkCriterion(linked, paths, 'Can I get to this zone without crossing the grass?'))
       .toEqual({ met: true, evidence: 'a path runs to the Lion Enclosure' });
+  });
+});
+
+describe('zoo game: a thing you have built stays where you built it', () => {
+  it('does not make a finished habitat disappear off the park', () => {
+    // Ticking the last task of a plan promotes an item to Done on the spot. That route never goes
+    // near placeOnPark, and the park used to refuse to draw a Done item without the `placed` flag -
+    // so a habitat vanished the moment it was finished and came back only when a button unrelated
+    // to it was pressed.
+    let s = planSprint(bigCatsSplit(1), ['leopard-enc']);
+    s = buildItem(s, 'leopard-enc', FULL_DESIGN);
+    for (const t of s.backlog.find((x) => x.id === 'leopard-enc')!.tasks ?? []) {
+      if (!t.done) s = toggleItemTask(s, 'leopard-enc', t.id);
+    }
+    const built = s.backlog.find((x) => x.id === 'leopard-enc')!;
+    expect(built.status).toBe('done');
+    expect(built.placed).toBeFalsy();      // nothing on this path ever set it
+    expect(standsOnPark(built)).toBe(true); // and it is still standing there
+  });
+
+  it('shows everything that has been delivered, placed or not', () => {
+    const at = (status: BacklogItem['status'], extra: Partial<BacklogItem> = {}) =>
+      standsOnPark({ id: 'x', name: 'X', category: 'enclosure', zone: 'Z', acceptance: [], sprintNumber: null, accessible: true, estimate: 3, status, ...extra });
+    expect(at('done')).toBe(true);
+    expect(at('open')).toBe(true);
+    expect(at('committed')).toBe(false);   // still a construction site, drawn as one
+    expect(at('backlog')).toBe(false);
+    // An improvement re-delivers the thing it improves; it is not a second thing in the park.
+    expect(at('open', { enhancesId: 'other' })).toBe(false);
+  });
+});
+
+describe('zoo game: laying out a full zoo', () => {
+  // A real park's worth of boxes: habitats, animals' plots, buildings and scenery.
+  const zooBoxes = (n: number) => Array.from({ length: n }, (_, i) => ({
+    id: `f${i}`, w: i % 3 === 0 ? 172 : i % 3 === 1 ? 132 : 64, h: i % 3 === 0 ? 114 : i % 3 === 1 ? 90 : 60,
+  }));
+  const buried = (boxes: { id: string; w: number; h: number }[]) => {
+    const pos = autoLayout(boxes);
+    let count = 0;
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i], c = boxes[j], pa = pos.get(a.id)!, pc = pos.get(c.id)!;
+      const ox = Math.max(0, Math.min(pa.x + a.w / 2, pc.x + c.w / 2) - Math.max(pa.x - a.w / 2, pc.x - c.w / 2));
+      const oy = Math.max(0, Math.min(pa.y + a.h / 2, pc.y + c.h / 2) - Math.max(pa.y - a.h / 2, pc.y - c.h / 2));
+      if ((ox * oy) / Math.min(a.w * a.h, c.w * c.h) > 0.5) count++;
+    }
+    return count;
+  };
+
+  it('never buries one thing under another, however full the zoo gets', () => {
+    // The bug this is here for: rows used to be clamped one at a time as they were laid, so every
+    // row past the bottom of the park landed on the SAME line - a habitat you had just delivered
+    // drawn underneath one you delivered earlier, and no way to tell it was there.
+    for (const n of [4, 8, 12, 18, 24, 30]) {
+      expect(buried(zooBoxes(n)), `${n} things in the park`).toBe(0);
+    }
+  });
+
+  it('keeps everything inside the park', () => {
+    const boxes = zooBoxes(24);
+    const pos = autoLayout(boxes);
+    for (const b of boxes) {
+      const p = pos.get(b.id)!;
+      expect(p.x - b.w / 2, `${b.id} off the left`).toBeGreaterThanOrEqual(0);
+      expect(p.x + b.w / 2, `${b.id} off the right`).toBeLessThanOrEqual(CANVAS_W);
+      expect(p.y - b.h / 2, `${b.id} off the top`).toBeGreaterThanOrEqual(0);
+      expect(p.y + b.h / 2, `${b.id} off the bottom`).toBeLessThanOrEqual(PLAY_H);
+    }
+  });
+
+  it('spreads a small zoo out, and tightens a big one', () => {
+    const few = autoLayout(zooBoxes(6));
+    const many = autoLayout(zooBoxes(30));
+    const spread = (m: Map<string, { x: number; y: number }>) => new Set([...m.values()].map((p) => p.y)).size;
+    expect(spread(many)).toBeGreaterThan(spread(few));   // more rows, not one pile
   });
 });
