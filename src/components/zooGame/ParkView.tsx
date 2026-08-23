@@ -1422,7 +1422,7 @@ interface ParkViewProps {
   /** A pathway on the design bench. A path is a route between things rather than a thing that sits
    *  somewhere, so this is how you lay one out: the pen comes out, at the width and colour it was
    *  designed at, for as long as that item is the one being built. */
-  drawRoute?: { name: string; style: { thickness: number; color: string } } | null;
+  drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null;
   /** Whether the pen is out. Owned by the design bench for a pathway - the controls for a thing
    *  being built belong with the rest of that thing's controls, not scattered over the product. */
   drawing?: boolean;
@@ -1648,7 +1648,10 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           </div>
           <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
-            onAddConnector={(c) => { onAddConnector?.(c); if (!drawRoute) setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
+            // Every run drawn for a pathway carries that pathway's id, so the item can list its own
+            // runs and take one back off. A route you cannot edit is a route you have to get right
+            // first time, which is not how anyone draws anything.
+            onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />
