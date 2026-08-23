@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { BacklogItem } from './types';
-import { PbiCard } from './PbiCard';
+import { PbiCard, CategoryChip } from './PbiCard';
+import { Chip } from './ui/Chip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Lock, Plus, X, Scissors, Wand2 } from 'lucide-react';
@@ -31,7 +32,10 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
   const [reading, setReading] = useState(false);
   // No trailing mark on the card itself: the button beside it is the one that adds or removes, and
   // two plus signs on one row is one too many.
-  const card = <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'} />;
+  // What kind of thing it is, on the card you choose from. Choosing work you have not read is
+  // guessing, and "Bridge" alone does not tell you it is infrastructure rather than scenery.
+  const card = <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'}
+    badges={<><Chip>{item.zone}</Chip><CategoryChip item={item} /></>} />;
 
   // Reading before choosing. Selecting an item you have not read is guessing, and a card that pulls
   // itself into the Sprint the moment you touch it gives you nowhere to look first. The body opens

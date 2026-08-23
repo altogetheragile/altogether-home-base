@@ -503,18 +503,34 @@ export const pathWidthPx = (thickness?: string): number => PATH_WIDTHS.find((w) 
 
 /** Acceptance criteria that fit a piece of scenery/landscape from its type (a river reads as water,
  *  an entrance marks the way in), so each backlog item is judged against something sensible. */
+// ============= How an acceptance criterion is written =============
+//
+// Every one of them is a question, beginning "Can I". Not a house style: a statement can be waved
+// through, and a question has to be answered - which is what an acceptance criterion is for. It
+// also forces you to say who is doing the looking, and the answer is always a visitor standing in
+// the park rather than a developer looking at a spec.
+//
+// It caught a criterion that had been sitting there since the first version. Planting had to meet
+// "Fits the planting" - the planting fits the planting - which cannot be failed because it does not
+// mean anything. In the question form it will not even write: "Can I... fit the planting?" is
+// obvious nonsense, where the statement had passed for a year.
+//
+// The dividend is that several of them are now things the game itself can answer. "Can I get to
+// this zone without crossing the grass?" is exactly what the visitors' pathfinding computes. Half
+// of them stay a matter of judgement, which is true of real acceptance criteria too - and worth the
+// player noticing.
+
 export function floraAcceptance(type?: string): string[] {
-  // Each list ends with a DEPLOY (placement/sizing) criterion, confirmed on the park; the rest are
-  // BUILD (appearance), confirmed in the studio.
+  // Each list ends with a PLACEMENT criterion, confirmed once it is on the park; the rest are about
+  // the thing itself. See ACCEPTANCE_FORM above for why they are all questions.
   switch (type) {
-    case 'signpost': return ['Clearly readable', 'Coloured', 'Placed where visitors will see it'];
-    case 'river': case 'pond': case 'fountain': return ['Reads as water', 'Sized to fit the space'];
-    case 'rocks': return ['Reads as rock', 'Sized to fit the space'];
-    case 'bridge': return ['Reads as a bridge you can cross', 'Placed across the water'];
-    case 'entrance': return ['Clearly marks the way in', 'Coloured', 'Placed at the way in'];
-    case 'carpark': return ['Clearly marked out', 'Sized to fit the space'];
-    case 'hedge': return ['Reads as a hedge', 'Sized to fit the space'];
-    default: return ['Fits the planting', 'Coloured, no bare patches', 'Placed where it looks right'];
+    case 'signpost': return ['Can I read it from a few steps away?', 'Can I tell which way to go from here?'];
+    case 'river': case 'pond': case 'fountain': return ['Can I tell that is water at a glance?', 'Can I see it from across the park?', 'Can visitors still get round it?'];
+    case 'rocks': return ['Can I tell that is rock at a glance?', 'Can I see it from across the park?', 'Can visitors still get round it?'];
+    case 'bridge': return ['Can I see it is something you cross?', 'Can I cross the water on it?'];
+    case 'entrance': return ['Can I tell this is the way in?', 'Can I find it from the car park?'];
+    case 'carpark': return ['Can I tell where to park?', 'Can I walk from it to the entrance?'];
+    default: return ['Can I tell what kind of place this is from the planting?', 'Can I see greenery from the path?', 'Can I still get past it?'];
   }
 }
 
@@ -526,28 +542,44 @@ export function enclosureAcceptance(): string[] {
   // one of them ticked itself - which reads as busywork rather than as the difference between how
   // you build a thing and what the Product Owner asked for. The plan is the work; these are what
   // somebody would notice if the work were not done.
-  return ['No animal could get out of it', 'The animals have room to roam', 'It looks like somewhere an animal would live', 'Placed in its zone with room around it'];
+  return ['Can I see a fence with no way out of it?', 'Can an animal move about in here?', 'Can I tell an animal lives here, not a shed?', 'Can I walk right round it?'];
 }
 
 /** Build + placement acceptance criteria for an exhibit (animal): built to look right, then settled
  *  into its enclosure. Handles plural names ("Penguins" -> "recognisable as penguins"). */
 export function exhibitAcceptance(name: string): string[] {
-  const looksLike = `A visitor would know it is ${/s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase()}`;
-  return [looksLike, 'It stands out from across the park', 'It looks finished, not half-painted', 'Placed in its enclosure'];
+  const what = /s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase();
+  return [`Can I tell it is ${what} without reading the sign?`, 'Can I pick it out from across the park?', 'Can I see it fully coloured?', 'Can I find it in its habitat?'];
 }
 
 /** Build + placement acceptance criteria for a pathway: designed as a width + colour in the studio,
  *  then routed (placed) on the park to link things - the route can only be judged once drawn. */
 export function pathAcceptance(): string[] {
-  return ['Wide enough to walk side by side', 'Placed to link the right features'];
+  return ['Can two people walk it side by side?', 'Can I get to this zone without crossing the grass?'];
 }
 
-/** Whether an acceptance criterion is a DEPLOY-time one - about how the item is sized or placed,
- *  which can only be judged once it is on the park (e.g. "Sized to fit the space"). The rest are
- *  BUILD-time (appearance), confirmed in the studio. So you never accept placement before you have
- *  placed it: build ACs are ticked in the studio, deploy ACs when you place & size it on the park. */
+/** The criteria that can only be answered once the thing is standing in the park - about where it
+ *  is rather than what it is. Named outright, because the wording no longer gives them away: the
+ *  old rule sniffed for "placed" or "sized", which worked while the criteria were statements and
+ *  stopped working the moment they became questions. A list you have to keep up to date is worse
+ *  than a rule that keeps itself up to date, but not as bad as a rule that quietly stops matching. */
+const PLACEMENT_CRITERIA = new Set([
+  'Can I walk right round it?',
+  'Can I find it in its habitat?',
+  'Can I still get past it?',
+  'Can visitors still get round it?',
+  'Can I tell which way to go from here?',
+  'Can I cross the water on it?',
+  'Can I find it from the car park?',
+  'Can I walk from it to the entrance?',
+  'Can I get to this zone without crossing the grass?',
+  'Can I find it from the entrance?',
+]);
+
 export function isDeployAcceptance(label: string): boolean {
-  return /\bsized?\b|fit the space|placed|placement|position/i.test(label);
+  // The regex is the fallback for games saved before the rewrite, whose items still carry the old
+  // wording. It costs nothing and it keeps somebody's half-built zoo working.
+  return PLACEMENT_CRITERIA.has(label) || /\bsized?\b|fit the space|placed|placement|position/i.test(label);
 }
 
 /** A landscape feature's two working colours (primary fill, secondary trim), taking the player's
@@ -601,13 +633,14 @@ export function buildingTypeFor(name: string, services?: string): string {
  *  in the same service group. */
 export function amenityAcceptance(name: string, services?: string): string[] {
   const n = name.toLowerCase();
-  const build = (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) ? ['Clearly signed', 'Has enough cubicles']
-    : /gift|shop|souvenir|store|retail/.test(n) ? ['Clearly signed', 'Sells a range of souvenirs']
-    : (services === 'food' || /kiosk|caf|coffee|restaurant|snack|food|drink|refresh|outlet/.test(n)) ? ['Clearly signed', 'Serves food and drink']
-    : (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) ? ['Clearly signed', 'Enough seating and shade']
-    : ['Clearly signed', 'Fit for its purpose'];
-  // ...then placed where visitors can actually reach it (a deploy-time, on-the-park criterion).
-  return [...build, 'Placed where visitors can reach it'];
+  const outside = 'Can I tell what it is from outside?';
+  const build = (services === 'toilet' || /toilet|\bwc\b|loo/.test(n)) ? [outside, 'Can I find a free cubicle at a busy time?']
+    : /gift|shop|souvenir|store|retail/.test(n) ? [outside, 'Can I buy something to take home?']
+    : (services === 'food' || /kiosk|caf|coffee|restaurant|snack|food|drink|refresh|outlet/.test(n)) ? [outside, 'Can I buy food and a drink here?']
+    : (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) ? [outside, 'Can I sit down in the shade?']
+    : [outside, 'Can I get what I came for?'];
+  // ...and then the one that can only be answered once it is standing in the park.
+  return [...build, 'Can I find it from the entrance?'];
 }
 export const FLORA_COLORS: { key: string; label: string }[] = [
   { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
