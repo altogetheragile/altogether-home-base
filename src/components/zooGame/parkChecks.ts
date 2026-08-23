@@ -1,5 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, presetFor } from './design';
+import { syncSignOff } from './engine';
 
 // ============= The criteria the park can answer for itself =============
 //
@@ -114,7 +115,11 @@ export function applyParkChecks(state: ZooGameState): ZooGameState {
     });
     if (!touched) return item;
     changed = true;
-    return { ...item, acConfirmed: next };
+    // The Product Owner's sign-off is DERIVED from the criteria, so anything that moves a criterion
+    // has to move the sign-off with it. Ticking the last one by hand re-derived it; the park
+    // answering the last one did not, so every criterion went green and the approval sat there
+    // unticked with no way to shift it.
+    return syncSignOff({ ...item, acConfirmed: next });
   });
   return changed ? { ...state, backlog } : state;
 }

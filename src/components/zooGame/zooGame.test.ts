@@ -2894,3 +2894,37 @@ describe('zoo game: the Product Owner looks ahead', () => {
     }
   });
 });
+
+describe("zoo game: the Product Owner's sign-off follows the park's answers too", () => {
+  it('ticks when the last criterion is one the PARK answers, not one you tick', () => {
+    // The sign-off is derived from the criteria. Ticking the last one by hand re-derived it; the
+    // park answering the last one did not - so every criterion went green and the approval sat
+    // there unticked with nothing the player could do to shift it.
+    let s = planSprint(bigCatsSplit(1), ['bigcats-paths']);
+    s = setItemTasks(s, 'bigcats-paths', suggestTasks(s.backlog.find((x) => x.id === 'bigcats-paths')!));
+    s = buildItem(s, 'bigcats-paths', { parts: { thickness: 'medium' }, colors: { path: '#c9a86a' } });
+    const item = () => s.backlog.find((x) => x.id === 'bigcats-paths')!;
+    const signOff = () => (item().tasks ?? []).find((t) => isSignOffTask(t.label))!;
+
+    // Accept everything a person can accept. The remaining one is the park's: no run is drawn yet.
+    item().acceptance.forEach((label, i) => {
+      if (!checkCriterion(s, item(), label)) s = confirmAcceptance(s, 'bigcats-paths', i, true);
+    });
+    s = applyParkChecks(s);
+    expect(signOff().done, 'not yet - the park has not seen a path').toBe(false);
+
+    // Lay a run to the habitat. The park answers the last criterion, and the sign-off must follow.
+    s = applyParkChecks({
+      ...s,
+      backlog: s.backlog.map((it) => (it.id === 'lion-enc' ? { ...it, pos: { x: 300, y: 300 } } : it)),
+      connectors: [{ id: 'r1', a: { featureId: 'lion-enc', x: 0, y: 0 }, b: { x: 300, y: 600 }, bends: [], thickness: 9, color: '#c9a86a' }],
+    });
+    expect(item().acceptance.every((_, i) => item().acConfirmed?.[i]), 'every criterion met').toBe(true);
+    expect(signOff().done, 'and the sign-off follows').toBe(true);
+
+    // Take the run back up and it all comes undone again, which is the point of deriving it.
+    const undone = applyParkChecks({ ...s, connectors: [] });
+    const paths = undone.backlog.find((x) => x.id === 'bigcats-paths')!;
+    expect((paths.tasks ?? []).find((t) => isSignOffTask(t.label))!.done).toBe(false);
+  });
+});

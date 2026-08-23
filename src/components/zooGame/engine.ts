@@ -322,7 +322,7 @@ export const standsOnPark = (item: BacklogItem): boolean =>
 /** Keep the sign-off task in step with the acceptance criteria, wherever they were changed. It is
  *  derived, not ticked by hand: the Product Owner signs off when the criteria are met, and the
  *  sign-off comes back off if one is later withdrawn. */
-function syncSignOff(item: BacklogItem): BacklogItem {
+export function syncSignOff(item: BacklogItem): BacklogItem {
   const tasks = item.tasks ?? [];
   if (!tasks.some((t) => isSignOffTask(t.label))) return item;
   const ready = signOffReady(item);
