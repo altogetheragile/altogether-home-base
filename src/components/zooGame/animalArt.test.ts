@@ -97,7 +97,9 @@ describe('animal artwork', () => {
       expect(art.body, species).not.toMatch(/<script|<foreignObject|<iframe|<image|<use\b/i);
       expect(art.body, species).not.toMatch(/\son\w+\s*=/i);
       expect(art.body, species).not.toMatch(/javascript:|data:text\/html/i);
-      expect(art.body, species).toMatch(/^<g[\s>]/);
+      // Starts with something drawable. Not specifically a <g>: a drawing cut out by region rather
+      // than lifted from a group arrives as bare paths, having had its empty wrappers pruned.
+      expect(art.body.trimStart(), species).toMatch(/^<(g|path|polygon|circle|ellipse|rect|defs)[\s>]/);
       expect(art.viewBox, species).toMatch(/^-?[\d.]+ -?[\d.]+ [\d.]+ [\d.]+$/);
     }
   });
