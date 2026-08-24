@@ -2,8 +2,8 @@ import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type Point
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
 import { AnimalSprite } from './AnimalSprite';
 import { hasAnimalArt } from './art/animalArt';
-import { ENCLOSURE_SIZE } from './design';
-import { renderDesign, presetFor, pathWidthPx, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
+import { ENCLOSURE_SIZE, footprintFor } from './design';
+import { renderDesign, presetFor, pathWidthPx, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
@@ -69,16 +69,20 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
  *  A species we have a drawing for is drawn; the rest are still built out of coloured squares. The
  *  two live side by side on purpose - a zoo can hold a lion and a toucan long before every animal
  *  in the toolbox has been illustrated. */
-function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign; cell: number }) {
+function Sprite({ item, design, cell, cellH }: { item: BacklogItem; design: ItemDesign; cell: number;
+  /** Cell height, where it differs from the width - a sprite filling a footprint that is not the
+   *  same shape as the grid it is drawn on. Defaults to square. */
+  cellH?: number }) {
   const species = item.template ?? item.id;
   if (item.category === 'exhibit' && hasAnimalArt(species)) {
     return <AnimalSprite species={species} cell={cell} coat={design.parts.coat} />;
   }
   const grid = renderDesign(item, design);
+  const h = cellH ?? cell;
   return (
     <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
       {grid.flatMap((row, r) => row.map((color, c) => (
-        <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />
+        <span key={`${r}-${c}`} style={{ width: cell, height: h, background: color ?? 'transparent' }} />
       )))}
     </div>
   );
@@ -223,7 +227,9 @@ function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; 
 
 /** A single feature on the grounds. Amenities (buildings) sit on a plot tile; planting (flora)
  *  is drawn as just the plant - a tree or bush needs no surround. */
-function Plot({ item, cell, named = true, design }: { item: BacklogItem; cell: number;
+export function Plot({ item, scale = 1, named = true, design }: { item: BacklogItem;
+  /** Screen pixels per design pixel. The park draws at 1; the small overview draws smaller. */
+  scale?: number;
   /** The design to draw it in. Given, it wins over the item's committed one - so a second tree put
    *  down while the first is still being built wears the colours you are choosing right now, rather
    *  than sitting there in the preset greys waiting for the item to be Done. */
@@ -232,13 +238,19 @@ function Plot({ item, cell, named = true, design }: { item: BacklogItem; cell: n
    *  PBI wearing three copies of "Big Cats Planting" is a label overlapping a label. */
   named?: boolean }) {
   const isFlora = item.category === 'flora';
+  // A feature is drawn at the size of the ground it stands on, surround included - so a cafe is
+  // plainly a bigger thing than a kiosk, and a signpost is plainly a post.
+  const fp = footprintFor(item);
+  const pad = Math.max(1, Math.round(2 * scale));
+  const cw = Math.max(0.5, (fp.w * scale - pad * 2) / GRID_W);
+  const ch = Math.max(0.5, (fp.h * scale - pad * 2) / GRID_H);
   return (
     <div className="relative flex flex-col items-center">
       <div className={cn('flex items-center justify-center', !isFlora && 'rounded-lg')}
         style={isFlora
-          ? { padding: cell }
-          : { background: '#cfd4d8', border: '2px solid #9aa3ab', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: cell }}>
-        <Sprite item={item} design={design ?? item.design ?? presetFor(item)} cell={cell} />
+          ? { padding: pad }
+          : { background: '#cfd4d8', border: '2px solid #9aa3ab', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: pad }}>
+        <Sprite item={item} design={design ?? item.design ?? presetFor(item)} cell={cw} cellH={ch} />
       </div>
       {named && <FeatureName name={item.name} />}
     </div>
@@ -571,7 +583,7 @@ function buildFeatures(state: ZooGameState): Feature[] {
   // Any open exhibit whose enclosure is not built falls back to a small plot (shouldn't
   // normally happen, since the habitat is built first).
   for (const o of open.filter((o) => o.category === 'exhibit' && !builtEnc.some((e) => e.id === o.enclosureId))) {
-    feats.push({ item: o, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(o.zone) });
+    { const fp = footprintFor(o); feats.push({ item: o, kind: 'plot', w: fp.w, h: fp.h + LABEL_H, animals: [], plants: [], theme: theme(o.zone) }); }
   }
   // Amenities and loose planting sit freely on the grounds - drag them anywhere (or a plant onto
   // an enclosure to plant it inside). Landscape scenery takes its own resizable footprint.
@@ -580,7 +592,8 @@ function buildFeatures(state: ZooGameState): Feature[] {
       const sz = landSize(a);
       feats.push({ item: a, kind: 'plot', w: sz.w, h: sz.h + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
     } else {
-      feats.push({ item: a, kind: 'plot', w: 64, h: 60 + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
+      const fp = footprintFor(a);
+      feats.push({ item: a, kind: 'plot', w: fp.w, h: fp.h + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
     }
   }
   // Work under way: an item started on the canvas holds its plot as a construction site. It is
@@ -1211,7 +1224,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                         onSelectPart={edit && building === f.item.id ? (key) => setPart({ id: f.item.id, key }) : undefined} onRename={onRename} />
                       : isLandscapeType(landType(f.item))
                       ? <LandscapePlot item={{ ...f.item, design: workingDesign(f.item) }} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
-                      : <Plot item={{ ...f.item, design: workingDesign(f.item) }} cell={4} />}
+                      : <Plot item={{ ...f.item, design: workingDesign(f.item) }} />}
                   </ConstructionSite>
                 )
                 : f.kind === 'enclosure'
@@ -1220,7 +1233,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   onSelectPart={edit && building === f.item.id && f.item.status === 'done' ? (key) => setPart({ id: f.item.id, key }) : undefined}
                   onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
-                : <Plot item={f.item} cell={4} />}
+                : <Plot item={f.item} />}
               {/* Resize a landscape feature: the right-edge handle sets its length (drag it across the
                   park), the bottom-edge handle its width - two separate controls. */}
               {isLand && onSetSize && tool === 'none' && !dragging && (
@@ -1285,7 +1298,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             style={{ left: c.x, top: c.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
             {f.item.category === 'flora' && isLandscapeType(landType(f.item))
               ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
-              : <Plot item={f.item} cell={4} named={false} design={workingDesign(f.item)} />}
+              : <Plot item={f.item} named={false} design={workingDesign(f.item)} />}
             {onRemoveCopy && tool === 'none' && (
               <button type="button" title={`Remove this ${f.item.name}`} aria-label={`Remove this ${f.item.name}`}
                 onPointerDown={(e) => e.stopPropagation()}
@@ -1399,7 +1412,7 @@ function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; 
       <div className="relative z-10 flex flex-wrap items-end gap-3 p-3 pb-8">
         {features.map((f) => (
           <div key={f.item.id}>
-            {f.kind === 'enclosure' ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} /> : <Plot item={f.item} cell={3} />}
+            {f.kind === 'enclosure' ? <Enclosure enc={f.item} animals={f.animals} theme={f.theme} /> : <Plot item={f.item} scale={0.75} />}
           </div>
         ))}
       </div>

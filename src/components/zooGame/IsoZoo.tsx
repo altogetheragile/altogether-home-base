@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './engine';
-import { ENCLOSURE_SIZE, shade, speciesColors, floraDefaultColors, isLandscapeType, landscapeDefaultSize, enclosureFlora } from './design';
+import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora } from './design';
 import { autoLayout, insidePark, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
@@ -75,11 +75,8 @@ function build(state: ZooGameState, targetH: number) {
 
   // Positions: the item's own spot if it has one, otherwise the same automatic layout the park uses,
   // so the two views never disagree about where anything is.
-  const sizeOf = (it: BacklogItem): { w: number; h: number } => {
-    if (it.category === 'enclosure') return ENCLOSURE_SIZE[it.enclosureSize ?? 'medium'];
-    if (it.category === 'flora' && isLandscapeType(landType(it))) return it.size ?? landscapeDefaultSize(landType(it));
-    return { w: 64, h: 60 };
-  };
+  const sizeOf = (it: BacklogItem): { w: number; h: number } =>
+    it.category === 'enclosure' ? ENCLOSURE_SIZE[it.enclosureSize ?? 'medium'] : footprintFor(it);
   const auto = autoLayout([...encs, ...loose].map((it) => ({ id: it.id, ...sizeOf(it) })));
   const posOf = (it: BacklogItem): Pt => {
     const size = sizeOf(it);

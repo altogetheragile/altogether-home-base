@@ -58,13 +58,36 @@ The showcase is `lazy`-imported by the Sprint Review, so none of this artwork -
 which is more than half of what the game weighs - is fetched until somebody
 reaches a Review.
 
+## Footprints
+
+How much ground a feature takes up lives in `FOOTPRINT` in `design.ts`, and both
+views read it through `footprintFor`. Everything used to occupy the same 64x60
+square - which is what a 16x14 sprite draws at four pixels a cell, so the tile
+came first and the thing came second. A cafe is now plainly bigger than a kiosk,
+and a signpost is plainly a post.
+
+The plan view sizes the sprite from the footprint too, so the drawing is the
+size of the ground it stands on rather than a fixed tile with a box drawn round
+it. `Sprite` therefore takes a cell height as well as a width: a footprint is
+rarely the same shape as the grid it is drawn on.
+
+To see them side by side:
+
+```
+npx vite-node scripts/preview/footprints-preview.tsx > /tmp/fp.html
+```
+
 ## Looking at it
 
 Building a zoo by hand to see a change takes twenty minutes. Instead:
 
 ```
-npx tsx --tsconfig tsconfig.app.json scripts/preview/iso-preview.tsx > /tmp/iso.html
+npx vite-node scripts/preview/iso-preview.tsx > /tmp/iso.html
 ```
+
+(Previews that touch app modules run under `vite-node` rather than `tsx`, so
+aliases and `import.meta.env` resolve. `.node-shims.mjs` supplies the handful of
+browser globals an imported module expects to exist.)
 
 That writes a standalone page holding a zoo with two habitats, four species
 (one of them with no artwork, to exercise the fallback), two buildings, a
