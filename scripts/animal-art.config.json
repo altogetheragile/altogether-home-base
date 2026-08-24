@@ -212,6 +212,25 @@
           "flip": true
         }
       }
+    },
+    {
+      "file": "art-src/zoo/birds.svg",
+      "credit": "Adobe Stock",
+      "//": "A page of birds. The peacock is taken displaying and front on, which breaks the side-view rule the way the sitting panda does: a peacock in display is drawn from the front by everyone, because that is the whole point of it. The eagle is in profile like the rest.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.06,
+      "unitScale": 0.35,
+      "species": {
+        "peacock": {
+          "island": 0,
+          "unitScale": 0.435
+        },
+        "eagle": {
+          "island": 12,
+          "unitScale": 0.337,
+          "flip": true
+        }
+      }
     }
   ]
 }
