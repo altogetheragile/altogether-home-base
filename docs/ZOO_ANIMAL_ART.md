@@ -73,6 +73,14 @@ filter at all.
    npx vitest run src/components/zooGame/animalArt.test.ts
    ```
 
+## The view has to match
+
+The animals are drawn in profile, side on. A sheet drawn three-quarter on will
+look wrong standing next to them - except where the pose does not depend on the
+angle. A sitting panda facing slightly towards you reads as a sitting panda; a
+walking elephant at the same angle does not read as one of ours. That is why the
+isometric sheet in `art-src/` contributed one species and not fifteen.
+
 ## Before buying a sheet
 
 ```
