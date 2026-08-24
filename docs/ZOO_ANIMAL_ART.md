@@ -74,7 +74,10 @@ filter at all.
 
    That writes `art-src/zoo/contact-sheet.png` with every drawing numbered.
 
-3. Add the sheet and its drawings to `scripts/animal-art.config.json`. The key
+3. Add the sheet and its drawings to `scripts/animal-art.config.json`. **Use the
+   same `bridge` and `ignoreLargerThan` the contact sheet was made with** - the
+   check prints them. Cluster differently and island 0 is a different drawing,
+   which is not something you notice until you look at what came out. The key
    must be an exhibit's `template` from `toolboxItems.ts` - `animalArt.test.ts`
    fails on a name no toolbox item uses, which is usually a typo. Set
    `"flip": true` for a drawing that faces left, so everything in the park faces
@@ -130,5 +133,5 @@ Sources in use, and what covers them:
 | Sheet | Source | Licence |
 | --- | --- | --- |
 | `wild-animals.svg`, `flamingos.svg`, `tropic.svg`, `apes.svg`, `iso-animals.svg` | Freepik | Al's Freepik licence |
-| `savanna.svg`, `savanna-grazers.svg`, `otters.svg`, `reef.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
+| `savanna.svg`, `savanna-grazers.svg`, `otters.svg`, `reef.svg`, `birds.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
 | `kenney-isometric-buildings/` | Kenney | CC0 - public domain, no attribution required |

@@ -82,7 +82,11 @@ const browser = await chromium.launch();
 const groups = topLevelGroups(svg);
 const boxes = await measureGroups(browser, svg);
 const drawable = boxes.filter((b) => b.w > 12 && b.h > 12 && b.n > 3);
-const islands = await findIslands(browser, svg, 0, 0.06);
+// These two numbers decide what island 0 is. A config that clusters differently gets a different
+// island 0, and the numbers read off this sheet then point at the wrong drawings - which is not
+// something you notice until you look at what came out.
+const BRIDGE = 0, IGNORE_LARGER_THAN = 0.06;
+const islands = await findIslands(browser, svg, BRIDGE, IGNORE_LARGER_THAN);
 const bigIslands = islands.filter((c) => c.w > 25 && c.h > 18);
 
 const kb = statSync(file).size / 1024;
@@ -172,5 +176,9 @@ if (byGroup) {
   await page.close();
 }
 await browser.close();
+if (!byGroup) {
+  console.log(`  Island numbers are relative to bridge=${BRIDGE}, ignoreLargerThan=${IGNORE_LARGER_THAN}.`);
+  console.log('  Use the same values in the config, or island 0 will be a different drawing.\n');
+}
 console.log(`  Overview:      ${stem}-overview.png`);
 console.log(`  Contact sheet: ${out}\n`);
