@@ -48,7 +48,10 @@ export interface Pt { x: number; y: number; }
 
 const CARS = ['#e0574b', '#4a90d9', '#43a047', '#f0b429', '#eeeeee', '#7d6bd0', '#e6842a', '#37b3a6', '#d94f8a', '#5b6673'];
 const KINDS = ['sedan', 'suv', 'hatch', 'van', 'pickup', 'sedan', 'suv', 'hatch'];
-const CAR_HW = 23, CAR_HH = 26, BUS_HW = 50, BUS_HH = 23; // half-footprints; a coach lies on its side
+// Half-footprints; a coach lies on its side. Exported because anything that DRAWS a vehicle has to
+// agree with what the visitors walk around - a car drawn smaller than the space it occupies leaves
+// guests giving a wide berth to thin air.
+export const CAR_HW = 23, CAR_HH = 26, BUS_HW = 50, BUS_HH = 23;
 
 const BAY_W = 78, BAY_GAP = 10, EDGE = 56; // bay pitch, and the margin the link roads need each side
 export const CAR_BAYS = 16, COACH_BAYS = 2; // what a default-width apron holds: 16 bays + 2 coaches

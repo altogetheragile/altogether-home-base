@@ -3,6 +3,7 @@ import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, GOAL_HAPPINESS_TARGET } from './engine';
 import { PbiCard } from './PbiCard';
+import { IsoZoo } from './IsoZoo';
 
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
@@ -77,6 +78,17 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       </header>
 
       {step === 'done' && (<>
+      {/* The Increment itself, before anything is said about it. A Review that opens with a chart
+          is a status meeting; a Review that opens with the product is an inspection. This is the
+          same zoo the park view holds, seen the way a visitor arriving at the gate would see it. */}
+      <section className="overflow-hidden rounded-lg border border-border bg-[#8cc063]/25">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">The Increment &middot; everything delivered so far</span>
+          <span className="text-[11px] text-muted-foreground">Not this Sprint's work alone - the whole zoo, which is what an Increment is.</span>
+        </div>
+        <IsoZoo state={state} height={470} className="px-3 pb-2" />
+      </section>
+
       {/* Progress toward the Product Goal opens the Review: the widest question first, before the
           Sprint that just ran. The Product Owner's decision on it comes at the end, once the
           visitors have been heard. */}

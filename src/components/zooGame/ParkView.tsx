@@ -2,6 +2,7 @@ import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type Point
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
 import { AnimalSprite } from './AnimalSprite';
 import { hasAnimalArt } from './art/animalArt';
+import { ENCLOSURE_SIZE } from './design';
 import { renderDesign, presetFor, pathWidthPx, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
@@ -251,13 +252,7 @@ function FeatureName({ name }: { name: string }) {
   );
 }
 
-/** Enclosure footprints (in the fixed design px). A bigger habitat is simply a bigger
- *  box; how many animals appear inside is how many you have actually built. */
-const ENCLOSURE: Record<'small' | 'medium' | 'large', { w: number; h: number }> = {
-  small: { w: 96, h: 68 },
-  medium: { w: 132, h: 90 },
-  large: { w: 172, h: 114 },
-};
+const ENCLOSURE = ENCLOSURE_SIZE;
 // A feature's name is drawn INSIDE its own footprint and ignores the pointer, so it never blocks
 // dragging, a resize handle or a path being drawn - and it adds nothing to the feature's box.
 const LABEL_H = 0;
