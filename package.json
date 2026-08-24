@@ -36,7 +36,8 @@
     "bdd:ci": "cucumber-js --config cucumber.mjs --tags \"not @skip\" --parallel 2 --format pretty --format html:cucumber-report.html",
     "check:routes": "node scripts/check-sitemap-routes.mjs",
     "audit:artifacts": "tsx scripts/audit-artifact-contracts.ts",
-    "check:css": "node scripts/check-tailwind-opacity.mjs"
+    "check:css": "node scripts/check-tailwind-opacity.mjs",
+    "animal-art": "node scripts/extract-animal-art.mjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",

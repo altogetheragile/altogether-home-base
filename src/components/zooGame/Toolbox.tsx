@@ -6,10 +6,18 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { X, Check } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
+import { AnimalSprite } from './AnimalSprite';
+import { hasAnimalArt } from './art/animalArt';
 
 /** A small greyscale silhouette of a template's shape (uncoloured - you colour it in
  *  the studio), so users can see what each toolbox piece looks like before picking it. */
 function Preview({ item, cell = 3 }: { item: ToolboxItem; cell?: number }) {
+  const species = item.template ?? item.name;
+  // An illustrated species shows its own drawing: what you are picking is the animal, not a shape
+  // to colour in, and the picker should say so.
+  if (item.category === 'exhibit' && hasAnimalArt(species)) {
+    return <div className="flex items-end justify-center"><AnimalSprite species={species} cell={cell * 3.4} /></div>;
+  }
   const fake = { id: item.template ?? item.name, category: item.category, template: item.template } as BacklogItem;
   const grid = renderDesign(fake, presetFor(fake));
   return (

@@ -1,5 +1,7 @@
 import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
+import { AnimalSprite } from './AnimalSprite';
+import { hasAnimalArt } from './art/animalArt';
 import { renderDesign, presetFor, pathWidthPx, GRID_W, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
@@ -61,8 +63,16 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
   );
 }
 
-/** Render one design (a creature or building) at a small scale. */
+/** Render one design (a creature or building) at a small scale.
+ *
+ *  A species we have a drawing for is drawn; the rest are still built out of coloured squares. The
+ *  two live side by side on purpose - a zoo can hold a lion and a toucan long before every animal
+ *  in the toolbox has been illustrated. */
 function Sprite({ item, design, cell }: { item: BacklogItem; design: ItemDesign; cell: number }) {
+  const species = item.template ?? item.id;
+  if (item.category === 'exhibit' && hasAnimalArt(species)) {
+    return <AnimalSprite species={species} cell={cell} coat={design.parts.coat} />;
+  }
   const grid = renderDesign(item, design);
   return (
     <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
