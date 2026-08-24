@@ -43,6 +43,22 @@ comes from; there is no per-species size table to keep in step.
    npx vitest run src/components/zooGame/animalArt.test.ts
    ```
 
+## Before buying a sheet
+
+```
+npm run art-check -- ~/Downloads/whatever.eps
+```
+
+It reports whether the drawings come apart, and how; whether anything in it is
+bitmap; what will need untangling; and roughly what each drawing will weigh. It
+also writes an overview PNG and a contact sheet to `art-src/.work/`.
+
+It does **not** judge style, and deliberately so: the obvious test - "a duotone
+sits in one wedge of the colour wheel" - fails on this very sheet, because a page
+of animals is honestly almost all browns. Look at the overview instead. What has
+to be true is that it sits beside flat-colour artwork: no outlines, no halftone
+or hatching, no line-art treatment.
+
 ## Species with no drawing yet
 
 A species without artwork falls back to its built sprite, so the toolbox never
