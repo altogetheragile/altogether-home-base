@@ -57,6 +57,36 @@ describe('animal artwork', () => {
     expect(coatFilter(undefined)).toBeUndefined();
   });
 
+  it('brings a species in from a second sheet at the right size', () => {
+    // The flamingo comes off a different sheet with its own units. If the scaling were dropped it
+    // would tower over the giraffe or vanish beside the penguin, and the giveaway is silent.
+    const flamingo = animalArtFor('flamingo')!;
+    const penguins = animalArtFor('penguins')!;
+    const giraffe = animalArtFor('giraffe')!;
+    expect(flamingo.h).toBeGreaterThan(penguins.h);
+    expect(flamingo.h).toBeLessThan(giraffe.h / 2);
+  });
+
+  it('leaves no drawing empty, however it was cut out', () => {
+    // Both of these have been real: a sheet whose exporter gives every path an id had the drawing
+    // pruned away as if it were an unused definition, and a box measured before the shadow was
+    // dropped left the animal squashed. Either way the failure is a correctly sized nothing.
+    for (const [species, art] of Object.entries(ANIMAL_ART)) {
+      expect(art.body.length, `${species} is empty`).toBeGreaterThan(400);
+      expect(art.body, species).toMatch(/<(path|polygon|g)[\s>]/);
+      expect(art.w, species).toBeGreaterThan(0);
+      expect(art.h, species).toBeGreaterThan(0);
+    }
+  });
+
+  it('drops the sheet\'s own backdrop rather than parking it on the grass', () => {
+    // The flamingo sheet draws each bird on a teal shadow puddle the colour of its own background.
+    const flamingo = animalArtFor('flamingo')!;
+    for (const teal of ['#4FC1AB', '#64D4BF', '4FC1AB', '64D4BF']) {
+      expect(flamingo.body.toUpperCase()).not.toContain(teal.toUpperCase());
+    }
+  });
+
   it('holds nothing but drawing', () => {
     // The markup is injected with dangerouslySetInnerHTML. It comes from our own extraction of a
     // licensed file rather than from anything a player typed, and this is what says so.

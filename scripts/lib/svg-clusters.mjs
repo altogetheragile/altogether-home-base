@@ -84,13 +84,53 @@ export async function cutIslands(browser, svg, picks) {
   const out = await page.evaluate(({ picks }) => {
     const root = document.querySelector('svg');
     const leafSel = 'path,polygon,circle,ellipse,rect,line,image';
+    const inv = root.getScreenCTM().inverse();
+    const originals = [...root.querySelectorAll(leafSel)];
+    /** A shape's box in the root's coordinates. */
+    const boxOf = (el) => {
+      let bb; try { bb = el.getBBox(); } catch { return null; }
+      const m = inv.multiply(el.getScreenCTM());
+      const at = (x, y) => { const p = root.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(m); };
+      const cs = [at(bb.x, bb.y), at(bb.x + bb.width, bb.y), at(bb.x, bb.y + bb.height), at(bb.x + bb.width, bb.y + bb.height)];
+      const xs = cs.map((c) => c.x), ys = cs.map((c) => c.y);
+      return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+    };
 
-    return picks.map(({ name, members }) => {
+    /** Does this shape's fill match one of the colours to throw away?
+     *
+     *  Read from what the browser computes, not from the attribute: a fill written inside a style
+     *  attribute never matches a hex compared as a string, and quietly keeps the thing you meant to
+     *  drop - usually the sheet's own backdrop or the shadow puddle under each drawing. */
+     const matchesDrop = (el, drop) => {
+      if (!drop || !drop.length) return false;
+      const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(getComputedStyle(el).fill || '');
+      if (!m) return false;
+      const got = [+m[1], +m[2], +m[3]];
+      return drop.some((hex) => {
+        const want = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+        return want.every((v, i) => Math.abs(v - got[i]) <= 14);
+      });
+    };
+
+    return picks.map(({ name, members, drop }) => {
       const keep = new Set(members);
       const clone = root.cloneNode(true);
       // Same document order in the clone as in the original, so indices still line up.
       const leaves = [...clone.querySelectorAll(leafSel)];
-      leaves.forEach((el, i) => { if (!keep.has(i) && !el.closest('defs,clipPath,mask,pattern')) el.remove(); });
+      // The box of what SURVIVES, not of the island it came from. Dropping a shadow puddle and
+      // then sizing the drawing to a box that still allows for it leaves the animal squashed.
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      leaves.forEach((el, i) => {
+        if (el.closest('defs,clipPath,mask,pattern')) return;
+        if (!keep.has(i) || matchesDrop(originals[i], drop)) { el.remove(); return; }
+        const b = boxOf(originals[i]);
+        if (!b) return;
+        x0 = Math.min(x0, b.x0); y0 = Math.min(y0, b.y0);
+        x1 = Math.max(x1, b.x1); y1 = Math.max(y1, b.y1);
+      });
+      const box = Number.isFinite(x0)
+        ? { x: +x0.toFixed(1), y: +y0.toFixed(1), w: +(x1 - x0).toFixed(1), h: +(y1 - y0).toFixed(1) }
+        : null;
 
       // Groups with nothing drawable left in them are just wrappers around air.
       let pruned = true;
@@ -126,8 +166,12 @@ export async function cutIslands(browser, svg, picks) {
         }
         if (used.size === before) break;
       }
-      for (const def of [...clone.querySelectorAll('[id]')]) {
-        if (!used.has(def.id)) def.remove();
+      // Only definitions get pruned. An earlier version removed anything with an unreferenced id,
+      // which is fine until a sheet's exporter gives every path an id - and then it deletes the
+      // drawing and leaves a correctly sized, entirely empty box.
+      const DEFN = 'linearGradient,radialGradient,clipPath,mask,pattern,filter,symbol,marker';
+      for (const def of [...clone.querySelectorAll(`${DEFN},defs [id]`)]) {
+        if (def.id && !used.has(def.id)) def.remove();
       }
       for (const d of [...clone.querySelectorAll('defs')]) if (!d.children.length) d.remove();
 
@@ -139,7 +183,7 @@ export async function cutIslands(browser, svg, picks) {
           .split(`url(#${id})`).join(`url(#${safe})`)
           .split(`href="#${id}"`).join(`href="#${safe}"`);
       }
-      return { name, body: html };
+      return { name, body: html, box };
     });
   }, { picks });
   await page.close();

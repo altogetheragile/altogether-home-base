@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet } from './lib/svg-sheet.mjs';
+import { findIslands, cutIslands, regionsOf } from './lib/svg-clusters.mjs';
 
 const CONFIG = 'scripts/animal-art.config.json';
 const OUT = 'src/components/zooGame/art/animalArt.generated.ts';
@@ -48,16 +49,46 @@ for (const source of config.sources) {
     continue;
   }
 
+  // Not every sheet keeps its grouping. Where it does not, the drawings are found as islands of
+  // touching shapes instead - see scripts/lib/svg-clusters.mjs.
+  const islands = Object.values(source.species).some((sp) => sp.island !== undefined)
+    ? await findIslands(browser, svg, source.bridge ?? 0, source.ignoreLargerThan ?? 0.06)
+    : [];
+
   if (source.credit) credits.add(source.credit);
-  for (const [species, spec] of Object.entries(source.species)) {
-    const b = boxes[spec.group];
-    if (!b) { console.error(`${species}: no group ${spec.group} in ${source.file}`); process.exit(1); }
+  // Every sheet is drawn to its own scale. `unitScale` says what one of this sheet's units is worth
+  // in the units the rest of the zoo is measured in, so a flamingo off a second sheet stands the
+  // right height beside a giraffe off the first.
+  const unit = source.unitScale ?? 1;
+  const named = Object.entries(source.species);
+  const islandPicks = named.filter(([, sp]) => sp.island !== undefined);
+  const cuts = islandPicks.length
+    ? await cutIslands(browser, svg, islandPicks.map(([species, sp]) => {
+      const c = islands[sp.island];
+      if (!c) { console.error(`${species}: no island ${sp.island} in ${source.file}`); process.exit(1); }
+      return { name: species, members: c.members, drop: source.drop ?? [] };
+    }))
+    : [];
+
+  for (const [species, spec] of named) {
+    let box, body;
+    if (spec.island !== undefined) {
+      const cut = cuts.find((x) => x.name === species);
+      body = cut.body;
+      box = cut.box ?? islands[spec.island];
+    } else {
+      box = boxes[spec.group];
+      body = groups[spec.group];
+      if (!box) { console.error(`${species}: no group ${spec.group} in ${source.file}`); process.exit(1); }
+    }
     entries.push({
       species,
-      w: b.w, h: b.h,
-      viewBox: viewBoxOf(b, 2),
+      // The box is scaled; the viewBox is not. The drawing is stretched into whatever box it is
+      // given, so scaling the box is all it takes to put a second sheet on the first one's scale.
+      w: +(box.w * unit).toFixed(1), h: +(box.h * unit).toFixed(1),
+      viewBox: viewBoxOf(box, 2),
       flip: !!spec.flip,
-      body: slim(groups[spec.group]),
+      body: slim(body),
     });
   }
 }
