@@ -136,15 +136,19 @@ A prop given a `tint` list has those flat colours swapped for numbered slots, so
 the game can recolour it - which is how a fence comes to wear the colour of the
 zone it encloses.
 
-Two drawings will be refused, both on purpose. One using `<use>` or `<clipPath>`
-cannot be lifted out of its sheet: two copies on a page would both claim the
-same id. One whose `tint` list misses a colour would come out half-painted.
+A drawing that clips itself, or fills from its own gradient, has its ids given a
+prefix so two copies on one page cannot borrow each other's definitions. Only a
+drawing that refers to a definition living elsewhere on the sheet is refused -
+that one would leave the definition behind. A `tint` list that misses a colour is
+refused too, since the drawing would come out half-painted.
 
 ## What is not here
 
-- **No isometric buildings or animals from artwork.** Buildings are drawn;
-  animals are the side-view drawings, which sit in an isometric scene by a long
-  standing convention and look right.
+- **No isometric buildings from artwork.** Buildings are drawn. The scene sheet
+  has one structure on it and it is a children's playhouse, not a facility.
+  Animals are the side-view drawings, which sit in an isometric scene by a long
+  standing convention and look right - though isometric animal artwork does now
+  exist in `art-src/`, if the park ever follows the showcase into isometric.
 - **Habitat floors and water** are flat colour, not drawn scenery.
 - **Paths** are drawn as plain quads between the two things they join, rather
   than following the elbow or spine routing the park view offers.

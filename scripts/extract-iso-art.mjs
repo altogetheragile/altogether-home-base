@@ -19,7 +19,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { chromium } from 'playwright';
-import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet } from './lib/svg-sheet.mjs';
+import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet, namespaceIds } from './lib/svg-sheet.mjs';
 
 const CONFIG = 'scripts/iso-art.config.json';
 const OUT = 'src/components/zooGame/art/isoArt.generated.ts';
@@ -52,14 +52,15 @@ for (const source of config.sources) {
   for (const [name, spec] of Object.entries(source.props)) {
     const b = boxes[spec.group];
     if (!b) { console.error(`${name}: no group ${spec.group} in ${source.file}`); process.exit(1); }
-    let body = slim(groups[spec.group]);
-    // A drawing that leans on <use> and a clipPath id cannot be lifted out of its sheet: the same
-    // prop drawn twice on a page would have two elements claiming the same id, and one of them
-    // would win. Better to know here than to wonder why one bench is clipped to another's shape.
-    if (/<use\b|<clipPath\b/i.test(body)) {
-      console.error(`${name}: uses <use>/<clipPath>, which will not survive being cut out. Pick another drawing.`);
+    // A drawing that clips itself carries ids that were unique on the sheet and are not unique on
+    // a page holding two copies of it, so they get a prefix of their own. Only a drawing whose
+    // definitions live elsewhere on the sheet is refused, because that one cannot be salvaged.
+    const named = namespaceIds(groups[spec.group], name);
+    if (named === null) {
+      console.error(`${name}: refers to a definition that is not inside it. Pick another drawing.`);
       process.exit(1);
     }
+    let body = slim(named);
     // A tinted prop keeps its shading but gives up its hue: each colour becomes a numbered slot,
     // darkest last, so whoever renders it can hand in a ramp of their own.
     if (spec.tint) {

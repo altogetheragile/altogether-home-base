@@ -91,3 +91,27 @@ export async function contactSheet(browser, groups, boxes, path) {
   await page.screenshot({ path, fullPage: true });
   await page.close();
 }
+
+/** Give every id in a drawing a prefix of its own, and repoint everything that referred to them.
+ *
+ *  A drawing that clips itself, or fills from its own gradient, carries ids that were unique on the
+ *  sheet and are not unique on a page holding two copies of it. The second copy then borrows the
+ *  first one's clip path, and one of them comes out wrong.
+ *
+ *  Returns null if the drawing points at an id it does not itself define - the definition lives
+ *  elsewhere on the sheet and would be left behind, which is the case that cannot be salvaged. */
+export function namespaceIds(markup, prefix) {
+  const defined = new Set([...markup.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
+  const used = new Set([...markup.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]));
+  for (const m of markup.matchAll(/(?:xlink:)?href="#([^"]+)"/g)) used.add(m[1]);
+  const orphans = [...used].filter((id) => !defined.has(id));
+  if (orphans.length) return null;
+  let out = markup;
+  for (const id of defined) {
+    const safe = `${prefix}_${id}`.replace(/[^\w-]/g, '_');
+    out = out.split(`id="${id}"`).join(`id="${safe}"`)
+      .split(`url(#${id})`).join(`url(#${safe})`)
+      .split(`href="#${id}"`).join(`href="#${safe}"`);
+  }
+  return out;
+}

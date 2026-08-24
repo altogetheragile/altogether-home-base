@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { slim } from '../../../scripts/lib/svg-sheet.mjs';
+import { slim, namespaceIds } from '../../../scripts/lib/svg-sheet.mjs';
 
 /** Numbers as an SVG path parser would read them: a '-' starts a new number as well as negating it. */
 const numbers = (d: string): number[] =>
@@ -39,5 +39,27 @@ describe('trimming a drawing down', () => {
     const d = 'M1,1c-0.001,0.002-0.003,0.004-0.005,0.006c-0.007,0.008-0.009,0.01-0.011,0.012';
     const got = slim(`<path d="${d}"/>`).match(/d="([^"]*)"/)![1];
     expect(numbers(got)).toHaveLength(numbers(d).length);
+  });
+});
+
+describe('lifting a drawing that refers to itself', () => {
+  it('gives its ids a prefix, and repoints what pointed at them', () => {
+    // A drawing that clips itself carries ids that were unique on the sheet and are not unique on a
+    // page holding two copies of it. The second copy would borrow the first one's clip path.
+    const markup = '<g><clipPath id="SVGID_7"><path d="M0,0"/></clipPath><path clip-path="url(#SVGID_7)" d="M1,1"/></g>';
+    const out = namespaceIds(markup, 'kiosk')!;
+    expect(out).toContain('id="kiosk_SVGID_7"');
+    expect(out).toContain('url(#kiosk_SVGID_7)');
+    expect(out).not.toMatch(/url\(#SVGID_7\)/);
+  });
+
+  it('refuses a drawing whose definitions live somewhere else on the sheet', () => {
+    // This one genuinely cannot be salvaged: the definition would be left behind on the sheet.
+    expect(namespaceIds('<g><path fill="url(#elsewhere)" d="M0,0"/></g>', 'kiosk')).toBeNull();
+  });
+
+  it('leaves a drawing that refers to nothing exactly as it was', () => {
+    const plain = '<g><path fill="#abc123" d="M0,0"/></g>';
+    expect(namespaceIds(plain, 'tree')).toBe(plain);
   });
 });
