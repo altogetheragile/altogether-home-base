@@ -1,0 +1,102 @@
+{
+  "//": "Isometric props cut from the scene sheets. `group` is a top-level <g> index - run `npm run iso-art -- --index` for a numbered contact sheet. `tint` lists the flat colours a prop is drawn in, lightest first; those become slots the game can recolour, so a fence can wear its zone's colour.",
+  "sources": [
+    {
+      "file": "art-src/zoo/iso-park.svg",
+      "credit": "Freepik",
+      "props": {
+        "fenceUp": {
+          "group": 58,
+          "tint": [
+            "#4FB7C5",
+            "#45A0AC",
+            "#377F88"
+          ]
+        },
+        "fenceDown": {
+          "group": 60,
+          "tint": [
+            "#FE2727",
+            "#C51E1E",
+            "#891515",
+            "#881515"
+          ]
+        },
+        "fenceUpShort": {
+          "group": 59,
+          "tint": [
+            "#4FB7C5",
+            "#45A0AC",
+            "#377F88"
+          ]
+        },
+        "fenceDownShort": {
+          "group": 61,
+          "tint": [
+            "#FE2727",
+            "#C51E1E",
+            "#891515",
+            "#881515"
+          ]
+        },
+        "tree": {
+          "group": 85
+        },
+        "treeTall": {
+          "group": 87
+        },
+        "hedge": {
+          "group": 51
+        },
+        "bench": {
+          "group": 64
+        },
+        "benchBin": {
+          "group": 62
+        },
+        "picnicTable": {
+          "group": 67
+        },
+        "fountain": {
+          "group": 40
+        },
+        "signpost": {
+          "group": 69
+        },
+        "visitor01": {
+          "group": 97
+        },
+        "visitor02": {
+          "group": 98
+        },
+        "visitor03": {
+          "group": 99
+        },
+        "visitor04": {
+          "group": 100
+        },
+        "visitor05": {
+          "group": 101
+        },
+        "visitor06": {
+          "group": 102
+        },
+        "visitor07": {
+          "group": 103
+        },
+        "visitor09": {
+          "group": 105
+        },
+        "child01": {
+          "group": 88
+        },
+        "child02": {
+          "group": 90
+        },
+        "child03": {
+          "group": 95
+        }
+      }
+    }
+  ]
+}

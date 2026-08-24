@@ -1022,6 +1022,16 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
 // ---- Enclosure shapes: a habitat can be more than a rectangle ----
 
 /** The habitat shapes an enclosure can take. Stored on the design (design.parts.shape). */
+
+/** Enclosure footprints (in the fixed design px). A bigger habitat is simply a bigger box; how many
+ *  animals appear inside is how many you have actually built. Shared, because the showcase view has
+ *  to agree with the park about how big a habitat is. */
+export const ENCLOSURE_SIZE: Record<'small' | 'medium' | 'large', { w: number; h: number }> = {
+  small: { w: 96, h: 68 },
+  medium: { w: 132, h: 90 },
+  large: { w: 172, h: 114 },
+};
+
 export const ENCLOSURE_SHAPES = [
   { key: 'rounded', label: 'Rounded' },
   { key: 'pill', label: 'Pill' },
