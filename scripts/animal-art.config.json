@@ -160,6 +160,30 @@
           "unitScale": 0.16
         }
       }
+    },
+    {
+      "file": "art-src/zoo/savanna-grazers.svg",
+      "credit": "Adobe Stock",
+      "//": "The same hand as savanna.svg. Each species carries its own scale: the sheet draws an impala nearly as tall as a buffalo, which a poster does and a park cannot.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.25,
+      "unitScale": 0.3,
+      "species": {
+        "buffalo": {
+          "island": 3,
+          "unitScale": 0.37,
+          "flip": true
+        },
+        "antelope": {
+          "island": 6,
+          "unitScale": 0.22
+        },
+        "ostrich": {
+          "island": 7,
+          "unitScale": 0.33,
+          "flip": true
+        }
+      }
     }
   ]
 }
