@@ -133,6 +133,9 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
                 ? { ...working(item), colors: { ...zoneColors(state, item), ...working(item).colors } }
                 : working(item)}
               copySources={edit.copySources(item)}
+              onAddPlant={(piece) => edit.onAddPlant(item.id, piece)}
+              onSetPlantPiece={(i, piece) => edit.onSetPlantPiece(item.id, i, piece)}
+              onRemovePlant={(i) => edit.onRemovePlant(item.id, i)}
               onDesign={(d) => edit.onDesign(item.id, d)}
               onSetEnclosure={item.category === 'enclosure' ? (size) => edit.onSetEnclosure(item.id, size) : undefined}
               onToggleTask={(taskId) => onToggleTask(item.id, taskId)}

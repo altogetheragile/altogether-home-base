@@ -4,7 +4,7 @@ import {
   designSatisfiesTask,
   AMENITY_COLORS, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
   ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureFlora,
-  addWaterTo, addFloraTo, isLandscapeType, piecesFor, pieceOf, applyPiece, renderDesign, GRID_W,
+  addWaterTo, addFloraTo, isLandscapeType, piecesFor, pieceOf, applyPiece, pieceByKey, renderDesign, GRID_W,
   AGES, COATS, DEFAULT_GROUP, ROOM, groupSize, roomNeeded, speciesColors,
   type ItemDesign, type FloraPiece, type AnimalGroup,
 } from './design';
@@ -12,8 +12,8 @@ import { isSignOffTask } from './engine';
 import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2, Maximize2, Shapes, Store, Ruler, type LucideIcon } from 'lucide-react';
-import { FOCUS } from './ui/tokens';
+import { Check, ChevronDown, Copy, Droplets, Maximize2, Plus, Ruler, Shapes, Sprout, Store, Trash2, X, type LucideIcon } from 'lucide-react';
+import { EYEBROW, FOCUS } from './ui/tokens';
 
 // ============= Building on the canvas =============
 //
@@ -211,6 +211,66 @@ function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemD
   );
 }
 
+/** Everything this item plants, and what each one is.
+ *
+ *  A planting PBI is some planting, not one tree - so it holds a set, and the set need not be all
+ *  the same. The first plant is the item itself; the rest are extra. Pick one to work on, pick what
+ *  it is from the catalogue, add another, take one away.
+ *
+ *  This used to be a plus button on the tree itself out on the park, which put "how many trees" in
+ *  the same place as "where does this tree go" and could only ever repeat the one kind.
+ */
+function Planting({ item, design, onDesign, onAddPlant, onSetPlantPiece, onRemovePlant }: {
+  item: BacklogItem; design: ItemDesign; onDesign: (d: ItemDesign) => void;
+  onAddPlant?: (piece?: string) => void;
+  onSetPlantPiece?: (index: number, piece: string) => void;
+  onRemovePlant?: (index: number) => void;
+}) {
+  const extra = item.copies ?? [];
+  const [chosen, setChosen] = useState(0);
+  const here = Math.min(chosen, extra.length);
+  const own = pieceOf(design, item.template);
+  const plants = [own, ...extra.map((c) => pieceByKey(c.piece) ?? own)];
+  const pick = (p: FloraPiece) => {
+    if (here === 0) onDesign(applyPiece(design, p));
+    else onSetPlantPiece?.(here - 1, p.key);
+  };
+  const many = plants.length > 1;
+  return (
+    <div className="flex basis-full flex-col gap-1.5">
+      {onAddPlant && (
+        <div className="flex flex-wrap items-center gap-1">
+          <span className={cn(EYEBROW, 'mr-0.5 text-muted-foreground')}>{many ? `Planting · ${plants.length}` : 'Planting'}</span>
+          {plants.map((p, i) => (
+            <span key={i} className="relative">
+              <button type="button" onClick={() => setChosen(i)} aria-pressed={i === here}
+                title={i === 0 ? `${p?.label ?? 'This'} - the item itself` : p?.label}
+                className={cn(FOCUS, 'flex h-9 w-9 items-center justify-center rounded-md border transition-colors',
+                  i === here ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
+                {p && <PieceSprite piece={p} />}
+              </button>
+              {i > 0 && onRemovePlant && (
+                <button type="button" onClick={() => { onRemovePlant(i - 1); setChosen(0); }}
+                  title="Take this one out" aria-label={`Take out plant ${i + 1}`}
+                  className={cn(FOCUS, 'absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground')}>
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              )}
+            </span>
+          ))}
+          {/* Planting one selects it, because the next thing anybody does is say what it is. */}
+          <button type="button" onClick={() => { onAddPlant(plants[here]?.key); setChosen(plants.length); }}
+            title="Plant another - then choose what it is" aria-label="Plant another"
+            className={cn(FOCUS, 'flex h-9 w-9 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:border-primary/60 hover:text-foreground')}>
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      <Catalogue item={item} design={design} onPick={pick} />
+    </div>
+  );
+}
+
 /** The ready pieces for this kind of scenery, each drawn as itself. You pick the thing rather than
  *  a colour for a shape - and the colours come with it, already right. */
 function Catalogue({ item, design, onPick }: { item: BacklogItem; design: ItemDesign; onPick: (p: FloraPiece) => void }) {
@@ -265,6 +325,11 @@ interface ItemToolbarProps {
   onConfirmAc: (index: number, value: boolean) => void;
   onClose: () => void;
   copySources?: CopySource[];
+  /** What this item plants, beyond the first. Planting is a set - three oaks and a bush is a thing
+   *  somebody chose - so it is chosen here rather than by clicking a plus on a tree on the park. */
+  onAddPlant?: (piece?: string) => void;
+  onSetPlantPiece?: (index: number, piece: string) => void;
+  onRemovePlant?: (index: number) => void;
   /** Which part of the thing is selected on the park - 'ground', 'fence', 'water', 'flora:2'.
    *  Clicking a part out there opens the control for it in here, which is the only way the two
    *  brown squares were ever going to explain themselves. */
@@ -387,7 +452,8 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isFlora && !isLand && (
         <>
-          <Catalogue item={item} design={design} onPick={(p) => onDesign(applyPiece(design, p))} />
+          <Planting item={item} design={design} onDesign={onDesign}
+            onAddPlant={props.onAddPlant} onSetPlantPiece={props.onSetPlantPiece} onRemovePlant={props.onRemovePlant} />
           <Tailor />
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key] ?? floraDefaultColors(design.parts.type ?? item.template ?? 'tree')[c.key as 'foliage' | 'trunk']}
