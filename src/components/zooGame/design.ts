@@ -1023,6 +1023,43 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
 
 /** The habitat shapes an enclosure can take. Stored on the design (design.parts.shape). */
 
+/** How much ground each kind of facility and small feature takes up, in the fixed design px.
+ *
+ *  Everything on the grounds used to occupy the same 64x60 square, which is what a 16x14 sprite
+ *  happens to draw at four pixels a cell - so the tile came first and the thing came second. A zoo
+ *  does not work like that. A cafe is a building with a kitchen and a terrace; a kiosk is a hatch;
+ *  a signpost is a post. Sizing them the same made the park read as a grid of identical boxes and
+ *  made a signpost look like somewhere you could buy lunch.
+ *
+ *  These are ratios, not measurements: what matters is that a cafe is plainly bigger than a kiosk
+ *  and a signpost is plainly smaller than either.
+ */
+export const FOOTPRINT: Record<string, { w: number; h: number }> = {
+  // Wayfinding and small planting - things you walk past.
+  signpost: { w: 26, h: 34 },
+  flowers: { w: 42, h: 32 },
+  bush: { w: 46, h: 40 },
+  tree: { w: 58, h: 66 },
+  // Facilities, smallest first. A hatch, then somewhere to sit, then buildings you go inside.
+  kiosk: { w: 64, h: 54 },
+  stall: { w: 80, h: 52 },
+  toilets: { w: 76, h: 64 },
+  shop: { w: 94, h: 72 },
+  cafe: { w: 108, h: 84 },
+};
+
+/** The default, for anything not named above. */
+export const DEFAULT_FOOTPRINT = { w: 64, h: 60 };
+
+/** The ground a feature stands on. Landscape scenery keeps its own resizable footprint; everything
+ *  else takes the size its kind is worth. */
+export function footprintFor(item: BacklogItem): { w: number; h: number } {
+  const type = item.design?.parts.type ?? item.template
+    ?? (item.category === 'amenity' ? buildingTypeFor(item.name, item.services) : undefined);
+  if (item.category === 'flora' && isLandscapeType(type)) return item.size ?? landscapeDefaultSize(type);
+  return FOOTPRINT[type ?? ''] ?? DEFAULT_FOOTPRINT;
+}
+
 /** Enclosure footprints (in the fixed design px). A bigger habitat is simply a bigger box; how many
  *  animals appear inside is how many you have actually built. Shared, because the showcase view has
  *  to agree with the park about how big a habitat is. */
