@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,7 +21,7 @@ export function Workspace({ title, subtitle, onClose, wide, children }: {
   wide?: boolean;
   children: ReactNode;
 }) {
-  return (
+  const panel = (
     <div className="fixed inset-0 z-40 flex overflow-y-auto bg-black/50 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={cn('m-auto w-full rounded-lg border border-border bg-card shadow-xl', wide ? 'max-w-3xl' : 'max-w-2xl')}>
@@ -37,4 +38,15 @@ export function Workspace({ title, subtitle, onClose, wide, children }: {
       </div>
     </div>
   );
+  // Sent to the body rather than left where it was written.
+  //
+  // "Fixed" does not mean the window: it means the nearest ancestor carrying a transform, a filter
+  // or a backdrop-filter, and if there is one, `inset-0` covers that box instead. Sizing an item
+  // from the Backlog opened this inside a popover - which a popup library positions with a
+  // transform - so the panel came up the width of the popover, in the left half of a split screen,
+  // with the button that commits the estimate off the edge of it. Nothing overflowed, nothing
+  // errored: the panel was exactly as wide as it had been told to be.
+  //
+  // A portal puts it beyond the reach of whatever it happens to be opened from.
+  return typeof document === 'undefined' ? panel : createPortal(panel, document.body);
 }
