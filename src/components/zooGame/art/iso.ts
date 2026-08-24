@@ -80,6 +80,15 @@ export function wallPanel(from: Pt, to: Pt, t0: number, t1: number, h0: number, 
 /** The three tones a box is painted in: lit on top, and the two walls falling away from the light. */
 export const boxTones = (hex: string) => ({ top: shade(hex, 16), left: shade(hex, -14), right: shade(hex, -32) });
 
+/** How much of its footprint a facility tile is drawn across.
+ *
+ *  A drawn building is walls standing on its footprint; a tile is a building AND the ground under
+ *  it, so it needs a little more room than the footprint alone to stand in the same space. */
+export const TILE_SPREAD = 1.15;
+
+/** The screen width a footprint projects to - what a tile is sized against. */
+export const footprintWidth = (w: number, h: number, u: number): number => (w + h) * COS * u;
+
 /** A licensed prop, ready to place. */
 export const prop = (name: string): IsoProp | undefined => ISO_ART[name];
 

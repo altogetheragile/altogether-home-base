@@ -8,9 +8,10 @@ import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpo
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
 import { AGE_SCALE, groupMembers } from './design';
 import {
-  project, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, COS, type Pt,
+  project, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
 } from './art/iso';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
+import { BUILDING_ART } from './art/buildingArt.generated';
 
 /** The zoo, seen from the corner.
  *
@@ -230,16 +231,35 @@ function build(state: ZooGameState, targetH: number) {
       }
       continue;
     }
-    // A building: walls, a pitched roof, a door and a window, in the colours it was designed in.
-    // A plain box was honest about the geometry and dishonest about the thing - a zoo does not have
-    // cubes in it, it has a kiosk you can queue at.
+    // A facility. Drawn where there is a tile for its kind, and built out of boxes where there is
+    // not - a zoo can offer a kind of building nobody has drawn yet, and it should still appear.
     const special = amenityProp(it);
     if (special) { place(special, c.x, c.y, u * 0.85, `am-${it.id}`); continue; }
+    const kind = it.design?.parts.type ?? it.template ?? '';
+    const tile = BUILDING_ART[kind];
+    const fw = size.w * 0.66, fh = size.h * 0.66;
+    const x0 = c.x - fw / 2, y0 = c.y - fh / 2, x1 = c.x + fw / 2, y1 = c.y + fh / 2;
+
+    if (tile) {
+      // The tile is sized from the footprint, so a cafe is drawn bigger than a kiosk on the same
+      // artwork - the FOOTPRINT table stays the single place a building's size is decided.
+      const w = footprintWidth(fw, fh, u) * TILE_SPREAD;
+      const h = w * (tile.h / tile.w);
+      const at = P(c.x, c.y);
+      const front = P(x1, y1);
+      push(depth(c.x, c.y), (
+        <image key={`b-${it.id}`} href={tile.src} x={at.x - w / 2} y={front.y - h} width={w} height={h}
+          // The tiles are painted a shade duller than the rest of the park. This is not a
+          // correction to the artwork - it is what makes it sit beside artwork from elsewhere.
+          style={{ filter: 'saturate(1.35)' }} preserveAspectRatio="xMidYMax meet" />
+      ));
+      continue;
+    }
+
+    // No tile: walls, a pitched roof, a door and a window, in the colours it was designed in.
     const walls = it.design?.colors.walls ?? '#e6ddd0';
     const roof = it.design?.colors.roof ?? '#b8563f';
     const door = it.design?.colors.door ?? '#7a5230';
-    const fw = size.w * 0.66, fh = size.h * 0.66;
-    const x0 = c.x - fw / 2, y0 = c.y - fh / 2, x1 = c.x + fw / 2, y1 = c.y + fh / 2;
     const wallH = Math.max(5, u * 30);
     const riseH = Math.max(3, u * 17);
     const f = boxFaces(x0, y0, x1, y1, wallH, u);
@@ -247,13 +267,12 @@ function build(state: ZooGameState, targetH: number) {
     const tone = boxTones(walls);
     const rt = boxTones(roof);
     const sh = (str: string) => str.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
-    // The front-left wall carries the door; the front-right one gets the window.
     const dl = { x: x0, y: y1 }, dr = { x: x1, y: y1 }, wr = { x: x1, y: y0 };
     push(depth(c.x, c.y), (
       <g key={`b-${it.id}`}>
         <polygon points={sh(f.left)} fill={tone.left} />
         <polygon points={sh(f.right)} fill={tone.right} />
-        <polygon points={sh(wallPanel(dl, dr, 0.36, 0.64, 0, wallH * 0.66, u).split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${x},${y}`; }).join(' '))} fill={shade(door, -6)} />
+        <polygon points={sh(wallPanel(dl, dr, 0.36, 0.64, 0, wallH * 0.66, u))} fill={shade(door, -6)} />
         <polygon points={sh(wallPanel(wr, dr, 0.3, 0.66, wallH * 0.3, wallH * 0.72, u))} fill="#93b8cc" />
         <polygon points={sh(r.far)} fill={rt.left} />
         <polygon points={sh(r.near)} fill={rt.right} />
