@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ANIMAL_ART } from './art/animalArt.generated';
-import { hasAnimalArt, animalArtFor, animalArtSize, coatFilter, UNITS_PER_CELL } from './art/animalArt';
+import { hasAnimalArt, animalArtFor, animalArtSize, animalArtFit, coatFilter, UNITS_PER_CELL } from './art/animalArt';
 import { TOOLBOX } from './toolboxItems';
 
 const exhibitTemplates = new Set(
@@ -50,6 +50,30 @@ describe('animal artwork', () => {
   it('scales with the cell, so a crowded enclosure draws its animals smaller', () => {
     expect(animalArtSize(animalArtFor('lion')!, 1).w).toBeLessThan(animalArtSize(animalArtFor('lion')!, 2).w);
     expect(UNITS_PER_CELL).toBeGreaterThan(0);
+  });
+
+  it('fits every animal into a picker\'s card, whatever size the animal is', () => {
+    // The park sizes an animal by how big it is, which is the point of it. A picker cannot: every
+    // card is the same, so scaling by size fills one with elephant and crops its head off while
+    // the meerkat sits in the middle as a dot. This is the other mode.
+    const BOX = { w: 48, h: 42 };
+    for (const [species, art] of Object.entries(ANIMAL_ART)) {
+      const fitted = animalArtFit(art, BOX.w, BOX.h);
+      expect(fitted.w, `${species} overflows the card`).toBeLessThanOrEqual(BOX.w);
+      expect(fitted.h, `${species} overflows the card`).toBeLessThanOrEqual(BOX.h);
+      // And it fills one dimension, so nothing is a speck in the middle of its card.
+      expect(fitted.w === BOX.w || fitted.h === BOX.h, `${species} does not fill its card`).toBe(true);
+      expect(fitted.w / fitted.h).toBeCloseTo(art.w / art.h, 0);
+    }
+  });
+
+  it('still sizes the park by how big the animal is', () => {
+    // The two modes must not collapse into one: an elephant on the park is drawn bigger than a
+    // meerkat, and in a picker they are the same.
+    const el = animalArtFor('elephant')!, mk = animalArtFor('meerkat')!;
+    expect(animalArtSize(el, 2).h).toBeGreaterThan(animalArtSize(mk, 2).h);
+    expect(animalArtFit(el, 48, 42).h).toBeLessThanOrEqual(42);
+    expect(animalArtFit(mk, 48, 42).h).toBe(42);
   });
 
   it('carries a coat through as a visible change, or leaves the drawing alone', () => {

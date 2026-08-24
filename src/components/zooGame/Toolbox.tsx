@@ -16,7 +16,13 @@ function Preview({ item, cell = 3 }: { item: ToolboxItem; cell?: number }) {
   // An illustrated species shows its own drawing: what you are picking is the animal, not a shape
   // to colour in, and the picker should say so.
   if (item.category === 'exhibit' && hasAnimalArt(species)) {
-    return <div className="flex items-end justify-center"><AnimalSprite species={species} cell={cell * 3.4} /></div>;
+    // Fitted, not scaled: every card is the same size, so the elephant must come down to it rather
+    // than spill over the edge of one and take its head off.
+    return (
+      <div className="flex items-end justify-center" style={{ width: GRID_W * cell, height: 14 * cell }}>
+        <AnimalSprite species={species} cell={cell} fit={{ w: GRID_W * cell, h: 14 * cell }} />
+      </div>
+    );
   }
   const fake = { id: item.template ?? item.name, category: item.category, template: item.template } as BacklogItem;
   const grid = renderDesign(fake, presetFor(fake));
