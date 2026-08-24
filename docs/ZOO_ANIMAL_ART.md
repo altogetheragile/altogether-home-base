@@ -13,10 +13,29 @@ writes them to `src/components/zooGame/art/animalArt.generated.ts`.
 It is a hand-run step and its output is committed, so a normal build and CI need
 neither a browser nor the source sheets.
 
-Every drawing on a sheet is to one scale, so the generated `w`/`h` are directly
+Every drawing on a sheet shares that sheet's scale, so the generated `w`/`h` are
 comparable. `UNITS_PER_CELL` in `art/animalArt.ts` turns those into pixels - one
-number for the whole menagerie. That is where a giraffe being taller than a fox
-comes from; there is no per-species size table to keep in step.
+number for the whole menagerie, and no per-species size table to keep in step.
+
+**That scale is the illustrator's, not biology's.** On the first sheet the large
+animals come out about right - the giraffe implies five metres, the elephant
+three - but the small ones are drawn two to four times life size, which is what
+an illustration set does so that a fox is not a speck beside an elephant. Size a
+new species truthfully and it looks shrunken among inflated neighbours. Match the
+sheet's convention instead.
+
+## A species from another sheet
+
+A second sheet has its own units and its own habits. Three fields in the source
+handle it:
+
+- `unitScale` - what one of its units is worth in the first sheet's units. Pick
+  it by eye against the neighbours the species will stand among, per the note
+  above.
+- `island` instead of `group`, where the sheet has no usable grouping.
+- `drop` - colours to throw away, for a sheet that draws each animal standing on
+  a shadow puddle the colour of its own backdrop. Without it, the puddle comes
+  along and sits on the grass.
 
 ## Adding a species
 

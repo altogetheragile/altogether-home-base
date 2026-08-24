@@ -5,21 +5,74 @@
       "file": "art-src/zoo/wild-animals.svg",
       "credit": "Freepik",
       "species": {
-        "lion": { "group": 22 },
-        "tiger": { "group": 24 },
-        "leopard": { "group": 23 },
-        "elephant": { "group": 21, "flip": true },
-        "giraffe": { "group": 26 },
-        "zebra": { "group": 20, "flip": true },
-        "rhino": { "group": 18 },
-        "hippo": { "group": 19 },
-        "camel": { "group": 25 },
-        "penguins": { "group": 7, "flip": true },
-        "seal": { "group": 15, "flip": true },
-        "bear": { "group": 0 },
-        "wolf": { "group": 13, "flip": true },
-        "fox": { "group": 2 },
-        "owl": { "group": 11 }
+        "lion": {
+          "group": 22
+        },
+        "tiger": {
+          "group": 24
+        },
+        "leopard": {
+          "group": 23
+        },
+        "elephant": {
+          "group": 21,
+          "flip": true
+        },
+        "giraffe": {
+          "group": 26
+        },
+        "zebra": {
+          "group": 20,
+          "flip": true
+        },
+        "rhino": {
+          "group": 18
+        },
+        "hippo": {
+          "group": 19
+        },
+        "camel": {
+          "group": 25
+        },
+        "penguins": {
+          "group": 7,
+          "flip": true
+        },
+        "seal": {
+          "group": 15,
+          "flip": true
+        },
+        "bear": {
+          "group": 0
+        },
+        "wolf": {
+          "group": 13,
+          "flip": true
+        },
+        "fox": {
+          "group": 2
+        },
+        "owl": {
+          "group": 11
+        }
+      }
+    },
+    {
+      "file": "art-src/zoo/flamingos.svg",
+      "credit": "Freepik",
+      "//": "No usable groups on this sheet, so the birds are found as islands. `drop` removes the sheet's own teal shadow puddle, which would otherwise sit on the grass. `unitScale` puts this sheet's units on the same scale as the first one: not by biology - the sheet draws small animals two to four times life size, so a flamingo sized truthfully looks shrunken beside an inflated fox. It is set to sit where the sheet would have drawn it.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.06,
+      "drop": [
+        "#4FC1AB",
+        "#64D4BF"
+      ],
+      "unitScale": 0.36,
+      "species": {
+        "flamingo": {
+          "island": 1,
+          "flip": true
+        }
       }
     }
   ]
