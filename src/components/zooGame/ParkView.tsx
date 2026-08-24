@@ -19,6 +19,7 @@ import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
 import { autoLayout, insidePark, parkBounds, shapeEdge, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { groupMembers } from './design';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock, Map, Box, Eye } from 'lucide-react';
+import { SURFACE, PADDING } from './ui/tokens';
 
 // ============= The Park View =============
 //
@@ -328,7 +329,7 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
   const [val, setVal] = useState(name);
   const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't start dragging the enclosure
   const commit = () => { setEditing(false); onRename?.(val); };
-  const cls = 'max-w-[132px] truncate rounded-md border-2 border-amber-900/70 bg-amber-200 px-1.5 py-0.5 text-center text-[10px] font-bold leading-tight text-amber-950 shadow-sm dark:bg-amber-300';
+  const cls = 'max-w-[132px] truncate rounded-md border-2 border-amber-900/70 bg-amber-200 px-1.5 py-0.5 text-center text-[11px] font-bold leading-tight text-amber-950 shadow-sm dark:bg-amber-300';
   return (
     // Below the habitat, not on it. Sitting at the top-centre it covered the fence exactly where
     // you would reach for it, and on a construction site it fought the BUILDING badge. Absolutely
@@ -570,7 +571,7 @@ function ConstructionSite({ item, w, h, selected, children }: { item: BacklogIte
       <div className="relative flex h-full w-full items-center justify-center">
         {children ?? (
           <div className="pointer-events-none max-w-full px-1 text-center">
-            <div className="truncate text-[10px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
+            <div className="truncate text-[11px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
           </div>
         )}
       </div>
@@ -1298,12 +1299,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   that has not been released yet - you are still building that one. */}
               {onImprove && f.kind !== 'site' && f.item.status === 'open' && tool === 'none' && !dragging && (
                 queued ? (
-                  <span className="pointer-events-none absolute -top-2 -right-1 z-40 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">Improving…</span>
+                  <span className="pointer-events-none absolute -top-2 -right-1 z-40 whitespace-nowrap rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow">Improving…</span>
                 ) : (
                   <button type="button" title={`Raise an Improve PBI for ${f.item.name}`}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onImprove(f.item.id); }}
-                    className="absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700">
+                    className="absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700">
                     <Sparkles className="h-3 w-3" /> Improve
                   </button>
                 )
@@ -1584,7 +1585,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   }
 
   const statsBar = (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5">
+    <div className={cn(SURFACE.card, PADDING.tight, 'flex flex-wrap items-center gap-x-5 gap-y-1.5')}>
       <Stat icon={LayoutGrid} value={`${openSlices.length}/${slices.length}`} label="zones open"
         title={openSlices.length || started.length
           ? [

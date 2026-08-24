@@ -65,13 +65,38 @@ export const TONE = {
 
 export type Tone = keyof typeof TONE;
 
-/** Four sizes, not eleven. `micro` is for chips and meta; `body` is the default; `lead` introduces
- *  a section; `question` is the one thing the screen is asking. */
+/** The ladder. Every step has a job; nothing sits between two of them.
+ *
+ *  An audit found twelve sizes in use, from 8px to 36px, two thirds of them written as arbitrary
+ *  pixel values - `text-[10px]` and `text-[13px]` and `text-[11px]` - so there was no way to know
+ *  which one a new screen should reach for. Twelve became these, plus two that other components
+ *  already own:
+ *
+ *    9px   a chip                 - `Chip` owns it; do not write it by hand
+ *    10px  an eyebrow             - `EYEBROW` owns it, below
+ *    11px  micro     meta, labels, anything that should recede
+ *    12px  small     dense UI: controls, lists, secondary prose
+ *    14px  body      the default
+ *    16px  lead      introduces a section
+ *    18px  title     a panel's own heading
+ *    30px  question  the one thing the screen is asking
+ *
+ *  The park's own labels are drawn smaller than this ladder goes, on purpose: they are painted onto
+ *  a canvas that is scaled to fit, so they are drawing rather than chrome and are not bound by it.
+ */
 export const TEXT = {
   micro: 'text-[11px] leading-snug',
+  small: 'text-xs',
   body: 'text-sm',
   lead: 'text-base font-semibold',
+  title: 'text-lg font-semibold leading-tight',
+  /** A whole screen's name, when the screen is an event rather than a panel. */
+  screen: 'text-2xl font-bold leading-tight',
+  /** A number the screen exists to show. Same size as a screen's name and a different job. */
+  figure: 'text-2xl font-bold',
   question: 'text-3xl font-bold leading-tight tracking-tight',
+  /** The two title screens, which are the only pages that get bigger on a wide window. */
+  hero: 'text-3xl font-bold md:text-4xl',
 } as const;
 
 /** Three radii, tied to what a thing IS rather than how big it is. */
@@ -79,6 +104,29 @@ export const RADIUS = {
   chip: 'rounded-full',
   panel: 'rounded-lg',
   inner: 'rounded-md',
+} as const;
+
+/** How a box is drawn. One recipe each, so a screen cannot invent a ninth.
+ *
+ *  The audit found eight: `bg-card` at six different paddings, and `bg-muted` at three opacities -
+ *  the Sprint Review used /20, /30 and /40 within eighty lines of itself. They all meant the same
+ *  thing. `Panel` is the component to reach for in new work; these are what it is made of, for the
+ *  places that already draw their own box.
+ */
+export const SURFACE = {
+  /** A panel that holds its own against the page. */
+  card: 'rounded-lg border border-border bg-card',
+  /** A panel that recedes into it. */
+  quiet: 'rounded-lg border border-border bg-muted/30',
+  /** A box nested inside another box. */
+  inset: 'rounded-md border border-border bg-background',
+} as const;
+
+/** Three paddings, not six. `tight` is a bar of read-outs; `roomy` is a panel of prose. */
+export const PADDING = {
+  tight: 'px-3 py-1.5',
+  default: 'px-3 py-2.5',
+  roomy: 'px-4 py-3',
 } as const;
 
 /** The eyebrow above a question: small, bold, spaced, in the tone of what follows. */

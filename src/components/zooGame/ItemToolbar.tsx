@@ -460,7 +460,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
                     const on = !!item.acConfirmed?.[i];
                     return (
                       <li key={i}>
-                        <button type="button" onClick={() => props.onConfirmAc(i, !on)} className="flex w-full items-start gap-1.5 text-left text-[12px]">
+                        <button type="button" onClick={() => props.onConfirmAc(i, !on)} className="flex w-full items-start gap-1.5 text-left text-xs">
                           <span className={cn('mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
                           <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
                         </button>

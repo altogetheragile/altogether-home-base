@@ -6,6 +6,8 @@ import { GoalShapes } from './GoalShapes';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
+import { PADDING, SURFACE, TEXT } from './ui/tokens';
+import { cn } from '@/lib/utils';
 
 interface ZooIntroProps {
   productGoal: string;
@@ -47,16 +49,16 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
 
         {/* 1. What this is - said once, briefly, because the thing to DO is below it. */}
         <header className="space-y-1 text-center">
-          <h1 className="text-3xl font-bold md:text-4xl">{INTRO_COPY.title}</h1>
+          <h1 className={TEXT.hero}>{INTRO_COPY.title}</h1>
           <p className="mx-auto max-w-2xl text-sm text-muted-foreground">{INTRO_COPY.strapline}</p>
         </header>
 
         {/* 2. How a Sprint goes, and what a Product Goal is - side by side, so the Goal itself stays
                above the fold. It is the one thing this page asks you to write. */}
         <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
-          <section className="rounded-lg border border-border bg-muted/40 p-3">
+          <section className={cn(SURFACE.quiet, PADDING.default)}>
             <h2 className="mb-1 text-sm font-semibold">{INTRO_COPY.loopTitle}</h2>
-            <ul className="space-y-0.5 text-[13px] leading-snug text-muted-foreground">
+            <ul className="space-y-0.5 text-sm leading-snug text-muted-foreground">
               {INTRO_COPY.loop.map((l) => (
                 <li key={l.step}><strong className="text-foreground">{l.step}</strong> - {l.text}</li>
               ))}
@@ -76,7 +78,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
               Commitment of the Product Backlog
             </span>
           </div>
-          <p className="text-[13px] leading-snug text-muted-foreground">
+          <p className="text-sm leading-snug text-muted-foreground">
             You are the Product Owner, so this one is yours to write. Shape it into a single clear outcome -
             a park that [who] love, so that [outcome] - and every Sprint will aim at it.
           </p>

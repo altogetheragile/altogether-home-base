@@ -81,7 +81,7 @@ export function BacklogWizard({ productGoal, onBuild }: { productGoal: string; o
       </header>
 
       {/* What all of this is in service of. */}
-      <p className="rounded-lg border border-primary/30 bg-primary/[0.04] px-3 py-2 text-[12px]">
+      <p className="rounded-lg border border-primary/30 bg-primary/[0.04] px-3 py-2 text-xs">
         <span className={cn(EYEBROW, 'mr-1.5 text-primary')}>Product Goal</span>
         <span className="font-medium">{productGoal}</span>
       </p>

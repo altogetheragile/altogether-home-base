@@ -91,7 +91,7 @@ function Field({ label, note, children }: { label: string; note?: string; childr
   return (
     <div className="space-y-1">
       <div className="text-[11px] font-semibold">{label}</div>
-      {note && <p className="text-[10px] text-muted-foreground">{note}</p>}
+      {note && <p className="text-[11px] text-muted-foreground">{note}</p>}
       {children}
     </div>
   );

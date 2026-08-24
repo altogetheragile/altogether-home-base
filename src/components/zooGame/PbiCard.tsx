@@ -117,7 +117,7 @@ export function PbiCard({
 /** Its size in points, or a "?" while the Developers have not sized it. */
 function Points({ item, suffix = false }: { item: BacklogItem; suffix?: boolean }) {
   return (
-    <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold',
+    <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold',
       item.unsized ? TONE.attention.chip : 'bg-muted text-muted-foreground')}
       title={item.unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
       {item.unsized ? '?' : item.estimate}{suffix ? ' pts' : ''}

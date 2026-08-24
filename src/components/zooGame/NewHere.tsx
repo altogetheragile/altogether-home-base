@@ -19,7 +19,7 @@ export function NewHere({ title, children }: { title: string; children: ReactNod
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72">
         <h4 className="text-sm font-semibold">{title}</h4>
-        <div className="mt-1 space-y-1.5 text-[12px] leading-snug text-muted-foreground">{children}</div>
+        <div className="mt-1 space-y-1.5 text-xs leading-snug text-muted-foreground">{children}</div>
       </PopoverContent>
     </Popover>
   );

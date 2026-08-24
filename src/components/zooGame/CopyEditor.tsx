@@ -55,19 +55,19 @@ function EditRow({ entry, tone, showWhere, current, onSaved }: { entry: CopyEntr
         {edited && (
           <button type="button" onClick={() => { setDraft(entry.value); void save(entry.value); }}
             title="Back to the wording the game shipped with"
-            className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
             <RotateCcw className="h-3 w-3" /> Reset
           </button>
         )}
       </div>
-      {showWhere && <p className="mb-1 text-[10px] text-muted-foreground/80">{entry.where}</p>}
+      {showWhere && <p className="mb-1 text-[11px] text-muted-foreground/80">{entry.where}</p>}
       {entry.long
         ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)}
           rows={Math.min(16, Math.max(3, Math.ceil(draft.length / 80) + 1))}
-          className="w-full resize-y rounded border border-border bg-background px-2 py-1.5 text-[13px] leading-relaxed outline-none focus:border-primary" />
+          className="w-full resize-y rounded border border-border bg-background px-2 py-1.5 text-sm leading-relaxed outline-none focus:border-primary" />
         : <input value={draft} onChange={(e) => setDraft(e.target.value)}
-          className="w-full rounded border border-border bg-background px-2 py-1.5 text-[13px] outline-none focus:border-primary" />}
-      {error && <p className="mt-1 text-[10px] text-destructive">{error}</p>}
+          className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary" />}
+      {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
       {dirty && (
         <div className="mt-1 flex items-center justify-end gap-1.5">
           <button type="button" onClick={() => setDraft(current ?? entry.value)} className="text-[11px] text-muted-foreground hover:text-foreground">Cancel</button>
@@ -141,14 +141,14 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the wording..."
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary" />
             <button type="button" onClick={() => setAll((a) => !a)}
-              className={cn('shrink-0 rounded-full border px-2 py-1 text-[10px] font-medium',
+              className={cn('shrink-0 rounded-full border px-2 py-1 text-[11px] font-medium',
                 all ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>
               {all ? 'Everything' : 'This screen'}
             </button>
           </div>
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-muted/40 px-3 py-3">
-            {shown.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground">Nothing matching. Try &ldquo;Everything&rdquo;.</p>}
+            {shown.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Nothing matching. Try &ldquo;Everything&rdquo;.</p>}
             {groups.map((g) => {
               const inGroup = shown.filter((e) => e.group === g);
               // Six fields of one card all captioned "Product Goal card" is noise. Where several

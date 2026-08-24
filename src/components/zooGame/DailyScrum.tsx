@@ -6,6 +6,7 @@ import { DAILY_SCRUM_SECONDS } from './config';
 import { sprintProgress } from './engine';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
+import { PADDING, SURFACE, TEXT } from './ui/tokens';
 
 interface DailyScrumProps {
   state: ZooGameState;
@@ -53,7 +54,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           <Users className="h-3.5 w-3.5" /> Daily Scrum
         </div>
-        <h1 className="text-2xl font-bold">Day {state.dayNumber} Daily Scrum</h1>
+        <h1 className={TEXT.screen}>Day {state.dayNumber} Daily Scrum</h1>
         <p className="text-sm text-muted-foreground">
           A short, timeboxed check: inspect progress toward the Sprint Goal and adapt the plan for the next day. It
           always happens. Blockers are surfaced here and removed by the Scrum Master outside it.
@@ -91,7 +92,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         <div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${pct}%` }} />
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-3">
+      <div className={cn(SURFACE.card, PADDING.default)}>
         <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold"><Target className="h-3.5 w-3.5 text-muted-foreground" /> Burndown <span className="font-normal text-muted-foreground">- committed points still to do</span></div>
         <Burndown state={state} />
         <p className="mt-1 text-[11px] text-muted-foreground">
@@ -128,7 +129,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         </>
       ) : (
         <>
-          <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          <div className={cn(SURFACE.quiet, PADDING.roomy, 'flex items-center gap-2.5 text-sm text-muted-foreground')}>
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
             {prog.essentialsTotal && prog.essentialsDone < prog.essentialsTotal
               ? 'Nothing blocking today - but essentials are still open. Adapt the plan to finish those first.'
@@ -146,7 +147,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
 
 function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-center">
+    <div className={cn(SURFACE.card, PADDING.default, 'text-center')}>
       <div className="flex items-center justify-center gap-1 text-lg font-bold tabular-nums"><Icon className="h-4 w-4 text-muted-foreground" />{value}</div>
       <div className="text-[11px] text-muted-foreground">{label}</div>
     </div>

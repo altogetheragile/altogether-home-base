@@ -2,6 +2,8 @@ import type { ZooGameState } from './types';
 import { openZoo } from './engine';
 import { Button } from '@/components/ui/button';
 import { ActionBar } from './ActionBar';
+import { PADDING, SURFACE, TEXT } from './ui/tokens';
+import { cn } from '@/lib/utils';
 
 interface ZooFinalProps {
   state: ZooGameState;
@@ -18,7 +20,7 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
   return (
     <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold md:text-4xl">Your zoo is open</h1>
+        <h1 className={TEXT.hero}>Your zoo is open</h1>
         <p className="text-muted-foreground">You reached the Product Goal in {state.sprintNumber} Sprint{state.sprintNumber === 1 ? '' : 's'}.</p>
       </div>
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
@@ -35,8 +37,8 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-2xl font-bold">{value}</div>
+    <div className={cn(SURFACE.card, PADDING.roomy)}>
+      <div className={TEXT.figure}>{value}</div>
       <div className="text-[11px] text-muted-foreground">{label}</div>
     </div>
   );

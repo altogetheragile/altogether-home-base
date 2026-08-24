@@ -3,7 +3,7 @@ import type { GoalShape, GoalMeasure, GoalMetric } from './types';
 import { GOAL_METRICS } from './engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, SURFACE } from './ui/tokens';
 import { ChevronDown, Plus, Trash2, Sparkles } from 'lucide-react';
 
 // ============= Other ways to write a Product Goal =============
@@ -41,10 +41,10 @@ function MeasureRow({ measure, onChange, onRemove }: { measure: GoalMeasure; onC
     <div className="flex items-center gap-1.5">
       <span className="text-[11px] text-muted-foreground">At least</span>
       <input type="number" min={0} value={measure.target} onChange={(e) => onChange({ ...measure, target: Math.max(0, Number(e.target.value) || 0) })}
-        aria-label="Target" className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-[12px] tabular-nums outline-none focus:border-primary" />
+        aria-label="Target" className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-right text-xs tabular-nums outline-none focus:border-primary" />
       <span className="shrink-0 text-[11px] text-muted-foreground">{spec.unit}</span>
       <select value={measure.metric} onChange={(e) => onChange({ ...measure, metric: e.target.value as GoalMetric })}
-        aria-label="What to measure" className="min-w-0 flex-1 rounded border border-border bg-background px-1.5 py-0.5 text-[12px] outline-none focus:border-primary">
+        aria-label="What to measure" className="min-w-0 flex-1 rounded border border-border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary">
         {GOAL_METRICS.map((g) => <option key={g.key} value={g.key}>{g.label}</option>)}
       </select>
       <button type="button" onClick={onRemove} aria-label="Remove this measure" className="shrink-0 text-muted-foreground hover:text-destructive">
@@ -72,7 +72,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
     <section className="rounded-lg border border-dashed border-border bg-muted/20">
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left">
         <span className="min-w-0">
-          <span className="text-[13px] font-semibold">Other ways to write a Product Goal</span>
+          <span className="text-sm font-semibold">Other ways to write a Product Goal</span>
           <span className="ml-1.5 text-[11px] text-amber-700 dark:text-amber-400">none of them Scrum</span>
         </span>
         <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')} />
@@ -99,7 +99,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
           </div>
           <p className="text-[11px] text-muted-foreground">{current.blurb}</p>
 
-          <div className="rounded-md border border-border bg-background/60 p-2">
+          <div className={cn(SURFACE.inset, '/60 p-2')}>
             <div className={cn(EYEBROW, 'mb-1 text-muted-foreground')}>For example</div>
             <p className="whitespace-pre-line text-[11px] italic leading-snug text-muted-foreground">{EXAMPLE[pick]}</p>
           </div>
@@ -110,7 +110,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
             </span>
             <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={pick === 'outcome' ? 2 : 3}
               placeholder={pick === 'epic' ? 'As a … I want … so that …' : 'One clear outcome'}
-              className="w-full resize-none rounded-md border border-border bg-background px-2 py-1.5 text-[13px] outline-none focus:border-primary" />
+              className={cn(SURFACE.inset, 'w-full resize-none px-2 py-1.5 text-sm outline-none focus:border-primary')} />
           </label>
 
           {pick !== 'outcome' && (
