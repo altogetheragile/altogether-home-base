@@ -1,6 +1,7 @@
 import { Eye, Pencil, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EVENT_CONTRACT, ARTIFACT_NAME, type ArtifactRole } from './scrumContent';
+import { TONE } from './ui/tokens';
 
 // What an event does to the artifacts, said on the event's own page.
 //
@@ -10,9 +11,9 @@ import { EVENT_CONTRACT, ARTIFACT_NAME, type ArtifactRole } from './scrumContent
 // Artifacts panel (see ArtifactsPanel.tsx).
 
 const ROLE_STYLE: Record<Exclude<ArtifactRole, null>, { label: string; cls: string; Icon: typeof Eye }> = {
-  inspects: { label: 'Inspecting', cls: 'bg-sky-500/15 text-sky-700 dark:text-sky-300', Icon: Eye },
-  adapts: { label: 'Adapting', cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-400', Icon: Pencil },
-  creates: { label: 'Creating', cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300', Icon: Sparkles },
+  inspects: { label: 'Inspecting', cls: cn(TONE.coach.text, 'bg-sky-500/15'), Icon: Eye },
+  adapts: { label: 'Adapting', cls: cn(TONE.attention.text, 'bg-amber-500/15'), Icon: Pencil },
+  creates: { label: 'Creating', cls: cn(TONE.done.text, 'bg-emerald-500/15'), Icon: Sparkles },
 };
 
 /** What this event inspects and what it adapts, said on the event's own page. */

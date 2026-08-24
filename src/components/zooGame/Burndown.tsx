@@ -2,6 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import type { ZooGameState } from './types';
 import { sprintProgress } from './engine';
 import { cn } from '@/lib/utils';
+import { TONE } from './ui/tokens';
 
 /** An at-a-glance Sprint pace chip for the board toolbar: a slim progress bar (points done of
  *  committed) with "N pts left", and - once the Sprint is under way - whether the team is on
@@ -29,8 +30,8 @@ export function BurndownChip({ state, className }: { state: ZooGameState; classN
         <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: behind ? '#f59e0b' : '#e6842a' }} />
       </span>
       <span className="tabular-nums text-foreground">{remaining}</span> pts left
-      {behind && <span className="text-amber-700 dark:text-amber-300">· behind</span>}
-      {onTrack && <span className="text-emerald-600 dark:text-emerald-400">· on track</span>}
+      {behind && <span className={TONE.attention.text}>· behind</span>}
+      {onTrack && <span className={TONE.done.text}>· on track</span>}
     </span>
   );
 }

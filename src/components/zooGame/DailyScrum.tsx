@@ -6,7 +6,7 @@ import { DAILY_SCRUM_SECONDS } from './config';
 import { sprintProgress } from './engine';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
-import { PADDING, SURFACE, TEXT } from './ui/tokens';
+import { PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
 
 interface DailyScrumProps {
   state: ZooGameState;
@@ -105,11 +105,11 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
         <>
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
             <div className="flex items-start gap-2.5">
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <AlertTriangle className={cn(TONE.attention.text, "mt-0.5 h-5 w-5 shrink-0")} />
               <div>
-                <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">A blocker surfaced: {imp.title}</div>
-                <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{imp.detail}</div>
-                <div className="mt-1 text-xs text-amber-700/80 dark:text-amber-300/70">Do you adapt the plan around it (the Scrum Master removes it), or carry on with the original plan?</div>
+                <div className={cn(TONE.attention.text, "text-sm font-semibold")}>A blocker surfaced: {imp.title}</div>
+                <div className={cn(TONE.attention.text, "text-sm")}>{imp.detail}</div>
+                <div className={cn(TONE.attention.text, "mt-1 text-xs")}>Do you adapt the plan around it (the Scrum Master removes it), or carry on with the original plan?</div>
               </div>
             </div>
           </div>
@@ -130,7 +130,7 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
       ) : (
         <>
           <div className={cn(SURFACE.quiet, PADDING.roomy, 'flex items-center gap-2.5 text-sm text-muted-foreground')}>
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className={cn(TONE.done.text, "h-5 w-5 shrink-0")} />
             {prog.essentialsTotal && prog.essentialsDone < prog.essentialsTotal
               ? 'Nothing blocking today - but essentials are still open. Adapt the plan to finish those first.'
               : 'On track for the Sprint Goal - nothing blocking today. The Daily Scrum is how you know that.'}

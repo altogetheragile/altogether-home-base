@@ -3,7 +3,7 @@ import { DOD_LIBRARY } from './config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, ClipboardCheck, Sparkles } from 'lucide-react';
-import { SURFACE, PADDING } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE } from './ui/tokens';
 
 interface DodEditorProps {
   dod: string[];
@@ -44,7 +44,7 @@ export function DodEditor({ dod, onSave }: DodEditorProps) {
             <input value={c} onChange={(e) => edit(i, e.target.value)} placeholder="A general Done criterion"
               className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2.5 py-1.5 text-sm outline-none focus:border-primary')} />
             {items.length > 1 && (
-              <button type="button" onClick={() => remove(i)} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="Remove criterion"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={() => remove(i)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove criterion"><X className="h-4 w-4" /></button>
             )}
           </div>
         ))}
@@ -62,7 +62,7 @@ export function DodEditor({ dod, onSave }: DodEditorProps) {
                   const added = has(c);
                   return (
                     <button key={c} type="button" disabled={added} onClick={() => addSuggestion(c)}
-                      className={cn('rounded-full border px-2.5 py-1 text-[11px] transition-colors',
+                      className={cn(FOCUS, 'rounded-full border px-2.5 py-1 text-[11px] transition-colors',
                         added ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300'
                           : 'border-border bg-background hover:border-primary hover:bg-primary/5')}>
                       {added ? '✓ ' : '+ '}{c}

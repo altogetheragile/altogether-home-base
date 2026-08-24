@@ -27,7 +27,7 @@ import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Boxes, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
-import { SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -107,7 +107,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Board settings" aria-label="Board settings"
-          className={cn(SURFACE.inset, 'p-1.5 text-muted-foreground hover:text-foreground')}>
+          className={cn(FOCUS, SURFACE.inset, 'p-1.5 text-muted-foreground hover:text-foreground')}>
           <SlidersHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
@@ -117,7 +117,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground" title="When the Developers hold their Daily Scrum - at the start of a day, planning the day ahead, or at its end">Daily Scrum</span>
             <button type="button" onClick={() => onSetScrumAt(dailyScrumAt === 'start' ? 'end' : 'start')}
-              className="rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40">
+              className={cn(FOCUS, "rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40")}>
               {dailyScrumAt === 'start' ? 'Day start' : 'Day end'}
             </button>
           </div>
@@ -132,7 +132,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               <div className="flex items-center gap-1">
                 {[0, 1, 2, 3, 4].map((n) => (
                   <button key={n} type="button" onClick={() => onSetWipLimit(n)}
-                    className={cn('rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                    className={cn(FOCUS, 'rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
                       wipLimit === n ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
                     {n === 0 ? 'Off' : n}
                   </button>
@@ -150,7 +150,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
             <span className="text-muted-foreground">Days</span>
             <button type="button" onClick={() => onSetLearnMode(!learnMode)}
               title={learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
-              className="rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40">
+              className={cn(FOCUS, "rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40")}>
               {learnMode ? 'Learn mode (paused)' : 'Timed'}
             </button>
           </div>
@@ -160,7 +160,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
             <div className="border-t border-border pt-2">
               <button type="button"
                 onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-estimated. A new Sprint starts straight away.')) onCancelSprint(); }}
-                className="text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline">
+                className={cn(FOCUS, "text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline")}>
                 Cancel the Sprint
               </button>
               <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
@@ -185,7 +185,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="How many Sprints of ready work are waiting"
-          className={cn('flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+          className={cn(FOCUS, 'flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
             owed ? 'border-violet-400 bg-violet-500/10 text-violet-700 dark:text-violet-300'
               : thin || deep ? 'border-amber-400/70 bg-amber-500/10 text-amber-700 dark:text-amber-400'
                 : 'border-border bg-background text-muted-foreground hover:text-foreground')}>
@@ -211,7 +211,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
             build time. What it prepares is later Sprints, not this one.
           </p>
           {owed && (
-            <p className="rounded-md border border-violet-400/50 bg-violet-500/10 px-2 py-1.5 text-xs text-violet-800 dark:text-violet-200">
+            <p className={cn(TONE.teach.text, "rounded-md border border-violet-400/50 bg-violet-500/10 px-2 py-1.5 text-xs")}>
               You set aside <strong>{planned!.points} point{planned!.points === 1 ? '' : 's'}</strong> for this at Sprint
               Planning and have not held it yet. It is on the board in To Do.
             </p>
@@ -401,7 +401,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // Done column: deployed, live to visitors.
   const doneActions = (it: BacklogItem) => (
     <>
-      <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Live to visitors</span>
+      <span className={cn(TONE.done.text, "flex items-center gap-1 text-[11px] font-medium")}><Check className="h-3.5 w-3.5" /> Live to visitors</span>
       {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
     </>
   );
@@ -459,12 +459,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           {state.carriedImpediment && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
               <div className="flex items-start gap-2.5">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <AlertTriangle className={cn(TONE.attention.text, "mt-0.5 h-5 w-5 shrink-0")} />
                 <div>
-                  <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
-                  <div className="text-sm text-amber-800/90 dark:text-amber-200/80">{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
+                  <div className={cn(TONE.attention.text, "text-sm font-semibold")}>Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
+                  <div className={cn(TONE.attention.text, "text-sm")}>{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
                   {state.carriedImpediment.tip && (
-                    <div className="mt-1 text-xs italic text-amber-700/80 dark:text-amber-300/70">Tip: {state.carriedImpediment.tip}</div>
+                    <div className={cn(TONE.attention.text, "mt-1 text-xs italic")}>Tip: {state.carriedImpediment.tip}</div>
                   )}
                 </div>
               </div>
@@ -499,7 +499,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 text-sm font-semibold">
-                            <ListChecks className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                            <ListChecks className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
                             Refine the Product Backlog
                           </div>
                           <p className="text-[11px] text-muted-foreground">Planned into this Sprint &middot; the whole Scrum Team</p>
@@ -511,7 +511,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         Planning has less to choose from.
                       </p>
                       <div className="mt-1.5 flex justify-end">
-                        <Button size="sm" className="h-7 bg-violet-600 px-2 text-xs text-white hover:bg-violet-700"
+                        <Button size="sm" className={cn(TONE.teach.solid, "h-7 px-2 text-xs text-white hover:bg-violet-700")}
                           onClick={() => { setShowBacklog(true); onHoldRefinement?.(); }}>
                           Hold it now
                         </Button>
@@ -534,9 +534,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                           // The order to pick things up in is the Developers' plan, so they can change it.
                           <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Re-order what to pick up next">
                             <button type="button" title="Move up" aria-label={`Move ${it.name} up the Sprint Backlog`} disabled={i === 0}
-                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'up'); }} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
+                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'up'); }} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3 w-3" /></button>
                             <button type="button" title="Move down" aria-label={`Move ${it.name} down the Sprint Backlog`} disabled={i === todo.length - 1}
-                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'down'); }} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'down'); }} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3 w-3" /></button>
                           </div>
                         )}
                         note={needsEnc ? `Needs ${encName} built first` : undefined}
@@ -572,7 +572,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         // the card there does the same thing.
                         note={readyForDone(it) ? undefined : whyNotDone(it)}
                         trailing={readyForDone(it)
-                          ? <Button size="sm" className="h-7 shrink-0 bg-emerald-600 px-2 text-xs text-white hover:bg-emerald-700"
+                          ? <Button size="sm" className={cn(TONE.done.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-emerald-700")}
                             onClick={(e) => { e.stopPropagation(); onFinishItem(it.id); }}
                             title="Built, accepted and open to visitors">Move to Done</Button>
                           : <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" title={whyNotDone(it)}
@@ -623,7 +623,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   ))}
                   {refineDone && (
                     <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2 py-1.5 text-xs">
-                      <Check className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                      <Check className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
                       <span className="font-medium">Refined the Product Backlog</span>
                       <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
                     </div>
@@ -689,7 +689,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               </div>
             )}
             <button type="button" onClick={() => setShowBacklog(false)} aria-label="Close the Product Backlog"
-              className="shrink-0 rounded-md border border-border p-1 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              className={cn(FOCUS, "shrink-0 rounded-md border border-border p-1 text-muted-foreground hover:text-foreground")}><X className="h-4 w-4" /></button>
           </div>
           {writing && onAddPbi && (
             <Workspace title="Write a Product Backlog item"

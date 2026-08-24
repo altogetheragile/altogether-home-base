@@ -3,7 +3,7 @@ import type { ScrumTeam, ScrumTeamMember } from './types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Users, Check } from 'lucide-react';
-import { SURFACE, PADDING } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // A stable colour per Developer id, so the same person reads the same everywhere.
 const DEV_COLORS = ['#e6842a', '#3f8fd0', '#43a047', '#8a5a2b', '#c17a5c', '#7c4dff'];
@@ -34,7 +34,7 @@ function EditableName({ member, onRename, className }: { member: ScrumTeamMember
     );
   }
   return (
-    <button type="button" onClick={() => onRename && (setDraft(member.name), setEditing(true))} className={cn('truncate', onRename && 'hover:underline', className)} title={onRename ? 'Rename' : undefined}>
+    <button type="button" onClick={() => onRename && (setDraft(member.name), setEditing(true))} className={cn(FOCUS, 'truncate', onRename && 'hover:underline', className)} title={onRename ? 'Rename' : undefined}>
       {member.name}
     </button>
   );
@@ -50,10 +50,10 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
       <Popover>
         <PopoverTrigger asChild>
           <button type="button" title="The Scrum Team - tap for names and roles"
-            className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+            className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
             <Users className="h-3.5 w-3.5" />
             <span className="rounded-full bg-primary/15 px-1 font-semibold text-primary">PO</span>
-            <span className="rounded-full bg-sky-500/15 px-1 font-semibold text-sky-600 dark:text-sky-300">SM</span>
+            <span className={cn(TONE.coach.text, "rounded-full bg-sky-500/15 px-1 font-semibold")}>SM</span>
             <span className="flex -space-x-1">
               {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}
             </span>
@@ -83,7 +83,7 @@ function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRenam
         <EditableName member={team.productOwner} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Scrum Master - a true leader who serves the team; causes impediments to be removed and coaches self-management.">
-        <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-sky-600 dark:text-sky-300">SM</span>
+        <span className={cn(TONE.coach.text, "rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold")}>SM</span>
         <EditableName member={team.scrumMaster} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Developers - build the Increment; self-managing (they decide who does what) and accountable for quality via the Definition of Done.">
@@ -104,7 +104,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Who has picked this up? (the Developers self-organise)"
-          className="flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+          className={cn(FOCUS, "flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
           {assigned.length === 0
             ? <span>+ pick up</span>
             : <span className="flex -space-x-1">{team.developers.filter((d) => assigned.includes(d.id)).map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}</span>}
@@ -117,7 +117,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
             const on = assigned.includes(d.id);
             return (
               <button key={d.id} type="button" onClick={() => onToggle(d.id)}
-                className={cn('flex w-full items-center gap-2 rounded-md border px-2 py-1 text-xs', on ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40')}>
+                className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-md border px-2 py-1 text-xs', on ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40')}>
                 <Avatar name={d.name} colour={devColor(d.id, team.developers)} size={18} dim={!on} />
                 <span className="flex-1 text-left font-medium">{d.name}</span>
                 {on && <Check className="h-3.5 w-3.5 text-primary" />}

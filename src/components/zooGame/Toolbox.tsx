@@ -9,7 +9,7 @@ import { ICONS, iconKey } from './itemIcons';
 import { AnimalSprite } from './AnimalSprite';
 import { Overlay } from './ui/Overlay';
 import { hasAnimalArt } from './art/animalArt';
-import { SURFACE, PADDING } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE } from './ui/tokens';
 
 /** A small greyscale silhouette of a template's shape (uncoloured - you colour it in
  *  the studio), so users can see what each toolbox piece looks like before picking it. */
@@ -63,7 +63,7 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
                   const n = added[it.name] ?? 0;
                   return (
                     <button key={it.name} type="button" onClick={() => pick(it)}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-background px-2 py-2 text-left text-sm transition-colors hover:border-primary hover:bg-primary/5">
+                      className={cn(FOCUS, "flex items-center gap-2 rounded-lg border border-border bg-background px-2 py-2 text-left text-sm transition-colors hover:border-primary hover:bg-primary/5")}>
                       <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted/50">
                         {it.category === 'exhibit'
                           ? <Preview item={it} cell={2} />

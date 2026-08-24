@@ -2,7 +2,7 @@ import type { PbiDraft } from './types';
 import type { Proposal } from './lookAhead';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, TONE } from './ui/tokens';
 import { Lightbulb, Plus, Scissors, X } from 'lucide-react';
 
 /** The Product Owner, thinking ahead out loud.
@@ -26,7 +26,7 @@ export function PoLookAhead({ proposals, onAdd, onSplit, onDecline, className }:
   return (
     <div className={cn('rounded-lg border border-violet-400/60 bg-violet-500/[0.06] px-3 py-2.5', className)}>
       <div className="flex items-start gap-2.5">
-        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" aria-hidden />
+        <Lightbulb className={cn(TONE.teach.text, "mt-0.5 h-4 w-4 shrink-0")} aria-hidden />
         <div className="min-w-0 flex-1">
           <div className={cn(EYEBROW, 'mb-0.5 text-violet-700 dark:text-violet-300')}>
             The Product Owner has been looking ahead

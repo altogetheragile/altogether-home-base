@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Lock, Plus, X, Scissors, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FOCUS } from './ui/tokens';
 
 /** One Backlog item, as a card you pick up.
  *
@@ -42,7 +43,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
   // the item; the + takes it.
   const detail = (
     <Popover open={reading} onOpenChange={setReading}>
-      <PopoverTrigger asChild><button type="button" className="min-w-0 flex-1 text-left">{card}</button></PopoverTrigger>
+      <PopoverTrigger asChild><button type="button" className={cn(FOCUS, "min-w-0 flex-1 text-left")}>{card}</button></PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <div className="space-y-2">
           <div className="flex items-start justify-between gap-2">
@@ -78,7 +79,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
       {!readOnly && (
         <button type="button" onClick={onPick} aria-label={chosen ? `Take ${item.name} out of the Sprint` : `Add ${item.name} to the Sprint`}
           title={chosen ? 'Take it out of the Sprint' : 'Add it to the Sprint'}
-          className={cn('flex w-9 shrink-0 items-center justify-center rounded-lg border-2 transition-colors',
+          className={cn(FOCUS, 'flex w-9 shrink-0 items-center justify-center rounded-lg border-2 transition-colors',
             chosen ? 'border-border text-muted-foreground hover:border-destructive/60 hover:text-destructive'
               : 'border-primary/40 text-primary hover:bg-primary/10')}>
           {chosen ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -90,7 +91,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
     // Controlled, because pressing Split or Estimate opens a panel BENEATH this popover - and a
     // popover that stays put over the thing it just opened is worse than no popover at all.
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild><button type="button" className="w-full text-left">{card}</button></PopoverTrigger>
+      <PopoverTrigger asChild><button type="button" className={cn(FOCUS, "w-full text-left")}>{card}</button></PopoverTrigger>
       <PopoverContent align="start" className="w-72">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-sm font-semibold"><Lock className="h-3.5 w-3.5" /> Not ready</div>

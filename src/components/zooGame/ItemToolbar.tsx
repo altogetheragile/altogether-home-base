@@ -13,6 +13,7 @@ import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, Copy, Droplets, Sprout, X, Trash2, Maximize2, Shapes, Store, Ruler, type LucideIcon } from 'lucide-react';
+import { FOCUS } from './ui/tokens';
 
 // ============= Building on the canvas =============
 //
@@ -48,7 +49,7 @@ function Menu({ label, swatch, icon: Icon, children, title }: { label: string; s
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" title={title ?? label} className={BTN}>
+        <button  type="button" title={title ?? label} className={cn(FOCUS, BTN)}>
           {/* A picture of the part, or the colour it is wearing. A row of identical grey words is
               hard to aim at; a row where each control looks like the thing it changes is not. */}
           {swatch === undefined && Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />}
@@ -70,7 +71,7 @@ function Options({ options, value, onPick, labels }: { options: readonly string[
     <div className="flex max-w-[18rem] flex-wrap gap-1">
       {options.map((o) => (
         <button key={o} type="button" onClick={() => onPick(o)}
-          className={cn('rounded-full border px-2.5 py-0.5 text-xs capitalize transition-colors',
+          className={cn(FOCUS, 'rounded-full border px-2.5 py-0.5 text-xs capitalize transition-colors',
             value === o ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted')}>
           {labels?.[o] ?? o}
         </button>
@@ -85,7 +86,7 @@ function Colours({ value, onChange, onPicked }: { value?: string; onChange: (hex
     <div className="flex flex-wrap items-center gap-1">
       {SWATCHES.map((s) => (
         <button key={s} type="button" title={s} onClick={() => { onChange(s); onPicked?.(); }}
-          className={cn('h-6 w-6 rounded-md border transition-transform hover:scale-110',
+          className={cn(FOCUS, 'h-6 w-6 rounded-md border transition-transform hover:scale-110',
             value?.toLowerCase() === s ? 'border-2 border-foreground' : 'border-border/60')} style={{ background: s }} />
       ))}
       <input type="color" value={value ?? '#cccccc'} onChange={(e) => onChange(e.target.value)} title="Any other colour"
@@ -111,7 +112,7 @@ function ColourButton({ label, value, onChange, part, focus, onFocus, onClosed }
         {/* The square alone told you nothing: two brown-ish squares side by side could be anything.
             It is named, and clicking the ground or the fence out on the park opens the right one. */}
         <button type="button" title={`${label} colour`} aria-label={`${label} colour`}
-          className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-1.5 text-xs font-medium transition-colors',
+          className={cn(FOCUS, 'flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-1.5 text-xs font-medium transition-colors',
             open ? 'bg-primary/10 text-primary' : 'hover:bg-muted')}>
           <span className="h-5 w-5 rounded border-2 border-border/70 shadow-sm" style={{ background: value ?? '#cccccc' }} />
           {label}
@@ -154,7 +155,7 @@ function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemD
         <span className="inline-flex overflow-hidden rounded-lg border border-border">
           {shapes.map((sh) => (
             <button key={sh.label} type="button" onClick={() => preset(sh.group)} aria-pressed={same(group, sh.group)}
-              className={cn('border-r border-border px-2.5 py-1 text-xs font-medium last:border-r-0 transition-colors',
+              className={cn(FOCUS, 'border-r border-border px-2.5 py-1 text-xs font-medium last:border-r-0 transition-colors',
                 same(group, sh.group) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted')}>
               {sh.label}
             </button>
@@ -170,10 +171,10 @@ function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemD
             <span className="min-w-[1ch] text-center font-mono font-semibold tabular-nums">{group[age]}</span>
             <span className="flex flex-col leading-none">
               <button type="button" aria-label={`One more ${age}`} onClick={() => set({ [age]: Math.min(9, group[age] + 1) } as Partial<AnimalGroup>)}
-                className="text-[9px] text-muted-foreground hover:text-foreground">&#9650;</button>
+                className={cn(FOCUS, "text-[9px] text-muted-foreground hover:text-foreground")}>&#9650;</button>
               <button type="button" aria-label={`One fewer ${age}`} disabled={group[age] <= 0 || total <= 1}
                 onClick={() => set({ [age]: Math.max(0, group[age] - 1) } as Partial<AnimalGroup>)}
-                className="text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30">&#9660;</button>
+                className={cn(FOCUS, "text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30")}>&#9660;</button>
             </span>
           </span>
         ))}
@@ -200,7 +201,7 @@ function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemD
           <button key={c.key} type="button"
             onClick={() => onDesign({ ...design, parts: { ...design.parts, coat: c.key }, colors: { ...design.colors, ...speciesColors(item, c.key) } })}
             aria-pressed={(design.parts.coat ?? 'common') === c.key}
-            className={cn('rounded-lg border px-2 py-1 text-xs font-medium transition-colors',
+            className={cn(FOCUS, 'rounded-lg border px-2 py-1 text-xs font-medium transition-colors',
               (design.parts.coat ?? 'common') === c.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
             {c.label}{c.rare ? ' - rare' : ''}
           </button>
@@ -221,7 +222,7 @@ function Catalogue({ item, design, onPick }: { item: BacklogItem; design: ItemDe
       {pieces.map((p) => (
         <button key={p.key} type="button" onClick={() => onPick(p)} aria-pressed={p.key === current}
           title={p.label}
-          className={cn('flex w-[3.9rem] flex-col items-center gap-0.5 rounded-lg border px-1 pb-1 pt-1.5 text-[11px] transition-colors',
+          className={cn(FOCUS, 'flex w-[3.9rem] flex-col items-center gap-0.5 rounded-lg border px-1 pb-1 pt-1.5 text-[11px] transition-colors',
             p.key === current ? 'border-primary bg-primary/10 font-semibold text-primary' : 'border-border text-muted-foreground hover:border-primary/60 hover:text-foreground')}>
           <PieceSprite piece={p} />
           <span className="max-w-full truncate">{p.label}</span>
@@ -317,7 +318,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
             <div className="space-y-1">
               {copySources.map((s) => (
                 <button key={s.id} type="button" onClick={() => { onDesign({ parts: { ...s.design.parts }, colors: { ...s.design.colors } }); close(); }}
-                  className="flex w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:border-primary/60">
+                  className={cn(FOCUS, "flex w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs hover:border-primary/60")}>
                   <Copy className="h-3 w-3 text-muted-foreground" /> {s.name}
                 </button>
               ))}
@@ -354,14 +355,14 @@ export function ItemToolbar(props: ItemToolbarProps) {
                     onChange={(hex) => onDesign({ ...design, flora: flora.map((f, j) => (j === floraIdx ? { ...f, [key]: hex } : f)) })} />
                 );
               })}
-              <button type="button" className={BTN} title={`Remove this ${selectedFlora.type}`}
+              <button  type="button" className={cn(FOCUS, BTN)} title={`Remove this ${selectedFlora.type}`}
                 onClick={() => { onDesign({ ...design, flora: flora.filter((_, j) => j !== floraIdx) }); onFocus?.(null); }}>
                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
               </button>
             </>
           )}
           <Divider />
-          <button type="button" className={BTN} title="Add a water feature, then drag it inside the habitat"
+          <button  type="button" className={cn(FOCUS, BTN)} title="Add a water feature, then drag it inside the habitat"
             onClick={() => onDesign({ ...design, water: addWaterTo(design) })}>
             <Droplets className="h-3.5 w-3.5 text-sky-600" /> Water
           </button>
@@ -428,7 +429,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
               onChange={(hex) => onDesign({ ...design, colors: { ...design.colors, [c.key]: hex }, parts: c.key === 'sign' ? { ...design.parts, sign: 'on' } : design.parts })} />
           ))}
           <button type="button" onClick={() => setPart('sign', design.parts.sign === 'on' ? 'off' : 'on')}
-            className={cn(BTN, design.parts.sign === 'on' && 'bg-primary/10 text-primary')}>
+            className={cn(FOCUS, BTN, design.parts.sign === 'on' && 'bg-primary/10 text-primary')}>
             <Sprout className="h-3.5 w-3.5" /> Sign
           </button>
         </>
@@ -446,7 +447,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
           return (
             <Popover>
               <PopoverTrigger asChild>
-                <button type="button" className={cn(BTN, 'border', met === all ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-border bg-muted/60')}
+                <button type="button" className={cn(FOCUS, BTN, 'border', met === all ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-border bg-muted/60')}
                   title="What the Product Owner asked for">
                   <Check className="h-3.5 w-3.5" /> Accepted <span className="tabular-nums">{met}/{all}</span> <ChevronDown className="h-3 w-3" />
                 </button>
@@ -460,7 +461,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
                     const on = !!item.acConfirmed?.[i];
                     return (
                       <li key={i}>
-                        <button type="button" onClick={() => props.onConfirmAc(i, !on)} className="flex w-full items-start gap-1.5 text-left text-xs">
+                        <button type="button" onClick={() => props.onConfirmAc(i, !on)} className={cn(FOCUS, "flex w-full items-start gap-1.5 text-left text-xs")}>
                           <span className={cn('mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-emerald-500 text-white' : 'border border-border')}>{on && <Check className="h-2.5 w-2.5" />}</span>
                           <span className={cn(on ? 'text-muted-foreground line-through' : 'text-foreground')}>{label}</span>
                         </button>
@@ -475,7 +476,7 @@ export function ItemToolbar(props: ItemToolbarProps) {
         })()}
         <ExplainButton cards={['definition-of-done', 'increment']} compact />
         <button type="button" onClick={onClose} aria-label="Deselect" title="Deselect"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          className={cn(FOCUS, "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground")}>
           <X className="h-4 w-4" />
         </button>
       </>}

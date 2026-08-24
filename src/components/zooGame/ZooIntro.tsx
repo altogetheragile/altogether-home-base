@@ -6,7 +6,7 @@ import { GoalShapes } from './GoalShapes';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
-import { PADDING, SURFACE, TEXT } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TEXT } from './ui/tokens';
 import { cn } from '@/lib/utils';
 
 interface ZooIntroProps {
@@ -40,7 +40,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 pb-28 pt-5">
         <div className="flex items-center justify-between gap-2">
           {onBack ? (
-            <button type="button" onClick={onBack} className="text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+            <button type="button" onClick={onBack} className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
               &larr; Scrum on one page
             </button>
           ) : <span />}
@@ -110,7 +110,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             // Grey text on a white pill is not a button anyone finds. Bordered, in the foreground
             // colour, with the icon that says what it does.
             <button type="button" onClick={onOpenSaves}
-              className="flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted">
+              className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
               <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Resume a saved game
             </button>
           ) : <span />}

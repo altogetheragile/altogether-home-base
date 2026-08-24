@@ -19,7 +19,7 @@ import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
 import { autoLayout, insidePark, parkBounds, shapeEdge, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { groupMembers } from './design';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock, Map, Box, Eye } from 'lucide-react';
-import { SURFACE, PADDING } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // ============= The Park View =============
 //
@@ -47,7 +47,7 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Path surface"
-          className="flex items-center gap-1.5 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+          className={cn(FOCUS, "flex items-center gap-1.5 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
           <span className="text-muted-foreground/80">Surface</span>
           <SurfaceSwatch style={current} />
           <span className="text-foreground">{current.label}</span>
@@ -57,7 +57,7 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
       <PopoverContent align="end" className="w-40 p-1">
         {PATH_STYLES.map((s) => (
           <button key={s.key} type="button" onClick={() => onPick(s.key)}
-            className={cn('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs', s.key === current.key ? 'bg-primary/10 font-semibold text-primary' : 'text-foreground hover:bg-muted/50')}>
+            className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs', s.key === current.key ? 'bg-primary/10 font-semibold text-primary' : 'text-foreground hover:bg-muted/50')}>
             <SurfaceSwatch style={s} />
             <span className="flex-1 text-left">{s.label}</span>
             {s.key === current.key && <Check className="h-3.5 w-3.5" />}
@@ -239,7 +239,7 @@ function ViewSwitch({ view, onView }: { view: 'plan' | 'iso'; onView: (v: 'plan'
       {([['plan', 'Plan', Map], ['iso', 'Isometric', Box]] as const).map(([key, label, Icon]) => (
         <button key={key} type="button" onClick={() => onView(key)} aria-pressed={view === key}
           title={key === 'plan' ? 'Lay the zoo out' : 'See it as a visitor would'}
-          className={cn('flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+          className={cn(FOCUS, 'flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors',
             view === key ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>
           <Icon className="h-3.5 w-3.5" /> {label}
         </button>
@@ -344,7 +344,7 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
       ) : onRename ? (
         <button type="button" title="Rename this enclosure" onPointerDown={stop}
           onClick={() => { setVal(name); setEditing(true); }}
-          className={cn(cls, 'cursor-text hover:bg-amber-100')}>{name}</button>
+          className={cn(FOCUS, cls, 'cursor-text hover:bg-amber-100')}>{name}</button>
       ) : (
         <span className={cls}>{name}</span>
       )}
@@ -370,7 +370,7 @@ function AnimalName({ name, onRename }: { name: string; onRename?: (name: string
       ) : onRename ? (
         <button type="button" title="Name this animal" onPointerDown={stop}
           onClick={() => { setVal(name); setEditing(true); }}
-          className={cn(cls, 'pointer-events-auto cursor-text opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white')}>{name}</button>
+          className={cn(FOCUS, cls, 'pointer-events-auto cursor-text opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white')}>{name}</button>
       ) : (
         <span className={cls}>{name}</span>
       )}
@@ -451,7 +451,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
                 style={{ background: d.colors.water ?? '#5aa9c8', boxShadow: onSetDesign ? 'inset 0 0 0 2px rgba(255,255,255,.3)' : undefined }} />
               {onSetDesign && <>
                 <button type="button" aria-label="Remove water feature" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); set(water.filter((_, j) => j !== i)); }}
-                  className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
+                  className={cn(FOCUS, "absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex")}>&times;</button>
                 <div onPointerDown={dragFraction(cfg, (dx, dy) => set(water.map((w2, j) => j !== i ? w2 : { ...w2, w: clampF(wf.w + dx, 0.08, 1 - wf.x), h: clampF(wf.h + dy, 0.08, 1 - wf.y) })))}
                   className="absolute -bottom-0.5 -right-0.5 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-sky-600 bg-white group-hover:block" />
               </>}
@@ -470,7 +470,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
               </div>
               {onSetDesign && <>
                 <button type="button" aria-label="Remove planting" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); set(flora.filter((_, j) => j !== i)); }}
-                  className="absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex">&times;</button>
+                  className={cn(FOCUS, "absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex")}>&times;</button>
                 <div onPointerDown={dragFraction(cfg, (dx, dy) => set(flora.map((f2, j) => j !== i ? f2 : { ...f2, s: clampF(fl.s + (dx + dy) * 1.5, 0.5, 2.6) })))}
                   className="absolute -bottom-1 -right-1 hidden h-3 w-3 cursor-nwse-resize rounded-full border-2 border-emerald-600 bg-white group-hover:block" />
               </>}
@@ -571,7 +571,7 @@ function ConstructionSite({ item, w, h, selected, children }: { item: BacklogIte
       <div className="relative flex h-full w-full items-center justify-center">
         {children ?? (
           <div className="pointer-events-none max-w-full px-1 text-center">
-            <div className="truncate text-[11px] font-semibold text-amber-900/80 dark:text-amber-200/80">{item.name}</div>
+            <div className={cn(TONE.attention.text, "truncate text-[11px] font-semibold")}>{item.name}</div>
           </div>
         )}
       </div>
@@ -1281,7 +1281,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                 <button type="button" title={`Put down another ${f.item.name}`} aria-label={`Put down another ${f.item.name}`}
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); onAddCopy(f.item.id, { x: clamp(p.x + f.w / 2 + 26, 8, CANVAS_W - 8), y: p.y }); }}
-                  className={cn('absolute -bottom-2 -right-1 z-40 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-600 bg-white text-emerald-700 shadow transition-opacity',
+                  className={cn(FOCUS, 'absolute -bottom-2 -right-1 z-40 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-600 bg-white text-emerald-700 shadow transition-opacity',
                     building === f.item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
                   <Plus className="h-3 w-3" />
                 </button>
@@ -1304,7 +1304,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                   <button type="button" title={`Raise an Improve PBI for ${f.item.name}`}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); onImprove(f.item.id); }}
-                    className="absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700">
+                    className={cn(FOCUS, "absolute -top-2 -right-1 z-40 flex items-center gap-1 whitespace-nowrap rounded-full bg-sky-600 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 hover:bg-sky-700")}>
                     <Sparkles className="h-3 w-3" /> Improve
                   </button>
                 )
@@ -1326,7 +1326,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
               <button type="button" title={`Remove this ${f.item.name}`} aria-label={`Remove this ${f.item.name}`}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); onRemoveCopy(f.item.id, i); }}
-                className="absolute -right-2 -top-2 z-40 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-white text-muted-foreground opacity-0 shadow transition-opacity hover:text-foreground group-hover:opacity-100">
+                className={cn(FOCUS, "absolute -right-2 -top-2 z-40 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-white text-muted-foreground opacity-0 shadow transition-opacity hover:text-foreground group-hover:opacity-100")}>
                 <X className="h-2.5 w-2.5" />
               </button>
             )}
@@ -1413,14 +1413,14 @@ function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number) => vo
   const btn = 'flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40';
   return (
     <div className="flex items-center gap-1" role="group" aria-label="Zoom the park">
-      <button type="button" className={btn} onClick={() => step(-1)} disabled={zoom <= ZOOM_STOPS[0]} title="Zoom out" aria-label="Zoom out">
+      <button  type="button" className={cn(FOCUS, btn)} onClick={() => step(-1)} disabled={zoom <= ZOOM_STOPS[0]} title="Zoom out" aria-label="Zoom out">
         <Minus className="h-3.5 w-3.5" />
       </button>
       <button type="button" onClick={() => onZoom(1)} disabled={zoom === 1} title="Fit the park to the width" aria-label="Fit the park to the width"
-        className="min-w-[3rem] rounded-md border border-border px-1 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60">
+        className={cn(FOCUS, "min-w-[3rem] rounded-md border border-border px-1 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60")}>
         {Math.round(zoom * 100)}%
       </button>
-      <button type="button" className={btn} onClick={() => step(1)} disabled={zoom >= ZOOM_STOPS[ZOOM_STOPS.length - 1]} title="Zoom in" aria-label="Zoom in">
+      <button  type="button" className={cn(FOCUS, btn)} onClick={() => step(1)} disabled={zoom >= ZOOM_STOPS[ZOOM_STOPS.length - 1]} title="Zoom in" aria-label="Zoom in">
         <Plus className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -1599,7 +1599,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
         title={gatesOpen ? undefined : 'They come anyway. Whether they enjoy it is measured at the Review.'} />
       <Stat icon={Smile} value={happiness === null ? '—' : `${happiness}`} label="happiness" title={happiness === null ? 'Measured at the Sprint Review' : undefined} />
       {!gatesOpen && (
-        <span className="flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300"
+        <span className={cn(TONE.attention.text, "flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium")}
           title="Visitors still turn up - and go home disappointed. Paths and grass are a park; a zoo needs an animal.">
           <Lock className="h-3 w-3 shrink-0" /> Nothing on show
         </span>
@@ -1639,7 +1639,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {!isoView && canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
-                  className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+                  className={cn(FOCUS, 'flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
                     effectiveTool === 'connect' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
                   <Spline className="h-3.5 w-3.5" /> Connect
                 </button>
@@ -1659,11 +1659,11 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             return (
             <div className="flex flex-col gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2 py-1.5 text-[11px]">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-emerald-700 dark:text-emerald-400">Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
+                <span className={cn(TONE.done.text, "font-medium")}>Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
                 {onFinishDeploy && (
                   <button type="button"
                     onClick={() => { stopDrawing(); setSelectedConn(null); onFinishDeploy(); }}
-                    className="ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700">
+                    className={cn(FOCUS, "ml-auto flex items-center gap-1 rounded bg-emerald-600 px-2 py-0.5 font-semibold text-white hover:bg-emerald-700")}>
                     <Check className="h-3 w-3" /> Back to the board</button>
                 )}
               </div>
@@ -1671,7 +1671,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                 <div className="rounded border border-emerald-500/30 bg-background/60 px-2 py-1">
                   {/* Shown, not ticked. Accepting a criterion belongs on the item's own card - the
                       park is where you put the thing, not where you judge it. */}
-                  <div className="mb-0.5 font-semibold uppercase tracking-wide text-emerald-700/80 dark:text-emerald-400/80">
+                  <div className={cn(TONE.done.text, "mb-0.5 font-semibold uppercase tracking-wide")}>
                     Acceptance criteria &middot; ticked on its card
                   </div>
                   <ul className="space-y-0.5">
@@ -1692,7 +1692,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           {canConnect && effectiveTool === 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
               <span className="font-medium text-primary">Click a start (an enclosure to attach, or empty grass to free-place), then click where it ends. It attaches if you finish on a feature.</span>
-              <button type="button" onClick={stopDrawing} className="ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /> Done</button>
+              <button type="button" onClick={stopDrawing} className={cn(FOCUS, "ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground")}><X className="h-3 w-3" /> Done</button>
             </div>
           )}
           {/* Selected-connector toolbar: thickness, colour, delete. While a pathway is on the bench
@@ -1715,11 +1715,11 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                       Re-routing it is a change to the product, so it goes through the Backlog.</span>
                     {onImprove && !improving?.has(owner.id) && (
                       <button type="button" onClick={() => { onImprove(owner.id); setSelectedConn(null); }}
-                        className="flex items-center gap-1 rounded border border-primary/60 bg-background px-1.5 py-0.5 font-semibold text-primary hover:bg-primary/10">
+                        className={cn(FOCUS, "flex items-center gap-1 rounded border border-primary/60 bg-background px-1.5 py-0.5 font-semibold text-primary hover:bg-primary/10")}>
                         <Sparkles className="h-3 w-3" /> Improve {owner.name}
                       </button>
                     )}
-                    {improving?.has(owner.id) && <span className="rounded bg-amber-500/10 px-1.5 py-0.5 font-medium text-amber-700 dark:text-amber-300">Already on the Backlog to improve</span>}
+                    {improving?.has(owner.id) && <span className={cn(TONE.attention.text, "rounded bg-amber-500/10 px-1.5 py-0.5 font-medium")}>Already on the Backlog to improve</span>}
                   </span>
                 );
                 return <span className="font-medium text-muted-foreground">A run left over from an earlier way of drawing paths. Nothing owns it.</span>;
@@ -1728,7 +1728,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                 <span className="font-medium text-muted-foreground">Thickness</span>
                 {[4, 8, 14].map((t) => (
                   <button key={t} type="button" onClick={() => onUpdateConnector(selected.id, { thickness: t })} title={`${t}px`} aria-pressed={selected.thickness === t}
-                    className={cn('flex h-6 w-7 items-center justify-center rounded border', selected.thickness === t ? 'border-primary bg-primary/10' : 'border-border')}>
+                    className={cn(FOCUS, 'flex h-6 w-7 items-center justify-center rounded border', selected.thickness === t ? 'border-primary bg-primary/10' : 'border-border')}>
                     <span className="rounded-full bg-foreground" style={{ width: 16, height: Math.max(2, t / 2) }} />
                   </button>
                 ))}
@@ -1737,12 +1737,12 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                 <span className="font-medium text-muted-foreground">Colour</span>
                 {CONNECTOR_COLORS.map((c) => (
                   <button key={c} type="button" onClick={() => onUpdateConnector(selected.id, { color: c })} title={c}
-                    className={cn('h-5 w-5 rounded-full border', selected.color.toLowerCase() === c ? 'border-foreground ring-2 ring-foreground/30' : 'border-border/60')} style={{ background: c }} />
+                    className={cn(FOCUS, 'h-5 w-5 rounded-full border', selected.color.toLowerCase() === c ? 'border-foreground ring-2 ring-foreground/30' : 'border-border/60')} style={{ background: c }} />
                 ))}
               </span>}
               {onDeleteConnector && (!selected.itemId || drawRoute?.id === selected.itemId) && (
                 <button type="button" onClick={() => { onDeleteConnector(selected.id); setSelectedConn(null); }} title="Take this run back up"
-                  className="ml-auto flex items-center gap-1 rounded border border-destructive/50 bg-background px-1.5 py-0.5 font-medium text-destructive hover:bg-destructive/10"><Trash2 className="h-3 w-3" /> Take it up</button>
+                  className={cn(FOCUS, "ml-auto flex items-center gap-1 rounded border border-destructive/50 bg-background px-1.5 py-0.5 font-medium text-destructive hover:bg-destructive/10")}><Trash2 className="h-3 w-3" /> Take it up</button>
               )}
             </div>
           )}

@@ -7,7 +7,7 @@ import { presetFor } from './design';
 import { Chip } from './ui/Chip';
 import { ExplainButton } from './Explain';
 import { cn } from '@/lib/utils';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, FOCUS } from './ui/tokens';
 import { Hammer, Spline, Trash2 } from 'lucide-react';
 
 // ============= Where you design the thing you are building =============
@@ -51,7 +51,7 @@ function Runs({ state, item, onRemove }: { state: ZooGameState; item: BacklogIte
               {onRemove && (
                 <button type="button" onClick={() => onRemove(c.id)} title={`Take run ${i + 1} back up`}
                   aria-label={`Take run ${i + 1} back up`}
-                  className="ml-auto shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive">
+                  className={cn(FOCUS, "ml-auto shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive")}>
                   <Trash2 className="h-3 w-3" />
                 </button>
               )}
@@ -146,7 +146,7 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
             {item.category === 'path' && onDrawing && (
               <div className="mt-2 space-y-1.5">
                 <button type="button" onClick={() => onDrawing(!drawing)} aria-pressed={!!drawing}
-                  className={cn('flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
+                  className={cn(FOCUS, 'flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
                     drawing ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted')}>
                   <Spline className="h-3.5 w-3.5" /> {drawing ? 'Drawing on the park - click Done there' : 'Draw its route'}
                 </button>
