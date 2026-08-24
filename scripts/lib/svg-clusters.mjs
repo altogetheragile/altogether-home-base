@@ -112,7 +112,7 @@ export async function cutIslands(browser, svg, picks) {
       });
     };
 
-    return picks.map(({ name, members, drop }) => {
+    return picks.map(({ name, members, drop, dropLargerThan }) => {
       const keep = new Set(members);
       const clone = root.cloneNode(true);
       // Same document order in the clone as in the original, so indices still line up.
@@ -125,6 +125,9 @@ export async function cutIslands(browser, svg, picks) {
         if (!keep.has(i) || matchesDrop(originals[i], drop)) { el.remove(); return; }
         const b = boxOf(originals[i]);
         if (!b) return;
+        // A drawing that comes on a base - a shop on its patch of pavement and road - has that base
+        // as the only thing bigger than the drawing itself. Everything standing on it is smaller.
+        if (dropLargerThan && (b.x1 - b.x0) * (b.y1 - b.y0) > dropLargerThan) { el.remove(); return; }
         x0 = Math.min(x0, b.x0); y0 = Math.min(y0, b.y0);
         x1 = Math.max(x1, b.x1); y1 = Math.max(y1, b.y1);
       });
