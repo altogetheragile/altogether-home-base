@@ -68,8 +68,11 @@ function build(state: ZooGameState, targetH: number) {
   const ox = b.ox + MARGIN, oy = b.oy + MARGIN;
 
   const P = (wx: number, wy: number): Pt => { const p = project(wx, wy, u); return { x: p.x + ox, y: p.y + oy }; };
-  const ground = (x0: number, y0: number, x1: number, y1: number) =>
-    groundPoints(x0, y0, x1, y1, u).split(' ').map((s) => { const [x, y] = s.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
+  /** Everything is drawn inset by the scene's margin, but `boxFaces` and `roofFaces` hand back raw
+   *  projected points. Anything built from those has to be shifted, or it is drawn off the edge of
+   *  the picture - which is silent, because a polygon at the wrong coordinates is still a polygon. */
+  const shift = (s: string) => s.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
+  const ground = (x0: number, y0: number, x1: number, y1: number) => shift(groundPoints(x0, y0, x1, y1, u));
 
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((i) => i.zone)]));
   const themeOf = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
@@ -218,6 +221,59 @@ function build(state: ZooGameState, targetH: number) {
     });
   }
 
+  /** A bridge, built rather than painted on.
+   *
+   *  Every landscape feature was one flat coloured diamond lying on the grass, which is fine for a
+   *  pond and wrong for a bridge: a bridge is the one piece of landscape that is above the ground,
+   *  and drawing it flat left a brown rectangle in the water with nothing to walk on. This gives it
+   *  the three things that read as a bridge from the corner - a deck you can see the top of, the
+   *  side of that deck, and a handrail along both edges.
+   */
+  const bridge = (id: string, x0: number, y0: number, x1: number, y1: number, wood: string) => {
+    const deckH = Math.max(2.5, u * 7);
+    const railH = Math.max(4, u * 10);
+    const f = boxFaces(x0, y0, x1, y1, deckH, u);
+    const up = (p: Pt, h: number): Pt => ({ x: p.x, y: p.y - h });
+    // The handrails run along the two long sides - the way you walk over it.
+    const along = (x1 - x0) >= (y1 - y0);
+    const sides: [Pt, Pt][] = along
+      ? [[{ x: x0, y: y0 }, { x: x1, y: y0 }], [{ x: x0, y: y1 }, { x: x1, y: y1 }]]
+      : [[{ x: x0, y: y0 }, { x: x0, y: y1 }], [{ x: x1, y: y0 }, { x: x1, y: y1 }]];
+    // Planks across the way you walk, so the deck reads as a deck and not a slab of colour.
+    const span = along ? x1 - x0 : y1 - y0;
+    const n = Math.max(3, Math.min(14, Math.round(span / 14)));
+    const planks = Array.from({ length: n - 1 }, (_, i) => {
+      const t = (i + 1) / n;
+      const a = along ? { x: x0 + (x1 - x0) * t, y: y0 } : { x: x0, y: y0 + (y1 - y0) * t };
+      const z = along ? { x: x0 + (x1 - x0) * t, y: y1 } : { x: x1, y: y0 + (y1 - y0) * t };
+      const A = up(P(a.x, a.y), deckH), B = up(P(z.x, z.y), deckH);
+      return <line key={`k${i}`} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={shade(wood, -14)} strokeWidth={Math.max(0.35, u * 0.5)} />;
+    });
+    const post = Math.max(0.7, u * 1.1);
+    const rails = sides.map(([a, z], s) => {
+      const A = up(P(a.x, a.y), deckH), B = up(P(z.x, z.y), deckH);
+      const posts = Array.from({ length: 6 }, (_, i) => {
+        const t = i / 5, px = A.x + (B.x - A.x) * t, py = A.y + (B.y - A.y) * t;
+        return <line key={`p${i}`} x1={px} y1={py} x2={px} y2={py - railH} stroke={shade(wood, -46)} strokeWidth={post} strokeLinecap="round" />;
+      });
+      return (
+        <g key={`rail-${s}`}>
+          {posts}
+          <line x1={A.x} y1={A.y - railH} x2={B.x} y2={B.y - railH} stroke={shade(wood, -22)} strokeWidth={Math.max(0.9, u * 1.5)} strokeLinecap="round" />
+        </g>
+      );
+    });
+    push(depth((x0 + x1) / 2, (y0 + y1) / 2), (
+      <g key={`bridge-${id}`}>
+        <polygon points={shift(f.left)} fill={shade(wood, -34)} />
+        <polygon points={shift(f.right)} fill={shade(wood, -18)} />
+        <polygon points={shift(f.top)} fill={wood} />
+        {planks}
+        {rails}
+      </g>
+    ));
+  };
+
   // ---- amenities and loose planting -------------------------------------------------------
   for (const it of loose) {
     const c = posOf(it), size = sizeOf(it);
@@ -225,14 +281,22 @@ function build(state: ZooGameState, targetH: number) {
       const type = landType(it);
       if (isLandscapeType(type)) {
         const cols = floraDefaultColors(type ?? 'pond');
-        nodes.push(<polygon key={`land-${it.id}`} points={ground(c.x - size.w / 2, c.y - size.h / 2, c.x + size.w / 2, c.y + size.h / 2)} fill={cols.foliage ?? '#6fb0d6'} opacity={0.92} />);
+        // Held to the park. A river is longer than the park is wide, on purpose - that is what makes
+        // it reach both banks - and painted at its full length it ran out over the edge of the grass
+        // and hung in the air.
+        const x0 = Math.max(0, c.x - size.w / 2), x1 = Math.min(CANVAS_W, c.x + size.w / 2);
+        const y0 = Math.max(0, c.y - size.h / 2), y1 = Math.min(PLAY_H, c.y + size.h / 2);
+        if (type === 'bridge') { bridge(it.id, x0, y0, x1, y1, cols.foliage ?? '#c8965a'); continue; }
+        nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={cols.foliage ?? '#6fb0d6'} opacity={0.92} />);
       } else {
-        place(treeProp(type), c.x, c.y, u * 1.9, `t-${it.id}`);
+        const plant = (name: string, wx: number, wy: number, key: string) =>
+          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key);
+        plant(treeProp(type), c.x, c.y, `t-${it.id}`);
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
         for (const [i, k] of (it.copies ?? []).entries()) {
           const at = insidePark({ w: 8, h: 8 }, { x: c.x + k.dx, y: c.y + k.dy });
-          place(treeProp(pieceByKey(k.piece)?.type ?? type, k.piece), at.x, at.y, u * 1.9, `t-${it.id}-${i}`);
+          plant(treeProp(pieceByKey(k.piece)?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`);
         }
       }
       continue;
@@ -272,17 +336,16 @@ function build(state: ZooGameState, targetH: number) {
     const r = roofFaces(x0, y0, x1, y1, wallH, riseH, Math.min(fw, fh) * 0.09, u);
     const tone = boxTones(walls);
     const rt = boxTones(roof);
-    const sh = (str: string) => str.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
     const dl = { x: x0, y: y1 }, dr = { x: x1, y: y1 }, wr = { x: x1, y: y0 };
     push(depth(c.x, c.y), (
       <g key={`b-${it.id}`}>
-        <polygon points={sh(f.left)} fill={tone.left} />
-        <polygon points={sh(f.right)} fill={tone.right} />
-        <polygon points={sh(wallPanel(dl, dr, 0.36, 0.64, 0, wallH * 0.66, u))} fill={shade(door, -6)} />
-        <polygon points={sh(wallPanel(wr, dr, 0.3, 0.66, wallH * 0.3, wallH * 0.72, u))} fill="#93b8cc" />
-        <polygon points={sh(r.far)} fill={rt.left} />
-        <polygon points={sh(r.near)} fill={rt.right} />
-        <polygon points={sh(r.gable)} fill={rt.top} />
+        <polygon points={shift(f.left)} fill={tone.left} />
+        <polygon points={shift(f.right)} fill={tone.right} />
+        <polygon points={shift(wallPanel(dl, dr, 0.36, 0.64, 0, wallH * 0.66, u))} fill={shade(door, -6)} />
+        <polygon points={shift(wallPanel(wr, dr, 0.3, 0.66, wallH * 0.3, wallH * 0.72, u))} fill="#93b8cc" />
+        <polygon points={shift(r.far)} fill={rt.left} />
+        <polygon points={shift(r.near)} fill={rt.right} />
+        <polygon points={shift(r.gable)} fill={rt.top} />
       </g>
     ));
   }
@@ -312,6 +375,13 @@ function build(state: ZooGameState, targetH: number) {
 }
 
 /** Which tree drawing a planting gets. Two shapes is enough to stop an avenue looking stamped. */
+/** How big a piece of planting is drawn, against a tree.
+ *
+ *  Everything was drawn at a tree's size, which made a signpost as tall as the oak behind it and
+ *  wider than the giraffe - and four of them a thicket of crossed arms. A signpost is a post with a
+ *  sign on it: it is smaller than a kiosk, and much smaller than a tree. */
+const FLORA_SCALE: Record<string, number> = { signpost: 0.42, hedge: 0.8, fountain: 0.9 };
+
 function treeProp(type?: string, piece?: string): string {
   // What it is beats what it is called. This used to pick between the two trees on whether the
   // type's name had an even number of letters, which drew a signpost as a sapling.

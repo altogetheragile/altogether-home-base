@@ -162,6 +162,52 @@ describe('the isometric projection', () => {
     }
   });
 
+  it('builds a bridge rather than painting one, and builds it inside the picture', () => {
+    // Landscape was one flat diamond lying on the grass, which suits a pond and not a bridge - the
+    // one piece of landscape that is above the ground. It is now a deck with sides and handrails.
+    //
+    // And it is drawn where it can be seen. The geometry helpers hand back raw projected points,
+    // which have to be shifted by the scene's margin; the first version of this forgot, and the
+    // deck was drawn off the edge of the picture. Nothing errored - a polygon at the wrong
+    // coordinates is still a polygon - it was simply a bridge nobody could see.
+    const base = initialZooState();
+    const state = { ...base, zones: ['Grounds'], backlog: [
+      item({ id: 'br', name: 'Bridge', category: 'flora', zone: 'Grounds', template: 'bridge',
+             pos: { x: 400, y: 350 }, size: { w: 74, h: 120 }, design: { parts: { type: 'bridge' }, colors: {} } }),
+    ] } as ZooGameState;
+    const { container } = render(<IsoZoo state={state} />);
+    const svg = container.querySelector('svg[role="img"]')!;
+    // handrails: posts and a rail along each of the two sides you walk between
+    expect(svg.querySelectorAll('line').length).toBeGreaterThan(8);
+
+    const [, , vw, vh] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+    // The bridge is the one group holding both polygons and lines - deck faces and handrails.
+    const group = [...svg.querySelectorAll('g')].find((g) => g.querySelector('polygon') && g.querySelector('line'))!;
+    expect(group, 'no bridge group was drawn').toBeTruthy();
+
+    // Its parts have to be in the same place. Deck and rails are worked out in different coordinate
+    // spaces - the geometry helpers hand back raw projected points, the props are already inset by
+    // the scene's margin - so forgetting to shift one of them does not fail, it just puts that piece
+    // somewhere else. A bridge whose deck is half a park away from its handrails is not a bridge.
+    const xs: number[] = [], ys: number[] = [];
+    for (const p of group.querySelectorAll('polygon')) {
+      for (const q of (p.getAttribute('points') ?? '').trim().split(/\s+/)) {
+        const [x, y] = q.split(',').map(Number); xs.push(x); ys.push(y);
+      }
+    }
+    for (const l of group.querySelectorAll('line')) {
+      xs.push(Number(l.getAttribute('x1')), Number(l.getAttribute('x2')));
+      ys.push(Number(l.getAttribute('y1')), Number(l.getAttribute('y2')));
+    }
+    expect(xs.every(Number.isFinite) && ys.every(Number.isFinite)).toBe(true);
+    const wide = Math.max(...xs) - Math.min(...xs), tall = Math.max(...ys) - Math.min(...ys);
+    expect(wide, `the bridge is ${Math.round(wide)} across a ${Math.round(vw)}-wide picture`).toBeLessThan(vw * 0.35);
+    expect(tall, `the bridge is ${Math.round(tall)} down a ${Math.round(vh)}-tall picture`).toBeLessThan(vh * 0.5);
+    // and all of it inside the picture
+    expect(Math.min(...xs)).toBeGreaterThan(0);
+    expect(Math.max(...xs)).toBeLessThan(vw);
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {

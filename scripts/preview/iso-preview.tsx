@@ -34,6 +34,17 @@ const state = {
     it({ id: 'f1', name: 'Big Cats Planting', category: 'flora', template: 'oak', pos: { x: 120, y: 200 }, design: { parts: { type: 'oak' }, colors: {} } }),
     it({ id: 'f2', name: 'Avenue', category: 'flora', template: 'blossom', pos: { x: 430, y: 120 }, design: { parts: { type: 'blossom' }, colors: {} } }),
     it({ id: 'f3', name: 'Hedging', category: 'flora', template: 'hedge', pos: { x: 700, y: 430 }, design: { parts: { type: 'hedge' }, colors: {} } }),
+    // The landscape: a river the full width of the park, a bridge over it, and a planting that is
+    // several trees rather than one - the three things this view used to get wrong.
+    it({ id: 'l1', name: 'River', category: 'flora', template: 'river', pos: { x: 410, y: 560 }, design: { parts: { type: 'river' }, colors: {} } }),
+    // Long across the river, not along it - a bridge is for getting to the other side.
+    it({ id: 'l2', name: 'Bridge', category: 'flora', template: 'bridge', pos: { x: 300, y: 560 }, size: { w: 74, h: 120 }, design: { parts: { type: 'bridge' }, colors: {} } }),
+    it({ id: 'f4', name: 'Signposts', category: 'flora', template: 'signpost', pos: { x: 520, y: 200 },
+         design: { parts: { type: 'signpost' }, colors: {} },
+         copies: [{ dx: 34, dy: 0 }, { dx: 0, dy: 34 }, { dx: -34, dy: 0 }] }),
+    it({ id: 'f5', name: 'Orchard', category: 'flora', template: 'tree', pos: { x: 120, y: 330 },
+         design: { parts: { type: 'tree' }, colors: {} },
+         copies: [{ dx: 34, dy: 0, piece: 'pine' }, { dx: 0, dy: 34, piece: 'blossom' }, { dx: 34, dy: 34, piece: 'palm' }] }),
   ],
   connectors: [
     { id: 'c1', a: { featureId: 'e1', x: 250, y: 210 }, b: { featureId: 'b1', x: 400, y: 470 }, style: 'gravel' },
