@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, GOAL_HAPPINESS_TARGET } from './engine';
 import { PbiCard } from './PbiCard';
-import { IsoZoo } from './IsoZoo';
+// The showcase carries the isometric artwork - props, and every vehicle in the car park - and
+// nobody needs any of it until they reach a Review. Loading it with the game made opening the game
+// slower to pay for a picture shown at the end of a Sprint.
+const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
@@ -86,7 +89,9 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">The Increment &middot; everything delivered so far</span>
           <span className="text-[11px] text-muted-foreground">Not this Sprint's work alone - the whole zoo, which is what an Increment is.</span>
         </div>
-        <IsoZoo state={state} height={470} className="px-3 pb-2" />
+        <Suspense fallback={<div className="mx-3 mb-2 h-[470px] animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
+          <IsoZoo state={state} height={470} className="px-3 pb-2" />
+        </Suspense>
       </section>
 
       {/* Progress toward the Product Goal opens the Review: the widest question first, before the

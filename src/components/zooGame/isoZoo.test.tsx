@@ -5,6 +5,7 @@ import type { BacklogItem, ZooGameState } from './types';
 import { IsoZoo } from './IsoZoo';
 import { project, depth, boxFaces, fenceRun, tint, screenBounds } from './art/iso';
 import { ISO_ART } from './art/isoArt.generated';
+import { VEHICLE_ART } from './art/vehicleArt.generated';
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
   id: over.id ?? 'x', name: 'Thing', zone: 'Big Cats', category: 'enclosure',
@@ -116,9 +117,43 @@ describe('the isometric projection', () => {
     expect(painted).toMatch(/#[0-9a-f]{6}/i);
   });
 
+  it('parks a vehicle for every occupied bay', () => {
+    // A lot with cars in it and no vehicles drawn is the failure that looks like an empty car park
+    // rather than like a bug.
+    const { container } = render(<IsoZoo state={zooWithEverything()} />);
+    const vehicles = [...container.querySelectorAll('svg[viewBox]')].filter((el) =>
+      Object.values(VEHICLE_ART).some((v) => el.getAttribute('viewBox') === v.viewBox));
+    expect(vehicles.length).toBeGreaterThan(2);
+  });
+
+  it('gives every vehicle its own definitions, so two of one can be parked', () => {
+    // These come from an EPS, where clip paths and gradients arrive with shared ids. Extraction
+    // renames them per vehicle; if it stopped doing that, the second copy of a van on the page
+    // would be clipped to the first one's shape.
+    const ids = new Map();
+    for (const [name, v] of Object.entries(VEHICLE_ART)) {
+      for (const m of v.body.matchAll(/id="([^"]+)"/g)) {
+        const owner = ids.get(m[1]);
+        expect(owner ?? name, `id ${m[1]} is in both ${owner} and ${name}`).toBe(name);
+        ids.set(m[1], name);
+      }
+      for (const m of v.body.matchAll(/url\(#([^)]+)\)/g)) {
+        expect(m[1].startsWith(`${name}_`), `${name} points at ${m[1]}, which is not its own`).toBe(true);
+      }
+    }
+  });
+
+  it('leaves no vehicle pointing at a gradient that was thrown away', () => {
+    for (const [name, v] of Object.entries(VEHICLE_ART)) {
+      expect(v.body, name).not.toMatch(/<linearGradient|<radialGradient/);
+      const refs = [...v.body.matchAll(/url\(#([^)]+)\)/g)].map((m) => m[1]);
+      for (const r of refs) expect(v.body, `${name} points at ${r}`).toMatch(new RegExp(`id="${r}"`));
+    }
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
-    for (const [name, p] of Object.entries(ISO_ART)) {
+    for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
       expect(p.body, name).not.toMatch(/<script|<foreignObject|<iframe|<image|<use\b/i);
       expect(p.body, name).not.toMatch(/\son\w+\s*=/i);
       expect(p.body, name).not.toMatch(/javascript:|data:text\/html/i);

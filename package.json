@@ -38,7 +38,8 @@
     "audit:artifacts": "tsx scripts/audit-artifact-contracts.ts",
     "check:css": "node scripts/check-tailwind-opacity.mjs",
     "animal-art": "node scripts/extract-animal-art.mjs",
-    "iso-art": "node scripts/extract-iso-art.mjs"
+    "iso-art": "node scripts/extract-iso-art.mjs",
+    "vehicle-art": "node scripts/extract-vehicle-art.mjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",

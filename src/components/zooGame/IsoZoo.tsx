@@ -8,8 +8,9 @@ import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpo
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
 import { AGE_SCALE, groupMembers } from './design';
 import {
-  project, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, type Pt,
+  project, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, COS, type Pt,
 } from './art/iso';
+import { VEHICLE_ART } from './art/vehicleArt.generated';
 
 /** The zoo, seen from the corner.
  *
@@ -265,7 +266,7 @@ function build(state: ZooGameState, targetH: number) {
   }
 
   // ---- the car park ------------------------------------------------------------------------
-  for (const [i, spot] of (lot.spots ?? []).entries()) push(...vehicle(spot, i, u, P, ox, oy));
+  for (const [i, spot] of (lot.spots ?? []).entries()) push(...vehicle(spot, i, u, P));
 
   // ---- visitors ----------------------------------------------------------------------------
   const strolling = Math.min(26, Math.round(visitors / 45));
@@ -303,42 +304,37 @@ function amenityProp(it: BacklogItem): string | undefined {
   return undefined;
 }
 
-/** A car, drawn as what a car is from this angle: a box with a smaller box on it.
+/** The vehicles in the lot, from the illustration sheet.
  *
- *  There is no licensed vehicle art yet, and unlike an animal a car is honest geometry - so it is
- *  built rather than bought, which also means every car in the lot can be a different colour. */
-function vehicle(spot: CarSpot, i: number, u: number, P: (x: number, y: number) => Pt, ox: number, oy: number): [number, React.ReactNode] {
-  // `rot` is radians: a car noses up to the curb (0 or PI), a coach lies along its lay-by (PI/2).
-  const across = Math.abs(Math.sin(spot.rot)) > 0.5;
-  const [hw, hh] = spot.bus ? [BUS_HW, BUS_HH] : [CAR_HW, CAR_HH];
-  const w = (across ? hh : hw) * 2, h = (across ? hw : hh) * 2;
-  const x0 = spot.x - w / 2, y0 = spot.y - h / 2, x1 = spot.x + w / 2, y1 = spot.y + h / 2;
-  const shift = (str: string) => str.split(' ').map((p) => { const [x, y] = p.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
+ *  They are all drawn facing one way, along the sheet's own axis. Mirroring an isometric drawing
+ *  horizontally gives you the other axis, which is exactly the pair the car park needs: cars nose up
+ *  to the curb along one, coaches lie along their lay-by on the other.
+ *
+ *  Both rows of cars therefore face the same way, where a real lot would have them nose to nose.
+ *  At the size a car is drawn here that is not a thing anyone can see, and the alternative is a
+ *  drawing that does not exist. */
+const CARS = ['suv', 'saloonRed', 'saloonBlue', 'saloonGrey', 'estateRed', 'estate4x4', 'vanYellow', 'pickup', 'cityCar'];
+const LARGE = ['coach', 'boxVan'];
 
-  const wheelH = Math.max(1, u * 3);
-  const bodyH = Math.max(3, u * (spot.bus ? 24 : 12));
-  const cabH = Math.max(2, u * (spot.bus ? 14 : 8));
-  // The cabin is set in along the vehicle and barely at all across it - which is the difference
-  // between a car and a crate with a lid.
-  const inA = spot.bus ? 0.05 : 0.26, inB = spot.bus ? 0.08 : 0.13;
-  const [ix, iy] = across ? [w * inA, h * inB] : [w * inB, h * inA];
-  const wheels = boxFaces(x0 + w * 0.08, y0 + h * 0.06, x1 - w * 0.08, y1 - h * 0.06, wheelH, u);
-  const body = boxFaces(x0, y0, x1, y1, wheelH + bodyH, u);
-  const cab = boxFaces(x0 + ix, y0 + iy, x1 - ix, y1 - iy, wheelH + bodyH + cabH, u);
-  const t = boxTones(spot.color);
-  const glass = boxTones('#7096a8');
+function vehicle(spot: CarSpot, i: number, u: number, P: (x: number, y: number) => Pt): [number, React.ReactNode] {
+  const name = spot.bus ? LARGE[i % LARGE.length] : CARS[i % CARS.length];
+  const art = VEHICLE_ART[name];
+  const [hw, hh] = spot.bus ? [BUS_HW, BUS_HH] : [CAR_HW, CAR_HH];
+  // A coach lies along its lay-by; a car noses into its bay. `rot` is radians, not degrees.
+  const across = Math.abs(Math.sin(spot.rot)) > 0.5;
+  const fw = (across ? hw : hh) * 2, fh = (across ? hh : hw) * 2;
+  // Fit the drawing's width to the width its footprint projects to, so a coach takes a coach's
+  // room - less a margin, because a drawing carries its own shadow and a car sized to the outside
+  // of that parks on top of its neighbour.
+  const k = (((fw + fh) * COS * u) / art.w) * 0.8;
+  const w = art.w * k, h = art.h * k;
   const at = P(spot.x, spot.y);
+  // The drawing stands on the ground, so its foot goes at the near corner of the footprint.
+  const foot = P(spot.x + (across ? hw : hh), spot.y + (across ? hh : hw));
   return [depth(spot.x, spot.y), (
-    <g key={`car-${i}`}>
-      <ellipse cx={at.x} cy={at.y} rx={Math.max(3, u * w * 0.62)} ry={Math.max(1.5, u * h * 0.32)} fill="rgba(0,0,0,.2)" />
-      <polygon points={shift(wheels.left)} fill="#2f3338" />
-      <polygon points={shift(wheels.right)} fill="#23272b" />
-      <polygon points={shift(body.left)} fill={t.left} />
-      <polygon points={shift(body.right)} fill={t.right} />
-      <polygon points={shift(body.top)} fill={t.top} />
-      <polygon points={shift(cab.left)} fill={glass.left} />
-      <polygon points={shift(cab.right)} fill={glass.right} />
-      <polygon points={shift(cab.top)} fill={shade(spot.color, 30)} />
+    <g key={`v-${i}`} transform={across ? undefined : `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)`}>
+      <svg x={at.x - w / 2} y={foot.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
+        dangerouslySetInnerHTML={{ __html: art.body }} />
     </g>
   )];
 }
