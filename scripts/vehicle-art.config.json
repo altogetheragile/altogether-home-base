@@ -1,0 +1,103 @@
+{
+  "//": "Isometric vehicles cut from an EPS sheet. EPS has no groups left after conversion, so drawings are found as islands of touching shapes - `island` is an index into that list, largest first. Run `npm run vehicle-art -- --index` for a numbered contact sheet. `bridge` is how close two shapes must be to count as one drawing.",
+  "sources": [
+    {
+      "file": "art-src/zoo/iso-transport.eps",
+      "credit": "Freepik",
+      "bridge": 0,
+      "vehicles": {
+        "suv": {
+          "box": [
+            60,
+            50,
+            106,
+            70
+          ]
+        },
+        "coach": {
+          "box": [
+            195,
+            15,
+            182,
+            152
+          ],
+          "bus": true
+        },
+        "estate4x4": {
+          "box": [
+            378,
+            66,
+            100,
+            74
+          ]
+        },
+        "saloonRed": {
+          "box": [
+            486,
+            71,
+            118,
+            80
+          ]
+        },
+        "boxVan": {
+          "box": [
+            119,
+            133,
+            140,
+            113
+          ],
+          "bus": true
+        },
+        "saloonGrey": {
+          "box": [
+            55,
+            231,
+            112,
+            77
+          ]
+        },
+        "vanYellow": {
+          "box": [
+            504,
+            176,
+            86,
+            70
+          ]
+        },
+        "cityCar": {
+          "box": [
+            347,
+            253,
+            66,
+            55
+          ]
+        },
+        "estateRed": {
+          "box": [
+            415,
+            302,
+            118,
+            80
+          ]
+        },
+        "pickup": {
+          "box": [
+            83,
+            353,
+            116,
+            79
+          ]
+        },
+        "saloonBlue": {
+          "box": [
+            193,
+            328,
+            115,
+            82
+          ]
+        }
+      },
+      "ignoreLargerThan": 0.06
+    }
+  ]
+}

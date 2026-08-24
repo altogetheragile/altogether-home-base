@@ -51,4 +51,6 @@ scripts/gsc-token.json
 supabase/.temp/
 
 # Contact sheets are generated on demand by `npm run animal-art -- --index`
-art-src/**/contact-sheet.png
+art-src/**/*contact-sheet.png
+
+art-src/.work/
