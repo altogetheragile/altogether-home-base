@@ -31,7 +31,9 @@ handle it:
 
 - `unitScale` - what one of its units is worth in the first sheet's units. Pick
   it by eye against the neighbours the species will stand among, per the note
-  above.
+  above. It can be set per species as well as per sheet: a poster draws a meerkat
+  nearly as tall as a lion so it is not a speck on the page, and a park is not a
+  page.
 - `island` instead of `group`, where the sheet has no usable grouping.
 - `drop` - colours to throw away, for a sheet that draws each animal on a shadow
   puddle or a blob the colour of its own backdrop. Without it, the backdrop comes
@@ -110,4 +112,11 @@ still on built sprites:
 
 `art-src/` holds licensed source art. Record where each sheet came from in the
 `credit` field of the config - it is carried into the generated file's header.
-The current sheet is Freepik, under Al's licence.
+
+Sources in use, and what covers them:
+
+| Sheet | Source | Licence |
+| --- | --- | --- |
+| `wild-animals.svg`, `flamingos.svg`, `tropic.svg`, `apes.svg`, `iso-animals.svg` | Freepik | Al's Freepik licence |
+| `savanna.svg`, `savanna-grazers.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
+| `kenney-isometric-buildings/` | Kenney | CC0 - public domain, no attribution required |

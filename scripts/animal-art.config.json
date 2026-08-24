@@ -142,6 +142,48 @@
           "group": 1
         }
       }
+    },
+    {
+      "file": "art-src/zoo/savanna.svg",
+      "credit": "Adobe Stock",
+      "//": "Flat, side on, no outlines - the closest match yet to the first sheet. Only the two species the game was missing are taken; the rest duplicate what is already drawn. The meerkat carries its own scale: this sheet draws one nearly as tall as a lion, which is a poster's convention rather than a park's.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.25,
+      "unitScale": 0.26,
+      "species": {
+        "cheetah": {
+          "island": 2,
+          "flip": true
+        },
+        "meerkat": {
+          "island": 8,
+          "unitScale": 0.16
+        }
+      }
+    },
+    {
+      "file": "art-src/zoo/savanna-grazers.svg",
+      "credit": "Adobe Stock",
+      "//": "The same hand as savanna.svg. Each species carries its own scale: the sheet draws an impala nearly as tall as a buffalo, which a poster does and a park cannot.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.25,
+      "unitScale": 0.3,
+      "species": {
+        "buffalo": {
+          "island": 3,
+          "unitScale": 0.37,
+          "flip": true
+        },
+        "antelope": {
+          "island": 6,
+          "unitScale": 0.22
+        },
+        "ostrich": {
+          "island": 7,
+          "unitScale": 0.33,
+          "flip": true
+        }
+      }
     }
   ]
 }

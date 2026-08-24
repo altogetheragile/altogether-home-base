@@ -66,6 +66,9 @@ for (const source of config.sources) {
   // in the units the rest of the zoo is measured in, so a flamingo off a second sheet stands the
   // right height beside a giraffe off the first.
   const unit = source.unitScale ?? 1;
+  // A species can override the sheet's scale. Illustration sets draw a meerkat nearly as tall as a
+  // lion so it is not a speck on the page; the park is not a page, and something has to give.
+  const unitFor = (spec) => spec.unitScale ?? unit;
   const named = Object.entries(source.species);
   const picks = named.filter(([, sp]) => sp.island !== undefined || sp.box).map(([species, sp]) => {
     const c = sp.box ? carved.find((r) => r.name === species) : islands[sp.island];
@@ -89,7 +92,7 @@ for (const source of config.sources) {
       species,
       // The box is scaled; the viewBox is not. The drawing is stretched into whatever box it is
       // given, so scaling the box is all it takes to put a second sheet on the first one's scale.
-      w: +(box.w * unit).toFixed(1), h: +(box.h * unit).toFixed(1),
+      w: +(box.w * unitFor(spec)).toFixed(1), h: +(box.h * unitFor(spec)).toFixed(1),
       viewBox: viewBoxOf(box, 2),
       flip: !!spec.flip,
       body: slim(body),
