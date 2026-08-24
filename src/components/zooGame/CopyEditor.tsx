@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { copyEntries, type CopyEntry, type CopyGroup } from './copy';
 import { saveCopy } from './useZooCopy';
-import { TONE, type Tone } from './ui/tokens';
+import { FOCUS, TONE, type Tone } from './ui/tokens';
 
 /** Each group wears the colour its subject wears in the game: teaching cards violet, the events
  *  emerald, the artifacts amber, the coach sky. Editing the Sprint Review's card should feel like
@@ -55,7 +55,7 @@ function EditRow({ entry, tone, showWhere, current, onSaved }: { entry: CopyEntr
         {edited && (
           <button type="button" onClick={() => { setDraft(entry.value); void save(entry.value); }}
             title="Back to the wording the game shipped with"
-            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+            className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
             <RotateCcw className="h-3 w-3" /> Reset
           </button>
         )}
@@ -70,7 +70,7 @@ function EditRow({ entry, tone, showWhere, current, onSaved }: { entry: CopyEntr
       {error && <p className="mt-1 text-[11px] text-destructive">{error}</p>}
       {dirty && (
         <div className="mt-1 flex items-center justify-end gap-1.5">
-          <button type="button" onClick={() => setDraft(current ?? entry.value)} className="text-[11px] text-muted-foreground hover:text-foreground">Cancel</button>
+          <button type="button" onClick={() => setDraft(current ?? entry.value)} className={cn(FOCUS, "text-[11px] text-muted-foreground hover:text-foreground")}>Cancel</button>
           <Button size="sm" className="h-6 px-2 text-[11px]" disabled={saving} onClick={() => void save(draft)}>
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="mr-1 h-3 w-3" /> Save</>}
           </Button>
@@ -110,7 +110,7 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
     <>
       <button type="button" onClick={() => setOpen((o) => !o)}
         title="Edit the teaching copy on this screen"
-        className={cn('flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors',
+        className={cn(FOCUS, 'flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors',
           open ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground hover:text-foreground')}>
         <PencilLine className="h-3.5 w-3.5" />
         <span className="hidden lg:inline">Copy</span>
@@ -130,10 +130,10 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <button type="button" onClick={() => setWide((w) => !w)} aria-label={wide ? 'Narrower' : 'Wider'} title={wide ? 'Narrower' : 'Wider'}
-                className="rounded border border-border p-1 text-muted-foreground hover:text-foreground">
+                className={cn(FOCUS, "rounded border border-border p-1 text-muted-foreground hover:text-foreground")}>
                 {wide ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
               </button>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className={cn(FOCUS, "text-muted-foreground hover:text-foreground")}><X className="h-4 w-4" /></button>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the wording..."
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-xs outline-none focus:border-primary" />
             <button type="button" onClick={() => setAll((a) => !a)}
-              className={cn('shrink-0 rounded-full border px-2 py-1 text-[11px] font-medium',
+              className={cn(FOCUS, 'shrink-0 rounded-full border px-2 py-1 text-[11px] font-medium',
                 all ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>
               {all ? 'Everything' : 'This screen'}
             </button>

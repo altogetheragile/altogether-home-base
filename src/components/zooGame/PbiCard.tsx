@@ -108,7 +108,7 @@ export function PbiCard({
           </div>
         </div>
       )}
-      {note && <div className="mt-1 pl-6 text-[11px] font-medium text-amber-700 dark:text-amber-300">{note}</div>}
+      {note && <div className={cn(TONE.attention.text, "mt-1 pl-6 text-[11px] font-medium")}>{note}</div>}
       {detail}
     </div>
   );

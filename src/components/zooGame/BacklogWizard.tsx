@@ -6,7 +6,7 @@ import { ActionBar } from './ActionBar';
 import { StepTrack } from './StepTrack';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, FOCUS } from './ui/tokens';
 import { Check, ArrowRight, Sparkles, Users, Camera, Armchair } from 'lucide-react';
 
 // ============= Where a Product Backlog comes from =============
@@ -35,7 +35,7 @@ const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
 function Choice({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={cn('flex items-start gap-2 rounded-lg border-2 p-3 text-left transition-colors',
+      className={cn(FOCUS, 'flex items-start gap-2 rounded-lg border-2 p-3 text-left transition-colors',
         on ? 'border-primary bg-primary/[0.07]' : 'border-border hover:border-primary/50 hover:bg-muted/40')}>
       <span className={cn('mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full', on ? 'bg-primary text-primary-foreground' : 'border-2 border-border')}>
         {on && <Check className="h-2.5 w-2.5" />}

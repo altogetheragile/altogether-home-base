@@ -5,7 +5,7 @@ import { SPECIES_SHAPES } from './design';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, Wand2 } from 'lucide-react';
-import { SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE } from './ui/tokens';
 
 interface PbiEditorProps {
   zones: string[];
@@ -139,7 +139,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           <div className="flex flex-wrap gap-1.5">
             {CATEGORIES.map((c) => (
               <button key={c.key} type="button" onClick={() => setCategory(c.key)}
-                className={cn('rounded-full border px-3 py-1 text-xs', category === c.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')} title={c.hint}>{c.label}</button>
+                className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs', category === c.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')} title={c.hint}>{c.label}</button>
             ))}
           </div>
           {/* Nudge: if the name implies a different Kind than the one picked, offer a one-click switch. */}
@@ -150,7 +150,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
             return (
               <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded-md border border-amber-300 bg-amber-50/70 px-2.5 py-1.5 text-[11px] text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200">
                 <span>That name suggests <strong>{label}</strong>, but the Kind is <strong>{CATEGORIES.find((c) => c.key === category)!.label}</strong>.</span>
-                <button type="button" onClick={() => setCategory(suggested)} className="rounded-full border border-amber-400 bg-background px-2 py-0.5 font-medium text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/40">Switch to {label}</button>
+                <button type="button" onClick={() => setCategory(suggested)} className={cn(FOCUS, "rounded-full border border-amber-400 bg-background px-2 py-0.5 font-medium text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/40")}>Switch to {label}</button>
               </div>
             );
           })()}
@@ -163,7 +163,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           <div className="flex flex-wrap gap-1.5">
             {SERVICES.map((s) => (
               <button key={s.key} type="button" onClick={() => setServices((v) => (v === s.key ? undefined : s.key))}
-                className={cn('rounded-full border px-3 py-1 text-xs', services === s.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{s.label}</button>
+                className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs', services === s.key ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{s.label}</button>
             ))}
           </div>
         </div>
@@ -175,7 +175,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           <div className="flex flex-wrap gap-1.5">
             {FOOTPRINTS.map((f) => (
               <button key={f} type="button" onClick={() => setFootprint(f)}
-                className={cn('rounded-full border px-3 py-1 text-xs capitalize', footprint === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{f}</button>
+                className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs capitalize', footprint === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{f}</button>
             ))}
           </div>
         </div>
@@ -228,7 +228,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
               <input value={a} onChange={(e) => setAc(i, e.target.value)} placeholder="What makes it done and right?"
                 className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2.5 py-1.5 text-sm outline-none focus:border-primary')} />
               {acceptance.length > 1 && (
-                <button type="button" onClick={() => setAcceptance((arr) => arr.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground" aria-label="Remove criterion"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={() => setAcceptance((arr) => arr.filter((_, j) => j !== i))} className={cn(FOCUS, "text-muted-foreground hover:text-foreground")} aria-label="Remove criterion"><X className="h-4 w-4" /></button>
               )}
             </div>
           ))}
@@ -243,10 +243,10 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Story points <span className="font-normal normal-case">- a common estimation practice; Scrum doesn&rsquo;t mandate it</span></span>
           <div className="flex flex-wrap gap-1.5">
             <button type="button" onClick={() => setPoints(null)}
-              className={cn('rounded-full border px-3 py-1 text-xs', points === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>? unsized</button>
+              className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs', points === null ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>? unsized</button>
             {POINTS.map((p) => (
               <button key={p} type="button" onClick={() => setPoints(p)}
-                className={cn('rounded-full border px-3 py-1 text-xs tabular-nums', points === p ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{p}</button>
+                className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs tabular-nums', points === p ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{p}</button>
             ))}
           </div>
         </div>

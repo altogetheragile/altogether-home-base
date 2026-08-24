@@ -14,7 +14,7 @@ import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW, PADDING, SURFACE, TEXT } from './ui/tokens';
+import { EYEBROW, PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check } from 'lucide-react';
 
 type Step = 'done' | 'visitors' | 'next';
@@ -39,7 +39,7 @@ interface SprintReviewProps {
 }
 
 const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts: 'Enthusiasts', comfortSeekers: 'Comfort Seekers' };
-const SEG_COLOR: Record<SegmentId, string> = { families: 'bg-orange-500', enthusiasts: 'bg-sky-500', comfortSeekers: 'bg-amber-700' };
+const SEG_COLOR: Record<SegmentId, string> = { families: 'bg-orange-500', enthusiasts: TONE.coach.solid, comfortSeekers: 'bg-amber-700' };
 const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber-500' : 'bg-rose-500');
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
@@ -145,7 +145,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       {state.sprintGoal.trim() && (
         <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3',
           state.sprintGoalMet ? 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/20' : 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20')}>
-          {state.sprintGoalMet ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" /> : <CircleDashed className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />}
+          {state.sprintGoalMet ? <CheckCircle2 className={cn(TONE.done.text, "mt-0.5 h-5 w-5 shrink-0")} /> : <CircleDashed className={cn(TONE.attention.text, "mt-0.5 h-5 w-5 shrink-0")} />}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sprint Goal · {state.sprintGoalMet ? 'met' : 'not met'}</div>
             <p className="text-sm font-medium">{state.sprintGoal}</p>
@@ -248,8 +248,8 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       {step === 'next' && (<>
           {state.signals.length > 0 && (
             <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800/50 dark:bg-amber-950/20">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300"><Lightbulb className="h-4 w-4" /> Adapt the Backlog</div>
-              <p className="text-[11px] text-amber-800/80 dark:text-amber-300/70">You are the Product Owner. Turn a signal into work now, or decide it can wait - ignored ones get louder.</p>
+              <div className={cn(TONE.attention.text, "flex items-center gap-2 text-sm font-semibold")}><Lightbulb className="h-4 w-4" /> Adapt the Backlog</div>
+              <p className={cn(TONE.attention.text, "text-[11px]")}>You are the Product Owner. Turn a signal into work now, or decide it can wait - ignored ones get louder.</p>
               {state.signals.map((sig, i) => (
                 <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
                   <span className="flex-1">{sig.suggestion}</span>

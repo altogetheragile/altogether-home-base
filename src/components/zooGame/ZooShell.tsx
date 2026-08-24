@@ -10,7 +10,7 @@ import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft } from 'lucide-react';
-import { SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE } from './ui/tokens';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -35,19 +35,19 @@ function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: 
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Game" aria-label="Game menu"
-          className={cn(SURFACE.inset, 'shrink-0 p-1.5 text-muted-foreground hover:text-foreground')}>
+          className={cn(FOCUS, SURFACE.inset, 'shrink-0 p-1.5 text-muted-foreground hover:text-foreground')}>
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-48">
         <div className="space-y-0.5">
           {onSave && (
-            <button type="button" onClick={onSave} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60">
+            <button type="button" onClick={onSave} className={cn(FOCUS, "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60")}>
               <Save className="h-3.5 w-3.5 text-muted-foreground" /> Save this game
             </button>
           )}
           {onOpenSaves && (
-            <button type="button" onClick={onOpenSaves} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60">
+            <button type="button" onClick={onOpenSaves} className={cn(FOCUS, "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60")}>
               <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Saved games
             </button>
           )}
@@ -60,7 +60,7 @@ function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: 
 function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string }) {
   return (
     <button type="button" onClick={onClick}
-      className={cn('flex items-center gap-1.5 rounded-t-md border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors',
+      className={cn(FOCUS, 'flex items-center gap-1.5 rounded-t-md border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors',
         active ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
       <Icon className="h-4 w-4" /> {label}
       {badge && <span className="rounded-full bg-muted px-1.5 text-[11px] font-semibold text-muted-foreground">{badge}</span>}
@@ -110,7 +110,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 </span>
               ) : onBack && (
                 <button type="button" onClick={() => onBack(back.to)} title={back.label} aria-label={back.label}
-                  className={cn(SURFACE.inset, 'flex shrink-0 items-center p-1 text-muted-foreground transition-colors hover:text-foreground')}>
+                  className={cn(FOCUS, SURFACE.inset, 'flex shrink-0 items-center p-1 text-muted-foreground transition-colors hover:text-foreground')}>
                   <ChevronLeft className="h-4 w-4" />
                 </button>
               )
@@ -149,7 +149,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
               // ordering by value. It changes the Backlog, it runs an AI, and it needs signing in.
               <button type="button" onClick={onPoRefine} disabled={poRefining}
                 title="Hold a Product Backlog refinement session: the Product Owner brings value and order, the Developers bring what is too big, unclear or dependent on something else. Sizing stays yours - you are the Developers - and nothing here touches a Sprint Goal you have agreed."
-                className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-60">
+                className={cn(FOCUS, "flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-60")}>
                 {poRefining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                 <span className="hidden md:inline">{poRefining ? 'Refining together…' : 'Refine with the Scrum Team'}</span>
                 <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
@@ -186,7 +186,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
             <p className="mt-0.5 whitespace-pre-line text-sm leading-snug text-foreground">{poNote}</p>
           </div>
           {onDismissPoNote && (
-            <button type="button" onClick={onDismissPoNote} aria-label="Dismiss" className="shrink-0 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            <button type="button" onClick={onDismissPoNote} aria-label="Dismiss" className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")}><X className="h-4 w-4" /></button>
           )}
         </div>
       )}

@@ -13,7 +13,7 @@ import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
-import { SURFACE, PADDING } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 /** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
  *  Backlog can be scanned by shape as well as by name. See itemIcons.ts for the mapping. */
@@ -100,7 +100,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
           {onToggleGoalCritical && (
             <button type="button" onClick={() => onToggleGoalCritical(item.id)}
               title={item.goalCritical ? 'Essential to the Sprint Goal - click to unmark' : 'Mark essential to the Sprint Goal'}
-              className={cn('flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors',
+              className={cn(FOCUS, 'flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors',
                 item.goalCritical ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-300'
                   : 'border-border text-muted-foreground hover:border-amber-400 hover:text-amber-600')}>
               <Star className={cn('h-3.5 w-3.5', item.goalCritical && 'fill-amber-400')} /> Goal
@@ -112,7 +112,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}
           {onClose && (
             <button type="button" onClick={onClose} title="Close this plan" aria-label={`Close the plan for ${item.name}`}
-              className="rounded-md border border-border p-1 text-muted-foreground transition-colors hover:text-foreground">
+              className={cn(FOCUS, "rounded-md border border-border p-1 text-muted-foreground transition-colors hover:text-foreground")}>
               <ChevronUp className="h-3.5 w-3.5" />
             </button>
           )}
@@ -125,7 +125,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
             <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
             <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
-            <button type="button" onClick={() => remove(t.id)} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="Remove task"><X className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={() => remove(t.id)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove task"><X className="h-3.5 w-3.5" /></button>
           </div>
         ))}
         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" /> Add task</Button>
@@ -203,7 +203,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
           the ownership - squares are the Developers' plan, circles are the Product Owner's criteria -
           so two rows of the same colour do not read as one long row. */}
       {!bare && <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={ownOpen}
-        className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+        className={cn(FOCUS, "flex items-center gap-2 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
         <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !ownOpen && '-rotate-90')} />
         {tasks.length > 0 && (
           <span className="flex items-center gap-1" title={`Plan: ${done} of ${tasks.length} steps done`}>
@@ -265,7 +265,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                         ? <span className="flex w-full items-start gap-1.5 text-left text-[11px]">{body}</span>
                         : (
                           <button type="button" disabled={!canTick} onClick={(e) => { e.stopPropagation(); onConfirmAc!(item.id, i, !item.acConfirmed?.[i]); }}
-                            className="flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default">
+                            className={cn(FOCUS, "flex w-full items-start gap-1.5 text-left text-[11px] disabled:cursor-default")}>
                             {body}
                           </button>
                         )}
@@ -351,11 +351,11 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
     // process"), but a Backlog refined during the last Sprint would not need it.
     const status = why ? (
       <span title={mode === 'plan' ? `${why}. You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
-        className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+        className={cn(TONE.attention.text, "flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide")}>
         <AlertCircle className="h-3 w-3" /> Not ready
       </span>
     ) : mode === 'view' || mode === 'refine' ? (
-      <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"><Check className="h-3.5 w-3.5" /> Ready</span>
+      <span className={cn(TONE.done.text, "flex shrink-0 items-center gap-1 text-[11px] font-medium")}><Check className="h-3.5 w-3.5" /> Ready</span>
     ) : null;
     const action =
       // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
@@ -363,7 +363,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.
-        <Button size="sm" className="h-7 shrink-0 bg-rose-600 px-2 text-xs text-white hover:bg-rose-700" onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
+        <Button size="sm" className={cn(TONE.reflect.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-rose-700")} onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
       ) : mode === 'refine' ? null
@@ -400,13 +400,13 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           lead={<>
             {onReorder && (
               <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
-                <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className="disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3 w-3" /></button>
+                <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3 w-3" /></button>
                 <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
-                <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className="disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3 w-3" /></button>
+                <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3 w-3" /></button>
               </div>
             )}
             <button type="button" onClick={() => toggleItem(it.id)} title={isOpen ? 'Collapse' : 'Expand'} aria-expanded={isOpen}
-              className="shrink-0 text-muted-foreground hover:text-foreground">
+              className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")}>
               <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !isOpen && '-rotate-90')} />
             </button>
           </>}
@@ -439,18 +439,18 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
               <div className="text-[11px] text-muted-foreground">Plan: <span className="font-medium text-foreground">{t.filter((x) => x.done).length}/{t.length}</span> task{t.length === 1 ? '' : 's'}</div>
             ) : null; })()}
             <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
-              <button type="button" onClick={() => setEditingPbi(it)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /> Refine</button>
+              <button type="button" onClick={() => setEditingPbi(it)} className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground")}><Pencil className="h-3.5 w-3.5" /> Refine</button>
               {onDuplicatePbi && (
-                <button type="button" onClick={() => onDuplicatePbi(it.id)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"><CopyPlus className="h-3.5 w-3.5" /> Duplicate</button>
+                <button type="button" onClick={() => onDuplicatePbi(it.id)} className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground")}><CopyPlus className="h-3.5 w-3.5" /> Duplicate</button>
               )}
               {onDeletePbi && (confirmDelete === it.id ? (
                 <span className="flex items-center gap-1.5 text-[11px] font-medium">
                   <span className="text-muted-foreground">Delete?</span>
-                  <button type="button" onClick={() => { onDeletePbi(it.id); setConfirmDelete(null); }} className="text-destructive hover:underline">Yes</button>
-                  <button type="button" onClick={() => setConfirmDelete(null)} className="text-muted-foreground hover:text-foreground">No</button>
+                  <button type="button" onClick={() => { onDeletePbi(it.id); setConfirmDelete(null); }} className={cn(FOCUS, "text-destructive hover:underline")}>Yes</button>
+                  <button type="button" onClick={() => setConfirmDelete(null)} className={cn(FOCUS, "text-muted-foreground hover:text-foreground")}>No</button>
                 </span>
               ) : (
-                <button type="button" onClick={() => setConfirmDelete(it.id)} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
+                <button type="button" onClick={() => setConfirmDelete(it.id)} className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive")}><Trash2 className="h-3.5 w-3.5" /> Delete</button>
               ))}
             </div>
           </div>
@@ -467,7 +467,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           <button type="button" onClick={() => setWide((w) => !w)}
             title={wide ? 'Narrow the Product Backlog' : 'Widen the Product Backlog to read it'}
             aria-label={wide ? 'Narrow the Product Backlog' : 'Widen the Product Backlog'}
-            className="rounded border border-border p-0.5 text-muted-foreground transition-colors hover:text-foreground">
+            className={cn(FOCUS, "rounded border border-border p-0.5 text-muted-foreground transition-colors hover:text-foreground")}>
             {wide ? <ChevronsLeft className="h-3 w-3" /> : <ChevronsRight className="h-3 w-3" />}
           </button>
           Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span>
@@ -539,7 +539,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             <div key={zone} className="space-y-1.5">
               <div className="flex items-center gap-1">
                 <button type="button" onClick={() => toggleZone(zone)}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground">
+                  className={cn(FOCUS, "flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground")}>
                   <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', collapsed && '-rotate-90')} />
                   <span className="truncate">{zone}</span> <span className="font-normal text-muted-foreground/60">({zoneItems.length})</span>
                 </button>
@@ -549,8 +549,8 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
                 {onMoveZone && zoneOrder.length > 1 && (
                   <div className={cn(SURFACE.inset, 'flex shrink-0 items-center gap-0.5 px-1 py-0.5 text-muted-foreground')} title={`Move the ${zone} theme up or down`}>
                     <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Move</span>
-                    <button type="button" aria-label={`Move ${zone} up`} title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className="rounded disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
-                    <button type="button" aria-label={`Move ${zone} down`} title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className="rounded disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>
+                    <button type="button" aria-label={`Move ${zone} up`} title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3.5 w-3.5" /></button>
+                    <button type="button" aria-label={`Move ${zone} down`} title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3.5 w-3.5" /></button>
                   </div>
                 )}
               </div>

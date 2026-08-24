@@ -6,7 +6,7 @@ import type { ZooGameState } from './types';
 import { artifactState } from './engine';
 import { DodEditor } from './DodEditor';
 import { ARTIFACT_NAME, ARTIFACT_PROVENANCE, roleFor, type ArtifactId } from './scrumContent';
-import { SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE } from './ui/tokens';
 
 // ============= The three artifacts, in one place =============
 //
@@ -35,7 +35,7 @@ function ListAgreement({ title, items, note, onSet }: { title?: string; items: s
         <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{title ? `${title} (${items.length})` : `${items.length} things every item must be`}</span>
         {onSet && (
           <button type="button" onClick={() => setEditing((e) => !e)}
-            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+            className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
             {editing ? <><Check className="h-3 w-3" /> Done</> : <><Pencil className="h-3 w-3" /> Edit</>}
           </button>
         )}
@@ -61,9 +61,9 @@ function GoalEditor({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string)
           className={cn(SURFACE.inset, 'w-full resize-none px-2 py-1.5 text-xs outline-none focus:border-primary')}
           placeholder="One clear outcome: a park that [who] love, so that [outcome]." />
         <div className="flex justify-end gap-1.5">
-          <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground">Cancel</button>
+          <button type="button" onClick={() => setEditing(false)} className={cn(FOCUS, "rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground")}>Cancel</button>
           <button type="button" disabled={!draft.trim()} onClick={() => { onSetGoal(draft); setEditing(false); }}
-            className="rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Save</button>
+            className={cn(FOCUS, "rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50")}>Save</button>
         </div>
       </div>
     );
@@ -73,7 +73,7 @@ function GoalEditor({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string)
       <p className="min-w-0 flex-1 text-xs font-medium leading-snug">{goal}</p>
       {onSetGoal && (
         <button type="button" onClick={() => { setDraft(goal); setEditing(true); }} title="Edit the Product Goal"
-          className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
+          className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")}><Pencil className="h-3 w-3" /></button>
       )}
     </div>
   );
@@ -94,7 +94,7 @@ export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: 
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="The three artifacts, what is in them, and their commitments"
-          className={cn(SURFACE.inset, 'flex shrink-0 items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground')}>
+          className={cn(FOCUS, SURFACE.inset, 'flex shrink-0 items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground')}>
           <Boxes className="h-3.5 w-3.5" />
           <span className="hidden md:inline">Artifacts</span>
           {active && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}

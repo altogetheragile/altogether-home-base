@@ -3,6 +3,7 @@ import type { BacklogItem, ZooGameState } from './types';
 import { pokerHand, estimateSuggestion, refinementTalk } from './engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { FOCUS, TONE } from './ui/tokens';
 
 const FIB = [1, 2, 3, 5, 8, 13, 21];
 
@@ -30,8 +31,8 @@ export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProp
           Developers by helping them understand and select trade-offs." */}
       <div className="mb-3 space-y-1.5">
         <div className="rounded-md border border-amber-300/60 bg-amber-50/60 px-2.5 py-1.5 text-[11px] dark:border-amber-800/40 dark:bg-amber-950/20">
-          <span className="font-semibold text-amber-900 dark:text-amber-200">{talk.po.name}</span>
-          <span className="ml-1 text-amber-900/90 dark:text-amber-100/90">{talk.po.line}</span>
+          <span className={cn(TONE.attention.text, "font-semibold")}>{talk.po.name}</span>
+          <span className={cn(TONE.attention.text, "ml-1")}>{talk.po.line}</span>
         </div>
         {talk.devs.map((d, i) => (
           <div key={i} className="rounded-md border border-border bg-card px-2.5 py-1.5 text-[11px]">
@@ -47,7 +48,7 @@ export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProp
       </p>
 
       {item.carriedOver && (
-        <p className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-800 dark:text-amber-300">
+        <p className={cn(TONE.attention.text, "mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px]")}>
           Carried over unfinished (was {item.estimate} pts). Estimate the work that is <b>left</b>, not the whole item again - the build progress is kept. Velocity only counts it once, in the Sprint it is finished.
         </p>
       )}
@@ -64,7 +65,7 @@ export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProp
         <div className="flex flex-wrap gap-1.5">
           {FIB.map((f) => (
             <button key={f} type="button" onClick={() => setPick(f)}
-              className={cn('h-8 w-9 rounded-md border font-mono text-sm', pick === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{f}</button>
+              className={cn(FOCUS, 'h-8 w-9 rounded-md border font-mono text-sm', pick === f ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/40')}>{f}</button>
           ))}
         </div>
       </div>

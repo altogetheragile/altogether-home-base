@@ -3,7 +3,7 @@ import type { GoalShape, GoalMeasure, GoalMetric } from './types';
 import { GOAL_METRICS } from './engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW, SURFACE } from './ui/tokens';
+import { EYEBROW, FOCUS, SURFACE, TONE } from './ui/tokens';
 import { ChevronDown, Plus, Trash2, Sparkles } from 'lucide-react';
 
 // ============= Other ways to write a Product Goal =============
@@ -47,7 +47,7 @@ function MeasureRow({ measure, onChange, onRemove }: { measure: GoalMeasure; onC
         aria-label="What to measure" className="min-w-0 flex-1 rounded border border-border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary">
         {GOAL_METRICS.map((g) => <option key={g.key} value={g.key}>{g.label}</option>)}
       </select>
-      <button type="button" onClick={onRemove} aria-label="Remove this measure" className="shrink-0 text-muted-foreground hover:text-destructive">
+      <button type="button" onClick={onRemove} aria-label="Remove this measure" className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-destructive")}>
         <Trash2 className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -70,10 +70,10 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
 
   return (
     <section className="rounded-lg border border-dashed border-border bg-muted/20">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left">
+      <button type="button" onClick={() => setOpen((o) => !o)} className={cn(FOCUS, "flex w-full items-center justify-between gap-2 px-3 py-2 text-left")}>
         <span className="min-w-0">
           <span className="text-sm font-semibold">Other ways to write a Product Goal</span>
-          <span className="ml-1.5 text-[11px] text-amber-700 dark:text-amber-400">none of them Scrum</span>
+          <span className={cn(TONE.attention.text, "ml-1.5 text-[11px]")}>none of them Scrum</span>
         </span>
         <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')} />
       </button>
@@ -91,7 +91,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
           <div className="flex flex-wrap gap-1.5">
             {SHAPES.map((s) => (
               <button key={s.key} type="button" onClick={() => setPick(s.key)}
-                className={cn('rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+                className={cn(FOCUS, 'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                   pick === s.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
                 {s.label}
               </button>
@@ -126,7 +126,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
               ))}
               {rows.length < 4 && (
                 <button type="button" onClick={() => setRows([...rows, { metric: 'visitors', target: 800 }])}
-                  className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline">
+                  className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-primary hover:underline")}>
                   <Plus className="h-3 w-3" /> Add a measure
                 </button>
               )}

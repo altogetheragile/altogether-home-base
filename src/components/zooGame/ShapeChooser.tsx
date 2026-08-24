@@ -1,6 +1,7 @@
 import type { BacklogItem } from './types';
 import { BUILDING_TYPES, FLORA_TYPES } from './design';
 import { cn } from '@/lib/utils';
+import { FOCUS } from './ui/tokens';
 
 // ============= Deciding what KIND of thing this is =============
 //
@@ -29,7 +30,7 @@ function Choice({ options, value, onPick }: { options: { key: string; label: str
     <div className="flex flex-wrap gap-1">
       {options.map((o) => (
         <button key={o.key} type="button" onClick={() => onPick(o.key)} title={o.hint}
-          className={cn('rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
+          className={cn(FOCUS, 'rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
             value === o.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
           {o.label}
         </button>

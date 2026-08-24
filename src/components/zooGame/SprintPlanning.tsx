@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight, ListChecks } from 'lucide-react';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 // ============= Sprint Planning =============
 //
@@ -92,7 +92,7 @@ function BacklogHeading({ count, note, onRefine }: { count: number; note?: strin
       <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({count})</span></h3>
       {onRefine
         ? <button type="button" onClick={onRefine} title="Sizing and splitting belong in refinement, during the Sprint before this one."
-          className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">Refine the Backlog</button>
+          className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline")}>Refine the Backlog</button>
         : note && <span className="text-[11px] text-muted-foreground/70">{note}</span>}
     </div>
   );
@@ -212,7 +212,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
               </div>
               {/* The wizards are the game offering to do a piece of work for you, so they read as an
                   offer: filled, not a tinted ghost of the primary action. */}
-              <Button size="sm" className="h-8 gap-1 bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+              <Button size="sm" className={cn(TONE.teach.solid, TONE.teach.solid, TONE.teach.solid, "h-8 gap-1 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark: dark:hover:")}
                 onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
                 title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
@@ -236,7 +236,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
           {state.signals.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
-                <button type="button" className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/70 px-3 py-1.5 text-xs font-medium text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-300">
+                <button type="button" className={cn(FOCUS, "flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/70 px-3 py-1.5 text-xs font-medium text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-300")}>
                   <Lightbulb className="h-3.5 w-3.5" /> {state.signals.length} signal{state.signals.length === 1 ? '' : 's'} from your visitors
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -318,7 +318,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   {REFINE_POINT_OPTIONS.map((v) => (
                     <button key={v} type="button" onClick={() => setRefinePts(v)}
-                      className={cn('rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      className={cn(FOCUS, 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                         refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border text-muted-foreground hover:text-foreground')}>
                       {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
                     </button>
@@ -347,7 +347,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                     {' '}<strong className="text-foreground">{totalSteps} step{totalSteps === 1 ? '' : 's'}</strong> so far.
                   </p>
                 </div>
-                <Button size="sm" className="h-8 gap-1 bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+                <Button size="sm" className={cn(TONE.teach.solid, TONE.teach.solid, TONE.teach.solid, "h-8 gap-1 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark: dark:hover:")}
                   onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
                   <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
                 </Button>
@@ -384,7 +384,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                             tasks.length ? 'border-emerald-400/60 bg-emerald-500/[0.04]' : 'border-dashed')}
                           lead={stars ? (
                             <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
-                              title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className="shrink-0">
+                              title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className={cn(FOCUS, "shrink-0")}>
                               <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
                             </button>
                           ) : undefined}
@@ -399,9 +399,9 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 })}
                 {refinePts > 0 && (
                   <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/60 bg-violet-500/[0.07] px-2 py-1.5 text-xs">
-                    <ListChecks className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                    <ListChecks className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
                     <span className="min-w-0 flex-1 font-medium">Refine the Product Backlog</span>
-                    <span className="shrink-0 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">{refinePts} pts</span>
+                    <span className={cn(TONE.teach.text, "shrink-0 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[11px] font-semibold")}>{refinePts} pts</span>
                   </div>
                 )}
               </div>

@@ -18,6 +18,7 @@ export const TONE = {
     soft: 'border-primary/30 bg-primary/5',
     strong: 'border-primary bg-primary/10 text-primary',
     chip: 'bg-primary/10 text-primary',
+    solid: 'bg-primary',
   },
   /** Teaching: cards, the "?" panel, anything explaining Scrum itself. */
   teach: {
@@ -25,6 +26,7 @@ export const TONE = {
     soft: 'border-violet-300/70 bg-violet-50/60 dark:border-violet-800/40 dark:bg-violet-950/20',
     strong: 'border-violet-400 bg-violet-500/10 text-violet-700 dark:text-violet-300',
     chip: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+    solid: 'bg-violet-500',
   },
   /** The coach's voice: a nudge about what the screens do not say. */
   coach: {
@@ -32,6 +34,7 @@ export const TONE = {
     soft: 'border-sky-300/70 bg-sky-50/70 dark:border-sky-800/40 dark:bg-sky-950/20',
     strong: 'border-sky-400 bg-sky-500/10 text-sky-700 dark:text-sky-300',
     chip: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
+    solid: 'bg-sky-500',
   },
   /** Attention: not ready, over capacity, a blocker, something waiting on you. */
   attention: {
@@ -39,6 +42,7 @@ export const TONE = {
     soft: 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20',
     strong: 'border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-400',
     chip: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+    solid: 'bg-amber-500',
   },
   /** Done: met, delivered, live to visitors. */
   done: {
@@ -46,6 +50,7 @@ export const TONE = {
     soft: 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/20',
     strong: 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
     chip: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+    solid: 'bg-emerald-500',
   },
   /** Reflection: the Retrospective's own voice - looking back rather than pushing forward. */
   reflect: {
@@ -53,6 +58,16 @@ export const TONE = {
     soft: 'border-rose-500/25 bg-rose-500/5',
     strong: 'border-rose-400 bg-rose-500/10 text-rose-700 dark:text-rose-300',
     chip: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+    solid: 'bg-rose-500',
+  },
+  /** Danger: removing something, a thing that has gone wrong. Kept on red rather than moved to the
+   *  `destructive` variable, because that is the colour these controls already are. */
+  danger: {
+    text: 'text-red-600 dark:text-red-400',
+    soft: 'border-red-300 bg-red-50/70 dark:border-red-900/50 dark:bg-red-950/20',
+    strong: 'border-red-400 bg-red-500/10 text-red-600 dark:text-red-400',
+    chip: 'bg-red-500/15 text-red-600 dark:text-red-400',
+    solid: 'bg-red-500',
   },
   /** Quiet: structure, meta, anything that should recede. */
   quiet: {
@@ -60,6 +75,7 @@ export const TONE = {
     soft: 'border-border bg-muted/30',
     strong: 'border-border bg-card',
     chip: 'bg-muted text-muted-foreground',
+    solid: 'bg-muted-foreground',
   },
 } as const;
 
@@ -128,6 +144,15 @@ export const PADDING = {
   default: 'px-3 py-2.5',
   roomy: 'px-4 py-3',
 } as const;
+
+/** The focus ring, matching the one the shared Button already uses.
+ *
+ *  An audit found 126 hand-rolled buttons in the game and not one of them showed where the keyboard
+ *  was. They are hand-rolled for good reasons - a card, a park feature, a poker card are not the
+ *  same shape as a button - but a control you cannot see yourself land on is a control somebody
+ *  navigating by keyboard cannot use. This is what the shared Button does, in a form the others can
+ *  borrow. */
+export const FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
 /** The eyebrow above a question: small, bold, spaced, in the tone of what follows. */
 export const EYEBROW = 'text-[10px] font-bold uppercase tracking-[0.08em]';

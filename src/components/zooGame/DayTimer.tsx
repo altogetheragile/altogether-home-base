@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DAY_SECONDS } from './config';
+import { TONE } from './ui/tokens';
 
 /** The day clock: a real countdown for the build day. It resets each day, and can be cut
  *  short by the Daily Scrum's timebox, a blocker that slipped through, or Backlog refinement
@@ -96,7 +97,7 @@ export function DayTimer({ dayNumber, dayTimeMult, refinePenalty, impeded, learn
         </div>
       )}
       {refinePenalty > 0 && (
-        <div className="mt-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">−{refinePenalty}s: refining the Backlog this Sprint</div>
+        <div className={cn(TONE.attention.text, "mt-1 text-[11px] font-medium")}>−{refinePenalty}s: refining the Backlog this Sprint</div>
       )}
     </div>
   );

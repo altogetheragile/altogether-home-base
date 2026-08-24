@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Sparkles } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { FOCUS } from './ui/tokens';
+import { cn } from '@/lib/utils';
 
 /** "This is new, and here is why it turned up."
  *
@@ -13,7 +15,7 @@ export function NewHere({ title, children }: { title: string; children: ReactNod
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title={`New: ${title}`}
-          className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary transition-colors hover:bg-primary/20">
+          className={cn(FOCUS, "flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary transition-colors hover:bg-primary/20")}>
           <Sparkles className="h-2.5 w-2.5" /> New
         </button>
       </PopoverTrigger>

@@ -10,7 +10,7 @@ import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Zap, MessageCircleQuestion } from 'lucide-react';
-import { SURFACE, PADDING } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 type Step = 'inspect' | 'adapt';
 const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
@@ -96,10 +96,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       <div className="max-h-[22vh] space-y-2 overflow-y-auto pr-1">
         {IMPROVEMENTS.map((imp) => (
           <button key={imp.text} type="button" onClick={() => setSelected(imp.text)}
-            className={cn('w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+            className={cn(FOCUS, 'w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
               selected === imp.text ? 'border-primary bg-primary/10 font-medium' : 'border-border bg-card hover:border-primary hover:bg-primary/5')}>
             {imp.text}
-            {imp.effect && <span className="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-300"><Zap className="h-3 w-3" /> {imp.effect}</span>}
+            {imp.effect && <span className={cn(TONE.attention.text, "mt-1 flex items-center gap-1 text-[11px] font-medium")}><Zap className="h-3 w-3" /> {imp.effect}</span>}
           </button>
         ))}
       </div>

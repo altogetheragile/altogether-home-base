@@ -3,6 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { TeachingCard, ExplainCard } from './ScrumTeaching';
 import { EventContractStrip } from './EventContract';
+import { FOCUS } from './ui/tokens';
 
 /** The one place words live on a screen.
  *
@@ -32,7 +33,7 @@ export function ExplainButton({ cards, phase, teachCard, onMarkTaught, compact }
         {/* Unread teaching used to pulse a bare icon, which nobody noticed. It now says what it is
             and how many cards are waiting - a button you can read beats an animation you cannot. */}
         <button type="button" title={teachCard ? 'New teaching about this screen' : 'What is this for?'} aria-label="What is this for?"
-          className={cn('flex shrink-0 items-center gap-1.5 rounded-full border py-1.5 text-xs font-semibold transition-colors',
+          className={cn(FOCUS, 'flex shrink-0 items-center gap-1.5 rounded-full border py-1.5 text-xs font-semibold transition-colors',
             compact ? 'px-1.5' : 'px-2.5',
             teachCard ? 'animate-pulse border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
               : 'border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground')}>

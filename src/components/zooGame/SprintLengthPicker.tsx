@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE } from './ui/tokens';
 
 /** How many days a custom Sprint may run to. A Sprint is "one month or less"; the game's days stand
  *  in for weeks, so ten is generous and anything past it is not a Sprint. */
@@ -27,7 +27,7 @@ export function SprintLengthPicker({ days, options, onSet, at }: {
       <div className="flex flex-wrap items-center gap-1.5">
         {options.map((d) => (
           <button key={d} type="button" onClick={() => { setCustom(false); onSet(d); }}
-            className={cn('rounded-md border px-3 py-1 text-sm transition-colors',
+            className={cn(FOCUS, 'rounded-md border px-3 py-1 text-sm transition-colors',
               !custom && days === d ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border hover:bg-muted')}>
             {d} days
           </button>
@@ -44,7 +44,7 @@ export function SprintLengthPicker({ days, options, onSet, at }: {
           </span>
         ) : (
           <button type="button" onClick={() => setCustom(true)}
-            className="rounded-md border border-dashed border-border px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground">
+            className={cn(FOCUS, "rounded-md border border-dashed border-border px-3 py-1 text-sm text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground")}>
             Custom
           </button>
         )}

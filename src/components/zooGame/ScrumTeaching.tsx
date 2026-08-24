@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
-import { SURFACE, TEXT } from './ui/tokens';
+import { FOCUS, SURFACE, TEXT, TONE } from './ui/tokens';
 
 // The teaching, on screen. Three pieces: a card shown in context the first time an element is met,
 // a reference panel that is always to hand, and the one-page introduction before play. All of it can
@@ -34,7 +34,7 @@ function CardBody({ card }: { card: ScrumCard }) {
       {card.timebox && (
         <p className="flex items-start gap-1 text-muted-foreground"><Clock className="mt-0.5 h-3 w-3 shrink-0" /> <span>{card.timebox}</span></p>
       )}
-      {card.notScrum && <p className="text-amber-700 dark:text-amber-400">{card.notScrum}</p>}
+      {card.notScrum && <p className={TONE.attention.text}>{card.notScrum}</p>}
     </div>
   );
 }
@@ -67,13 +67,13 @@ export function TeachingCard({ id, onDismiss }: { id: string; onDismiss: (id: st
             other and the card read as two competing headings. */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <GraduationCap className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">{kindLabel(card)}</span>
+            <GraduationCap className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
+            <span className={cn(TONE.teach.text, "text-[10px] font-bold uppercase tracking-[0.08em]")}>{kindLabel(card)}</span>
           </div>
           <h3 className="text-sm font-semibold leading-tight">{card.title}</h3>
         </div>
         <button type="button" onClick={() => onDismiss(card.id)} title="Got it" aria-label={`Got it - hide ${card.title}`}
-          className="shrink-0 rounded-full p-0.5 text-violet-700/70 hover:text-violet-900 dark:text-violet-300/70 dark:hover:text-violet-100">
+          className={cn(FOCUS, "shrink-0 rounded-full p-0.5 text-violet-700/70 hover:text-violet-900 dark:text-violet-300/70 dark:hover:text-violet-100")}>
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -89,7 +89,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Scrum reference - every element, what it is for" aria-label="Scrum reference"
-          className={cn(SURFACE.inset, 'flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground')}>
+          className={cn(FOCUS, SURFACE.inset, 'flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground')}>
           <BookOpen className="h-3.5 w-3.5" /> <span className="hidden md:inline">Scrum</span>
         </button>
       </PopoverTrigger>
@@ -98,7 +98,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum reference</span>
           {onSetTeaching && (
             <button type="button" onClick={() => onSetTeaching(!teaching)}
-              className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
+              className={cn(FOCUS, "rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
               Teaching {teaching ? 'on' : 'off'}
             </button>
           )}
@@ -117,7 +117,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
                 {SCRUM_CARDS.filter((c) => kinds.includes(c.kind)).map((c) => (
                   <div key={c.id} className="rounded-md border border-border bg-card">
                     <button type="button" onClick={() => setOpen((o) => (o === c.id ? null : c.id))}
-                      className="flex w-full items-start gap-2 px-2 py-1.5 text-left">
+                      className={cn(FOCUS, "flex w-full items-start gap-2 px-2 py-1.5 text-left")}>
                       <span className="mt-0.5 shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{kindLabel(c)}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-xs font-semibold">{c.title}</span>
@@ -142,16 +142,16 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
 // its colour three times over - a solid spine down the left, a filled title, and a tint you can
 // actually see - so the page reads as five separate things at a glance rather than one grey wall.
 // Five colours and no more: the discipline is what keeps it from becoming noise.
-const TONE = {
-  founded: { wrap: 'border-sky-500/40 bg-sky-500/[0.08]', spine: 'bg-sky-500', chip: 'bg-sky-600 text-white dark:bg-sky-500' },
-  team: { wrap: 'border-violet-500/40 bg-violet-500/[0.08]', spine: 'bg-violet-500', chip: 'bg-violet-600 text-white dark:bg-violet-500' },
-  artifacts: { wrap: 'border-amber-500/45 bg-amber-500/[0.10]', spine: 'bg-amber-500', chip: 'bg-amber-600 text-white dark:bg-amber-500' },
-  events: { wrap: 'border-emerald-500/40 bg-emerald-500/[0.08]', spine: 'bg-emerald-500', chip: 'bg-emerald-600 text-white dark:bg-emerald-500' },
-  values: { wrap: 'border-rose-500/40 bg-rose-500/[0.08]', spine: 'bg-rose-500', chip: 'bg-rose-600 text-white dark:bg-rose-500' },
+const SECTION = {
+  founded: { wrap: 'border-sky-500/40 bg-sky-500/[0.08]', spine: TONE.coach.solid, chip: 'bg-sky-600 text-white dark:bg-sky-500' },
+  team: { wrap: 'border-violet-500/40 bg-violet-500/[0.08]', spine: TONE.teach.solid, chip: 'bg-violet-600 text-white dark:bg-violet-500' },
+  artifacts: { wrap: 'border-amber-500/45 bg-amber-500/[0.10]', spine: TONE.attention.solid, chip: 'bg-amber-600 text-white dark:bg-amber-500' },
+  events: { wrap: 'border-emerald-500/40 bg-emerald-500/[0.08]', spine: TONE.done.solid, chip: 'bg-emerald-600 text-white dark:bg-emerald-500' },
+  values: { wrap: 'border-rose-500/40 bg-rose-500/[0.08]', spine: TONE.reflect.solid, chip: 'bg-rose-600 text-white dark:bg-rose-500' },
 } as const;
 
-function Section({ title, tone, icon: Icon, children }: { title: string; tone: keyof typeof TONE; icon: typeof Users; children: ReactNode }) {
-  const t = TONE[tone];
+function Section({ title, tone, icon: Icon, children }: { title: string; tone: keyof typeof SECTION; icon: typeof Users; children: ReactNode }) {
+  const t = SECTION[tone];
   return (
     <section className={cn('relative space-y-2 overflow-hidden rounded-lg border py-2.5 pl-4 pr-3', t.wrap)}>
       <span className={cn('absolute inset-y-0 left-0 w-1.5', t.spine)} aria-hidden />
@@ -191,7 +191,7 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
     <div className="mx-auto max-w-4xl space-y-3 px-4 py-5">
       <header className="space-y-1">
         {onBack && (
-          <button type="button" onClick={onBack} className="mb-1 block text-[11px] text-muted-foreground underline-offset-2 hover:underline">
+          <button type="button" onClick={onBack} className={cn(FOCUS, "mb-1 block text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
             &larr; Back
           </button>
         )}
@@ -234,12 +234,12 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
         {/* An escape you cannot see is not an escape. Bordered, in the foreground colour, with the
             icon that says what it does. */}
         <button type="button" onClick={onSkipTeaching}
-          className="flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted">
+          className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
           <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
           I have covered this - turn the teaching off
         </button>
         <button type="button" onClick={onDone}
-          className={cn('rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
+          className={cn(FOCUS, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
           Start building the zoo &rarr;
         </button>
       </div>
