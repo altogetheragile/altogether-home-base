@@ -17,7 +17,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { chromium } from 'playwright';
-import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet } from './lib/svg-sheet.mjs';
+import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet, inlineStyles } from './lib/svg-sheet.mjs';
 import { findIslands, cutIslands, regionsOf } from './lib/svg-clusters.mjs';
 
 const CONFIG = 'scripts/animal-art.config.json';
@@ -32,7 +32,7 @@ const entries = [];
 const credits = new Set();
 
 for (const source of config.sources) {
-  const svg = readFileSync(resolve(source.file), 'utf8');
+  const svg = await inlineStyles(browser, readFileSync(resolve(source.file), 'utf8'));
   const groups = topLevelGroups(svg);
 
   const boxes = await measureGroups(browser, svg);

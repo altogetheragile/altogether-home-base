@@ -19,7 +19,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { chromium } from 'playwright';
-import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet, namespaceIds } from './lib/svg-sheet.mjs';
+import { topLevelGroups, measureGroups, slim, viewBoxOf, contactSheet, namespaceIds, inlineStyles } from './lib/svg-sheet.mjs';
 
 const CONFIG = 'scripts/iso-art.config.json';
 const OUT = 'src/components/zooGame/art/isoArt.generated.ts';
@@ -33,7 +33,7 @@ const entries = [];
 const credits = new Set();
 
 for (const source of config.sources) {
-  const svg = readFileSync(resolve(source.file), 'utf8');
+  const svg = await inlineStyles(browser, readFileSync(resolve(source.file), 'utf8'));
   const groups = topLevelGroups(svg);
   const boxes = await measureGroups(browser, svg);
   if (boxes.length !== groups.length) {

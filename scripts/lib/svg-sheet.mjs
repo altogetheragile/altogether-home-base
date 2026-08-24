@@ -53,6 +53,9 @@ export async function measureGroups(browser, svg) {
  *  being shrunk to forty pixels wide, and together they are most of the file. */
 export function slim(markup) {
   return markup
+    // Exporters leave their signature in the file. It is not drawing, it rides along in every cut,
+    // and it is the first thing in the body where it lands - which is how it was noticed.
+    .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/\s*style="fill:(#[0-9A-Fa-f]{3,6});?"/g, ' fill="$1"')
     .replace(/\s*style="([^"]*)"/g, (m, css) => {
       const decls = css.split(';').map((d) => d.trim()).filter(Boolean)
@@ -113,5 +116,38 @@ export function namespaceIds(markup, prefix) {
       .split(`url(#${id})`).join(`url(#${safe})`)
       .split(`href="#${id}"`).join(`href="#${safe}"`);
   }
+  return out;
+}
+
+/** Write a sheet's computed styling onto its elements, so a drawing can be cut out of it.
+ *
+ *  Some exporters put the colours in a <style> block and give every shape a class. Cut a drawing
+ *  out of a sheet like that and the stylesheet stays behind: what you get is a correctly shaped,
+ *  entirely black animal. Nothing errors, because black is a perfectly good fill.
+ *
+ *  Rather than parse the CSS - which would have to handle specificity, inheritance and every form a
+ *  colour can take - this asks the browser what each shape actually looks like and writes that down.
+ *  Only for sheets that need it: a sheet whose fills are already on the elements is left alone, so
+ *  nothing already extracted changes.
+ */
+export async function inlineStyles(browser, svg) {
+  if (!/<style[\s>]/i.test(svg)) return svg;
+  const page = await browser.newPage({ viewport: { width: 1200, height: 1200 } });
+  await page.setContent(`<body style="margin:0">${svg}</body>`);
+  const out = await page.evaluate(() => {
+    const root = document.querySelector('svg');
+    for (const el of root.querySelectorAll('path,polygon,circle,ellipse,rect,line,polyline,g')) {
+      const cs = getComputedStyle(el);
+      for (const prop of ['fill', 'stroke', 'fill-opacity', 'stroke-opacity', 'stroke-width', 'opacity']) {
+        const v = cs.getPropertyValue(prop);
+        if (!v || v === 'none' && prop === 'stroke') continue;
+        el.setAttribute(prop, v);
+      }
+      el.removeAttribute('class');
+    }
+    for (const st of root.querySelectorAll('style')) st.remove();
+    return root.outerHTML;
+  });
+  await page.close();
   return out;
 }
