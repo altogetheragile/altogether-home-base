@@ -112,6 +112,12 @@ Then say where each drawing is, with `"box": [x, y, w, h]`. A shape joins a
 region if its middle is inside it *and* most of its area is - which is what
 keeps a connector reaching into the box from being dragged in with it.
 
+**Drawings that come on a base.** An isometric buildings sheet often draws each
+shop standing on its own patch of pavement and road. `dropLargerThan` throws away
+any shape bigger than a given area: the base is the one thing bigger than what is
+standing on it, which is what makes it separable at all. The box shrinks to what
+survives, so the building is not sized to allow for ground it no longer has.
+
 Either way, each drawing is cut with only the gradients and clip paths it uses,
 and those ids are renamed per drawing, so the same van can be parked twice.
 Gradients are then flattened to the colour halfway along them: a hundred stops

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { slim, namespaceIds } from '../../../scripts/lib/svg-sheet.mjs';
+import { chromium } from 'playwright';
+import { regionsOf, cutIslands } from '../../../scripts/lib/svg-clusters.mjs';
 
 /** Numbers as an SVG path parser would read them: a '-' starts a new number as well as negating it. */
 const numbers = (d: string): number[] =>
@@ -62,4 +64,32 @@ describe('lifting a drawing that refers to itself', () => {
     const plain = '<g><path fill="#abc123" d="M0,0"/></g>';
     expect(namespaceIds(plain, 'tree')).toBe(plain);
   });
+});
+
+/** A drawing that arrives standing on something: a shop on its own patch of pavement and road.
+ *  The base is the one thing bigger than the thing on it, which is what makes it separable. */
+const DIORAMA = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <polygon points="5,60 50,40 95,60 50,80" fill="#607d8b"/>
+  <rect x="40" y="20" width="20" height="25" fill="#ffb74d"/>
+  <rect x="44" y="30" width="6" height="8" fill="#42a5f5"/>
+</svg>`;
+
+describe('lifting a drawing off the base it came on', () => {
+  it('drops the base and keeps what stood on it', async () => {
+    const browser = await chromium.launch();
+    try {
+      const [region] = await regionsOf(browser, DIORAMA, [{ name: 'shop', box: [0, 0, 100, 100] }]);
+      const [whole] = await cutIslands(browser, DIORAMA, [{ name: 'shop', members: region.members }]);
+      expect(whole.body).toContain('#607d8b'); // the base is still there
+      const [lifted] = await cutIslands(browser, DIORAMA, [{ name: 'shop', members: region.members, dropLargerThan: 2000 }]);
+      expect(lifted.body).not.toContain('#607d8b'); // and now it is not
+      expect(lifted.body).toContain('#ffb74d');     // while the building is
+      expect(lifted.body).toContain('#42a5f5');     // window and all
+      // The box shrinks to what is left, so the building is not sized to allow for a base it no
+      // longer has - the same trap the flamingo's shadow set.
+      expect(lifted.box!.h).toBeLessThan(whole.box!.h);
+    } finally {
+      await browser.close();
+    }
+  }, 60_000);
 });
