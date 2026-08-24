@@ -37,9 +37,30 @@ Two kinds of thing appear in the scene, and the split is deliberate:
 - **Bought.** Anything organic or fiddly - trees, hedges, fences, benches, the
   fountain, the visitors - comes from a licensed sheet. Drawing these by hand
   goes badly.
-- **Built.** Buildings are drawn from the item's own colours. A box with a
-  pitched roof, a door and a window is a better kiosk than any single stock
-  drawing, because it wears the colours the player chose.
+- **Built.** A facility with no tile is drawn from the item's own colours - a box
+  with a pitched roof, a door and a window - so a kind nobody has illustrated
+  still appears.
+
+## Facilities
+
+The kiosk, cafe, gift shop and toilets are tiles from Kenney's Isometric
+Buildings pack, which is **CC0**: public domain, no attribution required, no
+licence question hanging over them.
+
+They are PNG rather than vector, which would be wrong for an animal and is fine
+here: a tile is 133px and every place the game draws a facility is smaller, so it
+is only ever scaled down. A test holds that line, comparing each tile against its
+own footprint at full zoom.
+
+They are painted a shade duller than the Freepik props, so they are rendered
+through `saturate(1.35)`. That is not a correction to the artwork - it is what
+makes artwork from two sources sit together.
+
+**The cost, stated plainly:** a tile cannot wear the colours a player chose in
+the studio. The plan view still does, because it draws the sprite they coloured.
+The isometric view shows the building as a visitor would find it. If that trade
+ever looks wrong, deleting a tile from the config is all it takes to go back to
+the drawn version for that kind.
 
 Vehicles use the car park's own `CAR_HW`/`CAR_HH` footprints, so a car is drawn
 at the size the visitors are already routing around.

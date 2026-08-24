@@ -1,0 +1,11 @@
+{
+  "//": "Isometric facility tiles. CC0, so no licence question: use freely, credit optional. Each is picked for what it reads as at the size a park draws it, not for what a city planner would call it.",
+  "dir": "art-src/zoo/kenney-isometric-buildings",
+  "credit": "Kenney (kenney.nl), Isometric Buildings, CC0 public domain",
+  "buildings": {
+    "kiosk":   { "file": "buildingTiles_100.png", "note": "a serving hatch with goods on the counter - what you queue at" },
+    "cafe":    { "file": "buildingTiles_099.png", "note": "bigger, with an awning over the front" },
+    "shop":    { "file": "buildingTiles_116.png", "note": "a glazed shopfront" },
+    "toilets": { "file": "buildingTiles_044.png", "note": "plain and civic, which is the whole of what a lavatory block looks like" }
+  }
+}

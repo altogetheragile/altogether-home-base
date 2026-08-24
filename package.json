@@ -40,7 +40,8 @@
     "animal-art": "node scripts/extract-animal-art.mjs",
     "iso-art": "node scripts/extract-iso-art.mjs",
     "vehicle-art": "node scripts/extract-vehicle-art.mjs",
-    "art-check": "node scripts/check-art-sheet.mjs"
+    "art-check": "node scripts/check-art-sheet.mjs",
+    "building-art": "node scripts/extract-building-art.mjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
