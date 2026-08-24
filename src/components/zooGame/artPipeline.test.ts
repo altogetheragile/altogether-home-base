@@ -1,7 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import { slim, namespaceIds } from '../../../scripts/lib/svg-sheet.mjs';
+import { existsSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { regionsOf, cutIslands } from '../../../scripts/lib/svg-clusters.mjs';
+
+/** Measuring where a shape lands needs a renderer, and CI has no browsers installed - the art
+ *  pipeline is hand-run precisely so that it does not need any. This part of the suite therefore
+ *  runs where a browser exists and stands aside where one does not, rather than failing the build
+ *  over a tool that is deliberately absent.
+ *
+ *  Asking Playwright for the path is not enough on its own: it answers with where the binary would
+ *  be rather than whether it is there, and the flavour it names is not always the one it launches.
+ *  So the launch itself is the test of whether a browser exists. */
+async function browserOrNull() {
+  try {
+    if (!existsSync(chromium.executablePath())) return null;
+    return await chromium.launch();
+  } catch {
+    return null;
+  }
+}
 
 /** Numbers as an SVG path parser would read them: a '-' starts a new number as well as negating it. */
 const numbers = (d: string): number[] =>
@@ -74,9 +92,10 @@ const DIORAMA = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <rect x="44" y="30" width="6" height="8" fill="#42a5f5"/>
 </svg>`;
 
-describe('lifting a drawing off the base it came on', () => {
-  it('drops the base and keeps what stood on it', async () => {
-    const browser = await chromium.launch();
+describe('lifting a drawing off the base it came on (needs a browser)', () => {
+  it('drops the base and keeps what stood on it', async (ctx) => {
+    const browser = await browserOrNull();
+    if (!browser) { ctx.skip(); return; }
     try {
       const [region] = await regionsOf(browser, DIORAMA, [{ name: 'shop', box: [0, 0, 100, 100] }]);
       const [whole] = await cutIslands(browser, DIORAMA, [{ name: 'shop', members: region.members }]);
