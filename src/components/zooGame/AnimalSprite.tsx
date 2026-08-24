@@ -1,4 +1,4 @@
-import { animalArtFor, animalArtSize, coatFilter } from './art/animalArt';
+import { animalArtFor, animalArtSize, animalArtFit, coatFilter } from './art/animalArt';
 
 /** A stocked animal, drawn from the illustration sheet rather than built out of coloured squares.
  *
@@ -9,10 +9,13 @@ import { animalArtFor, animalArtSize, coatFilter } from './art/animalArt';
  *
  *  The markup is generated from licensed artwork by scripts/extract-animal-art.mjs at development
  *  time and committed - it is never anything a player typed. */
-export function AnimalSprite({ species, cell, coat }: { species: string; cell: number; coat?: string }) {
+export function AnimalSprite({ species, cell, coat, fit }: { species: string; cell: number; coat?: string;
+  /** Fit the drawing inside this box instead of sizing it by how big the animal is. For pickers,
+   *  where every animal gets the same square of space and none of them may overflow it. */
+  fit?: { w: number; h: number } }) {
   const art = animalArtFor(species);
   if (!art) return null;
-  const { w, h } = animalArtSize(art, cell);
+  const { w, h } = fit ? animalArtFit(art, fit.w, fit.h) : animalArtSize(art, cell);
   return (
     <svg viewBox={art.viewBox} width={w} height={h} role="img" aria-hidden focusable="false"
       style={{ display: 'block', filter: coatFilter(coat), transform: art.flip ? 'scaleX(-1)' : undefined }}
