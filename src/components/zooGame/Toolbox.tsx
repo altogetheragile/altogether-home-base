@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { X, Check } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
 import { AnimalSprite } from './AnimalSprite';
+import { Overlay } from './ui/Overlay';
 import { hasAnimalArt } from './art/animalArt';
 
 /** A small greyscale silhouette of a template's shape (uncoloured - you colour it in
@@ -42,11 +43,11 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
   const pick = (t: ToolboxItem) => { onPick(t); setAdded((a) => ({ ...a, [t.name]: (a[t.name] ?? 0) + 1 })); };
 
   return (
-    <div className="fixed inset-0 z-40 flex overflow-y-auto bg-black/50 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true">
+    <Overlay onClose={onClose} labelledBy="toolbox-title">
       <div className="m-auto w-full max-w-3xl rounded-lg border border-border bg-card p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div>
-            <h3 className="text-lg font-bold">Toolbox</h3>
+            <h3 id="toolbox-title" className="text-lg font-bold">Toolbox</h3>
             <p className="text-[11px] text-muted-foreground">Pick pieces to build your zoo from - each becomes a Backlog item you estimate, then tailor in the studio.</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>Done</Button>
@@ -91,6 +92,6 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
           <Button size="sm" onClick={onClose}><X className="mr-1 h-3.5 w-3.5" /> Close toolbox</Button>
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }
