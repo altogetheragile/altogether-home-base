@@ -5,7 +5,18 @@ import type { BacklogItem, ZooGameState } from './types';
 import { IsoZoo } from './IsoZoo';
 import { project, depth, boxFaces, fenceRun, tint, screenBounds } from './art/iso';
 import { ISO_ART } from './art/isoArt.generated';
+import { hasAnimalArt } from './art/animalArt';
+import { TOOLBOX } from './toolboxItems';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
+
+/** A species the game offers and nobody has drawn yet. Found rather than named, so the test does
+ *  not date the day somebody draws whichever one was hard-coded. */
+function undrawnSpecies(): string {
+  const all = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'exhibit').map((i) => i.template!);
+  const undrawn = all.find((t) => !hasAnimalArt(t));
+  if (!undrawn) throw new Error('every species is drawn - this test has nothing left to check');
+  return undrawn;
+}
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
   id: over.id ?? 'x', name: 'Thing', zone: 'Big Cats', category: 'enclosure',
@@ -23,7 +34,7 @@ function zooWithEverything(): ZooGameState {
     backlog: [
       item({ id: 'enc', name: 'Lion Enclosure', category: 'enclosure', enclosureSize: 'medium', pos: { x: 300, y: 240 } }),
       item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc' }),
-      item({ id: 'toucan', name: 'Toucan', category: 'exhibit', template: 'toucan', enclosureId: 'enc' }),
+      item({ id: 'undrawn', name: 'Gorilla', category: 'exhibit', template: undrawnSpecies(), enclosureId: 'enc' }),
       item({ id: 'kiosk', name: 'Kiosk', category: 'amenity', template: 'kiosk', pos: { x: 520, y: 400 },
              design: { parts: { type: 'kiosk', sign: 'on' }, colors: { walls: '#e6ddd0', roof: '#b8563f', door: '#7a5230', sign: '#e6a53a' } } }),
       item({ id: 'sign', name: 'Signpost', category: 'amenity', template: 'signpost', pos: { x: 200, y: 420 },
@@ -55,7 +66,7 @@ describe('the isometric showcase', () => {
   });
 
   it('draws an animal it has no drawing for rather than dropping it', () => {
-    // A toucan has no artwork yet. It must still appear - a species that silently vanishes from the
+    // A species with no artwork yet must still appear - one that silently vanishes from the
     // Increment is the Review telling the team something untrue.
     const one = { ...zooWithEverything(), backlog: zooWithEverything().backlog.filter((i) => i.id !== 'lion') } as ZooGameState;
     const { container } = render(<IsoZoo state={one} />);

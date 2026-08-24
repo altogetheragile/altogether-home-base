@@ -74,6 +74,38 @@
           "flip": true
         }
       }
+    },
+    {
+      "file": "art-src/zoo/tropic.svg",
+      "credit": "Freepik",
+      "//": "A jungle scene: every animal sits among the same foliage, so islands weld them together and each is named by the patch it occupies instead. The parrot stands alone and comes out as an island. No gorilla here - the apes on this sheet are chimpanzees, and labelling one a gorilla would be a lie the game repeats to a room full of people.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.06,
+      "unitScale": 0.5,
+      "species": {
+        "parrot": {
+          "island": 7
+        },
+        "monkey": {
+          "box": [
+            136,
+            298,
+            220,
+            102
+          ],
+          "inside": 0.45,
+          "flip": true
+        },
+        "toucan": {
+          "box": [
+            549,
+            281,
+            66,
+            104
+          ],
+          "inside": 0.6
+        }
+      }
     }
   ]
 }

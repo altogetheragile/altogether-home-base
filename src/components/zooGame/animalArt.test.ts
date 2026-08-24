@@ -17,10 +17,13 @@ describe('animal artwork', () => {
   it('leaves the species it has no drawing for on their built sprites', () => {
     // The two kinds of sprite live side by side on purpose. If this ever came back true for
     // everything, the fallback would be dead code and an unillustrated animal would vanish.
-    expect(hasAnimalArt('toucan')).toBe(false);
+    // Whichever species that is is found rather than named: naming one dates the test the day
+    // somebody draws it, which is exactly what happened to the toucan.
+    const undrawn = [...exhibitTemplates].filter((t) => !hasAnimalArt(t));
+    expect(undrawn.length, 'every species is drawn - the fallback is now dead code').toBeGreaterThan(0);
+    expect(animalArtFor(undrawn[0])).toBeUndefined();
     expect(hasAnimalArt(undefined)).toBe(false);
-    expect(animalArtFor('toucan')).toBeUndefined();
-    expect([...exhibitTemplates].some((t) => !hasAnimalArt(t))).toBe(true);
+    expect(hasAnimalArt('not-an-animal')).toBe(false);
   });
 
   it('sizes each animal from its own drawing, so the park is to scale', () => {

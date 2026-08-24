@@ -59,7 +59,14 @@ export function slim(markup) {
         .map((d) => { const [k, v] = d.split(':'); return `${k.trim()}="${v.trim()}"`; });
       return decls.length ? ` ${decls.join(' ')}` : '';
     })
-    .replace(/(-?\d+\.\d{2,})/g, (n) => String(Math.round(Number(n) * 10) / 10))
+    // Round coordinates, but never lose a leading minus. In path data a '-' doubles as a
+    // separator - Illustrator writes `0.2-0.008` for two numbers - and JavaScript prints -0 as "0",
+    // which fuses them into the single number 0.20. The drawing then comes apart into slivers, at
+    // no point raising an error. Keep the sign and the separator survives.
+    .replace(/(-?\d+\.\d{2,})/g, (n) => {
+      const v = Math.round(Number(n) * 10) / 10;
+      return v === 0 && n.startsWith('-') ? '-0' : String(v);
+    })
     .replace(/\s+/g, ' ')
     .trim();
 }
