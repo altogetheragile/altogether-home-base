@@ -88,13 +88,17 @@
         },
         "monkey": {
           "box": [
-            136,
+            146,
             298,
-            220,
+            210,
             102
           ],
           "inside": 0.45,
-          "flip": true
+          "flip": true,
+          "drop": [
+            "#717A30",
+            "#FFFFFF"
+          ]
         },
         "toucan": {
           "box": [
@@ -104,6 +108,27 @@
             104
           ],
           "inside": 0.6
+        }
+      }
+    },
+    {
+      "file": "art-src/zoo/apes.svg",
+      "credit": "Freepik",
+      "//": "Each animal sits on a pale blob the colour of the sheet's own backdrop, so that colour is dropped. The gorilla is taken by region rather than as an island: its body alone is a fifth of the page, and the island finder treats anything that big as scenery.",
+      "drop": [
+        "#E6E29E"
+      ],
+      "unitScale": 0.27,
+      "species": {
+        "gorilla": {
+          "box": [
+            228,
+            190,
+            225,
+            255
+          ],
+          "inside": 0.5,
+          "flip": true
         }
       }
     }

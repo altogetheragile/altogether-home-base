@@ -33,9 +33,20 @@ handle it:
   it by eye against the neighbours the species will stand among, per the note
   above.
 - `island` instead of `group`, where the sheet has no usable grouping.
-- `drop` - colours to throw away, for a sheet that draws each animal standing on
-  a shadow puddle the colour of its own backdrop. Without it, the puddle comes
-  along and sits on the grass.
+- `drop` - colours to throw away, for a sheet that draws each animal on a shadow
+  puddle or a blob the colour of its own backdrop. Without it, the backdrop comes
+  along and sits on the grass. Can be set per species, for a leaf that overlaps
+  one drawing and belongs to another.
+- `box` instead of `island`, where the sheet has no grouping *and* the drawings
+  touch each other. `inside` is how much of a shape must lie in the box to count
+  as part of it - lower it when a limb near the edge goes missing.
+
+A note on `ignoreLargerThan`: it exists to stop a page-wide backdrop welding
+every drawing into one island, and it applies to islands only. On a sheet with
+few, large animals a body can be a fifth of the page and get treated as scenery -
+the giveaway is an animal that comes out as scattered fragments with its largest
+shapes gone. Either raise it, or take that species by region, which has no size
+filter at all.
 
 ## Adding a species
 
