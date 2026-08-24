@@ -118,5 +118,5 @@ Sources in use, and what covers them:
 | Sheet | Source | Licence |
 | --- | --- | --- |
 | `wild-animals.svg`, `flamingos.svg`, `tropic.svg`, `apes.svg`, `iso-animals.svg` | Freepik | Al's Freepik licence |
-| `savanna.svg`, `savanna-grazers.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
+| `savanna.svg`, `savanna-grazers.svg`, `otters.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
 | `kenney-isometric-buildings/` | Kenney | CC0 - public domain, no attribution required |
