@@ -3,6 +3,7 @@ import type { ScrumTeam, ScrumTeamMember } from './types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Users, Check } from 'lucide-react';
+import { SURFACE, PADDING } from './ui/tokens';
 
 // A stable colour per Developer id, so the same person reads the same everywhere.
 const DEV_COLORS = ['#e6842a', '#3f8fd0', '#43a047', '#8a5a2b', '#c17a5c', '#7c4dff'];
@@ -66,7 +67,7 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px]">
+    <div className={cn(SURFACE.card, PADDING.tight, 'flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px]')}>
       <span className="flex items-center gap-1 font-semibold text-muted-foreground"><Users className="h-3.5 w-3.5" /> Scrum Team</span>
       <TeamRows team={team} onRename={onRename} inline />
     </div>
@@ -76,7 +77,7 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
 /** The three accountabilities as labelled rows (popover) or an inline run (full strip). */
 function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRename?: (id: string, name: string) => void; inline?: boolean }) {
   return (
-    <div className={cn(inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1.5' : 'space-y-1.5 text-[12px]')}>
+    <div className={cn(inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1.5' : 'space-y-1.5 text-xs')}>
       <span className="flex items-center gap-1.5" title="Product Owner - accountable for the product's value; orders the Product Backlog toward the Product Goal.">
         <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary">PO</span>
         <EditableName member={team.productOwner} onRename={onRename} className="font-medium text-foreground" />
@@ -103,7 +104,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Who has picked this up? (the Developers self-organise)"
-          className="flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+          className="flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
           {assigned.length === 0
             ? <span>+ pick up</span>
             : <span className="flex -space-x-1">{team.developers.filter((d) => assigned.includes(d.id)).map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}</span>}
@@ -124,7 +125,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
             );
           })}
         </div>
-        <p className="mt-1.5 text-[10px] text-muted-foreground">The Developers self-organise - more than one on an item is swarming. Limit work in progress so the Developers finish together (Lean thinking).</p>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">The Developers self-organise - more than one on an item is swarming. Limit work in progress so the Developers finish together (Lean thinking).</p>
       </PopoverContent>
     </Popover>
   );

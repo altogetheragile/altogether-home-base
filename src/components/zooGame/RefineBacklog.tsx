@@ -42,7 +42,7 @@ function Step({ n, title, note, done, right, onToggle, children }: {
       <Head {...(onToggle ? { type: 'button' as const, onClick: onToggle } : {})}
         className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
         <h3 className={cn(EYEBROW, 'flex items-center gap-1.5', done ? 'text-emerald-700 dark:text-emerald-400' : 'text-primary')}>
-          <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white', done ? 'bg-emerald-500' : 'bg-primary')}>
+          <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white', done ? 'bg-emerald-500' : 'bg-primary')}>
             {done ? <Check className="h-3 w-3" /> : n}
           </span>
           {title}

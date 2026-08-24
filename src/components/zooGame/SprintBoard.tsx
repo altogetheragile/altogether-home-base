@@ -27,6 +27,7 @@ import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Boxes, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
+import { SURFACE } from './ui/tokens';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -106,7 +107,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Board settings" aria-label="Board settings"
-          className="rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground">
+          className={cn(SURFACE.inset, 'p-1.5 text-muted-foreground hover:text-foreground')}>
           <SlidersHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
@@ -120,7 +121,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               {dailyScrumAt === 'start' ? 'Day start' : 'Day end'}
             </button>
           </div>
-          <div className="-mt-1 text-[10px] leading-snug text-muted-foreground/80">
+          <div className="-mt-1 text-[11px] leading-snug text-muted-foreground/80">
             {dailyScrumAt === 'start'
               ? 'Held first thing, so the Developers plan the day ahead. Ending a day takes you into the next day\u2019s Scrum.'
               : 'Held as the day closes, looking back on it.'}
@@ -139,7 +140,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               </div>
             ) : <span className="text-[11px] font-medium">{wipLimit || 'Off'}</span>}
           </div>
-          <div className="-mt-1 text-[10px] leading-snug text-muted-foreground/80">
+          <div className="-mt-1 text-[11px] leading-snug text-muted-foreground/80">
             {wipLimit > 0
               ? `The Developers start no more than ${wipLimit} at once, and swarm to finish rather than starting more. Fewer things in flight means things actually finish.`
               : 'No limit: anything can be started at any time. Watch how much ends the Sprint unfinished.'}
@@ -162,7 +163,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
                 className="text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline">
                 Cancel the Sprint
               </button>
-              <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
             </div>
           )}
         </div>
@@ -194,12 +195,12 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
       <PopoverContent align="end" className="w-80">
         <div className="space-y-2">
           <h4 className="text-sm font-semibold">Product Backlog refinement</h4>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting. Aim for one to three:
             enough that the next Sprint Planning has something to choose from, not so much that you are analysing work you
             may never build.
           </p>
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {thin ? 'That is thin. Refine together now, or the next Planning will have nothing ready to forecast.'
               : deep ? 'That is a lot of detail on work that may change. Build something and learn from it instead.'
                 : 'That is about right. Keep it there as this Sprint burns through the work.'}
@@ -210,7 +211,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
             build time. What it prepares is later Sprints, not this one.
           </p>
           {owed && (
-            <p className="rounded-md border border-violet-400/50 bg-violet-500/10 px-2 py-1.5 text-[12px] text-violet-800 dark:text-violet-200">
+            <p className="rounded-md border border-violet-400/50 bg-violet-500/10 px-2 py-1.5 text-xs text-violet-800 dark:text-violet-200">
               You set aside <strong>{planned!.points} point{planned!.points === 1 ? '' : 's'}</strong> for this at Sprint
               Planning and have not held it yet. It is on the board in To Do.
             </p>
@@ -497,15 +498,15 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     <div className="rounded-lg border-2 border-violet-400/70 bg-violet-500/[0.07] p-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 text-[13px] font-semibold">
+                          <div className="flex items-center gap-1.5 text-sm font-semibold">
                             <ListChecks className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
                             Refine the Product Backlog
                           </div>
-                          <p className="text-[10px] text-muted-foreground">Planned into this Sprint &middot; the whole Scrum Team</p>
+                          <p className="text-[11px] text-muted-foreground">Planned into this Sprint &middot; the whole Scrum Team</p>
                         </div>
                         <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
                       </div>
-                      <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
                         It costs the day you hold it, and what it prepares is later Sprints. Skip it and the next
                         Planning has less to choose from.
                       </p>
@@ -581,7 +582,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                               and tick the detail. The real building happens on the park. */}
                           <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
                           <div className="mt-1.5 flex items-center gap-1.5">
-                            <span className="text-[10px] text-muted-foreground">Working it:</span>
+                            <span className="text-[11px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
                           </div>
                         </>} />
@@ -621,7 +622,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     </div>
                   ))}
                   {refineDone && (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2 py-1.5 text-[12px]">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2 py-1.5 text-xs">
                       <Check className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
                       <span className="font-medium">Refined the Product Backlog</span>
                       <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>

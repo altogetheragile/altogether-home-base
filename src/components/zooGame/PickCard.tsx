@@ -47,15 +47,15 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
         <div className="space-y-2">
           <div className="flex items-start justify-between gap-2">
             <h4 className="text-sm font-semibold leading-tight">{item.name}</h4>
-            <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold">{item.unsized ? '?' : `${item.estimate} pts`}</span>
+            <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold">{item.unsized ? '?' : `${item.estimate} pts`}</span>
           </div>
-          {item.story && <p className="text-[12px] italic leading-snug text-muted-foreground">{item.story}</p>}
+          {item.story && <p className="text-xs italic leading-snug text-muted-foreground">{item.story}</p>}
           {item.acceptance?.length > 0 && (
             <div className="space-y-1">
               <div className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Acceptance criteria <span className="font-normal normal-case tracking-normal">the Product Owner&rsquo;s</span></div>
               <ul className="space-y-0.5">
                 {item.acceptance.map((a) => (
-                  <li key={a} className="flex items-start gap-1.5 text-[12px] text-muted-foreground">
+                  <li key={a} className="flex items-start gap-1.5 text-xs text-muted-foreground">
                     <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />{a}
                   </li>
                 ))}
@@ -94,7 +94,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
       <PopoverContent align="start" className="w-72">
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-sm font-semibold"><Lock className="h-3.5 w-3.5" /> Not ready</div>
-          <p className="text-[12px] text-muted-foreground">{why}</p>
+          <p className="text-xs text-muted-foreground">{why}</p>
           {item.category === 'epic' && (
             // The model reserves "not Scrum" labelling for practices the game uses anyway, and an
             // epic is one of them: the Guide has one kind of thing on a Product Backlog.

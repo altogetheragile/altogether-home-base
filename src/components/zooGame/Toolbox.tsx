@@ -9,6 +9,7 @@ import { ICONS, iconKey } from './itemIcons';
 import { AnimalSprite } from './AnimalSprite';
 import { Overlay } from './ui/Overlay';
 import { hasAnimalArt } from './art/animalArt';
+import { SURFACE, PADDING } from './ui/tokens';
 
 /** A small greyscale silhouette of a template's shape (uncoloured - you colour it in
  *  the studio), so users can see what each toolbox piece looks like before picking it. */
@@ -44,7 +45,7 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
 
   return (
     <Overlay onClose={onClose} labelledBy="toolbox-title">
-      <div className="m-auto w-full max-w-3xl rounded-lg border border-border bg-card p-4 shadow-xl">
+      <div className={cn(SURFACE.card, PADDING.roomy, 'm-auto w-full max-w-3xl shadow-xl')}>
         <div className="mb-3 flex items-center justify-between gap-2">
           <div>
             <h3 id="toolbox-title" className="text-lg font-bold">Toolbox</h3>
@@ -76,9 +77,9 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{it.name}</span>
-                        <span className="block truncate text-[10px] text-muted-foreground">{it.category === 'enclosure' ? `${it.footprint} footprint` : it.zone === 'General' ? it.category : it.zone}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground">{it.category === 'enclosure' ? `${it.footprint} footprint` : it.zone === 'General' ? it.category : it.zone}</span>
                       </span>
-                      {n > 0 && <span className={cn('flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300')}><Check className="h-3 w-3" />{n > 1 ? n : ''}</span>}
+                      {n > 0 && <span className={cn('flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300')}><Check className="h-3 w-3" />{n > 1 ? n : ''}</span>}
                     </button>
                   );
                 })}

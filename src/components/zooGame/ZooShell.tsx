@@ -10,6 +10,7 @@ import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { SURFACE } from './ui/tokens';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
@@ -34,7 +35,7 @@ function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: 
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Game" aria-label="Game menu"
-          className="shrink-0 rounded-md border border-border bg-background p-1.5 text-muted-foreground hover:text-foreground">
+          className={cn(SURFACE.inset, 'shrink-0 p-1.5 text-muted-foreground hover:text-foreground')}>
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
@@ -62,7 +63,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
       className={cn('flex items-center gap-1.5 rounded-t-md border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors',
         active ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
       <Icon className="h-4 w-4" /> {label}
-      {badge && <span className="rounded-full bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground">{badge}</span>}
+      {badge && <span className="rounded-full bg-muted px-1.5 text-[11px] font-semibold text-muted-foreground">{badge}</span>}
     </button>
   );
 }
@@ -109,7 +110,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 </span>
               ) : onBack && (
                 <button type="button" onClick={() => onBack(back.to)} title={back.label} aria-label={back.label}
-                  className="flex shrink-0 items-center rounded-md border border-border bg-background p-1 text-muted-foreground transition-colors hover:text-foreground">
+                  className={cn(SURFACE.inset, 'flex shrink-0 items-center p-1 text-muted-foreground transition-colors hover:text-foreground')}>
                   <ChevronLeft className="h-4 w-4" />
                 </button>
               )

@@ -13,6 +13,7 @@ import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
+import { SURFACE, PADDING } from './ui/tokens';
 
 /** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
  *  Backlog can be scanned by shape as well as by name. See itemIcons.ts for the mapping. */
@@ -93,7 +94,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
           <CategoryIcon item={item} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate font-medium">{item.name}</span>
           <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{item.zone}</span>
-          <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{item.estimate} pts</span>
+          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.estimate} pts</span>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {onToggleGoalCritical && (
@@ -123,7 +124,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
           <div key={t.id} className="flex items-center gap-1.5">
             <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
             <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
-              className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[13px] outline-none focus:border-primary" />
+              className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
             <button type="button" onClick={() => remove(t.id)} className="shrink-0 text-muted-foreground hover:text-foreground" aria-label="Remove task"><X className="h-3.5 w-3.5" /></button>
           </div>
         ))}
@@ -155,7 +156,7 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
               <input type="checkbox" checked={t.done} disabled={readOnly || signOff} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
               <span className={cn(t.done && 'text-muted-foreground line-through', signOff && !t.done && 'text-muted-foreground')}>
                 {t.label}
-                {signOff && !t.done && <span className="block text-[10px] text-muted-foreground/70">Once every acceptance criterion is met, including where it stands on the park.</span>}
+                {signOff && !t.done && <span className="block text-[11px] text-muted-foreground/70">Once every acceptance criterion is met, including where it stands on the park.</span>}
               </span>
             </label>
           );
@@ -202,7 +203,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
           the ownership - squares are the Developers' plan, circles are the Product Owner's criteria -
           so two rows of the same colour do not read as one long row. */}
       {!bare && <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={ownOpen}
-        className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+        className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground hover:text-foreground">
         <ChevronDown className={cn('h-3 w-3 shrink-0 transition-transform', !ownOpen && '-rotate-90')} />
         {tasks.length > 0 && (
           <span className="flex items-center gap-1" title={`Plan: ${done} of ${tasks.length} steps done`}>
@@ -459,7 +460,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
   };
 
   return (
-    <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+    <section className={cn(SURFACE.quiet, PADDING.default, 'space-y-2')}>
       {showToolbox && <Toolbox onPick={(t) => onAddPbi(toolboxDraft(t))} onClose={() => setShowToolbox(false)} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-sm font-semibold">
@@ -473,7 +474,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           {mode === 'sprint' && (
             // How far ahead the Backlog is prepared. Refining here costs the day's build time, and
             // what it prepares is for LATER Sprints - this Sprint's plan is already settled.
-            <span className={cn('ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+            <span className={cn('ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-medium',
               horizon > 3 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
                 : horizon >= 1 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                 : 'bg-muted text-muted-foreground')}
@@ -546,7 +547,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
                     value. A labelled, bordered pill so it reads as a reorder control, distinct
                     from the collapse chevron on the left. */}
                 {onMoveZone && zoneOrder.length > 1 && (
-                  <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-background px-1 py-0.5 text-muted-foreground" title={`Move the ${zone} theme up or down`}>
+                  <div className={cn(SURFACE.inset, 'flex shrink-0 items-center gap-0.5 px-1 py-0.5 text-muted-foreground')} title={`Move the ${zone} theme up or down`}>
                     <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Move</span>
                     <button type="button" aria-label={`Move ${zone} up`} title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className="rounded disabled:opacity-30 hover:text-foreground"><ChevronUp className="h-3.5 w-3.5" /></button>
                     <button type="button" aria-label={`Move ${zone} down`} title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className="rounded disabled:opacity-30 hover:text-foreground"><ChevronDown className="h-3.5 w-3.5" /></button>

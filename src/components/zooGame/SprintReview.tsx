@@ -14,7 +14,7 @@ import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, PADDING, SURFACE, TEXT } from './ui/tokens';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check } from 'lucide-react';
 
 type Step = 'done' | 'visitors' | 'next';
@@ -97,7 +97,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       {/* Progress toward the Product Goal opens the Review: the widest question first, before the
           Sprint that just ran. The Product Owner's decision on it comes at the end, once the
           visitors have been heard. */}
-      <section className="space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
+      <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-1.5')}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Product Goal &middot; progress</span>
           <span className="text-[11px] text-muted-foreground">Sprint {state.sprintNumber} &middot; no set number of Sprints</span>
@@ -119,7 +119,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
             </div>
             <ul className="space-y-0.5">
               {goalChecks.map((m) => (
-                <li key={m.metric} className="flex items-center gap-2 text-[12px]">
+                <li key={m.metric} className="flex items-center gap-2 text-xs">
                   <span className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full', m.met ? 'bg-emerald-500 text-white' : 'border border-border')}>
                     {m.met && <Check className="h-2.5 w-2.5" />}
                   </span>
@@ -133,7 +133,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
           </div>
         )}
         {history.length > 1 && (
-          <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
             <span className="uppercase tracking-wide">Happiness by Sprint</span>
             {history.map((h, i) => (
               <span key={i} className={cn('rounded-full px-1.5 py-0.5 font-mono', i === history.length - 1 ? 'bg-primary/10 font-semibold text-primary' : 'bg-muted')}>{h}</span>
@@ -159,7 +159,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       {/* Slices, not layers. Points delivered says how much was built; zones open says how much of it
           anybody can visit, and the gap between the two is the lesson. The card explains it. */}
       {velocity > 0 && (openZones.length > 0 || startedNotOpen.length > 0) && (
-        <div className={cn('rounded-lg border px-3 py-2.5 text-[13px]',
+        <div className={cn('rounded-lg border px-3 py-2.5 text-sm',
           openZones.length ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
           <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5', openZones.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
             {openZones.length ? 'Open to visitors' : 'Nothing is open to visitors yet'}
@@ -193,7 +193,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
         <Stat label="Delivered" value={`${velocity} pts`} />
         <Stat label="Forecast" value={`${state.sprintForecast} pts`} />
       </div>
-      <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-[11px] text-muted-foreground">
+      <p className={cn(SURFACE.quiet, 'px-4 py-2.5 text-[11px] text-muted-foreground')}>
             You forecast <strong>{state.sprintForecast} pts</strong> and delivered <strong>{velocity} pts</strong>
             {velocity > state.sprintForecast ? ' - faster than forecast' : velocity < state.sprintForecast ? ' - short of the forecast' : ' - right on forecast'}.
         Velocity is measured, not fixed: next Sprint&rsquo;s forecast is your average over the last {sprintCapacity(state).measuredSprints} Sprint{sprintCapacity(state).measuredSprints === 1 ? '' : 's'} of this length (<strong>{sprintCapacity(state).points} pts</strong>).{sprintCapacity(state).discarded > 0 && ' Sprints run at a different length are left out - their delivery says nothing about this one.'}
@@ -202,7 +202,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
 
       {/* ---- The visitors ---- */}
       {step === 'visitors' && (!r || r.totalAttendance === 0 ? (
-        <p className="rounded-lg border border-border bg-muted/40 px-5 py-4 text-sm text-muted-foreground">Nothing is open to visitors yet, so there is no crowd to inspect. Open some of what you built next Sprint and they will come.</p>
+        <p className={cn(SURFACE.quiet, 'px-5 py-4 text-sm text-muted-foreground')}>Nothing is open to visitors yet, so there is no crowd to inspect. Open some of what you built next Sprint and they will come.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3">
@@ -211,7 +211,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
           </div>
 
           {/* Per-segment happiness */}
-          <section className="space-y-2 rounded-lg border border-border bg-muted/20 p-4">
+          <section className={cn(SURFACE.quiet, PADDING.roomy, 'space-y-2')}>
             <div className="flex items-center gap-2 text-sm font-semibold"><Users className="h-4 w-4 text-muted-foreground" /> How each visitor group felt</div>
             <div className="space-y-2">
               {r.segments.map((s) => (
@@ -260,14 +260,14 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
             </section>
           )}
           {state.signals.length === 0 && (
-            <p className="rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-[12px] text-muted-foreground">
+            <p className={cn(SURFACE.quiet, 'px-4 py-2.5 text-xs text-muted-foreground')}>
               Nothing the visitors said needs turning into work this time. Adapting the Product Backlog is the Review&rsquo;s output - some Sprints it is a long list, some Sprints it is nothing.
             </p>
           )}
 
       {/* What is next: the top of the Backlog as it stands after this conversation. The Guide has the
           attendees collaborating on what to do next, and "next" is a list you can point at. */}
-      <section className="space-y-1.5 rounded-lg border border-border bg-muted/20 px-4 py-3">
+      <section className={cn(SURFACE.quiet, PADDING.roomy, 'space-y-1.5')}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-sm font-semibold">What is next</h3>
           <span className="text-[11px] text-muted-foreground">
@@ -277,7 +277,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
         </div>
         <div className="grid gap-1.5 sm:grid-cols-2">
           {upNext.length === 0
-            ? <p className="text-[12px] text-muted-foreground">Nothing ready. The next Sprint starts with refinement.</p>
+            ? <p className="text-xs text-muted-foreground">Nothing ready. The next Sprint starts with refinement.</p>
             : upNext.map((it) => <PbiCard key={it.id} item={it} state={notReady(it) ? 'locked' : 'backlog'} />)}
         </div>
         <p className="text-[11px] text-muted-foreground">
@@ -287,7 +287,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
       </section>
 
       {/* The one decision only the Product Owner makes, after the visitors have been heard. */}
-      <section className="space-y-2 rounded-lg border border-border bg-card px-4 py-3">
+      <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Is the Product Goal met? &middot; the Product Owner&rsquo;s call</span>
         <p className="text-[11px] text-muted-foreground">
           {progress >= 80
@@ -299,7 +299,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
             <Button size="sm" variant={progress >= 80 ? 'default' : 'outline'} onClick={onWrapUp}>
               {progress >= 80 ? 'The Product Goal is met - wrap up' : 'End it here anyway'}
             </Button>
-            {progress < 80 && <span className="text-[10px] text-muted-foreground/80">It is your call as PO - but the visitors are not there yet.</span>}
+            {progress < 80 && <span className="text-[11px] text-muted-foreground/80">It is your call as PO - but the visitors are not there yet.</span>}
           </div>
         )}
       </section>
@@ -317,8 +317,8 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3 text-center">
-      <div className={cn('text-2xl font-bold', accent && accent.replace('bg-', 'text-'))}>{value}</div>
+    <div className={cn(SURFACE.card, PADDING.default, 'text-center')}>
+      <div className={cn(TEXT.figure, accent && accent.replace('bg-', 'text-'))}>{value}</div>
       <div className="text-[11px] text-muted-foreground">{label}</div>
     </div>
   );

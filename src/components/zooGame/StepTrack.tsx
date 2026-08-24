@@ -26,7 +26,7 @@ export function StepTrack<K extends string>({ steps, current, done, onGo, captio
           <div key={s.key} className="flex items-center gap-1.5">
             <button type="button" disabled={locked} onClick={() => onGo(s.key)}
               title={locked ? 'Finish the step before this one' : s.label}
-              className={cn('flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-[13px] font-medium transition-colors',
+              className={cn('flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-sm font-medium transition-colors',
                 active ? 'bg-primary font-semibold text-primary-foreground shadow-sm'
                   : complete ? 'text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400'
                     : 'text-muted-foreground')}>

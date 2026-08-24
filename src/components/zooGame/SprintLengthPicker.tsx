@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { SURFACE } from './ui/tokens';
 
 /** How many days a custom Sprint may run to. A Sprint is "one month or less"; the game's days stand
  *  in for weeks, so ten is generous and anything past it is not a Sprint. */
@@ -21,7 +22,7 @@ export function SprintLengthPicker({ days, options, onSet, at }: {
     // The guidance used to sit under the buttons, where it read as a footnote to the whole panel
     // rather than as the thing that helps you choose. It sits beside them now, at the moment of
     // choosing, and the buttons keep the left edge where the eye starts.
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border bg-card px-4 py-2.5">
+    <div className={cn(SURFACE.card, 'flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5')}>
       <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Sprint length</span>
       <div className="flex flex-wrap items-center gap-1.5">
         {options.map((d) => (

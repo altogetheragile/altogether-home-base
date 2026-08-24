@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
+import { SURFACE, TEXT } from './ui/tokens';
 
 // The teaching, on screen. Three pieces: a card shown in context the first time an element is met,
 // a reference panel that is always to hand, and the one-page introduction before play. All of it can
@@ -49,7 +50,7 @@ export function ExplainCard({ id }: { id: string }) {
         <h4 className="text-sm font-semibold leading-tight">{card.title}</h4>
         <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{kindLabel(card)}</span>
       </div>
-      <p className="mb-1.5 text-[12px] text-muted-foreground">{card.summary}</p>
+      <p className="mb-1.5 text-xs text-muted-foreground">{card.summary}</p>
       <CardBody card={card} />
     </div>
   );
@@ -88,7 +89,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="Scrum reference - every element, what it is for" aria-label="Scrum reference"
-          className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+          className={cn(SURFACE.inset, 'flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground')}>
           <BookOpen className="h-3.5 w-3.5" /> <span className="hidden md:inline">Scrum</span>
         </button>
       </PopoverTrigger>
@@ -97,7 +98,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum reference</span>
           {onSetTeaching && (
             <button type="button" onClick={() => onSetTeaching(!teaching)}
-              className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+              className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
               Teaching {teaching ? 'on' : 'off'}
             </button>
           )}
@@ -164,7 +165,7 @@ function Section({ title, tone, icon: Icon, children }: { title: string; tone: k
 
 function Row({ name, note, text, icon: Icon }: { name: string; note?: string; text: string; icon?: typeof Users }) {
   return (
-    <p className="flex gap-1.5 text-[12px] leading-snug text-foreground">
+    <p className="flex gap-1.5 text-xs leading-snug text-foreground">
       {Icon && <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" />}
       <span>
         <span className="font-semibold">{name}</span>
@@ -198,8 +199,8 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
           {copy && <CopyEditor phase="intro" {...copy} />}
         </div>
-        <h2 className="text-2xl font-bold leading-tight">Scrum on one page</h2>
-        <p className="text-[13px] leading-snug text-muted-foreground">{SCRUM_INTRO.what}</p>
+        <h2 className={TEXT.screen}>Scrum on one page</h2>
+        <p className="text-sm leading-snug text-muted-foreground">{SCRUM_INTRO.what}</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2">

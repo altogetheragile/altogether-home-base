@@ -91,12 +91,12 @@ export function DayTimer({ dayNumber, dayTimeMult, refinePenalty, impeded, learn
         <div className={cn('h-full rounded-full transition-[width] duration-500 ease-linear', impeded ? 'bg-red-500' : low ? 'bg-red-500' : 'bg-primary')} style={{ width: `${pct}%` }} />
       </div>
       {dayTimeMult < 1 && (
-        <div className={cn('mt-1 text-[10px] font-semibold', impeded ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
+        <div className={cn('mt-1 text-[11px] font-semibold', impeded ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground')}>
           {impeded ? `−${cut}% today: dealing with yesterday's blocker` : `−${cut}%: the Daily Scrum takes a little time`}
         </div>
       )}
       {refinePenalty > 0 && (
-        <div className="mt-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">−{refinePenalty}s: refining the Backlog this Sprint</div>
+        <div className="mt-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">−{refinePenalty}s: refining the Backlog this Sprint</div>
       )}
     </div>
   );

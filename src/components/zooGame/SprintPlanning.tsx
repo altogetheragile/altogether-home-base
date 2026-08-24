@@ -224,7 +224,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
             {/* The right-hand column is the Sprint. At topic one it is empty on purpose, and saying
                 so is better than leaving a blank panel: the Goal comes before the work, not after. */}
             <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
-              <p className="text-[12px] font-medium text-muted-foreground">Nothing forecast yet</p>
+              <p className="text-xs font-medium text-muted-foreground">Nothing forecast yet</p>
               <p className="text-[11px] text-muted-foreground/70">The Sprint Backlog fills at topic two, once you know what this Sprint is for.</p>
             </div>
           </>} />
@@ -236,7 +236,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
           {state.signals.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
-                <button type="button" className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/70 px-3 py-1.5 text-[12px] font-medium text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-300">
+                <button type="button" className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/70 px-3 py-1.5 text-xs font-medium text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-300">
                   <Lightbulb className="h-3.5 w-3.5" /> {state.signals.length} signal{state.signals.length === 1 ? '' : 's'} from your visitors
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -245,7 +245,7 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                 <div className="space-y-1.5">
                   <p className="text-[11px] text-muted-foreground">What the Sprint Review heard. Adding one puts it in the Product Backlog, unsized.</p>
                   {state.signals.map((sig, i) => (
-                    <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-[12px]">
+                    <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 text-xs">
                       <span className="min-w-0 flex-1">{sig.suggestion}</span>
                       <Button size="sm" variant="outline" className="h-6 shrink-0 px-1.5 text-[11px]" onClick={() => onTakeSignal(i)}>Add</Button>
                     </div>
@@ -281,14 +281,14 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
             right={<>
               <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
-              {chosen.length === 0 && <p className="py-6 text-center text-[12px] text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
+              {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">
                 {chosen.map((it) => (
                   <PickCard key={it.id} item={it} chosen why={null} onPick={() => toggle(it.id)} />
                 ))}
               </div>
               {chosen.length > 1 && onReorderForecast && (
-                <p className="text-[10px] text-muted-foreground/70">You can arrange the order of work on the board once the Sprint starts.</p>
+                <p className="text-[11px] text-muted-foreground/70">You can arrange the order of work on the board once the Sprint starts.</p>
               )}
             </>} />
         </div>
@@ -398,10 +398,10 @@ export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanSh
                   );
                 })}
                 {refinePts > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/60 bg-violet-500/[0.07] px-2 py-1.5 text-[12px]">
+                  <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/60 bg-violet-500/[0.07] px-2 py-1.5 text-xs">
                     <ListChecks className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
                     <span className="min-w-0 flex-1 font-medium">Refine the Product Backlog</span>
-                    <span className="shrink-0 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">{refinePts} pts</span>
+                    <span className="shrink-0 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700 dark:text-violet-300">{refinePts} pts</span>
                   </div>
                 )}
               </div>

@@ -6,6 +6,7 @@ import type { ZooGameState } from './types';
 import { artifactState } from './engine';
 import { DodEditor } from './DodEditor';
 import { ARTIFACT_NAME, ARTIFACT_PROVENANCE, roleFor, type ArtifactId } from './scrumContent';
+import { SURFACE } from './ui/tokens';
 
 // ============= The three artifacts, in one place =============
 //
@@ -34,16 +35,16 @@ function ListAgreement({ title, items, note, onSet }: { title?: string; items: s
         <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{title ? `${title} (${items.length})` : `${items.length} things every item must be`}</span>
         {onSet && (
           <button type="button" onClick={() => setEditing((e) => !e)}
-            className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground">
             {editing ? <><Check className="h-3 w-3" /> Done</> : <><Pencil className="h-3 w-3" /> Edit</>}
           </button>
         )}
       </div>
-      {note && <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground/80">{note}</p>}
+      {note && <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/80">{note}</p>}
       {editing && onSet
         ? <div className="mt-1"><DodEditor dod={items} onSave={onSet} /></div>
         : <div className="mt-1 flex flex-wrap gap-1">
-          {items.map((d) => <span key={d} className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">{d}</span>)}
+          {items.map((d) => <span key={d} className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[11px] text-muted-foreground">{d}</span>)}
         </div>}
     </div>
   );
@@ -57,7 +58,7 @@ function GoalEditor({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string)
     return (
       <div className="space-y-1.5">
         <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={3} autoFocus
-          className="w-full resize-none rounded-md border border-border bg-background px-2 py-1.5 text-[12px] outline-none focus:border-primary"
+          className={cn(SURFACE.inset, 'w-full resize-none px-2 py-1.5 text-xs outline-none focus:border-primary')}
           placeholder="One clear outcome: a park that [who] love, so that [outcome]." />
         <div className="flex justify-end gap-1.5">
           <button type="button" onClick={() => setEditing(false)} className="rounded-md border border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground">Cancel</button>
@@ -69,7 +70,7 @@ function GoalEditor({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string)
   }
   return (
     <div className="flex items-start gap-1.5">
-      <p className="min-w-0 flex-1 text-[12px] font-medium leading-snug">{goal}</p>
+      <p className="min-w-0 flex-1 text-xs font-medium leading-snug">{goal}</p>
       {onSetGoal && (
         <button type="button" onClick={() => { setDraft(goal); setEditing(true); }} title="Edit the Product Goal"
           className="shrink-0 text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
@@ -93,7 +94,7 @@ export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: 
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" title="The three artifacts, what is in them, and their commitments"
-          className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+          className={cn(SURFACE.inset, 'flex shrink-0 items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground')}>
           <Boxes className="h-3.5 w-3.5" />
           <span className="hidden md:inline">Artifacts</span>
           {active && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}
@@ -134,7 +135,7 @@ export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: 
                     ? <div className="mt-0.5"><GoalEditor goal={state.productGoal} onSetGoal={onSetProductGoal} /></div>
                     : a.id === 'increment'
                       ? <div className="mt-0.5"><ListAgreement items={state.definitionOfDone} onSet={onSetDod} /></div>
-                      : <p className="mt-0.5 text-[12px] font-medium leading-snug">{a.commitment}</p>}
+                      : <p className="mt-0.5 text-xs font-medium leading-snug">{a.commitment}</p>}
                 </div>
 
                 {a.id === 'product-backlog' && (

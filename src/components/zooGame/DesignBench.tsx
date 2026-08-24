@@ -68,7 +68,7 @@ function Empty({ next }: { next?: BacklogItem }) {
   return (
     <div className="flex h-full min-h-[8rem] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-4 py-6 text-center">
       <Hammer className="h-5 w-5 text-muted-foreground/50" aria-hidden />
-      <p className="text-[12px] font-medium text-muted-foreground">Nothing on the bench</p>
+      <p className="text-xs font-medium text-muted-foreground">Nothing on the bench</p>
       <p className="max-w-[22rem] text-[11px] leading-snug text-muted-foreground/80">
         {next
           ? <>Start <span className="font-medium text-foreground">{next.name}</span> and its design lands here. You build it here and place it on the park.</>

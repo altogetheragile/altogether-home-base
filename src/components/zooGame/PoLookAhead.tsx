@@ -32,8 +32,8 @@ export function PoLookAhead({ proposals, onAdd, onSplit, onDecline, className }:
             The Product Owner has been looking ahead
             {more > 0 && <span className="ml-1.5 font-normal normal-case tracking-normal text-muted-foreground">{more} more after this</span>}
           </div>
-          <p className="text-[13px] leading-snug">{p.why}</p>
-          <p className="mt-1 text-[12px] text-muted-foreground">
+          <p className="text-sm leading-snug">{p.why}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             {p.kind === 'add'
               ? <>Add <strong className="font-semibold text-foreground">{p.label}</strong> to the Product Backlog? It arrives
                 unsized, like anything else you would write - refine it and the Developers will size it.</>

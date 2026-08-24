@@ -10,6 +10,7 @@ import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Zap, MessageCircleQuestion } from 'lucide-react';
+import { SURFACE, PADDING } from './ui/tokens';
 
 type Step = 'inspect' | 'adapt';
 const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
@@ -104,7 +105,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       </div>
 
       {state.improvements.length > 0 && (
-        <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        <div className={cn(SURFACE.quiet, PADDING.default, 'text-xs text-muted-foreground')}>
           <div className="font-semibold uppercase tracking-wide">Carried so far</div>
           <ul className="mt-1 space-y-0.5">{state.improvements.map((imp, i) => <li key={i}>· {imp}</li>)}</ul>
         </div>

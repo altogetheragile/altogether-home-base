@@ -5,6 +5,7 @@ import { SPECIES_SHAPES } from './design';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, Wand2 } from 'lucide-react';
+import { SURFACE } from './ui/tokens';
 
 interface PbiEditorProps {
   zones: string[];
@@ -107,11 +108,11 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
       <label className="block space-y-1">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{storyMode ? 'Short label' : 'Name'}</span>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Meerkats, Ice cream stand, Oak tree"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+          className={cn(SURFACE.inset, 'w-full px-3 py-2 text-sm outline-none focus:border-primary')} />
       </label>
 
       {/* User-story format: optional, toggleable, with an auto-suggest. */}
-      <div className="space-y-2 rounded-md border border-border bg-background/40 p-2.5">
+      <div className={cn(SURFACE.inset, 'space-y-2 /40 p-2.5')}>
         <div className="flex items-center justify-between gap-2">
           <label className="flex items-center gap-2 text-xs font-medium">
             <input type="checkbox" checked={storyMode} onChange={(e) => toggleStory(e.target.checked)} />
@@ -183,38 +184,38 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
       {category === 'exhibit' && (
         <div className="space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Base shape</span>
-          <select value={shape} onChange={(e) => setShape(e.target.value)} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+          <select value={shape} onChange={(e) => setShape(e.target.value)} className={cn(SURFACE.inset, 'w-full px-2 py-1.5 text-sm')}>
             <option value="">Generic creature</option>
             {SPECIES_SHAPES.map((sh) => <option key={sh.key} value={sh.key}>{sh.label}</option>)}
           </select>
-          <p className="text-[10px] text-muted-foreground/70">The silhouette the studio starts from - just a starting point you tailor (parts, markings, colours). Pick one close to your animal.</p>
+          <p className="text-[11px] text-muted-foreground/70">The silhouette the studio starts from - just a starting point you tailor (parts, markings, colours). Pick one close to your animal.</p>
         </div>
       )}
 
       {category === 'exhibit' && (
         <div className="space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lives in</span>
-          <select value={enclosureId} onChange={(e) => setEnclosureId(e.target.value)} className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+          <select value={enclosureId} onChange={(e) => setEnclosureId(e.target.value)} className={cn(SURFACE.inset, 'w-full px-2 py-1.5 text-sm')}>
             <option value={NO_ENCLOSURE}>No enclosure yet</option>
             {enclosures.map((en) => <option key={en.id} value={en.id}>{en.name}</option>)}
           </select>
-          <p className="text-[10px] text-muted-foreground/70">An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.</p>
+          <p className="text-[11px] text-muted-foreground/70">An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.</p>
         </div>
       )}
       {category === 'flora' && (
-        <p className="rounded-md bg-muted/40 px-2.5 py-1.5 text-[10px] text-muted-foreground">Planting is placed freely - build it, then drag it anywhere on the park (including onto a compound).</p>
+        <p className="rounded-md bg-muted/40 px-2.5 py-1.5 text-[11px] text-muted-foreground">Planting is placed freely - build it, then drag it anywhere on the park (including onto a compound).</p>
       )}
 
       <div className="space-y-1">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Zone</span>
         <div className="flex gap-2">
-          <select value={zoneSel} onChange={(e) => setZoneSel(e.target.value)} className="rounded-md border border-border bg-background px-2 py-1.5 text-sm">
+          <select value={zoneSel} onChange={(e) => setZoneSel(e.target.value)} className={cn(SURFACE.inset, 'px-2 py-1.5 text-sm')}>
             {zones.map((z) => <option key={z} value={z}>{z}</option>)}
             <option value={NEW_ZONE}>+ New zone…</option>
           </select>
           {zoneSel === NEW_ZONE && (
             <input value={newZone} onChange={(e) => setNewZone(e.target.value)} placeholder="Zone name"
-              className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary" />
+              className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2 py-1.5 text-sm outline-none focus:border-primary')} />
           )}
         </div>
       </div>
@@ -225,7 +226,7 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
           {acceptance.map((a, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <input value={a} onChange={(e) => setAc(i, e.target.value)} placeholder="What makes it done and right?"
-                className="min-w-0 flex-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:border-primary" />
+                className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2.5 py-1.5 text-sm outline-none focus:border-primary')} />
               {acceptance.length > 1 && (
                 <button type="button" onClick={() => setAcceptance((arr) => arr.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground" aria-label="Remove criterion"><X className="h-4 w-4" /></button>
               )}
