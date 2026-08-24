@@ -24,6 +24,18 @@ an illustration set does so that a fox is not a speck beside an elephant. Size a
 new species truthfully and it looks shrunken among inflated neighbours. Match the
 sheet's convention instead.
 
+## Sheets that keep their colours somewhere else
+
+Some exporters put the fills in a `<style>` block and give every shape a class.
+Cut a drawing out of one of those and the stylesheet stays behind: what you get
+is a correctly shaped, entirely **black** animal. Nothing errors, because black
+is a perfectly good fill.
+
+The extractors now ask the browser what each shape actually looks like and write
+that onto the element before cutting - which handles every form a colour can take
+without parsing any CSS. It only runs on sheets that have a `<style>` block, so
+nothing already extracted is touched.
+
 ## A species from another sheet
 
 A second sheet has its own units and its own habits. Three fields in the source
@@ -118,5 +130,5 @@ Sources in use, and what covers them:
 | Sheet | Source | Licence |
 | --- | --- | --- |
 | `wild-animals.svg`, `flamingos.svg`, `tropic.svg`, `apes.svg`, `iso-animals.svg` | Freepik | Al's Freepik licence |
-| `savanna.svg`, `savanna-grazers.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
+| `savanna.svg`, `savanna-grazers.svg`, `otters.svg`, `reef.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
 | `kenney-isometric-buildings/` | Kenney | CC0 - public domain, no attribution required |

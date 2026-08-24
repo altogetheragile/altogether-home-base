@@ -184,6 +184,34 @@
           "flip": true
         }
       }
+    },
+    {
+      "file": "art-src/zoo/otters.svg",
+      "credit": "Adobe Stock",
+      "//": "A sheet of otters. The walking profile is the one a park wants - the others are floating, curled or head-on, which read as a portrait rather than an animal in an enclosure.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.25,
+      "unitScale": 0.055,
+      "species": {
+        "otter": {
+          "island": 3,
+          "flip": true
+        }
+      }
+    },
+    {
+      "file": "art-src/zoo/reef.svg",
+      "credit": "Adobe Stock",
+      "//": "Reef fish. This sheet keeps its colours in a <style> block and gives every shape a class, so it only works because the extractor now writes the computed styling onto the elements first. Without that it comes out a correctly shaped, entirely black fish.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.25,
+      "unitScale": 0.034,
+      "species": {
+        "reef": {
+          "group": 1,
+          "flip": true
+        }
+      }
     }
   ]
 }
