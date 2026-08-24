@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1737,6 +1737,40 @@ describe('zoo game: some scenery is a set, not a single thing', () => {
     expect(signs.copies).toEqual([{ x: 200, y: 300 }, { x: 500, y: 300 }, { x: 800, y: 300 }]);
     expect(s.backlog.length).toBe(before); // arranging, not new work - no PBI, no points
     expect(signs.estimate).toBe(initialZooState(1).backlog.find((it) => it.id === 'signposts')!.estimate);
+  });
+
+  it('plants from the studio, where there is no position to give it', () => {
+    // The studio is not the park, so a plant added there has nowhere to be put. It stands beside
+    // the last one, which is what somebody would do with the next tree.
+    let s = initialZooState(1);
+    const at = s.backlog.find((it) => it.id === 'trees')!.pos ?? { x: 120, y: 120 };
+    s = addItemCopy(s, 'trees');
+    s = addItemCopy(s, 'trees');
+    const c = s.backlog.find((it) => it.id === 'trees')!.copies!;
+    expect(c).toHaveLength(2);
+    expect(c[0].x).toBeGreaterThan(at.x);
+    expect(c[1].x).toBeGreaterThan(c[0].x);
+    expect(c[0].y).toBe(at.y);
+  });
+
+  it('lets one planting hold more than one kind of thing', () => {
+    // A planting PBI is some planting, not one tree repeated. Three oaks and a bush is a decision.
+    let s = addItemCopy(initialZooState(1), 'trees', undefined, 'pine');
+    s = addItemCopy(s, 'trees', undefined, 'bush');
+    let trees = s.backlog.find((it) => it.id === 'trees')!;
+    expect(trees.copies!.map((c) => c.piece)).toEqual(['pine', 'bush']);
+
+    s = setItemCopyPiece(s, 'trees', 1, 'blossom');
+    trees = s.backlog.find((it) => it.id === 'trees')!;
+    expect(trees.copies!.map((c) => c.piece)).toEqual(['pine', 'blossom']);
+    // and changing one leaves the others alone, including where they stand
+    expect(trees.copies![0].x).toBe(s.backlog.find((it) => it.id === 'trees')!.copies![0].x);
+  });
+
+  it('leaves a plant with no kind wearing the item\'s own design', () => {
+    // Everything planted before this existed has no piece of its own, and must keep working.
+    const s = addItemCopy(initialZooState(1), 'trees', { x: 200, y: 200 });
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies![0].piece).toBeUndefined();
   });
 
   it('moves and removes them one at a time, leaving the item itself alone', () => {

@@ -793,6 +793,10 @@ export function piecesFor(type?: string): FloraPiece[] {
   return FLORA_PIECES.filter((p) => family.includes(p.type));
 }
 
+/** A piece by its key, for anything that stores which piece it is rather than the whole design. */
+export const pieceByKey = (key?: string): FloraPiece | undefined =>
+  key ? FLORA_PIECES.find((p) => p.key === key) : undefined;
+
 /** Which piece a design is showing: the one it was given, or the first of its type. */
 export function pieceOf(design: ItemDesign, template?: string): FloraPiece | undefined {
   const key = design.parts.piece;

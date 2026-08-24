@@ -5,7 +5,7 @@ import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './ty
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 import { AnimalSprite } from './AnimalSprite';
 import { hasAnimalArt } from './art/animalArt';
-import { ENCLOSURE_SIZE, footprintFor } from './design';
+import { ENCLOSURE_SIZE, footprintFor, applyPiece, pieceByKey } from './design';
 import { renderDesign, presetFor, pathWidthPx, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
@@ -246,6 +246,14 @@ function ViewSwitch({ view, onView }: { view: 'plan' | 'iso'; onView: (v: 'plan'
       ))}
     </div>
   );
+}
+
+/** What one plant of an item looks like: the item's own design, or the piece this plant was given.
+ *  A planting PBI is some planting, not one tree repeated, so each may be its own kind. */
+function plantDesign(item: BacklogItem, piece?: string): ItemDesign {
+  const base = item.design ?? item.draftDesign ?? presetFor(item);
+  const p = pieceByKey(piece);
+  return p ? applyPiece(base, p) : base;
 }
 
 /** A single feature on the grounds. Amenities (buildings) sit on a plot tile; planting (flora)
@@ -524,6 +532,11 @@ export interface EditApi {
   onFinishBuild: (id: string) => void;
   onRelease: (id: string) => void;
   copySources: (item: BacklogItem) => CopySource[];
+  /** Planting is a set, and the set is chosen in the studio rather than by clicking a plus on a
+   *  forty-pixel tree. Adding, changing and removing what an item plants. */
+  onAddPlant: (id: string, piece?: string) => void;
+  onSetPlantPiece: (id: string, index: number, piece: string) => void;
+  onRemovePlant: (id: string, index: number) => void;
 }
 
 const clampF = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -671,7 +684,7 @@ const jitter = (n: number, k: number) => {
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   dots: SegmentId[];
   justOpened?: string | null;
@@ -699,7 +712,6 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   onSetRot?: (id: string, rot: number) => void;
-  onAddCopy?: (id: string, pos: { x: number; y: number }) => void;
   onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
@@ -1271,21 +1283,6 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
                     style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
                 </>
               )}
-              {/* Some scenery is a set - signposts at the junctions, trees along a path - so one
-                  delivered PBI can be put down more than once. */}
-              {canCopy(f) && onAddCopy && tool === 'none' && !dragging && (
-                // Shown outright on the thing you are working on, and only on hover for everything
-                // else. Hidden until hover it may as well not exist: a 40px tree is not somewhere
-                // anyone thinks to go looking for a button, and "how do I plant a second tree" is
-                // not a question the park should answer only to a mouse that happens to pass over.
-                <button type="button" title={`Put down another ${f.item.name}`} aria-label={`Put down another ${f.item.name}`}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => { e.stopPropagation(); onAddCopy(f.item.id, { x: clamp(p.x + f.w / 2 + 26, 8, CANVAS_W - 8), y: p.y }); }}
-                  className={cn(FOCUS, 'absolute -bottom-2 -right-1 z-40 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-600 bg-white text-emerald-700 shadow transition-opacity',
-                    building === f.item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
-                  <Plus className="h-3 w-3" />
-                </button>
-              )}
               {/* Turn it: across, up and down, or on the diagonal. */}
               {isLand && onSetRot && tool === 'none' && !dragging && (
                 <div onPointerDown={(e) => startRotate(e, f)} title="Drag to turn it - across, up and down, or diagonally (hold Shift for any angle)"
@@ -1321,7 +1318,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             style={{ left: c.x, top: c.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
             {f.item.category === 'flora' && isLandscapeType(landType(f.item))
               ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
-              : <Plot item={f.item} named={false} design={workingDesign(f.item)} />}
+              : <Plot item={f.item} named={false} design={plantDesign(f.item, c.piece)} />}
             {onRemoveCopy && tool === 'none' && (
               <button type="button" title={`Remove this ${f.item.name}`} aria-label={`Remove this ${f.item.name}`}
                 onPointerDown={(e) => e.stopPropagation()}
@@ -1514,7 +1511,6 @@ interface ParkViewProps {
   /** Turn a landscape feature on the park (degrees clockwise). */
   onSetRot?: (id: string, rot: number) => void;
   /** Extra placements of the same scenery - signposts at the junctions, trees along a path. */
-  onAddCopy?: (id: string, pos: { x: number; y: number }) => void;
   onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
 }
@@ -1522,7 +1518,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onAddCopy, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1753,7 +1749,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             </Suspense>
           ) : (
           <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}
-            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
+            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             // Every run drawn for a pathway carries that pathway's id, so the item can list its own
             // runs and take one back off. A route you cannot edit is a route you have to get right
             // first time, which is not how anyone draws anything.

@@ -593,8 +593,23 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
 /** Put down another of the same scenery. Some items are a set by nature - signposts at the
  *  junctions, trees along a path - so one delivered PBI can appear on the park as many times as it
  *  takes to meet its acceptance criteria. Arranging, not new work: no new PBI, no new points. */
-export function addItemCopy(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, copies: [...(it.copies ?? []), pos] } : it)) };
+export function addItemCopy(state: ZooGameState, id: string, pos?: { x: number; y: number }, piece?: string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => {
+    if (it.id !== id) return it;
+    const copies = it.copies ?? [];
+    // Added from the studio there is no position to give it, because the studio is not the park.
+    // So it stands beside the last one - which is what a person would do with the next tree.
+    const from = copies.length ? copies[copies.length - 1] : (it.pos ?? { x: 120, y: 120 });
+    const at = pos ?? { x: from.x + 34, y: from.y };
+    return { ...it, copies: [...copies, { ...at, ...(piece ? { piece } : {}) }] };
+  }) };
+}
+
+/** Change what one of them is. Planting is not one tree repeated: an oak beside a bush beside a
+ *  blossom is a thing somebody chose, and the game should let them choose it. */
+export function setItemCopyPiece(state: ZooGameState, id: string, index: number, piece: string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id
+    ? { ...it, copies: (it.copies ?? []).map((c, i) => (i === index ? { ...c, piece } : c)) } : it)) };
 }
 /** Move one of those extra placements. */
 export function moveItemCopy(state: ZooGameState, id: string, index: number, pos: { x: number; y: number }): ZooGameState {
