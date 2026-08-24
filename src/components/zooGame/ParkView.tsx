@@ -1,5 +1,8 @@
-import { useRef, useState, useLayoutEffect, type ReactNode, type Ref, type PointerEvent as ReactPointerEvent } from 'react';
+import { Suspense, lazy, type PointerEvent as ReactPointerEvent, type ReactNode, type Ref, useLayoutEffect, useRef, useState } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './types';
+/** The isometric view of the same park. Lazily imported: it carries the isometric artwork, which
+ *  is more than half of what the game weighs, and nobody needs it until they ask to look. */
+const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 import { AnimalSprite } from './AnimalSprite';
 import { hasAnimalArt } from './art/animalArt';
 import { ENCLOSURE_SIZE, footprintFor } from './design';
@@ -15,7 +18,7 @@ import { themeFor, type ZoneTheme } from './zoneTheme';
 import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
 import { autoLayout, insidePark, parkBounds, shapeEdge, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { groupMembers } from './design';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock, Map, Box, Eye } from 'lucide-react';
 
 // ============= The Park View =============
 //
@@ -221,6 +224,25 @@ function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; 
         <LandscapeShape type={type} w={w} h={h} primary={primary} secondary={secondary} />
       </div>
       <FeatureName name={item.name} />
+    </div>
+  );
+}
+
+/** Plan or isometric. Two ways of drawing one zoo, not two zoos.
+ *
+ *  Building happens in plan: a drag there moves a thing the way the pointer says it should. The
+ *  isometric side is for looking - which is most of what a park is for. */
+function ViewSwitch({ view, onView }: { view: 'plan' | 'iso'; onView: (v: 'plan' | 'iso') => void }) {
+  return (
+    <div className="flex items-center overflow-hidden rounded-md border border-border" role="group" aria-label="How to draw the park">
+      {([['plan', 'Plan', Map], ['iso', 'Isometric', Box]] as const).map(([key, label, Icon]) => (
+        <button key={key} type="button" onClick={() => onView(key)} aria-pressed={view === key}
+          title={key === 'plan' ? 'Lay the zoo out' : 'See it as a visitor would'}
+          className={cn('flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors',
+            view === key ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>
+          <Icon className="h-3.5 w-3.5" /> {label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1510,6 +1532,11 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   const [tool, setTool] = useState<'none' | 'connect' | null>(null);
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1); // 1 = the park fits the width it is given
+  // Plan to build in, isometric to look at. The same zoo either way - this switches how it is
+  // drawn, not what it is. Arranging happens in plan, because that is where a drag means what it
+  // looks like it means.
+  const [view, setView] = useState<'plan' | 'iso'>('plan');
+  const isoView = large && view === 'iso';
   // While a pathway is on the bench the bench holds the pen; otherwise it is the park's own toggle.
   const effectiveTool: 'none' | 'connect' = !canConnect ? 'none' : (drawRoute ? (drawing ? 'connect' : 'none') : (tool ?? 'none'));
   const stopDrawing = () => { setTool('none'); onDrawing?.(false); };
@@ -1600,13 +1627,16 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           </p>
           {statsBar}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            {features.length > 0 && onPlaceItem ? (
+            {isoView ? (
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands. Switch to Plan to arrange anything.</p>
+            ) : features.length > 0 && onPlaceItem ? (
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
             ) : <span />}
             <div className="flex items-center gap-3">
-              <ZoomControl zoom={zoom} onZoom={setZoom} />
+              <ViewSwitch view={view} onView={setView} />
+              {!isoView && <ZoomControl zoom={zoom} onZoom={setZoom} />}
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
-              {canConnect && onAddConnector && !drawRoute && (
+              {!isoView && canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
                   className={cn('flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
                     effectiveTool === 'connect' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
@@ -1716,12 +1746,18 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             </div>
           )}
           </div>
+          {isoView ? (
+            <Suspense fallback={<div className="h-[440px] animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
+              <IsoZoo state={state} height={520} />
+            </Suspense>
+          ) : (
           <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onAddCopy={onAddCopy} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             // Every run drawn for a pathway carries that pathway's id, so the item can list its own
             // runs and take one back off. A route you cannot edit is a route you have to get right
             // first time, which is not how anyone draws anything.
             onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); setSelectedConn(c.id); }} onUpdateConnector={onUpdateConnector} onSelectConn={setSelectedConn} />
+          )}
         </>
       ) : (
         <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />
