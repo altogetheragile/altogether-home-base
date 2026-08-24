@@ -1,0 +1,26 @@
+{
+  "//": "Which drawing in which source file is which species. `group` is the index of a top-level <g> in the file - run `npm run animal-art -- --index` to print a labelled contact sheet and read the numbers off it. `flip` mirrors a drawing so every animal in the game faces the same way (right).",
+  "sources": [
+    {
+      "file": "art-src/zoo/wild-animals.svg",
+      "credit": "Freepik",
+      "species": {
+        "lion": { "group": 22 },
+        "tiger": { "group": 24 },
+        "leopard": { "group": 23 },
+        "elephant": { "group": 21, "flip": true },
+        "giraffe": { "group": 26 },
+        "zebra": { "group": 20, "flip": true },
+        "rhino": { "group": 18 },
+        "hippo": { "group": 19 },
+        "camel": { "group": 25 },
+        "penguins": { "group": 7, "flip": true },
+        "seal": { "group": 15, "flip": true },
+        "bear": { "group": 0 },
+        "wolf": { "group": 13, "flip": true },
+        "fox": { "group": 2 },
+        "owl": { "group": 11 }
+      }
+    }
+  ]
+}
