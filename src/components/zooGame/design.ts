@@ -1055,12 +1055,24 @@ export const FOOTPRINT: Record<string, { w: number; h: number }> = {
 /** The default, for anything not named above. */
 export const DEFAULT_FOOTPRINT = { w: 64, h: 60 };
 
+/** How long a river is cut. It runs right across the land, fence to fence, with no gap at either
+ *  end - so it is cut long enough to reach past two opposite edges even on the diagonal, and
+ *  whatever draws it clips it to the park. */
+export const RIVER_LEN = 1180;
+
 /** The ground a feature stands on. Landscape scenery keeps its own resizable footprint; everything
- *  else takes the size its kind is worth. */
+ *  else takes the size its kind is worth.
+ *
+ *  A river is the exception, and it lives here rather than in one view because both of them draw
+ *  rivers: this rule was private to the park, so the Sprint Review drew a two-hundred-pixel puddle
+ *  where the park had a river across the whole zoo. */
 export function footprintFor(item: BacklogItem): { w: number; h: number } {
   const type = item.design?.parts.type ?? item.template
     ?? (item.category === 'amenity' ? buildingTypeFor(item.name, item.services) : undefined);
-  if (item.category === 'flora' && isLandscapeType(type)) return item.size ?? landscapeDefaultSize(type);
+  if (item.category === 'flora' && isLandscapeType(type)) {
+    if (type === 'river') return { w: RIVER_LEN, h: item.size?.h ?? landscapeDefaultSize('river').h };
+    return item.size ?? landscapeDefaultSize(type);
+  }
   return FOOTPRINT[type ?? ''] ?? DEFAULT_FOOTPRINT;
 }
 

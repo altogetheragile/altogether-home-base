@@ -1730,11 +1730,11 @@ describe('zoo game: some scenery is a set, not a single thing', () => {
   it('puts down as many as the acceptance criteria need, without new PBIs', () => {
     let s = initialZooState(1);
     const before = s.backlog.length;
-    s = addItemCopy(s, 'signposts', { x: 200, y: 300 });
-    s = addItemCopy(s, 'signposts', { x: 500, y: 300 });
-    s = addItemCopy(s, 'signposts', { x: 800, y: 300 });
+    s = addItemCopy(s, 'signposts');
+    s = addItemCopy(s, 'signposts');
+    s = addItemCopy(s, 'signposts');
     const signs = s.backlog.find((it) => it.id === 'signposts')!;
-    expect(signs.copies).toEqual([{ x: 200, y: 300 }, { x: 500, y: 300 }, { x: 800, y: 300 }]);
+    expect(signs.copies).toHaveLength(3);
     expect(s.backlog.length).toBe(before); // arranging, not new work - no PBI, no points
     expect(signs.estimate).toBe(initialZooState(1).backlog.find((it) => it.id === 'signposts')!.estimate);
   });
@@ -1743,20 +1743,46 @@ describe('zoo game: some scenery is a set, not a single thing', () => {
     // The studio is not the park, so a plant added there has nowhere to be put. It stands beside
     // the last one, which is what somebody would do with the next tree.
     let s = initialZooState(1);
-    const at = s.backlog.find((it) => it.id === 'trees')!.pos ?? { x: 120, y: 120 };
     s = addItemCopy(s, 'trees');
     s = addItemCopy(s, 'trees');
     const c = s.backlog.find((it) => it.id === 'trees')!.copies!;
     expect(c).toHaveLength(2);
-    expect(c[0].x).toBeGreaterThan(at.x);
-    expect(c[1].x).toBeGreaterThan(c[0].x);
-    expect(c[0].y).toBe(at.y);
+    // each one somewhere of its own, and each one next to the item rather than at a place on the park
+    expect(c[0]).not.toEqual(c[1]);
+    for (const p of c) expect(Math.hypot(p.dx, p.dy)).toBeGreaterThan(0);
+  });
+
+  it('stands each plant beside the item itself, wherever that turns out to be', () => {
+    // The fault this replaced: the studio had no park position to work from, so it guessed a fixed
+    // corner. Four signposts were made and one was seen - the other three were behind an enclosure
+    // at the top of the park. An offset cannot land anywhere but next to the item.
+    const s = addItemCopy(addItemCopy(initialZooState(1), 'signposts'), 'signposts');
+    const signs = s.backlog.find((it) => it.id === 'signposts')!;
+    expect(signs.pos).toBeUndefined(); // never dragged: the park decides where it goes
+    for (const c of signs.copies!) expect(Math.abs(c.dx) + Math.abs(c.dy)).toBeLessThan(120);
+  });
+
+  it('keeps a planting beside its item instead of walking off the park', () => {
+    // The fault: plants were laid in a line, each a step further right. With the item near the
+    // right-hand edge - a signpost by the gate - the line ran past the edge, and the park is
+    // clipped, so they were drawn and then cut away. Four made, one seen.
+    let s = initialZooState(1);
+    for (let i = 0; i < 8; i += 1) s = addItemCopy(s, 'signposts');
+    const copies = s.backlog.find((it) => it.id === 'signposts')!.copies!;
+    // Nothing runs away in one direction: as many go left as right, and up as down.
+    expect(copies.filter((c) => c.dx > 0)).toHaveLength(copies.filter((c) => c.dx < 0).length);
+    expect(copies.filter((c) => c.dy > 0)).toHaveLength(copies.filter((c) => c.dy < 0).length);
+    // and the whole planting stays within a plant or two of the item, however many there are
+    const far = Math.max(...copies.map((c) => Math.max(Math.abs(c.dx), Math.abs(c.dy))));
+    expect(far).toBeLessThanOrEqual(40);
+    // no two in the same spot, or eight signposts would look like one
+    expect(new Set(copies.map((c) => `${c.dx},${c.dy}`)).size).toBe(copies.length);
   });
 
   it('lets one planting hold more than one kind of thing', () => {
     // A planting PBI is some planting, not one tree repeated. Three oaks and a bush is a decision.
-    let s = addItemCopy(initialZooState(1), 'trees', undefined, 'pine');
-    s = addItemCopy(s, 'trees', undefined, 'bush');
+    let s = addItemCopy(initialZooState(1), 'trees', 'pine');
+    s = addItemCopy(s, 'trees', 'bush');
     let trees = s.backlog.find((it) => it.id === 'trees')!;
     expect(trees.copies!.map((c) => c.piece)).toEqual(['pine', 'bush']);
 
@@ -1764,21 +1790,22 @@ describe('zoo game: some scenery is a set, not a single thing', () => {
     trees = s.backlog.find((it) => it.id === 'trees')!;
     expect(trees.copies!.map((c) => c.piece)).toEqual(['pine', 'blossom']);
     // and changing one leaves the others alone, including where they stand
-    expect(trees.copies![0].x).toBe(s.backlog.find((it) => it.id === 'trees')!.copies![0].x);
+    expect(trees.copies![0].dx).toBe(s.backlog.find((it) => it.id === 'trees')!.copies![0].dx);
   });
 
   it('leaves a plant with no kind wearing the item\'s own design', () => {
     // Everything planted before this existed has no piece of its own, and must keep working.
-    const s = addItemCopy(initialZooState(1), 'trees', { x: 200, y: 200 });
+    const s = addItemCopy(initialZooState(1), 'trees');
     expect(s.backlog.find((it) => it.id === 'trees')!.copies![0].piece).toBeUndefined();
   });
 
   it('moves and removes them one at a time, leaving the item itself alone', () => {
-    let s = addItemCopy(addItemCopy(initialZooState(1), 'trees', { x: 100, y: 100 }), 'trees', { x: 300, y: 100 });
-    s = moveItemCopy(s, 'trees', 1, { x: 320, y: 140 });
-    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ x: 100, y: 100 }, { x: 320, y: 140 }]);
+    let s = addItemCopy(addItemCopy(initialZooState(1), 'trees'), 'trees');
+    const first = s.backlog.find((it) => it.id === 'trees')!.copies![0];
+    s = moveItemCopy(s, 'trees', 1, { dx: 320, dy: 140 });
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([first, { dx: 320, dy: 140 }]);
     s = removeItemCopy(s, 'trees', 0);
-    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ x: 320, y: 140 }]);
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ dx: 320, dy: 140 }]);
     // the item's own placement is not one of the copies, so it survives them all going
     s = removeItemCopy(s, 'trees', 0);
     expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([]);

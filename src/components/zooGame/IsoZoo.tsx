@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './engine';
-import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora } from './design';
+import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, pieceByKey } from './design';
 import { autoLayout, insidePark, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
@@ -228,6 +228,12 @@ function build(state: ZooGameState, targetH: number) {
         nodes.push(<polygon key={`land-${it.id}`} points={ground(c.x - size.w / 2, c.y - size.h / 2, c.x + size.w / 2, c.y + size.h / 2)} fill={cols.foliage ?? '#6fb0d6'} opacity={0.92} />);
       } else {
         place(treeProp(type), c.x, c.y, u * 1.9, `t-${it.id}`);
+        // The rest of what this item plants. One planting PBI is several trees, and it has to be
+        // several here too - otherwise switching to this view loses everything but the first.
+        for (const [i, k] of (it.copies ?? []).entries()) {
+          const at = insidePark({ w: 8, h: 8 }, { x: c.x + k.dx, y: c.y + k.dy });
+          place(treeProp(pieceByKey(k.piece)?.type ?? type, k.piece), at.x, at.y, u * 1.9, `t-${it.id}-${i}`);
+        }
       }
       continue;
     }
@@ -306,9 +312,18 @@ function build(state: ZooGameState, targetH: number) {
 }
 
 /** Which tree drawing a planting gets. Two shapes is enough to stop an avenue looking stamped. */
-function treeProp(type?: string): string {
-  if (type === 'hedge' || type === 'shrub' || type === 'bush') return 'hedge';
-  return type && type.length % 2 === 0 ? 'treeTall' : 'tree';
+function treeProp(type?: string, piece?: string): string {
+  // What it is beats what it is called. This used to pick between the two trees on whether the
+  // type's name had an even number of letters, which drew a signpost as a sapling.
+  switch (type) {
+    case 'signpost': return 'signpost';
+    case 'fountain': return 'fountain';
+    case 'hedge': case 'shrub': case 'bush': case 'flowers': return 'hedge';
+    default: break;
+  }
+  // Two trees and several kinds of tree, so a mixed planting is visibly mixed rather than a row of
+  // the same drawing: the taller one for the taller pieces.
+  return piece === 'pine' || piece === 'palm' ? 'treeTall' : 'tree';
 }
 
 /** Some amenities are a thing the sheet already has a drawing of, and a drawn bench beats a box. */

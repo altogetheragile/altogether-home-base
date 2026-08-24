@@ -593,16 +593,31 @@ export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; 
 /** Put down another of the same scenery. Some items are a set by nature - signposts at the
  *  junctions, trees along a path - so one delivered PBI can appear on the park as many times as it
  *  takes to meet its acceptance criteria. Arranging, not new work: no new PBI, no new points. */
-export function addItemCopy(state: ZooGameState, id: string, pos?: { x: number; y: number }, piece?: string): ZooGameState {
+export function addItemCopy(state: ZooGameState, id: string, piece?: string): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => {
     if (it.id !== id) return it;
     const copies = it.copies ?? [];
-    // Added from the studio there is no position to give it, because the studio is not the park.
-    // So it stands beside the last one - which is what a person would do with the next tree.
-    const from = copies.length ? copies[copies.length - 1] : (it.pos ?? { x: 120, y: 120 });
-    const at = pos ?? { x: from.x + 34, y: from.y };
-    return { ...it, copies: [...copies, { ...at, ...(piece ? { piece } : {}) }] };
+    // Around the item, measured from it - so this works from the studio, where there is no park to
+    // point at.
+    return { ...it, copies: [...copies, { ...copyOffset(copies.length), ...(piece ? { piece } : {}) }] };
   }) };
+}
+/** How far apart plants stand, in design px - about a tree's own width. */
+const COPY_GAP = 34;
+/** The eight ways round an item, nearest first. */
+const RING = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]];
+
+/** Where the n-th extra plant stands, relative to the item: a clump around it, ringing outwards.
+ *
+ *  Plants used to be laid in a line, each one a step further right than the last. Put the item near
+ *  the right-hand edge - where a signpost by the gate belongs - and the line walked off the park,
+ *  which is clipped, so the plants were drawn and then cut away. The studio counted four signposts
+ *  and the park showed one. Going round the item instead keeps a planting the size of a planting.
+ */
+export function copyOffset(n: number): { dx: number; dy: number } {
+  const [cx, cy] = RING[n % RING.length];
+  const step = Math.floor(n / RING.length) + 1;
+  return { dx: cx * COPY_GAP * step, dy: cy * COPY_GAP * step };
 }
 
 /** Change what one of them is. Planting is not one tree repeated: an oak beside a bush beside a
@@ -611,10 +626,11 @@ export function setItemCopyPiece(state: ZooGameState, id: string, index: number,
   return { ...state, backlog: state.backlog.map((it) => (it.id === id
     ? { ...it, copies: (it.copies ?? []).map((c, i) => (i === index ? { ...c, piece } : c)) } : it)) };
 }
-/** Move one of those extra placements. */
-export function moveItemCopy(state: ZooGameState, id: string, index: number, pos: { x: number; y: number }): ZooGameState {
+/** Move one of those extra placements - to a new distance from the item, not to a spot on the park,
+ *  so dragging the item afterwards takes its planting with it. */
+export function moveItemCopy(state: ZooGameState, id: string, index: number, off: { dx: number; dy: number }): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id
-    ? { ...it, copies: (it.copies ?? []).map((c, i) => (i === index ? pos : c)) } : it)) };
+    ? { ...it, copies: (it.copies ?? []).map((c, i) => (i === index ? { ...c, ...off } : c)) } : it)) };
 }
 /** Take one away again (the original placement stays - that is the item itself). */
 export function removeItemCopy(state: ZooGameState, id: string, index: number): ZooGameState {

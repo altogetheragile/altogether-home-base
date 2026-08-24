@@ -120,7 +120,7 @@ export default function ZooGame() {
     },
     onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
     // Something of the same kind you have already built, to start from rather than begin again.
-    onAddPlant: (id: string, piece?: string) => addCopy(id, undefined, piece),
+    onAddPlant: (id: string, piece?: string) => addCopy(id, piece),
     onSetPlantPiece: setCopyPiece,
     onRemovePlant: removeCopy,
     copySources: (item: { id: string; category: string }) => state.backlog

@@ -5,8 +5,8 @@ import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './ty
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 import { AnimalSprite } from './AnimalSprite';
 import { hasAnimalArt } from './art/animalArt';
-import { ENCLOSURE_SIZE, footprintFor, applyPiece, pieceByKey } from './design';
-import { renderDesign, presetFor, pathWidthPx, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapeDefaultSize, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
+import { ENCLOSURE_SIZE, footprintFor, applyPiece, pieceByKey  } from './design';
+import { renderDesign, presetFor, pathWidthPx, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import { VisitorLayer, type Attraction } from './VisitorLayer';
@@ -110,12 +110,8 @@ const landType = (item: BacklogItem): string | undefined => item.design?.parts.t
 /** A landscape feature's footprint on the park: its saved size, or the default for its type. A
  *  river always spans the full width of the park - it flows across the land, fence to fence, with
  *  no gap at either end - so only its thickness is taken from a saved size. */
-const landSize = (item: BacklogItem): { w: number; h: number } =>
-  landType(item) === 'river'
-    // A river always runs right across the land, whichever way it is turned - so it is cut long
-    // enough to reach past two opposite edges even on the diagonal, and clipped by the park.
-    ? { w: RIVER_LEN, h: item.size?.h ?? landscapeDefaultSize('river').h }
-    : item.size ?? landscapeDefaultSize(landType(item));
+// The river rule now lives with the footprints, because the Sprint Review draws rivers too.
+const landSize = (item: BacklogItem): { w: number; h: number } => footprintFor(item);
 
 /** A smooth (vector) wavy line: `n` samples of `yAt` across the width, as an SVG points string.
  *  Drawing scenery as vectors instead of a stretched pixel grid keeps it smooth at any size. */
@@ -661,7 +657,7 @@ function buildFeatures(state: ZooGameState): Feature[] {
 // portrait one uses the height it has. These are design pixels, scaled to whatever room it gets.
 // A river is cut long enough to cross the park from any angle (past the corners on the diagonal)
 // and is clipped by the park's edges, so turning it never leaves a gap at the ends.
-const RIVER_LEN = 1180;
+
 const PATH_H = 40; // promenade band along the foot, where visitors stroll
 // The park's own height, and it does not change. It used to be measured from wherever the lowest
 // thing had ended up, which meant the park grew when you added a gift shop and the whole scene
@@ -712,7 +708,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   onSetRot?: (id: string, rot: number) => void;
-  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
+  onMoveCopy?: (id: string, index: number, off: { dx: number; dy: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
@@ -767,6 +763,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   };
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const canvasH = PLAY_H + PATH_H;
+  /** Where one of an item's extra plants is drawn: beside the item, and never off the park. The
+   *  park is clipped, so a plant past the edge is not half on the grass - it is gone. */
+  const copyPos = (f: Feature, c: { dx: number; dy: number }) => {
+    const at = posOf(f);
+    return { x: clamp(at.x + c.dx, 10, CANVAS_W - 10), y: clamp(at.y + c.dy, 10, canvasH - PATH_H - 10) };
+  };
 
   // The visible body box of a feature (the enclosure box / building tile, excluding the name label),
   // used for both its perimeter path and where connectors attach.
@@ -1004,15 +1006,20 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
 
   // Dragging one of an item's extra placements. Same maths as dragging the feature, but it writes
   // back to that copy rather than to the item's own position.
-  const startCopyDrag = (e: ReactPointerEvent, f: Feature, index: number, from: { x: number; y: number }) => {
+  const startCopyDrag = (e: ReactPointerEvent, f: Feature, index: number, from: { dx: number; dy: number }) => {
     if (!onMoveCopy || tool !== 'none') return;
     e.preventDefault(); e.stopPropagation();
     const sc = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const sx = e.clientX, sy = e.clientY;
-    const move = (ev: PointerEvent) => onMoveCopy(f.item.id, index, {
-      x: clamp(from.x + (ev.clientX - sx) / sc, 8, CANVAS_W - 8),
-      y: clamp(from.y + (ev.clientY - sy) / sc, 8, canvasH - PATH_H - 8),
-    });
+    // Dragged to a place on the park, kept as a distance from the item: clamp where it lands, then
+    // measure back. Clamping the distance instead would let a plant sit off the edge of the grass.
+    const move = (ev: PointerEvent) => {
+      const at = posOf(f);
+      onMoveCopy(f.item.id, index, {
+        dx: clamp(at.x + from.dx + (ev.clientX - sx) / sc, 8, CANVAS_W - 8) - at.x,
+        dy: clamp(at.y + from.dy + (ev.clientY - sy) / sc, 8, canvasH - PATH_H - 8) - at.y,
+      });
+    };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
@@ -1315,7 +1322,7 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           <div key={`${f.item.id}-copy-${i}`}
             onPointerDown={(e) => startCopyDrag(e, f, i, c)}
             className={cn('group absolute z-10 select-none', onMoveCopy ? 'cursor-grab active:cursor-grabbing' : '')}
-            style={{ left: c.x, top: c.y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
+            style={{ left: copyPos(f, c).x, top: copyPos(f, c).y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
             {f.item.category === 'flora' && isLandscapeType(landType(f.item))
               ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
               : <Plot item={f.item} named={false} design={plantDesign(f.item, c.piece)} />}
@@ -1511,7 +1518,7 @@ interface ParkViewProps {
   /** Turn a landscape feature on the park (degrees clockwise). */
   onSetRot?: (id: string, rot: number) => void;
   /** Extra placements of the same scenery - signposts at the junctions, trees along a path. */
-  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
+  onMoveCopy?: (id: string, index: number, off: { dx: number; dy: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
 }
 
