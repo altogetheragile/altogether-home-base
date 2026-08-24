@@ -131,6 +131,17 @@
           "flip": true
         }
       }
+    },
+    {
+      "file": "art-src/zoo/iso-animals.svg",
+      "credit": "Freepik",
+      "//": "Drawn three-quarter on rather than in profile like the other sheets, so only taken where the pose earns it. A sitting panda reads as a sitting panda from any angle.",
+      "unitScale": 0.62,
+      "species": {
+        "panda": {
+          "group": 1
+        }
+      }
     }
   ]
 }
