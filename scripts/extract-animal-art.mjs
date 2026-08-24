@@ -54,6 +54,12 @@ for (const source of config.sources) {
   const islands = Object.values(source.species).some((sp) => sp.island !== undefined)
     ? await findIslands(browser, svg, source.bridge ?? 0, source.ignoreLargerThan ?? 0.06)
     : [];
+  // Where even islands weld drawings together - a sheet where every animal sits among the same
+  // foliage - a species can name the patch of the sheet it occupies instead.
+  const boxed = Object.entries(source.species).filter(([, sp]) => sp.box);
+  const carved = boxed.length
+    ? await regionsOf(browser, svg, boxed.map(([species, sp]) => ({ name: species, box: sp.box, inside: sp.inside })))
+    : [];
 
   if (source.credit) credits.add(source.credit);
   // Every sheet is drawn to its own scale. `unitScale` says what one of this sheet's units is worth
@@ -61,21 +67,19 @@ for (const source of config.sources) {
   // right height beside a giraffe off the first.
   const unit = source.unitScale ?? 1;
   const named = Object.entries(source.species);
-  const islandPicks = named.filter(([, sp]) => sp.island !== undefined);
-  const cuts = islandPicks.length
-    ? await cutIslands(browser, svg, islandPicks.map(([species, sp]) => {
-      const c = islands[sp.island];
-      if (!c) { console.error(`${species}: no island ${sp.island} in ${source.file}`); process.exit(1); }
-      return { name: species, members: c.members, drop: source.drop ?? [] };
-    }))
-    : [];
+  const picks = named.filter(([, sp]) => sp.island !== undefined || sp.box).map(([species, sp]) => {
+    const c = sp.box ? carved.find((r) => r.name === species) : islands[sp.island];
+    if (!c || !c.members.length) { console.error(`${species}: nothing found for it in ${source.file}`); process.exit(1); }
+    return { name: species, members: c.members, drop: sp.drop ?? source.drop ?? [] };
+  });
+  const cuts = picks.length ? await cutIslands(browser, svg, picks) : [];
 
   for (const [species, spec] of named) {
     let box, body;
-    if (spec.island !== undefined) {
+    if (spec.island !== undefined || spec.box) {
       const cut = cuts.find((x) => x.name === species);
+      box = cut.box ?? (spec.box ? carved.find((r) => r.name === species) : islands[spec.island]);
       body = cut.body;
-      box = cut.box ?? islands[spec.island];
     } else {
       box = boxes[spec.group];
       body = groups[spec.group];
