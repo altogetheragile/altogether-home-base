@@ -265,6 +265,22 @@
           ]
         }
       }
+    },
+    {
+      "file": "art-src/zoo/australia.svg",
+      "credit": "Adobe Stock",
+      "//": "Emu and kangaroo, the last two species the toolbox offered and nobody had drawn. ignoreLargerThan is 0.15 here, not the usual 0.06: the kangaroo is the biggest animal on a small sheet and its body was being taken for background, which left an island of pale legs and no kangaroo at all. These two are drawn WITH an outline and the rest of the menagerie is not - the outline is filled shapes rather than strokes, so it cannot be taken off without taking the eyes and the nostrils with it. They read as the same animals in the same zoo, a little more boldly drawn.",
+      "bridge": 0,
+      "ignoreLargerThan": 0.15,
+      "unitScale": 0.3,
+      "species": {
+        "kangaroo": {
+          "island": 0
+        },
+        "emu": {
+          "island": 1
+        }
+      }
     }
   ]
 }

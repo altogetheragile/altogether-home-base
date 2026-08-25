@@ -31,16 +31,26 @@ describe('animal artwork', () => {
     expect(animalArtFor('zebra', 'females')).toBe(animalArtFor('zebra'));
   });
 
-  it('leaves the species it has no drawing for on their built sprites', () => {
-    // The two kinds of sprite live side by side on purpose. If this ever came back true for
-    // everything, the fallback would be dead code and an unillustrated animal would vanish.
-    // Whichever species that is is found rather than named: naming one dates the test the day
-    // somebody draws it, which is exactly what happened to the toucan.
-    const undrawn = [...exhibitTemplates].filter((t) => !hasAnimalArt(t));
-    expect(undrawn.length, 'every species is drawn - the fallback is now dead code').toBeGreaterThan(0);
-    expect(animalArtFor(undrawn[0])).toBeUndefined();
+  it('leaves a species it has no drawing for on its built sprite', () => {
+    // The two kinds of sprite live side by side on purpose. This used to hunt for a real species the
+    // toolbox offered and nobody had illustrated - then somebody drew the last two, the emu and the
+    // kangaroo, and the hunt came back empty and the test failed for the happiest possible reason.
+    //
+    // The fallback is not dead code. It is what stands on the park the day a new animal is added to
+    // the toolbox and before anyone has drawn it, and that day will come again. So the test uses a
+    // species nobody has, rather than depending on one existing.
+    expect(hasAnimalArt('quagga')).toBe(false);
+    expect(animalArtFor('quagga')).toBeUndefined();
+    expect(animalArtFor('quagga', 'females')).toBeUndefined();
     expect(hasAnimalArt(undefined)).toBe(false);
-    expect(hasAnimalArt('not-an-animal')).toBe(false);
+    expect(animalArtFor(undefined)).toBeUndefined();
+  });
+
+  it('has now drawn every species the toolbox offers', () => {
+    // Worth saying out loud, and worth knowing if it stops being true: adding a species to the
+    // toolbox without drawing it is allowed, and this is where you find out you did it.
+    const undrawn = [...exhibitTemplates].filter((t) => !hasAnimalArt(t));
+    expect(undrawn, `not drawn yet: ${undrawn.join(', ')}`).toEqual([]);
   });
 
   it('sizes each animal from its own drawing, so the park is to scale', () => {

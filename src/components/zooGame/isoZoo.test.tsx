@@ -7,16 +7,21 @@ import { project, unproject, depth, boxFaces, fenceRun, tint, screenBounds } fro
 import { ISO_ART } from './art/isoArt.generated';
 import { ANIMAL_ART } from './art/animalArt.generated';
 import { hasAnimalArt } from './art/animalArt';
-import { TOOLBOX } from './toolboxItems';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
 
-/** A species the game offers and nobody has drawn yet. Found rather than named, so the test does
- *  not date the day somebody draws whichever one was hard-coded. */
+/** A species nobody has drawn.
+ *
+ *  This used to hunt for a real one the toolbox offered and nobody had illustrated, so the test
+ *  would not date the day somebody drew whichever one was hard-coded. Then somebody drew the last
+ *  two - the emu and the kangaroo - and the hunt came back empty.
+ *
+ *  So it is a made-up species now. The fallback is not dead code: it is what stands on the park the
+ *  day a new animal is added to the toolbox and before anyone has drawn it, which is a day that
+ *  will come again. A test for that day cannot depend on that day not having arrived. */
 function undrawnSpecies(): string {
-  const all = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'exhibit').map((i) => i.template!);
-  const undrawn = all.find((t) => !hasAnimalArt(t));
-  if (!undrawn) throw new Error('every species is drawn - this test has nothing left to check');
-  return undrawn;
+  const made = 'quagga';
+  if (hasAnimalArt(made)) throw new Error(`${made} has been drawn - pick another species nobody has`);
+  return made;
 }
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
