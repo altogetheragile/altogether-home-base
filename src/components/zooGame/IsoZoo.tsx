@@ -10,7 +10,8 @@ import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpo
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
 import { AGE_SCALE, groupMembers } from './design';
 import {
-  project, unproject, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
+  project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
+  roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, fenceRun as fenceRunOf, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
 } from './art/iso';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
 import { BUILDING_ART } from './art/buildingArt.generated';
@@ -78,16 +79,18 @@ function along(route: Pt[], t: number): Pt {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
 }
 
-export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, onSelect }: {
+export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect }: {
   state: ZooGameState;
   height?: number;
   className?: string;
+  /** Quarter-turns clockwise: 0, 1, 2 or 3. Walk round the park to see behind something. */
+  turn?: number;
   /** Move something. Given, this view stops being a picture and becomes somewhere you build. */
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   selected?: string | null;
   onSelect?: (id: string | null) => void;
 }) {
-  const scene = useMemo(() => build(state, height), [state, height]);
+  const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
 
@@ -100,7 +103,8 @@ export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, 
     const r = svgRef.current?.getBoundingClientRect();
     if (!r || !r.width) return null;
     const k = scene.w / r.width;
-    return unproject((e.clientX - r.left) * k - scene.ox, (e.clientY - r.top) * k - scene.oy, scene.u);
+    const p = unproject((e.clientX - r.left) * k - scene.ox, (e.clientY - r.top) * k - scene.oy, scene.u);
+    return scene.unturn(p.x, p.y);
   };
 
   /** What is under that point. Nearest first: where two things overlap, the pointer means the one
@@ -130,8 +134,7 @@ export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, 
   // A ring round what is picked up, drawn on the ground in the same projection as everything else,
   // so it lies flat on the grass instead of floating over it as a browser rectangle would.
   const held = selected ? scene.movable.find((m) => m.id === selected) : undefined;
-  const ring = held && groundPoints(held.x - held.w / 2, held.y - held.h / 2, held.x + held.w / 2, held.y + held.h / 2, scene.u)
-    .split(' ').map((s) => { const [x, y] = s.split(',').map(Number); return `${x + scene.ox},${y + scene.oy}`; }).join(' ');
+  const ring = held && scene.ground(held.x - held.w / 2, held.y - held.h / 2, held.x + held.w / 2, held.y + held.h / 2);
 
   return (
     <div className={className}>
@@ -152,7 +155,7 @@ export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, 
   );
 }
 
-function build(state: ZooGameState, targetH: number) {
+function build(state: ZooGameState, targetH: number, turn = 0) {
   // WHAT is on the park, how big it is and where it stands are decided in one place, shared with
   // the plan view - see parkModel. This file's job is to draw it from the corner, nothing else.
   const standing = standingOnPark(state);
@@ -174,21 +177,57 @@ function build(state: ZooGameState, targetH: number) {
   const lot = carParkLayout(CANVAS_W, PLAY_H, carCount, busCount);
   const worldH = PLAY_H + lot.height;
 
+  // ---- which way round the park is being looked at ---------------------------------------
+  //
+  // A quarter-turn is a coordinate swap, not a second projection: turn the world before projecting
+  // it and everything follows, the back-to-front drawing order included. Quarter-turns only, on
+  // purpose - every prop is drawn from one fixed angle, so at 37 degrees the trees, the cars and
+  // the animals would all be facing the wrong way.
+  //
+  // Everything below still works in the park's own coordinates. The turn is applied here, in the
+  // handful of places that convert a place in the park into a place in the picture.
+  const q = ((turn % 4) + 4) % 4;
+  const T = (x: number, y: number): Pt =>
+    q === 1 ? { x: worldH - y, y: x }
+      : q === 2 ? { x: CANVAS_W - x, y: worldH - y }
+        : q === 3 ? { x: y, y: CANVAS_W - x }
+          : { x, y };
+  /** ...and back again, for a pointer arriving on a park that has been turned. */
+  const unturn = (x: number, y: number): Pt =>
+    q === 1 ? { x: y, y: worldH - x }
+      : q === 2 ? { x: CANVAS_W - x, y: worldH - y }
+        : q === 3 ? { x: CANVAS_W - y, y: x }
+          : { x, y };
+  /** A turned box is still a box - it is the corners that swap. */
+  const Tbox = (x0: number, y0: number, x1: number, y1: number) => {
+    const a = T(x0, y0), z = T(x1, y1);
+    return [Math.min(a.x, z.x), Math.min(a.y, z.y), Math.max(a.x, z.x), Math.max(a.y, z.y)] as const;
+  };
+  // Turned a quarter, the park is as wide as it was tall.
+  const RW = q % 2 ? worldH : CANVAS_W, RH = q % 2 ? CANVAS_W : worldH;
+
   // Fit the whole thing, car park included, into the space we have been given.
-  const fit = screenBounds(CANVAS_W, worldH, 1);
+  const fit = screenBounds(RW, RH, 1);
   const u = Math.min((targetH * 1.9) / fit.w, targetH / fit.h) * 0.94;
-  const b = screenBounds(CANVAS_W, worldH, u);
+  const b = screenBounds(RW, RH, u);
   const MARGIN = 26;
   // Room above the park for the tallest prop standing at the very back of it.
   const HEAD = (prop('tree')?.h ?? 0) * u * 1.9;
   const ox = b.ox + MARGIN, oy = b.oy + MARGIN + HEAD;
 
-  const P = (wx: number, wy: number): Pt => { const p = project(wx, wy, u); return { x: p.x + ox, y: p.y + oy }; };
+  const P = (wx: number, wy: number): Pt => { const t = T(wx, wy); const p = project(t.x, t.y, u); return { x: p.x + ox, y: p.y + oy }; };
+  /** How far back something stands, on the park as it is being looked at. */
+  const depth = (wx: number, wy: number): number => { const t = T(wx, wy); return depthOf(t.x, t.y); };
+  const boxFaces = (x0: number, y0: number, x1: number, y1: number, h: number, k: number) => boxFacesOf(...Tbox(x0, y0, x1, y1), h, k);
+  const roofFaces = (x0: number, y0: number, x1: number, y1: number, wh: number, rh: number, e: number, k: number) => roofFacesOf(...Tbox(x0, y0, x1, y1), wh, rh, e, k);
+  const wallPanel = (a: Pt, z: Pt, ...rest: [number, number, number, number, number]) => wallPanelOf(T(a.x, a.y), T(z.x, z.y), ...rest);
+  /** Fencing runs the way the park is turned, and a panel drawn up-slope becomes one drawn down. */
+  const fenceRun = (from: Pt, to: Pt, k: number, up: boolean) => fenceRunOf(T(from.x, from.y), T(to.x, to.y), k, q % 2 ? !up : up);
   /** Everything is drawn inset by the scene's margin, but `boxFaces` and `roofFaces` hand back raw
    *  projected points. Anything built from those has to be shifted, or it is drawn off the edge of
    *  the picture - which is silent, because a polygon at the wrong coordinates is still a polygon. */
   const shift = (s: string) => s.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
-  const ground = (x0: number, y0: number, x1: number, y1: number) => shift(groundPoints(x0, y0, x1, y1, u));
+  const ground = (x0: number, y0: number, x1: number, y1: number) => shift(groundPoints(...Tbox(x0, y0, x1, y1), u));
 
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((i) => i.zone)]));
   const themeOf = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
@@ -533,7 +572,7 @@ function build(state: ZooGameState, targetH: number) {
   }
 
   // ---- the car park ------------------------------------------------------------------------
-  for (const [i, spot] of (lot.spots ?? []).entries()) push(...vehicle(spot, i, u, P));
+  for (const [i, spot] of (lot.spots ?? []).entries()) push(...vehicle(spot, i, u, P, depth, q));
 
   // ---- visitors ----------------------------------------------------------------------------
   //
@@ -584,7 +623,7 @@ function build(state: ZooGameState, targetH: number) {
   }
 
   pieces.sort((a, z) => a.z - z.z);
-  const total = screenBounds(CANVAS_W, worldH, u);
+  const total = screenBounds(RW, RH, u);
   return {
     w: total.w + MARGIN * 2,
     h: total.h + MARGIN * 2 + EDGE + HEAD,
@@ -596,6 +635,10 @@ function build(state: ZooGameState, targetH: number) {
     u,
     ox,
     oy,
+    /** A pointer arrives on the park as it is being LOOKED at; the zoo is laid out on the park as it
+     *  IS. One of these undoes the turn, the other draws a box in the picture. */
+    unturn,
+    ground,
     movable: [...encs, ...loose].map((it) => {
       const c = posOf(it), s = sizeOf(it);
       return { id: it.id, name: it.name, x: c.x, y: c.y, w: s.w, h: s.h, z: depth(c.x, c.y) };
@@ -646,12 +689,16 @@ function amenityProp(it: BacklogItem): string | undefined {
 const CARS = ['suv', 'saloonRed', 'saloonBlue', 'saloonGrey', 'estateRed', 'estate4x4', 'vanYellow', 'pickup', 'cityCar'];
 const LARGE = ['coach', 'boxVan'];
 
-function vehicle(spot: CarSpot, i: number, u: number, P: (x: number, y: number) => Pt): [number, React.ReactNode] {
+function vehicle(spot: CarSpot, i: number, u: number, P: (x: number, y: number) => Pt,
+  depth: (x: number, y: number) => number,
+  /** Quarter-turns of the park: a bay that ran across it now runs up it, so a car that nosed into
+   *  its bay is lying along it. The same swap the fencing needs. */
+  q: number): [number, React.ReactNode] {
   const name = spot.bus ? LARGE[i % LARGE.length] : CARS[i % CARS.length];
   const art = VEHICLE_ART[name];
   const [hw, hh] = spot.bus ? [BUS_HW, BUS_HH] : [CAR_HW, CAR_HH];
   // A coach lies along its lay-by; a car noses into its bay. `rot` is radians, not degrees.
-  const across = Math.abs(Math.sin(spot.rot)) > 0.5;
+  const across = (Math.abs(Math.sin(spot.rot)) > 0.5) !== (q % 2 === 1);
   const fw = (across ? hw : hh) * 2, fh = (across ? hh : hw) * 2;
   // Fit the drawing's width to the width its footprint projects to, so a coach takes a coach's
   // room - less a margin, because a drawing carries its own shadow and a car sized to the outside

@@ -1470,6 +1470,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
   // to turn the park to the Increment, which is the whole point of the button. It keeps its own
   // state when nobody is holding it, so the small read-only views still work on their own.
   const [ownView, setOwnView] = useState<'plan' | 'iso'>('plan');
+  const [turn, setTurn] = useState(0); // quarter-turns of the Increment view
   const view = viewProp ?? ownView;
   const setView = onView ?? setOwnView;
   const isoView = large && view === 'iso';
@@ -1578,6 +1579,14 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                   artwork - the animals, the buildings, the people - and it was the one view you
                   could not lean into. */}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
+              {/* Walk round it. A quarter at a time, because every prop is drawn from one angle. */}
+              {isoView && (
+                <button type="button" onClick={() => setTurn((t) => (t + 1) % 4)}
+                  title="Turn the park a quarter, to see behind something"
+                  className={cn(FOCUS, 'flex h-6 items-center gap-1 rounded-md border border-border px-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground')}>
+                  <RotateCw className="h-3.5 w-3.5" /> Turn
+                </button>
+              )}
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {!isoView && canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
@@ -1697,7 +1706,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                 <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
                   {/* The same handlers the plan uses. One zoo, two ways of drawing it, and either
                       one is somewhere you can arrange it. */}
-                  <IsoZoo state={state} height={520 * zoom}
+                  <IsoZoo state={state} height={520 * zoom} turn={turn}
                     onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild} />
                 </div>
               </div>

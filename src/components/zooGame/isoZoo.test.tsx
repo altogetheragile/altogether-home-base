@@ -396,6 +396,58 @@ describe('the isometric projection', () => {
     expect(new Set(filters).size, 'every plant was drawn the same').toBeGreaterThan(1);
   });
 
+  it('draws the same zoo whichever way round you walk', () => {
+    // A quarter-turn is a coordinate swap, not a second projection. It must change how the park is
+    // DRAWN and nothing about what is on it: the same things, the same number of them, the same
+    // habitats with the same animals in them.
+    const state = zooWithEverything();
+    const counts = [0, 1, 2, 3].map((turn) => {
+      const svg = render(<IsoZoo state={state} height={460} turn={turn} />).container.querySelector('svg[role="img"]')!;
+      return { props: svg.querySelectorAll('svg').length, polys: svg.querySelectorAll('polygon').length,
+               label: svg.getAttribute('aria-label') };
+    });
+    for (const c of counts) {
+      expect(c.props).toBe(counts[0].props);
+      expect(c.polys).toBe(counts[0].polys);
+      expect(c.label).toBe(counts[0].label);
+    }
+    // ...but it does not draw the same PICTURE, or the button would do nothing.
+    const shapeAt = (turn: number) => render(<IsoZoo state={state} height={460} turn={turn} />)
+      .container.querySelector('svg[role="img"]')!.querySelector('polygon')!.getAttribute('points');
+    expect(shapeAt(1)).not.toBe(shapeAt(0));
+  });
+
+  it('answers a pointer on a park that has been turned', () => {
+    // The pointer arrives on the park as it is being LOOKED at; the zoo is laid out on the park as
+    // it IS. Turning without undoing the turn would move the wrong thing, or the right thing in the
+    // wrong direction - and it would look almost right, which is the worst kind of wrong.
+    const moved: { id: string; pos: { x: number; y: number } }[] = [];
+    const { container } = render(
+      <IsoZoo state={zooWithEverything()} height={460} turn={1} selected="enc"
+        onPlaceItem={(id, pos) => moved.push({ id, pos })} />,
+    );
+    const svg = container.querySelector('svg[role="img"]') as SVGSVGElement;
+    const [, , vw, vh] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: vw, height: vh, right: vw, bottom: vh, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+
+    const ring = [...svg.querySelectorAll('polygon')].find((p) => p.getAttribute('stroke') === '#f97316')!;
+    const pts = (ring.getAttribute('points') ?? '').trim().split(/\s+/).map((q) => q.split(',').map(Number));
+    const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length;
+    const cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+
+    const opts = { bubbles: true, cancelable: true, pointerId: 1 };
+    svg.dispatchEvent(new window.PointerEvent('pointerdown', { ...opts, clientX: cx, clientY: cy }));
+    window.dispatchEvent(new window.PointerEvent('pointermove', { ...opts, clientX: cx + 30, clientY: cy + 15 }));
+    window.dispatchEvent(new window.PointerEvent('pointerup', { ...opts, clientX: cx + 30, clientY: cy + 15 }));
+
+    expect(moved.length, 'the habitat did not move on a turned park').toBeGreaterThan(0);
+    expect(moved[0].id).toBe('enc');
+    const last = moved[moved.length - 1].pos;
+    expect(last.x).toBeGreaterThan(0);
+    expect(last.x).toBeLessThan(820);
+    expect(last.y).toBeGreaterThan(0);
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
