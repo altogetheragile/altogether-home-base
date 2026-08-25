@@ -235,7 +235,7 @@
     {
       "file": "art-src/zoo/lion-family.svg",
       "credit": "Adobe Stock",
-      "//": "A lion family, and the whole pride comes from THIS one sheet on purpose: a male, a lioness and a cub drawn by three different hands standing in one habitat would look like three different animals. The male is an island of his own; the lioness and the cub are cut from the cluster in the middle by the patch each occupies. Standing poses for all three, so they read as one family rather than one walking and one sitting for no reason.",
+      "//": "A lion family, and the whole pride comes from THIS one sheet on purpose: a male, a lioness and a cub drawn by three different hands standing in one habitat would look like three different animals. The male is an island of his own; the lioness and the cub are cut from the cluster in the middle by the patch each occupies. Standing poses for all three, so they read as one family rather than one walking and one sitting for no reason. The male is flipped: every other drawing in the menagerie faces right, and the facing logic turns an animal towards its nearest fence by mirroring from that one shared starting point. One drawing facing the other way is not a style difference, it is a lion that turns the wrong way in every habitat.",
       "bridge": 0,
       "ignoreLargerThan": 0.06,
       "unitScale": 0.12,
@@ -244,7 +244,8 @@
           "island": 3,
           "drop": [
             "#FFFFFF"
-          ]
+          ],
+          "flip": true
         },
         "lion_females": {
           "island": 5,
