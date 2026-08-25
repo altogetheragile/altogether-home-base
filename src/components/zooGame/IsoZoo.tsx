@@ -124,8 +124,25 @@ export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, 
 
 function build(state: ZooGameState, targetH: number) {
   const live = state.backlog.filter(standsOnPark);
-  const encs = live.filter((i) => i.category === 'enclosure');
-  const loose = live.filter((i) => i.category === 'amenity' || (i.category === 'flora' && !i.enclosureId));
+
+  // Work that has been STARTED stands on the park too, behind hoardings, exactly as it does in the
+  // plan view. This view drew only what was delivered, which was defensible while it was a picture
+  // of the Increment and became nonsense the moment you could build in it: you started something
+  // and nothing appeared. An item under way is visible on the product from the moment it begins -
+  // that is the Increment made into something you watch happen. A path is the exception, as it is
+  // in the plan view: a route between things has no square of ground to hoard off.
+  const wip = state.backlog.filter((it) => it.status === 'committed' && it.started
+    && !it.enhancesId && it.category !== 'path');
+  const underWay = new Set(wip.map((i) => i.id));
+  const onPark = [...live, ...wip];
+
+  const encs = onPark.filter((i) => i.category === 'enclosure');
+  const encIds = new Set(encs.map((e) => e.id));
+  const loose = onPark.filter((i) => i.category === 'amenity'
+    || (i.category === 'flora' && !i.enclosureId)
+    // An animal whose habitat is not on the park yet has nowhere to stand, so it gets its own site
+    // rather than vanishing - the same as in the plan view.
+    || (i.category === 'exhibit' && !encIds.has(i.enclosureId ?? '')));
 
   // How busy the zoo is, on the same terms the park view uses: the lot fills with what is open to
   // visit, so the two views never disagree about how many cars turned up.
@@ -228,11 +245,40 @@ function build(state: ZooGameState, targetH: number) {
     walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
   }
 
+  /** The hoardings round work that is under way.
+   *
+   *  The same language the plan view uses - amber hatching, a dashed line and hazard posts at the
+   *  corners - so that "this is a building site" reads the same in both views. They come down when
+   *  the item is Done and released, which is the Definition of Done made into something you watch.
+   */
+  const hoard = (id: string, x0: number, y0: number, x1: number, y1: number) => {
+    const pad = 9;
+    const a = x0 - pad, b = y0 - pad, c = x1 + pad, d = y1 + pad;
+    const dash = Math.max(2.5, u * 7);
+    nodes.push(
+      <polygon key={`site-${id}`} points={ground(a, b, c, d)} fill="#f59e0b" opacity={0.16} />,
+      <polygon key={`site-edge-${id}`} points={ground(a, b, c, d)} fill="none" stroke="#f59e0b"
+        strokeWidth={Math.max(0.7, u * 1.6)} strokeDasharray={`${dash} ${dash * 0.7}`} strokeLinejoin="round" />,
+    );
+    const posts: [number, number][] = [[a, b], [c, b], [c, d], [a, d]];
+    for (const [i, [px, py]] of posts.entries()) {
+      const f = boxFaces(px - 3, py - 3, px + 3, py + 3, Math.max(2.5, u * 9), u);
+      push(depth(px, py), (
+        <g key={`post-${id}-${i}`}>
+          <polygon points={shift(f.left)} fill="#b45309" />
+          <polygon points={shift(f.right)} fill="#d97706" />
+          <polygon points={shift(f.top)} fill="#fbbf24" />
+        </g>
+      ));
+    }
+  };
+
   // ---- enclosures ------------------------------------------------------------------------
   for (const e of encs) {
     const c = posOf(e), size = sizeOf(e);
     const x0 = c.x - size.w / 2, y0 = c.y - size.h / 2, x1 = c.x + size.w / 2, y1 = c.y + size.h / 2;
     const theme = themeOf(e.zone);
+    if (underWay.has(e.id)) hoard(e.id, x0, y0, x1, y1);
     // The habitat floor, laid flat, before anything stands on it.
     nodes.push(<polygon key={`floor-${e.id}`} points={ground(x0, y0, x1, y1)} fill={theme.plot} />);
 
@@ -269,7 +315,9 @@ function build(state: ZooGameState, targetH: number) {
     });
 
     // The animals themselves, in the side view they were drawn in.
-    const stock = live.filter((i) => i.category === 'exhibit' && i.enclosureId === e.id);
+    // Including the one being stocked right now, so you watch the lion arrive rather than having it
+    // appear the instant somebody presses Done.
+    const stock = onPark.filter((i) => i.category === 'exhibit' && i.enclosureId === e.id);
     stock.forEach((a, ai) => {
       const members = groupMembers(a.design?.group);
       const list = members.length ? members : [{ age: 'adults' as const, scale: AGE_SCALE.adults }];
@@ -360,6 +408,7 @@ function build(state: ZooGameState, targetH: number) {
   // ---- amenities and loose planting -------------------------------------------------------
   for (const it of loose) {
     const c = posOf(it), size = sizeOf(it);
+    if (underWay.has(it.id)) hoard(it.id, c.x - size.w / 2, c.y - size.h / 2, c.x + size.w / 2, c.y + size.h / 2);
     if (it.category === 'flora') {
       const type = landType(it);
       if (isLandscapeType(type)) {
