@@ -7,7 +7,7 @@ import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
-import { hasAnimalArt, animalArtFor } from './art/animalArt';
+import { animalArtFor } from './art/animalArt';
 import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
@@ -410,10 +410,11 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         const wx = x0 + f.x * size.w;
         const wy = y0 + f.y * size.h;
         const species = a.template ?? a.id;
+        // A lioness has no mane, and a cub is a small lion that has not grown one.
+        const art = animalArtFor(species, m.kind);
         const at = P(wx, wy);
         const key = `a-${e.id}-${a.id}-${mi}`;
-        if (hasAnimalArt(species)) {
-          const art = animalArtFor(species)!;
+        if (art) {
           const h = art.h * u * 0.30 * m.scale;
           const w = h * (art.w / art.h);
           push(depth(wx, wy), (

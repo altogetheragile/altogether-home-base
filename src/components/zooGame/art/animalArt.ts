@@ -11,8 +11,27 @@ export const UNITS_PER_CELL = 6.5;
  *  hold a toucan and a tiger at once even though only one of them has been drawn yet. */
 export const hasAnimalArt = (species?: string): boolean => !!species && species in ANIMAL_ART;
 
-export const animalArtFor = (species?: string): AnimalArt | undefined =>
-  species ? ANIMAL_ART[species] : undefined;
+/** The drawing for one animal.
+ *
+ *  A species can be drawn more than once - a lion has a mane and a lioness does not, and a zoo that
+ *  draws them the same is telling a room full of people something untrue about lions. Where a sheet
+ *  gives us the difference, `lion_females` sits beside `lion` and is asked for by kind.
+ *
+ *  A young lion is a small lion WITHOUT a mane, so juveniles and cubs take the female drawing where
+ *  there is one - it is nearer the truth than a miniature male, and nearer than nothing. They are
+ *  already drawn smaller; see KIND_SCALE. */
+export const animalArtFor = (species?: string, kind?: string): AnimalArt | undefined => {
+  if (!species) return undefined;
+  if (kind) {
+    const own = ANIMAL_ART[`${species}_${kind}`];
+    if (own) return own;
+    if (kind === 'juveniles' || kind === 'cubs') {
+      const young = ANIMAL_ART[`${species}_females`];
+      if (young) return young;
+    }
+  }
+  return ANIMAL_ART[species];
+};
 
 /** The drawing's size in pixels at a given cell size, keeping its own proportions. */
 export function animalArtSize(art: AnimalArt, cell: number): { w: number; h: number } {
