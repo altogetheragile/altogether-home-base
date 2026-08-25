@@ -311,6 +311,31 @@ describe('the isometric projection', () => {
     expect(svg.style.cursor).toBe('');
   });
 
+  it('shows work that has been started, behind hoardings', () => {
+    // This view drew only what had been delivered. That was defensible while it was a picture of the
+    // Increment, and became nonsense the moment you could build in it: you started something and
+    // nothing appeared. Work under way is on the park from the moment it begins, in both views.
+    const base = initialZooState();
+    const under = { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'medium', pos: { x: 300, y: 240 },
+             status: 'committed', started: true }),
+    ] } as ZooGameState;
+    const { container } = render(<IsoZoo state={under} height={460} />);
+    const svg = container.querySelector('svg[role="img"]')!;
+
+    // The hoarding: a dashed amber line lying on the ground, and hazard posts at its corners.
+    const dashed = [...svg.querySelectorAll('polygon')].filter((p) => p.getAttribute('stroke-dasharray'));
+    expect(dashed.length, 'nothing was hoarded off').toBeGreaterThan(0);
+    expect(dashed[0].getAttribute('stroke')).toBe('#f59e0b');
+    // and the habitat itself is drawn inside them, not just an empty patch of amber
+    expect(svg.querySelectorAll('polygon').length).toBeGreaterThan(10);
+
+    // Once it is delivered the hoardings come down.
+    const done = { ...under, backlog: under.backlog.map((i) => ({ ...i, status: 'open' as const, started: true })) } as ZooGameState;
+    const after = render(<IsoZoo state={done} height={460} />).container.querySelector('svg[role="img"]')!;
+    expect([...after.querySelectorAll('polygon')].filter((p) => p.getAttribute('stroke-dasharray'))).toHaveLength(0);
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
