@@ -17,6 +17,19 @@ export interface Pt { x: number; y: number }
 export const project = (wx: number, wy: number, u: number): Pt =>
   ({ x: (wx - wy) * COS * u, y: (wx + wy) * SIN * u });
 
+/** Screen back to world - the inverse of `project`, at the same `u`.
+ *
+ *  Needed the moment the isometric view stops being a picture and becomes somewhere you can drag
+ *  things: a pointer arrives in screen coordinates and has to be answered in world ones.
+ *
+ *  `project` says  sx = (wx - wy)·COS·u  and  sy = (wx + wy)·SIN·u, so the two sums fall straight
+ *  out of it. It is exact, not an approximation - the projection is a plain linear map. */
+export const unproject = (sx: number, sy: number, u: number): Pt => {
+  const diff = sx / (COS * u);   // wx - wy
+  const sum = sy / (SIN * u);    // wx + wy
+  return { x: (sum + diff) / 2, y: (sum - diff) / 2 };
+};
+
 /** How far back something stands. Everything is drawn in this order so that what is in front
  *  covers what is behind it - the only way a scene like this stays readable. */
 export const depth = (wx: number, wy: number): number => wx + wy;

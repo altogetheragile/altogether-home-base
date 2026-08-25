@@ -1632,7 +1632,11 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           {statsBar}
           <div className="flex flex-wrap items-center justify-between gap-2">
             {isoView ? (
-              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands. Switch to Plan to arrange anything.</p>
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                {onPlaceItem
+                  ? <><Move className="h-3.5 w-3.5" /> The zoo as a visitor would see it. Drag a habitat, building or planting to arrange it, the same as in Plan.</>
+                  : <><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands.</>}
+              </p>
             ) : features.length > 0 && onPlaceItem ? (
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
             ) : <span />}
@@ -1759,7 +1763,10 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                   as walking up to it. At 100% it fits, and there is nothing to scroll. */}
               <div className="overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
                 <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
-                  <IsoZoo state={state} height={520 * zoom} />
+                  {/* The same handlers the plan uses. One zoo, two ways of drawing it, and either
+                      one is somewhere you can arrange it. */}
+                  <IsoZoo state={state} height={520 * zoom}
+                    onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild} />
                 </div>
               </div>
             </Suspense>
