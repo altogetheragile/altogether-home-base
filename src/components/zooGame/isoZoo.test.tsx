@@ -626,13 +626,54 @@ describe('the isometric projection', () => {
       const lion = [...svg.querySelectorAll<SVGElement>('svg[viewBox]')]
         .find((el) => el.getAttribute('viewBox') === ANIMAL_ART.lion_males.viewBox)!;
       expect(lion, 'no lion was drawn').toBeTruthy();
-      return lion.style.transform || 'none';
+      // The turn is an SVG transform on the wrapper, not a CSS one on the drawing - see below.
+      return lion.parentElement?.getAttribute('transform') ?? 'none';
     };
     // By the left-hand fence and by the right-hand one: it cannot be facing the same way in both.
     expect(atSpot(0.06, 0.5), 'the lion does not turn to face its nearest fence').not.toBe(atSpot(0.94, 0.5));
     // ...and one of the two is a mirror, not a nudge sideways - the old code moved a flipped animal
     // across the picture and never turned it round.
     expect([atSpot(0.06, 0.5), atSpot(0.94, 0.5)].join(' ')).toContain('scale(-1,1)');
+  });
+
+  it('draws every animal, whichever way it is turned', () => {
+    // Turning one costs nothing and losing one costs everything. Mirroring with a CSS transform
+    // reflected the animal through the origin of the wrong box and sent it off the picture: of four
+    // lions at four fences, the two that had to turn were simply not there. Counting them is the
+    // only assertion that notices, because the ones that vanish leave no mark to inspect.
+    const base = initialZooState();
+    const spots = [[0.08, 0.5], [0.92, 0.5], [0.5, 0.08], [0.5, 0.92]];
+    const state = { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lions', enclosureSize: 'large', pos: { x: 400, y: 340 } }),
+      ...spots.map(([x, y], i) => item({ id: `a${i}`, name: 'Lion', category: 'exhibit', template: 'lion',
+        enclosureId: 'enc', spot: { x, y },
+        design: { parts: {}, colors: {}, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } } })),
+    ] } as ZooGameState;
+    const svg = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
+    const lions = [...svg.querySelectorAll('svg[viewBox]')]
+      .filter((el) => el.getAttribute('viewBox') === ANIMAL_ART.lion_males.viewBox);
+    expect(lions, 'an animal went missing when it was turned round').toHaveLength(4);
+
+    // ...and every one of them is still ON the picture after it has been turned. This is the
+    // assertion that matters and the obvious one does not: nothing leaves the document when a
+    // transform throws it off the far side, so counting the elements finds four either way. Where
+    // the turn actually PUTS them is the whole question.
+    const [, , vw] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+    let turned = 0;
+    for (const lion of lions) {
+      const t = lion.parentElement?.getAttribute('transform') ?? '';
+      const x = Number(lion.getAttribute('x'));
+      // scale(-1,1) reflects through zero; the translate before it brings the animal back to itself.
+      const shift = /translate\(([-\d.]+)/.exec(t);
+      const mirrored = t.includes('scale(-1,1)');
+      if (mirrored) turned += 1;
+      const drawnAt = mirrored ? (shift ? Number(shift[1]) : 0) - x : x;
+      expect(drawnAt, `an animal is drawn at ${Math.round(drawnAt)}, off a picture ${Math.round(vw)} wide`)
+        .toBeGreaterThan(0);
+      expect(drawnAt).toBeLessThan(vw);
+    }
+    // and some of them did turn, because two of the four fences are on the other side
+    expect(turned, 'they all face the same way').toBeGreaterThan(0);
   });
 
   it('holds nothing but drawing', () => {

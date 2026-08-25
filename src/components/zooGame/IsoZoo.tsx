@@ -510,12 +510,15 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           const facesLeft = toLeft <= toRight;
           const mirror = facesLeft !== !!art.flip;
           push(depth(wx, wy), (
-            <svg key={key} x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
-              style={{
-                ...(mirror ? { transform: 'scale(-1,1)', transformOrigin: 'center', transformBox: 'fill-box' as const } : {}),
-                ...(coat ? { filter: coat } : {}),
-              }}
-              dangerouslySetInnerHTML={{ __html: art.body }} />
+            // Mirrored with an SVG transform on a wrapper, about the line the animal stands on:
+            // `scale(-1,1)` alone reflects through the origin and sends it off the far side, so the
+            // translate brings it back. A CSS transform with transform-box: fill-box looked like the
+            // tidier way to say this and put two lions in four somewhere off the picture entirely.
+            <g key={key} transform={mirror ? `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)` : undefined}>
+              <svg x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
+                style={coat ? { filter: coat } : undefined}
+                dangerouslySetInnerHTML={{ __html: art.body }} />
+            </g>
           ));
         } else {
           // No drawing for this species yet: a coloured marker, so it is still visibly here.
