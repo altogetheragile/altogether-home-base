@@ -2,6 +2,7 @@ import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
 import { shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, pieceByKey } from './design';
 import { standsOnPark } from './engine';
+import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { standingOnPark, parkPositions, restingPlace, groundSize, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
@@ -509,16 +510,11 @@ function build(state: ZooGameState, targetH: number) {
   const arrival = { x: gate.x, y: lot.walkway.y + lot.walkway.h - 6 };  // stepping off the tarmac
   const entry = { x: gate.x, y: promY + 18 };                            // on the promenade
 
-  /** The way to one exhibit: up from the lot, onto the promenade, then across to it - by way of a
-   *  bridge if the direct line would have them wading. */
-  const routeTo = (target: Pt): Pt[] => {
-    const legs: Pt[] = [arrival, entry];
-    const crossing = walks.find(([a, z]) => dry.some((r) => within(r, { x: (a.x + z.x) / 2, y: (a.y + z.y) / 2 })));
-    const wades = wet({ x: (entry.x + target.x) / 2, y: (entry.y + target.y) / 2 });
-    if (wades && crossing) legs.push(crossing[0], crossing[1]);
-    legs.push(target);
-    return legs;
-  };
+  /** The way to one exhibit: up from the lot, onto the promenade, then along whatever the player
+   *  has actually laid - the same path network the guests in the plan view used to walk, which is
+   *  where this routing comes from. Water is a wall with one door in it, and the door is a bridge. */
+  const nav = buildNav({ paths: walks.map(([a, z]) => [a, z]), water, crossings: dry });
+  const routeTo = (target: Pt): Pt[] => [arrival, entry, ...(routeAcross(nav, entry, target) ?? [target])];
   // Somewhere worth walking to: the habitats, or the middle of the park if none are open yet.
   const draws = encs.length ? encs.map((e) => posOf(e)) : [{ x: CANVAS_W / 2, y: promY - 120 }];
   const routes = draws.map(routeTo);

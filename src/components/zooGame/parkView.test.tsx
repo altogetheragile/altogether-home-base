@@ -133,3 +133,28 @@ describe('the two views draw the same zoo', () => {
     }
   });
 });
+
+describe('the plan is a plan', () => {
+  it('marks what is there instead of drawing a second park', () => {
+    // The plan view used to be a picture of the park too - grass with a texture, drawn animals,
+    // pixel-art buildings, visitors on the promenade - competing with the isometric view, losing,
+    // and costing every feature twice. It is a blueprint now: the drawing you build FROM, next to
+    // the isometric view, which is the thing you built.
+    const { container } = render(<ParkView state={zooWithALion()} large />);
+
+    // Drawn on a sheet, not on grass.
+    const sheet = [...container.querySelectorAll<HTMLElement>('div')]
+      .find((d) => (d.style.backgroundColor || '').length > 0 && d.style.backgroundImage.includes('linear-gradient'));
+    expect(sheet, 'the park is not drawn on a ruled sheet').toBeTruthy();
+
+    // The lion is MARKED - a ring with its initial - not illustrated.
+    const marks = [...container.querySelectorAll('text')].map((t) => t.textContent);
+    expect(marks, 'the lion is not marked on the plan').toContain('L');
+
+    // And nobody is walking about on it. A plan is not somewhere people are; it is the drawing they
+    // will walk about in. The crowds are in the other view, where they are worth looking at.
+    expect(container.querySelectorAll('.zoo-visitor'), 'somebody is walking about on the plan').toHaveLength(0);
+    // nor is anything bobbing: a drawing holds still
+    expect(container.querySelectorAll('.zoo-idle')).toHaveLength(0);
+  });
+});

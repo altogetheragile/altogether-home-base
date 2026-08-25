@@ -3,14 +3,10 @@ import type { ZooGameState, BacklogItem, ZooConnector, ConnectorEnd } from './ty
 /** The isometric view of the same park. Lazily imported: it carries the isometric artwork, which
  *  is more than half of what the game weighs, and nobody needs it until they ask to look. */
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
-import { AnimalSprite } from './AnimalSprite';
-import { hasAnimalArt } from './art/animalArt';
 import { ENCLOSURE_SIZE, footprintFor, applyPiece, pieceByKey  } from './design';
-import { renderDesign, presetFor, pathWidthPx, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, landscapePalette, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
+import { presetFor, pathWidthPx, GRID_W, GRID_H, enclosureShapePoints, enclosureWater, enclosureFlora, isLandscapeType, floraDefaultColors, shade, type ItemDesign, type WaterFeature, type EnclosureFlora } from './design';
 import { ItemToolbar, type CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
-import { VisitorLayer, type Attraction } from './VisitorLayer';
-import { carParkLayout, carCapacity } from './carPark';
 import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -21,6 +17,7 @@ import { groupMembers } from './design';
 import { standingOnPark, restingPlace, workingDesign as workingFor } from './parkModel';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock, Map, Box, Eye } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
+import * as BP from './blueprint';
 
 // ============= The Park View =============
 //
@@ -31,7 +28,6 @@ import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 // planting to arrange your zoo (an animal moves with its enclosure). Positions are saved
 // on the items, so the park is both a picture of delivered work and something you compose.
 
-const SEG_DOT: Record<SegmentId, string> = { families: '#e6842a', enthusiasts: '#3f8fd0', comfortSeekers: '#8a5a2b' };
 
 // Quick colours for connectors (path tan, plus a few clear signposting hues).
 const CONNECTOR_COLORS = ['#c9a86a', '#8a5a2b', '#c9cdd2', '#e6842a', '#4a90d9', '#43a047', '#e5484d'];
@@ -75,35 +71,57 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
  *  two live side by side on purpose - a zoo can hold a lion and a toucan long before every animal
  *  in the toolbox has been illustrated. */
 function Sprite({ item, design, cell, cellH }: { item: BacklogItem; design: ItemDesign; cell: number;
-  /** Cell height, where it differs from the width - a sprite filling a footprint that is not the
-   *  same shape as the grid it is drawn on. Defaults to square. */
+  /** Cell height, where it differs from the width. Defaults to square. */
   cellH?: number }) {
-  const species = item.template ?? item.id;
-  if (item.category === 'exhibit' && hasAnimalArt(species)) {
-    return <AnimalSprite species={species} cell={cell} coat={design.parts.coat} />;
-  }
-  const grid = renderDesign(item, design);
-  const h = cellH ?? cell;
+  const w = Math.max(9, cell * GRID_W), h = Math.max(9, (cellH ?? cell) * GRID_H);
+  const tone = BP.zoneInk(design.colors.foliage ?? design.colors.walls ?? BP.INK);
+  if (item.category === 'exhibit') return <AnimalMark w={w} h={h} initial={item.name.trim()[0] ?? '?'} />;
+  if (item.category === 'flora') return <PlantMark w={w} h={h} tone={tone} />;
+  return <BuiltMark w={w} h={h} tone={tone} />;
+}
+
+/** An animal, marked rather than drawn: a ring where it stands, with the first letter of its name.
+ *
+ *  A plan does not draw a lion. It says there is a lion, and where. The drawn lion - the one worth
+ *  looking at - is in the isometric view, which is the whole reason this view stopped trying. */
+function AnimalMark({ w, h, initial }: { w: number; h: number; initial: string }) {
+  const d = Math.max(9, Math.min(w, h));
   return (
-    <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
-      {grid.flatMap((row, r) => row.map((color, c) => (
-        <span key={`${r}-${c}`} style={{ width: cell, height: h, background: color ?? 'transparent' }} />
-      )))}
-    </div>
+    <svg width={d} height={d} viewBox="0 0 24 24" aria-hidden style={{ overflow: 'visible' }}>
+      <circle cx="12" cy="12" r="10" fill="rgba(12,44,71,0.75)" stroke={BP.INK} strokeWidth="1.6" />
+      <text x="12" y="16.5" textAnchor="middle" fill={BP.INK} fontSize="12" fontWeight="600"
+        fontFamily="ui-sans-serif, system-ui">{initial.toUpperCase()}</text>
+    </svg>
   );
 }
 
-/** A planting sprite of a given type and colours, at a chosen cell size. Used for enclosure
- *  planting in both the park and the studio preview so they match. */
-export function FloraSprite({ type, foliage, trunk, cell }: { type: string; foliage?: string; trunk?: string; cell: number }) {
-  const grid = renderDesign({ category: 'flora' } as BacklogItem, { parts: { type }, colors: { foliage: foliage ?? '#43a047', trunk: trunk ?? '#7a5230' } });
+/** Planting: the symbol a plan uses for a tree - a circle with its centre marked. */
+function PlantMark({ w, h, tone }: { w: number; h: number; tone: string }) {
+  const d = Math.max(8, Math.min(w, h));
   return (
-    <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${GRID_W}, ${cell}px)` }} aria-hidden>
-      {grid.flatMap((row, r) => row.map((color, c) => (
-        <span key={`${r}-${c}`} style={{ width: cell, height: cell, background: color ?? 'transparent' }} />
-      )))}
-    </div>
+    <svg width={d} height={d} viewBox="0 0 24 24" aria-hidden style={{ overflow: 'visible' }}>
+      <circle cx="12" cy="12" r="9" fill="none" stroke={tone} strokeWidth="1.4" strokeDasharray="3 2" />
+      <circle cx="12" cy="12" r="1.8" fill={tone} />
+    </svg>
   );
+}
+
+/** Anything built: a box with its corner cut, which is how a plan says "structure". */
+function BuiltMark({ w, h, tone }: { w: number; h: number; tone: string }) {
+  const cut = Math.min(w, h) * 0.28;
+  return (
+    <svg width={w} height={h} aria-hidden style={{ overflow: 'visible' }}>
+      <polygon points={`0,0 ${w - cut},0 ${w},${cut} ${w},${h} 0,${h}`}
+        fill="rgba(207,230,255,0.07)" stroke={tone} strokeWidth="1.5" strokeLinejoin="round" />
+      <line x1={w - cut} y1="0" x2={w} y2={cut} stroke={tone} strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+/** A planting symbol of a given type and colours. Used for enclosure planting. */
+export function FloraSprite({ foliage, cell }: { type: string; foliage?: string; trunk?: string; cell: number }) {
+  const d = Math.max(8, cell * GRID_W);
+  return <PlantMark w={d} h={d} tone={BP.zoneInk(foliage ?? BP.INK)} />;
 }
 
 /** The type of a flora/scenery item (from its built design, or its toolbox template before build). */
@@ -212,11 +230,16 @@ export function LandscapeShape({ type, w, h, primary, secondary }: { type: strin
  *  vector scenery, so it can be stretched right across the park without going blocky. */
 function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; h: number; rot?: number }) {
   const type = landType(item) ?? 'river';
-  const { primary, secondary } = landscapePalette(type, item.design?.colors);
+  // Landscape keeps its real shape - a river still bends, a bridge is still a bridge - but it is
+  // drawn in the sheet's own two colours rather than painted. Water is the one thing a plan does
+  // colour in, because "there is water here" is a fact about the site.
+  const wet = type === 'river' || type === 'pond' || type === 'fountain';
+  const primary = wet ? BP.WATER_LINE : BP.INK;
+  const secondary = wet ? BP.WATER_LINE : BP.INK_DIM;
   return (
     <div className="relative flex flex-col items-center">
       {/* Only the scenery turns - its name stays the right way up and under it, still readable. */}
-      <div style={rot ? { transform: `rotate(${rot}deg)` } : undefined}>
+      <div style={{ ...(rot ? { transform: `rotate(${rot}deg)` } : {}), opacity: wet ? 0.5 : 0.62 }}>
         <LandscapeShape type={type} w={w} h={h} primary={primary} secondary={secondary} />
       </div>
       <FeatureName name={item.name} />
@@ -263,7 +286,6 @@ export function Plot({ item, scale = 1, named = true, design }: { item: BacklogI
   /** Extra placements of the same item say the name once, on the first one. Three trees from one
    *  PBI wearing three copies of "Big Cats Planting" is a label overlapping a label. */
   named?: boolean }) {
-  const isFlora = item.category === 'flora';
   // A feature is drawn at the size of the ground it stands on, surround included - so a cafe is
   // plainly a bigger thing than a kiosk, and a signpost is plainly a post.
   const fp = footprintFor(item);
@@ -272,10 +294,8 @@ export function Plot({ item, scale = 1, named = true, design }: { item: BacklogI
   const ch = Math.max(0.5, (fp.h * scale - pad * 2) / GRID_H);
   return (
     <div className="relative flex flex-col items-center">
-      <div className={cn('flex items-center justify-center', !isFlora && 'rounded-lg')}
-        style={isFlora
-          ? { padding: pad }
-          : { background: '#cfd4d8', border: '2px solid #9aa3ab', boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.25), 0 2px 0 rgba(0,0,0,.08)', padding: pad }}>
+      {/* The mark is the drawing - there is no plinth under it, because a plan does not build one. */}
+      <div className="flex items-center justify-center" style={{ padding: pad }}>
         <Sprite item={item} design={design ?? item.design ?? presetFor(item)} cell={cw} cellH={ch} />
       </div>
       {named && <FeatureName name={item.name} />}
@@ -286,7 +306,8 @@ export function Plot({ item, scale = 1, named = true, design }: { item: BacklogI
 /** A feature's name, inside its own footprint and out of the pointer's way. */
 function FeatureName({ name }: { name: string }) {
   return (
-    <span className="pointer-events-none absolute bottom-0 left-1/2 z-10 max-w-[130px] -translate-x-1/2 translate-y-1/3 truncate rounded-full bg-white/85 px-1.5 text-[9px] font-semibold text-emerald-950 shadow-sm dark:bg-black/60 dark:text-emerald-50">{name}</span>
+    <span className={cn(BP.LABEL, 'pointer-events-none absolute bottom-0 left-1/2 z-10 max-w-[140px] -translate-x-1/2 translate-y-[120%] truncate whitespace-nowrap')}
+      style={{ color: BP.INK }}>{name}</span>
   );
 }
 
@@ -301,25 +322,36 @@ const LABEL_H = 0;
 /** The habitat box in its chosen shape (rounded rectangle, pill, round, hexagon, octagon), with
  *  the ground fill and fence outline. Rounded keeps the crisp bordered div; the other shapes are
  *  drawn as an SVG outline so the fence follows the shape. Contents (animals, water) overlay it. */
-export function EnclosureBox({ shape, w, h, ground, fence, border = 3, children, boxRef }:
+export function EnclosureBox({ shape, w, h, ground, fence, border = 2, children, boxRef }:
   { shape: string; w: number; h: number; ground: string; fence: string; border?: number; children?: ReactNode; boxRef?: Ref<HTMLDivElement> }) {
   const points = enclosureShapePoints(shape, w, h, border);
+  // On a plan the ground and the fence are not paint - they are a wash and a line. The colours
+  // chosen on the bench still decide them, so what you picked is still what you see; it is drawn
+  // the way a drawing draws it. What it really looks like is the other view's job.
+  const line = BP.zoneInk(fence);
+  const wash = BP.zoneWash(ground);
   return (
     <div ref={boxRef} className="relative" style={{ width: w, height: h }}>
       {shape === 'rounded' || !shape ? (
-        <div className="absolute inset-0 overflow-hidden rounded-lg"
-          style={{ background: ground, border: `${border}px solid ${fence}`, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.2), 0 2px 0 rgba(0,0,0,.08)' }}>
-          <div className="absolute inset-x-0 bottom-0" style={{ height: '30%', background: 'rgba(0,0,0,.08)' }} />
-        </div>
+        <div className="absolute inset-0 overflow-hidden rounded-sm"
+          style={{ background: wash, border: `${border}px solid ${line}` }} />
       ) : (
         <svg className="absolute inset-0" width={w} height={h} aria-hidden>
           {shape === 'circle'
-            ? <ellipse cx={w / 2} cy={h / 2} rx={w / 2 - border} ry={h / 2 - border} fill={ground} stroke={fence} strokeWidth={border} />
+            ? <ellipse cx={w / 2} cy={h / 2} rx={w / 2 - border} ry={h / 2 - border} fill={wash} stroke={line} strokeWidth={border} />
             : shape === 'pill'
-              ? <rect x={border} y={border} width={w - 2 * border} height={h - 2 * border} rx={(h - 2 * border) / 2} fill={ground} stroke={fence} strokeWidth={border} />
-              : <polygon points={points ?? ''} fill={ground} stroke={fence} strokeWidth={border} strokeLinejoin="round" />}
+              ? <rect x={border} y={border} width={w - 2 * border} height={h - 2 * border} rx={(h - 2 * border) / 2} fill={wash} stroke={line} strokeWidth={border} />
+              : <polygon points={points ?? ''} fill={wash} stroke={line} strokeWidth={border} strokeLinejoin="round" />}
         </svg>
       )}
+      {/* Corner ticks, the way a dimensioned box is marked up on a drawing. They also say which
+          shape a habitat is when the shape itself is a faint line. */}
+      <svg className="absolute inset-0 overflow-visible" width={w} height={h} aria-hidden>
+        {([[0, 0, 1, 1], [w, 0, -1, 1], [0, h, 1, -1], [w, h, -1, -1]] as const).map(([x, y, sx, sy], i) => (
+          <path key={i} d={`M ${x} ${y + sy * 7} L ${x} ${y} L ${x + sx * 7} ${y}`}
+            fill="none" stroke={line} strokeWidth={1.5} />
+        ))}
+      </svg>
       <div className="absolute inset-0">{children}</div>
     </div>
   );
@@ -332,7 +364,8 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
   const [val, setVal] = useState(name);
   const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't start dragging the enclosure
   const commit = () => { setEditing(false); onRename?.(val); };
-  const cls = 'max-w-[132px] truncate rounded-md border-2 border-amber-900/70 bg-amber-200 px-1.5 py-0.5 text-center text-[11px] font-bold leading-tight text-amber-950 shadow-sm dark:bg-amber-300';
+  // A name on a drawing is written on the drawing, not nailed to a post.
+  const cls = cn(BP.LABEL, 'max-w-[140px] truncate bg-transparent px-1 text-center leading-tight text-[#cfe6ff]');
   return (
     // Below the habitat, not on it. Sitting at the top-centre it covered the fence exactly where
     // you would reach for it, and on a construction site it fought the BUILDING badge. Absolutely
@@ -362,7 +395,7 @@ function AnimalName({ name, onRename }: { name: string; onRename?: (name: string
   const [val, setVal] = useState(name);
   const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't drag the animal
   const commit = () => { setEditing(false); const t = val.trim(); if (t) onRename?.(t); };
-  const cls = 'max-w-[72px] truncate rounded-full bg-white/85 px-1.5 text-[8px] font-semibold leading-[1.5] text-emerald-950 shadow-sm dark:bg-black/60 dark:text-emerald-50';
+  const cls = cn(BP.LABEL, 'max-w-[84px] truncate bg-transparent px-1 text-[9px] leading-[1.6] text-[#cfe6ff]');
   return (
     <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-0.5 flex -translate-x-1/2 justify-center">
       {editing ? (
@@ -451,7 +484,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
               style={{ left: `${wf.x * 100}%`, top: `${wf.y * 100}%`, width: `${wf.w * 100}%`, height: `${wf.h * 100}%`, touchAction: onSetDesign ? 'none' : undefined }}>
               <div onPointerDown={onSetDesign ? dragFraction(cfg, (dx, dy) => set(water.map((w2, j) => j !== i ? w2 : { ...w2, x: clampF(wf.x + dx, 0, 1 - wf.w), y: clampF(wf.y + dy, 0, 1 - wf.h) })), () => onSelectPart?.('water')) : undefined}
                 className={cn('h-full w-full rounded-full', onSetDesign && 'cursor-grab active:cursor-grabbing')}
-                style={{ background: d.colors.water ?? '#5aa9c8', boxShadow: onSetDesign ? 'inset 0 0 0 2px rgba(255,255,255,.3)' : undefined }} />
+                style={{ background: BP.WATER_FILL, border: `1.5px solid ${BP.WATER_LINE}` }} />
               {onSetDesign && <>
                 <button type="button" aria-label="Remove water feature" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); set(water.filter((_, j) => j !== i)); }}
                   className={cn(FOCUS, "absolute -right-1.5 -top-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-white text-[11px] font-bold leading-none text-red-600 shadow group-hover:flex")}>&times;</button>
@@ -480,7 +513,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
             </div>
           );
         })}
-        {!building && n === 0 && plants.length === 0 && (!d || enclosureFlora(d).length === 0) && <div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-black/40">habitat ready</div>}
+        {!building && n === 0 && plants.length === 0 && (!d || enclosureFlora(d).length === 0) && <div className={cn(BP.LABEL, 'absolute inset-0 flex items-center justify-center')} style={{ color: BP.INK_DIM }}>empty</div>}
         {/* Planting sits behind the animals; drag it within, or out of the fence to remove it. */}
         {plants.map((pl) => {
           const p = drag?.id === pl.id ? { left: drag.x * 100, top: drag.y * 100 } : { left: (pl.spot?.x ?? 0.5) * 100, top: (pl.spot?.y ?? 0.4) * 100 };
@@ -503,7 +536,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
               onPointerDown={lead ? (e) => startSpotDrag(e, a.id, false) : undefined}
               style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot && lead ? 'none' : undefined }}>
               {/* Gentle idle bob so the animals feel alive; each desynced by a stable per-animal delay. */}
-              <div className={cn(drag?.id !== a.id && 'zoo-idle')} style={{ animationDelay: `-${(jitter(i, 1) * 2.4).toFixed(2)}s` }}>
+              <div>
                 <Sprite item={a} design={a.design ?? a.draftDesign ?? presetFor(a)} cell={Math.max(1, Math.round(cell * scale * 10) / 10)} />
               </div>
               {lead && <AnimalName name={a.name} onRename={onRename ? (nm) => onRename(a.id, nm) : undefined} />}
@@ -622,26 +655,20 @@ const PATH_H = 40; // promenade band along the foot, where visitors stroll
 // laid down. A zoo does not get bigger because you built a kiosk in it. Big enough for a full zoo
 // laid out in rows, and everything is kept inside it.
 const PERIM = 8;        // how far a perimeter path sits outside a feature's body
-const PERIM_W = 8;      // perimeter / park-boundary path thickness
-const PATH_TAN = '#c9a86a'; // the default path colour (perimeters, park boundary, new connectors)
-const PATH_EDGE = 'rgba(0,0,0,.28)'; // the dark outline under every path
+const PERIM_W = 7;      // perimeter / park-boundary path thickness
+// On a plan a path is a line of a stated width, not a surface. Two thin rules and the ground
+// showing between them says "footpath, this wide" more clearly than any amount of gravel.
+const PATH_TAN = BP.FIELD; // a route is not filled: the sheet shows between its two edges
+const PATH_EDGE = 'rgba(207,230,255,0.55)'; // the ruled line down each side of it
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
-
-/** Deterministic 0..1 from an index + channel (stable across renders). */
-const jitter = (n: number, k: number) => {
-  const x = Math.sin((n + 1) * (k === 0 ? 12.9898 : 78.233)) * 43758.5453;
-  return x - Math.floor(x);
-};
 
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, dots, style, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
-  dots: SegmentId[];
   justOpened?: string | null;
-  style: PathStyle;
   tool: 'none' | 'connect';
   editable: boolean;
   zoom?: number;
@@ -979,36 +1006,10 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
 
   const selected = connectors.find((c) => c.id === selectedConn) ?? null;
 
-  // Living visitors: the exhibits worth visiting (built enclosures with animals, at their centre and
-  // with an appeal per segment averaged from their animals), the food stops that satisfy hunger, and
-  // the entrance they arrive at. Fed to the guest layer drawn over the park.
-  const norm = (v: number, n: number) => Math.max(0.15, Math.min(1, v / n / 8));
-  // Only what is OPEN draws a crowd. The park shows an item that is built and standing in place so
-  // you can position it, but visitors were turning up to see it before anyone had opened it - which
-  // taught the opposite of the thing the hoardings are there to teach. Done is not released.
-  const live = (it: BacklogItem) => it.status === 'open';
-  const attractions: Attraction[] = features
-    .map((f) => ({ f, animals: f.animals.filter(live) }))
-    .filter(({ f, animals }) => f.kind === 'enclosure' && live(f.item) && animals.length > 0)
-    .map(({ f, animals }) => {
-      const c = posOf(f), n = animals.length, a = { families: 0, enthusiasts: 0, comfortSeekers: 0 };
-      for (const an of animals) { const g = an.appeal; if (g) { a.families += g.families; a.enthusiasts += g.enthusiasts; a.comfortSeekers += g.comfortSeekers; } }
-      return { x: c.x, y: c.y, hh: f.h / 2, appeal: { families: norm(a.families, n), enthusiasts: norm(a.enthusiasts, n), comfortSeekers: norm(a.comfortSeekers, n) } };
-    });
-  const foodPts = features.filter((f) => f.item.category === 'amenity' && live(f.item)).map((f) => { const c = posOf(f); return { x: c.x, y: c.y }; });
-  const visitorEntrance = { x: CANVAS_W / 2, y: canvasH - PATH_H / 2 };
-  // The car park is the frame outside the fence: an apron pinned below the entrance, full width, no
-  // matter how tall the park grows. It starts empty and fills as the zoo opens more to see - roughly
-  // three cars per live exhibit or amenity, with coaches once the park is a real day out - so the lot
-  // reads as how busy the park is. Guests arrive from its cars and walk up through the gate.
-  const built = attractions.length + foodPts.length;
-  const carCount = Math.min(carCapacity(CANVAS_W), built * 3);
-  const busCount = built >= 5 ? 2 : built >= 3 ? 1 : 0;
-  const carPark = carParkLayout(CANVAS_W, canvasH, carCount, busCount);
-  // The lot's own depth, not a constant: it is one row of bays on day one and grows a second row and
-  // a coach lay-by as the zoo gets busy. Using the constant drew a quarter-screen of empty tarmac
-  // under a park with nothing in it.
-  const sceneH = canvasH + carPark.height;
+  // The plan draws the park. The car park is outside the fence and full of cars, which is a thing to
+  // look at rather than a thing to lay out - it is in the isometric view, with the people who came
+  // in them. The gate is marked on here, which is what a plan needs to say about arriving.
+  const sceneH = canvasH;
 
   // Fit the WHOLE park, not just its width. Fitting to width alone meant a portrait park in a tall
   // column ran off the bottom, so you were scrolling to see your own zoo. The scale is whichever of
@@ -1032,41 +1033,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
     return () => ro.disconnect();
   }, [sceneH]);
 
-  // What the guests can walk on, and what they cannot. The paths are the ones actually drawn on the
-  // park - the promenade, the boundary walk, each feature's perimeter, and the connectors the player
-  // laid - so wherever the player has made a route, that is the route people take. Water is a wall
-  // with one door: a bridge over it. A bridge is walkable along its length, which is how guests get
-  // from one bank to the other.
-  const rectOf = (f: Feature) => {
-    const b = coreBox(f);
-    return { x0: b.cx - b.hw, y0: b.cy - b.hh, x1: b.cx + b.hw, y1: b.cy + b.hh, rot: f.item.rot ?? 0 };
-  };
-  const landFeats = (type: string) => features.filter((f) => f.item.category === 'flora' && landType(f.item) === type);
-  const loop = (x: number, y: number, w: number, h: number) =>
-    [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }, { x, y }];
-  const nav = {
-    paths: [
-      [{ x: 24, y: canvasH - PATH_H / 2 }, { x: CANVAS_W - 24, y: canvasH - PATH_H / 2 }], // the promenade
-      loop(boundary.x, boundary.y, boundary.w, boundary.h),
-      ...perimeters.map((p) => loop(p.x, p.y, p.w, p.h)),
-      ...connectors.map((c) => connPoints(c)),
-      // a bridge is crossed along its short way - bank to bank, running past both ends onto dry land
-      ...landFeats('bridge').map((f) => {
-        const r = rectOf(f), cx = (r.x0 + r.x1) / 2, cy = (r.y0 + r.y1) / 2;
-        const half = (r.y1 - r.y0) / 2 + 12, a = (r.rot ?? 0) * Math.PI / 180;
-        // bank to bank along the bridge's short way, turned with it, running past both ends
-        return [-1, 1].map((k) => ({ x: cx + Math.sin(a) * -k * half, y: cy + Math.cos(a) * k * half }));
-      }),
-    ],
-    water: [...landFeats('river'), ...landFeats('pond')].map(rectOf),
-    crossings: landFeats('bridge').map(rectOf),
-    // Things you go round, not through: the buildings, the habitats and the rockeries. Guests were
-    // walking straight through the kiosk to the next exhibit.
-    solid: [
-      ...features.filter((f) => f.item.category === 'amenity' || f.item.category === 'enclosure').map(rectOf),
-      ...landFeats('rocks').map(rectOf),
-    ],
-  };
+  // The guests walk in the isometric view now, on the same path network this used to build - it
+  // moved with them, to parkNav's buildNav there. A plan does not need to know where people can
+  // walk; it needs to show where the paths are, which it does by drawing them.
 
   return (
     // Zoomed in, the park is bigger than the space it has, so the viewport scrolls over it and the
@@ -1092,12 +1061,13 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
             y: clamp((e.clientY - box.top) / s2, 40, canvasH - PATH_H - 40),
           });
         } : undefined}
-        className={cn('absolute left-0 top-0 overflow-hidden rounded-2xl border shadow-sm', dropping && 'ring-4 ring-primary/40')}
+        className={cn('absolute left-0 top-0 overflow-hidden rounded-lg border', dropping && 'ring-4 ring-primary/40')}
         style={{ width: CANVAS_W, height: canvasH, transform: `scale(${scale})`, transformOrigin: 'top left', cursor: tool === 'connect' ? 'crosshair' : undefined,
-          borderColor: 'rgba(120,140,90,.5)', background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,.06) 0 2px, transparent 3px) 0 0/22px 22px, linear-gradient(#86c06a,#7ab85f)' }}>
+          borderColor: BP.INK_DIM, ...BP.gridPaint() }}>
 
-        {/* Promenade path + entrance + trees along the foot. */}
-        <div className="absolute inset-x-0 bottom-0" style={{ height: PATH_H, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})`, boxShadow: 'inset 0 2px 0 rgba(255,255,255,.25)' }} aria-hidden />
+        {/* The promenade, as a plan draws it: a band ruled off at the foot, not a paved surface. */}
+        <div className="absolute inset-x-0 bottom-0" aria-hidden
+          style={{ height: PATH_H, background: BP.FIELD_EDGE, borderTop: `1px dashed ${BP.INK_DIM}` }} />
 
         {/* Path layer: the park boundary, a perimeter walkway around each enclosure/building, and the
             manual connectors that join them. Attached connector ends follow their feature (posOf
@@ -1112,16 +1082,18 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           return (
             <svg className="absolute inset-0 z-[5]" width={CANVAS_W} height={canvasH} style={{ pointerEvents: 'none' }}>
               {/* Outlines */}
-              {boundaryEl(PATH_EDGE, PERIM_W + 3, 'bo')}
-              {perimeters.map((p) => perimEl(p, PATH_EDGE, PERIM_W + 3, `po-${p.id}`))}
+              {boundaryEl(PATH_EDGE, PERIM_W + 2, 'bo')}
+              {perimeters.map((p) => perimEl(p, PATH_EDGE, PERIM_W + 2, `po-${p.id}`))}
               {drawn.map(({ c, d }) => (
-                <polyline key={`o-${c.id}`} points={d} fill="none" stroke={PATH_EDGE} strokeWidth={c.thickness + 3} strokeLinecap="round" strokeLinejoin="round" />
+                <polyline key={`o-${c.id}`} points={d} fill="none" stroke={BP.zoneInk(c.color)} strokeWidth={c.thickness + 2} strokeLinecap="round" strokeLinejoin="round" />
               ))}
               {/* Bodies */}
               {boundaryEl(PATH_TAN, PERIM_W, 'bb')}
               {perimeters.map((p) => perimEl(p, PATH_TAN, PERIM_W, `pb-${p.id}`))}
+              {/* The sheet, drawn back over the middle - so a route is two ruled lines with the
+                  ground between them, at the width it was actually laid. */}
               {drawn.map(({ c, d }) => (
-                <polyline key={`b-${c.id}`} points={d} fill="none" stroke={c.color} strokeWidth={c.thickness} strokeLinecap="round" strokeLinejoin="round" />
+                <polyline key={`b-${c.id}`} points={d} fill="none" stroke={BP.FIELD} strokeWidth={c.thickness} strokeLinecap="round" strokeLinejoin="round" />
               ))}
               {selected && selectedConn && (
                 <polyline points={toD(connPoints(selected))} fill="none" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 4" strokeLinecap="round" strokeLinejoin="round" />
@@ -1170,12 +1142,12 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
           );
         })()}
 
-        <Tree style={{ left: 14, bottom: PATH_H + 6 }} />
-        <Tree style={{ right: 14, bottom: PATH_H + 6 }} />
-        <div className="absolute left-1/2 -translate-x-1/2 text-[9px] font-black tracking-widest" style={{ bottom: 4, color: '#5a3a1c' }} aria-hidden>ENTRANCE</div>
+        {/* The gate, marked on the drawing. The decorative trees that used to stand either side of
+            it are gone: they were scenery, and scenery is the other view's job. */}
+        <div className={cn(BP.LABEL, 'absolute left-1/2 -translate-x-1/2')} style={{ bottom: 4, color: BP.INK_DIM }} aria-hidden>Entrance</div>
 
         {features.length === 0 && (
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm font-semibold text-white/90">Nothing open yet - build and open an enclosure and its animals.</div>
+          <div className={cn(BP.LABEL, 'absolute inset-x-0 top-1/2 -translate-y-1/2 text-center')} style={{ color: BP.INK_DIM }}>Nothing drawn yet - build and open an enclosure and its animals</div>
         )}
 
         {/* Features - each absolutely positioned at its centre and draggable. */}
@@ -1291,10 +1263,9 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
         )) : []))}
 
       </div>
-      {/* Living visitors + the car park: the lot is drawn in this layer below the fence, and guests
-          arrive from its cars and walk the park to the live exhibits. Drawn over the (unscaled) outer
-          box so they stay crisp at any zoom. Always mounted so the lot shows even before opening. */}
-      <VisitorLayer attractions={attractions} food={foodPts} entrance={visitorEntrance} mix={dots} W={CANVAS_W} H={sceneH} carPark={carPark} nav={nav} />
+      {/* No visitors here. A plan is not somewhere people walk about - it is the drawing they will
+          walk about IN. The crowds, the cars and the families are in the isometric view, which is
+          where they are worth looking at, and where they only had to be written once. */}
 
       {/* The toolbar for whatever is selected, floating just above it. It lives in the OUTER box,
           which is not transformed, so it stays its natural size however far the park is zoomed -
@@ -1385,10 +1356,12 @@ function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number) => vo
 }
 
 /** A simple read-only flow of features, for the small live views (no drag). */
-function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; dots: SegmentId[]; minHeight: number; style: PathStyle }) {
+function FlowScene({ features, minHeight }: { features: Feature[]; minHeight: number }) {
+  // The small overview is the same drawing, smaller: what has been delivered, in a row. It is on the
+  // same sheet as the big plan, because two greens and a blue would be three different parks.
   return (
-    <div className="relative overflow-hidden rounded-2xl border shadow-sm"
-      style={{ minHeight, borderColor: 'rgba(120,140,90,.5)', background: 'linear-gradient(#86c06a,#7ab85f)' }}>
+    <div className="relative overflow-hidden rounded-lg border"
+      style={{ minHeight, borderColor: BP.INK_FAINT, ...BP.gridPaint() }}>
       <div className="relative z-10 flex flex-wrap items-end gap-3 p-3 pb-8">
         {features.map((f) => (
           <div key={f.item.id}>
@@ -1396,17 +1369,8 @@ function FlowScene({ features, dots, minHeight, style }: { features: Feature[]; 
           </div>
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" style={{ height: 22, background: `linear-gradient(${style.promenade[0]},${style.promenade[1]})` }} aria-hidden />
-      {dots.length > 0 && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20" style={{ height: 22 }} aria-hidden>
-          {dots.map((seg, i) => (
-            <span key={i} className="zoo-visitor absolute" style={{ left: `${4 + jitter(i, 0) * 92}%`, top: `${18 + jitter(i, 1) * 50}%`, animation: `zooStroll ${7 + jitter(i, 0) * 6}s ease-in-out ${(-jitter(i, 1) * 9).toFixed(2)}s infinite` }}>
-              <span className="block rounded-full ring-1 ring-white/70" style={{ width: 4, height: 4, margin: '0 auto', background: '#f0c9a8' }} />
-              <span className="block rounded-b-sm rounded-t" style={{ width: 6, height: 6, background: SEG_DOT[seg] }} />
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0" aria-hidden
+        style={{ height: 22, background: BP.FIELD_EDGE, borderTop: `1px dashed ${BP.INK_FAINT}` }} />
     </div>
   );
 }
@@ -1724,7 +1688,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               </div>
             </Suspense>
           ) : (
-          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}
+          <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}
             onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             // Every run drawn for a pathway carries that pathway's id, so the item can list its own
             // runs and take one back off. A route you cannot edit is a route you have to get right
@@ -1733,20 +1697,12 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           )}
         </>
       ) : (
-        <FlowScene features={features} dots={dots} minHeight={compact ? 140 : 230} style={style} />
+        <FlowScene features={features} minHeight={compact ? 140 : 230} />
       )}
     </section>
   );
 }
 
-function Tree({ style }: { style: React.CSSProperties }) {
-  return (
-    <div className="absolute z-0" style={{ width: 26, height: 34, ...style }} aria-hidden>
-      <div className="absolute left-1/2 -translate-x-1/2 rounded-full" style={{ top: 0, width: 26, height: 26, background: 'radial-gradient(circle at 40% 35%,#5fa049,#3f7d33)', boxShadow: '0 3px 0 rgba(0,0,0,.08)' }} />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2" style={{ width: 5, height: 12, background: '#7a5230', borderRadius: 2 }} />
-    </div>
-  );
-}
 
 /** One inline park stat: icon + bold value + label, on a single slim row. */
 function Stat({ icon: Icon, label, value, title }: { icon: typeof Users; label: string; value: string; title?: string }) {
