@@ -8,7 +8,7 @@ import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, w
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
-import { AGE_SCALE, groupMembers } from './design';
+import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
   roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, fenceRun as fenceRunOf, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
@@ -401,7 +401,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     // animal dragged there is the animal that moves here.
     const herd = stock.flatMap((a) => {
       const members = groupMembers(working(a).group);
-      const list = members.length ? members : [{ age: 'adults' as const, scale: AGE_SCALE.adults }];
+      const list = members.length ? members : [{ kind: 'males' as const, scale: KIND_SCALE.males }];
       return list.map((m, mi) => ({ a, m, mi }));
     });
     herd.forEach(({ a, m, mi }, hi) => {
