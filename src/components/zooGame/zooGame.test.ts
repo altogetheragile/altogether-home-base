@@ -528,16 +528,36 @@ describe('zoo game: work that outlives the Sprint it was built in', () => {
     };
   };
 
-  it('sends work that was started but never built back to the Product Backlog to be re-estimated', () => {
+  it('sends work that was started but never built back to the Product Backlog, sized to what is left', () => {
     let s = planSprint(bigCatsSplit(1), ['tiger-enc']);
+    const asked = s.backlog.find((x) => x.id === 'tiger-enc')!.estimate;
     s = startItem(s, 'tiger-enc');
     s = startNextSprint(reviewSprint(s), '');
     const t = s.backlog.find((x) => x.id === 'tiger-enc')!;
     expect(t.status).toBe('backlog');   // back to the PO's list, not carried into the next Sprint
     expect(t.sprintNumber).toBeNull();
-    expect(t.carriedOver).toBe(true);   // ...flagged, and re-opened for estimation
-    expect(t.unsized).toBe(true);
+    expect(t.carriedOver).toBe(true);   // ...flagged as work already begun
+    // It comes back SIZED. The Developers re-size what is left every day - that is what the burndown
+    // is drawn from - so the number already exists and asking for it again is asking twice.
+    expect(t.unsized).toBe(false);
+    expect(t.estimate).toBeLessThanOrEqual(asked);
+    expect(t.estimate).toBeGreaterThan(0);
     expect(board(s).todo).not.toContain('tiger-enc');
+  });
+
+  it('sends work that was picked but never started back exactly as it was', () => {
+    // Nobody touched it, so nobody learned anything about it: an estimate good enough to plan with
+    // last week is good enough this week. Sending it round the poker again made estimating look
+    // like a toll you pay for not finishing.
+    let s = planSprint(bigCatsSplit(1), ['tiger-enc']);
+    const before = s.backlog.find((x) => x.id === 'tiger-enc')!;
+    s = startNextSprint(reviewSprint(s), '');
+    const t = s.backlog.find((x) => x.id === 'tiger-enc')!;
+    expect(t.status).toBe('backlog');
+    expect(t.sprintNumber).toBeNull();
+    expect(t.estimate).toBe(before.estimate);
+    expect(t.unsized).toBeFalsy();
+    expect(t.carriedOver).toBeFalsy();   // it was never started, so it did not carry over
   });
 
   it('keeps Done-but-unreleased work on the board, and in Done once it is released', () => {
@@ -1291,9 +1311,9 @@ describe('zoo game: the toolbox', () => {
     const lion = s.backlog.find((i) => i.id === 'lion')!;
     expect(lion.status).toBe('backlog');
     expect(lion.draftDesign).toEqual(partial);
-    // Carried over unfinished, it is re-opened for estimation (a fresh Ready check) - the team
-    // re-points the work that is left before it can be re-planned.
-    expect(lion.unsized).toBe(true);
+    // Carried over unfinished, it comes back already sized to what is left, so it is Ready to be
+    // planned again rather than queued behind another round of estimating.
+    expect(lion.unsized).toBe(false);
     expect(lion.carriedOver).toBe(true);
     // Re-estimating clears the carry-over flag and makes it Ready again.
     s = estimateItem(s, 'lion', 3);
@@ -1314,12 +1334,14 @@ describe('zoo game: the toolbox', () => {
       { id: 't0', label: 'a', done: true }, { id: 't1', label: 'b', done: true },
       { id: 't2', label: 'c', done: true }, { id: 't3', label: 'd', done: false },
     ];
-    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, tasks, trueSize: 8 } : it)) };
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, started: true, tasks, trueSize: 8 } : it)) };
     s = reviewSprint(s);
     const lion = s.backlog.find((i) => i.id === 'lion')!;
-    // 3/4 done -> ~1/4 of the work left, so the hidden size is nudged well below the original 8.
+    // 3/4 done -> ~1/4 of the work left, so the size comes back well below the original 8 - and it
+    // is the item's estimate now, not just a hidden nudge, because nobody is asked to size it again.
     expect(lion.trueSize).toBeLessThan(8);
     expect(lion.trueSize).toBeGreaterThanOrEqual(1);
+    expect(lion.estimate).toBe(lion.trueSize);
   });
 
   it('placeOnPark marks a built item as placed (on the park) without releasing it to visitors', () => {
@@ -1678,8 +1700,8 @@ describe('zoo game: cancelling a Sprint', () => {
     const done = s.backlog.find((it) => it.id === 'lion-enc')!;
     expect(done.status).toBe('done');            // Done work is kept and can still be released
     const unfinished = s.backlog.find((it) => it.id === 'tiger-enc')!;
-    expect(unfinished.status).toBe('backlog');   // ...everything else goes back to be re-estimated
-    expect(unfinished.unsized).toBe(true);
+    expect(unfinished.status).toBe('backlog');   // ...everything else goes back to the PO's list
+    expect(unfinished.unsized).toBe(false);      // sized to what is left, not queued for the poker
     expect(unfinished.carriedOver).toBe(true);
     expect(unfinished.sprintNumber).toBeNull();
 
