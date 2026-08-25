@@ -1,6 +1,6 @@
 import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
-import { shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, pieceByKey } from './design';
+import { shade, speciesColors, landscapePalette, isLandscapeType, enclosureFlora, enclosureWater, pieceByKey } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
@@ -445,7 +445,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
    *  the three things that read as a bridge from the corner - a deck you can see the top of, the
    *  side of that deck, and a handrail along both edges.
    */
-  const bridge = (id: string, x0: number, y0: number, x1: number, y1: number, wood: string) => {
+  const bridge = (id: string, x0: number, y0: number, x1: number, y1: number, wood: string, trim: string) => {
     const deckH = Math.max(2.5, u * 7);
     const railH = Math.max(4, u * 10);
     const f = boxFaces(x0, y0, x1, y1, deckH, u);
@@ -470,12 +470,12 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       const A = up(P(a.x, a.y), deckH), B = up(P(z.x, z.y), deckH);
       const posts = Array.from({ length: 6 }, (_, i) => {
         const t = i / 5, px = A.x + (B.x - A.x) * t, py = A.y + (B.y - A.y) * t;
-        return <line key={`p${i}`} x1={px} y1={py} x2={px} y2={py - railH} stroke={shade(wood, -46)} strokeWidth={post} strokeLinecap="round" />;
+        return <line key={`p${i}`} x1={px} y1={py} x2={px} y2={py - railH} stroke={shade(trim, -18)} strokeWidth={post} strokeLinecap="round" />;
       });
       return (
         <g key={`rail-${s}`}>
           {posts}
-          <line x1={A.x} y1={A.y - railH} x2={B.x} y2={B.y - railH} stroke={shade(wood, -22)} strokeWidth={Math.max(0.9, u * 1.5)} strokeLinecap="round" />
+          <line x1={A.x} y1={A.y - railH} x2={B.x} y2={B.y - railH} stroke={trim} strokeWidth={Math.max(0.9, u * 1.5)} strokeLinecap="round" />
         </g>
       );
     });
@@ -497,21 +497,25 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     if (it.category === 'flora') {
       const type = landType(it);
       if (isLandscapeType(type)) {
-        const cols = floraDefaultColors(type ?? 'pond');
+        // The colours somebody CHOSE for it, not the ones its kind starts with. This read the
+        // defaults for the type and ignored the design entirely, so a bridge given red railings and
+        // a light brown deck arrived here in the brown it started as - and so did every river and
+        // pond. A landscape feature has two colours: what it is made of, and its trim.
+        const { primary, secondary } = landscapePalette(type, working(it).colors);
         // Held to the park. A river is longer than the park is wide, on purpose - that is what makes
         // it reach both banks - and painted at its full length it ran out over the edge of the grass
         // and hung in the air.
         const x0 = Math.max(0, c.x - size.w / 2), x1 = Math.min(CANVAS_W, c.x + size.w / 2);
         const y0 = Math.max(0, c.y - size.h / 2), y1 = Math.min(PLAY_H, c.y + size.h / 2);
         if (type === 'bridge') {
-          bridge(it.id, x0, y0, x1, y1, cols.foliage ?? '#c8965a');
+          bridge(it.id, x0, y0, x1, y1, primary, secondary);
           // A bridge is the one door through the water, and it is walked across bank to bank.
           dry.push({ x0, y0, x1, y1 });
           walks.push([{ x: (x0 + x1) / 2, y: y0 - 10 }, { x: (x0 + x1) / 2, y: y1 + 10 }]);
           continue;
         }
         if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1 });
-        nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={cols.foliage ?? '#6fb0d6'} opacity={0.92} />);
+        nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={primary} opacity={0.92} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
           place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage));
