@@ -165,7 +165,7 @@ describe('arranging a family', () => {
     return { ...base, zones: ['Big Cats'], backlog: [
       item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 } }),
       item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
-             design: { parts: {}, colors: {}, group: { adults: 2, juveniles: 1, cubs: 2 } } }),
+             design: { parts: {}, colors: {}, group: { males: 2, females: 0, juveniles: 1, cubs: 2 } } }),
     ] } as ZooGameState;
   };
 

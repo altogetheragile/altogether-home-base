@@ -12,7 +12,7 @@ import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine'
 import { applyParkChecks, checkCriterion } from './parkChecks';
 import { lookAhead } from './lookAhead';
 import { autoLayout, insidePark, parkBounds, shapeEdge, insideShape, CANVAS_W, PLAY_H } from './parkLayout';
-import { AGE_SCALE, groupMembers, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
+import { type AnimalGroup, KIND_SCALE, groupMembers, groupSize, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 import { copyEntries, applyCopyOverrides } from './copy';
@@ -1433,7 +1433,7 @@ describe('zoo game: richer studio kit', () => {
     const unstocked = designCriteria(exhibit(), { parts: {}, colors: {} });
     expect(unstocked.every((c) => !c.pass)).toBe(true);
     expect(unstocked.map((c) => c.label)).toEqual(['Decide how many, and of what ages', 'They fit the habitat with room to roam']);
-    const pair = designCriteria(exhibit(), { parts: {}, colors: {}, group: { adults: 2, juveniles: 0, cubs: 0 } });
+    const pair = designCriteria(exhibit(), { parts: {}, colors: {}, group: { males: 2, females: 0, juveniles: 0, cubs: 0 } });
     expect(pair.every((c) => c.pass)).toBe(true);
   });
 });
@@ -2666,32 +2666,58 @@ describe('zoo game: an exhibit is stocked, not built', () => {
   const lionIn = (size: 'small' | 'medium' | 'large'): BacklogItem =>
     ({ id: 'l', name: 'Lion', category: 'exhibit', zone: 'Big Cats', acceptance: [], status: 'backlog', sprintNumber: null, accessible: true, estimate: 5, enclosureSize: size });
 
+  it('lets a zoo choose males and females, not just "adults"', () => {
+    // A pride is one male and several females, and that is WHY it is a pride. The model only knew
+    // "adults", so the choice could not be made at all - and the drawings cannot show it yet, which
+    // is a missing lioness rather than a missing decision.
+    const pride = groupMembers({ males: 1, females: 3, juveniles: 0, cubs: 2 });
+    expect(pride).toHaveLength(6);
+    expect(pride.filter((m) => m.kind === 'females')).toHaveLength(3);
+    // A lioness is a little smaller than a lion, and a cub much smaller - the difference the
+    // drawings can carry today.
+    expect(KIND_SCALE.females).toBeLessThan(KIND_SCALE.males);
+    expect(KIND_SCALE.cubs).toBeLessThan(KIND_SCALE.females);
+    // ...and she takes a little less room, so the trade-off moves with the choice
+    expect(roomNeeded({ males: 0, females: 2, juveniles: 0, cubs: 0 }))
+      .toBeLessThan(roomNeeded({ males: 2, females: 0, juveniles: 0, cubs: 0 }));
+  });
+
+  it('reads a zoo saved before males and females existed', () => {
+    // Somebody's game was saved with `adults`. Losing their pride over a field name would be a poor
+    // trade, so an old group is read as that many males and no females.
+    const old = { adults: 3, juveniles: 1, cubs: 2 } as unknown as AnimalGroup;
+    expect(groupMembers(old)).toHaveLength(6);
+    expect(groupMembers(old).filter((m) => m.kind === 'males')).toHaveLength(3);
+    expect(groupSize(old)).toBe(6);
+    expect(roomNeeded(old)).toBeGreaterThan(0);
+  });
+
   it('draws every animal in the group, the young ones smaller', () => {
-    const family = groupMembers({ adults: 2, juveniles: 1, cubs: 2 });
+    const family = groupMembers({ males: 2, females: 0, juveniles: 1, cubs: 2 });
     expect(family).toHaveLength(5);
-    expect(family.filter((m) => m.age === 'cubs')).toHaveLength(2);
+    expect(family.filter((m) => m.kind === 'cubs')).toHaveLength(2);
     // Ages are worth choosing because they are not the same animal at a different number.
-    expect(AGE_SCALE.cubs).toBeLessThan(AGE_SCALE.juveniles);
-    expect(AGE_SCALE.juveniles).toBeLessThan(AGE_SCALE.adults);
+    expect(KIND_SCALE.cubs).toBeLessThan(KIND_SCALE.juveniles);
+    expect(KIND_SCALE.juveniles).toBeLessThan(KIND_SCALE.males);
     // Nothing chosen yet still shows one animal rather than an empty habitat.
     expect(groupMembers(undefined)).toHaveLength(1);
   });
 
   it('measures the group against the habitat somebody else built', () => {
-    const family = { adults: 2, juveniles: 1, cubs: 2 };
+    const family = { males: 2, females: 0, juveniles: 1, cubs: 2 };
     expect(hasRoomToRoam(family, 'large')).toBe(true);
     expect(hasRoomToRoam(family, 'small')).toBe(false);
     // A cub takes less room than an adult, which is the whole reason ages are a decision.
-    expect(roomNeeded({ adults: 3, juveniles: 0, cubs: 0 })).toBeGreaterThan(roomNeeded({ adults: 1, juveniles: 0, cubs: 3 }));
+    expect(roomNeeded({ males: 3, females: 0, juveniles: 0, cubs: 0 })).toBeGreaterThan(roomNeeded({ males: 1, females: 0, juveniles: 0, cubs: 3 }));
   });
 
   it('will not call an exhibit built until it has been stocked AND housed', () => {
-    const crowded = { parts: {}, colors: {}, group: { adults: 4, juveniles: 2, cubs: 2 } };
+    const crowded = { parts: {}, colors: {}, group: { males: 4, females: 0, juveniles: 2, cubs: 2 } };
     expect(isDesignDone(lionIn('small'), crowded)).toBe(false);   // eight lions in a small habitat
     expect(isDesignDone(lionIn('medium'), crowded)).toBe(false);  // and too many for a medium one
     expect(isDesignDone(lionIn('large'), crowded)).toBe(true);    // the biggest habitat can take a pride
-    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {}, group: { adults: 8, juveniles: 0, cubs: 0 } })).toBe(false);
-    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {}, group: { adults: 2, juveniles: 1, cubs: 2 } })).toBe(true);
+    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {}, group: { males: 8, females: 0, juveniles: 0, cubs: 0 } })).toBe(false);
+    expect(isDesignDone(lionIn('large'), { parts: {}, colors: {}, group: { males: 2, females: 0, juveniles: 1, cubs: 2 } })).toBe(true);
     // Undecided is not the same as fits - it would otherwise pass on the default of one animal.
     expect(isDesignDone(lionIn('large'), { parts: {}, colors: {} })).toBe(false);
   });
@@ -2708,12 +2734,12 @@ describe('zoo game: an exhibit is stocked, not built', () => {
   it('makes a group worth more than a specimen, and a rare coat worth more again', () => {
     const lion = { ...lionIn('large'), appeal: { families: 8, enthusiasts: 7, comfortSeekers: 6 } } as BacklogItem;
     const at = (d: ItemDesign) => appealFromDesign(lion, d)!.families;
-    const one = at({ parts: {}, colors: { body: '#c8873b' }, group: { adults: 1, juveniles: 0, cubs: 0 } });
-    const family = at({ parts: {}, colors: { body: '#c8873b' }, group: { adults: 2, juveniles: 1, cubs: 2 } });
+    const one = at({ parts: {}, colors: { body: '#c8873b' }, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } });
+    const family = at({ parts: {}, colors: { body: '#c8873b' }, group: { males: 2, females: 0, juveniles: 1, cubs: 2 } });
     expect(family).toBeGreaterThan(one);
     // A rare coat is what the enthusiasts come for; the families come for a lively group.
     const keen = (d: ItemDesign) => appealFromDesign(lion, d)!.enthusiasts;
-    const plain = { parts: {}, colors: { body: '#c8873b' }, group: { adults: 1, juveniles: 0, cubs: 0 } };
+    const plain = { parts: {}, colors: { body: '#c8873b' }, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } };
     expect(keen({ ...plain, parts: { coat: 'pale' } })).toBeGreaterThan(keen(plain));
   });
 
@@ -2726,7 +2752,7 @@ describe('zoo game: an exhibit is stocked, not built', () => {
 
 describe('zoo game: the park answers the criteria it can answer', () => {
   const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
-  const stock = (s: ZooGameState, group: { adults: number; juveniles: number; cubs: number }): ZooGameState =>
+  const stock = (s: ZooGameState, group: AnimalGroup): ZooGameState =>
     applyParkChecks({ ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, draftDesign: { parts: {}, colors: {}, group } } : it)) });
 
   it('leaves judgement alone and takes the measurements', () => {
@@ -2738,24 +2764,24 @@ describe('zoo game: the park answers the criteria it can answer', () => {
   });
 
   it('counts the animals and says what it counted', () => {
-    const one = checkCriterion(stock(initialZooState(1), { adults: 1, juveniles: 0, cubs: 0 }), lion(initialZooState(1)), 'Can I see a group rather than one animal on its own?');
+    const one = checkCriterion(stock(initialZooState(1), { males: 1, females: 0, juveniles: 0, cubs: 0 }), lion(initialZooState(1)), 'Can I see a group rather than one animal on its own?');
     expect(one).toEqual({ met: false, evidence: 'one on its own' });
-    const s = stock(initialZooState(1), { adults: 2, juveniles: 1, cubs: 2 });
+    const s = stock(initialZooState(1), { males: 2, females: 0, juveniles: 1, cubs: 2 });
     expect(checkCriterion(s, lion(s), 'Can I see a group rather than one animal on its own?')).toEqual({ met: true, evidence: '5 of them' });
   });
 
   it('ticks them for you, and unticks them when the fact changes', () => {
-    const family = stock(initialZooState(1), { adults: 2, juveniles: 1, cubs: 2 });
+    const family = stock(initialZooState(1), { males: 2, females: 0, juveniles: 1, cubs: 2 });
     const groupCriterion = lion(family).acceptance.indexOf('Can I see a group rather than one animal on its own?');
     expect(lion(family).acConfirmed?.[groupCriterion]).toBe(true);
     // Take four of them away again and the criterion goes with them - a fact you ticked yesterday
     // can stop being true today, which is the whole reason the park keeps its own answer.
-    const alone = stock(family, { adults: 1, juveniles: 0, cubs: 0 });
+    const alone = stock(family, { males: 1, females: 0, juveniles: 0, cubs: 0 });
     expect(lion(alone).acConfirmed?.[groupCriterion]).toBe(false);
   });
 
   it('will not let you tick a measurement by hand', () => {
-    const family = stock(initialZooState(1), { adults: 1, juveniles: 0, cubs: 0 });
+    const family = stock(initialZooState(1), { males: 1, females: 0, juveniles: 0, cubs: 0 });
     const i = lion(family).acceptance.indexOf('Can I see a group rather than one animal on its own?');
     // confirmAcceptance goes through the reducer, which lays the park's answer back over the top.
     const lied = applyParkChecks(confirmAcceptance(family, 'lion', i, true));

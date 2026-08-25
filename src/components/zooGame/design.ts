@@ -27,7 +27,10 @@ export interface ItemDesign {
 
 /** The animals in one exhibit. A zoo does not BUILD a lion - it decides how many lions, of what
  *  ages, and whether it can house them. */
-export interface AnimalGroup { adults: number; juveniles: number; cubs: number }
+/** Who is in a group. Not ages: a male and a female are both grown, and which they are is a choice
+ *  a zoo makes on purpose - a pride is one male and several females, and that is why it is a pride.
+ *  Saved games from before this said `adults`; see `asGroup`. */
+export interface AnimalGroup { males: number; females: number; juveniles: number; cubs: number }
 
 /** A water feature inside an enclosure: position and size as fractions of the habitat box. */
 export interface WaterFeature { x: number; y: number; w: number; h: number }
@@ -702,22 +705,38 @@ export function amenityAcceptance(name: string, services?: string): string[] {
 // The species is still the species: `presetFor` gives a lion a lion's shape, and the coat is the
 // one thing left to choose, because a white tiger is a decision about value.
 
-export const AGES = ['adults', 'juveniles', 'cubs'] as const;
-export type Age = typeof AGES[number];
+export const KINDS = ['males', 'females', 'juveniles', 'cubs'] as const;
+export type Kind = typeof KINDS[number];
 
-/** How big each age is drawn, against a full-grown animal. */
-export const AGE_SCALE: Record<Age, number> = { adults: 1, juveniles: 0.72, cubs: 0.55 };
+/** How big each is drawn, against a full-grown male. A lioness really is a little smaller than a
+ *  lion, and a cub much smaller - which is the only difference the drawings can carry today, because
+ *  there is one lion drawing and it has a mane. The artwork is what is missing, not the choice. */
+export const KIND_SCALE: Record<Kind, number> = { males: 1, females: 0.92, juveniles: 0.72, cubs: 0.55 };
 
-export const DEFAULT_GROUP: AnimalGroup = { adults: 1, juveniles: 0, cubs: 0 };
+export const DEFAULT_GROUP: AnimalGroup = { males: 1, females: 0, juveniles: 0, cubs: 0 };
+
+/** Read a group however it was written. A game saved before males and females existed says
+ *  `adults`, and it would be a poor trade to lose somebody's zoo over a field name. */
+export function asGroup(g?: Partial<AnimalGroup> & { adults?: number }): AnimalGroup {
+  if (!g) return DEFAULT_GROUP;
+  return {
+    males: g.males ?? g.adults ?? 0,
+    females: g.females ?? 0,
+    juveniles: g.juveniles ?? 0,
+    cubs: g.cubs ?? 0,
+  };
+}
 
 /** How many animals in total. */
-export const groupSize = (g?: AnimalGroup): number =>
-  (g?.adults ?? DEFAULT_GROUP.adults) + (g?.juveniles ?? 0) + (g?.cubs ?? 0);
+export const groupSize = (g?: AnimalGroup): number => {
+  const grp = asGroup(g);
+  return KINDS.reduce((n, k) => n + grp[k], 0);
+};
 
 /** The group as one entry per animal, largest first so the little ones draw in front. */
-export function groupMembers(g?: AnimalGroup): { age: Age; scale: number }[] {
-  const grp = g ?? DEFAULT_GROUP;
-  return AGES.flatMap((age) => Array.from({ length: Math.max(0, grp[age]) }, () => ({ age, scale: AGE_SCALE[age] })));
+export function groupMembers(g?: AnimalGroup): { kind: Kind; scale: number }[] {
+  const grp = asGroup(g);
+  return KINDS.flatMap((kind) => Array.from({ length: Math.max(0, grp[kind]) }, () => ({ kind, scale: KIND_SCALE[kind] })));
 }
 
 /** How many animals a habitat of this size can hold with room to roam. A cub takes less room than a
@@ -726,8 +745,8 @@ export const ROOM: Record<'small' | 'medium' | 'large', number> = { small: 2, me
 
 /** What the group costs in room, in adult-equivalents. */
 export const roomNeeded = (g?: AnimalGroup): number => {
-  const grp = g ?? DEFAULT_GROUP;
-  return grp.adults + grp.juveniles * 0.6 + grp.cubs * 0.35;
+  const grp = asGroup(g);
+  return grp.males + grp.females * 0.9 + grp.juveniles * 0.6 + grp.cubs * 0.35;
 };
 
 /** Whether they have room to roam in a habitat of this size - a criterion the park can answer for

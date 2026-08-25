@@ -5,7 +5,7 @@ import {
   AMENITY_COLORS, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
   ENCLOSURE_SHAPES, PATH_WIDTHS, SWATCHES, floraColors, floraDefaultColors, enclosureFlora,
   addWaterTo, addFloraTo, isLandscapeType, piecesFor, pieceOf, applyPiece, pieceByKey, renderDesign, GRID_W,
-  AGES, COATS, DEFAULT_GROUP, ROOM, groupSize, roomNeeded, speciesColors,
+  KINDS, COATS, DEFAULT_GROUP, ROOM, groupSize, roomNeeded, speciesColors,
   type ItemDesign, type FloraPiece, type AnimalGroup,
 } from './design';
 import { isSignOffTask } from './engine';
@@ -142,11 +142,13 @@ function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemD
   const needs = roomNeeded(group);
   const roomy = needs <= room;
   const shapes: { label: string; group: AnimalGroup }[] = [
-    { label: 'One', group: { adults: 1, juveniles: 0, cubs: 0 } },
-    { label: 'A pair', group: { adults: 2, juveniles: 0, cubs: 0 } },
-    { label: 'A family', group: { adults: 2, juveniles: 1, cubs: 2 } },
+    // A pair is a male and a female, and a family is a male, a female and their young. That is what
+    // those words mean in a zoo, and it is the reason the choice is worth making.
+    { label: 'One', group: { males: 1, females: 0, juveniles: 0, cubs: 0 } },
+    { label: 'A pair', group: { males: 1, females: 1, juveniles: 0, cubs: 0 } },
+    { label: 'A family', group: { males: 1, females: 1, juveniles: 1, cubs: 2 } },
   ];
-  const same = (a: AnimalGroup, b: AnimalGroup) => a.adults === b.adults && a.juveniles === b.juveniles && a.cubs === b.cubs;
+  const same = (a: AnimalGroup, b: AnimalGroup) => KINDS.every((k) => a[k] === b[k]);
 
   return (
     <div className="flex basis-full flex-col gap-2">
@@ -165,15 +167,15 @@ function Stocking({ item, design, onDesign }: { item: BacklogItem; design: ItemD
 
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">Who is in it</span>
-        {AGES.map((age) => (
-          <span key={age} className="inline-flex items-center gap-1 rounded-lg border border-border px-1.5 py-0.5 text-xs capitalize">
-            {age}
-            <span className="min-w-[1ch] text-center font-mono font-semibold tabular-nums">{group[age]}</span>
+        {KINDS.map((kind) => (
+          <span key={kind} className="inline-flex items-center gap-1 rounded-lg border border-border px-1.5 py-0.5 text-xs capitalize">
+            {kind}
+            <span className="min-w-[1ch] text-center font-mono font-semibold tabular-nums">{group[kind]}</span>
             <span className="flex flex-col leading-none">
-              <button type="button" aria-label={`One more ${age}`} onClick={() => set({ [age]: Math.min(9, group[age] + 1) } as Partial<AnimalGroup>)}
+              <button type="button" aria-label={`One more ${kind}`} onClick={() => set({ [kind]: Math.min(9, group[kind] + 1) } as Partial<AnimalGroup>)}
                 className={cn(FOCUS, "text-[9px] text-muted-foreground hover:text-foreground")}>&#9650;</button>
-              <button type="button" aria-label={`One fewer ${age}`} disabled={group[age] <= 0 || total <= 1}
-                onClick={() => set({ [age]: Math.max(0, group[age] - 1) } as Partial<AnimalGroup>)}
+              <button type="button" aria-label={`One fewer ${kind}`} disabled={group[kind] <= 0 || total <= 1}
+                onClick={() => set({ [kind]: Math.max(0, group[kind] - 1) } as Partial<AnimalGroup>)}
                 className={cn(FOCUS, "text-[9px] text-muted-foreground hover:text-foreground disabled:opacity-30")}>&#9660;</button>
             </span>
           </span>

@@ -535,7 +535,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
             </div>
           );
         })}
-        {stock.map(({ a, age, scale, k }, i) => {
+        {stock.map(({ a, kind, scale, k }, i) => {
           // The first of a group keeps the item's dragged spot and wears the name; the rest of the
           // family arrange themselves around it. Dragging the lion moves the pride.
           // Every animal of a family can be put somewhere itself - the lioness by the water and the
@@ -553,7 +553,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
                 <Sprite item={a} design={a.design ?? a.draftDesign ?? presetFor(a)} cell={Math.max(1, Math.round(cell * scale * 10) / 10)} />
               </div>
               {lead && <AnimalName name={a.name} onRename={onRename ? (nm) => onRename(a.id, nm) : undefined} />}
-              <span className="sr-only">{age}</span>
+              <span className="sr-only">{kind}</span>
             </div>
           );
         })}
