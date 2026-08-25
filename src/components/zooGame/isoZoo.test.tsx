@@ -373,10 +373,23 @@ describe('the isometric projection', () => {
     const svg = container.querySelector('svg[role="img"]') as SVGSVGElement;
     expect(svg.style.overflow, 'the scene is not clipped').not.toBe('visible');
 
-    // ...and the headroom is real: nothing is drawn above the top of the picture either.
-    const tops = [...svg.querySelectorAll('svg')].map((el) => Number(el.getAttribute('y')));
-    expect(tops.length).toBeGreaterThan(3);
-    expect(Math.min(...tops), 'something is drawn above the top of the picture').toBeGreaterThanOrEqual(0);
+    // ...and the headroom is real: nothing is drawn outside the picture, at any turn. This is the
+    // "there is a tree in the corner of my screen" test.
+    for (const turn of [0, 1, 2, 3]) {
+      const el = render(<IsoZoo state={zooWithEverything()} height={460} turn={turn} />)
+        .container.querySelector('svg[role="img"]')!;
+      const [, , vw, vh] = el.getAttribute('viewBox')!.split(' ').map(Number);
+      const props = [...el.querySelectorAll('svg')];
+      expect(props.length).toBeGreaterThan(3);
+      for (const n of props) {
+        const x = Number(n.getAttribute('x')), y = Number(n.getAttribute('y'));
+        const w = Number(n.getAttribute("width"));
+        expect(y, `turn ${turn}: something is drawn above the picture`).toBeGreaterThanOrEqual(0);
+        expect(x + w, `turn ${turn}: something is drawn off the left of the picture`).toBeGreaterThan(0);
+        expect(x, `turn ${turn}: something is drawn off the right of the picture`).toBeLessThan(vw);
+        expect(y, `turn ${turn}: something is drawn below the picture`).toBeLessThan(vh);
+      }
+    }
   });
 
   it('plants what was chosen, in the colour it was chosen in', () => {
@@ -446,6 +459,51 @@ describe('the isometric projection', () => {
     expect(last.x).toBeGreaterThan(0);
     expect(last.x).toBeLessThan(820);
     expect(last.y).toBeGreaterThan(0);
+  });
+
+  it('stands an animal where it was dragged to on the Plan', () => {
+    // Move a lion in its habitat on the Plan and it did not move here: this view scattered the herd
+    // with a jitter of its own and never looked at `spot` at all. Where an animal stands has one
+    // answer now, in parkModel, and both drawings ask it.
+    const base = initialZooState();
+    const zoo = (spot?: { x: number; y: number }) => ({ ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 } }),
+      item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc', spot }),
+    ] } as ZooGameState);
+    const drawn = (state: ZooGameState) => {
+      const svg = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
+      return [...svg.querySelectorAll('svg')].map((el) => `${el.getAttribute('x')},${el.getAttribute('y')}`).join('|');
+    };
+    const nearLeft = drawn(zoo({ x: 0.15, y: 0.25 }));
+    const nearRight = drawn(zoo({ x: 0.85, y: 0.8 }));
+    expect(nearLeft, 'the lion stands in the same place wherever it was dragged').not.toBe(nearRight);
+  });
+
+  it('redraws everything when the park is turned under it', () => {
+    // Everything drawn goes into ONE list, so a key has to be unique across the whole scene and not
+    // just within its own loop. The guests and the parked cars were both numbering themselves v-0,
+    // v-1, ... - which looks harmless on a fresh render and is not: on an UPDATE React matches the
+    // old children to the new ones by key, and with the same key twice it keeps the wrong node. That
+    // is what "some of the cars have not turned" was, and the stray tree drawn out beside the park.
+    //
+    // So: turning a park that is already on screen must leave it identical to one drawn that way
+    // from scratch.
+    const base = initialZooState();
+    const busy = { ...base, zones: ['Big Cats'],
+      attendance: { ...(base.attendance ?? {}), families: 900, enthusiasts: 600, comfortSeekers: 400 },
+      backlog: [
+        item({ id: 'enc', name: 'Lion Enclosure', pos: { x: 250, y: 200 } }),
+        item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc' }),
+        ...['kiosk', 'shop', 'cafe', 'toilets'].map((t, i2) =>
+          item({ id: `am${i2}`, name: t, category: 'amenity', template: t, pos: { x: 120 + i2 * 140, y: 420 } })),
+      ] } as ZooGameState;
+    const drawnIn = (el: Element) => [...el.querySelectorAll('svg svg')]
+      .map((n) => `${n.getAttribute('x')},${n.getAttribute('y')}`).sort().join('|');
+
+    const fresh = drawnIn(render(<IsoZoo state={busy} height={460} turn={1} />).container);
+    const shown = render(<IsoZoo state={busy} height={460} turn={0} />);
+    shown.rerender(<IsoZoo state={busy} height={460} turn={1} />);
+    expect(drawnIn(shown.container), 'something kept its old place when the park was turned').toBe(fresh);
   });
 
   it('holds nothing but drawing', () => {

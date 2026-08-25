@@ -14,7 +14,7 @@ import { themeFor, type ZoneTheme } from './zoneTheme';
 import { zoneSlices, zooIsOpen } from './engine';
 import { autoLayout, parkBounds, shapeEdge, CANVAS_W, PLAY_H } from './parkLayout';
 import { groupMembers } from './design';
-import { standingOnPark, restingPlace, workingDesign as workingFor } from './parkModel';
+import { standingOnPark, restingPlace, habitatSpot, workingDesign as workingFor } from './parkModel';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock, Map, Box, Eye } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 import * as BP from './blueprint';
@@ -428,9 +428,14 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
   const boxRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
   // A content item keeps its dragged spot; an animal without one auto-arranges along the floor.
-  const spotOf = (a: BacklogItem, i: number) => a.spot
-    ? { left: a.spot.x * 100, top: a.spot.y * 100 }
-    : { left: n <= 1 ? 50 : 14 + (i / (n - 1)) * 72, top: 62 + (i % 2 === 0 ? -6 : 6) };
+  // Where an animal stands is decided in one place, shared with the Increment view - see parkModel.
+  const spotOf = (a: BacklogItem, i: number) => {
+    // Rounded where it becomes a percentage rather than where it is worked out: the model deals in
+    // fractions of a habitat, and 0.62 - 0.06 lands a hair off 0.56 in binary, which is invisible on
+    // the park and very visible in a diff.
+    const f = habitatSpot(a, i, n);
+    return { left: Math.round(f.x * 1000) / 10, top: Math.round(f.y * 1000) / 10 };
+  };
   const clampSpot = (p: { x: number; y: number }) => ({ x: clamp(p.x, 0.08, 0.92), y: clamp(p.y, 0.1, 0.94) });
 
   // Drag a content item (animal or planted flora) to a spot inside its enclosure. Coordinates come

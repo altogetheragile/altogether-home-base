@@ -122,3 +122,18 @@ export const positionOf = (s: Standing, auto: Map<string, { x: number; y: number
 /** Landscape - a river, a pond, a bridge - which takes a patch of ground rather than standing on it. */
 export const isLandscape = (item: BacklogItem): boolean =>
   item.category === 'flora' && isLandscapeType(parkType(item));
+
+/** Where an animal stands INSIDE its habitat, as fractions of the habitat box.
+ *
+ *  Dragged on the Plan, it keeps the spot it was put on; otherwise the herd arranges itself along
+ *  the floor, staggered so two animals do not stand on each other.
+ *
+ *  Both views ask this, because "where is the lion" has one answer. The isometric view used to
+ *  scatter them with its own jitter and never looked at `spot` at all, so moving a lion on the Plan
+ *  moved nothing in the Increment - the sixth time in a week the two drawings disagreed about the
+ *  same state, and the reason this module exists.
+ */
+export function habitatSpot(animal: BacklogItem, i: number, n: number): { x: number; y: number } {
+  if (animal.spot) return animal.spot;
+  return { x: n <= 1 ? 0.5 : 0.14 + (i / (n - 1)) * 0.72, y: 0.62 + (i % 2 === 0 ? -0.06 : 0.06) };
+}
