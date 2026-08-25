@@ -406,7 +406,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     });
     herd.forEach(({ a, m, mi }, hi) => {
       {
-        const f = habitatSpot(a, hi, herd.length);
+        const f = habitatSpot(a, hi, herd.length, mi, size);
         const wx = x0 + f.x * size.w;
         const wy = y0 + f.y * size.h;
         const species = a.template ?? a.id;

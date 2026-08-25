@@ -123,17 +123,40 @@ export const positionOf = (s: Standing, auto: Map<string, { x: number; y: number
 export const isLandscape = (item: BacklogItem): boolean =>
   item.category === 'flora' && isLandscapeType(parkType(item));
 
+/** The ways round one animal, for the rest of its family to stand in. */
+const HERD = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]];
+const hold = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+/** How far apart animals standing together are, in design px - about an animal's own width. */
+const APART = 30;
+
 /** Where an animal stands INSIDE its habitat, as fractions of the habitat box.
  *
  *  Dragged on the Plan, it keeps the spot it was put on; otherwise the herd arranges itself along
  *  the floor, staggered so two animals do not stand on each other.
+ *
+ *  One Backlog item can be a whole family - a pride is one "Lion" with several lions in it - and the
+ *  dragged spot belongs to the ITEM. So the one you took hold of stands on the spot and the rest of
+ *  the family gather round it. Reading the item's spot for every member of it put the whole pride on
+ *  a single point, one lion thick, which is what "they all group together in one spot" was.
  *
  *  Both views ask this, because "where is the lion" has one answer. The isometric view used to
  *  scatter them with its own jitter and never looked at `spot` at all, so moving a lion on the Plan
  *  moved nothing in the Increment - the sixth time in a week the two drawings disagreed about the
  *  same state, and the reason this module exists.
  */
-export function habitatSpot(animal: BacklogItem, i: number, n: number): { x: number; y: number } {
-  if (animal.spot) return animal.spot;
+export function habitatSpot(animal: BacklogItem, i: number, n: number,
+  /** Which of its own family this one is. The first stands where it was put. */
+  member = 0,
+  /** How big the habitat is, so the family stands an animal's width apart rather than a fixed
+   *  fraction of a box that might be any size. Without it they bunch up in a big habitat. */
+  box?: { w: number; h: number }): { x: number; y: number } {
+  if (animal.spot) {
+    if (member === 0) return animal.spot;
+    const [dx, dy] = HERD[(member - 1) % HERD.length];
+    const ring = 1 + Math.floor((member - 1) / HERD.length);
+    const sx = (box ? APART / box.w : 0.16) * ring;
+    const sy = (box ? APART / box.h : 0.16) * ring;
+    return { x: hold(animal.spot.x + dx * sx, 0.08, 0.92), y: hold(animal.spot.y + dy * sy, 0.1, 0.94) };
+  }
   return { x: n <= 1 ? 0.5 : 0.14 + (i / (n - 1)) * 0.72, y: 0.62 + (i % 2 === 0 ? -0.06 : 0.06) };
 }

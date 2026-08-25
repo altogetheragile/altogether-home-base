@@ -429,11 +429,11 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
   // A content item keeps its dragged spot; an animal without one auto-arranges along the floor.
   // Where an animal stands is decided in one place, shared with the Increment view - see parkModel.
-  const spotOf = (a: BacklogItem, i: number) => {
+  const spotOf = (a: BacklogItem, i: number, member = 0) => {
     // Rounded where it becomes a percentage rather than where it is worked out: the model deals in
     // fractions of a habitat, and 0.62 - 0.06 lands a hair off 0.56 in binary, which is invisible on
     // the park and very visible in a diff.
-    const f = habitatSpot(a, i, n);
+    const f = habitatSpot(a, i, n, member, cfg);
     return { left: Math.round(f.x * 1000) / 10, top: Math.round(f.y * 1000) / 10 };
   };
   const clampSpot = (p: { x: number; y: number }) => ({ x: clamp(p.x, 0.08, 0.92), y: clamp(p.y, 0.1, 0.94) });
@@ -536,7 +536,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
           // The first of a group keeps the item's dragged spot and wears the name; the rest of the
           // family arrange themselves around it. Dragging the lion moves the pride.
           const lead = k === 0;
-          const p = drag?.id === a.id && lead ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i);
+          const p = drag?.id === a.id && lead ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i, k);
           return (
             <div key={`${a.id}-${k}`} className={cn('group absolute', onSetSpot && lead && 'cursor-grab active:cursor-grabbing')}
               onPointerDown={lead ? (e) => startSpotDrag(e, a.id, false) : undefined}

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { BacklogItem, ZooGameState } from './types';
-import { standingOnPark, groundSize, workingDesign, parkPositions, restingPlace } from './parkModel';
+import { standingOnPark, groundSize, workingDesign, parkPositions, restingPlace, habitatSpot } from './parkModel';
 import { CANVAS_W } from './parkLayout';
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
@@ -98,5 +98,48 @@ describe('what is standing on the park', () => {
     // nothing laid on top of anything else
     const places = standing.map((st) => JSON.stringify(restingPlace(st.item, st.size, auto)));
     expect(new Set(places).size).toBe(places.length);
+  });
+});
+
+describe('a family stands together, not on top of each other', () => {
+  const pride = (spot?: { x: number; y: number }) =>
+    item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion',
+           enclosureId: 'enc', spot, design: { parts: { group: 'family' }, colors: {} } });
+
+  it('gathers the family round the one that was moved', () => {
+    // The dragged spot belongs to the ITEM, and one item can be a whole pride. Reading it for every
+    // member put the lot on a single point, one lion thick: "when I select a lion to move they all
+    // group together in one spot".
+    const lion = pride({ x: 0.3, y: 0.4 });
+    const places = [0, 1, 2, 3].map((m) => habitatSpot(lion, 0, 4, m));
+    // the one that was taken hold of is exactly where it was put
+    expect(places[0]).toEqual({ x: 0.3, y: 0.4 });
+    // and no two of them are standing in the same place
+    expect(new Set(places.map((p) => `${p.x.toFixed(3)},${p.y.toFixed(3)}`)).size).toBe(4);
+    // ...but they are a family, so they are all near it, and all still inside the habitat
+    for (const p of places) {
+      expect(Math.hypot(p.x - 0.3, p.y - 0.4)).toBeLessThan(0.3);
+      expect(p.x).toBeGreaterThan(0);
+      expect(p.x).toBeLessThan(1);
+      expect(p.y).toBeGreaterThan(0);
+      expect(p.y).toBeLessThan(1);
+    }
+  });
+
+  it('lays an unplaced herd along the floor', () => {
+    const roaming = pride();
+    const places = [0, 1, 2, 3].map((i) => habitatSpot(roaming, i, 4));
+    expect(new Set(places.map((p) => `${p.x},${p.y}`)).size).toBe(4);
+    expect(places[0].x).toBeLessThan(places[3].x); // spread out, left to right
+  });
+
+  it('keeps a big family inside the fence', () => {
+    // Dropped in a corner, a pride of twelve must not put half of itself through the fence.
+    const corner = pride({ x: 0.9, y: 0.92 });
+    for (let m = 0; m < 12; m += 1) {
+      const p = habitatSpot(corner, 0, 12, m);
+      expect(p.x, `member ${m}`).toBeLessThanOrEqual(0.92);
+      expect(p.y, `member ${m}`).toBeLessThanOrEqual(0.94);
+    }
   });
 });
