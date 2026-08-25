@@ -612,6 +612,29 @@ describe('the isometric projection', () => {
     expect(filtersFor('#e05c5c')).not.toBe(filtersFor('#2f6b3b'));
   });
 
+  it('turns an animal to face the fence it is nearest', () => {
+    // Standing at the rail with your back to the people watching you is what a drawing does and an
+    // animal does not. The drawings face sideways, so the four fences come down to two answers.
+    const base = initialZooState();
+    const atSpot = (x: number, y: number) => {
+      const state = { ...base, zones: ['Big Cats'], backlog: [
+        item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 } }),
+        item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
+               spot: { x, y }, design: { parts: {}, colors: {}, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } } }),
+      ] } as ZooGameState;
+      const svg = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
+      const lion = [...svg.querySelectorAll<SVGElement>('svg[viewBox]')]
+        .find((el) => el.getAttribute('viewBox') === ANIMAL_ART.lion_males.viewBox)!;
+      expect(lion, 'no lion was drawn').toBeTruthy();
+      return lion.style.transform || 'none';
+    };
+    // By the left-hand fence and by the right-hand one: it cannot be facing the same way in both.
+    expect(atSpot(0.06, 0.5), 'the lion does not turn to face its nearest fence').not.toBe(atSpot(0.94, 0.5));
+    // ...and one of the two is a mirror, not a nudge sideways - the old code moved a flipped animal
+    // across the picture and never turned it round.
+    expect([atSpot(0.06, 0.5), atSpot(0.94, 0.5)].join(' ')).toContain('scale(-1,1)');
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {

@@ -120,6 +120,13 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
             <CategoryIcon item={item} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate font-normal">{item.name}</span>
             <Chip>{item.zone}</Chip>
+            {/* Say when it is finished. The bench looked identical whether a thing was being built or
+                had been delivered a Sprint ago, so a habitat that was Done and live sat here looking
+                like work in progress. It can still be changed - a delivered thing is not frozen -
+                but you should know that is what you are doing. */}
+            {(item.status === 'done' || item.status === 'open') && (
+              <Chip tone="done">{item.status === 'open' ? 'live' : 'built'}</Chip>
+            )}
           </>}
         </h3>
         <ExplainButton cards={['increment', 'definition-of-done']} />
@@ -167,8 +174,11 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
               </div>
             )}
             <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
-              Touch a part of it on the park to open that part&rsquo;s controls here. Where it stands is
-              settled out there, by dragging it.
+              {item.status === 'open'
+                ? 'This one is already open to visitors. Change it here and the change is live - which is what an Increment being live means.'
+                : item.status === 'done'
+                  ? 'Built and waiting to be opened. Change it here and the change is part of what gets released.'
+                  : 'Touch a part of it on the park to open that part\u2019s controls here. Where it stands is settled out there, by dragging it.'}
             </p>
           </div>
           {/* The plan and the criteria, open. On the card they are a row of pips you expand; here,
