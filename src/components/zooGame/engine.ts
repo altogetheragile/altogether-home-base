@@ -586,7 +586,16 @@ export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y:
 /** Position an item WITHIN its parent enclosure (0..1 fractions of the habitat box) - drag an
  *  animal to a spot inside its enclosure rather than letting it auto-arrange. */
 export function setItemSpot(state: ZooGameState, id: string, spot: { x: number; y: number }): ZooGameState {
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, spot } : it)) };
+  // Moving the family as a whole starts it over: the ones that were placed by hand were placed
+  // relative to a pride that is no longer where it was.
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, spot, spots: undefined } : it)) };
+}
+
+/** Put ONE animal of a family somewhere. A pride is not a blob - the lioness by the water and the
+ *  cubs under the tree is a thing somebody arranges on purpose, and it has to be arrangeable. */
+export function setMemberSpot(state: ZooGameState, id: string, member: number, spot: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id
+    ? { ...it, spots: { ...(it.spots ?? {}), [member]: spot } } : it)) };
 }
 
 /** Resize a landscape feature's footprint on the park (e.g. stretch a river across it). */

@@ -200,6 +200,13 @@ export interface BacklogItem {
   /** Position WITHIN a parent enclosure, as 0..1 fractions of the habitat box. Set when an
    *  animal (or nested plant) is dragged to a spot inside its enclosure; unset = auto-arranged. */
   spot?: { x: number; y: number };
+  /** Where each ANIMAL of a family stands, when it has been put somewhere itself.
+   *
+   *  One item can be a whole pride, and a pride is not a blob: the lioness by the water and the cubs
+   *  under the tree is a thing somebody arranges on purpose. Keyed by which of the family it is, so
+   *  the ones nobody has touched still gather round the one that was placed. `spot` above remains
+   *  what it always was - where the family as a whole was put. */
+  spots?: Record<number, { x: number; y: number }>;
   /** The rest of what this item plants. One "Big Cats Planting" PBI is some planting, not one
    *  tree - so it can hold several, and they need not be the same tree. Each entry says how far it
    *  stands from the item itself and, optionally, which piece it is; without one it wears the item's
@@ -465,6 +472,7 @@ export type ZooAction =
   | { type: 'ADD_ANOTHER'; id: string }
   | { type: 'IMPROVE_ITEM'; id: string }
   | { type: 'SET_ITEM_SPOT'; id: string; spot: { x: number; y: number } }
+  | { type: 'SET_MEMBER_SPOT'; id: string; member: number; spot: { x: number; y: number } }
   | { type: 'SET_ITEM_SIZE'; id: string; size: { w: number; h: number } }
   | { type: 'NEST_ITEM'; id: string; enclosureId: string; spot: { x: number; y: number } }
   | { type: 'UNNEST_ITEM'; id: string }

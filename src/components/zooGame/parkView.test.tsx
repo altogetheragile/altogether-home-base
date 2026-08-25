@@ -158,3 +158,36 @@ describe('the plan is a plan', () => {
     expect(container.querySelectorAll('.zoo-idle')).toHaveLength(0);
   });
 });
+
+describe('arranging a family', () => {
+  const pride = (): ZooGameState => {
+    const base = initialZooState();
+    return { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 } }),
+      item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
+             design: { parts: {}, colors: {}, group: { adults: 2, juveniles: 1, cubs: 2 } } }),
+    ] } as ZooGameState;
+  };
+
+  it('lets every animal of a family be picked up, not just the first', () => {
+    // "If I add a family I need to be able to place them individually." Only the first of a pride
+    // could be taken hold of; the rest were scenery arranged around it.
+    const { container } = render(<ParkView state={pride()} large onSetSpot={() => {}} onSetMemberSpot={() => {}} />);
+    const grabbable = [...container.querySelectorAll('div')].filter((d) => d.className.includes('cursor-grab'));
+    // five lions in the pride, and every one of them can be moved
+    expect(grabbable.length, 'not every animal of the family can be picked up').toBeGreaterThanOrEqual(5);
+  });
+
+  it('puts the one that was dragged where it was dropped, and leaves the others alone', () => {
+    const placed: { id: string; member: number }[] = [];
+    const { container } = render(
+      <ParkView state={pride()} large onSetSpot={() => {}} onSetMemberSpot={(id, member) => placed.push({ id, member })} />,
+    );
+    const lions = [...container.querySelectorAll('div')].filter((d) => d.className.includes('cursor-grab'));
+    drag(lions[2], { x: 100, y: 100 }, { x: 150, y: 120 });
+    expect(placed, 'dragging one of the pride moved nothing').toHaveLength(1);
+    expect(placed[0].id).toBe('lion');
+    // it is the one that was taken hold of, not always the first
+    expect(placed[0].member).toBeGreaterThan(0);
+  });
+});

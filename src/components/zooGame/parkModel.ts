@@ -150,6 +150,9 @@ export function habitatSpot(animal: BacklogItem, i: number, n: number,
   /** How big the habitat is, so the family stands an animal's width apart rather than a fixed
    *  fraction of a box that might be any size. Without it they bunch up in a big habitat. */
   box?: { w: number; h: number }): { x: number; y: number } {
+  // Put there by hand, one animal at a time. A pride is not a blob.
+  const own = animal.spots?.[member];
+  if (own) return own;
   if (animal.spot) {
     if (member === 0) return animal.spot;
     const [dx, dy] = HERD[(member - 1) % HERD.length];
