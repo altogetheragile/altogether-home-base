@@ -364,6 +364,38 @@ describe('the isometric projection', () => {
     expect(fenceOf(repainted), 'the chosen fence was not put up').not.toBe(fenceOf(svg));
   });
 
+  it('keeps the drawing inside the picture', () => {
+    // A prop is drawn ABOVE the point it stands on, so a tall tree at the back of the park reaches
+    // past the top of the scene. With the picture uncropped it was painted over the PAGE instead -
+    // a tree in the corner of the screen, cars and people off the park. The scene keeps headroom for
+    // the tallest thing in it, and then holds its edges.
+    const { container } = render(<IsoZoo state={zooWithEverything()} height={460} />);
+    const svg = container.querySelector('svg[role="img"]') as SVGSVGElement;
+    expect(svg.style.overflow, 'the scene is not clipped').not.toBe('visible');
+
+    // ...and the headroom is real: nothing is drawn above the top of the picture either.
+    const tops = [...svg.querySelectorAll('svg')].map((el) => Number(el.getAttribute('y')));
+    expect(tops.length).toBeGreaterThan(3);
+    expect(Math.min(...tops), 'something is drawn above the top of the picture').toBeGreaterThanOrEqual(0);
+  });
+
+  it('plants what was chosen, in the colour it was chosen in', () => {
+    // An oak, a pine and a blossom were all the same green tree here however they were designed on
+    // the Plan - the artwork has no tint slot, so nothing carried the choice across.
+    const base = initialZooState();
+    const state = { ...base, zones: ['Grounds'], backlog: [
+      item({ id: 'orchard', name: 'Orchard', category: 'flora', zone: 'Grounds', template: 'tree',
+             pos: { x: 300, y: 300 }, design: { parts: { type: 'tree' }, colors: { foliage: '#4e9146' } },
+             copies: [{ dx: 34, dy: 0, piece: 'blossom' }, { dx: 0, dy: 34, piece: 'pine' }] }),
+    ] } as ZooGameState;
+    const { container } = render(<IsoZoo state={state} height={460} />);
+    const filters = [...container.querySelectorAll<SVGElement>('svg svg')]
+      .map((el) => el.style.filter).filter(Boolean);
+    expect(filters.length, 'the planting was not coloured at all').toBeGreaterThan(1);
+    // three different plants, and no two of them drawn the same
+    expect(new Set(filters).size, 'every plant was drawn the same').toBeGreaterThan(1);
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {

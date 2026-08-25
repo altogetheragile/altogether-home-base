@@ -37,6 +37,32 @@ const CHILD_PROPS = ['child01', 'child02', 'child03'];
 /** Anything with a place in the scene, carrying how far back it stands. */
 interface Piece { z: number; el: React.ReactNode }
 
+/** Colour a drawing to the foliage somebody chose.
+ *
+ *  The tree artwork arrives with no tint slot - unlike the fences, there is no marked colour in it
+ *  to swap - so an oak, a pine and a blossom were all drawn as the same green tree however they were
+ *  designed on the Plan. Turning the whole drawing by the difference between its own green and the
+ *  chosen colour is not the same as repainting it leaf by leaf, but it is honest: choose a pink
+ *  blossom on the Plan and a pink tree is what stands in the Increment. */
+function foliageFilter(hex?: string): string | undefined {
+  const m = /^#?([0-9a-f]{6})$/i.exec((hex ?? '').trim());
+  if (!m) return undefined;
+  const v = parseInt(m[1], 16);
+  const r = ((v >> 16) & 0xff) / 255, g = ((v >> 8) & 0xff) / 255, b = (v & 0xff) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  const l = (max + min) / 2;
+  const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d !== 0) {
+    h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  // What the artwork already is: a mid, fairly saturated green.
+  const BASE_H = 104, BASE_S = 0.42, BASE_L = 0.42;
+  const turn = Math.round(((h - BASE_H + 540) % 360) - 180);
+  return `hue-rotate(${turn}deg) saturate(${Math.max(0.15, sat / BASE_S).toFixed(2)}) brightness(${Math.max(0.55, Math.min(1.5, l / BASE_L)).toFixed(2)})`;
+}
+
 /** A patch of the park, in world coordinates. */
 interface Rect { x0: number; y0: number; x1: number; y1: number }
 
@@ -113,7 +139,11 @@ export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, 
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
       <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
         onPointerDown={editable ? onPointerDown : undefined}
-        style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height, overflow: 'visible',
+        // Clipped. A prop is drawn ABOVE the point it stands on, so a tall tree at the back of the
+        // park reaches past the top of the scene - and with the picture uncropped it was painted
+        // over the page instead: a tree in the corner of the screen, cars and people off the park.
+        // The scene keeps headroom for the tallest thing in it, and then holds its edges.
+        style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height,
           touchAction: editable ? 'none' : undefined, cursor: editable ? 'grab' : undefined }}>
         {scene.nodes}
         {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
@@ -149,7 +179,9 @@ function build(state: ZooGameState, targetH: number) {
   const u = Math.min((targetH * 1.9) / fit.w, targetH / fit.h) * 0.94;
   const b = screenBounds(CANVAS_W, worldH, u);
   const MARGIN = 26;
-  const ox = b.ox + MARGIN, oy = b.oy + MARGIN;
+  // Room above the park for the tallest prop standing at the very back of it.
+  const HEAD = (prop('tree')?.h ?? 0) * u * 1.9;
+  const ox = b.ox + MARGIN, oy = b.oy + MARGIN + HEAD;
 
   const P = (wx: number, wy: number): Pt => { const p = project(wx, wy, u); return { x: p.x + ox, y: p.y + oy }; };
   /** Everything is drawn inset by the scene's margin, but `boxFaces` and `roofFaces` hand back raw
@@ -172,7 +204,7 @@ function build(state: ZooGameState, targetH: number) {
 
   /** A licensed prop, standing on a world point. `k` scales it; props are drawn feet-down, so the
    *  drawing hangs above the point it stands on. */
-  const place = (name: string, wx: number, wy: number, k: number, key: string, tintTo?: string) => {
+  const place = (name: string, wx: number, wy: number, k: number, key: string, tintTo?: string, filter?: string) => {
     const p = prop(name);
     if (!p) return;
     const at = P(wx, wy);
@@ -180,7 +212,7 @@ function build(state: ZooGameState, targetH: number) {
     const body = p.tint && tintTo ? tint(p.body, tintTo, p.tint) : p.body;
     push(depth(wx, wy), (
       <svg key={key} x={at.x - w / 2} y={at.y - h + w * 0.29} width={w} height={h} viewBox={p.viewBox} overflow="visible"
-        dangerouslySetInnerHTML={{ __html: body }} />
+        style={filter ? { filter } : undefined} dangerouslySetInnerHTML={{ __html: body }} />
     ));
   };
 
@@ -227,7 +259,12 @@ function build(state: ZooGameState, targetH: number) {
     const dx = z.x - a.x, dy = z.y - a.y;
     const len = Math.hypot(dx, dy) || 1;
     const nx = (-dy / len) * wdt, ny = (dx / len) * wdt;
-    const corners = [P(a.x + nx, a.y + ny), P(z.x + nx, z.y + ny), P(z.x - nx, z.y - ny), P(a.x - nx, a.y - ny)];
+    // Run each path half its own width past both ends, so where two meet they overlap into the
+    // corner instead of leaving a notch. They are all one colour, so the overlap cannot be seen -
+    // which is the whole trick: a junction should look like a junction, not like two paths.
+    const ex = (dx / len) * wdt, ey = (dy / len) * wdt;
+    const a2 = { x: a.x - ex, y: a.y - ey }, z2 = { x: z.x + ex, y: z.y + ey };
+    const corners = [P(a2.x + nx, a2.y + ny), P(z2.x + nx, z2.y + ny), P(z2.x - nx, z2.y - ny), P(a2.x - nx, a2.y - ny)];
     nodes.push(<polygon key={`path-${c.id}`} points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill="#ddc79a" />);
     walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
   }
@@ -431,14 +468,16 @@ function build(state: ZooGameState, targetH: number) {
         if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1 });
         nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={cols.foliage ?? '#6fb0d6'} opacity={0.92} />);
       } else {
-        const plant = (name: string, wx: number, wy: number, key: string) =>
-          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key);
-        plant(treeProp(type), c.x, c.y, `t-${it.id}`);
+        const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
+          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage));
+        plant(treeProp(type), c.x, c.y, `t-${it.id}`, working(it).colors.foliage);
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
         for (const [i, k] of (it.copies ?? []).entries()) {
           const at = insidePark({ w: 8, h: 8 }, { x: c.x + k.dx, y: c.y + k.dy });
-          plant(treeProp(pieceByKey(k.piece)?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`);
+          const piece = pieceByKey(k.piece);
+          plant(treeProp(piece?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`,
+            piece?.colors.foliage ?? working(it).colors.foliage);
         }
       }
       continue;
@@ -548,7 +587,7 @@ function build(state: ZooGameState, targetH: number) {
   const total = screenBounds(CANVAS_W, worldH, u);
   return {
     w: total.w + MARGIN * 2,
-    h: total.h + MARGIN * 2 + EDGE,
+    h: total.h + MARGIN * 2 + EDGE + HEAD,
     nodes: [...nodes.filter(Boolean), ...pieces.map((p) => p.el)],
     label: `The zoo from above: ${encs.length} habitat${encs.length === 1 ? '' : 's'}, ${live.filter((i) => i.category === 'exhibit').length} exhibits, ${visitors} visitors`,
     // What a pointer can take hold of, and the frame needed to work out where it is pointing. The
