@@ -9,6 +9,7 @@ import {
   type ItemDesign, type FloraPiece, type AnimalGroup,
 } from './design';
 import { isSignOffTask } from './engine';
+import { TILED_BUILDINGS } from './art/buildingTiles.generated';
 import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -492,7 +493,13 @@ export function ItemToolbar(props: ItemToolbarProps) {
             <Options options={BUILDING_TYPES} value={design.parts.type ?? 'shop'} onPick={(o) => { setPart('type', o); close(); }} />
           )}</Menu>
           <Divider />
-          {AMENITY_COLORS.map((c) => (
+          {/* A building that has a drawing of its own wears the colours it was drawn in: a tile is a
+              picture and cannot be repainted. Offering four colour controls that quietly do nothing
+              is worse than offering none, so they are not offered - and the reason is said, because
+              a control that vanishes without explanation is its own small mystery. */}
+          {TILED_BUILDINGS.includes(design.parts.type ?? 'shop') ? (
+            <Hint>A {design.parts.type ?? 'shop'} comes with its own artwork, colours and all. Pick a kind that is not drawn yet to choose your own.</Hint>
+          ) : AMENITY_COLORS.map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key]}
               onChange={(hex) => onDesign({ ...design, colors: { ...design.colors, [c.key]: hex }, parts: c.key === 'sign' ? { ...design.parts, sign: 'on' } : design.parts })} />
           ))}
