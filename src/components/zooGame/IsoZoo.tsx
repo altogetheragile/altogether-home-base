@@ -1,13 +1,13 @@
 import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
-import { shade, speciesColors, landscapePalette, isLandscapeType, enclosureFlora, enclosureWater, pieceByKey } from './design';
+import { shade, speciesColors, landscapePalette, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
-import { animalArtFor } from './art/animalArt';
+import { animalArtFor, coatFilter } from './art/animalArt';
 import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
@@ -62,6 +62,46 @@ function foliageFilter(hex?: string): string | undefined {
   const BASE_H = 104, BASE_S = 0.42, BASE_L = 0.42;
   const turn = Math.round(((h - BASE_H + 540) % 360) - 180);
   return `hue-rotate(${turn}deg) saturate(${Math.max(0.15, sat / BASE_S).toFixed(2)}) brightness(${Math.max(0.55, Math.min(1.5, l / BASE_L)).toFixed(2)})`;
+}
+
+/** The outline of a habitat, as points round its own box.
+ *
+ *  The plan can draw a round habitat with a border-radius and a pill with one rule; from the corner
+ *  there is no such shortcut, so the shape has to become points before it can be projected. Every
+ *  habitat here was drawn as a rectangle whatever shape it had been given - pick Round in the studio
+ *  and the Increment showed you a box.
+ *
+ *  Sampled coarsely on purpose: the fence is built of panels along each segment, and a segment too
+ *  short to hold one is a gap in the fence.
+ */
+/** Does every side of this outline run true across the park? Only then can it wear the fence
+ *  panels, which are drawn for those two directions and no other. */
+function runsAll(outline: { x: number; y: number }[]): boolean {
+  return outline.every((from, i) => {
+    const to = outline[(i + 1) % outline.length];
+    return Math.abs(to.x - from.x) < 0.5 || Math.abs(to.y - from.y) < 0.5;
+  });
+}
+
+function outlineOf(shape: string, w: number, h: number): [number, number][] {
+  if (shape === 'circle') {
+    return Array.from({ length: 12 }, (_, i) => {
+      const t = Math.PI * 0.25 + (i / 12) * Math.PI * 2;
+      return [w / 2 + (w / 2) * Math.cos(t), h / 2 + (h / 2) * Math.sin(t)] as [number, number];
+    });
+  }
+  if (shape === 'pill') {
+    // A stadium: two straight sides and two rounded ends, each end a few segments.
+    const r = h / 2, n = 4;
+    const end = (cx: number, from: number) => Array.from({ length: n + 1 }, (_, i) => {
+      const t = from + (i / n) * Math.PI;
+      return [cx + r * Math.cos(t), h / 2 + r * Math.sin(t)] as [number, number];
+    });
+    return [...end(w - r, -Math.PI / 2), ...end(r, Math.PI / 2)];
+  }
+  const pts = enclosureShapePoints(shape, w, h, 0);
+  if (pts) return pts.split(' ').map((q) => q.split(',').map(Number) as [number, number]);
+  return [[0, 0], [w, 0], [w, h], [0, h]];
 }
 
 /** A patch of the park, in world coordinates. */
@@ -294,7 +334,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const a = c.a.featureId ? posOf(state.backlog.find((i) => i.id === c.a.featureId) ?? ({} as BacklogItem)) : { x: c.a.x, y: c.a.y };
     const z = c.b.featureId ? posOf(state.backlog.find((i) => i.id === c.b.featureId) ?? ({} as BacklogItem)) : { x: c.b.x, y: c.b.y };
     if (!Number.isFinite(a.x) || !Number.isFinite(z.x)) continue;
-    const wdt = 16;
+    // The width and the colour the path was actually laid with. This drew every route sixteen wide
+    // in one fixed tan, so changing a pathway's width or its surface on the bench changed the plan
+    // and nothing here - and the Increment is where a path is meant to look like a path.
+    const wdt = Math.max(4, (c.thickness || 14) * 1.15);
     const dx = z.x - a.x, dy = z.y - a.y;
     const len = Math.hypot(dx, dy) || 1;
     const nx = (-dy / len) * wdt, ny = (dx / len) * wdt;
@@ -304,7 +347,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const ex = (dx / len) * wdt, ey = (dy / len) * wdt;
     const a2 = { x: a.x - ex, y: a.y - ey }, z2 = { x: z.x + ex, y: z.y + ey };
     const corners = [P(a2.x + nx, a2.y + ny), P(z2.x + nx, z2.y + ny), P(z2.x - nx, z2.y - ny), P(a2.x - nx, a2.y - ny)];
-    nodes.push(<polygon key={`path-${c.id}`} points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill="#ddc79a" />);
+    nodes.push(<polygon key={`path-${c.id}`} points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill={c.color || '#ddc79a'} />);
     walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
   }
 
@@ -351,8 +394,11 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const floor = d?.colors.ground ?? theme.plot;
     const fence = d?.colors.fence ?? theme.plotBorder;
 
-    // The habitat floor, laid flat, before anything stands on it.
-    nodes.push(<polygon key={`floor-${e.id}`} points={ground(x0, y0, x1, y1)} fill={floor} />);
+    // The habitat floor, laid flat, in the shape it was given.
+    const outline = outlineOf(d?.parts.shape ?? 'rounded', size.w, size.h)
+      .map(([px, py]: [number, number]) => ({ x: x0 + px, y: y0 + py }));
+    nodes.push(<polygon key={`floor-${e.id}`} fill={floor}
+      points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
 
     // Water lies on the floor, in its own corner of the habitat - held as fractions of the box, so
     // it stays where it was put whatever size the habitat is.
@@ -362,23 +408,48 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         fill={d?.colors.water ?? '#5aa9c8'} />);
     }
 
-    // Fencing. The two far sides go down first so the near sides can stand in front of them.
-    const runs: [Pt, Pt, boolean][] = [
-      [{ x: x0, y: y0 }, { x: x1, y: y0 }, false],
-      [{ x: x0, y: y0 }, { x: x0, y: y1 }, true],
-      [{ x: x0, y: y1 }, { x: x1, y: y1 }, false],
-      [{ x: x1, y: y0 }, { x: x1, y: y1 }, true],
-    ];
-    runs.forEach(([from, to, up], ri) => {
-      for (const [pi, pl] of fenceRun(from, to, u, up).entries()) {
-        const p = prop(pl.name)!;
-        nodes.push(null); // keep the key space stable
-        push(pl.z, (
-          <svg key={`f-${e.id}-${ri}-${pi}`} x={pl.x + ox} y={pl.y + oy} width={pl.w} height={pl.h} viewBox={p.viewBox} overflow="visible"
-            dangerouslySetInnerHTML={{ __html: tint(p.body, fence, p.tint ?? 3) }} />
+    // Fencing, following the outline round.
+    //
+    // The panels are drawings, and there are two of them: one for a side running one way across the
+    // park and one for the other. That is fine for a rectangle, whose four sides run exactly those
+    // two ways, and impossible for a hexagon - a slanted side has no panel to stand along it, which
+    // is why the first attempt at this scattered broken fencing round the shaped habitats.
+    //
+    // So a habitat whose sides all run true gets its pickets, and any other shape gets a low wall
+    // built the same way the bridge deck is: one drawing per habitat, never half of each.
+    const square = runsAll(outline);
+    if (square) {
+      const runs: [Pt, Pt, boolean][] = outline.map((from, i) => {
+        const to = outline[(i + 1) % outline.length];
+        return [from, to, Math.abs(to.y - from.y) > Math.abs(to.x - from.x)];
+      });
+      runs.forEach(([from, to, up], ri) => {
+        for (const [pi, pl] of fenceRun(from, to, u, up).entries()) {
+          const pr = prop(pl.name)!;
+          nodes.push(null); // keep the key space stable
+          push(pl.z, (
+            <svg key={`f-${e.id}-${ri}-${pi}`} x={pl.x + ox} y={pl.y + oy} width={pl.w} height={pl.h} viewBox={pr.viewBox} overflow="visible"
+              dangerouslySetInnerHTML={{ __html: tint(pr.body, fence, pr.tint ?? 3) }} />
+          ));
+        }
+      });
+    } else {
+      const wallH = Math.max(3, u * 13);
+      const up = (q: Pt, k: number): Pt => ({ x: q.x, y: q.y - k });
+      outline.forEach((from, i) => {
+        const to = outline[(i + 1) % outline.length];
+        const a = P(from.x, from.y), b = P(to.x, to.y);
+        // Each side is its own piece, sorted with everything else, so the near ones stand in front.
+        push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
+          <g key={`w-${e.id}-${i}`}>
+            <polygon points={[a, b, up(b, wallH), up(a, wallH)].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+              fill={shade(fence, -18)} />
+            <line x1={up(a, wallH).x} y1={up(a, wallH).y} x2={up(b, wallH).x} y2={up(b, wallH).y}
+              stroke={fence} strokeWidth={Math.max(1, u * 2)} strokeLinecap="round" />
+          </g>
         ));
-      }
-    });
+      });
+    }
 
     // Planting inside the habitat: both the enclosure's own greenery, which is part of its design
     // and holds its own spot in the box, and any planting item dragged in on top of it.
@@ -412,6 +483,9 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         const species = a.template ?? a.id;
         // A lioness has no mane, and a cub is a small lion that has not grown one.
         const art = animalArtFor(species, m.kind);
+        // ...and a coat is a decision about what the zoo is for, so it has to be visible. It was
+        // drawn on the plan view's animals, and the plan view stopped drawing animals.
+        const coat = coatFilter(working(a).parts.coat);
         const at = P(wx, wy);
         const key = `a-${e.id}-${a.id}-${mi}`;
         if (art) {
@@ -419,7 +493,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           const w = h * (art.w / art.h);
           push(depth(wx, wy), (
             <svg key={key} x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
-              style={art.flip ? { transform: `translateX(${(at.x * 2 + 0).toFixed(1)}px)`, transformOrigin: 'center' } : undefined}
+              style={{
+                ...(art.flip ? { transform: `translateX(${(at.x * 2 + 0).toFixed(1)}px)`, transformOrigin: 'center' } : {}),
+                ...(coat ? { filter: coat } : {}),
+              }}
               dangerouslySetInnerHTML={{ __html: art.body }} />
           ));
         } else {
