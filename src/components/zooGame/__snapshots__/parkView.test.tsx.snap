@@ -1,0 +1,16 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`where the park puts things > lays the same zoo out the same way 1`] = `
+[
+  "206px,258px",
+  "256px,77px",
+  "392px,77px",
+  "410px,175px",
+  "474px,77px",
+  "50%,56%",
+  "50%,56%",
+  "556px,77px",
+  "74px,258px",
+  "86px,77px",
+]
+`;

@@ -15,9 +15,10 @@ import type { SegmentId } from './simulation/types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { themeFor, type ZoneTheme } from './zoneTheme';
-import { zoneSlices, zooIsOpen, standsOnPark } from './engine';
-import { autoLayout, insidePark, parkBounds, shapeEdge, CANVAS_W, PLAY_H, PAD } from './parkLayout';
+import { zoneSlices, zooIsOpen } from './engine';
+import { autoLayout, parkBounds, shapeEdge, CANVAS_W, PLAY_H } from './parkLayout';
 import { groupMembers } from './design';
+import { standingOnPark, restingPlace, workingDesign as workingFor } from './parkModel';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, TrafficCone, Lock, Map, Box, Eye } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
@@ -111,8 +112,6 @@ const landType = (item: BacklogItem): string | undefined => item.design?.parts.t
  *  river always spans the full width of the park - it flows across the land, fence to fence, with
  *  no gap at either end - so only its thickness is taken from a saved size. */
 // The river rule now lives with the footprints, because the Sprint Review draws rivers too.
-const landSize = (item: BacklogItem): { w: number; h: number } => footprintFor(item);
-
 /** A smooth (vector) wavy line: `n` samples of `yAt` across the width, as an SVG points string.
  *  Drawing scenery as vectors instead of a stretched pixel grid keeps it smooth at any size. */
 function wavePoints(w: number, n: number, yAt: (t: number) => number): [number, number][] {
@@ -594,61 +593,19 @@ function ConstructionSite({ item, w, h, selected, children }: { item: BacklogIte
 function buildFeatures(state: ZooGameState): Feature[] {
   // Show live items (open) plus any built item currently being placed on the park (done + placed) -
   // so you can position it and confirm its placement before marking it Deploy complete.
-  const isShown = standsOnPark;
-  const open = state.backlog.filter(isShown);
-  const builtEnc = state.backlog.filter((it) => it.category === 'enclosure' && isShown(it));
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((it) => it.zone)]));
   const theme = (zone: string) => themeFor(zone, Math.max(0, zones.indexOf(zone)));
-  // Planting dragged into a built enclosure lives inside that habitat, not loose on the grounds.
-  const nestedFlora = (o: BacklogItem) => o.category === 'flora' && !!o.enclosureId && builtEnc.some((e) => e.id === o.enclosureId);
-  const feats: Feature[] = [];
-  // An animal being STOCKED goes into its habitat too, not into a hoarding of its own. The whole
-  // point of choosing a family rather than assembling a lion is watching the family turn up, and it
-  // cannot turn up in a construction site next door to the habitat it belongs in.
-  const stocking = state.backlog.filter((it) => it.status === 'committed' && it.started && it.category === 'exhibit');
-  for (const e of builtEnc) {
-    const cfg = ENCLOSURE[e.enclosureSize ?? 'medium'];
-    const animals = [...open, ...stocking].filter((o) => o.category === 'exhibit' && o.enclosureId === e.id);
-    const plants = open.filter((o) => nestedFlora(o) && o.enclosureId === e.id);
-    feats.push({ item: e, kind: 'enclosure', w: cfg.w, h: cfg.h + LABEL_H, animals, plants, theme: theme(e.zone) });
-  }
-  // Any open exhibit whose enclosure is not built falls back to a small plot (shouldn't
-  // normally happen, since the habitat is built first).
-  for (const o of open.filter((o) => o.category === 'exhibit' && !builtEnc.some((e) => e.id === o.enclosureId))) {
-    { const fp = footprintFor(o); feats.push({ item: o, kind: 'plot', w: fp.w, h: fp.h + LABEL_H, animals: [], plants: [], theme: theme(o.zone) }); }
-  }
-  // Amenities and loose planting sit freely on the grounds - drag them anywhere (or a plant onto
-  // an enclosure to plant it inside). Landscape scenery takes its own resizable footprint.
-  for (const a of open.filter((o) => o.category === 'amenity' || (o.category === 'flora' && !nestedFlora(o)))) {
-    if (a.category === 'flora' && isLandscapeType(landType(a))) {
-      const sz = landSize(a);
-      feats.push({ item: a, kind: 'plot', w: sz.w, h: sz.h + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
-    } else {
-      const fp = footprintFor(a);
-      feats.push({ item: a, kind: 'plot', w: fp.w, h: fp.h + LABEL_H, animals: [], plants: [], theme: theme(a.zone) });
-    }
-  }
-  // Work under way: an item started on the canvas holds its plot as a construction site. It is
-  // visible to the team and invisible to visitors - the hoardings come down when it is Done and
-  // released, which is the Definition of Done made into something you watch happen.
-  // No `pos` needed: an item that has been STARTED is on the park, full stop. Dropped onto a spot
-  // it holds that spot; started from its card it is laid out with the rest. Either way the work is
-  // visible on the product from the moment it begins.
-  // ...except a path, which has no plot. A pathway is a route between things, so there is nothing
-  // to hoard off and no square of ground it occupies - it was being drawn as a little building with
-  // its name on it, which is not what a path is. You lay it out by drawing the route.
-  const housed = new Set(stocking.filter((a) => builtEnc.some((e) => e.id === a.enclosureId)).map((a) => a.id));
-  for (const w of state.backlog.filter((it) => it.status === 'committed' && it.started && !it.enhancesId
-    && it.category !== 'path' && !housed.has(it.id))) {
-    const cfg = w.category === 'enclosure' ? ENCLOSURE[w.enclosureSize ?? 'medium'] : null;
-    const sz = w.category === 'flora' && isLandscapeType(landType(w)) ? landSize(w) : null;
-    feats.push({
-      item: w, kind: 'site',
-      w: cfg?.w ?? sz?.w ?? 64,
-      h: (cfg?.h ?? sz?.h ?? 60) + LABEL_H,
-      animals: [], plants: [], theme: theme(w.zone),
-    });
-  }
+  // WHAT is on the park is decided in one place, shared with the isometric view - see parkModel.
+  // All this has to do is say how the plan draws it.
+  const feats: Feature[] = standingOnPark(state).map((s) => ({
+    item: s.item,
+    kind: s.underWay ? 'site' : s.item.category === 'enclosure' ? 'enclosure' : 'plot',
+    w: s.size.w,
+    h: s.size.h + LABEL_H,
+    animals: s.animals,
+    plants: s.plants,
+    theme: theme(s.item.zone),
+  }));
   return feats;
 }
 
@@ -748,19 +705,15 @@ function FreeScene({ features, dots, style, tool, editable, connectors, selected
   const setPart = onPart ?? setOwnPart;
   const selectable = (f: Feature) => !!onOpenBuild && !!edit && (f.kind === 'site' || f.item.status === 'done');
   // The design as it stands: what was built, or the draft so far, or the shape it starts from - so
-  // a site shows the real thing from the moment it is started rather than an empty plot.
-  const workingDesign = (it: BacklogItem) => it.design ?? it.draftDesign ?? presetFor(it);
+  // a site shows the real thing from the moment it is started rather than an empty plot. Shared
+  // with the isometric view, which used to read the finished design only and so showed none of the
+  // choices being made while a habitat was being built.
+  const workingDesign = workingFor;
 
   const auto = autoLayout(features.map((f) => ({ id: f.item.id, w: f.w, h: f.h })));
-  /** Where a feature sits when nothing is being dragged - its committed spot. */
-  const restPos = (f: Feature) => {
-    const base = f.item.pos ?? auto.get(f.item.id) ?? { x: PAD, y: PAD };
-    // A river starts life running across the middle; from there it can be dragged and turned.
-    const at = landType(f.item) === 'river' && !f.item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
-    // Read through the park's bounds, so a position saved when the park was a different size cannot
-    // leave a delivered thing drawn somewhere nobody can look.
-    return insidePark(f, at);
-  };
+  /** Where a feature sits when nothing is being dragged - its committed spot. The rule is shared
+   *  with the isometric view, so the two drawings cannot disagree about where the zoo is. */
+  const restPos = (f: Feature) => restingPlace(f.item, { w: f.w, h: f.h - LABEL_H }, auto);
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const canvasH = PLAY_H + PATH_H;
   /** Where one of an item's extra plants is drawn: beside the item, and never off the park. The
