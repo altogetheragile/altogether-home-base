@@ -597,6 +597,21 @@ describe('the isometric projection', () => {
     expect(shaped('hexagon')).toBeGreaterThan(shaped('rounded'));
   });
 
+  it('colours a habitat\'s own planting the way it was coloured', () => {
+    // The studio colours a habitat's planting plant by plant. It arrived here in the artwork's own
+    // green whatever anybody chose - so the control was there, and doing nothing.
+    const base = initialZooState();
+    const withFlora = (foliage: string) => ({ ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 },
+             design: { parts: {}, colors: {}, flora: [{ x: 0.3, y: 0.5, s: 1, type: 'tree', foliage }] } }),
+    ] } as ZooGameState);
+    const filtersFor = (foliage: string) => [...render(<IsoZoo state={withFlora(foliage)} height={460} />)
+      .container.querySelectorAll<SVGElement>('svg svg')].map((el) => el.style.filter).filter(Boolean).join('|');
+    expect(filtersFor('#e05c5c'), 'the planting was not coloured at all').not.toBe('');
+    // ...and two different choices are not drawn the same
+    expect(filtersFor('#e05c5c')).not.toBe(filtersFor('#2f6b3b'));
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
