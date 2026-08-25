@@ -64,13 +64,17 @@ function Runs({ state, item, onRemove }: { state: ZooGameState; item: BacklogIte
 }
 
 /** Nothing selected: say what the space is for rather than leaving a hole in the screen. */
-function Empty({ next }: { next?: BacklogItem }) {
+function Empty({ next, wentBack }: { next?: BacklogItem; wentBack?: BacklogItem }) {
   return (
     <div className="flex h-full min-h-[8rem] flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-4 py-6 text-center">
       <Hammer className="h-5 w-5 text-muted-foreground/50" aria-hidden />
       <p className="text-xs font-medium text-muted-foreground">Nothing on the bench</p>
       <p className="max-w-[22rem] text-[11px] leading-snug text-muted-foreground/80">
-        {next
+        {wentBack
+          // Say where it went. An item that ran out of Sprint goes back to be re-estimated against
+          // what is left of it - that is the rule, and it is one of the things this game is for.
+          ? <><span className="font-medium text-foreground">{wentBack.name}</span> did not finish in the Sprint, so it has gone back to the Product Backlog to be sized against what is left. Your build so far is kept. Pull it into a Sprint again to carry on.</>
+          : next
           ? <>Start <span className="font-medium text-foreground">{next.name}</span> and its design lands here. You build it here and place it on the park.</>
           : <>Pick something up from To Do, or select what you are building on the park.</>}
       </p>
@@ -98,7 +102,13 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
   /** Take one run of a pathway back up. */
   onRemoveRun?: (connectorId: string) => void;
 }) {
-  const item = itemId ? state.backlog.find((i) => i.id === itemId) : undefined;
+  // The bench holds what is being built. It used to hold whatever was last selected, which is not
+  // the same thing: an item that runs out of Sprint goes back to the Product Backlog, and the bench
+  // went on showing it - open, apparently in progress, and on no column of the board. There was no
+  // way to finish it and no way to put it down.
+  const held = itemId ? state.backlog.find((i) => i.id === itemId) : undefined;
+  const wentBack = held?.status === 'backlog' ? held : undefined;
+  const item = wentBack ? undefined : held;
 
   return (
     <section className="flex min-h-0 flex-col gap-2">
@@ -115,7 +125,7 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
         <ExplainButton cards={['increment', 'definition-of-done']} />
       </div>
 
-      {!item ? <Empty next={nextUp} /> : (
+      {!item ? <Empty next={nextUp} wentBack={wentBack} /> : (
         // Two jobs, two panels, two tints. The Developers' side is how the thing is made; the
         // Product Owner's side is what it has to be true of before anyone calls it Done. Told apart
         // by a wash of colour rather than a rule, so the bench reads as two things at a glance

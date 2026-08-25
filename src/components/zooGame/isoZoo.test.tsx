@@ -208,6 +208,52 @@ describe('the isometric projection', () => {
     expect(Math.max(...xs)).toBeLessThan(vw);
   });
 
+  it('keeps the visitors out of the river', () => {
+    // They were scattered at random across the whole park, so some of them stood in the water.
+    // A guest walks up from the car park and heads for something worth seeing; the water is a wall
+    // with one door in it, and the door is the bridge.
+    const base = initialZooState();
+    const state = { ...base, zones: ['Big Cats'],
+      attendance: { ...(base.attendance ?? {}), families: 500, enthusiasts: 250, comfortSeekers: 150 }, backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'medium', pos: { x: 300, y: 200 } }),
+      item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc' }),
+      item({ id: 'riv', name: 'River', category: 'flora', template: 'river',
+             pos: { x: 400, y: 470 }, design: { parts: { type: 'river' }, colors: {} } }),
+    ] } as ZooGameState;
+    const { container } = render(<IsoZoo state={state} height={460} />);
+    const svg = container.querySelector('svg[role="img"]')!;
+
+    // The river is the widest blue thing on the ground; the visitors are nested <svg> props. Both
+    // are in screen coordinates, so a visitor drawn over the water is one standing in it.
+    const people = [...svg.querySelectorAll('svg')];
+    expect(people.length, 'nobody came to the zoo').toBeGreaterThan(2);
+    const blue = (fill: string | null) => {
+      const m = /^#([0-9a-f]{6})$/i.exec(fill ?? '');
+      if (!m) return false;
+      const v = parseInt(m[1], 16);
+      return (v & 0xff) > ((v >> 16) & 0xff) + 24 && (v & 0xff) > ((v >> 8) & 0xff) + 8;
+    };
+    const river = [...svg.querySelectorAll('polygon')].find((p) => blue(p.getAttribute('fill')));
+    expect(river, 'no river was drawn').toBeTruthy();
+    const pts = (river!.getAttribute('points') ?? '').trim().split(/\s+/).map((q) => q.split(',').map(Number));
+    // Against the shape, not its bounding box: seen from the corner the river is a long diagonal
+    // band, and the box round it covers most of the dry park.
+    const inside = (x: number, y: number) => {
+      let hit = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i, i += 1) {
+        const [xi, yi] = pts[i], [xj, yj] = pts[j];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) hit = !hit;
+      }
+      return hit;
+    };
+    // A prop hangs above the point it stands on, so its feet are the bottom of its box.
+    for (const p of people) {
+      const fx = Number(p.getAttribute('x')) + Number(p.getAttribute('width')) / 2;
+      const fy = Number(p.getAttribute('y')) + Number(p.getAttribute('height'));
+      expect(inside(fx, fy), `somebody is standing at ${Math.round(fx)},${Math.round(fy)}, in the river`).toBe(false);
+    }
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {

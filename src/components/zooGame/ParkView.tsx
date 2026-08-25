@@ -1638,7 +1638,10 @@ export function ParkView({ state, compact = false, large = false, building, onOp
             ) : <span />}
             <div className="flex items-center gap-3">
               <ViewSwitch view={view} onView={setView} />
-              {!isoView && <ZoomControl zoom={zoom} onZoom={setZoom} />}
+              {/* Zoom belongs to both views. The isometric side is the one carrying the drawn
+                  artwork - the animals, the buildings, the people - and it was the one view you
+                  could not lean into. */}
+              <ZoomControl zoom={zoom} onZoom={setZoom} />
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {!isoView && canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
@@ -1752,7 +1755,13 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           </div>
           {isoView ? (
             <Suspense fallback={<div className="h-[440px] animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
-              <IsoZoo state={state} height={520} />
+              {/* Zoomed in, the drawing grows past its window and the window is scrolled - the same
+                  as walking up to it. At 100% it fits, and there is nothing to scroll. */}
+              <div className="overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
+                <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
+                  <IsoZoo state={state} height={520 * zoom} />
+                </div>
+              </div>
             </Suspense>
           ) : (
           <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} dots={dots} style={style} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}

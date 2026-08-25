@@ -30,6 +30,21 @@ const CHILD_PROPS = ['child01', 'child02', 'child03'];
 /** Anything with a place in the scene, carrying how far back it stands. */
 interface Piece { z: number; el: React.ReactNode }
 
+/** A patch of the park, in world coordinates. */
+interface Rect { x0: number; y0: number; x1: number; y1: number }
+
+const within = (r: Rect, p: Pt) => p.x >= r.x0 && p.x <= r.x1 && p.y >= r.y0 && p.y <= r.y1;
+
+/** A point some fraction of the way along a chain of points. */
+function along(route: Pt[], t: number): Pt {
+  const legs = route.length - 1;
+  if (legs < 1) return route[0] ?? { x: 0, y: 0 };
+  const at = Math.min(legs - 0.0001, Math.max(0, t) * legs);
+  const i = Math.floor(at), f = at - i;
+  const a = route[i], b = route[i + 1];
+  return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+}
+
 const landType = (item: BacklogItem): string | undefined => item.design?.parts.type ?? item.template;
 
 export function IsoZoo({ state, height = 460, className }: { state: ZooGameState; height?: number; className?: string }) {
@@ -132,6 +147,12 @@ function build(state: ZooGameState, targetH: number) {
   // The footway from the lay-by up to the gate, which is where the guests actually walk in.
   nodes.push(<polygon key="walkway" points={ground(lot.walkway.x, lot.walkway.y, lot.walkway.x + lot.walkway.w, lot.walkway.y + lot.walkway.h)} fill="#c9cdd1" />);
 
+  // Where a guest may put their feet. Collected as the park is drawn, because the park is what
+  // decides it: the paths are the ones actually laid, and the water is the water actually there.
+  const walks: [Pt, Pt][] = [];
+  const water: Rect[] = [];
+  const dry: Rect[] = [];
+
   // ---- paths the player drew -------------------------------------------------------------
   for (const c of state.connectors ?? []) {
     const a = c.a.featureId ? posOf(state.backlog.find((i) => i.id === c.a.featureId) ?? ({} as BacklogItem)) : { x: c.a.x, y: c.a.y };
@@ -143,6 +164,7 @@ function build(state: ZooGameState, targetH: number) {
     const nx = (-dy / len) * wdt, ny = (dx / len) * wdt;
     const corners = [P(a.x + nx, a.y + ny), P(z.x + nx, z.y + ny), P(z.x - nx, z.y - ny), P(a.x - nx, a.y - ny)];
     nodes.push(<polygon key={`path-${c.id}`} points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill="#ddc79a" />);
+    walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
   }
 
   // ---- enclosures ------------------------------------------------------------------------
@@ -286,7 +308,14 @@ function build(state: ZooGameState, targetH: number) {
         // and hung in the air.
         const x0 = Math.max(0, c.x - size.w / 2), x1 = Math.min(CANVAS_W, c.x + size.w / 2);
         const y0 = Math.max(0, c.y - size.h / 2), y1 = Math.min(PLAY_H, c.y + size.h / 2);
-        if (type === 'bridge') { bridge(it.id, x0, y0, x1, y1, cols.foliage ?? '#c8965a'); continue; }
+        if (type === 'bridge') {
+          bridge(it.id, x0, y0, x1, y1, cols.foliage ?? '#c8965a');
+          // A bridge is the one door through the water, and it is walked across bank to bank.
+          dry.push({ x0, y0, x1, y1 });
+          walks.push([{ x: (x0 + x1) / 2, y: y0 - 10 }, { x: (x0 + x1) / 2, y: y1 + 10 }]);
+          continue;
+        }
+        if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1 });
         nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={cols.foliage ?? '#6fb0d6'} opacity={0.92} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string) =>
@@ -354,14 +383,56 @@ function build(state: ZooGameState, targetH: number) {
   for (const [i, spot] of (lot.spots ?? []).entries()) push(...vehicle(spot, i, u, P));
 
   // ---- visitors ----------------------------------------------------------------------------
-  const strolling = Math.min(26, Math.round(visitors / 45));
-  for (let i = 0; i < strolling; i++) {
-    const onProm = i % 3 === 0;
-    const wx = 30 + jitter(i + 1, 3) * (CANVAS_W - 60);
-    const wy = onProm ? promY + 8 + jitter(i + 2, 5) * 24 : 40 + jitter(i + 2, 9) * (promY - 60);
-    const kid = i % 5 === 4;
-    const pool = kid ? CHILD_PROPS : VISITOR_PROPS;
-    place(pool[i % pool.length], wx, wy, u * (kid ? 0.78 : 0.92), `v-${i}`);
+  //
+  // People arrive. They were scattered at random over the whole park instead, which put them in the
+  // river and gave no sense of anyone going anywhere. A visit has a shape: you park, you walk up
+  // from the lot, and you head for something worth seeing.
+  //
+  // So everyone stands somewhere on a route from the car park to an exhibit - along the paths the
+  // player laid where there are any, and never in the water. Some come on their own and some come
+  // as a family, because a zoo on a good day is mostly families.
+  const wet = (p: Pt) => water.some((r) => within(r, p)) && !dry.some((r) => within(r, p));
+  const gate = { x: lot.walkway.x + lot.walkway.w / 2, y: lot.walkway.y };
+  const arrival = { x: gate.x, y: lot.walkway.y + lot.walkway.h - 6 };  // stepping off the tarmac
+  const entry = { x: gate.x, y: promY + 18 };                            // on the promenade
+
+  /** The way to one exhibit: up from the lot, onto the promenade, then across to it - by way of a
+   *  bridge if the direct line would have them wading. */
+  const routeTo = (target: Pt): Pt[] => {
+    const legs: Pt[] = [arrival, entry];
+    const crossing = walks.find(([a, z]) => dry.some((r) => within(r, { x: (a.x + z.x) / 2, y: (a.y + z.y) / 2 })));
+    const wades = wet({ x: (entry.x + target.x) / 2, y: (entry.y + target.y) / 2 });
+    if (wades && crossing) legs.push(crossing[0], crossing[1]);
+    legs.push(target);
+    return legs;
+  };
+  // Somewhere worth walking to: the habitats, or the middle of the park if none are open yet.
+  const draws = encs.length ? encs.map((e) => posOf(e)) : [{ x: CANVAS_W / 2, y: promY - 120 }];
+  const routes = draws.map(routeTo);
+
+  const parties = Math.max(1, Math.min(14, Math.round(visitors / 80)));
+  let n = 0;
+  for (let i = 0; i < parties; i++) {
+    const route = routes[i % routes.length];
+    // Spread the parties down the route so the walk reads as a walk: some just off the tarmac,
+    // some most of the way to the lions.
+    const t = 0.08 + jitter(i + 1, 7) * 0.88;
+    const at = along(route, t);
+    const spot = { x: at.x + (jitter(i + 3, 5) - 0.5) * 16, y: at.y + (jitter(i + 4, 11) - 0.5) * 14 };
+    if (spot.x < 14 || spot.x > CANVAS_W - 14 || spot.y < 14 || spot.y > worldH - 14) continue;
+    if (wet(spot)) continue;
+    place(VISITOR_PROPS[n % VISITOR_PROPS.length], spot.x, spot.y, u * 0.92, `v-${n}`); n += 1;
+    // Every third party is a family: another grown-up and a child or two, at their elbow.
+    if (i % 3 !== 2) continue;
+    const withThem = 1 + (i % 2);
+    for (let k = 0; k <= withThem; k += 1) {
+      const beside = { x: spot.x + 9 + k * 8, y: spot.y + (k % 2 ? 7 : -5) };
+      if (wet(beside) || beside.x > CANVAS_W - 14) continue;
+      const kid = k > 0;
+      const pool = kid ? CHILD_PROPS : VISITOR_PROPS;
+      place(pool[(n + k) % pool.length], beside.x, beside.y, u * (kid ? 0.72 : 0.9), `v-${n}-${k}`);
+    }
+    n += 1;
   }
 
   pieces.sort((a, z) => a.z - z.z);
