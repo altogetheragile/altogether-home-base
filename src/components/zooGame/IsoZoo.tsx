@@ -1,6 +1,6 @@
 import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
-import { shade, speciesColors, landscapePalette, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
+import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
@@ -454,14 +454,19 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     // Planting inside the habitat: both the enclosure's own greenery, which is part of its design
     // and holds its own spot in the box, and any planting item dragged in on top of it.
     for (const [i, f] of enclosureFlora(d).entries()) {
-      place(treeProp(f.type), x0 + f.x * size.w, y0 + f.y * size.h, u * 1.2 * (f.s || 1), `ef-${e.id}-${i}`);
+      // In the colours it was given. A habitat's own planting is coloured plant by plant in the
+      // studio and arrived here in the artwork's green whatever anybody chose - so the control was
+      // there, and doing nothing.
+      place(treeProp(f.type), x0 + f.x * size.w, y0 + f.y * size.h, u * 1.2 * (f.s || 1),
+        `ef-${e.id}-${i}`, undefined, foliageFilter(f.foliage ?? floraDefaultColors(f.type).foliage));
     }
     const plants = roomFor.get(e.id)?.plants ?? [];
     plants.forEach((pl, i) => {
       const t = jitter(i + 1, e.id.length);
       const wx = x0 + 16 + t * Math.max(4, size.w - 32);
       const wy = y0 + 12 + jitter(i + 2, e.id.length + 7) * Math.max(4, size.h - 24);
-      place(treeProp(landType(pl)), wx, wy, u * 1.2, `pl-${e.id}-${pl.id}-${i}`);
+      place(treeProp(landType(pl)), wx, wy, u * 1.2, `pl-${e.id}-${pl.id}-${i}`,
+        undefined, foliageFilter(working(pl).colors.foliage));
     });
 
     // The animals themselves, in the side view they were drawn in.
