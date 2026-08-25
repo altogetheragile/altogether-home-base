@@ -555,6 +555,48 @@ describe('the isometric projection', () => {
     expect(html, 'the railings are not the colour they were given').toContain(RAIL);
   });
 
+  it('lays a path at the width and in the colour it was laid', () => {
+    // Every route was drawn sixteen wide in one fixed tan, so changing a pathway's width or its
+    // surface on the bench changed the plan and nothing here.
+    const base = initialZooState();
+    const withPath = (color: string, thickness: number) => ({ ...base, zones: ['Grounds'], backlog: [
+      item({ id: 'a', name: 'Kiosk', category: 'amenity', template: 'kiosk', pos: { x: 200, y: 200 } }),
+      item({ id: 'b', name: 'Shop', category: 'amenity', template: 'shop', pos: { x: 600, y: 400 } }),
+    ], connectors: [{ id: 'c', a: { featureId: 'a', x: 200, y: 200 }, b: { featureId: 'b', x: 600, y: 400 },
+                      bends: [], thickness, color }] } as unknown as ZooGameState);
+    const svg = render(<IsoZoo state={withPath('#8b5a2b', 14)} height={460} />).container.querySelector('svg[role="img"]')!;
+    expect(svg.innerHTML.toLowerCase(), 'the path is not the colour it was laid').toContain('#8b5a2b');
+    // ...and a wider path is drawn wider
+    const widthOf = (t: number) => {
+      const el = render(<IsoZoo state={withPath('#8b5a2b', t)} height={460} />).container
+        .querySelector('polygon[fill="#8b5a2b"]')!;
+      const xs = (el.getAttribute('points') ?? '').trim().split(/\s+/).map((q) => Number(q.split(',')[1]));
+      return Math.max(...xs) - Math.min(...xs);
+    };
+    expect(widthOf(26), 'a wider path is not drawn wider').toBeGreaterThan(widthOf(8));
+  });
+
+  it('builds a habitat in the shape it was given', () => {
+    // Pick Round in the studio and the Increment showed you a box: it drew every habitat as a
+    // rectangle whatever shape it had. The floor takes the shape now, and the fence follows it.
+    const base = initialZooState();
+    const shaped = (shape: string) => {
+      const FLOOR = '#b45f06';
+      const state = { ...base, zones: ['Big Cats'], backlog: [
+        item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 },
+               design: { parts: { shape }, colors: { ground: FLOOR } } }),
+      ] } as ZooGameState;
+      const el = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
+      // Found by the colour it was given, so it is certainly the habitat floor and not the grass.
+      const floor = el.querySelector(`polygon[fill="${FLOOR}"]`);
+      expect(floor, `no floor drawn for ${shape}`).toBeTruthy();
+      return (floor!.getAttribute('points') ?? '').trim().split(/\s+/).length;
+    };
+    // A round habitat is drawn from many more points than a rectangular one.
+    expect(shaped('circle'), 'a round habitat is still a box').toBeGreaterThan(shaped('rounded'));
+    expect(shaped('hexagon')).toBeGreaterThan(shaped('rounded'));
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
