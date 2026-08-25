@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { initialZooState } from './config';
 import type { BacklogItem, ZooGameState } from './types';
 import { IsoZoo } from './IsoZoo';
-import { project, depth, boxFaces, fenceRun, tint, screenBounds } from './art/iso';
+import { project, unproject, depth, boxFaces, fenceRun, tint, screenBounds } from './art/iso';
 import { ISO_ART } from './art/isoArt.generated';
 import { hasAnimalArt } from './art/animalArt';
 import { TOOLBOX } from './toolboxItems';
@@ -252,6 +252,63 @@ describe('the isometric projection', () => {
       const fy = Number(p.getAttribute('y')) + Number(p.getAttribute('height'));
       expect(inside(fx, fy), `somebody is standing at ${Math.round(fx)},${Math.round(fy)}, in the river`).toBe(false);
     }
+  });
+
+  it('turns a point on the screen back into a place in the park', () => {
+    // Dragging in this view is only possible if the projection can be run backwards, so this is the
+    // one bit of arithmetic the whole thing rests on. It is a plain linear map, so the round trip is
+    // exact rather than close.
+    for (const u of [0.4, 1, 2.5]) {
+      for (const [x, y] of [[0, 0], [820, 700], [123.5, 456.5], [-40, 900]]) {
+        const back = unproject(project(x, y, u).x, project(x, y, u).y, u);
+        expect(back.x).toBeCloseTo(x, 6);
+        expect(back.y).toBeCloseTo(y, 6);
+      }
+    }
+  });
+
+  it('lets a habitat be dragged in the isometric view', () => {
+    // It used to be read-only, which read as the game being broken rather than as a deliberate line:
+    // this is the view carrying the artwork, so it is the view people want to be in.
+    const moved: { id: string; pos: { x: number; y: number } }[] = [];
+    const { container } = render(
+      <IsoZoo state={zooWithEverything()} height={460} selected="enc"
+        onPlaceItem={(id, pos) => moved.push({ id, pos })} />,
+    );
+    const svg = container.querySelector('svg[role="img"]') as SVGSVGElement;
+    // jsdom lays nothing out, so the drag maths needs a box to measure against. Given the viewBox's
+    // own size, one screen pixel is one scene unit and the sums are readable.
+    const [, , vw, vh] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: vw, height: vh, right: vw, bottom: vh, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+
+    // The ring drawn round the selected habitat IS its footprint on screen, so its middle is a
+    // point that is certainly on the lion enclosure - no guessing at the scene's own scale.
+    const ring = [...svg.querySelectorAll('polygon')].find((p) => p.getAttribute('stroke') === '#f97316')!;
+    expect(ring, 'the selected habitat was not ringed').toBeTruthy();
+    const pts = (ring.getAttribute('points') ?? '').trim().split(/\s+/).map((q) => q.split(',').map(Number));
+    const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length;
+    const cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+
+    const opts = { bubbles: true, cancelable: true, pointerId: 1 };
+    svg.dispatchEvent(new window.PointerEvent('pointerdown', { ...opts, clientX: cx, clientY: cy }));
+    window.dispatchEvent(new window.PointerEvent('pointermove', { ...opts, clientX: cx + 40, clientY: cy + 20 }));
+    window.dispatchEvent(new window.PointerEvent('pointerup', { ...opts, clientX: cx + 40, clientY: cy + 20 }));
+
+    expect(moved.length, 'nothing moved when the habitat was dragged').toBeGreaterThan(0);
+    expect(moved[0].id).toBe('enc');
+    // Dragging down the screen in this projection walks into the park, not off the edge of it.
+    const last = moved[moved.length - 1].pos;
+    expect(last.x).toBeGreaterThan(0);
+    expect(last.x).toBeLessThan(820);
+    expect(last.y).toBeGreaterThan(0);
+    expect(last).not.toEqual({ x: 300, y: 240 });
+  });
+
+  it('stays a picture when nothing may be moved', () => {
+    // The Sprint Review shows the Increment; it is not a place to rearrange the zoo.
+    const { container } = render(<IsoZoo state={zooWithEverything()} height={460} />);
+    const svg = container.querySelector('svg[role="img"]') as SVGSVGElement;
+    expect(svg.style.cursor).toBe('');
   });
 
   it('holds nothing but drawing', () => {

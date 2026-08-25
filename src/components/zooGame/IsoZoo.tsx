@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './engine';
 import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, pieceByKey } from './design';
@@ -8,7 +8,7 @@ import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpo
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
 import { AGE_SCALE, groupMembers } from './design';
 import {
-  project, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
+  project, unproject, depth, screenBounds, groundPoints, boxFaces, boxTones, roofFaces, wallPanel, prop, tint, fenceRun, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
 } from './art/iso';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
 import { BUILDING_ART } from './art/buildingArt.generated';
@@ -16,9 +16,14 @@ import { BUILDING_ART } from './art/buildingArt.generated';
 /** The zoo, seen from the corner.
  *
  *  This draws exactly what the park view draws - the same items, in the same places, from the same
- *  state - and nothing else. It is read-only on purpose: the park is where a zoo is built, and this
- *  is where it is looked at. Putting it in the Sprint Review gives "inspect the Increment" something
- *  to inspect, in the shape a visitor would actually see.
+ *  state. In the Sprint Review it gives "inspect the Increment" something to inspect, in the shape a
+ *  visitor would actually see.
+ *
+ *  It used to be read-only, on the reasoning that the plan is where a zoo is built and this is where
+ *  it is looked at. That reasoning did not survive contact: this is the view carrying the drawn
+ *  artwork, so it is the view people want to be in, and being unable to move anything in it read as
+ *  the game being broken rather than as a deliberate line. Given `onPlaceItem` it is somewhere you
+ *  build. The pointer is answered by running the projection backwards - see `unproject`.
  *
  *  Everything is sorted back to front before it is drawn, which is the whole trick of a view like
  *  this: get the order wrong and a lion stands in front of the fence that is meant to be holding it.
@@ -47,15 +52,71 @@ function along(route: Pt[], t: number): Pt {
 
 const landType = (item: BacklogItem): string | undefined => item.design?.parts.type ?? item.template;
 
-export function IsoZoo({ state, height = 460, className }: { state: ZooGameState; height?: number; className?: string }) {
+export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, onSelect }: {
+  state: ZooGameState;
+  height?: number;
+  className?: string;
+  /** Move something. Given, this view stops being a picture and becomes somewhere you build. */
+  onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+  selected?: string | null;
+  onSelect?: (id: string | null) => void;
+}) {
   const scene = useMemo(() => build(state, height), [state, height]);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const editable = !!onPlaceItem;
+
+  /** Where the pointer is, in the world the zoo is laid out in.
+   *
+   *  Three coordinate spaces, in order: the pointer arrives in the browser's, the drawing is scaled
+   *  to whatever width it was given, and the scene is inset by its own margin. Undo all three and
+   *  the projection can be run backwards. */
+  const worldAt = (e: { clientX: number; clientY: number }) => {
+    const r = svgRef.current?.getBoundingClientRect();
+    if (!r || !r.width) return null;
+    const k = scene.w / r.width;
+    return unproject((e.clientX - r.left) * k - scene.ox, (e.clientY - r.top) * k - scene.oy, scene.u);
+  };
+
+  /** What is under that point. Nearest first: where two things overlap, the pointer means the one
+   *  in front, which is the one you can see. */
+  const pick = (w: { x: number; y: number }) => [...scene.movable].sort((a, b) => b.z - a.z)
+    .find((m) => Math.abs(w.x - m.x) <= m.w / 2 && Math.abs(w.y - m.y) <= m.h / 2);
+
+  const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (!onPlaceItem) return;
+    const w = worldAt(e);
+    if (!w) return;
+    const hit = pick(w);
+    if (!hit) { onSelect?.(null); return; }
+    onSelect?.(hit.id);
+    e.preventDefault();
+    // Held where it was grabbed, so it does not jump its own centre under the pointer.
+    const grabX = w.x - hit.x, grabY = w.y - hit.y;
+    const move = (ev: PointerEvent) => {
+      const p = worldAt(ev);
+      if (p) onPlaceItem(hit.id, insidePark({ w: hit.w, h: hit.h }, { x: p.x - grabX, y: p.y - grabY }));
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  // A ring round what is picked up, drawn on the ground in the same projection as everything else,
+  // so it lies flat on the grass instead of floating over it as a browser rectangle would.
+  const held = selected ? scene.movable.find((m) => m.id === selected) : undefined;
+  const ring = held && groundPoints(held.x - held.w / 2, held.y - held.h / 2, held.x + held.w / 2, held.y + held.h / 2, scene.u)
+    .split(' ').map((s) => { const [x, y] = s.split(',').map(Number); return `${x + scene.ox},${y + scene.oy}`; }).join(' ');
+
   return (
     <div className={className}>
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
-      <svg viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
-        style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height, overflow: 'visible' }}>
+      <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
+        onPointerDown={editable ? onPointerDown : undefined}
+        style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height, overflow: 'visible',
+          touchAction: editable ? 'none' : undefined, cursor: editable ? 'grab' : undefined }}>
         {scene.nodes}
+        {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
       </svg>
     </div>
   );
@@ -442,6 +503,16 @@ function build(state: ZooGameState, targetH: number) {
     h: total.h + MARGIN * 2 + EDGE,
     nodes: [...nodes.filter(Boolean), ...pieces.map((p) => p.el)],
     label: `The zoo from above: ${encs.length} habitat${encs.length === 1 ? '' : 's'}, ${live.filter((i) => i.category === 'exhibit').length} exhibits, ${visitors} visitors`,
+    // What a pointer can take hold of, and the frame needed to work out where it is pointing. The
+    // hit area is the thing's own footprint on the ground - not its drawing, which for a habitat
+    // includes fences and animals standing well above it, and for a tree is mostly sky.
+    u,
+    ox,
+    oy,
+    movable: [...encs, ...loose].map((it) => {
+      const c = posOf(it), s = sizeOf(it);
+      return { id: it.id, name: it.name, x: c.x, y: c.y, w: s.w, h: s.h, z: depth(c.x, c.y) };
+    }),
   };
 }
 
