@@ -415,7 +415,7 @@ function AnimalName({ name, onRename }: { name: string; onRename?: (name: string
   );
 }
 
-function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSelectPart, building, onSetSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; design?: ItemDesign; onSetDesign?: (d: ItemDesign) => void; onSelectPart?: (key: string) => void; building?: boolean; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
+function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSelectPart, building, onSetSpot, onSetMemberSpot, onUnnest, onRename }: { enc: BacklogItem; animals: BacklogItem[]; plants?: BacklogItem[]; theme: ZoneTheme; design?: ItemDesign; onSetDesign?: (d: ItemDesign) => void; onSelectPart?: (key: string) => void; building?: boolean; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void }) {
   const cfg = ENCLOSURE[enc.enclosureSize ?? 'medium'];
   const d = design ?? enc.design;
   const ground = d?.colors.ground ?? theme.plot;
@@ -426,7 +426,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
   const n = stock.length;
   const cell = n >= 6 ? 1 : 2; // more animals share the space, so each is drawn smaller
   const boxRef = useRef<HTMLDivElement>(null);
-  const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [drag, setDrag] = useState<{ id: string; member: number; x: number; y: number } | null>(null);
   // A content item keeps its dragged spot; an animal without one auto-arranges along the floor.
   // Where an animal stands is decided in one place, shared with the Increment view - see parkModel.
   const spotOf = (a: BacklogItem, i: number, member = 0) => {
@@ -441,7 +441,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
   // Drag a content item (animal or planted flora) to a spot inside its enclosure. Coordinates come
   // from the habitat box, so it works regardless of the park's zoom; stopPropagation keeps the
   // whole enclosure from moving. A plant released well outside the box is taken back out (un-nested).
-  const startSpotDrag = (e: ReactPointerEvent, id: string, unnestable: boolean) => {
+  const startSpotDrag = (e: ReactPointerEvent, id: string, unnestable: boolean, member?: number) => {
     if (!onSetSpot) return;
     e.stopPropagation();
     e.preventDefault();
@@ -450,7 +450,7 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
       if (!r) return null;
       return { x: (ev.clientX - r.left) / r.width, y: (ev.clientY - r.top) / r.height };
     };
-    const move = (ev: globalThis.PointerEvent) => { const p = raw(ev); if (p) { const c = clampSpot(p); setDrag({ id, x: c.x, y: c.y }); } };
+    const move = (ev: globalThis.PointerEvent) => { const p = raw(ev); if (p) { const c = clampSpot(p); setDrag({ id, member: member ?? -1, x: c.x, y: c.y }); } };
     const up = (ev: globalThis.PointerEvent) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
@@ -458,6 +458,9 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
       if (p) {
         const outside = p.x < -0.05 || p.x > 1.05 || p.y < -0.05 || p.y > 1.05;
         if (unnestable && outside && onUnnest) onUnnest(id);
+        // An ANIMAL goes to its own spot - one of a family is one of a family, and arranging them is
+        // the point. A plant has no family, so it is the whole thing being put somewhere.
+        else if (member !== undefined && onSetMemberSpot) onSetMemberSpot(id, member, clampSpot(p));
         else onSetSpot(id, clampSpot(p));
       }
       setDrag(null);
@@ -535,12 +538,16 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
         {stock.map(({ a, age, scale, k }, i) => {
           // The first of a group keeps the item's dragged spot and wears the name; the rest of the
           // family arrange themselves around it. Dragging the lion moves the pride.
+          // Every animal of a family can be put somewhere itself - the lioness by the water and the
+          // cubs under the tree is a thing somebody arranges on purpose. Only the first of them
+          // wears the name, or a pride is a label on top of a label.
           const lead = k === 0;
-          const p = drag?.id === a.id && lead ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i, k);
+          const held = drag?.id === a.id && drag.member === k;
+          const p = held ? { left: drag.x * 100, top: drag.y * 100 } : spotOf(a, i, k);
           return (
-            <div key={`${a.id}-${k}`} className={cn('group absolute', onSetSpot && lead && 'cursor-grab active:cursor-grabbing')}
-              onPointerDown={lead ? (e) => startSpotDrag(e, a.id, false) : undefined}
-              style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: drag?.id === a.id ? 3 : 1, touchAction: onSetSpot && lead ? 'none' : undefined }}>
+            <div key={`${a.id}-${k}`} className={cn('group absolute', onSetSpot && 'cursor-grab active:cursor-grabbing')}
+              onPointerDown={(e) => startSpotDrag(e, a.id, false, k)}
+              style={{ left: `${p.left}%`, top: `${p.top}%`, transform: 'translate(-50%,-50%)', zIndex: held ? 3 : 1, touchAction: onSetSpot ? 'none' : undefined }}>
               {/* Gentle idle bob so the animals feel alive; each desynced by a stable per-animal delay. */}
               <div>
                 <Sprite item={a} design={a.design ?? a.draftDesign ?? presetFor(a)} cell={Math.max(1, Math.round(cell * scale * 10) / 10)} />
@@ -678,7 +685,7 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
-function FreeScene({ features, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
+function FreeScene({ features, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   justOpened?: string | null;
   tool: 'none' | 'connect';
@@ -702,6 +709,7 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
   onImprove?: (id: string) => void;
   improving?: Set<string>;
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   onSetRot?: (id: string, rot: number) => void;
   onMoveCopy?: (id: string, index: number, off: { dx: number; dy: number }) => void;
@@ -1210,7 +1218,7 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
                 ? <Enclosure enc={f.item} animals={f.animals} plants={f.plants} theme={f.theme}
                   onSetDesign={edit && building === f.item.id && f.item.status === 'done' ? (d) => edit.onDesign(f.item.id, d) : undefined}
                   onSelectPart={edit && building === f.item.id && f.item.status === 'done' ? (key) => setPart({ id: f.item.id, key }) : undefined}
-                  onSetSpot={onSetSpot} onUnnest={onUnnest} onRename={onRename} />
+                  onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                 : <Plot item={f.item} />}
               {/* Resize a landscape feature: the right-edge handle sets its length (drag it across the
@@ -1437,6 +1445,8 @@ interface ParkViewProps {
   onImprove?: (id: string) => void;
   /** On the big Park tab, position an animal within its enclosure (drag inside the habitat). */
   onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  /** ...and position ONE animal of a family, so a pride can be arranged rather than clumped. */
+  onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
   /** On the big Park tab, resize a landscape feature's footprint (drag its corner). */
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   /** On the big Park tab, plant flora inside an enclosure (drag onto it) or take it back out. */
@@ -1457,7 +1467,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, view: viewProp, onView, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, view: viewProp, onView, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1718,7 +1728,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
             </Suspense>
           ) : (
           <FreeScene building={building} onOpenBuild={onOpenBuild} edit={edit} part={part} onPart={onPart} benched={benched} onStartHere={onStartHere} features={features} tool={effectiveTool} editable={canConnect} connectors={connectors} selectedConn={selectedConn} newConn={newConn} runStyle={runStyle} justOpened={justOpened} zoom={zoom}
-            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
+            onPlaceItem={onPlaceItem} onImprove={onImprove} improving={improving} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} onRename={onRename}
             // Every run drawn for a pathway carries that pathway's id, so the item can list its own
             // runs and take one back off. A route you cannot edit is a route you have to get right
             // first time, which is not how anyone draws anything.
