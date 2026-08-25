@@ -119,6 +119,9 @@ export default function ZooGame() {
       setBuildingId(null);
     },
     onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
+    // Inspect and adapt: pick the item out and turn the park to the Increment, so what is judged
+    // against the acceptance criteria is the thing that was built rather than the drawing of it.
+    onInspect: (id: string) => { setBuildingId(id); setParkView('iso'); setParkTab('park'); },
     // Something of the same kind you have already built, to start from rather than begin again.
     onAddPlant: (id: string, piece?: string) => addCopy(id, piece),
     onSetPlantPiece: setCopyPiece,
@@ -245,6 +248,8 @@ export default function ZooGame() {
   // Which item's build is open. Shared between the board and the park: tapping a construction site
   // opens it, and the site shows as selected while it is.
   const [buildingId, setBuildingId] = useState<string | null>(null);
+  // Which drawing the park is showing. Held here because Inspect, down on the bench, has to move it.
+  const [parkView, setParkView] = useState<'plan' | 'iso'>('plan');
   // Which part of the selected thing is picked out - 'ground', 'fence', 'water', 'flora:2'. It has
   // to live up here now that the controls are in the bench and the thing is on the park: touching
   // the ground out there is what opens the ground's swatches over here, and neither half can own a
@@ -281,7 +286,7 @@ export default function ZooGame() {
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }
     : null;
 
-  const shellProps = { copy: copyProps, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, part: partFocus, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { copy: copyProps, parkView, onParkView: setParkView, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, part: partFocus, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
