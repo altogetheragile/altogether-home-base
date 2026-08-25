@@ -8,7 +8,7 @@ import { Chip } from './ui/Chip';
 import { ExplainButton } from './Explain';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { Hammer, Spline, Trash2 } from 'lucide-react';
+import { Eye, Hammer, Spline, Trash2 } from 'lucide-react';
 
 // ============= Where you design the thing you are building =============
 //
@@ -174,7 +174,19 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
           {/* The plan and the criteria, open. On the card they are a row of pips you expand; here,
               where you are actually doing the work, they are the work. */}
           <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] p-2">
-            <div className={cn(EYEBROW, 'mb-1.5 text-emerald-700 dark:text-emerald-300')}>What Done looks like</div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <div className={cn(EYEBROW, 'text-emerald-700 dark:text-emerald-300')}>What Done looks like</div>
+              {/* Inspect and adapt. These criteria are about the thing that was built, and until now
+                  they were being judged from the drawing of it - the Increment was a toggle above the
+                  park that you had to notice. Nothing to inspect until it has been built once. */}
+              {item.design && (
+                <button type="button" onClick={() => edit.onInspect(item.id)}
+                  title="Inspect the Increment - judge these against what was actually built"
+                  className={cn(FOCUS, 'flex shrink-0 items-center gap-1 rounded-md border border-emerald-500/50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/10 dark:text-emerald-300')}>
+                  <Eye className="h-3.5 w-3.5" /> Inspect
+                </button>
+              )}
+            </div>
             <CardDetail item={item} state={state} interactive showAcceptance bare
               onToggleTask={(id, taskId) => onToggleTask(id, taskId)}
               onConfirmAc={(id, i, v) => onConfirmAc(id, i, v)} />

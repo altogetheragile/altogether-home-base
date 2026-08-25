@@ -575,8 +575,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                           ? <Button size="sm" className={cn(TONE.done.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-emerald-700")}
                             onClick={(e) => { e.stopPropagation(); onFinishItem(it.id); }}
                             title="Built, accepted and open to visitors">Move to Done</Button>
+                          // Built once and not Done is the NORMAL case, not a failure: you build it,
+                          // inspect it against its criteria, adapt the design and build it again. It
+                          // is the same Backlog item throughout - iterating on your own unfinished
+                          // work is finishing it, not new work, and it never needs a new PBI.
                           : <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" title={whyNotDone(it)}
-                            onClick={(e) => { e.stopPropagation(); setDesigning(it.id); }}><Palette className="mr-1 h-3.5 w-3.5" /> Build</Button>}
+                            onClick={(e) => { e.stopPropagation(); setDesigning(it.id); }}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Build again' : 'Build'}</Button>}
                         detail={<>
                           {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
                               and tick the detail. The real building happens on the park. */}

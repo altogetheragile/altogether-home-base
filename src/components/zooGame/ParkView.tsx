@@ -247,16 +247,17 @@ function LandscapePlot({ item, w, h, rot = 0 }: { item: BacklogItem; w: number; 
   );
 }
 
-/** Plan or isometric. Two ways of drawing one zoo, not two zoos.
+/** Plan or Increment. Two ways of drawing one zoo, not two zoos.
  *
- *  Building happens in plan: a drag there moves a thing the way the pointer says it should. The
- *  isometric side is for looking - which is most of what a park is for. */
+ *  The Plan is the drawing you build from. The Increment is what you have actually delivered - what
+ *  a visitor would see - and it is the thing Scrum asks you to INSPECT. Naming it that is not
+ *  decoration: "switch to isometric" is a rendering choice, "inspect the Increment" is the event. */
 function ViewSwitch({ view, onView }: { view: 'plan' | 'iso'; onView: (v: 'plan' | 'iso') => void }) {
   return (
     <div className="flex items-center overflow-hidden rounded-md border border-border" role="group" aria-label="How to draw the park">
-      {([['plan', 'Plan', Map], ['iso', 'Isometric', Box]] as const).map(([key, label, Icon]) => (
+      {([['plan', 'Plan', Map], ['iso', 'Increment', Box]] as const).map(([key, label, Icon]) => (
         <button key={key} type="button" onClick={() => onView(key)} aria-pressed={view === key}
-          title={key === 'plan' ? 'Lay the zoo out' : 'See it as a visitor would'}
+          title={key === 'plan' ? 'The drawing: lay the zoo out and design it' : 'Inspect the Increment - what you have delivered, as a visitor would see it'}
           className={cn(FOCUS, 'flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors',
             view === key ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>
           <Icon className="h-3.5 w-3.5" /> {label}
@@ -365,7 +366,7 @@ function EnclosureSign({ name, onRename }: { name: string; onRename?: (name: str
   const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't start dragging the enclosure
   const commit = () => { setEditing(false); onRename?.(val); };
   // A name on a drawing is written on the drawing, not nailed to a post.
-  const cls = cn(BP.LABEL, 'max-w-[140px] truncate bg-transparent px-1 text-center leading-tight text-[#cfe6ff]');
+  const cls = cn(BP.LABEL, 'max-w-[140px] truncate bg-transparent px-1 text-center leading-tight text-[#eaf4ff]');
   return (
     // Below the habitat, not on it. Sitting at the top-centre it covered the fence exactly where
     // you would reach for it, and on a construction site it fought the BUILDING badge. Absolutely
@@ -395,7 +396,7 @@ function AnimalName({ name, onRename }: { name: string; onRename?: (name: string
   const [val, setVal] = useState(name);
   const stop = (e: ReactPointerEvent) => e.stopPropagation(); // don't drag the animal
   const commit = () => { setEditing(false); const t = val.trim(); if (t) onRename?.(t); };
-  const cls = cn(BP.LABEL, 'max-w-[84px] truncate bg-transparent px-1 text-[9px] leading-[1.6] text-[#cfe6ff]');
+  const cls = cn(BP.LABEL, 'max-w-[84px] truncate bg-transparent px-1 text-[9px] leading-[1.6] text-[#eaf4ff]');
   return (
     <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-0.5 flex -translate-x-1/2 justify-center">
       {editing ? (
@@ -559,6 +560,12 @@ export interface EditApi {
   onConfirmAc: (id: string, index: number, value: boolean) => void;
   onFinishBuild: (id: string) => void;
   onRelease: (id: string) => void;
+  /** Turn the park to the Increment, with this item picked out.
+   *
+   *  Inspect and adapt, made into a button. The Increment is the thing Scrum asks you to inspect,
+   *  and until now you could only reach it by noticing a toggle above the park - so the acceptance
+   *  criteria were being judged from the drawing rather than from the thing that was built. */
+  onInspect: (id: string) => void;
   copySources: (item: BacklogItem) => CopySource[];
   /** Planting is a set, and the set is chosen in the studio rather than by clicking a plus on a
    *  forty-pixel tree. Adding, changing and removing what an item plants. */
@@ -659,7 +666,7 @@ const PERIM_W = 7;      // perimeter / park-boundary path thickness
 // On a plan a path is a line of a stated width, not a surface. Two thin rules and the ground
 // showing between them says "footpath, this wide" more clearly than any amount of gravel.
 const PATH_TAN = BP.FIELD; // a route is not filled: the sheet shows between its two edges
-const PATH_EDGE = 'rgba(207,230,255,0.55)'; // the ruled line down each side of it
+const PATH_EDGE = 'rgba(234,244,255,0.65)'; // the ruled line down each side of it
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
@@ -1434,6 +1441,9 @@ interface ParkViewProps {
   onRename?: (id: string, name: string) => void;
   /** Turn a landscape feature on the park (degrees clockwise). */
   onSetRot?: (id: string, rot: number) => void;
+  /** Which drawing is showing, when something outside decides it - Inspect, on the bench. */
+  view?: 'plan' | 'iso';
+  onView?: (v: 'plan' | 'iso') => void;
   /** Extra placements of the same scenery - signposts at the junctions, trees along a path. */
   onMoveCopy?: (id: string, index: number, off: { dx: number; dy: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
@@ -1442,7 +1452,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, view: viewProp, onView, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onSetSize, part, onPart, benched, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -1453,10 +1463,15 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   const [tool, setTool] = useState<'none' | 'connect' | null>(null);
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1); // 1 = the park fits the width it is given
-  // Plan to build in, isometric to look at. The same zoo either way - this switches how it is
-  // drawn, not what it is. Arranging happens in plan, because that is where a drag means what it
-  // looks like it means.
-  const [view, setView] = useState<'plan' | 'iso'>('plan');
+  // Plan to build in, Increment to inspect. The same zoo either way - this switches how it is
+  // drawn, not what it is.
+  //
+  // Held OUTSIDE when somebody else needs to move it: pressing "Inspect" on the bench has to be able
+  // to turn the park to the Increment, which is the whole point of the button. It keeps its own
+  // state when nobody is holding it, so the small read-only views still work on their own.
+  const [ownView, setOwnView] = useState<'plan' | 'iso'>('plan');
+  const view = viewProp ?? ownView;
+  const setView = onView ?? setOwnView;
   const isoView = large && view === 'iso';
   // While a pathway is on the bench the bench holds the pen; otherwise it is the park's own toggle.
   const effectiveTool: 'none' | 'connect' = !canConnect ? 'none' : (drawRoute ? (drawing ? 'connect' : 'none') : (tool ?? 'none'));
