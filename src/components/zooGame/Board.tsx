@@ -412,7 +412,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           </>}
           badges={<>
             <CategoryChip item={it} />
-            {it.carriedOver && <Chip tone="attention" title={`Carried over unfinished - re-estimate the work that's left (was ${it.estimate} pts)`}>carried over</Chip>}
+            {it.carriedOver && <Chip tone="attention" title={`Carried over unfinished - already sized to the ${it.estimate} pts left of it`}>carried over</Chip>}
             {status}
           </>}
           trailing={action}

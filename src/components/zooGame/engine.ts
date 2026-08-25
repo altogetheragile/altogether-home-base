@@ -1256,6 +1256,34 @@ const seedFor = (state: ZooGameState): number => ((state.gameSeed * 100003) ^ (s
  *  them, hurt the visitor outcome - so the DoD's content bites the outcome, not just the
  *  per-item Done gate. Weakening the DoD (dropping these at the Retro) has consequences. */
 
+/** What becomes of a Sprint's unfinished work when the Sprint ends - however it ends.
+ *
+ *  Two different things happen to it, because two different things happened in the Sprint.
+ *
+ *  Work that was **picked but never started** goes back exactly as it was. Nobody touched it, so
+ *  nobody learned anything about it, and an estimate that was good enough to plan with last week is
+ *  good enough to plan with this week. Sending it round the poker again taught the opposite of the
+ *  point: it made estimating look like a toll you pay for not finishing.
+ *
+ *  Work that was **started and not finished** comes back sized to what is LEFT of it. That number
+ *  is not a new judgement either - the Developers re-size their remaining work every day, which is
+ *  what the burndown is drawn from - so it is applied rather than asked for. The build itself, the
+ *  design and the ticked plan tasks, is kept either way.
+ *
+ *  The goal-critical mark is cleared in both cases: it belongs to a Sprint, not to an item.
+ */
+function returnUnfinished(state: ZooGameState): BacklogItem[] {
+  return state.backlog.map((it) => {
+    if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
+    const back = { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false };
+    if (!it.started) return back;
+    const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
+    const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
+    const remaining = Math.max(1, Math.round((it.trueSize ?? it.estimate ?? 5) * (1 - doneFrac)));
+    return { ...back, carriedOver: true, unsized: false, estimate: remaining, trueSize: remaining };
+  });
+}
+
 export function reviewSprint(state: ZooGameState): ZooGameState {
   // Enclosures are infrastructure, not something visitors score directly - exclude them
   // from the simulation (the animals inside them carry the appeal).
@@ -1286,18 +1314,7 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
 
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
-  // Unfinished committed items return to the Backlog to be RE-ESTIMATED against the work that is
-  // LEFT, then re-planned (a fresh Ready check). Their build progress - design and ticked plan
-  // tasks - is kept; only their sizing is reopened, with the poker nudged toward the remaining
-  // work (trueSize scaled by how much of the plan is still to do). The per-Sprint goal-critical
-  // mark is cleared so it is re-decided next time they are planned.
-  const backlog = state.backlog.map((it) => {
-    if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
-    const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
-    const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
-    const remaining = Math.max(1, Math.round((it.trueSize ?? it.estimate ?? 5) * (1 - doneFrac)));
-    return { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false, unsized: true, carriedOver: true, trueSize: remaining };
-  });
+  const backlog = returnUnfinished(state);
 
   return {
     ...state,
@@ -1330,13 +1347,7 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
  *  from it, so velocity is untouched. A new Sprint starts straight after. */
 export function cancelSprint(state: ZooGameState): ZooGameState {
   if (state.phase !== 'sprint') return state;
-  const backlog = state.backlog.map((it) => {
-    if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
-    const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
-    const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
-    const remaining = Math.max(1, Math.round((it.trueSize ?? it.estimate ?? 5) * (1 - doneFrac)));
-    return { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false, unsized: true, carriedOver: true, trueSize: remaining };
-  });
+  const backlog = returnUnfinished(state);
   return {
     ...state,
     phase: 'planning',
@@ -1542,7 +1553,7 @@ export function refinementTalk(state: ZooGameState, item: BacklogItem): {
   if (enc) lines.push(`${item.name} cannot start until ${enc.name} is built - the habitat comes before the animal that lives in it.`);
   if (!item.acceptance.length) lines.push('There is nothing here saying when it would be Done. We need the acceptance criteria before we can judge the size.');
   if (built.length) lines.push(`It looks about the size of ${built[0].name}, which we have built - that is our reference.`);
-  if (item.carriedOver) lines.push(`We started this one and did not finish it. Size what is left, not the whole thing again.`);
+  if (item.carriedOver) lines.push(`We started this one and did not finish it. It is already down to the ${item.estimate} pts we think are left - that is the number we have been working to all Sprint.`);
   if (!lines.length) lines.push('Nothing surprising in it. We can size this against what we have already built.');
   lines.push('We will size it - we are the ones doing the work.');
 

@@ -49,7 +49,7 @@ export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProp
 
       {item.carriedOver && (
         <p className={cn(TONE.attention.text, "mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px]")}>
-          Carried over unfinished (was {item.estimate} pts). Estimate the work that is <b>left</b>, not the whole item again - the build progress is kept. Velocity only counts it once, in the Sprint it is finished.
+          Carried over unfinished, and already cut to the <b>{item.estimate} pts left</b> of it - the Developers size the work remaining every day, which is what the burndown is drawn from, so nobody has to size it twice. Change it if you disagree. The build progress is kept, and velocity counts it once, in the Sprint it is finished.
         </p>
       )}
 
