@@ -4,7 +4,7 @@ import { shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlo
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
-import { standingOnPark, parkPositions, restingPlace, groundSize, workingDesign as working, parkType as landType } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
@@ -397,13 +397,18 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     // Including the one being stocked right now, so you watch the lion arrive rather than having it
     // appear the instant somebody presses Done.
     const stock = roomFor.get(e.id)?.animals ?? [];
-    stock.forEach((a, ai) => {
-      const members = groupMembers(a.design?.group);
+    // Flattened the same way the Plan flattens it, so the two views number the herd alike and an
+    // animal dragged there is the animal that moves here.
+    const herd = stock.flatMap((a) => {
+      const members = groupMembers(working(a).group);
       const list = members.length ? members : [{ age: 'adults' as const, scale: AGE_SCALE.adults }];
-      list.forEach((m, mi) => {
-        const t = jitter(ai * 7 + mi + 1, e.id.length);
-        const wx = x0 + 20 + t * Math.max(6, size.w - 40);
-        const wy = y0 + 16 + jitter(ai * 7 + mi + 3, e.id.length + 11) * Math.max(6, size.h - 32);
+      return list.map((m, mi) => ({ a, m, mi }));
+    });
+    herd.forEach(({ a, m, mi }, hi) => {
+      {
+        const f = habitatSpot(a, hi, herd.length);
+        const wx = x0 + f.x * size.w;
+        const wy = y0 + f.y * size.h;
         const species = a.template ?? a.id;
         const at = P(wx, wy);
         const key = `a-${e.id}-${a.id}-${mi}`;
@@ -427,7 +432,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
             </g>
           ));
         }
-      });
+      }
     });
   }
 
@@ -576,6 +581,12 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
 
   // ---- visitors ----------------------------------------------------------------------------
   //
+  // Everything drawn goes into ONE list, so every key in this file has to be unique across the whole
+  // scene and not just within its own loop. The guests and the parked cars were both numbering
+  // themselves `v-0`, `v-1`, ... - React's answer to a duplicate key is that children "may be
+  // duplicated and/or omitted", and it was both: a tree drawn out on the page beside the park, and
+  // cars that kept their old angle when the park was turned under them.
+  //
   // People arrive. They were scattered at random over the whole park instead, which put them in the
   // river and gave no sense of anyone going anywhere. A visit has a shape: you park, you walk up
   // from the lot, and you head for something worth seeing.
@@ -608,7 +619,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const spot = { x: at.x + (jitter(i + 3, 5) - 0.5) * 16, y: at.y + (jitter(i + 4, 11) - 0.5) * 14 };
     if (spot.x < 14 || spot.x > CANVAS_W - 14 || spot.y < 14 || spot.y > worldH - 14) continue;
     if (wet(spot)) continue;
-    place(VISITOR_PROPS[n % VISITOR_PROPS.length], spot.x, spot.y, u * 0.92, `v-${n}`); n += 1;
+    place(VISITOR_PROPS[n % VISITOR_PROPS.length], spot.x, spot.y, u * 0.92, `guest-${n}`); n += 1;
     // Every third party is a family: another grown-up and a child or two, at their elbow.
     if (i % 3 !== 2) continue;
     const withThem = 1 + (i % 2);
@@ -617,7 +628,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       if (wet(beside) || beside.x > CANVAS_W - 14) continue;
       const kid = k > 0;
       const pool = kid ? CHILD_PROPS : VISITOR_PROPS;
-      place(pool[(n + k) % pool.length], beside.x, beside.y, u * (kid ? 0.72 : 0.9), `v-${n}-${k}`);
+      place(pool[(n + k) % pool.length], beside.x, beside.y, u * (kid ? 0.72 : 0.9), `guest-${n}-${k}`);
     }
     n += 1;
   }
@@ -709,7 +720,7 @@ function vehicle(spot: CarSpot, i: number, u: number, P: (x: number, y: number) 
   // The drawing stands on the ground, so its foot goes at the near corner of the footprint.
   const foot = P(spot.x + (across ? hw : hh), spot.y + (across ? hh : hw));
   return [depth(spot.x, spot.y), (
-    <g key={`v-${i}`} transform={across ? undefined : `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)`}>
+    <g key={`car-${i}`} transform={across ? undefined : `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)`}>
       <svg x={at.x - w / 2} y={foot.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
         dangerouslySetInnerHTML={{ __html: art.body }} />
     </g>
