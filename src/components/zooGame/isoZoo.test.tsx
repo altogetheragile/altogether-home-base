@@ -520,11 +520,14 @@ describe('the isometric projection', () => {
     const svg = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
     const drawn = [...svg.querySelectorAll('svg[viewBox]')].map((el) => el.getAttribute('viewBox'));
     // Named drawings, not just "more than one shape on the page" - the trees have viewBoxes too.
-    const male = ANIMAL_ART.lion_males.viewBox, lioness = ANIMAL_ART.lion_females.viewBox;
-    expect(male).not.toBe(lioness);
+    const male = ANIMAL_ART.lion_males.viewBox;
+    const lioness = ANIMAL_ART.lion_females.viewBox;
+    const cub = ANIMAL_ART.lion_cubs.viewBox;
+    expect(new Set([male, lioness, cub]).size, 'the three lions share a drawing').toBe(3);
     expect(drawn.filter((v) => v === male), 'the male is not drawn as a male').toHaveLength(1);
-    expect(drawn.filter((v) => v === lioness).length, 'the lionesses and young are not drawn maneless')
-      .toBeGreaterThanOrEqual(5);
+    // two lionesses and a juvenile, which has no drawing of its own and takes the maneless adult
+    expect(drawn.filter((v) => v === lioness), 'the lionesses are not drawn maneless').toHaveLength(3);
+    expect(drawn.filter((v) => v === cub), 'the cubs are not drawn as cubs').toHaveLength(2);
   });
 
   it('holds nothing but drawing', () => {

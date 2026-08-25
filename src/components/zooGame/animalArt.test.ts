@@ -21,9 +21,11 @@ describe('animal artwork', () => {
     // "Not all lions have manes." The group already knew who was in it; there was one drawing.
     expect(animalArtFor('lion', 'females')).toBeTruthy();
     expect(animalArtFor('lion', 'females')).not.toBe(animalArtFor('lion', 'males'));
-    // A cub is a small lion that has not grown a mane, so it takes the maneless drawing rather than
-    // a miniature male. It is drawn smaller by KIND_SCALE, not by the artwork.
-    expect(animalArtFor('lion', 'cubs')).toBe(animalArtFor('lion', 'females'));
+    // A cub has a drawing of its own - a lion's proportions are not an adult's shrunk down.
+    expect(animalArtFor('lion', 'cubs')).toBeTruthy();
+    expect(animalArtFor('lion', 'cubs')).not.toBe(animalArtFor('lion', 'females'));
+    // A juvenile has no drawing of its own, and is a small lion that has not grown a mane - so it
+    // takes the maneless adult rather than a miniature male. Drawn smaller by KIND_SCALE.
     expect(animalArtFor('lion', 'juveniles')).toBe(animalArtFor('lion', 'females'));
     // A species with only one drawing gives that drawing whatever is asked for, rather than nothing.
     expect(animalArtFor('zebra', 'females')).toBe(animalArtFor('zebra'));

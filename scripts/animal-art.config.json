@@ -233,18 +233,36 @@
       }
     },
     {
-      "file": "art-src/zoo/lions.svg",
+      "file": "art-src/zoo/lion-family.svg",
       "credit": "Adobe Stock",
-      "//": "A page of lions - the only sheet here holding a lioness, so a pride can be a pride. Male and female come from THIS sheet on purpose: two lions drawn by two different hands standing in one habitat would look like two different animals. No cub: the only cubs on the page are a pair at play, so entangled that no region cuts one out without taking a piece of the other or losing half of the one you wanted. A young lion is a small lion with no mane, which the lioness already is - see animalArtFor.",
+      "//": "A lion family, and the whole pride comes from THIS one sheet on purpose: a male, a lioness and a cub drawn by three different hands standing in one habitat would look like three different animals. The male is an island of his own; the lioness and the cub are cut from the cluster in the middle by the patch each occupies. Standing poses for all three, so they read as one family rather than one walking and one sitting for no reason.",
       "bridge": 0,
       "ignoreLargerThan": 0.06,
-      "unitScale": 0.085,
+      "unitScale": 0.12,
       "species": {
         "lion_males": {
-          "island": 3
+          "island": 3,
+          "drop": [
+            "#FFFFFF"
+          ]
         },
         "lion_females": {
-          "island": 1
+          "island": 5,
+          "drop": [
+            "#FFFFFF"
+          ]
+        },
+        "lion_cubs": {
+          "box": [
+            1787,
+            322,
+            552,
+            304
+          ],
+          "inside": 0.5,
+          "drop": [
+            "#FFFFFF"
+          ]
         }
       }
     }
