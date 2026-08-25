@@ -336,6 +336,34 @@ describe('the isometric projection', () => {
     expect([...after.querySelectorAll('polygon')].filter((p) => p.getAttribute('stroke-dasharray'))).toHaveLength(0);
   });
 
+  it('draws the habitat you are designing, not the one the zone would give you', () => {
+    // This view painted the floor and the fence from the ZONE's theme and ignored the design, so
+    // choosing a ground or a fence changed nothing here and adding water added nothing. And it read
+    // `design` only, which a habitat being built does not have yet - the draft is the whole point of
+    // building in place. There is no preview: the thing itself is what you are looking at.
+    const GROUND = '#8b3a2e', FENCE = '#2f6b8f', WATER = '#3f8fc4';
+    const base = initialZooState();
+    const state = { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'medium', pos: { x: 300, y: 240 },
+             status: 'committed', started: true,
+             draftDesign: { parts: {}, colors: { ground: GROUND, fence: FENCE, water: WATER },
+               water: [{ x: 0.5, y: 0.5, w: 0.3, h: 0.3 }] } }),
+    ] } as ZooGameState;
+    const { container } = render(<IsoZoo state={state} height={460} />);
+    const svg = container.querySelector('svg[role="img"]')!;
+
+    const fills = [...svg.querySelectorAll('polygon')].map((p) => p.getAttribute('fill'));
+    expect(fills, 'the chosen ground was not laid').toContain(GROUND);
+    expect(fills, 'the water was not added').toContain(WATER);
+    // The fence is artwork tinted to the chosen colour, so the markup holds shades of it rather than
+    // the colour itself. Changing the choice must change the fence: that is the whole claim.
+    const other = { ...state, backlog: state.backlog.map((i) => ({ ...i,
+      draftDesign: { ...i.draftDesign!, colors: { ...i.draftDesign!.colors, fence: '#8b3a2e' } } })) } as ZooGameState;
+    const repainted = render(<IsoZoo state={other} height={460} />).container.querySelector('svg[role="img"]')!;
+    const fenceOf = (el: Element) => [...el.querySelectorAll('svg')].map((s) => s.innerHTML).join('');
+    expect(fenceOf(repainted), 'the chosen fence was not put up').not.toBe(fenceOf(svg));
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
