@@ -4,7 +4,7 @@ import type { BacklogItem } from './types';
 import { ItemToolbar } from './ItemToolbar';
 import { TILED_BUILDINGS } from './art/buildingTiles.generated';
 import { BUILDING_ART } from './art/buildingArt.generated';
-import { BUILDING_TYPES } from './design';
+import { BUILDING_TYPES, designCriteria, isDesignDone, type ItemDesign } from './design';
 
 const lion = (): BacklogItem => ({
   id: 'lion', name: 'Lion', zone: 'Big Cats', category: 'exhibit', template: 'lion',
@@ -72,4 +72,55 @@ describe('colours a building can actually wear', () => {
     // offering colours that do nothing again - which is the whole thing this was fixing.
     expect([...TILED_BUILDINGS].sort()).toEqual(Object.keys(BUILDING_ART).sort());
   });
+});
+
+describe('everything the studio offers can be finished', () => {
+  // The guard that was missing. Hiding the colour controls on a drawn building left a gift shop
+  // that could be built, placed, accepted and never finished: its design criteria still asked it to
+  // be coloured, and there was no longer any control that could colour it. A criterion nobody can
+  // satisfy is worse than no criterion.
+  //
+  // So: for every kind of thing, there is a design that passes. Found by asking the studio's own
+  // rules rather than by listing what to do, which is what makes this catch the next one.
+  const satisfy = (item: BacklogItem): ItemDesign => {
+    const d: ItemDesign = { parts: { type: item.template ?? "" }, colors: {} };
+    // Everything a criterion could ask for. Over-generous on purpose: the question is whether ANY
+    // design can pass, not whether this exact one is what a player would build.
+    d.parts = { ...d.parts, sign: 'on', thickness: 'medium', coat: 'common', shape: 'rounded' };
+    d.colors = { walls: '#fff', roof: '#fff', sign: '#fff', ground: '#fff', fence: '#fff',
+                 foliage: '#fff', trunk: '#fff', path: '#fff', water: '#fff' };
+    d.group = { males: 1, females: 0, juveniles: 0, cubs: 0 };
+    return d;
+  };
+
+  const kinds: BacklogItem[] = [
+    ...BUILDING_TYPES.map((t) => ({ id: t, name: t, category: 'amenity', template: t } as BacklogItem)),
+    { id: 'e', name: 'Lion Enclosure', category: 'enclosure', enclosureSize: 'medium' } as BacklogItem,
+    { id: 'a', name: 'Lion', category: 'exhibit', template: 'lion', enclosureSize: 'medium' } as BacklogItem,
+    { id: 'p', name: 'Paths', category: 'path' } as BacklogItem,
+    { id: 'f', name: 'Planting', category: 'flora', template: 'tree' } as BacklogItem,
+    { id: 'l', name: 'River', category: 'flora', template: 'river' } as BacklogItem,
+  ];
+
+  it('can finish a building that cannot be coloured', () => {
+    // The one that matters, and the one the test above does NOT catch: a design built from ONLY
+    // what the studio still offers for a drawn building - its kind and its sign, no colours at all -
+    // has to be enough. Handing the criteria every colour proves nothing when the point is that the
+    // player can no longer choose any.
+    for (const type of TILED_BUILDINGS) {
+      const item = { id: type, name: type, category: 'amenity', template: type } as BacklogItem;
+      const whatTheStudioCanSet: ItemDesign = { parts: { type, sign: 'on' }, colors: {} };
+      expect(isDesignDone(item, whatTheStudioCanSet),
+        `a ${type} cannot be finished with the controls the studio shows`).toBe(true);
+    }
+  });
+
+  for (const item of kinds) {
+    it(`can finish a ${item.template ?? item.category}`, () => {
+      const criteria = designCriteria(item, satisfy(item));
+      const unmeetable = criteria.filter((c) => !c.pass).map((c) => c.label);
+      expect(unmeetable, `nothing can satisfy: ${unmeetable.join(', ')}`).toEqual([]);
+      expect(isDesignDone(item, satisfy(item))).toBe(true);
+    });
+  }
 });

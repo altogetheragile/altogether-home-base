@@ -1,5 +1,6 @@
 import type { BacklogItem } from './types';
 import type { SegmentId } from './simulation/types';
+import { TILED_BUILDINGS } from './art/buildingTiles.generated';
 
 // ============= Design and build (parametric) =============
 //
@@ -985,6 +986,18 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
     ];
   }
   if (item.category === 'amenity') {
+    // A building that comes with its own artwork cannot be repainted, so the studio does not offer
+    // to - and asking it to be coloured before it is Done would be asking for something the game
+    // has taken away. It was: a gift shop could be built, placed, accepted and never finished,
+    // because "colour the walls" had no control left to satisfy it.
+    //
+    // What is decided about a drawn building is which one it is, and whether it says so outside.
+    if (TILED_BUILDINGS.includes(design.parts.type ?? item.template ?? '')) {
+      return [
+        { label: 'Decide what kind of building it is', pass: !!(design.parts.type ?? item.template) },
+        { label: 'Give it a sign so visitors can find it', pass: design.parts.sign === 'on' },
+      ];
+    }
     return [
       { label: 'Colour the walls', pass: !!design.colors.walls },
       { label: 'Colour the roof', pass: !!design.colors.roof },
@@ -1015,6 +1028,12 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
   const s = label.toLowerCase();
   const c = design.colors, p = design.parts;
   if (item.category === 'path') return !!p.thickness && !!c.path; // width + colour chosen
+  if (item.category === 'amenity' && TILED_BUILDINGS.includes(p.type ?? item.template ?? '')) {
+    // A drawn building is decided, not painted: the plan ticks itself off the decisions there are.
+    if (/design|kind/.test(s)) return !!(p.type ?? item.template);
+    if (/sign/.test(s)) return p.sign === 'on';
+    return false;
+  }
   if (item.category === 'enclosure') {
     if (/footprint|size/.test(s)) return !!item.enclosureSize;
     if (/fence/.test(s)) return !!c.fence;
