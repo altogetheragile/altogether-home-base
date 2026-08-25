@@ -535,6 +535,26 @@ describe('the isometric projection', () => {
     expect(drawn.filter((v) => v === cub), 'the cubs are not drawn as cubs').toHaveLength(2);
   });
 
+  it('paints landscape in the colours it was given, both of them', () => {
+    // "I set the bridge railings to be red and the deck to a light brown. They are not in the
+    // isometric view." It painted landscape from the DEFAULTS FOR ITS KIND and never looked at the
+    // design - so every river, pond and bridge arrived in the colour it started as. And a bridge has
+    // two colours, what it is made of and its trim, where this had one and shaded it twice.
+    const DECK = '#d9a86a', RAIL = '#c0392b';
+    const base = initialZooState();
+    const state = { ...base, zones: ['Grounds'], backlog: [
+      item({ id: 'br', name: 'Bridge', category: 'flora', zone: 'Grounds', template: 'bridge',
+             pos: { x: 400, y: 350 }, size: { w: 74, h: 120 },
+             design: { parts: { type: 'bridge' }, colors: { foliage: DECK, trunk: RAIL } } }),
+    ] } as ZooGameState;
+    const svg = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
+    const html = svg.innerHTML.toLowerCase();
+    // The deck is the chosen colour; its sides are shades of it, so the colour itself must appear.
+    expect(html, 'the deck is not the colour it was given').toContain(DECK);
+    // The handrail is the trim, exactly - a rail shaded from the deck is not a red rail.
+    expect(html, 'the railings are not the colour they were given').toContain(RAIL);
+  });
+
   it('holds nothing but drawing', () => {
     // Injected with dangerouslySetInnerHTML, from our own extraction of a licensed file.
     for (const [name, p] of Object.entries({ ...ISO_ART, ...VEHICLE_ART })) {
