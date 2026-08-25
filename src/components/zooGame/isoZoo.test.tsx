@@ -5,6 +5,7 @@ import type { BacklogItem, ZooGameState } from './types';
 import { IsoZoo } from './IsoZoo';
 import { project, unproject, depth, boxFaces, fenceRun, tint, screenBounds } from './art/iso';
 import { ISO_ART } from './art/isoArt.generated';
+import { ANIMAL_ART } from './art/animalArt.generated';
 import { hasAnimalArt } from './art/animalArt';
 import { TOOLBOX } from './toolboxItems';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
@@ -504,6 +505,26 @@ describe('the isometric projection', () => {
     const shown = render(<IsoZoo state={busy} height={460} turn={0} />);
     shown.rerender(<IsoZoo state={busy} height={460} turn={1} />);
     expect(drawnIn(shown.container), 'something kept its old place when the park was turned').toBe(fresh);
+  });
+
+  it('draws a lion and a lioness as different animals', () => {
+    // "Not all lions have manes." The group knew who was in it; there was one drawing, so a pride
+    // was six maned lions. The male, the females and the young are three different sizes of two
+    // different drawings now.
+    const base = initialZooState();
+    const state = { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 } }),
+      item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
+             design: { parts: {}, colors: {}, group: { males: 1, females: 2, juveniles: 1, cubs: 2 } } }),
+    ] } as ZooGameState;
+    const svg = render(<IsoZoo state={state} height={460} />).container.querySelector('svg[role="img"]')!;
+    const drawn = [...svg.querySelectorAll('svg[viewBox]')].map((el) => el.getAttribute('viewBox'));
+    // Named drawings, not just "more than one shape on the page" - the trees have viewBoxes too.
+    const male = ANIMAL_ART.lion_males.viewBox, lioness = ANIMAL_ART.lion_females.viewBox;
+    expect(male).not.toBe(lioness);
+    expect(drawn.filter((v) => v === male), 'the male is not drawn as a male').toHaveLength(1);
+    expect(drawn.filter((v) => v === lioness).length, 'the lionesses and young are not drawn maneless')
+      .toBeGreaterThanOrEqual(5);
   });
 
   it('holds nothing but drawing', () => {

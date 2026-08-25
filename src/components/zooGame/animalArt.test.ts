@@ -10,8 +10,23 @@ const exhibitTemplates = new Set(
 describe('animal artwork', () => {
   it('draws only species the toolbox actually offers', () => {
     // Art for a species nobody can pick is art nobody will see, and usually a typo in the config.
-    const orphans = Object.keys(ANIMAL_ART).filter((s) => !exhibitTemplates.has(s));
+    // `lion_females` is a VARIANT of a species, not a species: a lioness has no mane, and the game
+    // asks for the drawing by kind. A variant is still only allowed if its species is offered, so a
+    // typo in either half is still caught.
+    const orphans = Object.keys(ANIMAL_ART).filter((s) => !exhibitTemplates.has(s.split('_')[0]));
     expect(orphans).toEqual([]);
+  });
+
+  it('draws a lioness without a mane, and a young lion as a small one', () => {
+    // "Not all lions have manes." The group already knew who was in it; there was one drawing.
+    expect(animalArtFor('lion', 'females')).toBeTruthy();
+    expect(animalArtFor('lion', 'females')).not.toBe(animalArtFor('lion', 'males'));
+    // A cub is a small lion that has not grown a mane, so it takes the maneless drawing rather than
+    // a miniature male. It is drawn smaller by KIND_SCALE, not by the artwork.
+    expect(animalArtFor('lion', 'cubs')).toBe(animalArtFor('lion', 'females'));
+    expect(animalArtFor('lion', 'juveniles')).toBe(animalArtFor('lion', 'females'));
+    // A species with only one drawing gives that drawing whatever is asked for, rather than nothing.
+    expect(animalArtFor('zebra', 'females')).toBe(animalArtFor('zebra'));
   });
 
   it('leaves the species it has no drawing for on their built sprites', () => {
