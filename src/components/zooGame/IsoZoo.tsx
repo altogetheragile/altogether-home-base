@@ -496,10 +496,23 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         if (art) {
           const h = art.h * u * 0.30 * m.scale;
           const w = h * (art.w / art.h);
+          // An animal looks at the fence it is nearest. Standing by the rail with your back to the
+          // people watching you is what a drawing does and an animal does not, and it is the tell
+          // that a habitat is a box with pictures in it rather than somewhere something lives.
+          //
+          // The drawings face sideways, so the four fences come down to two answers: the near edge
+          // is either off to the left of the picture or off to the right. `flip` is the sheet's own
+          // facing, so the two are combined rather than one overriding the other - which is also
+          // what fixes the species that were marked flipped and were being SHIFTED sideways instead
+          // of turned round, because the old transform moved them and never mirrored them.
+          const toLeft = Math.min(wx - x0, y1 - wy);
+          const toRight = Math.min(x1 - wx, wy - y0);
+          const facesLeft = toLeft <= toRight;
+          const mirror = facesLeft !== !!art.flip;
           push(depth(wx, wy), (
             <svg key={key} x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
               style={{
-                ...(art.flip ? { transform: `translateX(${(at.x * 2 + 0).toFixed(1)}px)`, transformOrigin: 'center' } : {}),
+                ...(mirror ? { transform: 'scale(-1,1)', transformOrigin: 'center', transformBox: 'fill-box' as const } : {}),
                 ...(coat ? { filter: coat } : {}),
               }}
               dangerouslySetInnerHTML={{ __html: art.body }} />
