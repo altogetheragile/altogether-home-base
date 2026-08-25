@@ -1,8 +1,9 @@
 import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
+import { shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, pieceByKey } from './design';
 import { standsOnPark } from './engine';
-import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, presetFor, pieceByKey, type ItemDesign } from './design';
-import { autoLayout, insidePark, CANVAS_W, PLAY_H, PAD } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
+import { standingOnPark, parkPositions, restingPlace, groundSize, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
 import { hasAnimalArt, animalArtFor } from './art/animalArt';
@@ -49,14 +50,6 @@ function along(route: Pt[], t: number): Pt {
   const a = route[i], b = route[i + 1];
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
 }
-
-/** What an item looks like RIGHT NOW: what has been designed, or the draft being designed, or the
- *  shape it starts as. The thing being built is exactly the thing whose ground, fence and walls you
- *  are choosing, so a view that reads only the finished design shows you none of your own choices
- *  until the moment you press Done - which is the opposite of building in place. */
-const working = (item: BacklogItem): ItemDesign => item.design ?? item.draftDesign ?? presetFor(item);
-
-const landType = (item: BacklogItem): string | undefined => working(item).parts.type ?? item.template;
 
 export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, onSelect }: {
   state: ZooGameState;
@@ -129,26 +122,17 @@ export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, 
 }
 
 function build(state: ZooGameState, targetH: number) {
+  // WHAT is on the park, how big it is and where it stands are decided in one place, shared with
+  // the plan view - see parkModel. This file's job is to draw it from the corner, nothing else.
+  const standing = standingOnPark(state);
+  const underWay = new Set(standing.filter((s) => s.underWay).map((s) => s.item.id));
+  // Delivered work, for the counts: an animal living in a habitat is nested inside it rather than
+  // standing on its own patch of ground, so it is not in `standing` and has to be counted from the
+  // Backlog. The zoo has exhibits whether or not they take up room.
   const live = state.backlog.filter(standsOnPark);
-
-  // Work that has been STARTED stands on the park too, behind hoardings, exactly as it does in the
-  // plan view. This view drew only what was delivered, which was defensible while it was a picture
-  // of the Increment and became nonsense the moment you could build in it: you started something
-  // and nothing appeared. An item under way is visible on the product from the moment it begins -
-  // that is the Increment made into something you watch happen. A path is the exception, as it is
-  // in the plan view: a route between things has no square of ground to hoard off.
-  const wip = state.backlog.filter((it) => it.status === 'committed' && it.started
-    && !it.enhancesId && it.category !== 'path');
-  const underWay = new Set(wip.map((i) => i.id));
-  const onPark = [...live, ...wip];
-
-  const encs = onPark.filter((i) => i.category === 'enclosure');
-  const encIds = new Set(encs.map((e) => e.id));
-  const loose = onPark.filter((i) => i.category === 'amenity'
-    || (i.category === 'flora' && !i.enclosureId)
-    // An animal whose habitat is not on the park yet has nowhere to stand, so it gets its own site
-    // rather than vanishing - the same as in the plan view.
-    || (i.category === 'exhibit' && !encIds.has(i.enclosureId ?? '')));
+  const encs = standing.filter((s) => s.item.category === 'enclosure').map((s) => s.item);
+  const loose = standing.filter((s) => s.item.category !== 'enclosure').map((s) => s.item);
+  const roomFor = new Map(standing.map((s) => [s.item.id, s]));
 
   // How busy the zoo is, on the same terms the park view uses: the lot fills with what is open to
   // visit, so the two views never disagree about how many cars turned up.
@@ -178,13 +162,9 @@ function build(state: ZooGameState, targetH: number) {
 
   // Positions: the item's own spot if it has one, otherwise the same automatic layout the park uses,
   // so the two views never disagree about where anything is.
-  const sizeOf = (it: BacklogItem): { w: number; h: number } =>
-    it.category === 'enclosure' ? ENCLOSURE_SIZE[it.enclosureSize ?? 'medium'] : footprintFor(it);
-  const auto = autoLayout([...encs, ...loose].map((it) => ({ id: it.id, ...sizeOf(it) })));
-  const posOf = (it: BacklogItem): Pt => {
-    const size = sizeOf(it);
-    return insidePark(size, it.pos ?? auto.get(it.id) ?? { x: PAD, y: PAD });
-  };
+  const sizeOf = (it: BacklogItem): { w: number; h: number } => roomFor.get(it.id)?.size ?? groundSize(it);
+  const auto = parkPositions(standing);
+  const posOf = (it: BacklogItem): Pt => restingPlace(it, sizeOf(it), auto);
 
   const pieces: Piece[] = [];
   const push = (z: number, el: React.ReactNode) => pieces.push({ z, el });
@@ -328,7 +308,7 @@ function build(state: ZooGameState, targetH: number) {
     for (const [i, f] of enclosureFlora(d).entries()) {
       place(treeProp(f.type), x0 + f.x * size.w, y0 + f.y * size.h, u * 1.2 * (f.s || 1), `ef-${e.id}-${i}`);
     }
-    const plants = onPark.filter((i) => i.category === 'flora' && i.enclosureId === e.id);
+    const plants = roomFor.get(e.id)?.plants ?? [];
     plants.forEach((pl, i) => {
       const t = jitter(i + 1, e.id.length);
       const wx = x0 + 16 + t * Math.max(4, size.w - 32);
@@ -339,7 +319,7 @@ function build(state: ZooGameState, targetH: number) {
     // The animals themselves, in the side view they were drawn in.
     // Including the one being stocked right now, so you watch the lion arrive rather than having it
     // appear the instant somebody presses Done.
-    const stock = onPark.filter((i) => i.category === 'exhibit' && i.enclosureId === e.id);
+    const stock = roomFor.get(e.id)?.animals ?? [];
     stock.forEach((a, ai) => {
       const members = groupMembers(a.design?.group);
       const list = members.length ? members : [{ age: 'adults' as const, scale: AGE_SCALE.adults }];
