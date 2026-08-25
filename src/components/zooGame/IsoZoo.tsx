@@ -1,7 +1,7 @@
 import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './engine';
-import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, pieceByKey } from './design';
+import { ENCLOSURE_SIZE, footprintFor, shade, speciesColors, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, presetFor, pieceByKey, type ItemDesign } from './design';
 import { autoLayout, insidePark, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
@@ -50,7 +50,13 @@ function along(route: Pt[], t: number): Pt {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
 }
 
-const landType = (item: BacklogItem): string | undefined => item.design?.parts.type ?? item.template;
+/** What an item looks like RIGHT NOW: what has been designed, or the draft being designed, or the
+ *  shape it starts as. The thing being built is exactly the thing whose ground, fence and walls you
+ *  are choosing, so a view that reads only the finished design shows you none of your own choices
+ *  until the moment you press Done - which is the opposite of building in place. */
+const working = (item: BacklogItem): ItemDesign => item.design ?? item.draftDesign ?? presetFor(item);
+
+const landType = (item: BacklogItem): string | undefined => working(item).parts.type ?? item.template;
 
 export function IsoZoo({ state, height = 460, className, onPlaceItem, selected, onSelect }: {
   state: ZooGameState;
@@ -279,11 +285,27 @@ function build(state: ZooGameState, targetH: number) {
     const x0 = c.x - size.w / 2, y0 = c.y - size.h / 2, x1 = c.x + size.w / 2, y1 = c.y + size.h / 2;
     const theme = themeOf(e.zone);
     if (underWay.has(e.id)) hoard(e.id, x0, y0, x1, y1);
+
+    // What has been designed so far - including the draft, because a habitat being built is exactly
+    // the one whose ground and fence you are choosing right now. This view painted from the zone's
+    // theme and ignored the design altogether, so picking a ground or a fence changed nothing here
+    // and adding water added nothing. There is no preview: the thing itself is what you look at.
+    const d = working(e);
+    const floor = d?.colors.ground ?? theme.plot;
+    const fence = d?.colors.fence ?? theme.plotBorder;
+
     // The habitat floor, laid flat, before anything stands on it.
-    nodes.push(<polygon key={`floor-${e.id}`} points={ground(x0, y0, x1, y1)} fill={theme.plot} />);
+    nodes.push(<polygon key={`floor-${e.id}`} points={ground(x0, y0, x1, y1)} fill={floor} />);
+
+    // Water lies on the floor, in its own corner of the habitat - held as fractions of the box, so
+    // it stays where it was put whatever size the habitat is.
+    for (const [i, wf] of enclosureWater(d).entries()) {
+      nodes.push(<polygon key={`water-${e.id}-${i}`}
+        points={ground(x0 + wf.x * size.w, y0 + wf.y * size.h, x0 + (wf.x + wf.w) * size.w, y0 + (wf.y + wf.h) * size.h)}
+        fill={d?.colors.water ?? '#5aa9c8'} />);
+    }
 
     // Fencing. The two far sides go down first so the near sides can stand in front of them.
-    const fence = theme.plotBorder;
     const runs: [Pt, Pt, boolean][] = [
       [{ x: x0, y: y0 }, { x: x1, y: y0 }, false],
       [{ x: x0, y: y0 }, { x: x0, y: y1 }, true],
@@ -303,10 +325,10 @@ function build(state: ZooGameState, targetH: number) {
 
     // Planting inside the habitat: both the enclosure's own greenery, which is part of its design
     // and holds its own spot in the box, and any planting item dragged in on top of it.
-    for (const [i, f] of enclosureFlora(e.design ?? { parts: {}, colors: {} }).entries()) {
+    for (const [i, f] of enclosureFlora(d).entries()) {
       place(treeProp(f.type), x0 + f.x * size.w, y0 + f.y * size.h, u * 1.2 * (f.s || 1), `ef-${e.id}-${i}`);
     }
-    const plants = live.filter((i) => i.category === 'flora' && i.enclosureId === e.id);
+    const plants = onPark.filter((i) => i.category === 'flora' && i.enclosureId === e.id);
     plants.forEach((pl, i) => {
       const t = jitter(i + 1, e.id.length);
       const wx = x0 + 16 + t * Math.max(4, size.w - 32);
@@ -444,7 +466,8 @@ function build(state: ZooGameState, targetH: number) {
     // not - a zoo can offer a kind of building nobody has drawn yet, and it should still appear.
     const special = amenityProp(it);
     if (special) { place(special, c.x, c.y, u * 0.85, `am-${it.id}`); continue; }
-    const kind = it.design?.parts.type ?? it.template ?? '';
+    const wd = working(it);
+    const kind = wd.parts.type ?? it.template ?? '';
     const tile = BUILDING_ART[kind];
     const fw = size.w * 0.66, fh = size.h * 0.66;
     const x0 = c.x - fw / 2, y0 = c.y - fh / 2, x1 = c.x + fw / 2, y1 = c.y + fh / 2;
@@ -466,9 +489,9 @@ function build(state: ZooGameState, targetH: number) {
     }
 
     // No tile: walls, a pitched roof, a door and a window, in the colours it was designed in.
-    const walls = it.design?.colors.walls ?? '#e6ddd0';
-    const roof = it.design?.colors.roof ?? '#b8563f';
-    const door = it.design?.colors.door ?? '#7a5230';
+    const walls = wd.colors.walls ?? '#e6ddd0';
+    const roof = wd.colors.roof ?? '#b8563f';
+    const door = wd.colors.door ?? '#7a5230';
     const wallH = Math.max(5, u * 30);
     const riseH = Math.max(3, u * 17);
     const f = boxFaces(x0, y0, x1, y1, wallH, u);
@@ -589,7 +612,7 @@ function treeProp(type?: string, piece?: string): string {
 
 /** Some amenities are a thing the sheet already has a drawing of, and a drawn bench beats a box. */
 function amenityProp(it: BacklogItem): string | undefined {
-  const t = it.design?.parts.type ?? it.template;
+  const t = working(it).parts.type ?? it.template;
   if (t === 'signpost') return 'signpost';
   if (t === 'stall' || t === 'bench' || t === 'seating') return 'bench';
   if (t === 'fountain') return 'fountain';
