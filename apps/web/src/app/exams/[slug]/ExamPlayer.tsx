@@ -86,6 +86,38 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
   const [practiceRevealed, setPracticeRevealed] = useState(false);
   const [scenarioTab, setScenarioTab] = useState<'question' | 'scenario'>('question');
   const [loading, setLoading] = useState(false);
+  /** How many questions this paper has to choose from. */
+  const [bank, setBank] = useState<number | null>(null);
+  /** What the person sitting it has asked for, if they have asked for anything. */
+  const [choice, setChoice] = useState<boolean | null>(null);
+
+  /** Whether this paper's order is a free choice - which is a narrower question than it looks, and
+   *  the reason the switch is not offered on every paper.
+   *
+   *  It is offered only where re-ordering is PURELY an order, and two things have to hold:
+   *
+   *    the paper asks for its whole bank. A Foundation paper asks all 50 of its 50, so shuffling
+   *    changes nothing but the sequence. The Scrum Master paper asks 40 of 131, so shuffling also
+   *    draws the forty - that is what the paper IS, and "the questions are selected from a larger
+   *    pool and change each time the exam is taken" is printed on it. Offering to switch that off
+   *    would be offering to turn it into a different exam;
+   *
+   *    and it has no scenario. A Practitioner paper's items build on one shared scenario and on one
+   *    another, so jumbling them is not an option, it is a fault.
+   *
+   *  Everything else keeps the behaviour it already had, exactly. */
+  const mayReorder = !exam.scenario && bank !== null && bank <= (exam.total_questions || 0);
+  /** Off unless asked for: a room of people sitting the same paper should get the same paper, and
+   *  question 7 should be question 7 for all of them. */
+  const reorder = choice ?? false;
+
+  useEffect(() => {
+    let alive = true;
+    supabase.from('questions').select('id', { count: 'exact', head: true })
+      .eq('exam_id', exam.id).eq('status', 'published')
+      .then(({ count }) => { if (alive) setBank(count ?? null); });
+    return () => { alive = false; };
+  }, [exam.id, supabase]);
   const [remaining, setRemaining] = useState(0);
   const expiredRef = useRef(false);
 
@@ -124,7 +156,21 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
       .eq('status', 'published')
       .order('sort_order', { ascending: true, nullsFirst: false });
     const raw = (data as Question[]) ?? [];
-    const ordered = exam.shuffle === false ? raw : shuffle(raw);
+    // The order the questions were WRITTEN in, unless somebody asks for them to be jumbled.
+    //
+    // This used to shuffle every time, and there was no way to stop it - which is wrong for the job
+    // these papers actually do. A trainer sits a room of people down in front of the same paper, and
+    // "the answer to question 7" has to mean the same thing to all of them. Re-ordering is a real
+    // thing to want as well, for re-sits and for a candidate practising alone, so it is still here -
+    // it is just asked for now rather than assumed.
+    //
+    // `exam.shuffle === false` is a different question and still wins: it marks a paper whose order
+    // CARRIES MEANING, like the Practitioner scenario papers where the items build on one another.
+    // Those must never be re-ordered, so they are not offered the choice.
+    // Where the order is a free choice, it is the player's. Everywhere else, untouched - the
+    // per-exam flag it always used, so a pool paper still draws a fresh set and a scenario paper
+    // still keeps its sequence.
+    const ordered = mayReorder ? (reorder ? shuffle(raw) : raw) : (exam.shuffle === false ? raw : shuffle(raw));
     const limited = ordered.slice(0, exam.total_questions || ordered.length);
     const init: Record<number, Answer> = {};
     limited.forEach((_, i) => (init[i] = { selected: [], flagged: false }));
@@ -132,7 +178,7 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
     setPracticeRevealed(false); setScenarioTab('question'); expiredRef.current = false;
     if (m === 'exam') setRemaining((exam.duration_minutes || 40) * 60);
     setPhase('playing'); setLoading(false);
-  }, [exam, supabase]);
+  }, [exam, supabase, mayReorder, reorder]);
 
   const q = questions[currentIdx];
   const answer = answers[currentIdx];
@@ -207,6 +253,23 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
               </div>
             ))}
           </div>
+          {/* Asked before the paper is drawn, because it decides what the paper IS. Only offered on
+              a paper whose order is free to change - a scenario paper's items build on one another,
+              and jumbling those would not be an option, it would be a fault. */}
+          {mayReorder && (
+            <label htmlFor="reorder" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', marginBottom: 20, borderRadius: 10, border: `1px solid ${reorder ? c.midTeal : '#E5E7EB'}`, background: reorder ? c.skyTeal : c.white, cursor: 'pointer' }}>
+              <input id="reorder" type="checkbox" checked={reorder} onChange={(e) => setChoice(e.target.checked)}
+                style={{ width: 16, height: 16, marginTop: 2, accentColor: c.midTeal, cursor: 'pointer' }} />
+              <span>
+                <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: c.deepTeal }}>Shuffle the question order</span>
+                <span style={{ display: 'block', fontSize: 12.5, color: c.muted, lineHeight: 1.5, marginTop: 2 }}>
+                  Off, so everyone sitting this paper gets the questions in the same order and
+                  question 7 is question 7 for the whole room. Turn it on for a re-sit, or to
+                  practise without learning the order.
+                </span>
+              </span>
+            </label>
+          )}
           <div style={{ display: 'flex', gap: 12 }}>
             <button onClick={() => start('exam')} disabled={loading} style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}><Timer size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Exam Mode</button>
             <button onClick={() => start('practice')} disabled={loading} style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: `2px solid ${c.deepTeal}`, background: c.white, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}><BookOpen size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Practice Mode</button>
