@@ -104,11 +104,11 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'DECLINE_PROPOSAL':
       return { ...state, declinedProposals: [...(state.declinedProposals ?? []), action.proposalId] };
     case 'ADD_COPY':
-      return addItemCopy(state, action.id, action.piece);
+      return addItemCopy(state, action.id, action.at, action.piece);
     case 'SET_COPY_PIECE':
       return setItemCopyPiece(state, action.id, action.index, action.piece);
     case 'MOVE_COPY':
-      return moveItemCopy(state, action.id, action.index, action.off);
+      return moveItemCopy(state, action.id, action.index, action.pos);
     case 'REMOVE_COPY':
       return removeItemCopy(state, action.id, action.index);
     case 'SET_ROT':
@@ -271,9 +271,9 @@ export function useZooGame(gameSeed?: number) {
   const setSpot = useCallback((id: string, spot: { x: number; y: number }) => dispatch({ type: 'SET_ITEM_SPOT', id, spot }), []);
   const setMemberSpotCb = useCallback((id: string, member: number, spot: { x: number; y: number }) => dispatch({ type: 'SET_MEMBER_SPOT', id, member, spot }), []);
   const setSize = useCallback((id: string, size: { w: number; h: number }) => dispatch({ type: 'SET_ITEM_SIZE', id, size }), []);
-  const addCopy = useCallback((id: string, piece?: string) => dispatch({ type: 'ADD_COPY', id, piece }), []);
+  const addCopy = useCallback((id: string, at: { x: number; y: number }, piece?: string) => dispatch({ type: 'ADD_COPY', id, at, piece }), []);
   const setCopyPiece = useCallback((id: string, index: number, piece: string) => dispatch({ type: 'SET_COPY_PIECE', id, index, piece }), []);
-  const moveCopy = useCallback((id: string, index: number, off: { dx: number; dy: number }) => dispatch({ type: 'MOVE_COPY', id, index, off }), []);
+  const moveCopy = useCallback((id: string, index: number, pos: { x: number; y: number }) => dispatch({ type: 'MOVE_COPY', id, index, pos }), []);
   const removeCopy = useCallback((id: string, index: number) => dispatch({ type: 'REMOVE_COPY', id, index }), []);
   const setRot = useCallback((id: string, rot: number) => dispatch({ type: 'SET_ROT', id, rot }), []);
   const nest = useCallback((id: string, enclosureId: string, spot: { x: number; y: number }) => dispatch({ type: 'NEST_ITEM', id, enclosureId, spot }), []);

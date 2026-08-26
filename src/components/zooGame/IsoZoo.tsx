@@ -621,7 +621,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
         for (const [i, k] of (it.copies ?? []).entries()) {
-          const at = insidePark({ w: 8, h: 8 }, { x: c.x + k.dx, y: c.y + k.dy });
+          const at = insidePark({ w: 8, h: 8 }, { x: k.x, y: k.y });
           const piece = pieceByKey(k.piece);
           plant(treeProp(piece?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`,
             piece?.colors.foliage ?? working(it).colors.foliage);

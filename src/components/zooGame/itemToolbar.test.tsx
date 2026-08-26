@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import type { BacklogItem } from './types';
 import { ItemToolbar } from './ItemToolbar';
 import { TILED_BUILDINGS } from './art/buildingTiles.generated';
@@ -123,4 +123,59 @@ describe('everything the studio offers can be finished', () => {
       expect(isDesignDone(item, satisfy(item))).toBe(true);
     });
   }
+});
+
+describe('planting a tree', () => {
+  const planting = (copies?: { x: number; y: number; piece?: string }[]): BacklogItem => ({
+    id: 'f', name: 'Planting', zone: 'Grounds', category: 'flora', template: 'oak',
+    status: 'committed', started: true, points: 1, acceptance: [], acConfirmed: [], tasks: [],
+    ...(copies ? { copies } : {}),
+  } as unknown as BacklogItem);
+
+  /** The catalogue of kinds, as buttons with the kind's name on the tooltip. */
+  const kindButtons = (c: HTMLElement) =>
+    [...c.querySelectorAll('button')].filter((b) => /^(Oak|Pine|Palm|Blossom|Bare|Bush|Hedge|Rock|Log)/i.test(b.getAttribute('title') ?? ''));
+
+  it('plants the kind that was clicked, rather than changing the one already there', () => {
+    // "I want to click oak and get an oak. I want to click pine and get a pine." The catalogue used
+    // to CHANGE the selected plant, so the only way to get a second tree was a "+" that copied
+    // whatever was selected and then had to be re-chosen.
+    const planted: (string | undefined)[] = [];
+    const changed: ItemDesign[] = [];
+    const { container } = render(
+      <ItemToolbar docked item={planting()} design={{ parts: { type: 'oak' }, colors: {} }}
+        onDesign={(d) => changed.push(d)} onAddPlant={(piece) => planted.push(piece)}
+        onToggleTask={() => {}} onConfirmAc={() => {}} onClose={() => {}} />,
+    );
+    const kinds = kindButtons(container);
+    expect(kinds.length, 'the studio offers no kinds to plant').toBeGreaterThan(1);
+
+    const pine = kinds.find((b) => /^pine/i.test(b.getAttribute('title') ?? ''))!;
+    expect(pine, 'no pine in the catalogue').toBeTruthy();
+    fireEvent.click(pine);
+
+    // one pine planted, and the oak that was already there is untouched
+    expect(planted, 'clicking a kind planted nothing').toHaveLength(1);
+    expect(planted[0]).toMatch(/pine/i);
+    expect(changed, 'clicking a kind changed the item instead of planting one').toHaveLength(0);
+  });
+
+  it('changes one instead, once you pick out the one you mean', () => {
+    // The item itself cannot be taken out, so there has to be some way to say what it is.
+    const planted: (string | undefined)[] = [];
+    const changed: ItemDesign[] = [];
+    const { container } = render(
+      <ItemToolbar docked item={planting([{ x: 260, y: 200, piece: 'pine' }])} design={{ parts: { type: 'oak' }, colors: {} }}
+        onDesign={(d) => changed.push(d)} onAddPlant={(piece) => planted.push(piece)}
+        onSetPlantPiece={() => {}} onToggleTask={() => {}} onConfirmAc={() => {}} onClose={() => {}} />,
+    );
+    // the row of what is planted: the item, then the one extra
+    const row = [...container.querySelectorAll('button')].filter((b) => /the item itself|pick it to change/i.test(b.getAttribute('title') ?? ''));
+    expect(row.length, 'the planted things are not shown').toBe(2);
+
+    fireEvent.click(row[0]);
+    fireEvent.click(kindButtons(container).find((b) => /^palm/i.test(b.getAttribute('title') ?? ''))!);
+    expect(planted, 'picking one out and choosing a kind planted another instead of changing it').toHaveLength(0);
+    expect(changed, 'the item did not change kind').toHaveLength(1);
+  });
 });

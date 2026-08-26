@@ -212,13 +212,15 @@ export interface BacklogItem {
    *  stands from the item itself and, optionally, which piece it is; without one it wears the item's
    *  own design. The first plant is the item itself, at its own position.
    *
-   *  **Beside the item, not at a place on the park.** Most items have never been dragged, so they
-   *  have no `pos` at all and the park lays them out - which means whatever adds a plant from the
-   *  studio, where there is no park to point at, cannot name the spot. Storing the spot got the
-   *  studio a guess: four signposts made, one seen, the other three in a corner behind the lion
-   *  enclosure. An offset needs no guess, and it also means the planting follows the item when the
-   *  item is dragged, instead of being left behind on the grass where it used to stand. */
-  copies?: { dx: number; dy: number; piece?: string }[];
+   *  **Each one is its own tree, at its own place on the park.** They were held as offsets from the
+   *  item for a while, which meant dragging the item dragged the whole planting with it - you could
+   *  not put an oak by the gate and a pine by the water, because they were one thing. Click Oak and
+   *  you get an oak; click Pine and you get a pine, and each stays where you put it.
+   *
+   *  This was an offset because the studio has no park to point at and could not name a spot. It can
+   *  now: where a thing stands is worked out in one place, shared by both views, and the studio asks
+   *  it - see parkModel. */
+  copies?: { x: number; y: number; piece?: string }[];
   /** How far a landscape feature is turned on the park, in degrees clockwise (0 = running across).
    *  Lets a river or a bridge run up and down, or on the diagonal, instead of only side to side. */
   rot?: number;
@@ -444,9 +446,9 @@ export type ZooAction =
   | { type: 'SET_DOR'; dor: string[] }
   | { type: 'DECLINE_PROPOSAL'; proposalId: string }
   /** The new plant stands beside the ones already there; nobody has to say where. */
-  | { type: 'ADD_COPY'; id: string; piece?: string }
+  | { type: 'ADD_COPY'; id: string; at: { x: number; y: number }; piece?: string }
   | { type: 'SET_COPY_PIECE'; id: string; index: number; piece: string }
-  | { type: 'MOVE_COPY'; id: string; index: number; off: { dx: number; dy: number } }
+  | { type: 'MOVE_COPY'; id: string; index: number; pos: { x: number; y: number } }
   | { type: 'REMOVE_COPY'; id: string; index: number }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }
