@@ -1003,11 +1003,19 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
     const type = design.parts.type ?? item.template;
     return [
       { label: 'Choose a plant type', pass: !!design.parts.type },
-      // Landscape is sized on the park, and for a river that is the whole job - it has no colour to
-      // choose, water being water. Without this gate a River arrived Done: a piece of scenery starts
-      // knowing what it is, so "choose a plant type" was already ticked and there was nothing else
-      // to ask. "The river is in the studio but it has been Done already."
-      ...(isLandscapeType(type) ? [{ label: 'Size it on the park', pass: !!item.size }] : []),
+      // Landscape needs a gate of its own, because a river has no colour to choose - water being
+      // water - and "choose a plant type" is ticked from the moment the item exists, so a River
+      // arrived Done before anybody touched it.
+      //
+      // The gate was "size it on the park", and that was wrong twice over. A river's length was
+      // fixed, so there was nothing to size; and sizing is ARRANGING, which is not what the build
+      // gate is about - the card said "Next: build it on the park" for a river that was already
+      // lying on the park, the Build button was offered, and pressing it did nothing at all.
+      //
+      // So it asks the studio, where the Build button is: which of these is it? A river, a stream,
+      // a pond, a fountain, a rockery. `presetFor` sets the TYPE and never the PIECE, so this is
+      // unticked until somebody chooses, and the catalogue that ticks it is right there.
+      ...(isLandscapeType(type) ? [{ label: 'Choose which kind of feature it is', pass: !!design.parts.piece }] : []),
       ...floraColors(type).map((c) => ({
         label: `Colour the ${c.label.toLowerCase()}`, pass: !!design.colors[c.key],
       })),
@@ -1126,7 +1134,11 @@ export function footprintFor(item: BacklogItem): { w: number; h: number } {
   const type = item.design?.parts.type ?? item.template
     ?? (item.category === 'amenity' ? buildingTypeFor(item.name, item.services) : undefined);
   if (item.category === 'flora' && isLandscapeType(type)) {
-    if (type === 'river') return { w: RIVER_LEN, h: item.size?.h ?? landscapeDefaultSize('river').h };
+    // A river STARTS reaching bank to bank, because that is what makes a bridge worth building -
+    // and it was pinned there, so the length handle moved nothing and only the width could change.
+    // Reaching both banks is a good default, not a rule: shorten it and visitors walk round it,
+    // which is a choice somebody is allowed to make.
+    if (type === 'river') return item.size ?? { w: RIVER_LEN, h: landscapeDefaultSize('river').h };
     return item.size ?? landscapeDefaultSize(type);
   }
   return FOOTPRINT[type ?? ''] ?? DEFAULT_FOOTPRINT;

@@ -118,9 +118,23 @@ function outlineOf(shape: string, w: number, h: number): [number, number][] {
 }
 
 /** A patch of the park, in world coordinates. */
-interface Rect { x0: number; y0: number; x1: number; y1: number }
+interface Rect { x0: number; y0: number; x1: number; y1: number; rot?: number }
 
-const within = (r: Rect, p: Pt) => p.x >= r.x0 && p.x <= r.x1 && p.y >= r.y0 && p.y <= r.y1;
+/** Is a point inside a patch of ground - a river, a bridge deck?
+ *
+ *  A turned patch is tested by turning the POINT back, which is the same question asked the easy
+ *  way round. Without it a river laid at an angle stopped visitors in an upright rectangle they
+ *  could not see, and let them paddle across the part of it they could. */
+const within = (r: Rect, p: Pt) => {
+  let { x, y } = p;
+  if (r.rot) {
+    const cx = (r.x0 + r.x1) / 2, cy = (r.y0 + r.y1) / 2, a = (-r.rot * Math.PI) / 180;
+    const dx = x - cx, dy = y - cy;
+    x = cx + dx * Math.cos(a) - dy * Math.sin(a);
+    y = cy + dx * Math.sin(a) + dy * Math.cos(a);
+  }
+  return x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
+};
 
 /** A point some fraction of the way along a chain of points. */
 function along(route: Pt[], t: number): Pt {
@@ -278,6 +292,18 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
    *  projected points. Anything built from those has to be shifted, or it is drawn off the edge of
    *  the picture - which is silent, because a polygon at the wrong coordinates is still a polygon. */
   const shift = (s: string) => s.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
+  /** A patch of ground swung round its own middle. Drawn from four corners rather than two, because
+   *  a turned rectangle is no longer a rectangle in the world - only in its own frame. */
+  const turned = (x0: number, y0: number, x1: number, y1: number, deg: number) => {
+    if (!deg) return ground(x0, y0, x1, y1);
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, a = (deg * Math.PI) / 180;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([px, py]) => {
+      const dx = px - cx, dy = py - cy;
+      const q2 = P(cx + dx * cos - dy * sin, cy + dx * sin + dy * cos);
+      return `${q2.x.toFixed(1)},${q2.y.toFixed(1)}`;
+    }).join(' ');
+  };
   const ground = (x0: number, y0: number, x1: number, y1: number) => shift(groundPoints(...Tbox(x0, y0, x1, y1), u));
 
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((i) => i.zone)]));
@@ -883,19 +909,24 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         // and hung in the air.
         const x0 = Math.max(0, c.x - size.w / 2), x1 = Math.min(CANVAS_W, c.x + size.w / 2);
         const y0 = Math.max(0, c.y - size.h / 2), y1 = Math.min(PLAY_H, c.y + size.h / 2);
+        // ...and the angle it was turned to on the Plan. A river could be swung round there since
+        // the day landscape was resizable, and this view had never heard of it: you turned the
+        // river, looked at the Increment, and it was still lying flat across the park. The seventh
+        // time these two drawings have disagreed about the same piece of state.
+        const spin = it.rot ?? 0;
         if (type === 'bridge') {
           bridge(it.id, x0, y0, x1, y1, primary, secondary);
           // A bridge is the one door through the water, and it is walked across bank to bank.
-          dry.push({ x0, y0, x1, y1 });
+          dry.push({ x0, y0, x1, y1, rot: spin });
           walks.push([{ x: (x0 + x1) / 2, y: y0 - 10 }, { x: (x0 + x1) / 2, y: y1 + 10 }]);
           continue;
         }
-        if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1 });
+        if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1, rot: spin });
         if (type === 'rocks') {
           push(depth(c.x, c.y), outcrop(`land-${it.id}`, c.x, c.y, Math.min(x1 - x0, y1 - y0), primary, it.id.length * 3));
           continue;
         }
-        nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={primary} opacity={0.92} />);
+        nodes.push(<polygon key={`land-${it.id}`} points={turned(x0, y0, x1, y1, spin)} fill={primary} opacity={0.92} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
           place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage));
