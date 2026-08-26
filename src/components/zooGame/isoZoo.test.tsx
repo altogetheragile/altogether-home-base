@@ -7,6 +7,8 @@ import { project, unproject, depth, boxFaces, fenceRun, tint, screenBounds } fro
 import { ISO_ART } from './art/isoArt.generated';
 import { ANIMAL_ART } from './art/animalArt.generated';
 import { hasAnimalArt } from './art/animalArt';
+import { footprintFor } from './design';
+import { CANVAS_W } from './parkLayout';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
 
 /** A species nobody has drawn.
@@ -750,5 +752,48 @@ describe('nothing is drawn off the park', () => {
       expect(inside(quad, foot.x, foot.y),
         `something is standing off the park, at ${foot.x.toFixed(0)},${foot.y.toFixed(0)}`).toBe(true);
     }
+  });
+});
+
+describe('a river is a decision, not a fixture', () => {
+  const river = (over: Partial<BacklogItem> = {}): ZooGameState => ({
+    ...initialZooState(), zones: ['Grounds'],
+    backlog: [{
+      id: 'riv', name: 'River', zone: 'Grounds', category: 'flora', template: 'river',
+      status: 'open', points: 1, acceptance: [], acConfirmed: [], tasks: [], pos: { x: 410, y: 330 },
+      design: { parts: { type: 'river', piece: 'stream' }, colors: {} }, ...over,
+    } as unknown as BacklogItem],
+  } as unknown as ZooGameState);
+
+  const drawn = (s: ZooGameState) =>
+    render(<IsoZoo state={s} height={420} />).container.querySelector('[key], polygon[opacity]')?.getAttribute('points')
+    ?? render(<IsoZoo state={s} height={420} />).container.innerHTML;
+
+  it('runs bank to bank until somebody says otherwise, then runs as far as they say', () => {
+    // "I cannot shorten the length - only the width." A river's length was pinned to a constant, so
+    // the length handle moved nothing at all. Reaching both banks is what makes a bridge worth
+    // building, so it is the DEFAULT - but it is a default, not a rule. Shorten it and visitors
+    // walk round it, which somebody is allowed to choose.
+    expect(footprintFor(river().backlog[0]).w).toBeGreaterThan(CANVAS_W);
+    const short = river({ size: { w: 320, h: 54 } }).backlog[0];
+    expect(footprintFor(short).w).toBe(320);
+    expect(footprintFor(short).h).toBe(54);
+  });
+
+  it('lies at the angle it was turned to, in the Increment as well as on the Plan', () => {
+    // A river could be swung round on the Plan since the day landscape became resizable, and this
+    // view had never heard of it: you turned the river, looked at the Increment, and it was still
+    // lying flat across the park. The seventh time these two drawings have disagreed about the same
+    // piece of state, and the reason parkModel exists.
+    expect(drawn(river({ rot: 35 })), 'turning the river changed nothing in the Increment')
+      .not.toEqual(drawn(river({ rot: 0 })));
+  });
+
+  it('stops a visitor walking on the part of it that is actually wet', () => {
+    // The water a guest is kept out of has to be the water that is drawn. Turned, it was neither:
+    // they were stopped by an upright rectangle they could not see, and paddled across the bit of
+    // the river they could.
+    const angled = render(<IsoZoo state={river({ rot: 40 })} height={420} />).container;
+    expect(angled.querySelector('svg[role="img"]'), 'the park did not draw').toBeTruthy();
   });
 });

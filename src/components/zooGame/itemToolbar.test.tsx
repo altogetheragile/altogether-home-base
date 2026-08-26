@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import type { BacklogItem } from './types';
 import { ItemToolbar } from './ItemToolbar';
-import { BUILDING_TYPES, designCriteria, isDesignDone, floraColors, presetFor, type ItemDesign } from './design';
+import { BUILDING_TYPES, designCriteria, isDesignDone, floraColors, presetFor, piecesFor, applyPiece, type ItemDesign } from './design';
 
 const lion = (): BacklogItem => ({
   id: 'lion', name: 'Lion', zone: 'Big Cats', category: 'exhibit', template: 'lion',
@@ -78,7 +78,11 @@ describe('everything the studio offers can be finished', () => {
     const d: ItemDesign = { parts: { type: item.template ?? "" }, colors: {} };
     // Everything a criterion could ask for. Over-generous on purpose: the question is whether ANY
     // design can pass, not whether this exact one is what a player would build.
-    d.parts = { ...d.parts, sign: 'on', thickness: 'medium', coat: 'common', shape: 'rounded' };
+    // ...including which one of its kind it is, picked from the studio's own catalogue rather than
+    // made up, so the fixture cannot pass with a piece that does not exist.
+    const own = piecesFor(item.template)[0]?.key;
+    d.parts = { ...d.parts, sign: 'on', thickness: 'medium', coat: 'common', shape: 'rounded',
+                ...(own ? { piece: own } : {}) };
     d.colors = { walls: '#fff', roof: '#fff', sign: '#fff', ground: '#fff', fence: '#fff',
                  foliage: '#fff', trunk: '#fff', path: '#fff', water: '#fff' };
     d.group = { males: 1, females: 0, juveniles: 0, cubs: 0 };
@@ -183,17 +187,20 @@ describe('a control has to be a decision', () => {
   });
 
   it('does not hand out a river that is already finished', () => {
-    // What is left when the colour goes. A piece of scenery starts out knowing what it is, so
-    // "choose a plant type" was ticked from the moment the item existed - take the colour away and
-    // a River PBI would be Done before anybody touched it, which is the complaint that was already
-    // made once about this exact item.
+    // What is left when the colour goes. A piece of scenery starts out knowing what it IS - its
+    // type comes from the template - so "choose a plant type" was ticked from the moment the item
+    // existed, and a River PBI would be Done before anybody touched it.
     const untouched = flora('river');
     expect(isDesignDone(untouched, presetFor(untouched)),
       'a river is Done before anybody has done anything to it').toBe(false);
 
-    // What finishes it is the thing a river is actually for: reaching across the park.
-    const stretched = flora('river', { size: { w: 400, h: 46 } });
-    expect(isDesignDone(stretched, presetFor(stretched))).toBe(true);
+    // What finishes it is a decision, made in the studio, where the Build button is. The gate used
+    // to be "size it on the park", and that was wrong twice over: a river's length was pinned so
+    // there was nothing to size, and the card then said "Next: build it on the park" about a river
+    // already lying on the park, with a Build button that did nothing when pressed.
+    const kind = piecesFor('river')[0];
+    expect(kind, 'the studio offers no kinds of water to choose from').toBeTruthy();
+    expect(isDesignDone(untouched, applyPiece(presetFor(untouched), kind))).toBe(true);
   });
 
   it('asks each piece of scenery about the parts it has got', () => {
