@@ -702,6 +702,10 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 /** The free-placement park canvas: a fixed design-sized scene scaled to fit, with each
  *  feature absolutely positioned and draggable. Dragging updates a live local position and
  *  commits to the item on release (so the layout persists). */
+/** A grip you take hold of on the park. Out of the way until you want it - and "until you want it"
+ *  cannot mean hover alone, because a tablet has no hover and this game is largely played on one. */
+const HANDLE = 'absolute z-40 rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow transition-opacity group-hover:opacity-100';
+
 function FreeScene({ features, tool, editable, connectors, selectedConn, newConn, runStyle, justOpened, zoom = 1, building, onOpenBuild, edit, part: partProp, onPart, benched, onStartHere, onPlaceItem, onImprove, improving, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onAddConnector, onUpdateConnector, onSelectConn }: {
   features: Feature[];
   justOpened?: string | null;
@@ -1195,7 +1199,8 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
           // while you were building the bridge. The footprint was always there - it is the same
           // measurement either way - only the grips for it were missing.
           const isLand = (f.kind === 'plot' || f.kind === 'site') && f.item.category === 'flora' && isLandscapeType(landType(f.item));
-          const isRiver = isLand && landType(f.item) === 'river'; // spans the park; no length handle
+          /** The thing you are working on right now - its handles stay out, hover or no hover. */
+          const working = building === f.item.id;
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
@@ -1235,27 +1240,35 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
                   onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onUnnest={onUnnest} onRename={onRename} />
                 : isLand ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
                 : <Plot item={f.item} />}
-              {/* Resize a landscape feature: the right-edge handle sets its length (drag it across the
-                  park), the bottom-edge handle its width - two separate controls. */}
-              {isLand && onSetSize && tool === 'none' && !dragging && (
+              {/* The handles for arranging a landscape feature: length across, width down, and the
+                  turn above it.
+
+                  They used to appear on hover alone, which failed two ways. On a tablet there is no
+                  hover at all, so on the machine this game is mostly played on they could not be
+                  reached; and on a desktop you had to guess they were there before you could find
+                  out they were there - "how do I turn the river? where is the control?". So they
+                  also show whenever the thing is the one you are working on, which is exactly when
+                  you want them and never when you do not. */}
+              {isLand && tool === 'none' && !dragging && (
                 <>
-                  {!isRiver && (
-                  <div onPointerDown={(e) => startResize(e, f, 'len')} title="Drag to lengthen"
-                    className="absolute z-40 h-4 w-4 -translate-y-1/2 cursor-ew-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
-                    style={{ right: -8, top: (f.h - LABEL_H) / 2, touchAction: 'none' }} />
+                  {onSetSize && (
+                    <>
+                      <div onPointerDown={(e) => startResize(e, f, 'len')} title="Drag to make it longer or shorter"
+                        className={cn(HANDLE, 'h-4 w-4 -translate-y-1/2 cursor-ew-resize', working && 'opacity-100')}
+                        style={{ right: -8, top: (f.h - LABEL_H) / 2, touchAction: 'none' }} />
+                      <div onPointerDown={(e) => startResize(e, f, 'wid')} title="Drag to make it wider or narrower"
+                        className={cn(HANDLE, 'h-4 w-4 -translate-x-1/2 cursor-ns-resize', working && 'opacity-100')}
+                        style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
+                    </>
                   )}
-                  <div onPointerDown={(e) => startResize(e, f, 'wid')} title="Drag to widen"
-                    className="absolute z-40 h-4 w-4 -translate-x-1/2 cursor-ns-resize rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100"
-                    style={{ left: '50%', top: (f.h - LABEL_H) - 8, touchAction: 'none' }} />
+                  {onSetRot && (
+                    <div onPointerDown={(e) => startRotate(e, f)} title="Drag to turn it - across, up and down, or diagonally (hold Shift for any angle)"
+                      className={cn(HANDLE, 'flex h-6 w-6 -translate-x-1/2 cursor-grab items-center justify-center active:cursor-grabbing', working && 'opacity-100')}
+                      style={{ left: '50%', top: -16, touchAction: 'none' }}>
+                      <RotateCw className="h-3.5 w-3.5 text-emerald-700" />
+                    </div>
+                  )}
                 </>
-              )}
-              {/* Turn it: across, up and down, or on the diagonal. */}
-              {isLand && onSetRot && tool === 'none' && !dragging && (
-                <div onPointerDown={(e) => startRotate(e, f)} title="Drag to turn it - across, up and down, or diagonally (hold Shift for any angle)"
-                  className="absolute z-40 flex h-5 w-5 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border-2 border-emerald-600 bg-white opacity-0 shadow group-hover:opacity-100 active:cursor-grabbing"
-                  style={{ left: '50%', top: -14, touchAction: 'none' }}>
-                  <RotateCw className="h-3 w-3 text-emerald-700" />
-                </div>
               )}
               {/* Feedback-driven improvement: raise an "Improve" PBI for this LIVE item (self as PO).
                   Nothing to improve about a construction site, and nothing to improve about work

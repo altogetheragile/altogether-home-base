@@ -487,7 +487,10 @@ export function ItemToolbar(props: ItemToolbarProps) {
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />
           ))}
-          <Hint>Drag its edge on the park to size it.</Hint>
+          {/* It said only "size it", so the turn handle went unfound: "how do I turn the river?
+              where is the control?" A control nobody can find is a control nobody has. */}
+          <Hint>On the park: drag the grip on its right to make it longer, the one below it to make
+            it wider, and the one above it to turn it.</Hint>
         </>
       )}
 

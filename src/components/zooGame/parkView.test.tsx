@@ -235,3 +235,48 @@ describe('rock is drawn as rock, not as a shrub', () => {
     expect(isoView(withWater), 'the habitat Water button draws nothing').not.toEqual(isoView(pool));
   });
 });
+
+describe('the grips for arranging a landscape feature', () => {
+  const riverPark = (): ZooGameState => {
+    const base = initialZooState();
+    return { ...base, zones: ['Grounds'], backlog: [
+      item({ id: 'riv', name: 'River', zone: 'Grounds', category: 'flora', template: 'river',
+             status: 'committed', started: true, pos: { x: 410, y: 330 },
+             design: { parts: { type: 'river', piece: 'stream' }, colors: {} } }),
+    ] } as ZooGameState;
+  };
+
+  const grips = (opts: { building?: string } = {}) => {
+    const { container } = render(
+      <ParkView state={riverPark()} large building={opts.building} onSetSize={() => {}} onSetRot={() => {}} onOpenBuild={() => {}} />,
+    );
+    return [...container.querySelectorAll<HTMLElement>('[title]')]
+      .filter((e) => /longer|wider|turn it/i.test(e.getAttribute('title') ?? ''));
+  };
+
+  it('offers a river a length grip, not only a width one', () => {
+    // "I cannot shorten the length - only the width." Half of that was the model pinning a river to
+    // a fixed length; the other half was here, hiding the length grip for a river on purpose,
+    // because back then it always spanned the park. It does not any more.
+    const titles = grips().map((g) => g.getAttribute('title') ?? '');
+    expect(titles.some((t) => /longer/i.test(t)), 'a river has no grip for its length').toBe(true);
+    expect(titles.some((t) => /wider/i.test(t)), 'a river has no grip for its width').toBe(true);
+    expect(titles.some((t) => /turn it/i.test(t)), 'a river has no grip to turn it').toBe(true);
+  });
+
+  it('shows them while you are working on it, rather than only under a hovering mouse', () => {
+    // "How do I turn the river? Where is the control?" It was there, and invisible until hovered -
+    // which on a tablet is never, and this game is largely played on a tablet. A control nobody can
+    // find is a control nobody has.
+    // Class TOKENS, not substrings. `toContain('opacity-100')` passes on the hover-only class
+    // `group-hover:opacity-100`, so the first version of this was satisfied by the very thing it
+    // was written to catch.
+    const shown = (g: Element) => g.className.split(/\s+/).includes('opacity-100');
+    const hidden = (g: Element) => g.className.split(/\s+/).includes('opacity-0');
+    for (const g of grips({ building: 'riv' })) {
+      expect(shown(g), `${g.getAttribute('title')} stays hidden while you are working on it`).toBe(true);
+    }
+    // ...and out of the way the rest of the time.
+    for (const g of grips()) expect(hidden(g), 'a grip is in the way when nobody wants it').toBe(true);
+  });
+});
