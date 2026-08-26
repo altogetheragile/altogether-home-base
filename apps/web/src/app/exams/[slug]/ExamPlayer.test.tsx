@@ -1,9 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { ExamPlayer, type ExamForPlayer } from './ExamPlayer';
 
 // The question bank, in the order it was written. Supabase is mocked so nothing hits the network;
 // the player always gets these rows back, in this order, and what it does with them is the subject.
+/** A matching part: several rows sharing one screen and one set of options. */
+const MATCH = Array.from({ length: 3 }, (_, i) => ({
+  id: `m${i + 1}`, area: 'A', question_number: 1, part: 'A', item_type: 'match',
+  part_instruction: 'For each action in Column 1, select the Principle in Column 2.',
+  question_text: `Action ${i + 1}`, option_a: 'Focus on the Business Need', option_b: 'Deliver on Time',
+  option_c: 'Collaborate', option_d: 'Never Compromise Quality',
+  option_e: '', option_f: '', option_g: '', option_h: '',
+  correct_answer: 'ABCD'[i], reference: `Row ${i + 1} reason. Ref 4.3.${i + 1}, A Principle.`,
+  sort_order: i + 1,
+}));
+
 const BANK = Array.from({ length: 12 }, (_, i) => ({
   id: `q${i + 1}`, area: 'A', question_number: i + 1, part: null, item_type: null, part_instruction: null,
   question_text: `Question ${i + 1}`, option_a: 'One', option_b: 'Two', option_c: 'Three', option_d: 'Four',
@@ -13,14 +24,14 @@ const BANK = Array.from({ length: 12 }, (_, i) => ({
 
 // How many questions the bank holds, which the player counts on mount - it is the difference
 // between a paper that re-orders and one that also draws.
-const { bankSize } = vi.hoisted(() => ({ bankSize: { current: 12 } }));
+const { bankSize, useMatching } = vi.hoisted(() => ({ bankSize: { current: 12 }, useMatching: { on: false } }));
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     from: () => ({
       select: (_cols: string, opts?: { head?: boolean }) => (opts?.head
         // the count query: .eq().eq() then awaited
         ? { eq: () => ({ eq: () => Promise.resolve({ count: bankSize.current }) }) }
-        : { eq: () => ({ eq: () => ({ order: () => Promise.resolve({ data: BANK }) }) }) }),
+        : { eq: () => ({ eq: () => ({ order: () => Promise.resolve({ data: useMatching.on ? MATCH : BANK }) }) }) }),
       insert: vi.fn(),
     }),
     auth: { getUser: () => Promise.resolve({ data: { user: null } }) },
@@ -53,7 +64,7 @@ async function paperOrder(opts: { shuffled?: boolean; exam?: Record<string, unkn
 
 const WRITTEN = BANK.map((q) => q.question_text);
 
-beforeEach(() => { document.body.innerHTML = ''; bankSize.current = 12; });
+beforeEach(() => { cleanup(); bankSize.current = 12; useMatching.on = false; });
 
 describe('the question order is a choice', () => {
   it('gives everybody the same paper unless somebody asks otherwise', async () => {
@@ -69,13 +80,13 @@ describe('the question order is a choice', () => {
     // order - so it is still here. It is asked for now rather than assumed.
     render(<ExamPlayer exam={exam()} />);
     await waitFor(() => expect(screen.getByLabelText(/shuffle the question order/i)).toBeTruthy());
-    document.body.innerHTML = '';
+    cleanup();
 
     // Shuffled, over several sittings, the paper does not always come back in the written order.
     // Asked over several because a shuffle is allowed to land on the written order by chance -
     // once in 12 factorial, but a test that can fail once in a blue moon is a test nobody trusts.
     const runs = [] as string[][];
-    for (let i = 0; i < 6; i += 1) { document.body.innerHTML = ''; runs.push(await paperOrder({ shuffled: true })); }
+    for (let i = 0; i < 6; i += 1) { cleanup(); runs.push(await paperOrder({ shuffled: true })); }
     expect(runs.some((r) => r.join() !== WRITTEN.join()), 'shuffling changed nothing').toBe(true);
     // ...and whatever the order, it is the same twelve questions.
     for (const r of runs) expect([...r].sort()).toEqual([...WRITTEN].sort());
@@ -102,7 +113,7 @@ describe('the question order is a choice', () => {
 
     // ...and it still draws a fresh set, exactly as it did before any of this.
     const runs: string[][] = [];
-    for (let i = 0; i < 6; i += 1) { document.body.innerHTML = ''; runs.push(await paperOrder({ exam: { total_questions: 12 } })); }
+    for (let i = 0; i < 6; i += 1) { cleanup(); runs.push(await paperOrder({ exam: { total_questions: 12 } })); }
     expect(runs.some((r) => r.join() !== WRITTEN.join()), 'the pool paper stopped drawing').toBe(true);
   });
 
@@ -112,5 +123,32 @@ describe('the question order is a choice', () => {
     render(<ExamPlayer exam={exam({ total_questions: 12 })} />);
     await waitFor(() => expect(screen.getByLabelText(/shuffle the question order/i)).toBeTruthy());
     expect((screen.getByLabelText(/shuffle the question order/i) as HTMLInputElement).checked).toBe(false);
+  });
+});
+
+describe('practice mode explains a matching answer', () => {
+  it('shows the reason for each row once it is answered, as it does for every other question type', async () => {
+    // The dot turned green and that was the whole of the teaching. Every other kind of question
+    // shows its reference in practice mode; a matching part showed nothing, so the parts of the
+    // paper that teach by comparison taught the least.
+    // Start from a clean DOM. The tests above render several times inside one test, and a root
+    // left behind makes getBy throw on a duplicate, which surfaces here as a timeout and reads
+    // like the feature is broken when it is not.
+    cleanup();
+    useMatching.on = true; bankSize.current = 3;
+    render(<ExamPlayer exam={exam({ total_questions: 3, scenario: 'A scenario.' })} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /practice mode/i })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /practice mode/i }));
+    await waitFor(() => expect(screen.getByText('Action 1')).toBeTruthy());
+
+    expect(document.body.textContent || '', 'the answer was explained before it was given').not.toContain('Row 1 reason');
+    fireEvent.click(screen.getByLabelText('Row 1, option A'));
+    // Asserted on the document text rather than with getByText: the reason lives in a row that is
+    // added to the table after the state settles, and a getBy inside waitFor reports "unable to
+    // find" on its first poll and never retries far enough to see it.
+    await waitFor(() => expect(document.body.textContent || '',
+      'answering a row explained nothing').toContain('Row 1 reason'));
+    // ...and only for the row that was answered
+    expect(document.body.textContent || '', 'an unanswered row gave its answer away').not.toContain('Row 2 reason');
   });
 });

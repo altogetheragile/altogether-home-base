@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useState, useEffect, useMemo, useCallback, useRef, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { marked } from 'marked';
 import { createClient } from '@/lib/supabase/client';
@@ -467,7 +467,8 @@ function MatchingPart({ items, answers, mode, currentIdx, onSelect, onFocusRow }
             {items.map((it, ri) => {
               const sel = answers[it.globalIndex]?.selected[0]; const correct = it.q.correct_answer; const reveal = mode === 'practice' && !!sel; const isCur = it.globalIndex === currentIdx;
               return (
-                <tr key={it.globalIndex} style={{ background: isCur ? c.skyTeal : 'transparent', borderTop: '1px solid #EEF2F6' }}>
+                <Fragment key={it.globalIndex}>
+                <tr style={{ background: isCur ? c.skyTeal : 'transparent', borderTop: '1px solid #EEF2F6' }}>
                   <td style={{ fontWeight: 700, color: c.muted, fontSize: 13, padding: '10px 6px', verticalAlign: 'top' }}>{ri + 1}</td>
                   <td onClick={() => onFocusRow(it.globalIndex)} style={{ padding: '10px 12px 10px 2px', fontSize: 14, color: c.body, lineHeight: 1.45, cursor: 'pointer', verticalAlign: 'top' }}>{it.q.question_text}</td>
                   {options.map((o) => {
@@ -477,6 +478,21 @@ function MatchingPart({ items, answers, mode, currentIdx, onSelect, onFocusRow }
                     return <td key={o.letter} style={{ textAlign: 'center', padding: '8px 4px', verticalAlign: 'top' }}><button onClick={() => { onFocusRow(it.globalIndex); onSelect(it.globalIndex, o.letter); }} aria-label={`Row ${ri + 1}, option ${o.letter}`} style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${bd}`, background: bg, cursor: 'pointer', padding: 0 }} /></td>;
                   })}
                 </tr>
+                {/* Practice mode explains the answer for every other kind of question and explained
+                    nothing at all for a matching one: the dot turned green and that was the whole of
+                    the teaching. Each answered row gets its reason under itself, because a matching
+                    part is several questions sharing one screen. */}
+                {reveal && it.q.reference && (
+                  <tr>
+                    <td />
+                    <td colSpan={options.length + 1} style={{ padding: '0 12px 10px 2px' }}>
+                      <div style={{ padding: '8px 12px', background: '#F8FAFC', borderLeft: `3px solid ${c.lightTeal}`, borderRadius: 6, fontSize: 12.5, color: c.muted, lineHeight: 1.5 }}>
+                        {it.q.reference}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
           </tbody>
