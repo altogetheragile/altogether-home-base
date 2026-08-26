@@ -4,7 +4,7 @@ import type { BacklogItem } from './types';
 import { ItemToolbar } from './ItemToolbar';
 import { TILED_BUILDINGS } from './art/buildingTiles.generated';
 import { BUILDING_ART } from './art/buildingArt.generated';
-import { BUILDING_TYPES, designCriteria, isDesignDone, type ItemDesign } from './design';
+import { BUILDING_TYPES, designCriteria, isDesignDone, floraColors, presetFor, type ItemDesign } from './design';
 
 const lion = (): BacklogItem => ({
   id: 'lion', name: 'Lion', zone: 'Big Cats', category: 'exhibit', template: 'lion',
@@ -115,7 +115,13 @@ describe('everything the studio offers can be finished', () => {
     }
   });
 
-  for (const item of kinds) {
+  /** ...and everything the player can do to the item OUTSIDE the studio. Not every decision is a
+   *  control on the toolbar: a landscape feature is sized by dragging its edge on the park, and the
+   *  gate reads that off the item rather than the design. The question this whole block asks is
+   *  "can a player finish this", so the fixture has to cover the park as well as the bench. */
+  const built = (item: BacklogItem): BacklogItem => ({ ...item, size: { w: 200, h: 60 } });
+
+  for (const item of kinds.map(built)) {
     it(`can finish a ${item.template ?? item.category}`, () => {
       const criteria = designCriteria(item, satisfy(item));
       const unmeetable = criteria.filter((c) => !c.pass).map((c) => c.label);
@@ -177,5 +183,48 @@ describe('planting a tree', () => {
     fireEvent.click(kindButtons(container).find((b) => /^palm/i.test(b.getAttribute('title') ?? ''))!);
     expect(planted, 'picking one out and choosing a kind planted another instead of changing it').toHaveLength(0);
     expect(changed, 'the item did not change kind').toHaveLength(1);
+  });
+});
+
+describe('a control has to be a decision', () => {
+  const flora = (template: string, over: Partial<BacklogItem> = {}): BacklogItem => ({
+    id: template, name: template, zone: 'Grounds', category: 'flora', template,
+    status: 'committed', started: true, points: 1, acceptance: [], acConfirmed: [], tasks: [],
+    ...over,
+  } as unknown as BacklogItem);
+
+  it('does not ask what colour the water is', () => {
+    // Honoured, unlike the trunk - a river IS drawn in the colour it is given. It still went,
+    // because it is not a decision anybody makes. Water is water, and every control that is not a
+    // decision is one more thing to click before the PBI can be finished. The bank of a pond and
+    // the stone of a fountain stay, because those are choices.
+    expect(floraColors('river')).toEqual([]);
+    expect(floraColors('pond').map((c) => c.label)).toEqual(['Bank']);
+    expect(floraColors('fountain').map((c) => c.label)).toEqual(['Stone']);
+  });
+
+  it('does not hand out a river that is already finished', () => {
+    // What is left when the colour goes. A piece of scenery starts out knowing what it is, so
+    // "choose a plant type" was ticked from the moment the item existed - take the colour away and
+    // a River PBI would be Done before anybody touched it, which is the complaint that was already
+    // made once about this exact item.
+    const untouched = flora('river');
+    expect(isDesignDone(untouched, presetFor(untouched)),
+      'a river is Done before anybody has done anything to it').toBe(false);
+
+    // What finishes it is the thing a river is actually for: reaching across the park.
+    const stretched = flora('river', { size: { w: 400, h: 46 } });
+    expect(isDesignDone(stretched, presetFor(stretched))).toBe(true);
+  });
+
+  it('asks each piece of scenery about the parts it has got', () => {
+    // The gate was hardcoded to "colour the foliage" for every kind of scenery, so a car park was
+    // asked about its foliage. It passed only because 'foliage' happened to be the key behind
+    // whatever the first control was called - one rename away from another stuck Gift Shop.
+    const carpark = flora('carpark', { size: { w: 200, h: 90 } });
+    const labels = designCriteria(carpark, presetFor(carpark)).map((c) => c.label);
+    expect(labels).not.toContain('Colour the foliage');
+    expect(labels).toContain('Colour the tarmac');
+    expect(labels).toContain('Colour the markings');
   });
 });

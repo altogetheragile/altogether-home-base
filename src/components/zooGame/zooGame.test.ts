@@ -1264,20 +1264,41 @@ describe('zoo game: the toolbox', () => {
     expect(sized.backlog.find((i) => i.id === 'lion')!.size).toEqual({ w: 400, h: 40 });
     // The studio names a feature's colours for what they are - a river has water, not "foliage" or
     // a trunk - and shows only the colours it uses.
-    expect(floraColors('river')).toEqual([{ key: 'foliage', label: 'Water' }]);
+    // A river has no colour control at all: water is water, and a control that is not a decision is
+    // just another thing to click before the PBI can be finished. What a river IS is how far it
+    // reaches, so its one build step is sizing it on the park.
+    expect(floraColors('river')).toEqual([]);
     expect(floraColors('carpark').map((c) => c.label)).toEqual(['Tarmac', 'Markings']);
-    expect(floraColors('tree').map((c) => c.label)).toEqual(['Foliage', 'Trunk']);
+    expect(floraColors('tree').map((c) => c.label)).toEqual(['Foliage']);
+
+    // ...and it shows only the colours the Increment can KEEP, which is the harder half. Landscape
+    // is drawn as geometry out of the colours it is given, so both of them land - a bridge really
+    // does get red railings on a light brown deck. Everything else is a drawing off the artwork
+    // sheet, tinted by turning the whole picture at once, and one turn cannot move a trunk away
+    // from its leaves. The trunk control was there and it did nothing: choose a black trunk and the
+    // tree stayed brown. A control that cannot be honoured is worse than a missing one - it teaches
+    // the player that the studio lies.
+    for (const type of FLORA_TYPES) {
+      if (isLandscapeType(type)) continue;
+      expect(floraColors(type).map((c) => c.key), `${type} offers a colour the Increment cannot keep`)
+        .toEqual(['foliage']);
+    }
     // A landscape PBI's plan has no "choose the plant type" step - it is scenery you colour and
     // then size on the park.
     // suggestTasks only reads category + template, both of which a toolbox draft carries.
     const riverPlan = suggestTasks(toolboxDraft(items.find((i) => i.name === 'River')!) as never).map((t) => t.label);
-    // Named for the parts a river actually has, not for a plant's.
-    expect(riverPlan).toEqual(['Colour the water', "Get the PO's sign-off"]);
+    // Named for the work a river actually needs, not for a plant's. Colouring it is not on the list
+    // because water is water; what makes it a river rather than a puddle is how far it reaches.
+    expect(riverPlan).toEqual(['Size it on the park', "Get the PO's sign-off"]);
     expect(riverPlan.some((l) => /plant|foliage/i.test(l))).toBe(false);
     // And a signpost is asked about its sign and its post, not about foliage - it fell through to
     // the planting branch for months because it is filed as flora.
     const signPlan = suggestTasks(toolboxDraft(items.find((i) => i.name === 'Signpost')!) as never).map((t) => t.label);
-    expect(signPlan).toEqual(['Colour the sign', 'Colour the post', "Get the PO's sign-off"]);
+    // No "colour the post": a signpost is drawn off the artwork sheet and tinted whole, so the post
+    // cannot be coloured away from the board. The plan comes from the same list the controls do, so
+    // dropping a control drops the step that asked for it - nothing is left demanding something the
+    // studio cannot do, which is how the Gift Shop got stuck.
+    expect(signPlan).toEqual(['Colour the sign', "Get the PO's sign-off"]);
     // All the landscape sprites differ from each other.
     const shapes = ['river', 'pond', 'rocks', 'entrance', 'carpark', 'hedge', 'fountain'];
     const rendered = shapes.map((t) => JSON.stringify(renderDesign({ category: 'flora' } as never, { parts: { type: t }, colors: { foliage: '#5aa9c8', trunk: '#8a5a2b' } })));

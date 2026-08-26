@@ -222,8 +222,12 @@ export function estimateItem(state: ZooGameState, id: string, points: number): Z
 function floraTasks(item: BacklogItem): string[] {
   const type = item.template;
   const parts = floraColors(type).map((c) => `Colour the ${c.label.toLowerCase()}`);
+  // Landscape is the one sort whose work is not choosing colours: a river is water, and what makes
+  // it a river rather than a puddle is how far it reaches. Without this a river's whole plan was
+  // the Product Owner's sign-off, which is not a plan.
+  const shaped = isLandscapeType(type) ? ['Size it on the park', ...parts] : parts;
   const oneOfMany = floraFamily(type).length > 1 && !isLandscapeType(type) && type !== 'signpost';
-  return oneOfMany ? ['Choose which planting', ...parts] : parts;
+  return oneOfMany ? ['Choose which planting', ...shaped] : shaped;
 }
 
 export function suggestTasks(item: BacklogItem): SprintTask[] {
