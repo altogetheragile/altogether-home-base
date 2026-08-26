@@ -41,10 +41,10 @@ const state = {
     it({ id: 'l2', name: 'Bridge', category: 'flora', template: 'bridge', pos: { x: 300, y: 560 }, size: { w: 74, h: 120 }, design: { parts: { type: 'bridge' }, colors: {} } }),
     it({ id: 'f4', name: 'Signposts', category: 'flora', template: 'signpost', pos: { x: 520, y: 200 },
          design: { parts: { type: 'signpost' }, colors: {} },
-         copies: [{ dx: 34, dy: 0 }, { dx: 0, dy: 34 }, { dx: -34, dy: 0 }] }),
+         copies: [{ x: 364, y: 350 }, { x: 330, y: 384 }, { x: 296, y: 350 }] }),
     it({ id: 'f5', name: 'Orchard', category: 'flora', template: 'tree', pos: { x: 120, y: 330 },
          design: { parts: { type: 'tree' }, colors: {} },
-         copies: [{ dx: 34, dy: 0, piece: 'pine' }, { dx: 0, dy: 34, piece: 'blossom' }, { dx: 34, dy: 34, piece: 'palm' }] }),
+         copies: [{ x: 154, y: 200, piece: 'pine' }, { x: 120, y: 234, piece: 'blossom' }, { x: 154, y: 234, piece: 'palm' }] }),
   ],
   connectors: [
     { id: 'c1', a: { featureId: 'e1', x: 250, y: 210 }, b: { featureId: 'b1', x: 400, y: 470 }, style: 'gravel' },

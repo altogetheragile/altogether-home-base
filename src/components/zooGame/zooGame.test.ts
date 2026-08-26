@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -1749,62 +1749,58 @@ describe('zoo game: refinement is a conversation, and the Developers do the sizi
 });
 
 describe('zoo game: some scenery is a set, not a single thing', () => {
+  // Where a plant goes is worked out by the caller, which knows where on the park the item stands.
+  // Here that is stated plainly, which is the point of the engine taking a place rather than
+  // guessing one: it cannot put a plant somewhere silly, because it does not choose.
+  const at = (x: number, y: number) => ({ x, y });
+
   it('puts down as many as the acceptance criteria need, without new PBIs', () => {
     let s = initialZooState(1);
     const before = s.backlog.length;
-    s = addItemCopy(s, 'signposts');
-    s = addItemCopy(s, 'signposts');
-    s = addItemCopy(s, 'signposts');
+    s = addItemCopy(s, 'signposts', at(200, 300));
+    s = addItemCopy(s, 'signposts', at(240, 300));
+    s = addItemCopy(s, 'signposts', at(280, 300));
     const signs = s.backlog.find((it) => it.id === 'signposts')!;
     expect(signs.copies).toHaveLength(3);
     expect(s.backlog.length).toBe(before); // arranging, not new work - no PBI, no points
     expect(signs.estimate).toBe(initialZooState(1).backlog.find((it) => it.id === 'signposts')!.estimate);
   });
 
-  it('plants from the studio, where there is no position to give it', () => {
-    // The studio is not the park, so a plant added there has nowhere to be put. It stands beside
-    // the last one, which is what somebody would do with the next tree.
-    let s = initialZooState(1);
-    s = addItemCopy(s, 'trees');
-    s = addItemCopy(s, 'trees');
-    const c = s.backlog.find((it) => it.id === 'trees')!.copies!;
-    expect(c).toHaveLength(2);
-    // each one somewhere of its own, and each one next to the item rather than at a place on the park
-    expect(c[0]).not.toEqual(c[1]);
-    for (const p of c) expect(Math.hypot(p.dx, p.dy)).toBeGreaterThan(0);
+  it('gives every plant its own place, so moving one moves only that one', () => {
+    // They were held as offsets from the item, which meant dragging the item dragged the whole
+    // planting with it - you could not put an oak by the gate and a pine by the water, because they
+    // were one thing. Click Oak and you get an oak; click Pine and you get a pine.
+    let s = addItemCopy(initialZooState(1), 'trees', at(100, 100), 'oak');
+    s = addItemCopy(s, 'trees', at(400, 500), 'pine');
+    const before = s.backlog.find((it) => it.id === 'trees')!.copies!;
+    expect(before.map((c) => c.piece)).toEqual(['oak', 'pine']);
+
+    // Move the item itself right across the park: the trees stay where they were put.
+    s = setItemPos(s, 'trees', { x: 700, y: 60 });
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual(before);
+
+    // ...and moving one of them leaves the other alone.
+    s = moveItemCopy(s, 'trees', 0, at(120, 130));
+    const after = s.backlog.find((it) => it.id === 'trees')!.copies!;
+    expect(after[0]).toEqual({ x: 120, y: 130, piece: 'oak' });
+    expect(after[1]).toEqual(before[1]);
   });
 
-  it('stands each plant beside the item itself, wherever that turns out to be', () => {
-    // The fault this replaced: the studio had no park position to work from, so it guessed a fixed
-    // corner. Four signposts were made and one was seen - the other three were behind an enclosure
-    // at the top of the park. An offset cannot land anywhere but next to the item.
-    const s = addItemCopy(addItemCopy(initialZooState(1), 'signposts'), 'signposts');
-    const signs = s.backlog.find((it) => it.id === 'signposts')!;
-    expect(signs.pos).toBeUndefined(); // never dragged: the park decides where it goes
-    for (const c of signs.copies!) expect(Math.abs(c.dx) + Math.abs(c.dy)).toBeLessThan(120);
-  });
-
-  it('keeps a planting beside its item instead of walking off the park', () => {
-    // The fault: plants were laid in a line, each a step further right. With the item near the
-    // right-hand edge - a signpost by the gate - the line ran past the edge, and the park is
-    // clipped, so they were drawn and then cut away. Four made, one seen.
-    let s = initialZooState(1);
-    for (let i = 0; i < 8; i += 1) s = addItemCopy(s, 'signposts');
-    const copies = s.backlog.find((it) => it.id === 'signposts')!.copies!;
-    // Nothing runs away in one direction: as many go left as right, and up as down.
-    expect(copies.filter((c) => c.dx > 0)).toHaveLength(copies.filter((c) => c.dx < 0).length);
-    expect(copies.filter((c) => c.dy > 0)).toHaveLength(copies.filter((c) => c.dy < 0).length);
-    // and the whole planting stays within a plant or two of the item, however many there are
-    const far = Math.max(...copies.map((c) => Math.max(Math.abs(c.dx), Math.abs(c.dy))));
-    expect(far).toBeLessThanOrEqual(40);
-    // no two in the same spot, or eight signposts would look like one
-    expect(new Set(copies.map((c) => `${c.dx},${c.dy}`)).size).toBe(copies.length);
+  it('stands a new plant beside the last, ringing outwards rather than marching off', () => {
+    // The offsets a caller uses to place them. A line walks off the park - which is clipped, so the
+    // plants are drawn and then cut away: four signposts made, two seen.
+    const spots = Array.from({ length: 8 }, (_, i) => copyOffset(i));
+    expect(spots.filter((c) => c.dx > 0)).toHaveLength(spots.filter((c) => c.dx < 0).length);
+    expect(spots.filter((c) => c.dy > 0)).toHaveLength(spots.filter((c) => c.dy < 0).length);
+    // the first eight all stand in the first ring, a plant's width out - near enough to read as one
+    // planting, far enough apart to read as several plants
+    expect(Math.max(...spots.map((c) => Math.max(Math.abs(c.dx), Math.abs(c.dy))))).toBe(COPY_GAP);
+    expect(new Set(spots.map((c) => `${c.dx},${c.dy}`)).size).toBe(spots.length);
   });
 
   it('lets one planting hold more than one kind of thing', () => {
-    // A planting PBI is some planting, not one tree repeated. Three oaks and a bush is a decision.
-    let s = addItemCopy(initialZooState(1), 'trees', 'pine');
-    s = addItemCopy(s, 'trees', 'bush');
+    let s = addItemCopy(initialZooState(1), 'trees', at(100, 100), 'pine');
+    s = addItemCopy(s, 'trees', at(140, 100), 'bush');
     let trees = s.backlog.find((it) => it.id === 'trees')!;
     expect(trees.copies!.map((c) => c.piece)).toEqual(['pine', 'bush']);
 
@@ -1812,22 +1808,18 @@ describe('zoo game: some scenery is a set, not a single thing', () => {
     trees = s.backlog.find((it) => it.id === 'trees')!;
     expect(trees.copies!.map((c) => c.piece)).toEqual(['pine', 'blossom']);
     // and changing one leaves the others alone, including where they stand
-    expect(trees.copies![0].dx).toBe(s.backlog.find((it) => it.id === 'trees')!.copies![0].dx);
+    expect(trees.copies![0]).toEqual({ x: 100, y: 100, piece: 'pine' });
   });
 
   it('leaves a plant with no kind wearing the item\'s own design', () => {
-    // Everything planted before this existed has no piece of its own, and must keep working.
-    const s = addItemCopy(initialZooState(1), 'trees');
+    const s = addItemCopy(initialZooState(1), 'trees', at(200, 200));
     expect(s.backlog.find((it) => it.id === 'trees')!.copies![0].piece).toBeUndefined();
   });
 
-  it('moves and removes them one at a time, leaving the item itself alone', () => {
-    let s = addItemCopy(addItemCopy(initialZooState(1), 'trees'), 'trees');
-    const first = s.backlog.find((it) => it.id === 'trees')!.copies![0];
-    s = moveItemCopy(s, 'trees', 1, { dx: 320, dy: 140 });
-    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([first, { dx: 320, dy: 140 }]);
+  it('removes them one at a time, leaving the item itself alone', () => {
+    let s = addItemCopy(addItemCopy(initialZooState(1), 'trees', at(100, 100)), 'trees', at(300, 100));
     s = removeItemCopy(s, 'trees', 0);
-    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ dx: 320, dy: 140 }]);
+    expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([{ x: 300, y: 100 }]);
     // the item's own placement is not one of the copies, so it survives them all going
     s = removeItemCopy(s, 'trees', 0);
     expect(s.backlog.find((it) => it.id === 'trees')!.copies).toEqual([]);

@@ -405,7 +405,7 @@ describe('the isometric projection', () => {
     const state = { ...base, zones: ['Grounds'], backlog: [
       item({ id: 'orchard', name: 'Orchard', category: 'flora', zone: 'Grounds', template: 'tree',
              pos: { x: 300, y: 300 }, design: { parts: { type: 'tree' }, colors: { foliage: '#4e9146' } },
-             copies: [{ dx: 34, dy: 0, piece: 'blossom' }, { dx: 0, dy: 34, piece: 'pine' }] }),
+             copies: [{ x: 334, y: 300, piece: 'blossom' }, { x: 300, y: 334, piece: 'pine' }] }),
     ] } as ZooGameState;
     const { container } = render(<IsoZoo state={state} height={460} />);
     const filters = [...container.querySelectorAll<SVGElement>('svg svg')]

@@ -712,7 +712,7 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
   onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   onSetRot?: (id: string, rot: number) => void;
-  onMoveCopy?: (id: string, index: number, off: { dx: number; dy: number }) => void;
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
@@ -763,12 +763,13 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
   const restPos = (f: Feature) => restingPlace(f.item, { w: f.w, h: f.h - LABEL_H }, auto);
   const posOf = (f: Feature) => (drag?.id === f.item.id ? drag.pos : restPos(f));
   const canvasH = PLAY_H + PATH_H;
-  /** Where one of an item's extra plants is drawn: beside the item, and never off the park. The
-   *  park is clipped, so a plant past the edge is not half on the grass - it is gone. */
-  const copyPos = (f: Feature, c: { dx: number; dy: number }) => {
-    const at = posOf(f);
-    return { x: clamp(at.x + c.dx, 10, CANVAS_W - 10), y: clamp(at.y + c.dy, 10, canvasH - PATH_H - 10) };
-  };
+  /** Where one of an item's plants is drawn. Its own place on the park - one planting item is
+   *  several trees and they are not a formation, so moving the first does not move the rest. Held
+   *  inside the park, which is clipped: a plant past the edge is not half on the grass, it is gone. */
+  const copyPos = (c: { x: number; y: number }) => ({
+    x: clamp(c.x, 10, CANVAS_W - 10),
+    y: clamp(c.y, 10, canvasH - PATH_H - 10),
+  });
 
   // The visible body box of a feature (the enclosure box / building tile, excluding the name label),
   // used for both its perimeter path and where connectors attach.
@@ -1006,22 +1007,18 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
 
   // Dragging one of an item's extra placements. Same maths as dragging the feature, but it writes
   // back to that copy rather than to the item's own position.
-  const startCopyDrag = (e: ReactPointerEvent, f: Feature, index: number, from: { dx: number; dy: number }) => {
+  const startCopyDrag = (e: ReactPointerEvent, f: Feature, index: number, from: { x: number; y: number }) => {
     if (!onMoveCopy || tool !== 'none') return;
     e.preventDefault(); e.stopPropagation();
     const sc = inner.current ? inner.current.getBoundingClientRect().width / CANVAS_W : scale || 1;
     const sx = e.clientX, sy = e.clientY;
-    // Dragged to a place on the park, kept as a distance from the item: clamp where it lands, then
-    // measure back. Clamping the distance instead would let a plant sit off the edge of the grass.
-    const move = (ev: PointerEvent) => {
-      const at = posOf(f);
-      onMoveCopy(f.item.id, index, {
-        dx: clamp(at.x + from.dx + (ev.clientX - sx) / sc, 8, CANVAS_W - 8) - at.x,
-        dy: clamp(at.y + from.dy + (ev.clientY - sy) / sc, 8, canvasH - PATH_H - 8) - at.y,
-      });
-    };
+    const move = (ev: PointerEvent) => onMoveCopy(f.item.id, index, {
+      x: clamp(from.x + (ev.clientX - sx) / sc, 8, CANVAS_W - 8),
+      y: clamp(from.y + (ev.clientY - sy) / sc, 8, canvasH - PATH_H - 8),
+    });
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
-    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
   };
 
   const selected = connectors.find((c) => c.id === selectedConn) ?? null;
@@ -1267,7 +1264,7 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
           <div key={`${f.item.id}-copy-${i}`}
             onPointerDown={(e) => startCopyDrag(e, f, i, c)}
             className={cn('group absolute z-10 select-none', onMoveCopy ? 'cursor-grab active:cursor-grabbing' : '')}
-            style={{ left: copyPos(f, c).x, top: copyPos(f, c).y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
+            style={{ left: copyPos(c).x, top: copyPos(c).y, transform: 'translate(-50%,-50%)', touchAction: 'none' }}>
             {f.item.category === 'flora' && isLandscapeType(landType(f.item))
               ? <LandscapePlot item={f.item} w={f.w} h={f.h - LABEL_H} rot={f.item.rot ?? 0} />
               : <Plot item={f.item} named={false} design={plantDesign(f.item, c.piece)} />}
@@ -1460,7 +1457,7 @@ interface ParkViewProps {
   view?: 'plan' | 'iso';
   onView?: (v: 'plan' | 'iso') => void;
   /** Extra placements of the same scenery - signposts at the junctions, trees along a path. */
-  onMoveCopy?: (id: string, index: number, off: { dx: number; dy: number }) => void;
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
 }
 

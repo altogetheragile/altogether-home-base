@@ -13,7 +13,7 @@ import { TILED_BUILDINGS } from './art/buildingTiles.generated';
 import { ExplainButton } from './Explain';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Copy, Droplets, Maximize2, Plus, Ruler, Shapes, Sprout, Store, Trash2, X, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, Copy, Droplets, Maximize2, Ruler, Shapes, Sprout, Store, Trash2, X, type LucideIcon } from 'lucide-react';
 import { EYEBROW, FOCUS } from './ui/tokens';
 
 // ============= Building on the canvas =============
@@ -230,12 +230,19 @@ function Planting({ item, design, onDesign, onAddPlant, onSetPlantPiece, onRemov
   onRemovePlant?: (index: number) => void;
 }) {
   const extra = item.copies ?? [];
-  const [chosen, setChosen] = useState(0);
-  const here = Math.min(chosen, extra.length);
+  // Nothing picked out to start with, and that is what makes the catalogue additive: click Oak and
+  // an oak is planted. Pick one of the plants you already have and the next click changes THAT one
+  // instead, which is the only way to correct the item's own kind - it cannot be taken out, being
+  // the item. Two jobs, one row of buttons, told apart by whether anything is picked out.
+  const [chosen, setChosen] = useState<number | null>(null);
   const own = pieceOf(design, item.template);
   const plants = [own, ...extra.map((c) => pieceByKey(c.piece) ?? own)];
+  const here = chosen === null ? null : Math.min(chosen, plants.length - 1);
   const pick = (p: FloraPiece) => {
-    if (here === 0) onDesign(applyPiece(design, p));
+    // Nowhere to plant into - no park to put it on - so the catalogue goes back to saying what this
+    // item is, which is all it can usefully mean.
+    if (here === null && onAddPlant) { onAddPlant(p.key); return; }
+    if (here === null || here === 0) onDesign(applyPiece(design, p));
     else onSetPlantPiece?.(here - 1, p.key);
   };
   const many = plants.length > 1;
@@ -246,14 +253,15 @@ function Planting({ item, design, onDesign, onAddPlant, onSetPlantPiece, onRemov
           <span className={cn(EYEBROW, 'mr-0.5 text-muted-foreground')}>{many ? `Planting · ${plants.length}` : 'Planting'}</span>
           {plants.map((p, i) => (
             <span key={i} className="relative">
-              <button type="button" onClick={() => setChosen(i)} aria-pressed={i === here}
-                title={i === 0 ? `${p?.label ?? 'This'} - the item itself` : p?.label}
+              <button type="button" onClick={() => setChosen(here === i ? null : i)} aria-pressed={i === here}
+                title={i === 0 ? `${p?.label ?? 'This'} - the item itself. Pick it to change what it is.`
+                  : `${p?.label ?? 'This one'} - pick it to change what it is`}
                 className={cn(FOCUS, 'flex h-9 w-9 items-center justify-center rounded-md border transition-colors',
                   i === here ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
                 {p && <PieceSprite piece={p} />}
               </button>
               {i > 0 && onRemovePlant && (
-                <button type="button" onClick={() => { onRemovePlant(i - 1); setChosen(0); }}
+                <button type="button" onClick={() => { onRemovePlant(i - 1); setChosen(null); }}
                   title="Take this one out" aria-label={`Take out plant ${i + 1}`}
                   className={cn(FOCUS, 'absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-border bg-background text-muted-foreground hover:text-foreground')}>
                   <X className="h-2.5 w-2.5" />
@@ -261,32 +269,40 @@ function Planting({ item, design, onDesign, onAddPlant, onSetPlantPiece, onRemov
               )}
             </span>
           ))}
-          {/* Planting one selects it, because the next thing anybody does is say what it is. */}
-          <button type="button" onClick={() => { onAddPlant(plants[here]?.key); setChosen(plants.length); }}
-            title="Plant another - then choose what it is" aria-label="Plant another"
-            className={cn(FOCUS, 'flex h-9 w-9 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground hover:border-primary/60 hover:text-foreground')}>
-            <Plus className="h-3.5 w-3.5" />
-          </button>
         </div>
       )}
-      <Catalogue item={item} design={design} onPick={pick} />
+      {onAddPlant && (
+      <p className="text-[11px] leading-snug text-muted-foreground">
+        {here === null
+          ? 'Click a kind to plant one. Each is its own tree, on its own spot - drag them apart on the park.'
+          : `Click a kind to change ${here === 0 ? 'this item' : 'that one'}. Click it again to go back to planting.`}
+      </p>
+      )}
+      <Catalogue item={item} design={design} onPick={pick}
+        current={here === null && onAddPlant ? null : plants[here ?? 0]?.key} />
     </div>
   );
 }
 
 /** The ready pieces for this kind of scenery, each drawn as itself. You pick the thing rather than
  *  a colour for a shape - and the colours come with it, already right. */
-function Catalogue({ item, design, onPick }: { item: BacklogItem; design: ItemDesign; onPick: (p: FloraPiece) => void }) {
+function Catalogue({ item, design, onPick, current }: {
+  item: BacklogItem; design: ItemDesign; onPick: (p: FloraPiece) => void;
+  /** Which kind to show as the one in force. Left out, it is the item's own kind. Planting passes
+   *  null while the catalogue is planting rather than changing - nothing is "in force" then, and
+   *  marking one would say the click is going to change that one. */
+  current?: string | null;
+}) {
   const pieces = piecesFor(design.parts.type ?? item.template);
-  const current = pieceOf(design, item.template)?.key;
+  const inForce = current === undefined ? pieceOf(design, item.template)?.key : current;
   if (pieces.length < 2) return null;
   return (
     <div className="flex basis-full flex-wrap gap-1">
       {pieces.map((p) => (
-        <button key={p.key} type="button" onClick={() => onPick(p)} aria-pressed={p.key === current}
+        <button key={p.key} type="button" onClick={() => onPick(p)} aria-pressed={p.key === inForce}
           title={p.label}
           className={cn(FOCUS, 'flex w-[3.9rem] flex-col items-center gap-0.5 rounded-lg border px-1 pb-1 pt-1.5 text-[11px] transition-colors',
-            p.key === current ? 'border-primary bg-primary/10 font-semibold text-primary' : 'border-border text-muted-foreground hover:border-primary/60 hover:text-foreground')}>
+            p.key === inForce ? 'border-primary bg-primary/10 font-semibold text-primary' : 'border-border text-muted-foreground hover:border-primary/60 hover:text-foreground')}>
           <PieceSprite piece={p} />
           <span className="max-w-full truncate">{p.label}</span>
         </button>

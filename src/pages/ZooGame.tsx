@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
+import { standingOnPark, parkPositions, restingPlace, groundSize } from '@/components/zooGame/parkModel';
+import { copyOffset } from '@/components/zooGame/engine';
+import { insidePark } from '@/components/zooGame/parkLayout';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
 import { useZooProductOwner } from '@/components/zooGame/useZooProductOwner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -123,7 +126,19 @@ export default function ZooGame() {
     // against the acceptance criteria is the thing that was built rather than the drawing of it.
     onInspect: (id: string) => { setBuildingId(id); setParkView('iso'); setParkTab('park'); },
     // Something of the same kind you have already built, to start from rather than begin again.
-    onAddPlant: (id: string, piece?: string) => addCopy(id, piece),
+    // Where the new plant goes. The studio has no park to point at, so it asks the one place that
+    // knows where a thing stands - the same answer both views draw from - and stands the plant
+    // beside it. From that moment it is its own tree at its own place: click Oak and get an oak,
+    // click Pine and get a pine, and moving one moves only that one.
+    onAddPlant: (id: string, piece?: string) => {
+      const item = state.backlog.find((i) => i.id === id);
+      if (!item) return;
+      const standing = standingOnPark(state);
+      const auto = parkPositions(standing);
+      const here = restingPlace(item, groundSize(item), auto);
+      const off = copyOffset((item.copies ?? []).length);
+      addCopy(id, insidePark({ w: 24, h: 24 }, { x: here.x + off.dx, y: here.y + off.dy }), piece);
+    },
     onSetPlantPiece: setCopyPiece,
     onRemovePlant: removeCopy,
     copySources: (item: { id: string; category: string }) => state.backlog
