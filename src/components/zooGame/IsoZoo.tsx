@@ -391,6 +391,53 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
   };
 
   // ---- enclosures ------------------------------------------------------------------------
+  // ---- rock ----------------------------------------------------------------------------------
+  //
+  // A rocky outcrop, drawn rather than found. There is no rock on the artwork sheet, and rocks were
+  // getting whatever the sheet handed back for a name it did not know - which was a tree. So a
+  // boulder in a big cat enclosure came out as a white tree, and out on the grounds a Boulders item
+  // was a flat grey rectangle lying on the grass.
+  //
+  // Each boulder is a ring of points at a height, its facets dropped to the ground and shaded by
+  // which way they turn, with a paler cap on top. The ring is wobbled by `jitter`, which is a hash
+  // rather than a random number, so a rock has its own shape and keeps it - the same rock every
+  // time the park is drawn, which matters when the park is redrawn on every tick.
+  const boulder = (key: string, cx: number, cy: number, r: number, h: number, hex: string, seed: number) => {
+    const N = 6;
+    const ring = Array.from({ length: N }, (_, i) => {
+      const a = (i / N) * Math.PI * 2 + 0.35;
+      const wob = 0.74 + jitter(seed + i, 5) * 0.5;
+      return { x: cx + Math.cos(a) * r * wob, y: cy + Math.sin(a) * r * wob };
+    });
+    const cap = ring.map((q2) => { const s2 = P(q2.x, q2.y); return { x: s2.x, y: s2.y - h }; });
+    const foot = ring.map((q2) => P(q2.x, q2.y));
+    const pts = (ps: Pt[]) => ps.map((q2) => `${q2.x.toFixed(1)},${q2.y.toFixed(1)}`).join(' ');
+    return (
+      <g key={key}>
+        {ring.map((_, i) => {
+          const j = (i + 1) % N;
+          const face = Math.sin((i / N) * Math.PI * 2 + 0.35);
+          return <polygon key={i} points={pts([cap[i], cap[j], foot[j], foot[i]])}
+            fill={shade(hex, -14 - Math.round(20 * (0.5 + 0.5 * face)))} />;
+        })}
+        <polygon points={pts(cap)} fill={shade(hex, 16)} />
+      </g>
+    );
+  };
+
+  /** An outcrop: a big one with two or three smaller ones tumbled round it. One boulder alone reads
+   *  as a pebble somebody dropped; a group reads as rock. */
+  const outcrop = (key: string, cx: number, cy: number, w: number, hex: string, seed: number) => {
+    const r = Math.max(2.5, w * 0.3);
+    const round = [[0, 0, 1], [-0.85, 0.34, 0.6], [0.78, 0.42, 0.52], [0.1, -0.66, 0.44]];
+    return (
+      <g key={key}>
+        {round.map(([dx, dy, k], i) => boulder(`${key}-${i}`,
+          cx + dx * r * 1.15, cy + dy * r * 1.15, r * k, Math.max(1.5, u * 15 * k), hex, seed + i * 7))}
+      </g>
+    );
+  };
+
   for (const e of encs) {
     const c = posOf(e), size = sizeOf(e);
     const x0 = c.x - size.w / 2, y0 = c.y - size.h / 2, x1 = c.x + size.w / 2, y1 = c.y + size.h / 2;
@@ -468,7 +515,13 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       // In the colours it was given. A habitat's own planting is coloured plant by plant in the
       // studio and arrived here in the artwork's green whatever anybody chose - so the control was
       // there, and doing nothing.
-      place(treeProp(f.type), x0 + f.x * size.w, y0 + f.y * size.h, u * 1.2 * (f.s || 1),
+      const fx = x0 + f.x * size.w, fy = y0 + f.y * size.h;
+      if (f.type === 'rocks') {
+        push(depth(fx, fy), outcrop(`ef-${e.id}-${i}`, fx, fy, 26 * (f.s || 1),
+          f.foliage ?? floraDefaultColors('rocks').foliage, i * 11 + e.id.length));
+        continue;
+      }
+      place(treeProp(f.type), fx, fy, u * 1.2 * (f.s || 1),
         `ef-${e.id}-${i}`, undefined, foliageFilter(f.foliage ?? floraDefaultColors(f.type).foliage));
     }
     const plants = roomFor.get(e.id)?.plants ?? [];
@@ -820,6 +873,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           continue;
         }
         if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1 });
+        if (type === 'rocks') {
+          push(depth(c.x, c.y), outcrop(`land-${it.id}`, c.x, c.y, Math.min(x1 - x0, y1 - y0), primary, it.id.length * 3));
+          continue;
+        }
         nodes.push(<polygon key={`land-${it.id}`} points={ground(x0, y0, x1, y1)} fill={primary} opacity={0.92} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
