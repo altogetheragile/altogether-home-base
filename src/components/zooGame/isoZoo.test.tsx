@@ -686,3 +686,69 @@ describe('the isometric projection', () => {
     }
   });
 });
+
+describe('nothing is drawn off the park', () => {
+  const item = (over: Partial<BacklogItem>): BacklogItem => ({
+    id: over.id ?? 'x', name: 'Thing', zone: 'Big Cats', category: 'enclosure',
+    status: 'open', points: 3, acceptance: [], acConfirmed: [], tasks: [],
+    ...over,
+  } as BacklogItem);
+
+  /** A habitat whose planting has been given a spot outside its own fence.
+   *
+   *  Not a contrived number - nothing validates these fractions. They come from a drag, and from
+   *  saved games written by every version of this that has ever run, and `x: 4` means "four times
+   *  the width of the habitat along from its left edge", which is out in the white beside the park.
+   *  Every other route into this has been closed one at a time; this is the one still open. */
+  const strayPlanting = (): ZooGameState => ({
+    ...initialZooState(), zones: ['Big Cats'],
+    backlog: [item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'medium', pos: { x: 300, y: 240 },
+      design: { parts: {}, colors: { ground: '#c9a86a', fence: '#7a5230' },
+        flora: [{ x: 4, y: 4.5, s: 1, type: 'tree' }, { x: -3, y: -2, s: 1, type: 'tree' }] } })],
+  } as unknown as ZooGameState);
+
+  /** The land, as a quadrilateral on screen: grass and tarmac together, read off the drawing.
+   *
+   *  It has to be the land and not the picture. The picture is a rectangle and the land is a diamond
+   *  inside it, so the white beside the park is INSIDE the viewBox - which is exactly where the
+   *  reported tree was standing. A test that only asks "is it in the picture" says yes to the bug. */
+  function land(scene: Element): { x: number; y: number }[] {
+    const pts = [...scene.querySelectorAll('[data-land]')]
+      .flatMap((p) => (p.getAttribute('points') ?? '').split(' ')
+        .map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; }));
+    expect(pts.length, 'the park draws no ground').toBeGreaterThan(3);
+    // Grass and tarmac together make one parallelogram, so its four corners are the four extremes.
+    const pick = (f: (p: { x: number; y: number }) => number) => pts.reduce((a, b) => (f(b) < f(a) ? b : a));
+    return [pick((p) => p.y), pick((p) => -p.x), pick((p) => -p.y), pick((p) => p.x)];
+  }
+
+  const inside = (poly: { x: number; y: number }[], x: number, y: number) => {
+    let hit = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const a = poly[i], b = poly[j];
+      if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
+    }
+    return hit;
+  };
+
+  it('stands every drawing ON THE LAND, wherever it was told to stand', () => {
+    // "There are random objects off the park" has now been reported four times, and it was a
+    // different caller every time: plants marching off in a line, a bridge deck drawn from
+    // unshifted points, guests and cars sharing a React key. Each was fixed where it happened and
+    // the next arrived by a route nobody had thought of - so the rule lives at the one place every
+    // prop in the scene is drawn, and this asks the picture rather than the caller.
+    const { container } = render(<IsoZoo state={strayPlanting()} height={460} />);
+    const scene = container.querySelector('svg[role="img"]')!;
+    const quad = land(scene);
+
+    for (const p of [...scene.querySelectorAll('svg')]) {
+      const x = Number(p.getAttribute('x')), y = Number(p.getAttribute('y'));
+      const w = Number(p.getAttribute('width')), h = Number(p.getAttribute('height'));
+      // What stands on the ground is the FOOT, not the box: a tree's leaves are over the grass
+      // beside it and a person's head is over the path behind them, and both are meant to be.
+      const foot = { x: x + w / 2, y: y + h - w * 0.29 };
+      expect(inside(quad, foot.x, foot.y),
+        `something is standing off the park, at ${foot.x.toFixed(0)},${foot.y.toFixed(0)}`).toBe(true);
+    }
+  });
+});

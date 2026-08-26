@@ -294,9 +294,27 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
 
   /** A licensed prop, standing on a world point. `k` scales it; props are drawn feet-down, so the
    *  drawing hangs above the point it stands on. */
-  const place = (name: string, wx: number, wy: number, k: number, key: string, tintTo?: string, filter?: string) => {
+  /** Stand a drawing from the artwork sheet on the park.
+   *
+   *  Held to the land, and that is the point of it being one function. "There are random objects off
+   *  the park" has been reported four times, and it has been a different caller every time: plants
+   *  marching off in a line, a bridge deck drawn from unshifted points, guests and cars sharing a
+   *  React key so one was drawn where another belonged. Each was fixed where it happened, and the
+   *  next one arrived by a route nobody had thought of.
+   *
+   *  Every prop in the scene - trees, people, cars, benches - comes through here, so here is where
+   *  the rule belongs: nothing is drawn off the land. The land is the whole world, grass AND tarmac,
+   *  because a visitor on the promenade and a car in the lot are both standing somewhere real; it is
+   *  only outside THAT that there is nothing to stand on.
+   *
+   *  It does not make the arithmetic right - a tree held at the edge is still a tree in the wrong
+   *  place. It makes it stay in the picture, where it can be seen to be wrong, instead of floating
+   *  in the white beside the park looking like the game has come apart. */
+  const onLand = (v: number, hi: number) => Math.max(0, Math.min(hi, v));
+  const place = (name: string, rawX: number, rawY: number, k: number, key: string, tintTo?: string, filter?: string) => {
     const p = prop(name);
     if (!p) return;
+    const wx = onLand(rawX, CANVAS_W), wy = onLand(rawY, worldH);
     const at = P(wx, wy);
     const w = p.w * k, h = p.h * k;
     const body = p.tint && tintTo ? tint(p.body, tintTo, p.tint) : p.body;
@@ -319,9 +337,9 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
   nodes.push(
     <polygon key="edge-l" points={`${P(0, worldH).x},${P(0, worldH).y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cFL.x},${cFL.y + EDGE}`} fill={shade(tarmac, -40)} />,
     <polygon key="edge-r" points={`${cR.x},${cR.y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cR.x},${cR.y + EDGE}`} fill={shade(grass, -52)} />,
-    <polygon key="grass" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={grass} />,
+    <polygon key="grass" data-land="grass" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={grass} />,
     <polygon key="prom" points={ground(0, promY, CANVAS_W, PLAY_H)} fill="#e7d6a8" />,
-    <polygon key="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
+    <polygon key="apron" data-land="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
   );
 
   // A bay's x,y is its CENTRE, the same as a parked car's - so the markings line up with what is
