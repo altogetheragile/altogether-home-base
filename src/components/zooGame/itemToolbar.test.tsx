@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import type { BacklogItem } from './types';
 import { ItemToolbar } from './ItemToolbar';
-import { TILED_BUILDINGS } from './art/buildingTiles.generated';
-import { BUILDING_ART } from './art/buildingArt.generated';
 import { BUILDING_TYPES, designCriteria, isDesignDone, floraColors, presetFor, type ItemDesign } from './design';
 
 const lion = (): BacklogItem => ({
@@ -52,25 +50,19 @@ describe('colours a building can actually wear', () => {
       onDesign={() => {}} onToggleTask={() => {}} onConfirmAc={() => {}} onClose={() => {}} />,
   ).container.textContent ?? '';
 
-  it('does not offer to repaint a building that came with its own artwork', () => {
-    // A tile is a picture and cannot be repainted. Four colour controls that quietly do nothing are
-    // worse than none - and the reason is said, because a control that vanishes without explanation
-    // is its own small mystery.
-    const drawn = toolbarFor(TILED_BUILDINGS[0]);
-    expect(drawn.toLowerCase()).toContain('comes with its own artwork');
-    expect(drawn).not.toContain('Walls');
-  });
-
-  it('still offers them for a kind that is built out of boxes', () => {
-    const undrawn = BUILDING_TYPES.find((t) => !TILED_BUILDINGS.includes(t));
-    expect(undrawn, 'every building kind is drawn - this test has nothing left to check').toBeTruthy();
-    expect(toolbarFor(undrawn!)).toContain('Walls');
-  });
-
-  it('knows exactly which kinds are drawn', () => {
-    // Two generated lists, one source. If the tiles change and the names do not, the studio starts
-    // offering colours that do nothing again - which is the whole thing this was fixing.
-    expect([...TILED_BUILDINGS].sort()).toEqual(Object.keys(BUILDING_ART).sort());
+  it('offers the colours for every kind, because every kind is drawn from them', () => {
+    // This test used to say the opposite. Four kinds arrived as photographs out of a city set,
+    // could not be repainted, and had their colour controls hidden with an explanation in place of
+    // them. They are drawn now - walls, roof, door, a board over the front - so the paint lands on
+    // all of them and there is nothing left to hide or explain.
+    for (const type of BUILDING_TYPES) {
+      const bar = toolbarFor(type);
+      for (const control of ['Walls', 'Roof', 'Door', 'Sign']) {
+        expect(bar, `a ${type} cannot be given ${control.toLowerCase()}`).toContain(control);
+      }
+      expect(bar.toLowerCase(), `a ${type} still claims to come with its own artwork`)
+        .not.toContain('comes with its own artwork');
+    }
   });
 });
 
@@ -101,19 +93,6 @@ describe('everything the studio offers can be finished', () => {
     { id: 'f', name: 'Planting', category: 'flora', template: 'tree' } as BacklogItem,
     { id: 'l', name: 'River', category: 'flora', template: 'river' } as BacklogItem,
   ];
-
-  it('can finish a building that cannot be coloured', () => {
-    // The one that matters, and the one the test above does NOT catch: a design built from ONLY
-    // what the studio still offers for a drawn building - its kind and its sign, no colours at all -
-    // has to be enough. Handing the criteria every colour proves nothing when the point is that the
-    // player can no longer choose any.
-    for (const type of TILED_BUILDINGS) {
-      const item = { id: type, name: type, category: 'amenity', template: type } as BacklogItem;
-      const whatTheStudioCanSet: ItemDesign = { parts: { type, sign: 'on' }, colors: {} };
-      expect(isDesignDone(item, whatTheStudioCanSet),
-        `a ${type} cannot be finished with the controls the studio shows`).toBe(true);
-    }
-  });
 
   /** ...and everything the player can do to the item OUTSIDE the studio. Not every decision is a
    *  control on the toolbar: a landscape feature is sized by dragging its edge on the park, and the

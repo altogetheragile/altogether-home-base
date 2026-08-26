@@ -1,7 +1,6 @@
 import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { TILED_BUILDINGS } from './art/buildingTiles.generated';
 import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
@@ -247,12 +246,7 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
     // Stocking, not modelling: how many and of what ages, and whether the habitat can hold them.
     ? ['Decide how many, and of what ages', 'Check they fit the habitat', 'Choose the coat']
     : item.category === 'amenity'
-      // A building that comes with its own artwork is not coloured in, so the plan does not say to
-      // colour it. Asking for work the game has taken the controls away for is how a card ends up
-      // built, placed, accepted and unfinishable.
-      ? (TILED_BUILDINGS.includes(item.template ?? '')
-        ? [`Choose what kind of ${item.name.toLowerCase()} it is`, 'Put up a sign']
-        : [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign'])
+      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
       // Scenery: named for the parts THIS thing actually has. A signpost was being asked to choose
       // a plant type and colour its foliage, because everything that was not landscape fell through
       // to the planting branch - and a signpost is not planting, whatever the category says.

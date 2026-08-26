@@ -11,10 +11,9 @@ import { animalArtFor, coatFilter } from './art/animalArt';
 import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
-  roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, fenceRun as fenceRunOf, jitter, COS, TILE_SPREAD, footprintWidth, type Pt,
+  roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, fenceRun as fenceRunOf, jitter, COS, type Pt,
 } from './art/iso';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
-import { BUILDING_ART } from './art/buildingArt.generated';
 
 /** The zoo, seen from the corner.
  *
@@ -31,6 +30,20 @@ import { BUILDING_ART } from './art/buildingArt.generated';
  *  Everything is sorted back to front before it is drawn, which is the whole trick of a view like
  *  this: get the order wrong and a lion stands in front of the fence that is meant to be holding it.
  */
+
+/** What each kind of building is, before anybody has chosen anything about it.
+ *
+ *  `shape` is the part that matters and the part the player cannot change: it is how you tell a
+ *  cafe from a gift shop across a park. The colours are only starting points - every one of them
+ *  is a control in the studio. */
+const FACILITY: Record<string, { walls: string; roof: string; sign: string; height: number;
+  shape: 'awning' | 'hatch' | 'glazed' | 'stall' | 'plain' }> = {
+  cafe:    { walls: '#f4eee3', roof: '#b8563f', sign: '#e8b84b', height: 30, shape: 'awning' },
+  kiosk:   { walls: '#efe6d8', roof: '#3f8f6f', sign: '#e6a53a', height: 21, shape: 'hatch' },
+  shop:    { walls: '#f5f0e7', roof: '#4a6fa5', sign: '#e0653f', height: 30, shape: 'glazed' },
+  stall:   { walls: '#efe6d8', roof: '#c85a3c', sign: '#f2c14e', height: 17, shape: 'stall' },
+  toilets: { walls: '#e9e7e1', roof: '#8f9aa3', sign: '#4a6fa5', height: 25, shape: 'plain' },
+};
 
 const VISITOR_PROPS = ['visitor01', 'visitor02', 'visitor03', 'visitor04', 'visitor05', 'visitor06', 'visitor07', 'visitor09'];
 const CHILD_PROPS = ['child01', 'child02', 'child03'];
@@ -259,8 +272,6 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
   /** How far back something stands, on the park as it is being looked at. */
   const depth = (wx: number, wy: number): number => { const t = T(wx, wy); return depthOf(t.x, t.y); };
   const boxFaces = (x0: number, y0: number, x1: number, y1: number, h: number, k: number) => boxFacesOf(...Tbox(x0, y0, x1, y1), h, k);
-  const roofFaces = (x0: number, y0: number, x1: number, y1: number, wh: number, rh: number, e: number, k: number) => roofFacesOf(...Tbox(x0, y0, x1, y1), wh, rh, e, k);
-  const wallPanel = (a: Pt, z: Pt, ...rest: [number, number, number, number, number]) => wallPanelOf(T(a.x, a.y), T(z.x, z.y), ...rest);
   /** Fencing runs the way the park is turned, and a panel drawn up-slope becomes one drawn down. */
   const fenceRun = (from: Pt, to: Pt, k: number, up: boolean) => fenceRunOf(T(from.x, from.y), T(to.x, to.y), k, q % 2 ? !up : up);
   /** Everything is drawn inset by the scene's margin, but `boxFaces` and `roofFaces` hand back raw
@@ -588,6 +599,202 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     ));
   };
 
+  // ---- facilities --------------------------------------------------------------------------
+  //
+  // Drawn, not photographed. These were tiles out of a city set - four flat-roofed boxes - and a
+  // cafe looked like a gift shop looked like an office block. In a game whose whole subject is
+  // showing somebody the thing they built, a building that cannot be told from its neighbour is
+  // the one thing it must not be: "a gift shop or cafe do not have a sign. Nor do they look like a
+  // cafe or a gift shop."
+  //
+  // So a building says what it is by its SHAPE, which survives being small and being turned:
+  // an awning and parasols is a cafe, a hatch over a counter is a kiosk, a glazed front is a shop,
+  // two doors in a plain block is a lavatory, a canopy on posts is a stall. Colour is what the
+  // player chooses on top of that, and the sign colour is used where a sign would actually be -
+  // the board over the door, the stripes of the awning - so choosing it does something visible.
+  //
+  // Everything below works in TURNED space: Tbox hands back corners already turned, so "the front"
+  // is whichever wall faces the viewer. That is why it uses the raw iso helpers rather than the
+  // turn-applying wrappers further up - turning twice puts the door round the back.
+  const facility = (it: BacklogItem, c: Pt, size: { w: number; h: number }) => {
+    const wd = working(it);
+    const look = FACILITY[wd.parts.type ?? it.template ?? ''] ?? FACILITY.shop;
+    const walls = wd.colors.walls ?? look.walls;
+    const roof = wd.colors.roof ?? look.roof;
+    const door = wd.colors.door ?? '#7a5230';
+    const sign = wd.colors.sign ?? look.sign;
+    const signed = wd.parts.sign !== 'off';
+
+    const fw = size.w * 0.66, fh = size.h * 0.66;
+    const [x0, y0, x1, y1] = Tbox(c.x - fw / 2, c.y - fh / 2, c.x + fw / 2, c.y + fh / 2);
+    const wallH = Math.max(5, u * look.height);
+    const tone = boxTones(walls), rt = boxTones(roof);
+    const GLASS = '#a8cadd';
+
+    /** A point on the park at a height above it, ready to draw. */
+    const at = (wx: number, wy: number, h = 0): Pt => {
+      const q2 = project(wx, wy, u); return { x: q2.x + ox, y: q2.y + oy - h };
+    };
+    const quad = (ps: Pt[]) => ps.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    /** A panel let into the wall facing the viewer, as fractions along it and up it. */
+    const face = (t0: number, t1: number, h0: number, h1: number) =>
+      shift(wallPanelOf({ x: x0, y: y1 }, { x: x1, y: y1 }, t0, t1, h0, h1, u));
+    /** ...and into the one running away to the right. */
+    const flank = (t0: number, t1: number, h0: number, h1: number) =>
+      shift(wallPanelOf({ x: x1, y: y1 }, { x: x1, y: y0 }, t0, t1, h0, h1, u));
+    const lerp = (t: number) => x0 + (x1 - x0) * t;
+
+    /** A flat slab lying over the walls - a canopy, or a roof with no pitch to it. */
+    const slab = (key: string, over: number, base: number, thick: number, hex: string) => {
+      const t = boxTones(hex);
+      const X0 = x0 - over, X1 = x1 + over, Y0 = y0 - over, Y1 = y1 + over, top = base + thick;
+      return (
+        <g key={key}>
+          <polygon points={quad([at(X0, Y1, top), at(X1, Y1, top), at(X1, Y1, base), at(X0, Y1, base)])} fill={t.left} />
+          <polygon points={quad([at(X1, Y1, top), at(X1, Y0, top), at(X1, Y0, base), at(X1, Y1, base)])} fill={t.right} />
+          <polygon points={quad([at(X0, Y0, top), at(X1, Y0, top), at(X1, Y1, top), at(X0, Y1, top)])} fill={t.top} />
+        </g>
+      );
+    };
+
+    /** A striped awning sloping out over the front. The stripes are the sign colour, so the one
+     *  thing you choose about how a cafe looks is the thing you see first. */
+    const awning = (key: string, h: number, out: number, drop: number, bands: number) => (
+      <g key={key}>
+        {Array.from({ length: bands }, (_, i) => (
+          <polygon key={i} fill={i % 2 ? '#f7f4ee' : sign}
+            points={quad([at(lerp(i / bands), y1, h), at(lerp((i + 1) / bands), y1, h),
+                          at(lerp((i + 1) / bands), y1 + out, h - drop), at(lerp(i / bands), y1 + out, h - drop)])} />
+        ))}
+      </g>
+    );
+
+    /** The name board: a fascia hung on the front, just under the eaves.
+     *
+     *  It has been in the wrong place twice. Free-standing above the ridge it read as a stray beam
+     *  driven through the tiles; flush with the wall it disappeared behind the roof overhang, which
+     *  is what an overhang is for. So it stands a hair proud of the wall and is painted after the
+     *  roof - a board screwed to the front of a building, which is what a shop sign is.
+     *
+     *  Not lettered: at the size a park is drawn, type turns to mud. */
+    const board = (t0 = 0.14, t1 = 0.86, lift = 0) => {
+      const y = y1 + 0.9, lo = wallH * 0.72 + lift, hi = wallH * 0.98 + lift;
+      const p0 = lerp(t0), p1 = lerp(t1), i0 = lerp(t0 + (t1 - t0) * 0.07), i1 = lerp(t1 - (t1 - t0) * 0.07);
+      const band = (a: number, b: number, h0: number, h1: number) =>
+        quad([at(a, y, h1), at(b, y, h1), at(b, y, h0), at(a, y, h0)]);
+      return (
+        <g key="sb">
+          {/* Edged, so it separates from whatever is behind it. A cafe's board sat against a roof
+              of nearly its own colour and vanished, which is a hard thing to see in a screenshot
+              and an easy one to see in a game. */}
+          <polygon points={band(p0, p1, lo, hi)} fill={shade(sign, -34)} />
+          <polygon points={band(lerp(t0 + 0.012), lerp(t1 - 0.012), lo + (hi - lo) * 0.1, hi - (hi - lo) * 0.1)} fill={sign} />
+          <polygon points={band(i0, i1, lo + (hi - lo) * 0.26, hi - (hi - lo) * 0.26)} fill={shade(sign, 28)} />
+        </g>
+      );
+    };
+
+    /** A parasol: a post and a disc. Two of these outside settle any argument about which building
+     *  is the cafe. */
+    const parasol = (key: string, wx: number, wy: number) => {
+      const foot = at(wx, wy, 0), top = at(wx, wy, u * 22), r = Math.max(3, u * 12);
+      return (
+        <g key={key}>
+          <ellipse cx={foot.x} cy={foot.y} rx={r * 0.5} ry={r * 0.25} fill="rgba(0,0,0,0.13)" />
+          <line x1={foot.x} y1={foot.y} x2={top.x} y2={top.y} stroke="#8a8078" strokeWidth={Math.max(0.6, u * 1.1)} />
+          <ellipse cx={top.x} cy={top.y} rx={r} ry={r * 0.5} fill={sign} />
+          <ellipse cx={top.x} cy={top.y - r * 0.16} rx={r * 0.62} ry={r * 0.31} fill={shade(sign, 22)} />
+        </g>
+      );
+    };
+
+    const box = boxFacesOf(x0, y0, x1, y1, wallH, u);
+    const walled = [
+      <polygon key="wl" points={shift(box.left)} fill={tone.left} />,
+      <polygon key="wr" points={shift(box.right)} fill={tone.right} />,
+    ];
+    const pitched = (rise: number) => {
+      const r = roofFacesOf(x0, y0, x1, y1, wallH, Math.max(3, u * rise), Math.min(fw, fh) * 0.1, u);
+      return [
+        <polygon key="rf" points={shift(r.far)} fill={rt.left} />,
+        <polygon key="rn" points={shift(r.near)} fill={rt.right} />,
+        <polygon key="rg" points={shift(r.gable)} fill={rt.top} />,
+      ];
+    };
+
+    let parts: React.ReactNode[];
+    switch (look.shape) {
+      case 'awning':
+        // A cafe: its name board under the eaves, a striped awning below that, and tables out in
+        // front under parasols. Sign above, awning below - the way a cafe front is actually stacked.
+        parts = [
+          ...walled,
+          <polygon key="w1" points={face(0.08, 0.32, wallH * 0.24, wallH * 0.56)} fill={GLASS} />,
+          <polygon key="dr" points={face(0.42, 0.60, 0, wallH * 0.56)} fill={shade(door, -6)} />,
+          <polygon key="w2" points={face(0.70, 0.94, wallH * 0.24, wallH * 0.56)} fill={GLASS} />,
+          <polygon key="fk" points={flank(0.24, 0.70, wallH * 0.28, wallH * 0.62)} fill={shade(GLASS, -12)} />,
+          ...pitched(17),
+          ...(signed ? [board()] : []),
+          awning('aw', wallH * 0.68, Math.min(fh * 0.40, 13), Math.max(1.5, u * 5), 6),
+          parasol('p1', x0 + (x1 - x0) * 0.20, y1 + Math.min(fh * 0.9, 26)),
+          parasol('p2', x0 + (x1 - x0) * 0.74, y1 + Math.min(fh * 0.7, 20)),
+        ];
+        break;
+      case 'hatch':
+        // A kiosk: no door at all - a serving hatch with goods on the counter, under a canopy that
+        // overhangs just enough to shade it. It swallowed the whole building at 30%.
+        parts = [
+          ...walled,
+          <polygon key="ht" points={face(0.14, 0.86, wallH * 0.26, wallH * 0.62)} fill="#3b3a36" />,
+          <polygon key="gd" points={face(0.20, 0.80, wallH * 0.30, wallH * 0.44)} fill={shade(sign, 12)} />,
+          <polygon key="cs" points={face(0.10, 0.90, wallH * 0.22, wallH * 0.28)} fill={shade(walls, -10)} />,
+          slab('rf', Math.min(fw, fh) * 0.13, wallH, Math.max(1.5, u * 4), roof),
+          ...(signed ? [board(0.12, 0.88)] : []),
+        ];
+        break;
+      case 'glazed':
+        // A gift shop: a glazed shopfront with a mullion down it, a door at one end, its name board
+        // across the top. Which is what a shop is, from the pavement.
+        parts = [
+          ...walled,
+          <polygon key="gl" points={face(0.06, 0.66, wallH * 0.10, wallH * 0.66)} fill={GLASS} />,
+          <polygon key="ml" points={face(0.35, 0.375, wallH * 0.10, wallH * 0.66)} fill={shade(walls, -22)} />,
+          <polygon key="dr" points={face(0.72, 0.92, 0, wallH * 0.62)} fill={shade(door, -6)} />,
+          <polygon key="fk" points={flank(0.24, 0.74, wallH * 0.28, wallH * 0.62)} fill={shade(GLASS, -14)} />,
+          ...pitched(16),
+          ...(signed ? [board(0.06, 0.94)] : []),
+        ];
+        break;
+      case 'stall':
+        // A stall has no walls: a counter, four posts, and a striped canopy over it. It was being
+        // drawn as a park bench, which is a different thing to sit on entirely.
+        parts = [
+          <polygon key="ct" points={shift(boxFacesOf(x0, y1 - Math.max(3, fh * 0.3), x1, y1, wallH * 0.46, u).left)} fill={tone.left} />,
+          <polygon key="cr" points={shift(boxFacesOf(x0, y1 - Math.max(3, fh * 0.3), x1, y1, wallH * 0.46, u).right)} fill={tone.right} />,
+          <polygon key="cw" points={face(0.06, 0.94, wallH * 0.46, wallH * 0.52)} fill={shade(walls, 14)} />,
+          ...[[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([px, py], i) => (
+            <line key={`ps${i}`} x1={at(px, py, 0).x} y1={at(px, py, 0).y} x2={at(px, py, wallH).x} y2={at(px, py, wallH).y}
+              stroke={shade(walls, -34)} strokeWidth={Math.max(0.7, u * 1.3)} />
+          )),
+          slab('rf', Math.min(fw, fh) * 0.08, wallH, Math.max(1, u * 2.5), roof),
+          awning('cp', wallH, Math.min(fh * 0.34, 11), Math.max(1, u * 3), 6),
+          ...(signed ? [board(0.2, 0.8, Math.max(1.5, u * 5))] : []),
+        ];
+        break;
+      default:
+        // A lavatory block: plain, flat-roofed, two doors and a vent over each. It is meant to be
+        // the dullest building in the zoo, because that is what it is.
+        parts = [
+          ...walled,
+          <polygon key="d1" points={face(0.12, 0.40, 0, wallH * 0.64)} fill={shade(door, -6)} />,
+          <polygon key="d2" points={face(0.60, 0.88, 0, wallH * 0.64)} fill={shade(door, -6)} />,
+          slab('rf', Math.min(fw, fh) * 0.1, wallH, Math.max(1.5, u * 4), roof),
+          ...(signed ? [board(0.3, 0.7)] : []),
+        ];
+    }
+    push(depth(c.x, c.y), <g key={`b-${it.id}`} data-facility={look.shape}>{parts}</g>);
+  };
+
   // ---- amenities and loose planting -------------------------------------------------------
   for (const it of loose) {
     const c = posOf(it), size = sizeOf(it);
@@ -629,54 +836,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       }
       continue;
     }
-    // A facility. Drawn where there is a tile for its kind, and built out of boxes where there is
-    // not - a zoo can offer a kind of building nobody has drawn yet, and it should still appear.
+    // A facility, drawn as the kind of building it is.
     const special = amenityProp(it);
     if (special) { place(special, c.x, c.y, u * 0.85, `am-${it.id}`); continue; }
-    const wd = working(it);
-    const kind = wd.parts.type ?? it.template ?? '';
-    const tile = BUILDING_ART[kind];
-    const fw = size.w * 0.66, fh = size.h * 0.66;
-    const x0 = c.x - fw / 2, y0 = c.y - fh / 2, x1 = c.x + fw / 2, y1 = c.y + fh / 2;
-
-    if (tile) {
-      // The tile is sized from the footprint, so a cafe is drawn bigger than a kiosk on the same
-      // artwork - the FOOTPRINT table stays the single place a building's size is decided.
-      const w = footprintWidth(fw, fh, u) * TILE_SPREAD;
-      const h = w * (tile.h / tile.w);
-      const at = P(c.x, c.y);
-      const front = P(x1, y1);
-      push(depth(c.x, c.y), (
-        <image key={`b-${it.id}`} href={tile.src} x={at.x - w / 2} y={front.y - h} width={w} height={h}
-          // The tiles are painted a shade duller than the rest of the park. This is not a
-          // correction to the artwork - it is what makes it sit beside artwork from elsewhere.
-          style={{ filter: 'saturate(1.35)' }} preserveAspectRatio="xMidYMax meet" />
-      ));
-      continue;
-    }
-
-    // No tile: walls, a pitched roof, a door and a window, in the colours it was designed in.
-    const walls = wd.colors.walls ?? '#e6ddd0';
-    const roof = wd.colors.roof ?? '#b8563f';
-    const door = wd.colors.door ?? '#7a5230';
-    const wallH = Math.max(5, u * 30);
-    const riseH = Math.max(3, u * 17);
-    const f = boxFaces(x0, y0, x1, y1, wallH, u);
-    const r = roofFaces(x0, y0, x1, y1, wallH, riseH, Math.min(fw, fh) * 0.09, u);
-    const tone = boxTones(walls);
-    const rt = boxTones(roof);
-    const dl = { x: x0, y: y1 }, dr = { x: x1, y: y1 }, wr = { x: x1, y: y0 };
-    push(depth(c.x, c.y), (
-      <g key={`b-${it.id}`}>
-        <polygon points={shift(f.left)} fill={tone.left} />
-        <polygon points={shift(f.right)} fill={tone.right} />
-        <polygon points={shift(wallPanel(dl, dr, 0.36, 0.64, 0, wallH * 0.66, u))} fill={shade(door, -6)} />
-        <polygon points={shift(wallPanel(wr, dr, 0.3, 0.66, wallH * 0.3, wallH * 0.72, u))} fill="#93b8cc" />
-        <polygon points={shift(r.far)} fill={rt.left} />
-        <polygon points={shift(r.near)} fill={rt.right} />
-        <polygon points={shift(r.gable)} fill={rt.top} />
-      </g>
-    ));
+    facility(it, c, size);
   }
 
   // ---- the car park ------------------------------------------------------------------------
@@ -786,7 +949,7 @@ function treeProp(type?: string, piece?: string): string {
 function amenityProp(it: BacklogItem): string | undefined {
   const t = working(it).parts.type ?? it.template;
   if (t === 'signpost') return 'signpost';
-  if (t === 'stall' || t === 'bench' || t === 'seating') return 'bench';
+  if (t === 'bench' || t === 'seating') return 'bench';
   if (t === 'fountain') return 'fountain';
   return undefined;
 }
