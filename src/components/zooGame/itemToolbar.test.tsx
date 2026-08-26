@@ -214,3 +214,39 @@ describe('a control has to be a decision', () => {
     expect(labels).toContain('Colour the markings');
   });
 });
+
+describe('choosing what a piece of landscape is', () => {
+  const river = (design?: Record<string, unknown>): BacklogItem => ({
+    id: 'riv', name: 'River', zone: 'Grounds', category: 'flora', template: 'river',
+    status: 'committed', started: true, points: 3, acceptance: [], acConfirmed: [], tasks: [],
+    ...(design ? { design } : {}),
+  } as unknown as BacklogItem);
+
+  const bench = (d: ItemDesign) => render(
+    <ItemToolbar docked item={river()} design={d}
+      onDesign={() => {}} onToggleTask={() => {}} onConfirmAc={() => {}} onClose={() => {}} />,
+  ).container;
+
+  /** The kinds in the catalogue, and whether each is shown as the one in force. */
+  const kinds = (c: HTMLElement) => [...c.querySelectorAll('button')]
+    .filter((b) => b.className.includes('w-[3.9rem]'))
+    .map((b) => ({ label: b.getAttribute('title'), chosen: b.getAttribute('aria-pressed') === 'true' }));
+
+  it('marks nothing until somebody actually chooses', () => {
+    // The Done gate asks whether a kind has been chosen. `pieceOf` falls back to the FIRST piece of
+    // the type when none is set, so a River arrived with "Stream" already lit up while
+    // `parts.piece` was still unset - and the gate, quite correctly, said no choice had been made.
+    //
+    // "I cannot move the river to done", with the studio showing a kind already selected. A control
+    // that looks satisfied while the gate says otherwise is the worst of both, and it is worse than
+    // either: there is nothing on the screen to tell you what is missing.
+    const untouched = kinds(bench(presetFor(river())));
+    expect(untouched.length, 'the studio offers no kinds of water').toBeGreaterThan(1);
+    expect(untouched.some((k) => k.chosen), 'a kind is shown as chosen before anybody chose it').toBe(false);
+
+    // ...and once one IS chosen, that one is marked and the gate opens.
+    const picked = applyPiece(presetFor(river()), piecesFor('river')[0]);
+    expect(kinds(bench(picked)).filter((k) => k.chosen)).toHaveLength(1);
+    expect(isDesignDone(river(), picked)).toBe(true);
+  });
+});

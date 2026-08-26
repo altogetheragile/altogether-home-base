@@ -292,18 +292,46 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
    *  projected points. Anything built from those has to be shifted, or it is drawn off the edge of
    *  the picture - which is silent, because a polygon at the wrong coordinates is still a polygon. */
   const shift = (s: string) => s.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${(x + ox).toFixed(1)},${(y + oy).toFixed(1)}`; }).join(' ');
-  /** A patch of ground swung round its own middle. Drawn from four corners rather than two, because
-   *  a turned rectangle is no longer a rectangle in the world - only in its own frame. */
-  const turned = (x0: number, y0: number, x1: number, y1: number, deg: number) => {
-    if (!deg) return ground(x0, y0, x1, y1);
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, a = (deg * Math.PI) / 180;
-    const cos = Math.cos(a), sin = Math.sin(a);
-    return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([px, py]) => {
-      const dx = px - cx, dy = py - cy;
-      const q2 = P(cx + dx * cos - dy * sin, cy + dx * sin + dy * cos);
-      return `${q2.x.toFixed(1)},${q2.y.toFixed(1)}`;
-    }).join(' ');
+  /** A patch of ground swung round its own middle, and then cut to the grass it lies on.
+   *
+   *  The order matters and it took a report to see it. Cutting first and turning afterwards gives a
+   *  river that no longer reaches the banks - "it does not span the whole park area" - and whose
+   *  corners swing out over the tarmac as you turn it: "it can cut across the car park if I turn it
+   *  enough". Turning first and cutting afterwards gives what a river actually is: as long as it
+   *  needs to be, stopping exactly at the edge of the grass, at any angle.
+   *
+   *  The cut is Sutherland-Hodgman against the four edges of the park - the standard way to trim a
+   *  polygon to a rectangle, and the only way that stays right for a shape that is no longer
+   *  aligned to anything. */
+  const clipTo = (poly: Pt[], bx0: number, by0: number, bx1: number, by1: number): Pt[] => {
+    const edges: [(p: Pt) => boolean, (a: Pt, z: Pt) => Pt][] = [
+      [(p) => p.x >= bx0, (a, z) => ({ x: bx0, y: a.y + ((z.y - a.y) * (bx0 - a.x)) / (z.x - a.x) })],
+      [(p) => p.x <= bx1, (a, z) => ({ x: bx1, y: a.y + ((z.y - a.y) * (bx1 - a.x)) / (z.x - a.x) })],
+      [(p) => p.y >= by0, (a, z) => ({ x: a.x + ((z.x - a.x) * (by0 - a.y)) / (z.y - a.y), y: by0 })],
+      [(p) => p.y <= by1, (a, z) => ({ x: a.x + ((z.x - a.x) * (by1 - a.y)) / (z.y - a.y), y: by1 })],
+    ];
+    let out = poly;
+    for (const [keep, cross] of edges) {
+      const src = out; out = [];
+      for (let i = 0; i < src.length; i += 1) {
+        const a = src[(i + src.length - 1) % src.length], z = src[i];
+        const ain = keep(a), zin = keep(z);
+        if (zin) { if (!ain) out.push(cross(a, z)); out.push(z); } else if (ain) out.push(cross(a, z));
+      }
+      if (!out.length) return [];
+    }
+    return out;
   };
+
+  /** The four corners of a rectangle swung round its own middle. */
+  const swing = (cx: number, cy: number, w: number, h: number, deg: number): Pt[] => {
+    const a = (deg * Math.PI) / 180, cos = Math.cos(a), sin = Math.sin(a);
+    return [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]]
+      .map(([dx, dy]) => ({ x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos }));
+  };
+
+  const drawPoly = (poly: Pt[]) => poly.map((q2) => { const p = P(q2.x, q2.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ');
+
   const ground = (x0: number, y0: number, x1: number, y1: number) => shift(groundPoints(...Tbox(x0, y0, x1, y1), u));
 
   const zones = Array.from(new Set([...state.zones, ...state.backlog.map((i) => i.zone)]));
@@ -949,12 +977,20 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           walks.push([{ x: (x0 + x1) / 2, y: y0 - 10 }, { x: (x0 + x1) / 2, y: y1 + 10 }]);
           continue;
         }
-        if (type === 'river' || type === 'pond') water.push({ x0, y0, x1, y1, rot: spin });
+        // Water is impassable where it is DRAWN, so the rectangle the routing uses is the one the
+        // feature actually has - full length, turned - not the one that was cut to the park.
+        if (type === 'river' || type === 'pond') {
+          water.push({ x0: c.x - size.w / 2, y0: c.y - size.h / 2, x1: c.x + size.w / 2, y1: c.y + size.h / 2, rot: spin });
+        }
         if (type === 'rocks') {
           push(depth(c.x, c.y), outcrop(`land-${it.id}`, c.x, c.y, Math.min(x1 - x0, y1 - y0), primary, it.id.length * 3));
           continue;
         }
-        nodes.push(<polygon key={`land-${it.id}`} points={turned(x0, y0, x1, y1, spin)} fill={primary} opacity={0.92} />);
+        // Turned at its full length and THEN cut to the grass, which is the only order that gives a
+        // river reaching both banks at any angle without swinging out over the car park.
+        const lie = clipTo(swing(c.x, c.y, size.w, size.h, spin), 0, 0, CANVAS_W, PLAY_H);
+        if (!lie.length) continue;
+        nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
           place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage));
