@@ -835,25 +835,38 @@ export function applyPiece(design: ItemDesign, piece: FloraPiece): ItemDesign {
   };
 }
 
-export const FLORA_COLORS: { key: string; label: string }[] = [
-  { key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk / bed' },
-];
 /** The colours a scenery type actually uses, named for what they are - a river has water, not
  *  "foliage"; a car park has tarmac and markings. The keys stay 'foliage'/'trunk' (what the
- *  renderer reads); only the labels change, and a type that uses one colour shows just the one. */
+ *  renderer reads); only the labels change, and a type that uses one colour shows just the one.
+ *
+ *  WHICH types get the second colour is not a matter of taste - it is how the thing is drawn in the
+ *  Increment, and there are two ways:
+ *
+ *    - LANDSCAPE is drawn as geometry, out of the two colours it is given, so both of them land: a
+ *      bridge really does get red railings on a light brown deck, a pond a bank of its own.
+ *    - EVERYTHING ELSE is a drawing off the artwork sheet, tinted by turning the whole picture by
+ *      the difference between its own green and the colour chosen. One turn moves every part of the
+ *      picture together, so a tree cannot be given a trunk apart from its leaves. The control was
+ *      there and it did nothing: choose a black trunk and the tree stayed brown.
+ *
+ *  So the sheet-drawn kinds - trees, bushes, flowerbeds, signposts - offer the one colour they can
+ *  honour. The plan's build steps come from this same list, so dropping a control drops the task
+ *  that asked for it too, and nothing is left demanding something the studio cannot do. */
 export function floraColors(type?: string): { key: string; label: string }[] {
   switch (type) {
-    case 'river': return [{ key: 'foliage', label: 'Water' }];
+    // Landscape: drawn as geometry, so both colours land.
+    case 'river': return [];
     case 'rocks': return [{ key: 'foliage', label: 'Rock' }];
     case 'hedge': return [{ key: 'foliage', label: 'Leaves' }];
-    case 'pond': return [{ key: 'foliage', label: 'Water' }, { key: 'trunk', label: 'Bank' }];
-    case 'fountain': return [{ key: 'foliage', label: 'Water' }, { key: 'trunk', label: 'Stone' }];
+    case 'pond': return [{ key: 'trunk', label: 'Bank' }];
+    case 'fountain': return [{ key: 'trunk', label: 'Stone' }];
     case 'bridge': return [{ key: 'foliage', label: 'Deck' }, { key: 'trunk', label: 'Railings' }];
     case 'entrance': return [{ key: 'foliage', label: 'Banner' }, { key: 'trunk', label: 'Posts' }];
     case 'carpark': return [{ key: 'foliage', label: 'Tarmac' }, { key: 'trunk', label: 'Markings' }];
-    case 'signpost': return [{ key: 'foliage', label: 'Sign' }, { key: 'trunk', label: 'Post' }];
-    case 'flowers': return [{ key: 'foliage', label: 'Flowers' }, { key: 'trunk', label: 'Bed' }];
-    default: return [{ key: 'foliage', label: 'Foliage' }, { key: 'trunk', label: 'Trunk' }];
+    // Drawn off the sheet and tinted whole: one colour each, because one is all that can be kept.
+    case 'signpost': return [{ key: 'foliage', label: 'Sign' }];
+    case 'flowers': return [{ key: 'foliage', label: 'Flowers' }];
+    default: return [{ key: 'foliage', label: 'Foliage' }];
   }
 }
 /** Quick colour suggestions offered next to each picker (still fully editable). */
@@ -980,9 +993,21 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
     ];
   }
   if (item.category === 'flora') {
+    // Built from the same list the controls are, so the gate can only ever ask for something the
+    // studio can do. Hardcoded, it asked every piece of scenery to "colour the foliage" - a car park
+    // has tarmac and markings and no foliage at all - and it only avoided being another stuck Gift
+    // Shop because 'foliage' happened to be the key behind whatever the first control was called.
+    const type = design.parts.type ?? item.template;
     return [
       { label: 'Choose a plant type', pass: !!design.parts.type },
-      { label: 'Colour the foliage', pass: !!design.colors.foliage },
+      // Landscape is sized on the park, and for a river that is the whole job - it has no colour to
+      // choose, water being water. Without this gate a River arrived Done: a piece of scenery starts
+      // knowing what it is, so "choose a plant type" was already ticked and there was nothing else
+      // to ask. "The river is in the studio but it has been Done already."
+      ...(isLandscapeType(type) ? [{ label: 'Size it on the park', pass: !!item.size }] : []),
+      ...floraColors(type).map((c) => ({
+        label: `Colour the ${c.label.toLowerCase()}`, pass: !!design.colors[c.key],
+      })),
     ];
   }
   if (item.category === 'amenity') {
@@ -1043,6 +1068,9 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
   if (item.category === 'flora') {
     // Match the task to the colour slot it names, so "Colour the post" checks the post and not
     // whatever the first slot happens to be called.
+    // Sizing a landscape feature is done ON THE PARK, by dragging its edge - so what says it is done
+    // is that somebody has given it a size, not anything in the design.
+    if (/size it|sizing/.test(s)) return !!item.size;
     const slot = floraColors(design.parts.type ?? item.template).find((c) => s.includes(c.label.toLowerCase()));
     if (slot) return !!design.colors[slot.key];
     if (/which planting|plant|type/.test(s)) return !!p.piece || !!p.type;
