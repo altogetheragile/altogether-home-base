@@ -37,7 +37,8 @@ const exam = (over: Record<string, unknown> = {}) => ({
 async function paperOrder(opts: { shuffled?: boolean; exam?: Record<string, unknown> } = {}) {
   render(<ExamPlayer exam={exam(opts.exam)} />);
   // The bank is counted on mount, so wait for that before reading or touching the default.
-  await waitFor(() => expect(screen.getByLabelText(/shuffle the question order/i)).toBeTruthy());
+  // The bank is counted on mount, and the switch only appears on a paper whose order is free.
+  await waitFor(() => expect(screen.getByRole('button', { name: /exam mode/i })).toBeTruthy());
   if (opts.shuffled) fireEvent.click(screen.getByLabelText(/shuffle the question order/i));
   fireEvent.click(screen.getByRole('button', { name: /exam mode/i }));
   await waitFor(() => expect(screen.getByText(/^Question \d+$/)).toBeTruthy());
@@ -88,22 +89,28 @@ describe('the question order is a choice', () => {
       'a scenario paper is offered a shuffle that would break it').toBeNull();
   });
 
-  it('leaves a paper that draws from a POOL shuffling, because that is what it is for', async () => {
-    // The one a blanket default would have broken, silently. The Scrum Master paper asks 40 of 131,
-    // so shuffling does not only re-order it - it decides which forty. Its own description says so:
-    // "the questions are selected from a larger pool and change each time the exam is taken."
-    // Defaulting every paper to the written order would have served the same first forty for ever.
-    bankSize.current = 40;   // a bank the same size as the paper: re-ordering only
+  it('is not offered on a paper that draws from a POOL, because that is not just an order', async () => {
+    // The one a blanket toggle would have broken, silently. The Scrum Master paper asks 40 of 131,
+    // so shuffling does not merely re-order it - it decides WHICH forty. Its own description says
+    // so: "the questions are selected from a larger pool and change each time the exam is taken."
+    // Offering to switch that off would be offering to turn it into a different exam.
+    bankSize.current = 40;                       // a bank bigger than the paper
     render(<ExamPlayer exam={exam({ total_questions: 12 })} />);
-    await waitFor(() => expect(screen.getByLabelText(/shuffle the question order/i)).toBeTruthy());
-    expect((screen.getByLabelText(/shuffle the question order/i) as HTMLInputElement).checked,
-      'a paper that draws from a pool arrived with its pool switched off').toBe(true);
+    await waitFor(() => expect(screen.getByRole('button', { name: /exam mode/i })).toBeTruthy());
+    expect(screen.queryByLabelText(/shuffle the question order/i),
+      'a pool paper is offered a switch that would turn it into a different exam').toBeNull();
 
-    document.body.innerHTML = '';
-    bankSize.current = 12;   // ...and a bank that IS the paper
+    // ...and it still draws a fresh set, exactly as it did before any of this.
+    const runs: string[][] = [];
+    for (let i = 0; i < 6; i += 1) { document.body.innerHTML = ''; runs.push(await paperOrder({ exam: { total_questions: 12 } })); }
+    expect(runs.some((r) => r.join() !== WRITTEN.join()), 'the pool paper stopped drawing').toBe(true);
+  });
+
+  it('is offered where the paper IS its bank, which is the Foundation papers', async () => {
+    // 50 of 50: shuffling changes nothing but the sequence, so the sequence is a free choice.
+    bankSize.current = 12;
     render(<ExamPlayer exam={exam({ total_questions: 12 })} />);
     await waitFor(() => expect(screen.getByLabelText(/shuffle the question order/i)).toBeTruthy());
-    expect((screen.getByLabelText(/shuffle the question order/i) as HTMLInputElement).checked,
-      'a fixed paper arrived jumbled').toBe(false);
+    expect((screen.getByLabelText(/shuffle the question order/i) as HTMLInputElement).checked).toBe(false);
   });
 });

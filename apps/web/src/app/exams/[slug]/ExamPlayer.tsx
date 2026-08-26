@@ -91,26 +91,25 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
   /** What the person sitting it has asked for, if they have asked for anything. */
   const [choice, setChoice] = useState<boolean | null>(null);
 
-  /** Whether shuffling this paper would also decide WHICH questions get asked.
+  /** Whether this paper's order is a free choice - which is a narrower question than it looks, and
+   *  the reason the switch is not offered on every paper.
    *
-   *  This is the whole of why the default cannot be one answer for every paper:
+   *  It is offered only where re-ordering is PURELY an order, and two things have to hold:
    *
-   *    a Foundation paper asks all 50 of its 50, so shuffling only changes the ORDER. Off by
-   *    default, so a room of people sitting the same paper get the same paper and question 7 is
-   *    question 7 for all of them - which is what was asked for;
+   *    the paper asks for its whole bank. A Foundation paper asks all 50 of its 50, so shuffling
+   *    changes nothing but the sequence. The Scrum Master paper asks 40 of 131, so shuffling also
+   *    draws the forty - that is what the paper IS, and "the questions are selected from a larger
+   *    pool and change each time the exam is taken" is printed on it. Offering to switch that off
+   *    would be offering to turn it into a different exam;
    *
-   *    the Scrum Master paper asks 40 of 131, so shuffling also draws the 40. That is what the
-   *    paper is FOR - "the questions are selected from a larger pool and change each time" is
-   *    printed on it - so it stays on by default, and turning the shuffle off everywhere would
-   *    have quietly served the same first forty for ever.
+   *    and it has no scenario. A Practitioner paper's items build on one shared scenario and on one
+   *    another, so jumbling them is not an option, it is a fault.
    *
-   *  It also keeps itself right: add questions to a Foundation bank and it becomes a pool, and
-   *  starts varying, which is what anybody would then expect of it. */
-  const drawsFromPool = bank !== null && bank > (exam.total_questions || 0);
-  const reorder = choice ?? drawsFromPool;
-  /** ...and whether this paper may be re-ordered at all. A scenario paper's items build on one
-   *  another, so jumbling them is not an option, it is a fault. */
-  const mayReorder = !exam.scenario;
+   *  Everything else keeps the behaviour it already had, exactly. */
+  const mayReorder = !exam.scenario && bank !== null && bank <= (exam.total_questions || 0);
+  /** Off unless asked for: a room of people sitting the same paper should get the same paper, and
+   *  question 7 should be question 7 for all of them. */
+  const reorder = choice ?? false;
 
   useEffect(() => {
     let alive = true;
@@ -168,7 +167,10 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
     // `exam.shuffle === false` is a different question and still wins: it marks a paper whose order
     // CARRIES MEANING, like the Practitioner scenario papers where the items build on one another.
     // Those must never be re-ordered, so they are not offered the choice.
-    const ordered = mayReorder && reorder ? shuffle(raw) : raw;
+    // Where the order is a free choice, it is the player's. Everywhere else, untouched - the
+    // per-exam flag it always used, so a pool paper still draws a fresh set and a scenario paper
+    // still keeps its sequence.
+    const ordered = mayReorder ? (reorder ? shuffle(raw) : raw) : (exam.shuffle === false ? raw : shuffle(raw));
     const limited = ordered.slice(0, exam.total_questions || ordered.length);
     const init: Record<number, Answer> = {};
     limited.forEach((_, i) => (init[i] = { selected: [], flagged: false }));
@@ -261,9 +263,9 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
               <span>
                 <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: c.deepTeal }}>Shuffle the question order</span>
                 <span style={{ display: 'block', fontSize: 12.5, color: c.muted, lineHeight: 1.5, marginTop: 2 }}>
-                  {drawsFromPool
-                    ? `This paper asks ${exam.total_questions} questions from a bank of ${bank}, so shuffling also decides which ones. Turn it off to give a whole group the same paper.`
-                    : 'Off, so everyone sitting this paper gets the questions in the same order and question 7 is question 7 for the whole room. Turn it on for a re-sit, or to practise without learning the order.'}
+                  Off, so everyone sitting this paper gets the questions in the same order and
+                  question 7 is question 7 for the whole room. Turn it on for a re-sit, or to
+                  practise without learning the order.
                 </span>
               </span>
             </label>
