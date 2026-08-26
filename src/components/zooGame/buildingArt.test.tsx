@@ -87,3 +87,35 @@ describe('a building looks like the kind of building it is', () => {
     }
   });
 });
+
+describe('turning a building', () => {
+  const at = (rot: number) => ({
+    ...initialZooState(), zones: ['Grounds'],
+    backlog: [{
+      id: 'b', name: 'Cafe', zone: 'Grounds', category: 'amenity', template: 'cafe',
+      status: 'open', points: 1, acceptance: [], acConfirmed: [], tasks: [], rot,
+      pos: { x: 300, y: 240 }, design: { parts: { type: 'cafe', sign: 'on' }, colors: {} },
+    } as unknown as BacklogItem],
+  } as unknown as ZooGameState);
+
+  it('walks the front round, so the door can be made to face the path', () => {
+    // The point of turning a building is that its front does not have to face the way the
+    // illustrator happened to draw it. The turn is applied by walking the four walls round rather
+    // than by rotating the drawing - an isometric box put through an arbitrary transform stops
+    // agreeing with its own roof.
+    const seen = new Map<string, number>();
+    for (const rot of [0, 90, 180, 270]) {
+      const d = drawingOf(at(rot));
+      const twin = seen.get(d);
+      expect(twin, `a cafe turned ${rot} is drawn exactly like one turned ${twin}`).toBeUndefined();
+      seen.set(d, rot);
+    }
+  });
+
+  it('rounds an in-between angle to the nearest quarter rather than skewing the box', () => {
+    // Free rotation is the thing NOT to build here: everything in an isometric park shares two
+    // axes, and that shared grid is the look.
+    expect(drawingOf(at(37))).toEqual(drawingOf(at(0)));
+    expect(drawingOf(at(80))).toEqual(drawingOf(at(90)));
+  });
+});
