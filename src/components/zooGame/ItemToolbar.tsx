@@ -482,7 +482,13 @@ export function ItemToolbar(props: ItemToolbarProps) {
 
       {isLand && (
         <>
-          <Catalogue item={item} design={design} onPick={(p) => onDesign(applyPiece(design, p))} />
+          {/* Only what has actually been CHOSEN is marked, which for a landscape item is nothing at
+              all until somebody picks. `pieceOf` falls back to the first piece of the type, so a
+              River arrived with "Stream" already lit up while `parts.piece` was still unset - and
+              the Done gate, which asks for the choice, said it had not been made. A control that
+              looks satisfied while the gate says otherwise is the worst of both. */}
+          <Catalogue item={item} design={design} current={design.parts.piece ?? null}
+            onPick={(p) => onDesign(applyPiece(design, p))} />
           <Tailor />
           {floraColors(design.parts.type ?? item.template).map((c) => (
             <ColourButton key={c.key} label={c.label} value={design.colors[c.key]} onChange={(hex) => setColor(c.key, hex)} />

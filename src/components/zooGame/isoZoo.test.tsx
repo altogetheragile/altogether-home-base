@@ -823,6 +823,60 @@ describe('a river is a decision, not a fixture', () => {
       .not.toEqual(drawn(river({ rot: 0 })));
   });
 
+  /** The grass alone - not the tarmac, which is where a river must never reach. */
+  const grassOf = (scene: Element) => {
+    const pts = ((scene.querySelector('[data-land="grass"]')?.getAttribute('points')) ?? '')
+      .split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; });
+    expect(pts.length, 'the park draws no grass').toBe(4);
+    return pts;
+  };
+  /** Which edge of the park a point is sitting on, or -1 for none. ON the edge counts as on the
+   *  grass, and that is the normal case rather than the corner one: the river is cut exactly to the
+   *  park, so its ends LIE on the boundary - where ray casting gives whichever answer the rounding
+   *  felt like. */
+  const edgeUnder = (poly: { x: number; y: number }[], p: { x: number; y: number }) =>
+    poly.findIndex((g, i) => {
+      const h = poly[(i + 1) % poly.length];
+      const dx = h.x - g.x, dy = h.y - g.y, len2 = dx * dx + dy * dy || 1;
+      const t = Math.max(0, Math.min(1, ((p.x - g.x) * dx + (p.y - g.y) * dy) / len2));
+      return Math.hypot(p.x - (g.x + t * dx), p.y - (g.y + t * dy)) < 1.5;
+    });
+
+  /** The river itself: the one flat patch painted at 0.92. */
+  const bandOf = (c: Element) => {
+    const el = [...c.querySelectorAll('polygon')].find((p) => p.getAttribute('opacity') === '0.92');
+    expect(el, 'the river is not drawn').toBeTruthy();
+    return (el!.getAttribute('points') ?? '').split(' ')
+      .map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; });
+  };
+
+  it('reaches both banks at any angle, and never over the car park', () => {
+    // Two complaints with one cause, and the cause was the ORDER. The river was cut to the park and
+    // then turned, so turning it made it too short to reach the banks - "it does not span the whole
+    // park area" - while its corners swung out over the tarmac: "it can cut across the car park if
+    // I turn it enough". Turned at full length and cut afterwards, it is as long as it needs to be
+    // and stops exactly at the edge of the grass.
+    for (const rot of [0, 20, 45, 70]) {
+      const c = render(<IsoZoo state={river({ rot })} height={420} />).container;
+      const scene = c.querySelector('svg[role="img"]')!;
+      const grass = grassOf(scene);
+      const band = bandOf(c);
+      for (const p of band) {
+        // ON the edge counts as on the grass, and that is the normal case rather than the corner
+        // one: the river is cut exactly to the park, so its ends LIE on the boundary - where ray
+        // casting gives whichever answer the rounding felt like.
+        expect(inside(grass, p.x, p.y) || edgeUnder(grass, p) >= 0,
+          `turned ${rot}, the river runs off the grass at ${p.x.toFixed(0)},${p.y.toFixed(0)}`).toBe(true);
+      }
+      // ...and it still CROSSES the park, which has an exact meaning rather than a threshold:
+      // being cut to the grass, a river that reaches both banks ends ON two DIFFERENT edges of it.
+      // Comparing lengths needed a fudge factor and then argued with itself at 70 degrees, where a
+      // river running nearly north to south spans the park perfectly well and is simply shorter.
+      const banks = new Set(band.map((p) => edgeUnder(grass, p)).filter((i) => i >= 0));
+      expect(banks.size, `turned ${rot}, the river does not reach two banks`).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   it('stops a visitor walking on the part of it that is actually wet', () => {
     // The water a guest is kept out of has to be the water that is drawn. Turned, it was neither:
     // they were stopped by an upright rectangle they could not see, and paddled across the bit of
