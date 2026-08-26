@@ -167,10 +167,12 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
     // `exam.shuffle === false` is a different question and still wins: it marks a paper whose order
     // CARRIES MEANING, like the Practitioner scenario papers where the items build on one another.
     // Those must never be re-ordered, so they are not offered the choice.
-    // Where the order is a free choice, it is the player's. Everywhere else, untouched - the
-    // per-exam flag it always used, so a pool paper still draws a fresh set and a scenario paper
-    // still keeps its sequence.
-    const ordered = mayReorder ? (reorder ? shuffle(raw) : raw) : (exam.shuffle === false ? raw : shuffle(raw));
+    // A scenario paper is NEVER re-ordered, whatever the per-exam flag says. Its items build on one
+    // another and on a shared scenario, so "part B" assumes you have just read "part A" - shuffling
+    // them does not make a harder paper, it makes an incoherent one. The flag was allowed to win
+    // here and a scenario paper with shuffle=true came back jumbled, which is how this was found.
+    const fixedOrder = !!exam.scenario || exam.shuffle === false;
+    const ordered = fixedOrder ? raw : (mayReorder && !reorder ? raw : shuffle(raw));
     const limited = ordered.slice(0, exam.total_questions || ordered.length);
     const init: Record<number, Answer> = {};
     limited.forEach((_, i) => (init[i] = { selected: [], flagged: false }));

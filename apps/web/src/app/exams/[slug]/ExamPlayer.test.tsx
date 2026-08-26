@@ -24,14 +24,19 @@ const BANK = Array.from({ length: 12 }, (_, i) => ({
 
 // How many questions the bank holds, which the player counts on mount - it is the difference
 // between a paper that re-orders and one that also draws.
-const { bankSize, useMatching } = vi.hoisted(() => ({ bankSize: { current: 12 }, useMatching: { on: false } }));
+// Which bank comes back is decided by the exam id in the query, not by a flag the tests share.
+// A shared flag made this file flaky: a request still in flight from a previous test could observe
+// the next test's setting, and the failure looked like a broken feature rather than a broken mock.
+const { bankSize } = vi.hoisted(() => ({ bankSize: { current: 12 } }));
+const MATCH_EXAM = 'exam-matching';
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     from: () => ({
       select: (_cols: string, opts?: { head?: boolean }) => (opts?.head
         // the count query: .eq().eq() then awaited
         ? { eq: () => ({ eq: () => Promise.resolve({ count: bankSize.current }) }) }
-        : { eq: () => ({ eq: () => ({ order: () => Promise.resolve({ data: useMatching.on ? MATCH : BANK }) }) }) }),
+        : { eq: (_c: string, id: string) => ({ eq: () => ({ order: () =>
+            Promise.resolve({ data: id === MATCH_EXAM ? MATCH : BANK }) }) }) }),
       insert: vi.fn(),
     }),
     auth: { getUser: () => Promise.resolve({ data: { user: null } }) },
@@ -64,7 +69,7 @@ async function paperOrder(opts: { shuffled?: boolean; exam?: Record<string, unkn
 
 const WRITTEN = BANK.map((q) => q.question_text);
 
-beforeEach(() => { cleanup(); bankSize.current = 12; useMatching.on = false; });
+beforeEach(() => { cleanup(); bankSize.current = 12; });
 
 describe('the question order is a choice', () => {
   it('gives everybody the same paper unless somebody asks otherwise', async () => {
@@ -135,20 +140,36 @@ describe('practice mode explains a matching answer', () => {
     // left behind makes getBy throw on a duplicate, which surfaces here as a timeout and reads
     // like the feature is broken when it is not.
     cleanup();
-    useMatching.on = true; bankSize.current = 3;
-    render(<ExamPlayer exam={exam({ total_questions: 3, scenario: 'A scenario.' })} />);
+    bankSize.current = 3;
+    render(<ExamPlayer exam={exam({ id: MATCH_EXAM, total_questions: 3, scenario: 'A scenario.' })} />);
     await waitFor(() => expect(screen.getByRole('button', { name: /practice mode/i })).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: /practice mode/i }));
     await waitFor(() => expect(screen.getByText('Action 1')).toBeTruthy());
 
     expect(document.body.textContent || '', 'the answer was explained before it was given').not.toContain('Row 1 reason');
     fireEvent.click(screen.getByLabelText('Row 1, option A'));
-    // Asserted on the document text rather than with getByText: the reason lives in a row that is
-    // added to the table after the state settles, and a getBy inside waitFor reports "unable to
-    // find" on its first poll and never retries far enough to see it.
-    await waitFor(() => expect(document.body.textContent || '',
-      'answering a row explained nothing').toContain('Row 1 reason'));
+    // findBy, the canonical async query: it retries inside act until the row the click adds has
+    // been flushed. An assertion on document.textContent inside waitFor passed locally and failed
+    // in CI, which is the signature of a race rather than of a missing feature.
+    expect(await screen.findByText(/Row 1 reason/), 'answering a row explained nothing').toBeTruthy();
     // ...and only for the row that was answered
     expect(document.body.textContent || '', 'an unanswered row gave its answer away').not.toContain('Row 2 reason');
+  });
+});
+
+describe('a scenario paper keeps its order', () => {
+  it('never re-orders a paper that has a scenario, whatever the per-exam flag says', async () => {
+    // Its parts build on one another and on a shared scenario: part B assumes you have just read
+    // part A. Shuffling those does not make a harder paper, it makes an incoherent one. The flag
+    // was allowed to win, and a scenario paper with shuffle=true came back jumbled - found because
+    // a matching test kept failing on a row that turned out to hold somebody else's question.
+    for (let run = 0; run < 5; run += 1) {
+      cleanup(); bankSize.current = 3;
+      render(<ExamPlayer exam={exam({ id: MATCH_EXAM, total_questions: 3, scenario: 'A scenario.', shuffle: true })} />);
+      await waitFor(() => expect(screen.getByRole('button', { name: /practice mode/i })).toBeTruthy());
+      fireEvent.click(screen.getByRole('button', { name: /practice mode/i }));
+      const rows = await screen.findAllByText(/^Action \d$/);
+      expect(rows[0].textContent, 'a scenario paper came back jumbled').toBe('Action 1');
+    }
   });
 });
