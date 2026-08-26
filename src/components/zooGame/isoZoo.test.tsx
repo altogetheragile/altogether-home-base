@@ -390,12 +390,12 @@ describe('the isometric projection', () => {
       const props = [...el.querySelectorAll('svg')];
       expect(props.length).toBeGreaterThan(3);
       for (const n of props) {
-        const x = Number(n.getAttribute('x')), y = Number(n.getAttribute('y'));
-        const w = Number(n.getAttribute("width"));
-        expect(y, `turn ${turn}: something is drawn above the picture`).toBeGreaterThanOrEqual(0);
-        expect(x + w, `turn ${turn}: something is drawn off the left of the picture`).toBeGreaterThan(0);
-        expect(x, `turn ${turn}: something is drawn off the right of the picture`).toBeLessThan(vw);
-        expect(y, `turn ${turn}: something is drawn below the picture`).toBeLessThan(vh);
+        if (walking(n)) continue; // their place is the route, which is checked separately
+        const b = boxOf(n);
+        expect(b.top, `turn ${turn}: something is drawn above the picture`).toBeGreaterThanOrEqual(0);
+        expect(b.right, `turn ${turn}: something is drawn off the left of the picture`).toBeGreaterThan(0);
+        expect(b.left, `turn ${turn}: something is drawn off the right of the picture`).toBeLessThan(vw);
+        expect(b.top, `turn ${turn}: something is drawn below the picture`).toBeLessThan(vh);
       }
     }
   });
@@ -689,6 +689,63 @@ describe('the isometric projection', () => {
   });
 });
 
+/** The box a drawing actually occupies in the scene.
+ *
+ *  Reading x/y off the element stopped being enough twice over. An animal that faces left is drawn
+ *  inside `translate(2cx,0) scale(-1,1)`, which reflects it - so its own x is on the wrong side of
+ *  the mirror. And a visitor WALKS now: drawn about the origin inside a `<g>` that carries it, so
+ *  its x is about -6 and means nothing by itself. This walks the ancestors and works out where the
+ *  thing really is.
+ */
+function boxOf(el: Element): { left: number; right: number; top: number; bottom: number } {
+  const x = Number(el.getAttribute('x')), y = Number(el.getAttribute('y'));
+  const w = Number(el.getAttribute('width')), h = Number(el.getAttribute('height'));
+  let tx = 0, ty = 0, flip = false;
+  for (let p: Element | null = el.parentElement; p; p = p.parentElement) {
+    const t = p.getAttribute('transform') ?? '';
+    const m = /translate\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/.exec(t);
+    if (m) { tx += Number(m[1]); ty += Number(m[2]); }
+    if (/scale\(\s*-1/.test(t)) flip = !flip;
+  }
+  // Reflected, the left edge is the far side of the mirror from the right edge.
+  const left = flip ? tx - x - w : tx + x;
+  return { left, right: left + w, top: ty + y, bottom: ty + y + h };
+}
+
+/** The land, as a quadrilateral on screen: grass and tarmac together, read off the drawing.
+ *
+ *  It has to be the land and not the picture. The picture is a rectangle and the land is a diamond
+ *  inside it, so the white beside the park is INSIDE the viewBox - which is exactly where the
+ *  reported tree was standing. A test that only asks "is it in the picture" says yes to the bug. */
+function land(scene: Element): { x: number; y: number }[] {
+  const pts = [...scene.querySelectorAll('[data-land]')]
+    .flatMap((p) => (p.getAttribute('points') ?? '').split(' ')
+      .map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; }));
+  expect(pts.length, 'the park draws no ground').toBeGreaterThan(3);
+  // Grass and tarmac together make one parallelogram, so its four corners are the four extremes.
+  const pick = (f: (p: { x: number; y: number }) => number) => pts.reduce((a, b) => (f(b) < f(a) ? b : a));
+  return [pick((p) => p.y), pick((p) => -p.x), pick((p) => -p.y), pick((p) => p.x)];
+}
+
+const inside = (poly: { x: number; y: number }[], x: number, y: number) => {
+  let hit = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
+  }
+  return hit;
+};
+
+/** Somebody on the move: their place comes from the route, not from where they are drawn. */
+const walking = (el: Element): boolean => {
+  for (let p: Element | null = el.parentElement; p; p = p.parentElement) {
+    // NOT querySelector: this is an HTML document, so a selector is lowercased before it is
+    // matched, and the SVG element is `animateMotion` with a capital M. It matches nothing, quietly.
+    if ([...p.children].some((c) => c.tagName.toLowerCase() === 'animatemotion')) return true;
+  }
+  return false;
+};
+
 describe('nothing is drawn off the park', () => {
   const item = (over: Partial<BacklogItem>): BacklogItem => ({
     id: over.id ?? 'x', name: 'Thing', zone: 'Big Cats', category: 'enclosure',
@@ -709,30 +766,6 @@ describe('nothing is drawn off the park', () => {
         flora: [{ x: 4, y: 4.5, s: 1, type: 'tree' }, { x: -3, y: -2, s: 1, type: 'tree' }] } })],
   } as unknown as ZooGameState);
 
-  /** The land, as a quadrilateral on screen: grass and tarmac together, read off the drawing.
-   *
-   *  It has to be the land and not the picture. The picture is a rectangle and the land is a diamond
-   *  inside it, so the white beside the park is INSIDE the viewBox - which is exactly where the
-   *  reported tree was standing. A test that only asks "is it in the picture" says yes to the bug. */
-  function land(scene: Element): { x: number; y: number }[] {
-    const pts = [...scene.querySelectorAll('[data-land]')]
-      .flatMap((p) => (p.getAttribute('points') ?? '').split(' ')
-        .map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; }));
-    expect(pts.length, 'the park draws no ground').toBeGreaterThan(3);
-    // Grass and tarmac together make one parallelogram, so its four corners are the four extremes.
-    const pick = (f: (p: { x: number; y: number }) => number) => pts.reduce((a, b) => (f(b) < f(a) ? b : a));
-    return [pick((p) => p.y), pick((p) => -p.x), pick((p) => -p.y), pick((p) => p.x)];
-  }
-
-  const inside = (poly: { x: number; y: number }[], x: number, y: number) => {
-    let hit = false;
-    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      const a = poly[i], b = poly[j];
-      if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
-    }
-    return hit;
-  };
-
   it('stands every drawing ON THE LAND, wherever it was told to stand', () => {
     // "There are random objects off the park" has now been reported four times, and it was a
     // different caller every time: plants marching off in a line, a bridge deck drawn from
@@ -744,8 +777,9 @@ describe('nothing is drawn off the park', () => {
     const quad = land(scene);
 
     for (const p of [...scene.querySelectorAll('svg')]) {
-      const x = Number(p.getAttribute('x')), y = Number(p.getAttribute('y'));
-      const w = Number(p.getAttribute('width')), h = Number(p.getAttribute('height'));
+      if (walking(p)) continue; // checked as a route, below
+      const b = boxOf(p);
+      const x = b.left, y = b.top, w = b.right - b.left, h = b.bottom - b.top;
       // What stands on the ground is the FOOT, not the box: a tree's leaves are over the grass
       // beside it and a person's head is over the path behind them, and both are meant to be.
       const foot = { x: x + w / 2, y: y + h - w * 0.29 };
@@ -795,5 +829,60 @@ describe('a river is a decision, not a fixture', () => {
     // the river they could.
     const angled = render(<IsoZoo state={river({ rot: 40 })} height={420} />).container;
     expect(angled.querySelector('svg[role="img"]'), 'the park did not draw').toBeTruthy();
+  });
+});
+
+describe('people walk', () => {
+  const openZoo = (): ZooGameState => {
+    const base = initialZooState();
+    return {
+      ...base, zones: ['Big Cats'],
+      attendance: { ...(base.attendance ?? {}), 'Big Cats': 800 },
+      backlog: [
+        item({ id: 'enc', name: 'Lion Enclosure', category: 'enclosure', enclosureSize: 'medium', pos: { x: 300, y: 240 } }),
+        item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc' }),
+      ],
+    } as ZooGameState;
+  };
+
+  const routes = (c: Element) => [...c.querySelectorAll('path')]
+    .filter((p) => (p.getAttribute('id') ?? '').startsWith('walk-'));
+
+  it('sets them walking instead of freezing them mid-stride', () => {
+    // They were placed at a fixed point along the route - a hash, so the SAME point every time the
+    // park was drawn. A still photograph of a walk: everybody stopped on their way to the lions. A
+    // zoo with nobody moving in it does not look open.
+    const { container } = render(<IsoZoo state={openZoo()} height={460} />);
+    const movers = [...container.querySelectorAll('*')]
+      .filter((e) => e.tagName.toLowerCase() === 'animatemotion');
+    expect(movers.length, 'nobody in the park is going anywhere').toBeGreaterThan(0);
+    // Each follows a route laid down once, rather than carrying its own copy of the way.
+    for (const m of movers) {
+      const path = [...m.children].find((c) => c.tagName.toLowerCase() === 'mpath');
+      expect(path, 'somebody is walking without a route').toBeTruthy();
+      const id = (path!.getAttribute('href') ?? '').replace('#', '');
+      expect(routes(container).some((p) => p.getAttribute('id') === id),
+        `the route ${id} is walked but never drawn`).toBe(true);
+    }
+  });
+
+  it('walks them from the car park to the exhibit, over the land the whole way', () => {
+    // The guards that keep drawings on the park read where a thing is drawn, and a walker is drawn
+    // about the origin - so they skip them, and this is what stands in their place. A route that
+    // leaves the land is somebody strolling through the air.
+    const { container } = render(<IsoZoo state={openZoo()} height={460} />);
+    const scene = container.querySelector('svg[role="img"]')!;
+    const quad = land(scene);
+    const ways = routes(container);
+    expect(ways.length, 'nobody has a route at all').toBeGreaterThan(0);
+
+    for (const w of ways) {
+      const pts = (w.getAttribute('d') ?? '').split(/[ML]/).filter(Boolean)
+        .map((q) => q.trim().split(',').map(Number));
+      expect(pts.length, 'a route with nowhere to go').toBeGreaterThan(1);
+      for (const [x, y] of pts) {
+        expect(inside(quad, x, y), `a visitor walks off the park, at ${x.toFixed(0)},${y.toFixed(0)}`).toBe(true);
+      }
+    }
   });
 });
