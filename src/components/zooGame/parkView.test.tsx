@@ -254,6 +254,22 @@ describe('the grips for arranging a landscape feature', () => {
       .filter((e) => /longer|wider|turn it/i.test(e.getAttribute('title') ?? ''));
   };
 
+  it('offers the turn grip on habitats and buildings, not only on landscape', () => {
+    // "Can we rotate all enclosures and buildings too?" The grip was landscape-only, so the answer
+    // was no - and a habitat or a building is exactly the thing you want to swing round, because
+    // its front should face the path rather than whichever way it was drawn.
+    const park = { ...riverPark(), backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', category: 'enclosure', enclosureSize: 'medium', pos: { x: 250, y: 200 } }),
+      item({ id: 'shop', name: 'Gift Shop', category: 'amenity', template: 'shop', zone: 'Grounds', pos: { x: 520, y: 300 } }),
+    ] } as ZooGameState;
+    const { container } = render(
+      <ParkView state={park} large onSetSize={() => {}} onSetRot={() => {}} onOpenBuild={() => {}} />,
+    );
+    const turns = [...container.querySelectorAll('[title]')]
+      .filter((e) => /turn it/i.test(e.getAttribute('title') ?? ''));
+    expect(turns.length, 'neither the habitat nor the building can be turned').toBe(2);
+  });
+
   it('offers a river a length grip, not only a width one', () => {
     // "I cannot shorten the length - only the width." Half of that was the model pinning a river to
     // a fixed length; the other half was here, hiding the length grip for a river on purpose,

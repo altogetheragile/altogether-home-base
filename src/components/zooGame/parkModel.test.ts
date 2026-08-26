@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { BacklogItem, ZooGameState } from './types';
-import { standingOnPark, groundSize, workingDesign, parkPositions, restingPlace, habitatSpot } from './parkModel';
+import { standingOnPark, groundSize, quarterOf, workingDesign, parkPositions, restingPlace, habitatSpot } from './parkModel';
 import { CANVAS_W } from './parkLayout';
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
@@ -141,5 +141,38 @@ describe('a family stands together, not on top of each other', () => {
       expect(p.x, `member ${m}`).toBeLessThanOrEqual(0.92);
       expect(p.y, `member ${m}`).toBeLessThanOrEqual(0.94);
     }
+  });
+});
+
+describe('turning a box', () => {
+  const box = (over: Partial<BacklogItem>) => item({ id: 'b', ...over });
+
+  it('makes it as wide as it was deep, and only in quarters', () => {
+    // A quarter turn of a box IS the swap - that is the whole of what it means for the ground it
+    // takes. Answered here so both drawings, the automatic layout, the visitor routing and the hit
+    // area all get the same answer rather than each working it out again.
+    const shop = box({ category: 'amenity', template: 'shop' });
+    const flat = groundSize(shop);
+    expect(groundSize({ ...shop, rot: 90 })).toEqual({ w: flat.h, h: flat.w });
+    expect(groundSize({ ...shop, rot: 180 })).toEqual(flat);
+    expect(groundSize({ ...shop, rot: 270 })).toEqual({ w: flat.h, h: flat.w });
+
+    const enc = box({ category: 'enclosure', enclosureSize: 'large' });
+    const wide = groundSize(enc);
+    expect(wide.w).toBeGreaterThan(wide.h);
+    expect(groundSize({ ...enc, rot: 90 }).h).toBeGreaterThan(groundSize({ ...enc, rot: 90 }).w);
+  });
+
+  it('rounds a box to the nearest quarter, and leaves landscape at any angle it likes', () => {
+    // Everything in an isometric park shares two axes, and that shared grid IS the look: a cafe at
+    // 37 degrees stops agreeing with its own roof ridge, its awning and the fence next door. A
+    // river is an organic shape and 37 degrees looks like a river, so landscape is left alone.
+    expect(quarterOf(box({ category: 'amenity', template: 'shop', rot: 37 }))).toBe(0);
+    expect(quarterOf(box({ category: 'amenity', template: 'shop', rot: 80 }))).toBe(1);
+    expect(quarterOf(box({ category: 'amenity', template: 'shop', rot: -90 }))).toBe(3);
+    // ...and a river keeps its own angle, which the drawing reads straight off `rot`.
+    const river = box({ category: 'flora', template: 'river', rot: 37 });
+    expect(quarterOf(river), 'a river was snapped to a quarter').toBe(0);
+    expect(groundSize(river), 'a river had its length and width swapped').toEqual(groundSize({ ...river, rot: 0 }));
   });
 });

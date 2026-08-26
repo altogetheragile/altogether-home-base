@@ -39,8 +39,25 @@ export const parkType = (item: BacklogItem): string | undefined =>
  *
  *  A habitat's size is chosen from a few standard ones; everything else has a footprint per kind, so
  *  that a cafe is plainly a bigger thing than a kiosk and a signpost is plainly a post. */
-export const groundSize = (item: BacklogItem): { w: number; h: number } =>
-  item.category === 'enclosure' ? ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'] : footprintFor(item);
+export const groundSize = (item: BacklogItem): { w: number; h: number } => {
+  const base = item.category === 'enclosure'
+    ? ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'] : footprintFor(item);
+  // Turned a quarter, a box is as wide as it was deep. This is the whole of what a quarter turn
+  // MEANS for the ground it takes, and it is answered here so that both drawings, the automatic
+  // layout, the visitor routing and the hit area all get the same answer without being told twice.
+  return quarterOf(item) % 2 ? { w: base.h, h: base.w } : base;
+};
+
+/** Which quarter a thing has been turned to: 0, 1, 2 or 3.
+ *
+ *  Landscape can lie at any angle - a river is an organic shape and 37 degrees looks like a river.
+ *  A box cannot. Everything in an isometric park shares two axes, and that shared grid IS the look:
+ *  a cafe at 37 degrees stops agreeing with its own roof ridge, its awning, its sign board and the
+ *  fence next door, and reads as broken rather than as angled. So boxes turn by quarters, which is
+ *  also the turn anybody actually wants - a shop facing the path instead of away from it. */
+export const quarterOf = (item: BacklogItem): number =>
+  (item.category === 'flora' && isLandscapeType(parkType(item))) ? 0
+    : ((Math.round((item.rot ?? 0) / 90) % 4) + 4) % 4;
 
 /** One thing standing on the park, and what is standing in it. */
 export interface Standing {

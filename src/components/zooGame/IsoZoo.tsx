@@ -4,7 +4,7 @@ import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscape
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
-import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, workingDesign as working, parkType as landType } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
 import { animalArtFor, coatFilter } from './art/animalArt';
@@ -733,13 +733,36 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       const q2 = project(wx, wy, u); return { x: q2.x + ox, y: q2.y + oy - h };
     };
     const quad = (ps: Pt[]) => ps.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    /** Which wall is the front.
+     *
+     *  A building can be turned a quarter at a time, so its door does not have to face the way the
+     *  illustrator happened to draw it - you turn the shop until its front faces the path. The turn
+     *  is applied HERE, by walking the four walls round, rather than by rotating the drawing: an
+     *  isometric box rotated by an arbitrary transform stops agreeing with its own roof.
+     *
+     *  The park's own Turn button rotates the whole zoo, and this rides on top of it - if the park
+     *  is turned a quarter and the shop is turned a quarter, the shop's front comes back round to
+     *  where it was, which is what anybody would expect of two quarter turns. */
+    const corner = [{ x: x0, y: y1 }, { x: x1, y: y1 }, { x: x1, y: y0 }, { x: x0, y: y0 }];
+    const side = ((quarterOf(it) + q) % 4 + 4) % 4;
+    const wall = (n: number) => [corner[(side + n) % 4], corner[(side + n + 1) % 4]] as const;
     /** A panel let into the wall facing the viewer, as fractions along it and up it. */
-    const face = (t0: number, t1: number, h0: number, h1: number) =>
-      shift(wallPanelOf({ x: x0, y: y1 }, { x: x1, y: y1 }, t0, t1, h0, h1, u));
+    const face = (t0: number, t1: number, h0: number, h1: number) => {
+      const [a, z] = wall(0);
+      return shift(wallPanelOf(a, z, t0, t1, h0, h1, u));
+    };
     /** ...and into the one running away to the right. */
-    const flank = (t0: number, t1: number, h0: number, h1: number) =>
-      shift(wallPanelOf({ x: x1, y: y1 }, { x: x1, y: y0 }, t0, t1, h0, h1, u));
-    const lerp = (t: number) => x0 + (x1 - x0) * t;
+    const flank = (t0: number, t1: number, h0: number, h1: number) => {
+      const [a, z] = wall(1);
+      return shift(wallPanelOf(a, z, t0, t1, h0, h1, u));
+    };
+    /** A point along the front wall, and a step out in front of it - which way that is depends on
+     *  which wall the front has become. */
+    const front = (t: number, out = 0) => {
+      const [a, z] = wall(0);
+      const nx = -(z.y - a.y), ny = z.x - a.x, len = Math.hypot(nx, ny) || 1;
+      return { x: a.x + (z.x - a.x) * t + (nx / len) * out, y: a.y + (z.y - a.y) * t + (ny / len) * out };
+    };
 
     /** A flat slab lying over the walls - a canopy, or a roof with no pitch to it. */
     const slab = (key: string, over: number, base: number, thick: number, hex: string) => {
@@ -758,11 +781,12 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
      *  thing you choose about how a cafe looks is the thing you see first. */
     const awning = (key: string, h: number, out: number, drop: number, bands: number) => (
       <g key={key}>
-        {Array.from({ length: bands }, (_, i) => (
-          <polygon key={i} fill={i % 2 ? '#f7f4ee' : sign}
-            points={quad([at(lerp(i / bands), y1, h), at(lerp((i + 1) / bands), y1, h),
-                          at(lerp((i + 1) / bands), y1 + out, h - drop), at(lerp(i / bands), y1 + out, h - drop)])} />
-        ))}
+        {Array.from({ length: bands }, (_, i) => {
+          const a = front(i / bands), z = front((i + 1) / bands);
+          const ao = front(i / bands, out), zo = front((i + 1) / bands, out);
+          return <polygon key={i} fill={i % 2 ? '#f7f4ee' : sign}
+            points={quad([at(a.x, a.y, h), at(z.x, z.y, h), at(zo.x, zo.y, h - drop), at(ao.x, ao.y, h - drop)])} />;
+        })}
       </g>
     );
 
@@ -775,17 +799,19 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
      *
      *  Not lettered: at the size a park is drawn, type turns to mud. */
     const board = (t0 = 0.14, t1 = 0.86, lift = 0) => {
-      const y = y1 + 0.9, lo = wallH * 0.72 + lift, hi = wallH * 0.98 + lift;
-      const p0 = lerp(t0), p1 = lerp(t1), i0 = lerp(t0 + (t1 - t0) * 0.07), i1 = lerp(t1 - (t1 - t0) * 0.07);
-      const band = (a: number, b: number, h0: number, h1: number) =>
-        quad([at(a, y, h1), at(b, y, h1), at(b, y, h0), at(a, y, h0)]);
+      const lo = wallH * 0.72 + lift, hi = wallH * 0.98 + lift;
+      const p0 = t0, p1 = t1, i0 = t0 + (t1 - t0) * 0.07, i1 = t1 - (t1 - t0) * 0.07;
+      const band = (ta: number, tb: number, h0: number, h1: number) => {
+        const a = front(ta, 0.9), b = front(tb, 0.9);
+        return quad([at(a.x, a.y, h1), at(b.x, b.y, h1), at(b.x, b.y, h0), at(a.x, a.y, h0)]);
+      };
       return (
         <g key="sb">
           {/* Edged, so it separates from whatever is behind it. A cafe's board sat against a roof
               of nearly its own colour and vanished, which is a hard thing to see in a screenshot
               and an easy one to see in a game. */}
           <polygon points={band(p0, p1, lo, hi)} fill={shade(sign, -34)} />
-          <polygon points={band(lerp(t0 + 0.012), lerp(t1 - 0.012), lo + (hi - lo) * 0.1, hi - (hi - lo) * 0.1)} fill={sign} />
+          <polygon points={band(t0 + 0.012, t1 - 0.012, lo + (hi - lo) * 0.1, hi - (hi - lo) * 0.1)} fill={sign} />
           <polygon points={band(i0, i1, lo + (hi - lo) * 0.26, hi - (hi - lo) * 0.26)} fill={shade(sign, 28)} />
         </g>
       );
@@ -833,8 +859,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           ...pitched(17),
           ...(signed ? [board()] : []),
           awning('aw', wallH * 0.68, Math.min(fh * 0.40, 13), Math.max(1.5, u * 5), 6),
-          parasol('p1', x0 + (x1 - x0) * 0.20, y1 + Math.min(fh * 0.9, 26)),
-          parasol('p2', x0 + (x1 - x0) * 0.74, y1 + Math.min(fh * 0.7, 20)),
+          ...[[0.2, Math.min(fh * 0.9, 26)], [0.74, Math.min(fh * 0.7, 20)]].map(([t, out], i) => {
+            const at2 = front(t, out);
+            return parasol(`p${i}`, at2.x, at2.y);
+          }),
         ];
         break;
       case 'hatch':

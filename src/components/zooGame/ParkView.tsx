@@ -1008,9 +1008,14 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
   };
 
-  // Turn a landscape feature by dragging its handle round its centre: the angle follows the pointer,
-  // snapped to 15 degrees so across, up-and-down and the diagonals all land exactly. Hold Shift for
-  // any angle in between.
+  // Turn a thing by dragging its handle round its centre.
+  //
+  // How freely depends on what it is, and that is not fussiness. Landscape is an organic shape - a
+  // river at 37 degrees looks like a river - so it snaps to 15 degrees, with Shift for any angle at
+  // all. A habitat or a building is a BOX, and everything in an isometric park shares two axes: that
+  // shared grid is the look, and a cafe at 37 degrees stops agreeing with its own roof ridge, its
+  // awning and the fence next door. So boxes go round in quarters, which is the turn anybody
+  // actually wants anyway - the shop facing the path instead of away from it.
   const startRotate = (e: ReactPointerEvent, f: Feature) => {
     if (!onSetRot) return;
     e.preventDefault(); e.stopPropagation();
@@ -1020,7 +1025,9 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
     const cx = (rect?.left ?? 0) + c.x * sc, cy = (rect?.top ?? 0) + c.y * sc;
     const move = (ev: PointerEvent) => {
       const deg = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
-      onSetRot(f.item.id, ev.shiftKey ? deg : Math.round(deg / 15) * 15);
+      const boxy = f.item.category !== 'flora' || !isLandscapeType(landType(f.item));
+      const step = boxy ? 90 : 15;
+      onSetRot(f.item.id, ev.shiftKey && !boxy ? deg : ((Math.round(deg / step) * step) % 360 + 360) % 360);
     };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
@@ -1201,6 +1208,10 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
           const isLand = (f.kind === 'plot' || f.kind === 'site') && f.item.category === 'flora' && isLandscapeType(landType(f.item));
           /** The thing you are working on right now - its handles stay out, hover or no hover. */
           const working = building === f.item.id;
+          /** Anything you can turn. Landscape swings to any angle; a habitat or a building goes
+           *  round in quarters, and both want the same grip in the same place. */
+          const turnable = isLand
+            || (f.item.category === 'enclosure' || f.item.category === 'amenity');
           return (
             <div key={f.item.id}
               onPointerDown={(e) => startDrag(e, f)}
@@ -1249,9 +1260,9 @@ function FreeScene({ features, tool, editable, connectors, selectedConn, newConn
                   out they were there - "how do I turn the river? where is the control?". So they
                   also show whenever the thing is the one you are working on, which is exactly when
                   you want them and never when you do not. */}
-              {isLand && tool === 'none' && !dragging && (
+              {turnable && tool === 'none' && !dragging && (
                 <>
-                  {onSetSize && (
+                  {isLand && onSetSize && (
                     <>
                       <div onPointerDown={(e) => startResize(e, f, 'len')} title="Drag to make it longer or shorter"
                         className={cn(HANDLE, 'h-4 w-4 -translate-y-1/2 cursor-ew-resize', working && 'opacity-100')}
