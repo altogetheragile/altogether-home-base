@@ -980,29 +980,81 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
   const draws = encs.length ? encs.map((e) => posOf(e)) : [{ x: CANVAS_W / 2, y: promY - 120 }];
   const routes = draws.map(routeTo);
 
+  /** A visitor prop drawn about the ORIGIN rather than at a place on the park, so a `<g>` can carry
+   *  it along a route. `place` anchors to a spot, which is right for a tree and wrong for somebody
+   *  on their way somewhere. */
+  const walker = (name: string, k: number, key: string) => {
+    const pr = prop(name);
+    if (!pr) return null;
+    const w = pr.w * k, h = pr.h * k;
+    return <svg key={key} x={-w / 2} y={-h + w * 0.29} width={w} height={h} viewBox={pr.viewBox}
+      overflow="visible" dangerouslySetInnerHTML={{ __html: pr.body }} />;
+  };
+
+  // People WALK. They were placed at a fixed point along their route - a hash, so the same point
+  // every time the park was drawn - which made a still photograph of a walk: everybody frozen
+  // mid-stride on the way to the lions. A zoo with nobody moving in it does not look open.
+  //
+  // The walking is SMIL, not React: one <animateMotion> per party, following a path laid down once.
+  // A ticker in the component would redraw the entire park sixty times a second to move eight
+  // people, and the park is a thousand polygons.
+  const stroll = !(typeof window !== 'undefined'
+    && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  /** How fast somebody walks, in scene px per second. Slow enough to read as strolling round a zoo
+   *  rather than late for a train. */
+  const PACE = 26;
+  const paths: React.ReactNode[] = [];
+
   const parties = Math.max(1, Math.min(14, Math.round(visitors / 80)));
   let n = 0;
   for (let i = 0; i < parties; i++) {
     const route = routes[i % routes.length];
-    // Spread the parties down the route so the walk reads as a walk: some just off the tarmac,
-    // some most of the way to the lions.
+    // Where along the route this party is. Still a hash, so a party keeps its place in the queue -
+    // and when they walk it becomes WHEN they set off rather than where they are stuck.
     const t = 0.08 + jitter(i + 1, 7) * 0.88;
     const at = along(route, t);
     const spot = { x: at.x + (jitter(i + 3, 5) - 0.5) * 16, y: at.y + (jitter(i + 4, 11) - 0.5) * 14 };
     if (spot.x < 14 || spot.x > CANVAS_W - 14 || spot.y < 14 || spot.y > worldH - 14) continue;
     if (wet(spot)) continue;
-    place(VISITOR_PROPS[n % VISITOR_PROPS.length], spot.x, spot.y, u * 0.92, `guest-${n}`); n += 1;
-    // Every third party is a family: another grown-up and a child or two, at their elbow.
-    if (i % 3 !== 2) continue;
-    const withThem = 1 + (i % 2);
-    for (let k = 0; k <= withThem; k += 1) {
-      const beside = { x: spot.x + 9 + k * 8, y: spot.y + (k % 2 ? 7 : -5) };
-      if (wet(beside) || beside.x > CANVAS_W - 14) continue;
-      const kid = k > 0;
-      const pool = kid ? CHILD_PROPS : VISITOR_PROPS;
-      place(pool[(n + k) % pool.length], beside.x, beside.y, u * (kid ? 0.72 : 0.9), `guest-${n}-${k}`);
+
+    // The route in the picture, and how long it takes to walk it.
+    const screen = route.map((q2) => P(q2.x, q2.y));
+    const len = screen.reduce((sum, q2, k) => (k ? sum + Math.hypot(q2.x - screen[k - 1].x, q2.y - screen[k - 1].y) : 0), 0);
+    const secs = Math.max(14, Math.min(70, len / PACE));
+    const id = `walk-${i}`;
+    if (stroll) {
+      paths.push(<path key={id} id={id} fill="none" stroke="none"
+        d={screen.map((q2, k) => `${k ? 'L' : 'M'}${q2.x.toFixed(1)},${q2.y.toFixed(1)}`).join(' ')} />);
     }
+    /** Everybody in this party, walking together or standing together. */
+    const party: React.ReactNode[] = [];
+    party.push(walker(VISITOR_PROPS[n % VISITOR_PROPS.length], u * 0.92, `guest-${n}`));
     n += 1;
+    // Every third party is a family: another grown-up and a child or two, at their elbow.
+    if (i % 3 === 2) {
+      const withThem = 1 + (i % 2);
+      for (let k = 0; k <= withThem; k += 1) {
+        const kid = k > 0;
+        const pool = kid ? CHILD_PROPS : VISITOR_PROPS;
+        party.push(<g key={`guest-${n}-${k}`} transform={`translate(${(9 + k * 8) * 0.6},${(k % 2 ? 7 : -5) * 0.6})`}>
+          {walker(pool[(n + k) % pool.length], u * (kid ? 0.72 : 0.9), `p-${n}-${k}`)}
+        </g>);
+      }
+      n += 1;
+    }
+    // Drawn as far back as the point they are passing, so they go behind a habitat and in front of
+    // the path. It is one depth for the whole walk rather than a moving one, which is what SMIL
+    // buys: the alternative is re-sorting the scene on every frame.
+    push(depth(spot.x, spot.y), stroll ? (
+      <g key={`party-${i}`}>
+        <animateMotion dur={`${secs.toFixed(1)}s`} repeatCount="indefinite"
+          begin={`${(-t * secs).toFixed(1)}s`}><mpath href={`#${id}`} /></animateMotion>
+        {party}
+      </g>
+    ) : (
+      // Motion turned down: they stand where they had got to, which is what this used to be.
+      <g key={`party-${i}`} transform={`translate(${P(spot.x, spot.y).x.toFixed(1)},${P(spot.x, spot.y).y.toFixed(1)})`}>{party}</g>
+    ));
   }
 
   pieces.sort((a, z) => a.z - z.z);
@@ -1010,7 +1062,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
   return {
     w: total.w + MARGIN * 2,
     h: total.h + MARGIN * 2 + EDGE + HEAD,
-    nodes: [...nodes.filter(Boolean), ...pieces.map((p) => p.el)],
+    nodes: [...(paths.length ? [<defs key="walks">{paths}</defs>] : []), ...nodes.filter(Boolean), ...pieces.map((p) => p.el)],
     label: `The zoo from above: ${encs.length} habitat${encs.length === 1 ? '' : 's'}, ${live.filter((i) => i.category === 'exhibit').length} exhibits, ${visitors} visitors`,
     // What a pointer can take hold of, and the frame needed to work out where it is pointing. The
     // hit area is the thing's own footprint on the ground - not its drawing, which for a habitat
