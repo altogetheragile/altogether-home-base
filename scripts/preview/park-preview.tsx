@@ -29,7 +29,7 @@ const state = {
     it({ id: 'e1', name: 'Lion Enclosure', enclosureSize: 'medium', pos: { x: 250, y: 210 },
          design: { parts: {}, colors: { ground: '#c9a86a', fence: '#7a5230' },
            water: [{ x: 0.6, y: 0.55, w: 0.3, h: 0.35 }],
-           flora: [{ x: 0.18, y: 0.7, s: 1, type: 'oak' }] } }),
+           flora: [{ x: 0.18, y: 0.7, s: 1, type: 'tree' }, { x: 0.62, y: 0.3, s: 1.2, type: 'rocks' }] } }),
     it({ id: 'a1', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'e1',
          design: { parts: { group: 'family' }, colors: {} } }),
     it({ id: 'e2', name: 'Giraffe Enclosure', zone: 'Savanna', enclosureSize: 'large', pos: { x: 580, y: 300 } }),

@@ -106,6 +106,18 @@ function PlantMark({ w, h, tone }: { w: number; h: number; tone: string }) {
   );
 }
 
+/** Rock, on a plan: an angular outline, because that is what tells it from a shrub at a glance.
+ *  A circle is a plant; a broken polygon is stone. */
+function RockMark({ w, h, tone }: { w: number; h: number; tone: string }) {
+  const d = Math.max(8, Math.min(w, h));
+  return (
+    <svg width={d} height={d} viewBox="0 0 24 24" aria-hidden style={{ overflow: 'visible' }}>
+      <polygon points="4,17 8,7 15,5 20,11 18,18" fill="none" stroke={tone} strokeWidth="1.4" strokeLinejoin="round" />
+      <polyline points="8,7 12,13 18,18" fill="none" stroke={tone} strokeWidth="1" strokeLinejoin="round" opacity="0.7" />
+    </svg>
+  );
+}
+
 /** Anything built: a box with its corner cut, which is how a plan says "structure". */
 function BuiltMark({ w, h, tone }: { w: number; h: number; tone: string }) {
   const cut = Math.min(w, h) * 0.28;
@@ -118,10 +130,15 @@ function BuiltMark({ w, h, tone }: { w: number; h: number; tone: string }) {
   );
 }
 
-/** A planting symbol of a given type and colours. Used for enclosure planting. */
-export function FloraSprite({ foliage, cell }: { type: string; foliage?: string; trunk?: string; cell: number }) {
+/** A symbol for one thing planted or placed inside a habitat.
+ *
+ *  It used to ignore `type` altogether and mark everything as planting, so rocks in a lion
+ *  enclosure were drawn on the plan as a shrub - the same fault the Increment had, in its own
+ *  idiom. A plan marks what a thing IS; that is the whole of what a plan does. */
+export function FloraSprite({ type, foliage, cell }: { type: string; foliage?: string; trunk?: string; cell: number }) {
   const d = Math.max(8, cell * GRID_W);
-  return <PlantMark w={d} h={d} tone={BP.zoneInk(foliage ?? BP.INK)} />;
+  const tone = BP.zoneInk(foliage ?? BP.INK);
+  return type === 'rocks' ? <RockMark w={d} h={d} tone={tone} /> : <PlantMark w={d} h={d} tone={tone} />;
 }
 
 /** The type of a flora/scenery item (from its built design, or its toolbox template before build). */

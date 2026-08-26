@@ -5,6 +5,7 @@ import type { BacklogItem, ZooGameState } from './types';
 import { ParkView } from './ParkView';
 import { IsoZoo } from './IsoZoo';
 import { standingOnPark } from './parkModel';
+import { HABITAT_FEATURE_TYPES } from './design';
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
   id: over.id ?? 'x', name: 'Thing', zone: 'Big Cats', category: 'enclosure',
@@ -189,5 +190,48 @@ describe('arranging a family', () => {
     expect(placed[0].id).toBe('lion');
     // it is the one that was taken hold of, not always the first
     expect(placed[0].member).toBeGreaterThan(0);
+  });
+});
+
+describe('rock is drawn as rock, not as a shrub', () => {
+  const habitat = (feature: string): ZooGameState => {
+    const base = initialZooState();
+    return { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 },
+             design: { parts: {}, colors: { ground: '#c9a86a', fence: '#7a5230' },
+                       // The SAME colour for both, or this proves nothing: rocks start grey and a
+                       // tree starts green, so two drawings of a tree - one tinted grey, one green -
+                       // come back different and the test passes with the fault still in place.
+                       // Held to one colour, only the shape is left to tell them apart.
+                       flora: [{ x: 0.4, y: 0.5, s: 1.2, type: feature, foliage: '#8a8f96' }] } }),
+    ] } as ZooGameState;
+  };
+
+  const planView = (s: ZooGameState) => render(<ParkView state={s} large />).container.innerHTML;
+  const isoView = (s: ZooGameState) => render(<IsoZoo state={s} height={460} />).container.innerHTML;
+
+  it('tells a rock from a tree in BOTH drawings', () => {
+    // There is no rock on the artwork sheet, so the isometric view handed back what it had for a
+    // name it did not know - a tree - and a boulder in a lion enclosure came out as a white tree.
+    // The plan had the same fault in its own idiom: FloraSprite ignored the type it was given and
+    // marked everything as planting, so rocks were drawn as a shrub.
+    //
+    // Both views, because that is the failure this game keeps having: a rule lands in one drawing
+    // and the other has never heard of it.
+    expect(isoView(habitat('rocks')), 'the Increment draws rocks exactly like a tree')
+      .not.toEqual(isoView(habitat('tree')));
+    expect(planView(habitat('rocks')), 'the plan marks rocks exactly like planting')
+      .not.toEqual(planView(habitat('tree')));
+  });
+
+  it('offers no pond inside a habitat, because the Water button already is one', () => {
+    // Two ways to put water in a pen: a Water button that drew a proper pool, and a "pond" feature
+    // that drew a tree tinted blue. One control that works beats two where one lies.
+    expect(HABITAT_FEATURE_TYPES).not.toContain('pond');
+    // ...and the one that works is still there and still draws water.
+    const pool = { ...habitat('rocks') };
+    const withWater = { ...pool, backlog: [{ ...pool.backlog[0],
+      design: { ...pool.backlog[0].design!, water: [{ x: 0.4, y: 0.4, w: 0.3, h: 0.3 }] } }] } as ZooGameState;
+    expect(isoView(withWater), 'the habitat Water button draws nothing').not.toEqual(isoView(pool));
   });
 });

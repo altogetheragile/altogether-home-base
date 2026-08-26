@@ -513,7 +513,11 @@ export const FLORA_TYPES = ['tree', 'bush', 'flowers', 'signpost', 'hedge', 'roc
  *  belongs on the grounds, not in a habitat. */
 export const PLANTING_TYPES = ['tree', 'bush', 'flowers', 'hedge'];
 // Rivers and fountains are park-scale features, so they stay out on the grounds, not in a habitat.
-export const HABITAT_FEATURE_TYPES = ['rocks', 'pond'];
+// No pond either, and that one is worth saying: a habitat has a Water button of its own, which puts
+// a proper pool inside the fence. Offering "pond" here as well was a second way to do a thing that
+// already worked - and the second way did not work, because there is no pond on the artwork sheet,
+// so it came out as a tree tinted blue. One control that works beats two where one lies.
+export const HABITAT_FEATURE_TYPES = ['rocks'];
 export const BUILDING_TYPES = ['shop', 'kiosk', 'cafe', 'stall', 'toilets'];
 
 /** Scenery, grouped by what KIND of thing it is.
