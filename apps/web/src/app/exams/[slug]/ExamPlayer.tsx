@@ -200,7 +200,11 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
       setAnswers((p) => ({ ...p, [currentIdx]: { ...p[currentIdx], selected: next } }));
     } else {
       if (current.includes(letter)) { setAnswers((p) => ({ ...p, [currentIdx]: { ...p[currentIdx], selected: [] } })); if (mode === 'practice') setPracticeRevealed(false); return; }
-      if (mode === 'exam' && current.length > 0) return;
+      // Exam mode used to freeze the first answer: every other option went dead on the click, with
+      // nothing on screen saying why, and the only way out was to click your own answer again to
+      // clear it - which nobody thinks to try. Changing your mind is ordinary exam behaviour and
+      // the real paper allows it right up to the moment you hand it in. Practice mode keeps the
+      // lock, because it has already shown you the answer by then.
       if (mode === 'practice' && practiceRevealed) return;
       setAnswers((p) => ({ ...p, [currentIdx]: { ...p[currentIdx], selected: [letter] } }));
       if (mode === 'practice') setPracticeRevealed(true);
@@ -382,7 +386,9 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
                   {isMulti && <p style={{ margin: '4px 0 0', fontSize: 12, color: c.muted }}>Select {corr.length}.</p>}
                   <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {opts.map((o) => (
-                      <button key={o.letter} onClick={() => select(o.letter)} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: 12, borderRadius: 10, border: '1px solid', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit', ...optStyle(o.letter) }}>
+                      // Which option is held was said in colour and nowhere else, so a screen
+                      // reader could not tell you what you had answered.
+                      <button key={o.letter} onClick={() => select(o.letter)} aria-pressed={!!answer?.selected.includes(o.letter)} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: 12, borderRadius: 10, border: '1px solid', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit', ...optStyle(o.letter) }}>
                         <span style={{ fontWeight: 700 }}>{o.letter}</span><span>{o.text}</span>
                       </button>
                     ))}
