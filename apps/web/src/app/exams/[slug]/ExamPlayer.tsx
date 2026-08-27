@@ -448,7 +448,10 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
         /* Tabbed at every screen size (like the live page): only the active pane
            shows, so the scenario gets full width and is easy to read. */
         .pane-scenario[data-active=false],.pane-question[data-active=false]{display:none}
-        .aa-scenario-body{font-size:14px;line-height:1.6;color:${c.body}}.aa-scenario-body h1,.aa-scenario-body h2,.aa-scenario-body h3{color:${c.deepTeal};font-weight:700;margin:14px 0 6px}.aa-scenario-body p{margin:0 0 10px}.aa-scenario-body ul,.aa-scenario-body ol{margin:0 0 10px;padding-left:20px}.aa-scenario-body table{border-collapse:collapse;width:100%;margin:0 0 10px}.aa-scenario-body th,.aa-scenario-body td{border:1px solid #E5E7EB;padding:6px 8px;text-align:left;font-size:13px}
+        .aa-scenario-body{font-size:14px;line-height:1.6;color:${c.body}}.aa-scenario-body h1,.aa-scenario-body h2,.aa-scenario-body h3{color:${c.deepTeal};font-weight:700;margin:14px 0 6px}.aa-scenario-body p{margin:0 0 10px}.aa-scenario-body ul,.aa-scenario-body ol{margin:0 0 10px;padding-left:22px}
+        /* The app's reset clears list markers, so a scenario's scope and deliverables read as
+           loose indented lines rather than a list. Padding alone does not put the bullets back. */
+        .aa-scenario-body ul{list-style:disc}.aa-scenario-body ol{list-style:decimal}.aa-scenario-body li{margin:0 0 4px}.aa-scenario-body table{border-collapse:collapse;width:100%;margin:0 0 10px}.aa-scenario-body th,.aa-scenario-body td{border:1px solid #E5E7EB;padding:6px 8px;text-align:left;font-size:13px}
         .aa-match-table td,.aa-match-table th{border:none}
       `}</style>
     </div>
