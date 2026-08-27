@@ -131,6 +131,63 @@ describe('the question order is a choice', () => {
   });
 });
 
+describe('an answer can be changed', () => {
+  /** Start a sitting and hand back the option buttons for the question on screen. */
+  async function sitting(mode: RegExp) {
+    cleanup(); bankSize.current = 12;
+    render(<ExamPlayer exam={exam()} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: mode })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: mode }));
+    await waitFor(() => expect(screen.getByText('Question 1')).toBeTruthy());
+    // An option's accessible name is its letter run together with its text - "BTwo" - because the
+    // two live in adjacent spans. Match on the option's own words rather than on that seam.
+    const TEXT: Record<string, string> = { A: 'One', B: 'Two', C: 'Three', D: 'Four' };
+    const opt = (letter: string) => screen.getByRole('button',
+      { name: (n) => n.replace(/\s+/g, '') === letter + TEXT[letter] });
+    return { opt, chosen: () => 'ABCD'.split('').filter((l) => opt(l).getAttribute('aria-pressed') === 'true') };
+  }
+
+  it('lets somebody in exam mode think again and pick a different one', async () => {
+    // Exam mode took the first answer and froze it: every other option was dead on the click, with
+    // nothing on screen to say why. Changing your mind is ordinary exam behaviour, and the real
+    // paper allows it right up to the moment you hand it in.
+    const { opt, chosen } = await sitting(/exam mode/i);
+    fireEvent.click(opt('B'));
+    expect(chosen(), 'the first answer did not take').toEqual(['B']);
+
+    fireEvent.click(opt('C'));
+    expect(chosen(), 'exam mode would not let the answer be changed').toEqual(['C']);
+
+    // ...and still only one of them is held, rather than both.
+    fireEvent.click(opt('A'));
+    expect(chosen()).toEqual(['A']);
+  });
+
+  it('can still be cleared back to unanswered, and stays changed after moving away and back', async () => {
+    // Leaving a question blank is a real answer in a negatively unmarked paper, and the count in
+    // the top bar is what somebody navigates by, so it has to follow.
+    const { opt, chosen } = await sitting(/exam mode/i);
+    fireEvent.click(opt('B'));
+    fireEvent.click(opt('B'));
+    expect(chosen(), 'an answer could not be taken back').toEqual([]);
+    expect(screen.getByText(/^0 answered$/)).toBeTruthy();
+
+    fireEvent.click(opt('D'));
+    fireEvent.click(screen.getByRole('button', { name: /^next$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^prev$/i }));
+    expect(chosen(), 'the changed answer was lost on the way back').toEqual(['D']);
+  });
+
+  it('does not let practice mode change an answer once it has shown you the reason', async () => {
+    // The one place the lock belongs. Practice reveals the answer the moment you commit, so
+    // changing it afterwards is just marking your own work correct.
+    const { opt, chosen } = await sitting(/practice mode/i);
+    fireEvent.click(opt('B'));
+    fireEvent.click(opt('C'));
+    expect(chosen(), 'practice mode let the answer be changed after revealing it').toEqual(['B']);
+  });
+});
+
 describe('practice mode explains a matching answer', () => {
   it('shows the reason for each row once it is answered, as it does for every other question type', async () => {
     // The dot turned green and that was the whole of the teaching. Every other kind of question
