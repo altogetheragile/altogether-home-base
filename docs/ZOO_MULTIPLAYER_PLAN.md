@@ -324,21 +324,37 @@ being a faithful Scrum game. The project layer sits on top and reads the same st
 
 Each step is usable on its own, and each is a prerequisite for the next.
 
-**Steps 1 to 3 are built and merged. They were the platform; what is left is product on top
-of it.** What each turned out to involve is recorded under Built, below.
+1. **A group can play one game together.** Sessions, participants and presence *and* game
+   time, because neither ships without the other: while the day clock lives in a component
+   each browser runs its own countdown and each fires the day advance, so every phase would
+   work except the build day, which is the heart of the game.
+   - The four tables and their RLS, with the three participant kinds - player, AI, observer
+     - in the access model from the start, so a trainer can observe on day one even though
+     the cohort view comes at step 8.
+   - The day clock and Daily Scrum timebox move out of `DayTimer.tsx` and `DailyScrum.tsx`
+     into `ZooGameState`, owned by one client, pausable, holding a part-spent day. Fixes
+     save-and-resume in the single-player game as a side effect.
+   - `useZooSession`: apply locally, write `WHERE version = n`, retry on conflict,
+     broadcast, catch up. Presence copied from `useCanvasRealtime.ts`.
+   - Create a session and get a code, join by code, a lobby to claim a seat or observe.
 
-1. ~~**A group can play one game together.**~~ Done - PRs #418, #419, #420.
-2. ~~**Seats and gating.**~~ Done - PR #422.
-3. ~~**AI seats.**~~ Done - PR #423. The screens were pointed at a session in #424, so a
-   seated team builds the same zoo rather than a panel proving the plumbing.
+   Deliberately not included: gating, so anyone can still do anything. At the end of it four
+   people join a code, sit in seats, play a Sprint together, close their laptops and pick it
+   up on Thursday where they left it. The biggest single step here, and the one that has to
+   be right because everything above assumes it.
+2. **Actor on actions, seats, gating.** Every action carries `by`. A guard layer refuses
+   what a seat may not do, and says why. This is the step that turns a synchronised screen
+   into a team game and makes the accountabilities bite.
+3. **AI seats.** A seat with no human plays its accountability in character, built on the
+   `zoo-po-refine` pattern and plugged into the step 3 gating layer, which is exactly what
+   an AI seat needs in order to know what it may and may not do. Extends reach further than
+   anything else here: it is what lets one person, or a pair, see a whole Scrum Team work.
 4. **Debrief.** Velocity trend, forecast against delivered, the decisions taken and who took
    them. Serves every way of playing. Still the biggest unlock for a trainer, and still
    unbuilt.
 5. **Live rituals.** Planning Poker with real votes rather than a simulated hand, a Daily
    Scrum where each Developer speaks, a Retrospective board everyone writes on.
-6. **Park concurrency.** Item ownership while dragging. **Likely wanted sooner than this
-   position suggests**: the park is the one surface two people will touch at once on their
-   first shared Sprint, and nothing currently stops them.
+6. **Park concurrency.** Item ownership while dragging.
 7. **Facilitator controls.** Pause and freeze input for discussion, rewind to a decision,
    inject an impediment or a scope change on cue, spotlight a screen, and a cohort view of
    several teams at once.
@@ -347,53 +363,7 @@ of it.** What each turned out to involve is recorded under Built, below.
    debrief that walks the group through their own run. Last, because it needs all of the
    above.
 
-## Built
-
-What steps 1 to 3 actually came to, including the things that were not in the plan.
-
-**The tables** are `zoo_sessions`, `zoo_session_participants`, `zoo_games` and
-`zoo_game_seats`, applied to the live database. Verified with three real user tokens rather
-than the service role, which is what found that **the first participant row of every session
-was unwritable**: PostgREST inserts with RETURNING, and under RLS that also requires the new
-row to be visible through the SELECT policy, which raises the same 42501 an insert-check
-failure gives. Reading participants required membership, and a host is not a member until
-the row they are inserting exists. Eleven RLS checks now pass, including that a player
-cannot grant themselves `can_facilitate` and an observer can read but not write.
-
-**Game time** moved into `ZooGameState` as `daySecondsLeft` and `scrumSecondsLeft`, advanced
-by `TICK_DAY` and `TICK_SCRUM` from one heartbeat. The reducer ends the day itself, so the
-expiry cannot fire from two browsers. Two bugs fell out that pre-dated any of this: holding
-the Daily Scrum cost nothing, because the day was sized before the event set `dayTimeMult`;
-and a cancelled Sprint kept the old day's remaining seconds.
-
-**Reconciliation** lives in `sessionSync.ts` as plain functions, so the races are pinned
-down without a network: an action shows before any write lands, a rebase keeps the player's
-unconfirmed intent while taking the other person's change, and a confirm clears only what
-its write carried rather than swallowing what was queued mid-flight. Proven against the live
-database as well - two writers at the same version, the second rejected, re-read, retried
-and won.
-
-**One action surface.** All 86 callbacks moved into `zooActions`, built around a carrier
-rather than a reducer, so `useZooGame` and `useZooSession` offer the same thing and
-`ZooSession extends ZooActions` makes a missing action a compile error.
-
-**The gate** assigns only what the Guide assigns, and the list is short on purpose - the
-Sprint Goal, the Definition of Done and refinement stay the whole team's, with a test
-asserting they are *not* gated. It refuses with a sentence rather than a disabled control,
-because the sentence is the teaching.
-
-**AI seats turned out not to need a language model.** The game already holds the judgement
-(`pokerHand`, `notReady`, the WIP limit), so an AI seat is mostly an accountability applied
-to what the game knows. That kept all three things this plan worried about: determinism, so
-a seed can still be replayed; no cost; and no latency.
-
-## Not Yet Proven
-
-Everything above is covered by 429 tests, RLS checks against real tokens, and a live write
-race. **Two signed-in people have not yet built a zoo together**, because that needs real
-accounts. That is the check most likely to find what the tests cannot - two people dragging
-on the park at once, or a seat claim racing another - and it is worth half an hour with a
-colleague and two laptops before a cohort sees it.
+Steps 1 to 3 are the platform. Everything after is product on top of it.
 
 ## What This Reverses
 
