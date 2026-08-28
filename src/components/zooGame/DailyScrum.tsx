@@ -93,10 +93,10 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
       </div>
 
       <div className={cn(SURFACE.card, PADDING.default)}>
-        <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold"><Target className="h-3.5 w-3.5 text-muted-foreground" /> Burndown <span className="font-normal text-muted-foreground">- committed points still to do</span></div>
+        <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold"><Target className="h-3.5 w-3.5 text-muted-foreground" /> Burndown <span className="font-normal text-muted-foreground">- forecast points still to do</span></div>
         <Burndown state={state} />
         <p className="mt-1 text-[11px] text-muted-foreground">
-          {prog.remaining === 0 ? 'All committed work is done - ahead of the line.'
+          {prog.remaining === 0 ? 'All the forecast work is done - ahead of the line.'
             : `${prog.remaining} pts remain over ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Above the ideal line = behind; adapt by focusing the essentials.`}
         </p>
       </div>
@@ -109,7 +109,10 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
               <div>
                 <div className={cn(TONE.attention.text, "text-sm font-semibold")}>A blocker surfaced: {imp.title}</div>
                 <div className={cn(TONE.attention.text, "text-sm")}>{imp.detail}</div>
-                <div className={cn(TONE.attention.text, "mt-1 text-xs")}>Do you adapt the plan around it (the Scrum Master removes it), or carry on with the original plan?</div>
+                {/* Surfaced here, removed outside here. The screen used to say the Scrum Master
+                    removed it as part of adapting the plan, which put a Scrum Master act inside a
+                    Developers' event and contradicted the Daily Scrum card two clicks away. */}
+                <div className={cn(TONE.attention.text, "mt-1 text-xs")}>Do you adapt today&rsquo;s plan around it, so the Scrum Master can get it removed, or carry on with the original plan?</div>
               </div>
             </div>
           </div>

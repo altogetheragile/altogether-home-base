@@ -151,7 +151,7 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
             <p className="text-sm font-medium">{state.sprintGoal}</p>
             {state.sprintGoalMet
               ? <p className="text-[11px] text-muted-foreground">The work the Goal depended on was delivered - dropping less-essential scope to protect the Goal is a win, not a miss.</p>
-              : <p className="text-[11px] text-muted-foreground">Work the Goal depended on was left unfinished. Inspect why, and adapt - protect the Goal by committing to less, or marking fewer items essential.</p>}
+              : <p className="text-[11px] text-muted-foreground">Work the Goal depended on was left unfinished. Inspect why, and adapt - protect the Goal by forecasting less, or marking fewer items essential.</p>}
           </div>
         </div>
       )}
