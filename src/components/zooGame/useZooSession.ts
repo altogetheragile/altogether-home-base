@@ -6,6 +6,8 @@ import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
+import { aiTurn } from './aiSeats';
+import type { SeatName } from './useZooSessions';
 
 // One shared game, kept in step across several browsers with no server code.
 //
@@ -177,3 +179,29 @@ export function useSharedClock(session: ZooSession) {
 
 /** Re-export so a caller can build a state without importing the reducer separately. */
 export { reducer };
+
+
+/** Play the seats nobody is sitting in.
+ *
+ *  Only one browser does this - the same one that drives the clock - or every browser takes
+ *  the same turn and the Backlog gets sized four times. The pause is not for thinking, since
+ *  none of this needs a network: it is so a move reads as somebody else doing their job
+ *  rather than the board twitching.
+ *
+ *  Each move goes through `send` like anybody's, so it is written, shared, and refused by the
+ *  gate if it does not belong to that accountability. An AI seat is a player, not a back door.
+ */
+export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string) => void) {
+  const { state, drivesClock, send } = session;
+  const seats = aiSeats.join(',');
+  useEffect(() => {
+    if (!drivesClock || !state || !seats) return;
+    const id = setTimeout(() => {
+      for (const seat of seats.split(',') as SeatName[]) {
+        const move = aiTurn(state, seat);
+        if (move) { onSay?.(seat, move.says); send(move.action); return; }  // one at a time
+      }
+    }, 900);
+    return () => clearTimeout(id);
+  }, [state, drivesClock, seats, send, onSay]);
+}
