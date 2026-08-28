@@ -1460,11 +1460,15 @@ describe('zoo game: richer studio kit', () => {
 });
 
 describe('zoo game: the coach nudges a new player through the loop', () => {
-  it('points a brand-new player at Refinement first, not at the Sprint', () => {
+  it('sends a brand-new player to plan, rather than to finish the Backlog first', () => {
+    // This used to tell them to split the epics before starting, which is Sprint 0 taught as
+    // a screen. The Guide has no phase before the first Sprint, and the first area arrives
+    // ready, so there is already a Sprint's worth to plan from.
     const s: ZooGameState = { ...initialZooState(1), phase: 'refine' }; // where Start lands you
     const n = nextNudge(s)!;
     expect(n.id).toBe('refine-first');
-    expect(n.text).toMatch(/locked inside epics/i); // the animals, not the paths, are the work
+    expect(n.text, 'the opening nudge no longer sends them to plan').toMatch(/go and plan/i);
+    expect(n.text, 'it still told them to split the epics up front').not.toMatch(/split one into pieces/i);
   });
 
   it('sends them to plan once a Sprint or two is ready, and warns when they overdo it', () => {

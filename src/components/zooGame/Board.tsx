@@ -494,7 +494,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
         {mode === 'view'
           ? 'Ordered by the Product Owner, most valuable first. This is what a Sprint Goal is built from - read it, then select the work in topic two.'
           : mode === 'refine'
-          ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. Refining before the first Sprint costs you nothing on the clock; from here on it happens alongside the build and takes a little of the Sprint.'
+          ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. You do not have to finish this list. Take a Sprint\u2019s worth off the top and go; the rest gets built out through the Sprints, where refining happens alongside the build and takes a little of the Sprint.'
           : mode === 'plan'
             ? 'Ordered by you (the PO). The Developers select the ready ones they forecast they can finish, and those become the Sprint Backlog.'
             : 'Pull a Ready item in by agreement, if it will not put the Sprint Goal at risk. Refining here is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints.'}

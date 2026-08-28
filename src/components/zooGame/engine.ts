@@ -1494,7 +1494,7 @@ export const COACH_NUDGES: CoachNudge[] = [
     text: 'That is roughly {horizon} Sprints of work refined in detail. Analysing work you may never build is waste - what you learn from opening the first exhibits will change it. Build something first.' },
   { id: 'refine-first', where: 'Refinement, first Sprint, when the animals are still inside epics', phases: ['refine'],
     when: (c) => c.state.phase === 'refine' && c.state.sprintNumber === 1 && c.epicCount > 0 && c.exhibitsReady < 3,
-    text: 'The paths and benches are ready to build, but most of the animals are still locked inside epics - and visitors come for the exhibits. Split one into pieces you could actually build, and size them: enough to fill a Sprint or two, not the whole zoo.' },
+    text: 'The paths and benches are ready to build, and so is the first area - that is already a Sprint\u2019s worth. The other areas are still epics, and they can stay that way: you will split them when a Sprint needs them, which is how a Backlog actually gets built. Go and plan.' },
   { id: 'refine-enough', where: 'Refinement, when there is enough ready work to start', phases: ['refine'],
     when: (c) => c.state.phase === 'refine' && c.horizon >= 1 && c.horizon <= 3,
     text: 'You have about {horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Backlog better than more analysis now.' },

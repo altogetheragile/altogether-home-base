@@ -79,10 +79,17 @@ interface RefineBacklogProps {
   onMarkTaught?: (id: string) => void;
 }
 
-/** Product Backlog Refinement - a one-time bootstrap before the FIRST Sprint. You need
- *  a Backlog, however rough, to start: order it and estimate the unsized items until the
- *  top items are Ready to plan. From Sprint 2 on, refinement is not a separate step - it
- *  is ongoing, done during each Sprint on the board, where it costs a little capacity. */
+/** The two decisions that genuinely precede the first Sprint - how long a Sprint is, and
+ *  what Done means - plus a look at the Backlog the Product Owner has just written.
+ *
+ *  This screen used to be called Initial Refinement and invited you to get the Backlog
+ *  right before starting. That is Sprint 0, and it is the habit trainers spend a day
+ *  undoing: the Guide has no phase before the first Sprint ("a new Sprint starts
+ *  immediately after the conclusion of the previous Sprint"), and refinement is ongoing
+ *  work inside Sprints, not a gate in front of them. A rough Backlog with a Sprint's
+ *  worth ready at the top is enough, and the rest is built out through the Sprints - which
+ *  is what actually happens, and what costs capacity you can see. You can still tidy the
+ *  list here; the screen just stops telling you to finish it first. */
 export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan, teachCard, onMarkTaught }: RefineBacklogProps) {
   const [lengthOpen, setLengthOpen] = useState(true);
   const [dodOpen, setDodOpen] = useState(false);
@@ -112,12 +119,12 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {/* One question, like every other screen. What refinement is, who does it and how much is
           enough sits behind the "?" rather than as a paragraph over the work. */}
       <header className="space-y-1">
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Backlog Refinement</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">{first ? 'Before the first Sprint' : 'Backlog Refinement'}</div>
         <div className="flex items-center gap-2">
-          <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Build a Product Backlog for the Product Goal' : 'What is ready for the Sprints ahead?'}</h2>
+          <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Ready to start the first Sprint?' : 'What is ready for the Sprints ahead?'}</h2>
           <ExplainButton cards={['refinement', 'product-backlog', 'pbi']} phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
-        <p className="text-sm text-muted-foreground">Split what is too big, size what is not sized, and order it by value.</p>
+        <p className="text-sm text-muted-foreground">{first ? 'A Sprint\u2019s worth ready at the top is enough to begin. The rest of the Backlog gets built out through the Sprints, where refinement is real work and costs the time you can see.' : 'Split what is too big, size what is not sized, and order it by value.'}</p>
       </header>
 
       {/* This screen asks for two things in order, and nothing said so. Numbering them is the whole
