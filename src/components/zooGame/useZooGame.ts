@@ -20,7 +20,12 @@ import { applyParkChecks } from './parkChecks';
  *  off, and the card cannot go to Done, the way a build reruns its tests rather than trusting the
  *  last green.
  */
-function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
+/** The whole game, as a pure function of state and one action. Exported because a shared
+ *  session replays it: an action is applied locally for instant feedback, and if the write
+ *  loses a race the pending actions are re-applied onto whatever the server actually has.
+ *  That re-application is only sound because this is pure - no clock, no randomness that
+ *  is not seeded, no I/O. */
+export function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
   return applyParkChecks(step(state, action));
 }
 
