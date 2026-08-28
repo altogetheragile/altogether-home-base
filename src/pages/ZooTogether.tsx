@@ -58,7 +58,9 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
 
       {/* The game itself. The same screens the solo game uses - the only difference is which
           carrier the actions were built around, which is the whole point of one surface. */}
-      <ZooGameScreens game={{ ...session, state }} saves={false} />
+      <ZooGameScreens game={{ ...session, state }} saves={false}
+        seat={mySeat?.seat ?? null} observer={ctx.observer}
+        covering={ctx.emptySeats} />
 
       <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground">
         <span>
