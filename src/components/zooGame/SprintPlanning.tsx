@@ -91,7 +91,7 @@ function BacklogHeading({ count, note, onRefine }: { count: number; note?: strin
     <div className="flex flex-wrap items-baseline justify-between gap-x-2">
       <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({count})</span></h3>
       {onRefine
-        ? <button type="button" onClick={onRefine} title="Sizing and splitting belong in refinement, during the Sprint before this one."
+        ? <button type="button" onClick={onRefine} title="You can refine here, but it goes better in the Sprint before this one."
           className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline")}>Refine the Backlog</button>
         : note && <span className="text-[11px] text-muted-foreground/70">{note}</span>}
     </div>

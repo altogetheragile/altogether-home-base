@@ -7,8 +7,10 @@ import { FOCUS, SURFACE } from './ui/tokens';
 const MAX_DAYS = 10;
 
 /** Choosing how long a Sprint runs. A Sprint is a fixed-length container, so this is agreed once
- *  before the first one and revisited only at a Retrospective - never while planning a Sprint,
- *  where sizing the box to the work is exactly backwards. */
+ *  before the first one, and this game only reopens it at a Retrospective - never while planning a
+ *  Sprint, where sizing the box to the work is exactly backwards. The Guide fixes the length and
+ *  leaves it there; confining the change to the Retrospective is this game's convention, not a rule
+ *  from the Guide, so the copy says so rather than teaching it as one. */
 export function SprintLengthPicker({ days, options, onSet, at }: {
   days: number; options: readonly number[]; onSet: (d: number) => void; at: 'setup' | 'retro';
 }) {
@@ -51,7 +53,7 @@ export function SprintLengthPicker({ days, options, onSet, at }: {
       </div>
       <span className="min-w-[16rem] flex-1 text-[11px] text-muted-foreground">
         {at === 'setup'
-          ? 'Shorter gives faster feedback; longer gives more build time. Pick one and keep it - the cadence is the point, and you can only change it at a Retrospective.'
+          ? 'Shorter gives faster feedback; longer gives more build time. Pick one and keep it - a Sprint is never stretched to fit the work, and the cadence is the point. In this game you reopen it at a Retrospective.'
           : 'Only change this if the cadence itself is wrong - it applies from the next Sprint. If work is not finishing, a longer Sprint is rarely the fix; smaller pieces usually are.'}
       </span>
     </div>
