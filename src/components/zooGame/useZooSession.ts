@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ZooGameState, ZooAction } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
+import { zooActions, type ZooActions } from './zooActions';
 
 // One shared game, kept in step across several browsers with no server code.
 //
@@ -17,7 +18,7 @@ import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload
 // that reconciliation, and its tests are where the races are pinned down; this file is the
 // plumbing around it.
 
-export interface ZooSession {
+export interface ZooSession extends ZooActions {
   /** What to render: the server's state with this browser's unconfirmed actions on top. */
   state: ZooGameState | null;
   /** Apply an action: locally now, on the server shortly. */
@@ -134,7 +135,11 @@ export function useZooSession(gameId: string | null): ZooSession {
   // it re-settles by itself when that person closes their laptop.
   const drivesClock = !!user && present.length > 0 && [...present].sort()[0] === user.id;
 
-  return { state: sync ? localState(sync) : null, send, ready, present, drivesClock, error };
+  // The same surface a solo game offers, built around this carrier instead of the reducer,
+  // so a screen cannot tell which kind of game it was handed.
+  const actions = useMemo(() => zooActions(send), [send]);
+
+  return { state: sync ? localState(sync) : null, send, ready, present, drivesClock, error, ...actions };
 }
 
 /** The clock, for a shared game: the same heartbeat useZooGame runs alone, but only on the

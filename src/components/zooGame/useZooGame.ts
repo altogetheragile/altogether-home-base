@@ -1,6 +1,6 @@
-import { useReducer, useCallback, useEffect } from 'react';
-import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure } from './types';
-import type { ItemDesign } from './design';
+import { useReducer, useCallback, useEffect, useMemo } from 'react';
+import type { ZooGameState, ZooAction } from './types';
+import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {
   planSprint, holdPlannedRefinement, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
@@ -229,99 +229,10 @@ export function useZooGame(gameSeed?: number, runClock = true) {
     return () => clearInterval(id);
   }, [ticking, state.dayStage]);
 
-  const start = useCallback((seed?: number) => dispatch({ type: 'START', gameSeed: seed }), []);
-  const setPhase = useCallback((phase: ZooPhase) => dispatch({ type: 'SET_PHASE', phase }), []);
-  const setGoal = useCallback((goal: string) => dispatch({ type: 'SET_PRODUCT_GOAL', goal }), []);
-  const setSprintGoalCb = useCallback((goal: string) => dispatch({ type: 'SET_SPRINT_GOAL', goal }), []);
-  const setDor = useCallback((dor: string[]) => dispatch({ type: 'SET_DOR', dor }), []);
-  const setDod = useCallback((dod: string[]) => dispatch({ type: 'SET_DOD', dod }), []);
-  const takeSignal = useCallback((index: number) => dispatch({ type: 'ACCEPT_SIGNAL', index }), []);
-  const plan = useCallback((ids: string[], refinementPoints?: number) => dispatch({ type: 'PLAN_SPRINT', ids, refinementPoints }), []);
-  const holdRefinement = useCallback(() => dispatch({ type: 'HOLD_REFINEMENT' }), []);
-  const agreeDod = useCallback(() => dispatch({ type: 'AGREE_DOD' }), []);
-  const writeTheBacklog = useCallback((brief: ZooBrief) => dispatch({ type: 'WRITE_BACKLOG', brief }), []);
-  const setGoalShape = useCallback((shape: GoalShape, goal: string, measures: GoalMeasure[]) => dispatch({ type: 'SET_GOAL_FORM', shape, goal, measures }), []);
-  const startHere = useCallback((id: string, pos: { x: number; y: number }) => dispatch({ type: 'START_ITEM_AT', id, pos }), []);
-  const planShape = useCallback((id: string, patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string }) => dispatch({ type: 'PLAN_ITEM_SHAPE', id, patch }), []);
-  const estimate = useCallback((id: string, points: number) => dispatch({ type: 'ESTIMATE_ITEM', id, points }), []);
-  const setTasks = useCallback((id: string, tasks: SprintTask[]) => dispatch({ type: 'SET_TASKS', id, tasks }), []);
-  const toggleTask = useCallback((id: string, taskId: string) => dispatch({ type: 'TOGGLE_TASK', id, taskId }), []);
-  const confirmAc = useCallback((id: string, index: number, value: boolean) => dispatch({ type: 'CONFIRM_AC', id, index, value }), []);
-  const placeOnParkCb = useCallback((id: string) => dispatch({ type: 'PLACE_ON_PARK', id }), []);
-  const saveDraftDesign = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'SET_DRAFT_DESIGN', id, design }), []);
-  const startWork = useCallback((id: string) => dispatch({ type: 'START_ITEM', id }), []);
-  const markGoalCritical = useCallback((id: string) => dispatch({ type: 'TOGGLE_GOAL_CRITICAL', id }), []);
-  const chooseSprintDays = useCallback((days: number) => dispatch({ type: 'SET_SPRINT_DAYS', days }), []);
-  const setWip = useCallback((limit: number) => dispatch({ type: 'SET_WIP_LIMIT', limit }), []);
-  const teach = useCallback((on: boolean) => dispatch({ type: 'SET_TEACHING', on }), []);
-  const markRead = useCallback((id: string) => dispatch({ type: 'MARK_TAUGHT', id }), []);
-  const setLearn = useCallback((on: boolean) => dispatch({ type: 'SET_LEARN_MODE', on }), []);
-  const chooseScrumAt = useCallback((at: 'start' | 'end') => dispatch({ type: 'SET_SCRUM_AT', at }), []);
-  const chooseEnclosure = useCallback((id: string, size: 'small' | 'medium' | 'large') => dispatch({ type: 'SET_ENCLOSURE', id, size }), []);
-  const placeItem = useCallback((id: string, pos: { x: number; y: number }) => dispatch({ type: 'SET_POS', id, pos }), []);
-  const splitEpicCb = useCallback((id: string, memberIds: string[]) => dispatch({ type: 'SPLIT_EPIC', id, memberIds }), []);
-  const createPbi = useCallback((draft: PbiDraft) => dispatch({ type: 'ADD_PBI', draft }), []);
-  const declineProposal = useCallback((proposalId: string) => dispatch({ type: 'DECLINE_PROPOSAL', proposalId }), []);
-  const refinePbiCb = useCallback((id: string, draft: PbiDraft) => dispatch({ type: 'REFINE_PBI', id, draft }), []);
-  const reorder = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ITEM', id, dir }), []);
-  const moveBefore = useCallback((id: string, beforeId: string) => dispatch({ type: 'MOVE_ITEM_BEFORE', id, beforeId }), []);
-  const reorderSprint = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_SPRINT_ITEM', id, dir }), []);
-  const reorderForecast = useCallback((id: string, dir: 'up' | 'down', picked: string[]) => dispatch({ type: 'MOVE_FORECAST_ITEM', id, dir, picked }), []);
-  const setUserStories = useCallback((on: boolean) => dispatch({ type: 'SET_USE_USER_STORIES', on }), []);
-  const pull = useCallback((id: string) => dispatch({ type: 'PULL_ITEM', id }), []);
-  const moveZone = useCallback((id: string, zone: string) => dispatch({ type: 'MOVE_TO_ZONE', id, zone }), []);
-  const createZone = useCallback((name: string) => dispatch({ type: 'ADD_ZONE', name }), []);
-  const renameZoneCb = useCallback((oldName: string, newName: string) => dispatch({ type: 'RENAME_ZONE', oldName, newName }), []);
-  const reorderZone = useCallback((id: string, dir: 'up' | 'down') => dispatch({ type: 'REORDER_IN_ZONE', id, dir }), []);
-  const deletePbiCb = useCallback((id: string) => dispatch({ type: 'DELETE_PBI', id }), []);
-  const duplicatePbiCb = useCallback((id: string) => dispatch({ type: 'DUPLICATE_PBI', id }), []);
-  const assignDevCb = useCallback((itemId: string, devId: string) => dispatch({ type: 'ASSIGN_DEV', itemId, devId }), []);
-  const renameMemberCb = useCallback((memberId: string, name: string) => dispatch({ type: 'RENAME_MEMBER', memberId, name }), []);
-  const moveZoneOrder = useCallback((zone: string, dir: 'up' | 'down') => dispatch({ type: 'MOVE_ZONE', zone, dir }), []);
-  const setPathStyleCb = useCallback((style: string) => dispatch({ type: 'SET_PATH_STYLE', style }), []);
-  const setPathRouteCb = useCallback((route: 'straight' | 'elbow' | 'spine' | 'none') => dispatch({ type: 'SET_PATH_ROUTE', route }), []);
-  const addPathCb = useCallback((points: { x: number; y: number }[]) => dispatch({ type: 'ADD_PATH', points }), []);
-  const deletePathCb = useCallback((id: string) => dispatch({ type: 'DELETE_PATH', id }), []);
-  const clearPathsCb = useCallback(() => dispatch({ type: 'CLEAR_PATHS' }), []);
-  const addConnectorCb = useCallback((connector: ZooConnector) => dispatch({ type: 'ADD_CONNECTOR', connector }), []);
-  const updateConnectorCb = useCallback((id: string, patch: Partial<ZooConnector>) => dispatch({ type: 'UPDATE_CONNECTOR', id, patch }), []);
-  const deleteConnectorCb = useCallback((id: string) => dispatch({ type: 'DELETE_CONNECTOR', id }), []);
-  const build = useCallback((id: string, design?: ItemDesign) => dispatch({ type: 'BUILD_ITEM', id, design }), []);
-  const editBuild = useCallback((id: string, design: ItemDesign) => dispatch({ type: 'EDIT_ITEM', id, design }), []);
-  const addAnotherPbi = useCallback((id: string) => dispatch({ type: 'ADD_ANOTHER', id }), []);
-  const improve = useCallback((id: string) => dispatch({ type: 'IMPROVE_ITEM', id }), []);
-  const setSpot = useCallback((id: string, spot: { x: number; y: number }) => dispatch({ type: 'SET_ITEM_SPOT', id, spot }), []);
-  const setMemberSpotCb = useCallback((id: string, member: number, spot: { x: number; y: number }) => dispatch({ type: 'SET_MEMBER_SPOT', id, member, spot }), []);
-  const setSize = useCallback((id: string, size: { w: number; h: number }) => dispatch({ type: 'SET_ITEM_SIZE', id, size }), []);
-  const addCopy = useCallback((id: string, at: { x: number; y: number }, piece?: string) => dispatch({ type: 'ADD_COPY', id, at, piece }), []);
-  const setCopyPiece = useCallback((id: string, index: number, piece: string) => dispatch({ type: 'SET_COPY_PIECE', id, index, piece }), []);
-  const moveCopy = useCallback((id: string, index: number, pos: { x: number; y: number }) => dispatch({ type: 'MOVE_COPY', id, index, pos }), []);
-  const removeCopy = useCallback((id: string, index: number) => dispatch({ type: 'REMOVE_COPY', id, index }), []);
-  const setRot = useCallback((id: string, rot: number) => dispatch({ type: 'SET_ROT', id, rot }), []);
-  const nest = useCallback((id: string, enclosureId: string, spot: { x: number; y: number }) => dispatch({ type: 'NEST_ITEM', id, enclosureId, spot }), []);
-  const unnest = useCallback((id: string) => dispatch({ type: 'UNNEST_ITEM', id }), []);
-  const renameItemCb = useCallback((id: string, name: string) => dispatch({ type: 'RENAME_ITEM', id, name }), []);
-  const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
-  const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
-  // One tick a second, dispatched from a single place. The reducer decides whether it means
-  // anything (paused in learn mode, ignored outside a running day) and ends the day itself
-  // when the clock runs out. In a shared session only the tick owner will dispatch these.
-  const tickTheDay = useCallback(() => dispatch({ type: 'TICK_DAY' }), []);
-  const tickTheScrum = useCallback(() => dispatch({ type: 'TICK_SCRUM' }), []);
-  const holdDailyScrum = useCallback(() => dispatch({ type: 'RUN_DAILY_SCRUM' }), []);
-  const skipDailyScrumCb = useCallback(() => dispatch({ type: 'SKIP_DAILY_SCRUM' }), []);
-  const beginDay = useCallback(() => dispatch({ type: 'START_DAY' }), []);
-  const cancelTheSprint = useCallback(() => dispatch({ type: 'CANCEL_SPRINT' }), []);
-  const review = useCallback(() => dispatch({ type: 'REVIEW_SPRINT' }), []);
-  const nextSprint = useCallback((improvement: string) => dispatch({ type: 'NEXT_SPRINT', improvement }), []);
-  const finish = useCallback(() => dispatch({ type: 'END_GAME' }), []);
-  const loadGame = useCallback((loaded: ZooGameState) => dispatch({ type: 'LOAD_GAME', state: loaded }), []);
-  const poRefine = useCallback((decisions: PoDecisions) => dispatch({ type: 'PO_REFINE', decisions }), []);
-  const reset = useCallback(() => dispatch({ type: 'RESET' }), []);
+  // Every action lives in zooActions, built around a carrier, so a shared game and a solo
+  // game offer the screens exactly the same surface and there is only one list to maintain.
+  const send = useCallback((action: ZooAction) => dispatch(action), []);
+  const actions = useMemo(() => zooActions(send), [send]);
 
-  return {
-    state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog: writeTheBacklog, setGoalShape, planShape, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark: placeOnParkCb, startItem: startWork, startHere, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setWipLimit: setWip, setTeaching: teach, markTaught: markRead, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, setItemSpot: setSpot, setMemberSpot: setMemberSpotCb, setItemSize: setSize, setItemRot: setRot, addCopy, setCopyPiece, moveCopy, removeCopy, nestItem: nest, unnestItem: unnest, renameItem: renameItemCb, splitEpic: splitEpicCb, createPbi, declineProposal, refinePbi: refinePbiCb, reorder, moveBefore, reorderSprint, reorderForecast, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, loadGame, poRefine,
-    moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, deletePbi: deletePbiCb, duplicatePbi: duplicatePbiCb, assignDev: assignDevCb, renameMember: renameMemberCb, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb, addPath: addPathCb, deletePath: deletePathCb, clearPaths: clearPathsCb, addConnector: addConnectorCb, updateConnector: updateConnectorCb, deleteConnector: deleteConnectorCb,
-    closeDay, tickDay: tickTheDay, tickScrum: tickTheScrum, cancelSprint: cancelTheSprint, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
-  };
+  return { state, ...actions };
 }
