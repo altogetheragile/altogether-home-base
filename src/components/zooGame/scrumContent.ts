@@ -24,7 +24,10 @@ export interface ScrumCard {
   of?: string;
   /** The Guide's maximum for a one-month Sprint. Shorter Sprints are usually shorter. */
   timebox?: string;
-  /** Set when the thing is a common practice rather than part of Scrum. */
+  /** Set when the thing is a common practice rather than part of Scrum, or when a habit worth
+   *  teaching is firmer than anything the Guide actually says. Both are the same job: keeping the
+   *  line visible between what Scrum requires and what merely tends to work, so a learner is never
+   *  taught a convention as a rule and left to find out in a classroom. */
   notScrum?: string;
 }
 
@@ -118,7 +121,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     summary: 'The fixed-length container for all the other events.',
     why: 'A regular, unchanging rhythm limits risk to one Sprint’s worth of work and makes progress inspectable.',
     who: 'The whole Scrum Team.',
-    when: 'One month or less, and a new one starts immediately after the last. The length is agreed once and changed only at a Retrospective.',
+    when: 'One month or less, and a new one starts immediately after the last. The length is agreed once and held, so the rhythm is something you can plan against.',
     how: 'Scope may be renegotiated with the Product Owner as more is learned, but nothing may endanger the Sprint Goal or quality. A Sprint is never extended to finish work. It can be cancelled if the Sprint Goal becomes obsolete, and only the Product Owner can do that.',
     timebox: 'One month or less',
   },
@@ -128,7 +131,8 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'It starts the Sprint by laying out the work to be done, and produces the Sprint Backlog.',
     who: 'The whole Scrum Team. The Scrum Master typically facilitates; others may be invited for advice.',
     when: 'At the start of every Sprint.',
-    how: 'Topic one: the Product Owner proposes how the product could increase in value, and the Scrum Team defines a Sprint Goal together. Topic two: the Developers select items they forecast they can finish. Topic three: the Developers plan how, in as much detail as they need. Sizing and splitting belong to refinement, not here.',
+    how: 'Topic one: the Product Owner proposes how the product could increase in value, and the Scrum Team defines a Sprint Goal together. Topic two: the Developers select items they forecast they can finish. Topic three: the Developers plan how, in as much detail as they need. The Scrum Team may refine items here to understand them better and pick with more confidence.',
+    notScrum: 'Doing the bulk of the sizing and splitting here is not forbidden, but a Planning that turns into a refinement session usually means the top of the Backlog was not ready.',
     timebox: 'Up to 8 hours for a one-month Sprint, usually shorter for shorter Sprints',
   },
   {
@@ -187,7 +191,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'To increase quality and effectiveness. It is where the way of working itself gets better.',
     who: 'The Scrum Team.',
     when: 'At the end of the Sprint, after the Review, closing the Sprint.',
-    how: 'Inspect individuals, interactions, process, tools and the Definition of Done. Discuss what went well, what did not, and how problems were solved. Pick the most helpful improvements and actually do them - the most impactful may even go into the next Sprint Backlog. This is where the Definition of Done is adapted, and the only place the Sprint length changes: a fixed-length container is the point of a Sprint, so it is never resized to fit the work.',
+    how: 'Inspect individuals, interactions, process, tools and the Definition of Done. Discuss what went well, what did not, and how problems were solved. Pick the most helpful improvements and actually do them - the most impactful may even go into the next Sprint Backlog. This is where the Definition of Done is adapted, and the natural place to weigh up a change of Sprint length. What the Guide does fix is that a Sprint is never stretched to fit the work inside it.',
     timebox: 'Up to 3 hours for a one-month Sprint',
   },
   {
