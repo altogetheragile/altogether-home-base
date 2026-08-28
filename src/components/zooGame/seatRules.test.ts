@@ -55,13 +55,31 @@ describe('who may do what', () => {
     expect(refusal(mayTake('PULL_ITEM', watching))).toMatch(/watching/i);
   });
 
-  it('hands an empty seat’s work to the team rather than to nobody', () => {
-    // Three people cannot fill a Scrum Team, and a Sprint that cannot be finished because
-    // no one is the Product Owner teaches nothing.
+  it('refuses an empty seat’s work, and says how to fill it', () => {
+    // This test used to assert the opposite, and the opposite was wrong. Permitting an
+    // empty seat's work so a short-handed team could not deadlock meant that alone in a
+    // session - five seats empty - every rule fell away, and holding the Product Owner seat
+    // became indistinguishable from holding a Developer's. Reported as "assuming a PO role
+    // is no different to being a Developer", which it exactly was.
+    //
+    // AI seats solve the deadlock properly: an unclaimed seat is played by the game, so
+    // somebody always holds the accountability.
     const shortHanded = { seat: 'developer' as const, emptySeats: ['product_owner' as const] };
-    expect(mayTake('REORDER_IN_ZONE', shortHanded).allowed, 'the team deadlocked on an empty seat').toBe(true);
-    // ...but a seat somebody IS holding still belongs to them.
-    expect(mayTake('REORDER_IN_ZONE', { seat: 'developer', emptySeats: ['scrum_master'] }).allowed).toBe(false);
+    const no = mayTake('REORDER_IN_ZONE', shortHanded);
+    expect(no.allowed, 'an empty seat still permits its work').toBe(false);
+    expect(refusal(no), 'the refusal does not say how to fix it').toMatch(/AI|sit somebody/i);
+  });
+
+  it('leaves a lone Product Owner unable to do the Developers’ job', () => {
+    // The case that was broken. Sitting as Product Owner with nobody else there must not
+    // hand you every other accountability as well.
+    const lone = { seat: 'product_owner' as const, emptySeats: ['scrum_master' as const, 'developer' as const] };
+    for (const a of ['ESTIMATE_ITEM', 'PLAN_SPRINT', 'PULL_ITEM', 'ASSIGN_DEV', 'SET_WIP_LIMIT'] as const) {
+      expect(mayTake(a, lone).allowed, `a lone Product Owner was allowed to ${a}`).toBe(false);
+    }
+    // ...while their own work is still theirs
+    expect(mayTake('REORDER_IN_ZONE', lone).allowed).toBe(true);
+    expect(mayTake('CANCEL_SPRINT', lone).allowed).toBe(true);
   });
 
   it('can list what an accountability owns, for a screen that wants to say so up front', () => {

@@ -63,7 +63,19 @@ export interface Verdict {
   owner?: Accountability;
   /** What to say. Written to teach, so it is worth showing rather than swallowing. */
   because?: string;
+  /** What to do about it, when the answer is not "ask somebody". */
+  fix?: string;
 }
+
+const LABEL: Record<Accountability, string> = {
+  product_owner: 'the Product Owner', scrum_master: 'the Scrum Master',
+  developer: 'the Developers', anyone: 'the Scrum Team',
+};
+/** The same names without the article, for when a sentence supplies its own. */
+const SEAT: Record<Accountability, string> = {
+  product_owner: 'Product Owner', scrum_master: 'Scrum Master',
+  developer: 'Developer', anyone: 'Scrum Team',
+};
 
 const ALLOWED: Verdict = { allowed: true };
 
@@ -87,20 +99,28 @@ export function mayTake(type: ZooAction['type'], ctx: SeatContext): Verdict {
   const rule = OWNER[type];
   if (!rule || rule.who === 'anyone') return ALLOWED;         // most of the game: the team's
   if (ctx.seat === rule.who) return ALLOWED;
-  // Nobody is holding that accountability, so the team carries it between them. Better than
-  // a deadlock, and it is what a real team short of a Product Owner ends up doing.
-  if (ctx.emptySeats?.includes(rule.who)) return ALLOWED;
+  // A seat nobody is in used to permit everything, so that a short-handed team could not
+  // deadlock. That was wrong, and badly so: alone in a session five seats are empty, so
+  // every rule fell away and holding the Product Owner seat became indistinguishable from
+  // holding a Developer's. The gate was inert for any team that was not full, which is most
+  // of them, and it failed silently - the worst way for a teaching tool to fail.
+  //
+  // The deadlock is solved properly by AI seats instead: an unclaimed seat is played by the
+  // game, so the accountability is always held by somebody. A seat that is genuinely empty
+  // is now refused like any other, with a refusal that says how to fill it.
+  if (ctx.emptySeats?.includes(rule.who)) {
+    return { allowed: false, owner: rule.who,
+             because: `Nobody is holding the ${SEAT[rule.who]} seat.`,
+             fix: 'Sit somebody in it, or let AI play it, from the lobby.' };
+  }
   return { allowed: false, owner: rule.who, because: rule.because };
 }
 
-const LABEL: Record<Accountability, string> = {
-  product_owner: 'the Product Owner', scrum_master: 'the Scrum Master',
-  developer: 'the Developers', anyone: 'the Scrum Team',
-};
 
 /** One line to put in front of somebody, naming whose call it is. */
 export function refusal(v: Verdict): string {
   if (v.allowed) return '';
+  if (v.fix) return `${v.because} ${v.fix}`;
   return v.owner ? `${v.because} Ask ${LABEL[v.owner]}.` : v.because ?? '';
 }
 

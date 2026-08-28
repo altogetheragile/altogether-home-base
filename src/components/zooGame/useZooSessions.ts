@@ -121,8 +121,12 @@ export function useZooSessions(sessionId: string | null) {
                   state: initialZooState(seed) as never })
         .select('id').single();
       if (e) { setError(e.message); return null; }
+      // Every seat starts played by AI, so an accountability is always held by somebody and
+      // the gate has something to enforce from the first click. Claiming a seat clears its
+      // AI flag; this is what makes a lone player face a real Scrum Team rather than a set
+      // of empty chairs that quietly permit everything.
       await supabase.from('zoo_game_seats').insert(
-        STARTING_SEATS.map((s) => ({ game_id: data.id, ...s })));
+        STARTING_SEATS.map((s) => ({ game_id: data.id, ...s, is_ai: true })));
       await supabase.from('zoo_sessions').update({ status: 'live' }).eq('id', session.id);
       await refresh(session.id);
       return data.id;
