@@ -103,12 +103,17 @@ zoo_sessions
   join_code               -- short code, so a trainer can read it out
   created_at, updated_at
 
-zoo_session_seats
-  session_id, seat ('product_owner' | 'scrum_master' | 'developer'),
+zoo_session_participants
+  session_id,
+  role                    -- player | observer
+  seat                    -- product_owner | scrum_master | developer; null for an observer
   user_id                 -- null when the seat is played by AI
   is_ai                   -- so the interface can always say which of your team is not a person
   display_name, claimed_at, last_seen_at
 ```
+
+An observer is a participant with no seat: present, named, and able to act on nothing. That
+is the trainer, and it is also what a cohort view is later assembled from.
 
 Seats bind to `user_id` and persist, so Bob is still the Product Owner on Thursday. A seat
 can be released and reclaimed for the people who do not come back. `status: 'paused'` is
@@ -121,9 +126,10 @@ session hangs off a course, a group of teammates' session hangs off nothing.
 
 Each step is usable on its own, and each is a prerequisite for the next.
 
-1. **Sessions, seats and presence.** Session table, join code, seat claiming, Realtime
-   catch-up. Everybody who joins plays. There is no watch-only step: see "What Watchers?"
-   below.
+1. **Sessions, participants and presence.** Session table, join code, seat claiming,
+   Realtime catch-up, and the three participant kinds - player, AI, observer - in the
+   access model from the start. A trainer can join a team as an observer on day one, even
+   though the cohort view that shows several teams at once comes at step 7.
 2. **Game time into state.** Day clock and Daily Scrum timebox move into `ZooGameState`,
    advanced by one owner, pausable, and **holding a part-spent day** so a session can stop
    in the middle of a Sprint and resume days later. Fixes save-and-resume in the
@@ -188,15 +194,32 @@ Three things to hold on to:
 - **It must be visibly an AI.** A learner has to know which of their team is not a person,
   or the Retrospective is about the wrong thing.
 
-### What Watchers?
+### What Watchers? The Trainer
 
-There are none, and the watch-only step is cut.
+There is one kind of watcher, and it is the trainer. Two things were being run together
+under one word:
 
-That step was engineering convenience dressed as a product step: the cheapest way to prove
-the plumbing, justified by a classroom-projector model taken from the August doc. Neither
-real case wants it. A group of teammates all play. A trainer running a course is not
-watching one screen; they are moving between several teams, which is the **cohort view**,
-and that needs teams to exist first.
+- **A class mirroring one screen** - the classroom-projector model carried over from the
+  August doc. Cut. Neither real case wants it: a group of teammates all play, and a cohort
+  does not learn Scrum by watching one person play it.
+- **A trainer observing a team they are not seated in** - real, and needed. A trainer
+  coaching four tables has to see what a table is doing without taking one of its five
+  seats and without becoming a sixth Developer.
 
-So step 1 goes straight to sessions with seats, and observation appears only later, as a
-trainer looking across teams rather than a class looking at one.
+The consequence lands in **step 1, not step 7**. The cohort view is a screen and can come
+late, but the access model cannot: a session has three kinds of participant from the
+beginning.
+
+| Participant | Has a seat | Can act | Sees |
+|---|---|---|---|
+| Player | yes | within their accountability | everything their team sees |
+| AI | yes | within its accountability | the compact context it is given |
+| Observer | no | nothing in the game | everything, plus who did what |
+
+Retrofitting a third kind of participant after seats are built is the expensive version of
+this. Adding `role` to the participant table now is a column.
+
+A trainer sees everything, including what the group has not worked out yet. That is the
+point of coaching and there is nothing to protect them from. The one caution is a projected
+observer view leaking an answer to the room, which is a matter for the screen rather than
+the schema.
