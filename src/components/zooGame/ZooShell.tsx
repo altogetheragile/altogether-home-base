@@ -125,7 +125,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkV
               hidden while you build - the build spends the day's time, so you need to see it. */}
           {state.phase === 'sprint' && state.dayStage !== 'dailyScrum' && onEndDay && (
             <span className="relative z-[45] rounded-full bg-background">
-              <DayTimer key={state.dayNumber} compact dayNumber={state.dayNumber} dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} onExpire={onEndDay} />
+              <DayTimer compact dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} secondsLeft={state.daySecondsLeft} />
             </span>
           )}
           {/* The Sprint's commitment, on screen at all times - so it needs to read as more than one

@@ -1,10 +1,10 @@
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useEffect } from 'react';
 import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure } from './types';
 import type { ItemDesign } from './design';
 import { initialZooState } from './config';
 import {
   planSprint, holdPlannedRefinement, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
-  reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay,
+  reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay, tickDay, tickScrum,
 } from './engine';
 import { applyParkChecks } from './parkChecks';
 
@@ -175,6 +175,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return renameItem(state, action.id, action.name);
     case 'OPEN_ITEM':
       return openItem(state, action.id);
+    case 'TICK_DAY':
+      return tickDay(state);
+    case 'TICK_SCRUM':
+      return tickScrum(state);
     case 'END_DAY':
       return endDay(state);
     case 'RUN_DAILY_SCRUM':
@@ -204,8 +208,21 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
   }
 }
 
-export function useZooGame(gameSeed?: number) {
+export function useZooGame(gameSeed?: number, runClock = true) {
   const [state, dispatch] = useReducer(reducer, gameSeed, initialZooState);
+
+  // The one clock. It used to live in DayTimer and DailyScrum, one countdown per component,
+  // which meant it could not be saved, shared or paused - and in a shared session every
+  // browser would have run its own and every one of them would have ended the day. The
+  // reducer decides whether a tick means anything, so this stays a dumb heartbeat.
+  // `runClock` is how a shared session will let a single owner drive it.
+  const ticking = runClock && state.phase === 'sprint' && !state.learnMode;
+  useEffect(() => {
+    if (!ticking) return;
+    const id = setInterval(() => dispatch(
+      { type: state.dayStage === 'dailyScrum' ? 'TICK_SCRUM' : 'TICK_DAY' }), 1000);
+    return () => clearInterval(id);
+  }, [ticking, state.dayStage]);
 
   const start = useCallback((seed?: number) => dispatch({ type: 'START', gameSeed: seed }), []);
   const setPhase = useCallback((phase: ZooPhase) => dispatch({ type: 'SET_PHASE', phase }), []);
@@ -281,6 +298,11 @@ export function useZooGame(gameSeed?: number) {
   const renameItemCb = useCallback((id: string, name: string) => dispatch({ type: 'RENAME_ITEM', id, name }), []);
   const open = useCallback((id: string) => dispatch({ type: 'OPEN_ITEM', id }), []);
   const closeDay = useCallback(() => dispatch({ type: 'END_DAY' }), []);
+  // One tick a second, dispatched from a single place. The reducer decides whether it means
+  // anything (paused in learn mode, ignored outside a running day) and ends the day itself
+  // when the clock runs out. In a shared session only the tick owner will dispatch these.
+  const tickTheDay = useCallback(() => dispatch({ type: 'TICK_DAY' }), []);
+  const tickTheScrum = useCallback(() => dispatch({ type: 'TICK_SCRUM' }), []);
   const holdDailyScrum = useCallback(() => dispatch({ type: 'RUN_DAILY_SCRUM' }), []);
   const skipDailyScrumCb = useCallback(() => dispatch({ type: 'SKIP_DAILY_SCRUM' }), []);
   const beginDay = useCallback(() => dispatch({ type: 'START_DAY' }), []);
@@ -295,6 +317,6 @@ export function useZooGame(gameSeed?: number) {
   return {
     state, start, setPhase, setGoal, setSprintGoal: setSprintGoalCb, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog: writeTheBacklog, setGoalShape, planShape, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark: placeOnParkCb, startItem: startWork, startHere, toggleGoalCritical: markGoalCritical, setSprintDays: chooseSprintDays, setLearnMode: setLearn, setWipLimit: setWip, setTeaching: teach, markTaught: markRead, setDailyScrumAt: chooseScrumAt, setEnclosureSize: chooseEnclosure, setItemPos: placeItem, setItemSpot: setSpot, setMemberSpot: setMemberSpotCb, setItemSize: setSize, setItemRot: setRot, addCopy, setCopyPiece, moveCopy, removeCopy, nestItem: nest, unnestItem: unnest, renameItem: renameItemCb, splitEpic: splitEpicCb, createPbi, declineProposal, refinePbi: refinePbiCb, reorder, moveBefore, reorderSprint, reorderForecast, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, loadGame, poRefine,
     moveZone, createZone, renameZone: renameZoneCb, reorderZone, moveZoneOrder, deletePbi: deletePbiCb, duplicatePbi: duplicatePbiCb, assignDev: assignDevCb, renameMember: renameMemberCb, setPathStyle: setPathStyleCb, setPathRoute: setPathRouteCb, addPath: addPathCb, deletePath: deletePathCb, clearPaths: clearPathsCb, addConnector: addConnectorCb, updateConnector: updateConnectorCb, deleteConnector: deleteConnectorCb,
-    closeDay, cancelSprint: cancelTheSprint, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
+    closeDay, tickDay: tickTheDay, tickScrum: tickTheScrum, cancelSprint: cancelTheSprint, holdDailyScrum, skipDailyScrum: skipDailyScrumCb, beginDay, review, nextSprint, finish, reset,
   };
 }

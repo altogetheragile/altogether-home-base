@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from 'react';
 import type { ZooGameState } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
@@ -26,24 +25,9 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
   const imp = state.pendingImpediment;
   const pct = prog.pointsCommitted ? Math.round((prog.pointsDone / prog.pointsCommitted) * 100) : 0;
 
-  // The timebox: a short countdown standing in for the 15-minute box. On expiry, re-plan and
-  // continue (the disciplined default). Paused in learn mode - decide in your own time.
-  const [left, setLeft] = useState(DAILY_SCRUM_SECONDS);
-  const fired = useRef(false);
-  useEffect(() => {
-    fired.current = false;
-    setLeft(DAILY_SCRUM_SECONDS);
-    if (state.learnMode) return;
-    const id = setInterval(() => {
-      setLeft((s) => {
-        if (s <= 1) { clearInterval(id); if (!fired.current) { fired.current = true; onHold(); } return 0; }
-        return s - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-    // Restart the box for each day's Daily Scrum; onHold is stable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.dayNumber, state.learnMode]);
+  // The timebox counts in game state (TICK_SCRUM), not here, so it survives a reload and
+  // can be shared. On expiry the reducer takes the disciplined default and adapts.
+  const left = state.scrumSecondsLeft;
 
   const boxPct = Math.max(0, Math.min(100, (left / DAILY_SCRUM_SECONDS) * 100));
   const low = boxPct <= 30;

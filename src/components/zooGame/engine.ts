@@ -5,14 +5,42 @@ import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAccept
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, zooCapacity } from './config';
+import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
  *  Refinement and Planning phases are the dedicated time to refine), so this is a no-op
  *  unless a Sprint is in progress. */
 const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number): ZooGameState =>
-  before.phase === 'sprint' ? { ...after, refinePenalty: after.refinePenalty + seconds } : after;
+  before.phase === 'sprint'
+    ? { ...after,
+        // refinePenalty is the day's tally, shown so the cost is visible; daySecondsLeft is
+        // the clock it comes out of. The DayTimer used to do this subtraction itself, which
+        // is why the spend vanished on reload.
+        refinePenalty: after.refinePenalty + seconds,
+        daySecondsLeft: Math.max(0, after.daySecondsLeft - seconds) }
+    : after;
+
+/** How long a build day is, given how much of it this day has. */
+export const dayTotalSeconds = (mult: number): number => Math.round(DAY_SECONDS * mult);
+
+/** One second of the build day. The reducer ends the day itself when the clock runs out,
+ *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
+ *  at once. Paused in learn mode and outside a running build day. */
+export function tickDay(state: ZooGameState): ZooGameState {
+  if (state.learnMode || state.phase !== 'sprint') return state;
+  if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
+  const left = state.daySecondsLeft - 1;
+  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0 }) : { ...state, daySecondsLeft: left };
+}
+
+/** One second of the Daily Scrum's timebox. On expiry the disciplined default is taken:
+ *  the plan is adapted and the day continues, so you decide inside the box. */
+export function tickScrum(state: ZooGameState): ZooGameState {
+  if (state.learnMode || state.phase !== 'sprint' || state.dayStage !== 'dailyScrum') return state;
+  const left = state.scrumSecondsLeft - 1;
+  return left <= 0 ? runDailyScrum({ ...state, scrumSecondsLeft: 0 }) : { ...state, scrumSecondsLeft: left };
+}
 
 
 // ============= Refinement: estimation and ordering =============
@@ -856,6 +884,8 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     plannedRefinement: refinementPoints > 0,
     sprintRefinement: refinementPoints > 0 ? { points: refinementPoints, done: false } : undefined,
     refinePenalty: 0,
+    daySecondsLeft: DAY_SECONDS,
+    scrumSecondsLeft: DAILY_SCRUM_SECONDS,
   };
 }
 
@@ -1202,10 +1232,11 @@ export function endDay(state: ZooGameState): ZooGameState {
   if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
-    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0 };
+    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0,
+      daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
-  return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber) };
+  return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
@@ -1215,7 +1246,8 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
   // A new day gets a fresh build clock, so the refinement spend resets too.
-  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0 };
+  return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0,
+    daySecondsLeft: dayTotalSeconds(nextMult) };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */
@@ -1235,7 +1267,10 @@ export function runDailyScrum(state: ZooGameState): ZooGameState {
   const mult = state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
   const cleared = { ...state, pendingImpediment: null, carriedImpediment: null };
   // Start-of-day scrums are held ON the day (endDay already advanced it): begin building.
-  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult };
+  // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
+  // has to happen here rather than when the day turned over - otherwise holding the event
+  // costs nothing, which is the opposite of what it should teach.
+  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(cleared, mult);
 }
 
@@ -1255,7 +1290,7 @@ export function skipDailyScrum(state: ZooGameState): ZooGameState {
     carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
     missedScrums: state.missedScrums + (imp ? 1 : 0),
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(base, mult);
 }
 
@@ -1378,6 +1413,8 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
     pendingImpediment: null,
     carriedImpediment: null,
     refinePenalty: 0,
+    daySecondsLeft: DAY_SECONDS,
+    scrumSecondsLeft: DAILY_SCRUM_SECONDS,
     burndown: [],
     sprintsCancelled: (state.sprintsCancelled ?? 0) + 1,
   };
