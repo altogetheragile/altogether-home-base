@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       activity_domains: {
@@ -1672,39 +1697,6 @@ export type Database = {
           name?: string
           phase?: string | null
           round_number?: number | null
-          state?: Json
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      zoo_game_saves: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          phase: string | null
-          sprint_number: number | null
-          state: Json
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          phase?: string | null
-          sprint_number?: number | null
-          state: Json
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          phase?: string | null
-          sprint_number?: number | null
           state?: Json
           updated_at?: string
           user_id?: string
@@ -4466,11 +4458,240 @@ export type Database = {
           },
         ]
       }
+      zoo_copy: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      zoo_game_saves: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phase: string | null
+          sprint_number: number | null
+          state: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phase?: string | null
+          sprint_number?: number | null
+          state: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phase?: string | null
+          sprint_number?: number | null
+          state?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      zoo_game_seats: {
+        Row: {
+          claimed_at: string | null
+          game_id: string
+          id: string
+          is_ai: boolean
+          participant_id: string | null
+          seat: string
+          seat_no: number
+        }
+        Insert: {
+          claimed_at?: string | null
+          game_id: string
+          id?: string
+          is_ai?: boolean
+          participant_id?: string | null
+          seat: string
+          seat_no?: number
+        }
+        Update: {
+          claimed_at?: string | null
+          game_id?: string
+          id?: string
+          is_ai?: boolean
+          participant_id?: string | null
+          seat?: string
+          seat_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zoo_game_seats_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "zoo_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zoo_game_seats_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "zoo_session_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zoo_games: {
+        Row: {
+          ended_at: string | null
+          id: string
+          seed: number
+          seq: number
+          session_id: string
+          started_at: string
+          state: Json
+          status: string
+          theme: string
+          version: number
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          seed: number
+          seq: number
+          session_id: string
+          started_at?: string
+          state: Json
+          status?: string
+          theme?: string
+          version?: number
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          seed?: number
+          seq?: number
+          session_id?: string
+          started_at?: string
+          state?: Json
+          status?: string
+          theme?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zoo_games_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "zoo_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zoo_session_participants: {
+        Row: {
+          can_facilitate: boolean
+          display_name: string
+          id: string
+          joined_at: string
+          last_seen_at: string
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          can_facilitate?: boolean
+          display_name: string
+          id?: string
+          joined_at?: string
+          last_seen_at?: string
+          role?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          can_facilitate?: boolean
+          display_name?: string
+          id?: string
+          joined_at?: string
+          last_seen_at?: string
+          role?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zoo_session_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "zoo_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zoo_sessions: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          host_user_id: string
+          id: string
+          join_code: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          host_user_id: string
+          id?: string
+          join_code: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          host_user_id?: string
+          id?: string
+          join_code?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zoo_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_play_zoo_session: { Args: { _session_id: string }; Returns: boolean }
       check_ai_rate_limit: {
         Args: {
           p_endpoint: string
@@ -4522,6 +4743,11 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
+      is_zoo_session_member: { Args: { _session_id: string }; Returns: boolean }
+      join_zoo_session: {
+        Args: { _display_name: string; _join_code: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
@@ -4650,6 +4876,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
