@@ -109,6 +109,9 @@ zoo_session_participants
   seat                    -- product_owner | scrum_master | developer; null for an observer
   user_id                 -- null when the seat is played by AI
   is_ai                   -- so the interface can always say which of your team is not a person
+  can_facilitate          -- acts ON the session, not in it. A trainer. Granted, not implied
+                          --   by hosting, so an elected learner host cannot inject an
+                          --   impediment into their own team's Sprint
   display_name, claimed_at, last_seen_at
 ```
 
@@ -210,11 +213,30 @@ The consequence lands in **step 1, not step 7**. The cohort view is a screen and
 late, but the access model cannot: a session has three kinds of participant from the
 beginning.
 
-| Participant | Has a seat | Can act | Sees |
+**A trainer is not a participant type.** That was a person put in a column meant for what
+you do in the game. Two independent things:
+
+*What you do in the game* - your participant role:
+
+| Participant | Has a seat | Can act in the game | Sees |
 |---|---|---|---|
 | Player | yes | within their accountability | everything their team sees |
 | AI | yes | within its accountability | the compact context it is given |
-| Observer | no | nothing in the game | everything, plus who did what |
+| Observer | no | nothing | everything, plus who did what |
+
+*Whether you can act on the session rather than in it* - a separate permission,
+`can_facilitate`: pause and freeze input for discussion, inject an impediment or a scope
+change, rewind to a decision, look across teams.
+
+A trainer is usually an observer who can facilitate. But they might take the Product Owner
+seat so a group has someone to negotiate with, or play a stakeholder who arrives at the
+Sprint Review with an awkward request. Both are players who can facilitate. Keeping the two
+apart is what allows that without a special case.
+
+It also keeps the elected-player host honest. **Hosting is ownership, not authority**: the
+learner who created a session can invite people and hand the session on, but they do not
+get to inject an impediment into their own team's Sprint. `can_facilitate` is granted, not
+implied by `host_user_id`.
 
 Retrofitting a third kind of participant after seats are built is the expensive version of
 this. Adding `role` to the participant table now is a column.
