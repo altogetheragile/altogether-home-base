@@ -5,12 +5,15 @@ A build plan, 28 August 2026. Supersedes the multiplayer half of
 recommendation (course layer first) this reverses, and whose "host broadcasts from the
 browser" sketch it rules out.
 
-Two answers set the shape of everything below:
+Four answers set the shape of everything below:
 
 - **The host is a role, not a person.** A learner may invite teammates; a trainer may invite
   a cohort. Hosting has to be claimable and transferable.
 - **A session persists across days.** A trainer runs short sessions over a week. The game
   must survive every browser closing, and be picked up on Thursday where Tuesday left off.
+- **A Sprint does not have to finish in one sitting**, so a session can pause mid-Sprint and
+  the day clock has to carry a part-spent day.
+- **Unclaimed seats are played by AI**, in character and visibly not human.
 
 The second one is the constraint that decides the architecture. A game that outlives every
 tab cannot have its authority inside a tab.
@@ -101,7 +104,9 @@ zoo_sessions
   created_at, updated_at
 
 zoo_session_seats
-  session_id, user_id, seat ('product_owner' | 'scrum_master' | 'developer'),
+  session_id, seat ('product_owner' | 'scrum_master' | 'developer'),
+  user_id                 -- null when the seat is played by AI
+  is_ai                   -- so the interface can always say which of your team is not a person
   display_name, claimed_at, last_seen_at
 ```
 
@@ -116,12 +121,13 @@ session hangs off a course, a group of teammates' session hangs off nothing.
 
 Each step is usable on its own, and each is a prerequisite for the next.
 
-1. **Sessions and shared state, watch-only.** Session table, join code, Realtime catch-up.
-   One person plays, everyone else sees it live. Proves the plumbing and is immediately
-   useful in a classroom.
+1. **Sessions, seats and presence.** Session table, join code, seat claiming, Realtime
+   catch-up. Everybody who joins plays. There is no watch-only step: see "What Watchers?"
+   below.
 2. **Game time into state.** Day clock and Daily Scrum timebox move into `ZooGameState`,
-   advanced by one owner, pausable. Required before more than one person can act, and it
-   fixes save-and-resume in the single-player game as a side effect.
+   advanced by one owner, pausable, and **holding a part-spent day** so a session can stop
+   in the middle of a Sprint and resume days later. Fixes save-and-resume in the
+   single-player game as a side effect, where the clock currently restarts at full.
 3. **Actor on actions, seats, gating.** Every action carries `by`. A guard layer refuses
    what a seat may not do, and says why. This is the step that turns a synchronised screen
    into a team game and makes the accountabilities bite.
@@ -148,13 +154,49 @@ modes, debrief export). Seeds and challenges are still worth having, but session
 are the thing that only gets harder to add later, and the reducer is in exactly the right
 shape to take them now. Debrief survives the reordering and moves to step 4.
 
-## Open Questions
+## Decided
 
-- **Does a Sprint have to finish in one sitting?** If a session can be paused mid-Sprint,
-  the day clock has to hold a part-spent day across days. Cleaner alternative: a session
-  pauses only at an event boundary, which is also better teaching.
-- **What happens to a seat nobody claims?** A three-person group cannot fill a Scrum Team.
-  Either the unclaimed seats are played by the game, or the group doubles up and the game
-  says so out loud.
-- **How much does a watcher see?** In a classroom, showing the Product Owner's screen to
-  everyone may give away what the group should be working out for themselves.
+### A Sprint Does Not Have To Finish In One Sitting
+
+So a session can pause mid-Sprint, and the day clock has to carry a part-spent day across
+days. That makes step 2 slightly larger but not different in kind: the day's remaining
+seconds become state like anything else, and `status: 'paused'` stops them moving. It rules
+out the simpler option of only pausing at an event boundary.
+
+### Unclaimed Seats Are Played By AI
+
+Three people cannot fill a Scrum Team, and a group should not have to double up just to see
+Scrum work. There is already a precedent in the game: the **AI Product Owner** behind the
+`zoo-po-refine` Edge Function, auth-gated and rate-limited, whose decisions the reducer
+applies through `PO_REFINE`. An AI seat is that pattern with a wider brief.
+
+Treated properly this is better than a gap-filler. An AI Product Owner that says "that is
+not the most valuable thing next, and here is why" creates exactly the argument a learner
+needs to have, and an AI Scrum Master can ask the question nobody in the room thought to
+ask. **The seat should play its accountability in character, including pushing back**, not
+quietly rubber-stamp whatever the humans want.
+
+Three things to hold on to:
+
+- **It costs determinism.** The game is seeded and reproducible today, which is what lets a
+  trainer say "everyone at seed 42, what did you do differently?" An AI seat breaks that.
+  The action log keeps a session **replayable** even when it is no longer **reproducible**,
+  and that is the property the debrief actually needs.
+- **It costs money and latency per session.** A seat that thinks for four seconds every time
+  anyone moves a card will not survive a classroom. Batch its decisions to the moments its
+  accountability actually owns.
+- **It must be visibly an AI.** A learner has to know which of their team is not a person,
+  or the Retrospective is about the wrong thing.
+
+### What Watchers?
+
+There are none, and the watch-only step is cut.
+
+That step was engineering convenience dressed as a product step: the cheapest way to prove
+the plumbing, justified by a classroom-projector model taken from the August doc. Neither
+real case wants it. A group of teammates all play. A trainer running a course is not
+watching one screen; they are moving between several teams, which is the **cohort view**,
+and that needs teams to exist first.
+
+So step 1 goes straight to sessions with seats, and observation appears only later, as a
+trainer looking across teams rather than a class looking at one.
