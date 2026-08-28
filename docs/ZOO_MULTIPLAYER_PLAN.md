@@ -125,6 +125,29 @@ what makes multi-day real: no clock advances and nothing expires.
 `event_id` is nullable, and that single column covers both of your cases: a trainer's
 session hangs off a course, a group of teammates' session hangs off nothing.
 
+## Ways To Play
+
+Three from the learner's side, two shapes in the code, and one permission.
+
+| | Who is at the table | Shape | Needs |
+|---|---|---|---|
+| **Solo, all hats** | you, wearing all three accountabilities | single | what exists today |
+| **Solo, one seat** | you in one seat, AI in the others | single + AI | steps 3 and 4 |
+| **A group, no facilitator** | your teammates, AI filling what is unclaimed | session | steps 1 to 4, then 9 |
+| **A course with a facilitator** | a cohort, plus a trainer | session | the same, plus `can_facilitate` and step 8 |
+
+The last two are the same shape. A facilitated course session is a group session with one
+extra participant who can act on the session rather than in it, which is the whole reason
+for keeping that permission separate from the seat. Once a group can play, running a course
+costs a permission and a screen rather than a mode.
+
+**Solo splits in two, and the second half is the point.** Today a solo player is the Product
+Owner and the Developers and the Scrum Master at once, which is exactly why the
+accountabilities are invisible: you are all of them, so none of them can push back on you.
+An AI team that holds the seats you are not in is the single-player form of seat gating. It
+is the same mechanic, and it is what makes solo play teach an accountability rather than a
+loop.
+
 ## Sequence
 
 Each step is usable on its own, and each is a prerequisite for the next.
@@ -132,7 +155,7 @@ Each step is usable on its own, and each is a prerequisite for the next.
 1. **Sessions, participants and presence.** Session table, join code, seat claiming,
    Realtime catch-up, and the three participant kinds - player, AI, observer - in the
    access model from the start. A trainer can join a team as an observer on day one, even
-   though the cohort view that shows several teams at once comes at step 7.
+   though the cohort view that shows several teams at once comes at step 8.
 2. **Game time into state.** Day clock and Daily Scrum timebox move into `ZooGameState`,
    advanced by one owner, pausable, and **holding a part-spent day** so a session can stop
    in the middle of a Sprint and resume days later. Fixes save-and-resume in the
@@ -140,16 +163,20 @@ Each step is usable on its own, and each is a prerequisite for the next.
 3. **Actor on actions, seats, gating.** Every action carries `by`. A guard layer refuses
    what a seat may not do, and says why. This is the step that turns a synchronised screen
    into a team game and makes the accountabilities bite.
-4. **Debrief.** Velocity trend, forecast against delivered, the decisions taken and who took
-   them. Serves both modes and the single-player game. Still the biggest unlock for a
-   trainer, and still unbuilt.
-5. **Live rituals.** Planning Poker with real votes rather than a simulated hand, a Daily
+4. **AI seats.** A seat with no human plays its accountability in character, built on the
+   `zoo-po-refine` pattern and plugged into the step 3 gating layer, which is exactly what
+   an AI seat needs in order to know what it may and may not do. Extends reach further than
+   anything else here: it is what lets one person, or a pair, see a whole Scrum Team work.
+5. **Debrief.** Velocity trend, forecast against delivered, the decisions taken and who took
+   them. Serves every way of playing. Still the biggest unlock for a trainer, and still
+   unbuilt.
+6. **Live rituals.** Planning Poker with real votes rather than a simulated hand, a Daily
    Scrum where each Developer speaks, a Retrospective board everyone writes on.
-6. **Park concurrency.** Item ownership while dragging.
-7. **Facilitator controls.** Pause and freeze input for discussion, rewind to a decision,
+7. **Park concurrency.** Item ownership while dragging.
+8. **Facilitator controls.** Pause and freeze input for discussion, rewind to a decision,
    inject an impediment or a scope change on cue, spotlight a screen, and a cohort view of
    several teams at once.
-8. **No-facilitator prompts.** The game creates the conversations a trainer would provoke:
+9. **No-facilitator prompts.** The game creates the conversations a trainer would provoke:
    an explicit "you are split, and this is the Product Owner's call", and a structured
    debrief that walks the group through their own run. Last, because it needs all of the
    above.
