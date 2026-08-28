@@ -113,8 +113,9 @@ zoo_sessions
   join_code               -- short code, so a trainer can read it out
   created_at, updated_at
 
-zoo_games                 -- one run of a few Sprints; a session has several
+zoo_games                 -- one run toward one Product Goal; a session has several
   id, session_id, seq,
+  theme                   -- 'zoo' today; the seam for a resort or a city later
   seed, state jsonb, version int,
   status                  -- live | paused | done
   started_at, ended_at
@@ -241,6 +242,83 @@ accountabilities are invisible: you are all of them, so none of them can push ba
 An AI team that holds the seats you are not in is the single-player form of seat gating. It
 is the same mechanic, and it is what makes solo play teach an accountability rather than a
 loop.
+
+## Two Seams To Keep Open
+
+Neither is work to do now. Both are cheap to preserve and expensive to recover, and both
+depend on the same discipline: **the Scrum core stays clean and everything else layers onto
+it.**
+
+### Across: Another Theme
+
+Measured rather than guessed:
+
+| Layer | Lines | Zoo coupling | Reuse |
+|---|---|---|---|
+| Scrum teaching and events | ~1,900 | 8 hits in 382 lines, 2 in 158, 4 in 124 | as-is |
+| Domain model (`types`, `config`, `blueprint`, `itemKinds`, `toolboxItems`) | ~1,000 | heavy, but naming only | rename |
+| Simulation (`simulation/`) | 612 | visitors arrive, walk, are happy, tell friends | as-is |
+| Drawing (`ParkView`, `IsoZoo`, `design.ts`, `carPark`) | ~4,500 | 274, 140 and 171 hits | redraw |
+
+The item ontology is already generic and only wears zoo names:
+
+```
+ItemCategory = epic | enclosure | exhibit | amenity | flora | path
+services     = food | toilet | rest
+```
+
+| | enclosure | exhibit | amenity | flora | path |
+|---|---|---|---|---|---|
+| Zoo | habitat | the animal | cafe, toilets | planting | paths |
+| Holiday resort | pool area, villa block | the pool, the spa | bar, restaurant | landscaping | walkways |
+| City | a block | a landmark | services | parks | streets |
+| Theme park | the ride's plot | the ride | food stalls | planting | queue lines |
+
+Every mechanic that teaches Scrum rides on that ontology and none of it cares what the words
+mean. Slices not layers is identical in all four: somewhere to see the thing, the thing, and
+a way to walk in.
+
+So roughly 40% reuses untouched, 25% is a rename, and 35% is a redraw. **The bill is the
+art, not the Scrum.** The animals are cut from licensed sheets through `npm run animal-art`;
+a resort needs its own sheets and its own cutting pass.
+
+**What to do now: nothing, except do not fork.** The tempting move when a second theme is
+wanted is to copy the folder and rename, which forks the Scrum teaching into two codebases.
+Every correction then needs making twice and within a month they disagree. When a second
+theme is actually wanted, the zoo words move out of `types.ts` and `config.ts` into a theme
+module - category labels, zone names, the starter blueprint, the toolbox, the art pack - and
+the engine takes a theme rather than containing one.
+
+**What to do in step 1:** give `zoo_games` a `theme` column. Free now, awkward later.
+
+### Up: AgilePM3
+
+AgilePM3 uses Scrum, unchanged, at the team level. The handbook is explicit: *"A Scrum Team
+is the model assumed in this reference book for an Agile Delivery Team."*
+
+That is the best possible news, because it means an AgilePM simulation is **a layer above
+this game, not a change to it**. The Scrum loop that has taken the most effort to get right
+is reused exactly as it stands.
+
+| AgilePM3 | Already here |
+|---|---|
+| Sprint | the Sprint, unchanged |
+| Project Increment | a **game** (which this plan already scopes to one goal) |
+| The project | a **session** |
+| Delivery Team | the Scrum Team and its seats |
+| Multiple Delivery Teams | several seat groups in one session, which the multiplayer work makes possible |
+| Business Case | the purse: love, visitors, land |
+| MoSCoW | the Backlog already marks essentials |
+| Business Sponsor, Business Visionary, Project Manager, Solution Architect | participants who hold no Delivery Team seat but may act - exactly what splitting the participant role from `can_facilitate` already allows |
+
+Genuinely new work, none of it inside the Scrum engine: the lifecycle phases (Pre-Project,
+Feasibility, Foundations, Delivery, Deployment, Realization), the Project Artifacts, MoSCoW
+as a real prioritisation rather than a flag, the Project Approach Questionnaire, and
+coordination across Delivery Teams.
+
+**The discipline this asks for is the same one the theme seam asks for.** If AgilePM
+concepts leak down into the Scrum engine, both products get worse and the Scrum game stops
+being a faithful Scrum game. The project layer sits on top and reads the same state.
 
 ## Sequence
 
