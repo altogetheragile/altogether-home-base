@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
+import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import { standingOnPark, parkPositions, restingPlace, groundSize } from '@/components/zooGame/parkModel';
 import { copyOffset } from '@/components/zooGame/engine';
 import { insidePark } from '@/components/zooGame/parkLayout';
@@ -52,8 +53,12 @@ function GameTopBar() {
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
  *  retro -> next Sprint. Games can be saved and resumed (signed-in players). */
-export default function ZooGame() {
-  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addCopy, setCopyPiece, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = useZooGame();
+/** The zoo, drawn. It takes the game it is playing rather than reaching for a hook, so the
+ *  same screens serve a game played alone and a game played by a team - the only difference
+ *  being which carrier the actions were built around. `saves` is off in a shared session,
+ *  where the session itself is the save and a private copy would be a fork of it. */
+export function ZooGameScreens({ game, saves = true }: { game: ZooGameApi; saves?: boolean }) {
+  const { state, start, setPhase, setGoal, setSprintGoal, setDod, setDor, takeSignal, plan, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addCopy, setCopyPiece, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -301,7 +306,7 @@ export default function ZooGame() {
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }
     : null;
 
-  const shellProps = { copy: copyProps, parkView, onParkView: setParkView, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, part: partFocus, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: requestSave, onOpenSaves: () => setSavesOpen(true), onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { copy: copyProps, parkView, onParkView: setParkView, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, part: partFocus, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
@@ -317,7 +322,7 @@ export default function ZooGame() {
           teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
           onMarkTaught={markTaught}
           onBack={(state.teaching ?? true) ? () => { setOnePagerSeen(true); setOnePager(true); } : undefined}
-          onOpenSaves={user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
+          onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
         // No shell: there is nothing to put in a header yet - no Sprint, no Backlog, no park.
         return <div className="h-full overflow-y-auto px-4 py-5"><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} /></div>;
@@ -346,9 +351,14 @@ export default function ZooGame() {
       {/* Hold the game for the one query that decides which words it uses. A blank half-second
           beats a visible flash of superseded wording in front of a class. */}
       <main className="min-h-0 flex-1 overflow-hidden">{zooCopy.ready ? render() : null}</main>
-      <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />
-      <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />
+      {saves && <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />}
+      {saves && <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />}
       <Celebration trigger={celebrate} origin={celebrateOrigin} />
     </div>
   );
+}
+
+/** Played alone: the same screens, with the reducer as the carrier. */
+export default function ZooGame() {
+  return <ZooGameScreens game={useZooGame()} />;
 }

@@ -1,13 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
+import { ZooGameScreens } from './ZooGame';
 import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
 import type { SeatContext } from '@/components/zooGame/seatRules';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { PADDING, SURFACE, TEXT } from '@/components/zooGame/ui/tokens';
+import { TEXT } from '@/components/zooGame/ui/tokens';
 
 // Build A Zoo, played together. The lobby seats a Scrum Team; the panel below is the seam
 // where the game itself attaches - it holds a live shared game and proves the whole stack
@@ -31,62 +30,43 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   const [saidBy, setSaid] = useState<{ seat: string; says: string } | null>(null);
   const aiSeats = lobby.seats.filter((x) => x.is_ai).map((x) => x.seat);
   useAiSeats(session, aiSeats, useCallback((seat: string, says: string) => setSaid({ seat, says }), []));
-  const { state, ready, present, drivesClock, error, send, refused, clearRefused } = session;
+  const { state, ready, present, drivesClock, error, refused, clearRefused } = session;
 
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;
   if (!ready || !state) return <p className="p-10 text-center text-sm text-muted-foreground">Joining the game…</p>;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-8">
-      <h1 className={TEXT.screen}>{state.productGoal || 'A shared zoo'}</h1>
-
-      <div className={cn(SURFACE.card, PADDING.default, 'grid grid-cols-2 gap-3 text-sm sm:grid-cols-4')}>
-        <div><div className="text-[11px] uppercase tracking-wide text-muted-foreground">Phase</div><div className="font-semibold">{state.phase}</div></div>
-        <div><div className="text-[11px] uppercase tracking-wide text-muted-foreground">Sprint</div><div className="font-semibold">{state.sprintNumber}</div></div>
-        <div><div className="text-[11px] uppercase tracking-wide text-muted-foreground">Backlog</div><div className="font-semibold">{state.backlog.length}</div></div>
-        <div><div className="text-[11px] uppercase tracking-wide text-muted-foreground">Here</div><div className="font-semibold">{present.length}</div></div>
-      </div>
-
-      {/* Whose call it was. Shown rather than swallowed: a silent no reads as a broken
-          button, and the sentence is the only thing here that teaches. */}
-      {/* An AI seat doing its job, in its own words. */}
-      {saidBy && (
-        <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
-          <span><strong className="capitalize">{saidBy.seat.replace('_', ' ')}</strong> (AI): {saidBy.says}</span>
-          <button type="button" onClick={() => setSaid(null)} className="shrink-0 text-xs underline">ok</button>
+    <div className="relative">
+      {/* Two lines over the top of the game: what a seat nobody is in has just done, and
+          anything the gate refused. Both are the teaching, so neither is swallowed. */}
+      {(saidBy || refused) && (
+        <div className="sticky top-0 z-30 space-y-1 px-4 pt-2">
+          {saidBy && (
+            <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/95 px-4 py-2 text-sm shadow-sm backdrop-blur">
+              <span><strong className="capitalize">{saidBy.seat.replace('_', ' ')}</strong> (AI): {saidBy.says}</span>
+              <button type="button" onClick={() => setSaid(null)} className="shrink-0 text-xs underline">ok</button>
+            </div>
+          )}
+          {refused && (
+            <div className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/95 px-4 py-2 text-sm shadow-sm backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/90">
+              <span>{refused}</span>
+              <button type="button" onClick={clearRefused} className="shrink-0 text-xs underline">dismiss</button>
+            </div>
+          )}
         </div>
       )}
 
-      {refused && (
-        <div className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-700/60 dark:bg-amber-950/30">
-          <span>{refused}</span>
-          <button type="button" onClick={clearRefused} className="shrink-0 text-xs underline">dismiss</button>
-        </div>
-      )}
+      {/* The game itself. The same screens the solo game uses - the only difference is which
+          carrier the actions were built around, which is the whole point of one surface. */}
+      <ZooGameScreens game={{ ...session, state }} saves={false} />
 
-      <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
-        <p className="text-xs text-muted-foreground">
-          {ctx.observer ? 'You are watching. You act on nothing.'
-            : mySeat ? `You are sitting as ${mySeat.seat.replace('_', ' ')}.` : 'You hold no seat yet.'}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {drivesClock
-            ? 'This browser is driving the clock. Exactly one does, so a day is only ever ended once.'
-            : 'Another browser is driving the clock.'}
-        </p>
-        {/* Anything typed here appears on everyone else's screen: the round trip, visible. */}
-        <input
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          placeholder="Change the Product Goal and watch it land on the other screens"
-          value={state.productGoal}
-          onChange={(e) => send({ type: 'SET_PRODUCT_GOAL', goal: e.target.value })} />
-      </div>
-
-      <div className="flex justify-between">
-        <Button variant="ghost" onClick={onBack}>Back to the lobby</Button>
-        <span className="self-center text-[11px] text-muted-foreground">
-          The game attaches here next: the same state, drawn by the screens that already exist.
+      <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground">
+        <span>
+          {ctx.observer ? 'Watching this team. You act on nothing.'
+            : mySeat ? `You are sitting as ${mySeat.seat.replace('_', ' ')}.` : 'You hold no seat.'}
+          {' '}{present.length} here{drivesClock ? ' \u00b7 this browser is keeping time' : ''}
         </span>
+        <button type="button" onClick={onBack} className="underline">Back to the lobby</button>
       </div>
     </div>
   );
