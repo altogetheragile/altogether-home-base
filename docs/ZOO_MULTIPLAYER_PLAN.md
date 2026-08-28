@@ -140,6 +140,48 @@ zoo_game_seats            -- who sat where, for ONE game
 An observer is a participant with no seat in any game: present, named, and able to act on
 nothing. That is the trainer, and it is also what a cohort view is later assembled from.
 
+### A Game Is A Product Goal
+
+The cleanest unit for a game is not "a few Sprints", it is **one Product Goal**. The Guide
+says a Product Goal holds until it is met or abandoned and that a product has one at a
+time, which means a product's life is a sequence of them. The game's own Product Goal card
+says exactly that, and then a learner never sees the second half of the sentence, because
+one run has one Goal and nothing ever comes after it.
+
+That is a teaching gap, not just a missing feature: one Goal per run quietly teaches that a
+Product Goal is a permanent thing you set at the start.
+
+**Most of the machinery is already built.** A Goal can be written with measures
+(`GoalShapes`), and at every Sprint Review `goalChecks` compares each measure against what
+the park actually counts and ticks the ones that are met. The game already knows when a
+Product Goal has been achieved. It just has nowhere to go afterwards.
+
+So:
+
+- **Game 1** - a bare minimum zoo: open at all, take money, get the first real feedback.
+- **Game 2** - the same zoo, carried forward, with a new Product Goal: improve and expand,
+  perhaps buying land and growing the footprint.
+- Seats rotate between them, and the reflection in between has something concrete to be
+  about, because the first Goal was either met or it was not and the measures say which.
+
+This gives the between-games lobby two genuinely different offers rather than one:
+
+| | What carries over | Teaches |
+|---|---|---|
+| **Same zoo, next Product Goal** | the park, the Backlog, the team's velocity | a product outlives any one Goal, and a Goal is met and replaced |
+| **Fresh zoo, same seed** | nothing but the seed | comparison: identical start, different seats, different outcome |
+
+The second only works with human seats, since AI breaks reproducibility. The lobby should
+say so when it offers a replay.
+
+**What expansion needs.** The park is a fixed `CANVAS_W` in `parkLayout.ts`. Buying land
+means park size becomes state. Growing is the safe direction: positions are clamped through
+`insidePark`, so everything already placed stays valid inside a larger boundary. Shrinking
+would not be, so land is bought and never sold.
+
+Open: whether the game has an economy solid enough for "make money" to be a measure, or
+whether that Goal is expressed in attendance and happiness, which the park already counts.
+
 ### Changing Seats
 
 Never inside a Sprint. Between games, always. Mid-Sprint rotation would break the one
