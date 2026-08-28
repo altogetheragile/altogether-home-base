@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
-import { useZooSession, useSharedClock } from '@/components/zooGame/useZooSession';
+import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
 import type { SeatContext } from '@/components/zooGame/seatRules';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,11 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   };
   const session = useZooSession(gameId, ctx);
   useSharedClock(session);
+  // Seats with nobody in them are played by the game, so a pair can still field a whole
+  // Scrum Team. What they do, they say - that is the part a solo player never gets.
+  const [saidBy, setSaid] = useState<{ seat: string; says: string } | null>(null);
+  const aiSeats = lobby.seats.filter((x) => x.is_ai).map((x) => x.seat);
+  useAiSeats(session, aiSeats, useCallback((seat: string, says: string) => setSaid({ seat, says }), []));
   const { state, ready, present, drivesClock, error, send, refused, clearRefused } = session;
 
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;
@@ -44,6 +49,14 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
 
       {/* Whose call it was. Shown rather than swallowed: a silent no reads as a broken
           button, and the sentence is the only thing here that teaches. */}
+      {/* An AI seat doing its job, in its own words. */}
+      {saidBy && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
+          <span><strong className="capitalize">{saidBy.seat.replace('_', ' ')}</strong> (AI): {saidBy.says}</span>
+          <button type="button" onClick={() => setSaid(null)} className="shrink-0 text-xs underline">ok</button>
+        </div>
+      )}
+
       {refused && (
         <div className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-700/60 dark:bg-amber-950/30">
           <span>{refused}</span>
