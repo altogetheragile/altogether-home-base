@@ -105,3 +105,9 @@ export function zooActions(send: (action: ZooAction) => void) {
 
 /** The whole action surface, so a screen can take it from either carrier. */
 export type ZooActions = ReturnType<typeof zooActions>;
+
+/** A playable game: the state and everything you can do to it. useZooGame satisfies this
+ *  directly; useZooSession does once its state has loaded. The screens take this rather than
+ *  calling a hook themselves, which is what lets the same screens serve a game played alone
+ *  and a game played by a team. */
+export type ZooGameApi = { state: ZooGameState } & ZooActions;
