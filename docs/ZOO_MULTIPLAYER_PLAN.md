@@ -227,9 +227,9 @@ Three from the learner's side, two shapes in the code, and one permission.
 | | Who is at the table | Shape | Needs |
 |---|---|---|---|
 | **Solo, all hats** | you, wearing all three accountabilities | single | what exists today |
-| **Solo, one seat** | you in one seat, AI in the others | single + AI | steps 3 and 4 |
-| **A group, no facilitator** | your teammates, AI filling what is unclaimed | session | steps 1 to 4, then 9 |
-| **A course with a facilitator** | a cohort, plus a trainer | session | the same, plus `can_facilitate` and step 8 |
+| **Solo, one seat** | you in one seat, AI in the others | single + AI | steps 2 and 3 |
+| **A group, no facilitator** | your teammates, AI filling what is unclaimed | session | steps 1 to 3, then 8 |
+| **A course with a facilitator** | a cohort, plus a trainer | session | the same, plus `can_facilitate` and step 7 |
 
 The last two are the same shape. A facilitated course session is a group session with one
 extra participant who can act on the session rather than in it, which is the whole reason
@@ -324,31 +324,41 @@ being a faithful Scrum game. The project layer sits on top and reads the same st
 
 Each step is usable on its own, and each is a prerequisite for the next.
 
-1. **Sessions, participants and presence.** Session table, join code, seat claiming,
-   Realtime catch-up, and the three participant kinds - player, AI, observer - in the
-   access model from the start. A trainer can join a team as an observer on day one, even
-   though the cohort view that shows several teams at once comes at step 8.
-2. **Game time into state.** Day clock and Daily Scrum timebox move into `ZooGameState`,
-   advanced by one owner, pausable, and **holding a part-spent day** so a session can stop
-   in the middle of a Sprint and resume days later. Fixes save-and-resume in the
-   single-player game as a side effect, where the clock currently restarts at full.
-3. **Actor on actions, seats, gating.** Every action carries `by`. A guard layer refuses
+1. **A group can play one game together.** Sessions, participants and presence *and* game
+   time, because neither ships without the other: while the day clock lives in a component
+   each browser runs its own countdown and each fires the day advance, so every phase would
+   work except the build day, which is the heart of the game.
+   - The four tables and their RLS, with the three participant kinds - player, AI, observer
+     - in the access model from the start, so a trainer can observe on day one even though
+     the cohort view comes at step 8.
+   - The day clock and Daily Scrum timebox move out of `DayTimer.tsx` and `DailyScrum.tsx`
+     into `ZooGameState`, owned by one client, pausable, holding a part-spent day. Fixes
+     save-and-resume in the single-player game as a side effect.
+   - `useZooSession`: apply locally, write `WHERE version = n`, retry on conflict,
+     broadcast, catch up. Presence copied from `useCanvasRealtime.ts`.
+   - Create a session and get a code, join by code, a lobby to claim a seat or observe.
+
+   Deliberately not included: gating, so anyone can still do anything. At the end of it four
+   people join a code, sit in seats, play a Sprint together, close their laptops and pick it
+   up on Thursday where they left it. The biggest single step here, and the one that has to
+   be right because everything above assumes it.
+2. **Actor on actions, seats, gating.** Every action carries `by`. A guard layer refuses
    what a seat may not do, and says why. This is the step that turns a synchronised screen
    into a team game and makes the accountabilities bite.
-4. **AI seats.** A seat with no human plays its accountability in character, built on the
+3. **AI seats.** A seat with no human plays its accountability in character, built on the
    `zoo-po-refine` pattern and plugged into the step 3 gating layer, which is exactly what
    an AI seat needs in order to know what it may and may not do. Extends reach further than
    anything else here: it is what lets one person, or a pair, see a whole Scrum Team work.
-5. **Debrief.** Velocity trend, forecast against delivered, the decisions taken and who took
+4. **Debrief.** Velocity trend, forecast against delivered, the decisions taken and who took
    them. Serves every way of playing. Still the biggest unlock for a trainer, and still
    unbuilt.
-6. **Live rituals.** Planning Poker with real votes rather than a simulated hand, a Daily
+5. **Live rituals.** Planning Poker with real votes rather than a simulated hand, a Daily
    Scrum where each Developer speaks, a Retrospective board everyone writes on.
-7. **Park concurrency.** Item ownership while dragging.
-8. **Facilitator controls.** Pause and freeze input for discussion, rewind to a decision,
+6. **Park concurrency.** Item ownership while dragging.
+7. **Facilitator controls.** Pause and freeze input for discussion, rewind to a decision,
    inject an impediment or a scope change on cue, spotlight a screen, and a cohort view of
    several teams at once.
-9. **No-facilitator prompts.** The game creates the conversations a trainer would provoke:
+8. **No-facilitator prompts.** The game creates the conversations a trainer would provoke:
    an explicit "you are split, and this is the Product Owner's call", and a structured
    debrief that walks the group through their own run. Last, because it needs all of the
    above.
