@@ -5,6 +5,7 @@ import type { ZooGameState, ZooAction } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
+import { mayTake, refusal, type SeatContext } from './seatRules';
 
 // One shared game, kept in step across several browsers with no server code.
 //
@@ -30,6 +31,10 @@ export interface ZooSession extends ZooActions {
   /** True while this browser owns the clock. Exactly one does, so the day is only ever
    *  ended once - see the reducer, which ends it rather than a component. */
   drivesClock: boolean;
+  /** Set when the last action was refused because it belongs to another accountability.
+   *  Worth showing: the sentence is the teaching, and a silent no reads as a broken button. */
+  refused: string | null;
+  clearRefused: () => void;
   error: string | null;
 }
 
@@ -37,12 +42,13 @@ export interface ZooSession extends ZooActions {
  *  is one write rather than forty; short enough that nobody notices. */
 const FLUSH_MS = 250;
 
-export function useZooSession(gameId: string | null): ZooSession {
+export function useZooSession(gameId: string | null, seat: SeatContext = { seat: null }): ZooSession {
   const { user } = useAuth();
   const [sync, setSync] = useState<SyncState | null>(null);
   const [present, setPresent] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refused, setRefused] = useState<string | null>(null);
 
   // The writer runs outside React's render: it has to read the newest sync state at the
   // moment it writes, not the one captured when it was scheduled.
@@ -99,7 +105,19 @@ export function useZooSession(gameId: string | null): ZooSession {
     }
   }, [gameId]);
 
+  // The gate. It refuses before anything is applied locally, so a player never sees a change
+  // that is about to be undone - and it says whose call it was, because that sentence is the
+  // reason the gate exists at all.
+  //
+  // Client-side is the right place for it. This is a teaching game, not a threat model: the
+  // point is that the interface tells you the Backlog is the Product Owner's, not that a
+  // determined learner cannot get round it.
+  const seatRef = useRef(seat);
+  seatRef.current = seat;
   const send = useCallback((action: ZooAction) => {
+    const verdict = mayTake(action.type, seatRef.current);
+    if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
+    setRefused(null);
     setSync((cur) => (cur ? queueAction(cur, action) : cur));
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => { void flush(); }, FLUSH_MS);
@@ -139,7 +157,8 @@ export function useZooSession(gameId: string | null): ZooSession {
   // so a screen cannot tell which kind of game it was handed.
   const actions = useMemo(() => zooActions(send), [send]);
 
-  return { state: sync ? localState(sync) : null, send, ready, present, drivesClock, error, ...actions };
+  return { state: sync ? localState(sync) : null, send, ready, present, drivesClock,
+           refused, clearRefused: () => setRefused(null), error, ...actions };
 }
 
 /** The clock, for a shared game: the same heartbeat useZooGame runs alone, but only on the

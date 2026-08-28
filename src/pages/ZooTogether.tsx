@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { useZooSession, useSharedClock } from '@/components/zooGame/useZooSession';
+import { useZooSessions } from '@/components/zooGame/useZooSessions';
+import type { SeatContext } from '@/components/zooGame/seatRules';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,10 +14,19 @@ import { PADDING, SURFACE, TEXT } from '@/components/zooGame/ui/tokens';
 // between two browsers, which is the thing that had to work before any of the game is
 // wired to it.
 
-function SharedGame({ gameId, onBack }: { gameId: string; onBack: () => void }) {
-  const session = useZooSession(gameId);
+function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: string | null; onBack: () => void }) {
+  // Which accountability this player holds, and which seats nobody is holding - the gate
+  // needs both, because an empty seat's work falls to the team rather than to nobody.
+  const lobby = useZooSessions(sessionId);
+  const mySeat = lobby.seats.find((x) => x.participant_id === lobby.me?.id) ?? null;
+  const ctx: SeatContext = {
+    seat: mySeat?.seat ?? null,
+    observer: lobby.me?.role === 'observer',
+    emptySeats: lobby.seats.filter((x) => !x.participant_id && !x.is_ai).map((x) => x.seat),
+  };
+  const session = useZooSession(gameId, ctx);
   useSharedClock(session);
-  const { state, ready, present, drivesClock, error, send } = session;
+  const { state, ready, present, drivesClock, error, send, refused, clearRefused } = session;
 
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;
   if (!ready || !state) return <p className="p-10 text-center text-sm text-muted-foreground">Joining the game…</p>;
@@ -31,7 +42,20 @@ function SharedGame({ gameId, onBack }: { gameId: string; onBack: () => void }) 
         <div><div className="text-[11px] uppercase tracking-wide text-muted-foreground">Here</div><div className="font-semibold">{present.length}</div></div>
       </div>
 
+      {/* Whose call it was. Shown rather than swallowed: a silent no reads as a broken
+          button, and the sentence is the only thing here that teaches. */}
+      {refused && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-700/60 dark:bg-amber-950/30">
+          <span>{refused}</span>
+          <button type="button" onClick={clearRefused} className="shrink-0 text-xs underline">dismiss</button>
+        </div>
+      )}
+
       <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
+        <p className="text-xs text-muted-foreground">
+          {ctx.observer ? 'You are watching. You act on nothing.'
+            : mySeat ? `You are sitting as ${mySeat.seat.replace('_', ' ')}.` : 'You hold no seat yet.'}
+        </p>
         <p className="text-xs text-muted-foreground">
           {drivesClock
             ? 'This browser is driving the clock. Exactly one does, so a day is only ever ended once.'
@@ -73,7 +97,7 @@ export default function ZooTogether() {
     );
   }
 
-  if (gameId) return <SharedGame gameId={gameId} onBack={() => { setGameId(null); }} />;
+  if (gameId) return <SharedGame gameId={gameId} sessionId={sessionId} onBack={() => { setGameId(null); }} />;
 
   return (
     <ZooLobby
