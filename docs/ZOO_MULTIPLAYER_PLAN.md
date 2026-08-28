@@ -94,29 +94,69 @@ free of React imports.
 
 ### Session Model
 
+A training session is not one run of the game. It is several, with reflection between them,
+so there are two nested things: a **session** that persists over days and holds the people,
+and a **game** inside it that holds one run of a few Sprints.
+
+That split is what answers seat rotation. **Seats belong to the game, not the session**, so
+changing seats is not an operation at all - it is what starting the next game means. Inside
+a game the debrief's "who did what" stays unambiguous, and across games you get the better
+question: you were Product Owner in game one and a Developer in game two, what looked
+different?
+
 ```
 zoo_sessions
-  id, name, seed, state jsonb, version int,
-  host_user_id            -- transferable
+  id, name,
+  host_user_id            -- transferable; ownership, not authority
   event_id                -- null for a self-organised group
   status                  -- lobby | live | paused | done
   join_code               -- short code, so a trainer can read it out
   created_at, updated_at
 
-zoo_session_participants
+zoo_games                 -- one run of a few Sprints; a session has several
+  id, session_id, seq,
+  seed, state jsonb, version int,
+  status                  -- live | paused | done
+  started_at, ended_at
+
+zoo_session_participants  -- the people, for the whole session
   session_id,
   role                    -- player | observer
-  seat                    -- product_owner | scrum_master | developer; null for an observer
-  user_id                 -- null when the seat is played by AI
-  is_ai                   -- so the interface can always say which of your team is not a person
+  user_id                 -- the person
   can_facilitate          -- acts ON the session, not in it. A trainer. Granted, not implied
                           --   by hosting, so an elected learner host cannot inject an
                           --   impediment into their own team's Sprint
   display_name, claimed_at, last_seen_at
 ```
 
-An observer is a participant with no seat: present, named, and able to act on nothing. That
-is the trainer, and it is also what a cohort view is later assembled from.
+```
+zoo_game_seats            -- who sat where, for ONE game
+  game_id,
+  seat                    -- product_owner | scrum_master | developer
+  participant_id          -- null when the seat is played by AI
+  is_ai                   -- so the interface can always say which of your team is not a person
+```
+
+An observer is a participant with no seat in any game: present, named, and able to act on
+nothing. That is the trainer, and it is also what a cohort view is later assembled from.
+
+### Changing Seats
+
+Never inside a Sprint. Between games, always. Mid-Sprint rotation would break the one
+promise a Sprint makes, and would make the Sprint's own debrief unreadable.
+
+Between games there is a short lobby, and the same screen serves all three ways of playing:
+
+- **Rotate one step** is the default and one click. The Product Owner becomes the Scrum
+  Master, the Scrum Master becomes a Developer, a Developer takes the Product Owner seat.
+  Over three games everybody has held every accountability, which is what a trainer wants
+  and what a group would otherwise have to negotiate every time.
+- **Assign** for a group that wants to choose.
+- **Keep** for when the point is to get better at the seat you already have.
+
+A facilitator can override. Without one, the group agrees, which is itself the sort of
+conversation the no-facilitator mode exists to provoke. Unclaimed seats fall to AI, and
+because seats are per-game a group that shrinks on day three simply picks up more AI.
 
 Seats bind to `user_id` and persist, so Bob is still the Product Owner on Thursday. A seat
 can be released and reclaimed for the people who do not come back. `status: 'paused'` is
