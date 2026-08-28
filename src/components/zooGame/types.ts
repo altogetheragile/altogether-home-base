@@ -335,6 +335,14 @@ export interface ZooGameState {
   /** Multiplier on the current day's build time: the Daily Scrum costs a little
    *  time, a missed impediment costs more. 1 = a full day. */
   dayTimeMult: number;
+  /** Seconds left in the current build day. In state rather than in the DayTimer component
+   *  because a clock in a component cannot be saved, shared or paused: each browser would
+   *  run its own countdown and each would end the day. Advanced by TICK_DAY, which also
+   *  ends the day when it reaches zero, so the expiry cannot fire twice. */
+  daySecondsLeft: number;
+  /** Seconds left in the Daily Scrum's timebox, for the same reasons. Reset each time the
+   *  event opens; on expiry the disciplined default is taken (adapt and continue). */
+  scrumSecondsLeft: number;
   /** The impediment surfaced at the current Daily Scrum, awaiting the team's call. */
   pendingImpediment: Impediment | null;
   /** A missed impediment carried into the current building day (skipped Daily
@@ -407,6 +415,8 @@ export interface ZooGameState {
 export type ZooAction =
   | { type: 'START'; gameSeed?: number }
   | { type: 'SET_PHASE'; phase: ZooPhase }
+  | { type: 'TICK_DAY' }
+  | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_DOD'; dod: string[] }

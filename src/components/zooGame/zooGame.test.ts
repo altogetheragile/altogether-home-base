@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, estimatedVelocity } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
+  endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions,
 } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
@@ -3096,5 +3096,67 @@ describe('zoo game: a path meets the habitat it runs to', () => {
     const round = shapeEdge('circle', 0, 0, hw, hh, d * 500, d * 500);
     const boxy = shapeEdge('rounded', 0, 0, hw, hh, d * 500, d * 500);
     expect(Math.hypot(boxy.x, boxy.y)).toBeGreaterThan(Math.hypot(round.x, round.y));
+  });
+});
+
+describe('the clock is part of the game, not part of a component', () => {
+  // It used to live in DayTimer and DailyScrum as useState + setInterval. That could not be
+  // saved (a resumed game came back with a full day however much had been spent), could not
+  // be paused, and in a shared session every browser would run its own countdown and every
+  // one of them would end the day.
+  const running = (over: Partial<ZooGameState> = {}): ZooGameState =>
+    ({ ...initialZooState(1), phase: 'sprint', dayStage: 'building', dayNumber: 1, sprintDays: 3, ...over });
+
+  it('spends a second of the build day on each tick', () => {
+    const s = tickDay(running());
+    expect(s.daySecondsLeft).toBe(DAY_SECONDS - 1);
+  });
+
+  it('is paused in learn mode, and outside a running build day', () => {
+    expect(tickDay(running({ learnMode: true })).daySecondsLeft).toBe(DAY_SECONDS);
+    expect(tickDay(running({ phase: 'planning' })).daySecondsLeft).toBe(DAY_SECONDS);
+    // A session left open overnight must not burn the day it is paused on.
+    expect(tickDay(running({ dayStage: 'dailyScrum' })).daySecondsLeft).toBe(DAY_SECONDS);
+  });
+
+  it('ends the day itself when the clock runs out, so two browsers cannot both end it', () => {
+    const s = tickDay(running({ daySecondsLeft: 1 }));
+    expect(s.dayStage, 'the clock ran out and the day did not end').not.toBe('building');
+    // ...and the day that has ended is not still counting down
+    expect(tickDay(s).dayStage).toBe(s.dayStage);
+  });
+
+  it('takes refinement out of the clock, not just out of a tally', () => {
+    const before = running();
+    const item = before.backlog.find((it) => it.status === 'backlog');
+    const after = estimateItem(before, item!.id, 5);
+    expect(after.refinePenalty, 'the spend was not tallied').toBe(REFINE_COSTS.estimate);
+    expect(after.daySecondsLeft, 'the tally moved but the clock did not')
+      .toBe(DAY_SECONDS - REFINE_COSTS.estimate);
+  });
+
+  it('sizes the day to what the Daily Scrum left of it', () => {
+    // The event is what SETS dayTimeMult, so the clock has to be cut when it is held. Sizing
+    // the day when it turned over instead made holding the Daily Scrum free.
+    const held = runDailyScrum(running({ dayStage: 'dailyScrum', daySecondsLeft: 3, dayNumber: 1 }));
+    expect(held.daySecondsLeft, 'the day did not get a fresh clock').toBeGreaterThan(3);
+    expect(held.daySecondsLeft, 'holding the Daily Scrum cost nothing').toBeLessThan(DAY_SECONDS);
+    expect(held.daySecondsLeft).toBe(Math.round(DAY_SECONDS * held.dayTimeMult));
+  });
+
+  it('runs the Daily Scrum timebox too, and adapts when it expires', () => {
+    const inScrum = running({ dayStage: 'dailyScrum', scrumSecondsLeft: DAILY_SCRUM_SECONDS });
+    expect(tickScrum(inScrum).scrumSecondsLeft).toBe(DAILY_SCRUM_SECONDS - 1);
+    const expired = tickScrum({ ...inScrum, scrumSecondsLeft: 1 });
+    expect(expired.dayStage, 'the timebox ran out and nothing happened').not.toBe('dailyScrum');
+  });
+
+  it('carries a part-spent day through a save and a resume', () => {
+    // The reason the clock had to move at all: a session can stop mid-Sprint on Tuesday and
+    // pick up on Thursday, and it must not hand back a whole fresh day.
+    const midDay = tickDay(tickDay(tickDay(running())));
+    const resumed = JSON.parse(JSON.stringify(midDay)) as ZooGameState;
+    expect(resumed.daySecondsLeft).toBe(DAY_SECONDS - 3);
+    expect(tickDay(resumed).daySecondsLeft).toBe(DAY_SECONDS - 4);
   });
 });

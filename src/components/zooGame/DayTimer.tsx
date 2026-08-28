@@ -1,49 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DAY_SECONDS } from './config';
+import { dayTotalSeconds } from './engine';
 import { TONE } from './ui/tokens';
 
-/** The day clock: a real countdown for the build day. It resets each day, and can be cut
- *  short by the Daily Scrum's timebox, a blocker that slipped through, or Backlog refinement
- *  spent this Sprint - so the cost of those is obvious. `compact` renders a tight chip for the
- *  app header (always visible across tabs); the default is the full labelled bar. In learn mode
- *  the clock is paused - no countdown and no auto-expire, so days are ended by hand. */
-export function DayTimer({ dayNumber, dayTimeMult, refinePenalty, impeded, learnMode, onExpire, compact = false }: { dayNumber: number; dayTimeMult: number; refinePenalty: number; impeded: boolean; learnMode: boolean; onExpire: () => void; compact?: boolean }) {
-  const total = Math.round(DAY_SECONDS * dayTimeMult);
-  const [left, setLeft] = useState(total);
-  const fired = useRef(false);
-  const spent = useRef(0); // refinement seconds already deducted this day
-
-  // Reset for each new day (dayNumber changes) and count down once per second. In learn
-  // mode the clock is paused - no countdown and no auto-expire, so you end days yourself.
-  useEffect(() => {
-    fired.current = false;
-    spent.current = 0;
-    setLeft(total);
-    if (learnMode) return;
-    const id = setInterval(() => {
-      setLeft((s) => {
-        if (s <= 1) {
-          clearInterval(id);
-          if (!fired.current) { fired.current = true; onExpire(); }
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-    // total is derived from dayNumber+dayTimeMult; reset on a genuinely new day.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayNumber, learnMode]);
-
-  // Refining the Backlog mid-Sprint spends build time: deduct the new refinement seconds
-  // from the clock as they accrue (the interval below picks up the expiry within a tick).
-  useEffect(() => {
-    const delta = refinePenalty - spent.current;
-    spent.current = refinePenalty;
-    if (delta > 0) setLeft((s) => Math.max(0, s - delta));
-  }, [refinePenalty]);
+/** The day clock, drawn. It counts nothing: the seconds live in game state and are advanced
+ *  by TICK_DAY, which also ends the day when they run out. This used to hold its own
+ *  countdown, which is why a saved game came back with a full day however much of it had
+ *  been spent, and why two browsers could never have shared one. `compact` renders a tight
+ *  chip for the app header; the default is the full labelled bar. In learn mode the clock is
+ *  paused - no countdown and no auto-expire, so days are ended by hand. */
+export function DayTimer({ dayTimeMult, refinePenalty, impeded, learnMode, secondsLeft, compact = false }: { dayTimeMult: number; refinePenalty: number; impeded: boolean; learnMode: boolean; secondsLeft: number; compact?: boolean }) {
+  const total = dayTotalSeconds(dayTimeMult);
+  const left = secondsLeft;
 
   const pct = Math.max(0, Math.min(100, (left / total) * 100));
   const mm = Math.floor(left / 60);
