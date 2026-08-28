@@ -179,8 +179,20 @@ means park size becomes state. Growing is the safe direction: positions are clam
 `insidePark`, so everything already placed stays valid inside a larger boundary. Shrinking
 would not be, so land is bought and never sold.
 
-Open: whether the game has an economy solid enough for "make money" to be a measure, or
-whether that Goal is expressed in attendance and happiness, which the park already counts.
+**The economy stays simple and fun.** No profit and loss, no budgets, no running costs,
+nothing to balance. One chain, one number:
+
+> a zoo people love -> more visitors -> a purse -> land
+
+The purse fills from attendance and happiness, which the park already counts, and it is
+spent once, on land. Nothing else costs anything.
+
+That is not only the cheaper build, it is the better lesson. **You cannot buy a bigger zoo
+by building more; you earn it by making a place people love.** It gives teeth to the thing
+the Review already says out loud - value is the outcome, not the output - because a team
+that spent three Sprints delivering things nobody enjoyed simply cannot afford the next
+Product Goal. The measures on Goal 1 are therefore written in visitors and happiness, and
+money is a consequence of them rather than a thing anyone manages.
 
 ### Changing Seats
 
