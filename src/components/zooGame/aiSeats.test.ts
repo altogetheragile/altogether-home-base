@@ -51,6 +51,39 @@ describe('a seat nobody is sitting in', () => {
     expect(aiTurn(s, 'scrum_master')).toBeNull();
   });
 
+  it('will not let one person decree the Sprint Goal', () => {
+    // "A PO can propose a Sprint Goal, but the Scrum Team must all agree." The Guide: the
+    // Product Owner proposes how the product could increase in value, and the whole Scrum
+    // Team then collaborates to define the Goal. So a typed sentence is a proposal.
+    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
+    expect(s.sprintGoalAgreed, 'writing it counted as agreeing to it').toHaveLength(0);
+
+    for (const seat of ['developer', 'scrum_master', 'product_owner'] as const) {
+      const move = aiTurn(s, seat);
+      expect(move, `the ${seat} never said whether they agreed`).not.toBeNull();
+      expect(move!.action.type).toBe('AGREE_SPRINT_GOAL');
+      s = reducer(s, move!.action);
+    }
+    expect(s.sprintGoalAgreed.sort()).toEqual(['developer', 'product_owner', 'scrum_master']);
+  });
+
+  it('clears the agreement when the wording changes', () => {
+    // The agreement was to the words that were there. Carrying it silently across a rewrite
+    // is how a Sprint Goal becomes one person's sentence with everybody's name on it.
+    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'developer' });
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'scrum_master' });
+    expect(s.sprintGoalAgreed).toHaveLength(2);
+
+    s = reducer(s, { type: 'SET_SPRINT_GOAL', goal: 'Something else entirely' });
+    expect(s.sprintGoalAgreed, 'agreement survived a rewrite').toHaveLength(0);
+
+    // ...but tidying the same sentence is not a new Goal
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'developer' });
+    s = reducer(s, { type: 'SET_SPRINT_GOAL', goal: '  Something else entirely  ' });
+    expect(s.sprintGoalAgreed, 'trimming whitespace threw the agreement away').toHaveLength(1);
+  });
+
   it('gets a lone Product Owner through Sprint Planning', () => {
     // The reported deadlock. Sitting as Product Owner, topic three needs steps, SET_TASKS is
     // the Developers' and correctly refused - so with nobody in those seats the game sat on

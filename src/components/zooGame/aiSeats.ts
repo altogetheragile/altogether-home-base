@@ -40,6 +40,12 @@ const topUnsized = (s: ZooGameState): BacklogItem | undefined =>
 /** What this AI accountability would do now, or nothing if it is not their turn. */
 export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
   if (seat === 'developer') {
+    // Topic one comes before the work. The whole Scrum Team defines the Sprint Goal, so the
+    // Developers say whether they are in before they start sizing or selecting against it.
+    if (state.phase === 'planning' && state.sprintGoal.trim() && !state.sprintGoalAgreed.includes('developer')) {
+      return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'developer' },
+               says: 'We are agreed on that Sprint Goal, and we will forecast against it.' };
+    }
     // Sizing is the Developers'. They do it when there is something unsized near the top,
     // and they say the number rather than just applying it.
     const item = topUnsized(state);
@@ -88,6 +94,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
     // "Ensure that all Scrum events take place." The Daily Scrum is the one the game lets
     // you skip, and skipping it is what lets a blocker grow overnight - so the Scrum Master
     // holding it is the clearest thing this accountability actually does here.
+    if (state.phase === 'planning' && state.sprintGoal.trim()
+        && !state.sprintGoalAgreed.includes('scrum_master')) {
+      return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'scrum_master' },
+               says: 'Agreed. It says why the Sprint is valuable, which is what it is for.' };
+    }
     if (state.phase === 'sprint' && state.dayStage === 'dailyScrum') {
       return { action: { type: 'RUN_DAILY_SCRUM' },
                says: state.pendingImpediment
@@ -97,8 +108,14 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
     return null;
   }
 
-  // Product Owner. What the visitors asked for becomes a Backlog item when they decide it
-  // does, which is the value call the Review exists to produce.
+  // Product Owner. They proposed it, so they are in - but it is still the team's to agree.
+  if (state.phase === 'planning' && state.sprintGoal.trim()
+      && !state.sprintGoalAgreed.includes('product_owner')) {
+    return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' },
+             says: 'That is the value I am proposing this Sprint.' };
+  }
+  // What the visitors asked for becomes a Backlog item when they decide it does, which is
+  // the value call the Review exists to produce.
   if (state.phase === 'review' && state.signals.length > 0) {
     return { action: { type: 'ACCEPT_SIGNAL', index: 0 },
              says: `Visitors asked for this. I am putting it on the Backlog: ${state.signals[0].suggestion}.` };

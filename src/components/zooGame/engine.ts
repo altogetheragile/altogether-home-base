@@ -864,6 +864,12 @@ export function readyHorizon(state: ZooGameState): number {
 
 /** Topic two: what the Developers think they can finish. Shared, so everyone at Planning is
  *  looking at the same forecast and an AI Developer can plan the steps for it. */
+/** Agreeing, as one accountability, to the Sprint Goal as it currently reads. */
+export function agreeSprintGoal(state: ZooGameState, seat: string): ZooGameState {
+  if (!state.sprintGoal.trim() || state.sprintGoalAgreed.includes(seat)) return state;
+  return { ...state, sprintGoalAgreed: [...state.sprintGoalAgreed, seat] };
+}
+
 export function setForecast(state: ZooGameState, ids: string[]): ZooGameState {
   return state.phase === 'planning' ? { ...state, forecast: ids } : state;
 }
@@ -1131,7 +1137,11 @@ export function setProductGoal(state: ZooGameState, goal: string): ZooGameState 
 
 /** The Sprint Goal: a single, editable objective for the Sprint (may be blank). */
 export function setSprintGoal(state: ZooGameState, goal: string): ZooGameState {
-  return { ...state, sprintGoal: goal };
+  // Re-wording it clears the agreement: the team agreed to the words that were there, and
+  // quietly carrying that over to different words is how a Sprint Goal ends up being one
+  // person's sentence with everybody's name on it.
+  const changed = goal.trim() !== state.sprintGoal.trim();
+  return { ...state, sprintGoal: goal, sprintGoalAgreed: changed ? [] : state.sprintGoalAgreed };
 }
 
 /** A Sprint Goal the team has actually drafted, rather than an empty field or a stub. Shorter than

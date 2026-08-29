@@ -34,6 +34,12 @@ interface SprintPlanningProps {
   state: ZooGameState;
   onPlan: (ids: string[], refinementPoints?: number) => void;
   onSetForecast: (ids: string[]) => void;
+  /** The accountabilities that must agree the Sprint Goal before Planning moves on. Empty
+   *  when playing alone, where you are all three. */
+  mustAgree?: string[];
+  /** Yours, so you can agree as yourself and only as yourself. */
+  mySeat?: string | null;
+  onAgreeSprintGoal?: (seat: string) => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   /** Topic three's shape decisions: how big, which habitat, what kind of building or planting. */
@@ -58,6 +64,10 @@ type Step = 'why' | 'what' | 'how';
 // The Guide's three topics, worded as the Guide words them. A learner who meets "What can we build?"
 // here and "What can be Done this Sprint?" in the exam has been taught two things, one of which is
 // wrong; `topic` carries the Guide's phrasing and `label` is only the short chip on the step track.
+const AGREER: Record<string, string> = {
+  product_owner: 'the Product Owner', scrum_master: 'the Scrum Master', developer: 'the Developers',
+};
+
 const STEPS: { key: Step; n: number; label: string; topic: string; question: string; lead: string }[] = [
   { key: 'why', n: 1, label: 'Why', topic: 'Topic One', question: 'Why is this Sprint valuable?', lead: 'Agree one objective the whole Sprint aims at.' },
   { key: 'what', n: 2, label: 'What', topic: 'Topic Two', question: 'What can be Done this Sprint?', lead: 'Pull in the work you believe you can finish.' },
@@ -125,7 +135,7 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onSetForecast, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
   // The forecast is shared state, not this component's: another player at Planning must see
@@ -146,6 +156,12 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onEstimate, onSet
   const capacity = cap.points;
   const over = committed > capacity;
   const hasGoal = isDraftedGoal(state.sprintGoal);
+  // The Product Owner proposes; the whole Scrum Team defines. So a drafted sentence is not
+  // yet a Sprint Goal - it is a proposal until the accountabilities at the table agree it.
+  // `mustAgree` is empty when playing alone, where you are all three and agreeing with
+  // yourself teaches nothing.
+  const outstanding = mustAgree.filter((who) => !state.sprintGoalAgreed.includes(who));
+  const agreed = hasGoal && outstanding.length === 0;
   const hasWhat = chosen.length > 0;
   const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
   // Refining opens a panel above the columns; bring it into view so it is not something you have to
@@ -169,8 +185,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onEstimate, onSet
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
-  const done = (s: Step) => (s === 'why' ? hasGoal : s === 'what' ? hasWhat : false);
-  const goTo = (s: Step) => { if (s === 'why' || (s === 'what' && hasGoal) || (s === 'how' && hasGoal && hasWhat)) setStep(s); };
+  const done = (s: Step) => (s === 'why' ? agreed : s === 'what' ? hasWhat : false);
+  const goTo = (s: Step) => { if (s === 'why' || (s === 'what' && agreed) || (s === 'how' && agreed && hasWhat)) setStep(s); };
 
   const current = STEPS.find((s) => s.key === step)!;
 
@@ -226,6 +242,34 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onEstimate, onSet
             <textarea value={state.sprintGoal} onChange={(e) => onSetSprintGoal(e.target.value)} rows={3} autoFocus
               placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo;"
               className="w-full resize-none rounded-lg border-2 border-primary/40 bg-background px-3 py-2 text-lg font-medium leading-snug outline-none focus:border-primary" />
+            {/* Who has agreed. A Product Owner proposes how the product could increase in
+                value; the whole Scrum Team then defines the Goal - so this row is the
+                difference between a sentence somebody typed and a Sprint Goal. Re-wording it
+                clears the ticks, because the agreement was to the words that were there. */}
+            {mustAgree.length > 0 && hasGoal && (
+              <div className="space-y-1.5 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  The whole Scrum Team agrees the Goal
+                </div>
+                <ul className="space-y-1">
+                  {mustAgree.map((who) => {
+                    const yes = state.sprintGoalAgreed.includes(who);
+                    return (
+                      <li key={who} className="flex items-center justify-between gap-2 text-xs">
+                        <span className={yes ? 'text-muted-foreground' : 'text-foreground'}>
+                          {yes ? '\u2713 ' : '\u00b7 '}{AGREER[who] ?? who}
+                        </span>
+                        {!yes && who === mySeat && onAgreeSprintGoal && (
+                          <Button size="sm" variant="outline" onClick={() => onAgreeSprintGoal(who)}>I agree</Button>
+                        )}
+                        {!yes && who !== mySeat && <span className="text-[11px] text-muted-foreground">waiting</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
             {/* The right-hand column is the Sprint. At topic one it is empty on purpose, and saying
                 so is better than leaving a blank panel: the Goal comes before the work, not after. */}
             <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
@@ -420,7 +464,12 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onEstimate, onSet
           {step === 'why' && (
             <>
               {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">{state.sprintGoal.trim() ? 'A Sprint Goal is an objective, not a word' : 'Write the Sprint Goal to continue'}</span>}
-              <Button disabled={!hasGoal} onClick={() => setStep('what')}>Next: what to build <ArrowRight className="ml-1 h-4 w-4" /></Button>
+              {hasGoal && outstanding.length > 0 && (
+                <span className="hidden text-[11px] text-muted-foreground sm:inline">
+                  Proposed. Waiting on {outstanding.map((w) => AGREER[w] ?? w).join(' and ')}
+                </span>
+              )}
+              <Button disabled={!agreed} onClick={() => setStep('what')}>Next: what to build <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
           {step === 'what' && (

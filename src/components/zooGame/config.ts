@@ -335,6 +335,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     scrumDiscipline: false,
     learnMode: false,
     dailyScrumAt: 'start',
+    sprintGoalAgreed: [],
     forecast: [],
     refinePenalty: 0,
     daySecondsLeft: DAY_SECONDS,
