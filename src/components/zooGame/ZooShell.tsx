@@ -193,17 +193,19 @@ export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkV
         {refused && (
           <RailNote title="Whose call it is" tone="rule" onDismiss={onDismissRefused}>{refused}</RailNote>
         )}
+        {/* The Product Owner's account of a refinement is a long read rather than a passing
+            remark, so it sits with the things you read and not with the running commentary. */}
+        {poNote && (
+          <RailNote title="Refinement session · the Scrum Team" onDismiss={onDismissPoNote}>
+            <span className="whitespace-pre-line">{poNote}</span>
+          </RailNote>
+        )}
       </MessageRail>
 
       <MessageRail side="right">
         {said && (
           <RailNote title={`${said.seat.replace('_', ' ')} (AI)`} tone="team" onDismiss={onDismissSaid} dismissLabel="ok">
             {said.says}
-          </RailNote>
-        )}
-        {poNote && (
-          <RailNote title="Refinement session · the Scrum Team" tone="team" onDismiss={onDismissPoNote}>
-            <span className="whitespace-pre-line">{poNote}</span>
           </RailNote>
         )}
       </MessageRail>
