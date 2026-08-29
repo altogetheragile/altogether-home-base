@@ -51,6 +51,25 @@ describe('a seat nobody is sitting in', () => {
     expect(aiTurn(s, 'scrum_master')).toBeNull();
   });
 
+  it('gets a lone Product Owner through Sprint Planning', () => {
+    // The reported deadlock. Sitting as Product Owner, topic three needs steps, SET_TASKS is
+    // the Developers' and correctly refused - so with nobody in those seats the game sat on
+    // "5 items have no steps yet" forever and Start Sprint stayed disabled.
+    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
+    const moves: string[] = [];
+    for (let i = 0; i < 200; i += 1) {
+      const move = aiTurn(s, 'developer');
+      if (!move) break;
+      moves.push(move.action.type);
+      s = reducer(s, move.action);
+    }
+    expect(moves, 'the Developers never selected anything').toContain('SET_FORECAST');
+    expect(moves, 'the Developers never planned the steps').toContain('SET_TASKS');
+    expect(s.forecast.length, 'nothing was forecast').toBeGreaterThan(0);
+    const unplanned = s.backlog.filter((it) => s.forecast.includes(it.id) && !(it.tasks ?? []).some((t) => t.label.trim()));
+    expect(unplanned, 'items were left without steps, so Start Sprint stays disabled').toHaveLength(0);
+  });
+
   it('runs out of things to do instead of looping', () => {
     // The property that matters most: each move has to make its own condition stop holding,
     // or a seat sits there sizing the same item forever and burns a session down.

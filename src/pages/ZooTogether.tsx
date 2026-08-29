@@ -37,24 +37,25 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
 
   return (
     <div className="relative">
-      {/* Two lines over the top of the game: what a seat nobody is in has just done, and
-          anything the gate refused. Both are the teaching, so neither is swallowed. */}
-      {(saidBy || refused) && (
-        <div className="sticky top-0 z-30 space-y-1 px-4 pt-2">
-          {saidBy && (
-            <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/95 px-4 py-2 text-sm shadow-sm backdrop-blur">
-              <span><strong className="capitalize">{saidBy.seat.replace('_', ' ')}</strong> (AI): {saidBy.says}</span>
-              <button type="button" onClick={() => setSaid(null)} className="shrink-0 text-xs underline">ok</button>
-            </div>
-          )}
-          {refused && (
-            <div className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/95 px-4 py-2 text-sm shadow-sm backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/90">
-              <span>{refused}</span>
-              <button type="button" onClick={clearRefused} className="shrink-0 text-xs underline">dismiss</button>
-            </div>
-          )}
-        </div>
-      )}
+      {/* These used to sit above the game and push the whole page down each time one
+          arrived, which on a screen with wide empty margins was the wrong place for them.
+          Fixed to the right margin instead: they overlay nothing, reflow nothing, and stack
+          where there was already empty space. */}
+      <div className="pointer-events-none fixed right-3 top-24 z-40 flex w-72 flex-col gap-2">
+        {saidBy && (
+          <div className="pointer-events-auto rounded-lg border border-border bg-background/95 p-3 text-xs shadow-lg backdrop-blur">
+            <div className="mb-1 font-semibold capitalize">{saidBy.seat.replace('_', ' ')} (AI)</div>
+            <p className="text-muted-foreground">{saidBy.says}</p>
+            <button type="button" onClick={() => setSaid(null)} className="mt-1.5 text-[11px] underline">ok</button>
+          </div>
+        )}
+        {refused && (
+          <div className="pointer-events-auto rounded-lg border border-amber-300 bg-amber-50/95 p-3 text-xs shadow-lg backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/95">
+            <p>{refused}</p>
+            <button type="button" onClick={clearRefused} className="mt-1.5 text-[11px] underline">dismiss</button>
+          </div>
+        )}
+      </div>
 
       {/* The game itself. The same screens the solo game uses - the only difference is which
           carrier the actions were built around, which is the whole point of one surface. */}

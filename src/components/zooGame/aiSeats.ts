@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity } from './engine';
 
 // A seat nobody is sitting in, played by the game.
 //
@@ -48,6 +48,28 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
       return { action: { type: 'ESTIMATE_ITEM', id: item.id, points },
                says: `We sized ${item.name} at ${points}.` };
     }
+    // Sprint Planning topic two: what they think they can finish. The Product Owner proposes
+    // where the value is; selecting against it is the Developers' call, so if nobody is in
+    // those seats this is where the game would otherwise sit and wait forever.
+    if (state.phase === 'planning' && state.sprintGoal.trim()) {
+      if (state.forecast.length === 0) {
+        const capacity = sprintCapacity(state).points;
+        const take: string[] = [];
+        let pts = 0;
+        for (const it of state.backlog.filter((x) => x.status === 'backlog' && isReady(x))) {
+          if (pts + it.estimate > capacity) continue;
+          take.push(it.id); pts += it.estimate;
+        }
+        if (take.length) return { action: { type: 'SET_FORECAST', ids: take },
+          says: `We think we can finish ${take.length} item${take.length === 1 ? '' : 's'}, about ${pts} points. That is what our last Sprints say we manage.` };
+      }
+      // Topic three: how it gets done. Also theirs, and the step the game blocked on when a
+      // Product Owner sat alone - gated away from them, and nobody else to do it.
+      const unplanned = state.backlog.find((it) => state.forecast.includes(it.id) && !(it.tasks ?? []).some((t) => t.label.trim()));
+      if (unplanned) return { action: { type: 'SET_TASKS', id: unplanned.id, tasks: suggestTasks(unplanned) },
+        says: `We planned the steps for ${unplanned.name}.` };
+    }
+
     // Self-managing: they pull their own next piece when there is room, rather than waiting
     // to be given one. Bounded by the WIP limit, so they finish before starting more.
     if (state.phase === 'sprint' && state.dayStage === 'building') {

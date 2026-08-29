@@ -33,6 +33,7 @@ import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 interface SprintPlanningProps {
   state: ZooGameState;
   onPlan: (ids: string[], refinementPoints?: number) => void;
+  onSetForecast: (ids: string[]) => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   /** Topic three's shape decisions: how big, which habitat, what kind of building or planting. */
@@ -124,10 +125,14 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onSetForecast, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
   const [step, setStepState] = useState<Step>('why');
   const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // The forecast is shared state, not this component's: another player at Planning must see
+  // the same one, and an AI Developer cannot plan steps for work it cannot see.
+  const selected = new Set(state.forecast);
+  const setSelected = (next: Set<string> | ((s: Set<string>) => Set<string>)) =>
+    onSetForecast([...(typeof next === 'function' ? next(new Set(state.forecast)) : next)]);
   const [fixing, setFixing] = useState<string | null>(null);   // refining an item mid-Planning
   const [openPlan, setOpenPlan] = useState<string | null>(null); // which item's task plan is open
   // Topic three's other question, which the Guide asks and the game did not: does the state of the
