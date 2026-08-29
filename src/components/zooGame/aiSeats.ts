@@ -1,7 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady } from './engine';
-import { presetFor, floraColors, isLandscapeType, isDesignDone, type ItemDesign } from './design';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask } from './engine';
+import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './design';
 
 // A seat nobody is sitting in, played by the game.
 //
@@ -114,10 +114,22 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
       // only end with nothing Done, which is the opposite of the lesson - and a team that
       // pulls a second thing while the first is unfinished is the habit the WIP limit exists
       // to break, so it would have been the wrong order even if it worked.
-      const building = state.backlog.find((it) => it.status === 'committed' && it.started
-        && !isDesignDone(it, it.design ?? it.draftDesign ?? presetFor(it)));
+      // Build anything started that has no committed design yet. The test used to be
+      // "is the design incomplete", which quietly skipped a path: its preset already meets
+      // its own criteria, so it looked finished, was never built, never had a design stored,
+      // and could never leave Doing. Nothing about it was the route.
+      const building = state.backlog.find((it) => it.status === 'committed' && it.started && !it.design);
       if (building) return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
                              says: `Built ${building.name} to the Definition of Done.` };
+
+      // Then tick their own plan off. The sign-off step is not theirs - that is the Product
+      // Owner accepting the work - and ticking the last of the rest is what moves an item to
+      // Done, so leaving the plan untouched left everything sitting in Doing.
+      for (const it of state.backlog.filter((x) => x.status === 'committed' && x.started && x.design)) {
+        const task = (it.tasks ?? []).find((t) => !t.done && t.label.trim() && !isSignOffTask(t.label));
+        if (task) return { action: { type: 'TOGGLE_TASK', id: it.id, taskId: task.id },
+                           says: `${task.label} - done, on ${it.name}.` };
+      }
 
       const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
       const wip = activeWipLimit(state);
