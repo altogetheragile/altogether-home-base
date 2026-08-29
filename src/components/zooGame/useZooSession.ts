@@ -168,6 +168,12 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  // A refusal is about the thing you just tried, so it should not follow you to the next
+  // screen. Left up, it reads as a comment on where you are now - a note about selecting
+  // work still on screen at topic three looks like it is talking about topic three.
+  const phase = sync ? localState(sync).phase : null;
+  useEffect(() => { setRefused(null); }, [phase]);
+
   // Exactly one browser drives the clock, chosen by a rule every client computes the same
   // way from the same list: the lowest participant id present. No election, no chatter, and
   // it re-settles by itself when that person closes their laptop.

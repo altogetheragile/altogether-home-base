@@ -26,7 +26,10 @@ describe('who may do what', () => {
   it('keeps sizing and the Sprint Backlog with the Developers', () => {
     expect(mayTake('ESTIMATE_ITEM', dev).allowed).toBe(true);
     expect(mayTake('ESTIMATE_ITEM', po).allowed, 'the Product Owner sized the work').toBe(false);
-    expect(mayTake('PLAN_SPRINT', po).allowed, 'the Product Owner chose what fits in the Sprint').toBe(false);
+    expect(mayTake('SET_FORECAST', po).allowed, 'the Product Owner chose what fits in the Sprint').toBe(false);
+    // ...but ending the event is not one accountability's call. Gating this stopped a
+    // Product Owner starting a Sprint the Developers had already forecast and planned.
+    expect(mayTake('PLAN_SPRINT', po).allowed, 'the Product Owner could not start the Sprint').toBe(true);
     expect(refusal(mayTake('ESTIMATE_ITEM', po))).toMatch(/people who will do the work/i);
   });
 
@@ -74,7 +77,7 @@ describe('who may do what', () => {
     // The case that was broken. Sitting as Product Owner with nobody else there must not
     // hand you every other accountability as well.
     const lone = { seat: 'product_owner' as const, emptySeats: ['scrum_master' as const, 'developer' as const] };
-    for (const a of ['ESTIMATE_ITEM', 'PLAN_SPRINT', 'PULL_ITEM', 'ASSIGN_DEV', 'SET_WIP_LIMIT'] as const) {
+    for (const a of ['ESTIMATE_ITEM', 'SET_FORECAST', 'PULL_ITEM', 'ASSIGN_DEV', 'SET_WIP_LIMIT'] as const) {
       expect(mayTake(a, lone).allowed, `a lone Product Owner was allowed to ${a}`).toBe(false);
     }
     // ...while their own work is still theirs
