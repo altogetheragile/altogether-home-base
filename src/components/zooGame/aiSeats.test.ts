@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks } from './engine';
+import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint } from './engine';
 import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
@@ -167,6 +167,32 @@ describe('a seat nobody is sitting in', () => {
     const withHome = { ...s, backlog: s.backlog.map((it) =>
       it.id === animal.enclosureId ? { ...it, status: 'open' as const } : it) };
     expect(aiTurn(withHome, 'developer')?.action.type).toBe('START_ITEM');
+  });
+
+  it('stops building when the day cannot afford it', () => {
+    // Work has to cost time, or a Sprint delivers whatever it likes and the capacity the
+    // whole game turns on means nothing. Building first and charging afterwards let a day
+    // with five seconds left absorb an eight-point item; a forecast of forty-nine points
+    // against a capacity of twenty-two delivered the lot.
+    let s: ZooGameState = withWork(1);
+    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
+    const take = s.backlog.filter((x) => x.status === 'backlog' && isReady(x)).slice(0, 4);
+    for (const it of take) s = reducer(s, { type: 'SET_TASKS', id: it.id, tasks: suggestTasks(it) });
+    s = planSprint({ ...s, phase: 'planning' }, take.map((x) => x.id));
+
+    // A day with almost nothing left in it cannot take a build.
+    const nearlyOver: ZooGameState = { ...s, daySecondsLeft: 2 };
+    const started = { ...nearlyOver, backlog: nearlyOver.backlog.map((it) =>
+      it.id === take[0].id ? { ...it, started: true } : it) };
+    const move = aiTurn(started, 'developer');
+    expect(move?.action.type, 'they built an item the day could not pay for').not.toBe('BUILD_ITEM');
+
+    // ...and a whole day can.
+    const fresh = { ...started, daySecondsLeft: 90 };
+    const ok = aiTurn(fresh, 'developer');
+    expect(ok?.action.type).toBe('BUILD_ITEM');
+    expect(ok?.weight, 'the build carried no cost, so nothing would be charged for it').toBe(take[0].estimate);
+    expect(secondsPerPoint(fresh), 'a point of work costs nothing').toBeGreaterThan(0);
   });
 
   it('runs out of things to do instead of looping', () => {

@@ -24,6 +24,28 @@ const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number
 /** How long a build day is, given how much of it this day has. */
 export const dayTotalSeconds = (mult: number): number => Math.round(DAY_SECONDS * mult);
 
+/** What a point of work costs in build time.
+ *
+ *  From the game's own numbers rather than picked: a Sprint is `sprintDays` days of
+ *  DAY_SECONDS each, and the team forecasts against a measured capacity, so a point costs
+ *  `sprintSeconds / capacity`. A Sprint's forecast then costs about a Sprint. */
+export function secondsPerPoint(state: ZooGameState): number {
+  return (DAY_SECONDS * Math.max(1, state.sprintDays)) / Math.max(1, sprintCapacity(state).points);
+}
+
+/** Spend build time on work that was done rather than waited out.
+ *
+ *  A person building something spends the day doing it, and the clock runs while they do. A
+ *  seat played by the game does it at once, so the cost has to be charged instead - or the
+ *  Developers deliver a Sprint's forecast in a few seconds and the capacity the whole game
+ *  turns on stops meaning anything. Same currency as refinement, which is charged the same
+ *  way and for the same reason. */
+export function spendDay(state: ZooGameState, seconds: number): ZooGameState {
+  if (state.learnMode || state.phase !== 'sprint') return state;
+  const left = state.daySecondsLeft - Math.max(0, Math.round(seconds));
+  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0 }) : { ...state, daySecondsLeft: left };
+}
+
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
  *  at once. Paused in learn mode and outside a running build day. */

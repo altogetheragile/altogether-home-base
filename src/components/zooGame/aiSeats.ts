@@ -1,6 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, secondsPerPoint } from './engine';
+import { DAY_SECONDS } from './config';
 import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './design';
 
 // A seat nobody is sitting in, played by the game.
@@ -27,6 +28,12 @@ import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './desi
 
 export interface AiMove {
   action: ZooAction;
+  /** Roughly how much of the Sprint's work this move is, in the same points the team
+   *  forecasts in. The pacing upstairs turns it into time, so that a Sprint's forecast takes
+   *  about a Sprint - which is the whole tension the game is built on, and which vanished
+   *  when the seats did twenty-one points in eighteen seconds. Small moves carry nothing:
+   *  the effort of an item is charged once, when it is built. */
+  weight?: number;
   /** What the seat says. The point is not the move, it is that somebody in that
    *  accountability tells you why - which is the thing a solo player never gets. */
   says: string;
@@ -141,8 +148,20 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
       // its own criteria, so it looked finished, was never built, never had a design stored,
       // and could never leave Doing. Nothing about it was the route.
       const building = state.backlog.find((it) => it.status === 'committed' && it.started && !it.design);
-      if (building) return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
-                             says: `Built ${building.name} to the Definition of Done.` };
+      if (building) {
+        // Only what today can still afford. Building regardless and charging afterwards let
+        // a day with five seconds left absorb an eight-point item, so a Sprint delivered
+        // whatever it liked and capacity meant nothing. A day that cannot take it ends, and
+        // the work waits for tomorrow - which is what running out of day looks like.
+        const cost = secondsPerPoint(state) * building.estimate;
+        const wholeDay = cost >= DAY_SECONDS;   // bigger than any day; it has to start somewhere
+        if (state.daySecondsLeft >= cost || (wholeDay && state.daySecondsLeft >= DAY_SECONDS * 0.9)) {
+          return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
+                   says: `Built ${building.name} to the Definition of Done.`,
+                   weight: building.estimate };
+        }
+        return null;   // out of day. The clock runs down and the Daily Scrum comes round.
+      }
 
       // Then tick their own plan off. The sign-off step is not theirs - that is the Product
       // Owner accepting the work - and ticking the last of the rest is what moves an item to
