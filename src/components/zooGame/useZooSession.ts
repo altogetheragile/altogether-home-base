@@ -7,6 +7,7 @@ import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
 import { aiTurn } from './aiSeats';
+import { secondsPerPoint } from './engine';
 import type { SeatName } from './useZooSessions';
 
 // One shared game, kept in step across several browsers with no server code.
@@ -205,33 +206,46 @@ export function useSharedClock(session: ZooSession) {
 export { reducer };
 
 
+/** How long to pause before a move lands. Not the cost of the work - that is charged to the
+ *  day clock, so the board never sits dead while a large item is built - just long enough
+ *  that a move reads as somebody doing something rather than the board twitching. */
+const BEAT_MS = 900;
+const WORK_BEAT_MS = 2200;
+
 /** Play the seats nobody is sitting in.
  *
  *  Only one browser does this - the same one that drives the clock - or every browser takes
- *  the same turn and the Backlog gets sized four times. The pause is not for thinking, since
- *  none of this needs a network: it is so a move reads as somebody else doing their job
- *  rather than the board twitching.
+ *  the same turn and the Backlog gets sized four times.
  *
- *  Each move goes through `send` like anybody's, so it is written, shared, and refused by the
- *  gate if it does not belong to that accountability. An AI seat is a player, not a back door.
+ *  Each move goes through `sendAs` like anybody's, so it is written, shared, and refused by
+ *  the gate if it does not belong to that accountability. An AI seat is a player, not a back
+ *  door - and now it works at something like the pace of one.
  */
 export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string) => void) {
   const { state, drivesClock, sendAs } = session;
   const seats = aiSeats.join(',');
   useEffect(() => {
     if (!drivesClock || !state || !seats) return;
+    // Look at the next move first, so its own size decides how long it takes.
+    let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
+    for (const seat of seats.split(',') as SeatName[]) {
+      const move = aiTurn(state, seat);
+      // A move its own accountability may not take is skipped rather than sent, so a seat
+      // that keeps proposing something impossible cannot starve the seats behind it in this
+      // list - which is how the Scrum Master ended up never getting to agree.
+      if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
+      next = { seat, move }; break;
+    }
+    if (!next) return;
+    const { seat, move } = next;
     const id = setTimeout(() => {
-      for (const seat of seats.split(',') as SeatName[]) {
-        const move = aiTurn(state, seat);
-        // A move its own accountability may not take is skipped rather than sent, so a seat
-        // that keeps proposing something impossible cannot starve the seats behind it in
-        // this list - which is how the Scrum Master ended up never getting to agree.
-        if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
-        onSay?.(seat, move.says);
-        sendAs(seat, move.action);
-        return;                        // one move a tick, so it reads as somebody working
-      }
-    }, 900);
+      onSay?.(seat, move.says);
+      sendAs(seat, move.action);       // one move at a time, so it reads as somebody working
+      // ...and the work costs the day, the way it would if a person had done it. Charged
+      // rather than waited out, so a five-point build does not leave the board dead for a
+      // minute while the clock runs down behind it.
+      if (move.weight) sendAs(seat, { type: 'SPEND_DAY', seconds: Math.round(secondsPerPoint(state) * move.weight) });
+    }, move.weight ? WORK_BEAT_MS : BEAT_MS);
     return () => clearTimeout(id);
   }, [state, drivesClock, seats, sendAs, onSay]);
 }

@@ -428,6 +428,7 @@ export type ZooAction =
   | { type: 'SET_PHASE'; phase: ZooPhase }
   | { type: 'SET_FORECAST'; ids: string[] }
   | { type: 'AGREE_SPRINT_GOAL'; seat: string }
+  | { type: 'SPEND_DAY'; seconds: number }
   | { type: 'TICK_DAY' }
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
