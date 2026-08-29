@@ -283,6 +283,12 @@ export interface ZooGameState {
   /** The single objective for the current Sprint (coached, outcome-shaped). Empty
    *  until set at Planning. The Daily Scrum inspects progress toward it. */
   sprintGoal: string;
+  /** Which accountabilities have agreed to the Sprint Goal as it currently stands. The
+   *  Product Owner proposes how the product could increase in value; the whole Scrum Team
+   *  then collaborates to define the Goal, so one person writing a sentence is a proposal
+   *  and not yet a Sprint Goal. Changing the wording clears this, because agreement was to
+   *  the words that were there. */
+  sprintGoalAgreed: string[];
   /** What the Developers have selected at Sprint Planning topic two, before the Sprint
    *  starts. In state rather than in the Planning component because a selection nobody else
    *  can see is not a forecast: another player would have their own, and an AI Developer
@@ -421,6 +427,7 @@ export type ZooAction =
   | { type: 'START'; gameSeed?: number }
   | { type: 'SET_PHASE'; phase: ZooPhase }
   | { type: 'SET_FORECAST'; ids: string[] }
+  | { type: 'AGREE_SPRINT_GOAL'; seat: string }
   | { type: 'TICK_DAY' }
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }

@@ -61,7 +61,10 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
           carrier the actions were built around, which is the whole point of one surface. */}
       <ZooGameScreens game={{ ...session, state }} saves={false}
         seat={mySeat?.seat ?? null} observer={ctx.observer}
-        covering={ctx.emptySeats} />
+        covering={ctx.emptySeats}
+        // Every accountability with somebody in it - a person or an AI - has to agree the
+        // Sprint Goal. Empty seats cannot agree, so they are not waited on.
+        mustAgree={[...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))]} />
 
       <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground">
         <span>
