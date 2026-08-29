@@ -283,6 +283,11 @@ export interface ZooGameState {
   /** The single objective for the current Sprint (coached, outcome-shaped). Empty
    *  until set at Planning. The Daily Scrum inspects progress toward it. */
   sprintGoal: string;
+  /** What the Developers have selected at Sprint Planning topic two, before the Sprint
+   *  starts. In state rather than in the Planning component because a selection nobody else
+   *  can see is not a forecast: another player would have their own, and an AI Developer
+   *  could not plan the steps for work it cannot see. PLAN_SPRINT commits it. */
+  forecast: string[];
   /** Whether the current Sprint's goal was met, set at the Review (null until then,
    *  or when there is no goal). */
   sprintGoalMet: boolean | null;
@@ -415,6 +420,7 @@ export interface ZooGameState {
 export type ZooAction =
   | { type: 'START'; gameSeed?: number }
   | { type: 'SET_PHASE'; phase: ZooPhase }
+  | { type: 'SET_FORECAST'; ids: string[] }
   | { type: 'TICK_DAY' }
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }

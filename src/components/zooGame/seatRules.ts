@@ -48,6 +48,7 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   // Backlog." Sizing is theirs, and so is how the work gets done.
   ESTIMATE_ITEM:     { who: 'developer', because: 'The people who will do the work are the people who size it.' },
   PLAN_SPRINT:       { who: 'developer', because: 'The Developers select what they forecast they can finish.' },
+  SET_FORECAST:      { who: 'developer', because: 'The Developers select what they forecast they can finish.' },
   MOVE_SPRINT_ITEM:  { who: 'developer', because: 'The Sprint Backlog is a plan by and for the Developers.' },
   MOVE_FORECAST_ITEM:{ who: 'developer', because: 'The Sprint Backlog is a plan by and for the Developers.' },
   SET_TASKS:         { who: 'developer', because: 'How the work gets done is the Developers’ to plan.' },

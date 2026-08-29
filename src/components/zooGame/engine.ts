@@ -862,6 +862,12 @@ export function readyHorizon(state: ZooGameState): number {
   return cap > 0 ? Math.round((pts / cap) * 10) / 10 : 0;
 }
 
+/** Topic two: what the Developers think they can finish. Shared, so everyone at Planning is
+ *  looking at the same forecast and an AI Developer can plan the steps for it. */
+export function setForecast(state: ZooGameState, ids: string[]): ZooGameState {
+  return state.phase === 'planning' ? { ...state, forecast: ids } : state;
+}
+
 export function planSprint(state: ZooGameState, ids: string[], refinementPoints = 0): ZooGameState {
   // Only Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
   // and with acceptance criteria. Anything else has to go back through Refinement first.
@@ -871,7 +877,7 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
   );
   const committedPts = [...committed].reduce((s, id) => s + (backlog.find((it) => it.id === id)?.estimate ?? 0), 0);
   return {
-    ...state, phase: 'sprint', committedIds: [...committed], backlog,
+    ...state, phase: 'sprint', committedIds: [...committed], backlog, forecast: [],
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
     sprintForecast: sprintCapacity(state).points,
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
