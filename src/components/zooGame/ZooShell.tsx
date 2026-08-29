@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
 import { DayTimer } from './DayTimer';
-import { CoachNudge } from './CoachTip';
 import { ArtifactsPanel } from './ArtifactsPanel';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard, ScrumReference } from './ScrumTeaching';
@@ -10,9 +9,10 @@ import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { SeatBadge } from './SeatBadge';
+import { MessageRail, RailNote } from './MessageRail';
 import { whatIsYours } from './seatCopy';
 import type { SeatName } from './useZooSessions';
-import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, X, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft } from 'lucide-react';
 import { FOCUS, SURFACE } from './ui/tokens';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
@@ -74,7 +74,7 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkView, building, onOpenBuild, edit, part, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; part?: { id: string; key: string } | null; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; parkView?: 'plan' | 'iso'; onParkView?: (v: 'plan' | 'iso') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
+export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkView, building, onOpenBuild, edit, part, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, justOpened, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onRename, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; part?: { id: string; key: string } | null; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; parkView?: 'plan' | 'iso'; onParkView?: (v: 'plan' | 'iso') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; justOpened?: string | null; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onRename?: (id: string, name: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; said?: { seat: string; says: string } | null; onDismissSaid?: () => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
   // `tab` is controlled from above when provided, so an event (place & open) can switch to
   // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
   // position the released item there.
@@ -184,25 +184,35 @@ export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkV
         )}
       </header>
 
+      {/* Everything the game says, in the margins rather than in the flow. Split by who is
+          talking: the coach and the rules on the left, your team on the right. */}
+      <MessageRail side="left">
+        {nudge && onDismissNudge && (
+          <RailNote title="Coach" onDismiss={() => onDismissNudge(nudge.id)}>{nudge.text}</RailNote>
+        )}
+        {refused && (
+          <RailNote title="Whose call it is" tone="rule" onDismiss={onDismissRefused}>{refused}</RailNote>
+        )}
+      </MessageRail>
+
+      <MessageRail side="right">
+        {said && (
+          <RailNote title={`${said.seat.replace('_', ' ')} (AI)`} tone="team" onDismiss={onDismissSaid} dismissLabel="ok">
+            {said.says}
+          </RailNote>
+        )}
+        {poNote && (
+          <RailNote title="Refinement session · the Scrum Team" tone="team" onDismiss={onDismissPoNote}>
+            <span className="whitespace-pre-line">{poNote}</span>
+          </RailNote>
+        )}
+      </MessageRail>
+
       {/* What that accountability holds on THIS screen. Its own row, because the header is
           already full and squeezing it in there collided with the Sprint Goal field. */}
       {seat && !observer && whatIsYours(seat, state.phase) && (
         <div className="shrink-0 border-b border-border bg-primary/5 px-3 py-1 text-[11px] text-muted-foreground">
           <span className="font-semibold text-primary">Yours here:</span> {whatIsYours(seat, state.phase)}
-        </div>
-      )}
-
-      {/* What the Scrum Team changed in the last refinement session, and who changed it. */}
-      {poNote && (
-        <div className="mx-2 mt-2 flex shrink-0 items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 sm:mx-3">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-primary">Refinement session &middot; the Scrum Team</div>
-            <p className="mt-0.5 whitespace-pre-line text-sm leading-snug text-foreground">{poNote}</p>
-          </div>
-          {onDismissPoNote && (
-            <button type="button" onClick={onDismissPoNote} aria-label="Dismiss" className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")}><X className="h-4 w-4" /></button>
-          )}
         </div>
       )}
 
@@ -227,7 +237,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkV
                 of it and stay pinned. A pane that grows with its contents has no foot to pin to. */}
             <div className="relative flex min-h-0 w-1/2 shrink-0 flex-col overflow-hidden border-r border-border">
               <div className="flex h-full min-h-0 flex-col gap-3 px-2 py-2">
-                {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
                 {children}
               </div>
             </div>
@@ -245,7 +254,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, parkView, onParkV
               <div className="mx-auto max-w-3xl space-y-3 pb-24">
                 {/* One card at a time, for the element they have just arrived at, once each. */}
                 {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-                {nudge && onDismissNudge && <CoachNudge text={nudge.text} onDismiss={() => onDismissNudge(nudge.id)} />}
                 {children}
               </div>
             </div>

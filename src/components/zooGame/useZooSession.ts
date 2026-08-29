@@ -24,8 +24,13 @@ import type { SeatName } from './useZooSessions';
 export interface ZooSession extends ZooActions {
   /** What to render: the server's state with this browser's unconfirmed actions on top. */
   state: ZooGameState | null;
-  /** Apply an action: locally now, on the server shortly. */
+  /** Apply an action: locally now, on the server shortly. Gated against your own seat. */
   send: (action: ZooAction) => void;
+  /** Apply an action taken by another seat - an AI one. Gated against THAT seat, because an
+   *  AI Developer sizing the work is the Developers doing their job, not you doing theirs.
+   *  Sending it through `send` judged it against whoever is sitting at this browser, so
+   *  every AI move was refused the moment a human held a different seat. */
+  sendAs: (seat: SeatName, action: ZooAction) => void;
   /** True once the game has loaded and the channel is up. */
   ready: boolean;
   /** Everyone currently in this game, by participant id. */
@@ -116,14 +121,27 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
   // determined learner cannot get round it.
   const seatRef = useRef(seat);
   seatRef.current = seat;
-  const send = useCallback((action: ZooAction) => {
-    const verdict = mayTake(action.type, seatRef.current);
-    if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
-    setRefused(null);
+
+  /** Queue an action that has already been judged. */
+  const apply = useCallback((action: ZooAction) => {
     setSync((cur) => (cur ? queueAction(cur, action) : cur));
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => { void flush(); }, FLUSH_MS);
   }, [flush]);
+
+  const send = useCallback((action: ZooAction) => {
+    const verdict = mayTake(action.type, seatRef.current);
+    if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
+    setRefused(null);
+    apply(action);
+  }, [apply]);
+
+  // An AI seat is a player, so its move is judged the same way - just against its own
+  // accountability rather than against whoever happens to be sitting here.
+  const sendAs = useCallback((asSeat: SeatName, action: ZooAction) => {
+    if (!mayTake(action.type, { seat: asSeat }).allowed) return;
+    apply(action);
+  }, [apply]);
 
   // ---- listen ----
   useEffect(() => {
@@ -159,7 +177,7 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
   // so a screen cannot tell which kind of game it was handed.
   const actions = useMemo(() => zooActions(send), [send]);
 
-  return { state: sync ? localState(sync) : null, send, ready, present, drivesClock,
+  return { state: sync ? localState(sync) : null, send, sendAs, ready, present, drivesClock,
            refused, clearRefused: () => setRefused(null), error, ...actions };
 }
 
@@ -192,16 +210,22 @@ export { reducer };
  *  gate if it does not belong to that accountability. An AI seat is a player, not a back door.
  */
 export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string) => void) {
-  const { state, drivesClock, send } = session;
+  const { state, drivesClock, sendAs } = session;
   const seats = aiSeats.join(',');
   useEffect(() => {
     if (!drivesClock || !state || !seats) return;
     const id = setTimeout(() => {
       for (const seat of seats.split(',') as SeatName[]) {
         const move = aiTurn(state, seat);
-        if (move) { onSay?.(seat, move.says); send(move.action); return; }  // one at a time
+        // A move its own accountability may not take is skipped rather than sent, so a seat
+        // that keeps proposing something impossible cannot starve the seats behind it in
+        // this list - which is how the Scrum Master ended up never getting to agree.
+        if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
+        onSay?.(seat, move.says);
+        sendAs(seat, move.action);
+        return;                        // one move a tick, so it reads as somebody working
       }
     }, 900);
     return () => clearTimeout(id);
-  }, [state, drivesClock, seats, send, onSay]);
+  }, [state, drivesClock, seats, sendAs, onSay]);
 }
