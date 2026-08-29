@@ -110,14 +110,25 @@ export function useZooSessions(sessionId: string | null) {
     } finally { setBusy(false); }
   }, [user]);
 
-  /** Start the first game: one run toward one Product Goal, with its seats laid out empty. */
-  const startGame = useCallback(async (): Promise<string | null> => {
+  /** Start a game: one run toward one Product Goal. A session has several, which is what a
+   *  training session actually is - play, reflect, play again - and it is why seats belong
+   *  to the game rather than to the session.
+   *
+   *  `rotate` moves everyone one accountability along, so over three games each person has
+   *  held each one. That is the reflection the second game exists for: you were Product
+   *  Owner then and a Developer now, what looked different? */
+  const startGame = useCallback(async (rotate = false): Promise<string | null> => {
     if (!session) return null;
     setBusy(true);
     try {
       const seed = Math.floor(Math.random() * 1_000_000);
+      const { data: last } = await supabase.from('zoo_games')
+        .select('seq').eq('session_id', session.id).order('seq', { ascending: false }).limit(1);
+      const seq = (last?.[0]?.seq ?? 0) + 1;
+      // Who sat where last time, so the rotation has something to move along.
+      const previous = seats.filter((x) => x.participant_id).map((x) => ({ seat: x.seat, participant_id: x.participant_id! }));
       const { data, error: e } = await supabase.from('zoo_games')
-        .insert({ session_id: session.id, seq: 1, seed, theme: 'zoo',
+        .insert({ session_id: session.id, seq, seed, theme: 'zoo',
                   state: initialZooState(seed) as never })
         .select('id').single();
       if (e) { setError(e.message); return null; }
@@ -125,13 +136,29 @@ export function useZooSessions(sessionId: string | null) {
       // the gate has something to enforce from the first click. Claiming a seat clears its
       // AI flag; this is what makes a lone player face a real Scrum Team rather than a set
       // of empty chairs that quietly permit everything.
-      await supabase.from('zoo_game_seats').insert(
-        STARTING_SEATS.map((s) => ({ game_id: data.id, ...s, is_ai: true })));
+      const ROTATION: Record<SeatName, SeatName> = {
+        product_owner: 'scrum_master', scrum_master: 'developer', developer: 'product_owner',
+      };
+      // Everyone who had a seat gets one again, moved along if rotating. Anything left over
+      // is played by AI, so the team is complete from the first click.
+      const taken = new Map<string, string>();   // "seat:no" -> participant
+      previous.forEach((prev, i) => {
+        const want = rotate ? ROTATION[prev.seat] : prev.seat;
+        const free = STARTING_SEATS.find((c) => c.seat === want && !taken.has(`${c.seat}:${c.seat_no}`))
+          ?? STARTING_SEATS.find((c) => !taken.has(`${c.seat}:${c.seat_no}`));
+        if (free) taken.set(`${free.seat}:${free.seat_no}`, prev.participant_id);
+        else void i;
+      });
+      await supabase.from('zoo_game_seats').insert(STARTING_SEATS.map((c) => {
+        const who = taken.get(`${c.seat}:${c.seat_no}`);
+        return { game_id: data.id, ...c, participant_id: who ?? null, is_ai: !who,
+                 claimed_at: who ? new Date().toISOString() : null };
+      }));
       await supabase.from('zoo_sessions').update({ status: 'live' }).eq('id', session.id);
       await refresh(session.id);
       return data.id;
     } finally { setBusy(false); }
-  }, [session, refresh]);
+  }, [session, seats, refresh]);
 
   const me = participants.find((p) => p.user_id === user?.id) ?? null;
 
