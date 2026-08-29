@@ -103,6 +103,25 @@ describe('a seat nobody is sitting in', () => {
     expect(unplanned, 'items were left without steps, so Start Sprint stays disabled').toHaveLength(0);
   });
 
+  it('lets every seat get a turn, rather than one starving the others', () => {
+    // The reported symptom: Developers and Product Owner agreed, the Scrum Master sat on
+    // "waiting" forever. The cause was upstream - an AI move was judged against whoever was
+    // sitting at the browser, so every Developer action was refused while a human held the
+    // Product Owner seat, and the loop returned on that seat every tick without ever
+    // reaching the Scrum Master. This pins the sequence the loop is supposed to produce.
+    const ai = ['developer', 'scrum_master'] as const;
+    let s: ZooGameState = { ...withWork(1), phase: 'planning', sprintGoal: 'Open the Grounds zone' };
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' });
+    for (let i = 0; i < 60; i += 1) {
+      let took = null;
+      for (const seat of ai) { const m = aiTurn(s, seat); if (m) { took = m; break; } }
+      if (!took) break;
+      s = reducer(s, took.action);
+    }
+    expect(s.sprintGoalAgreed.sort(), 'somebody never got to agree')
+      .toEqual(['developer', 'product_owner', 'scrum_master']);
+  });
+
   it('runs out of things to do instead of looping', () => {
     // The property that matters most: each move has to make its own condition stop holding,
     // or a seat sits there sizing the same item forever and burns a session down.

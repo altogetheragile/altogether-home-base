@@ -37,31 +37,13 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
 
   return (
     <div className="relative">
-      {/* These used to sit above the game and push the whole page down each time one
-          arrived, which on a screen with wide empty margins was the wrong place for them.
-          Fixed to the right margin instead: they overlay nothing, reflow nothing, and stack
-          where there was already empty space. */}
-      <div className="pointer-events-none fixed right-3 top-24 z-40 flex w-72 flex-col gap-2">
-        {saidBy && (
-          <div className="pointer-events-auto rounded-lg border border-border bg-background/95 p-3 text-xs shadow-lg backdrop-blur">
-            <div className="mb-1 font-semibold capitalize">{saidBy.seat.replace('_', ' ')} (AI)</div>
-            <p className="text-muted-foreground">{saidBy.says}</p>
-            <button type="button" onClick={() => setSaid(null)} className="mt-1.5 text-[11px] underline">ok</button>
-          </div>
-        )}
-        {refused && (
-          <div className="pointer-events-auto rounded-lg border border-amber-300 bg-amber-50/95 p-3 text-xs shadow-lg backdrop-blur dark:border-amber-700/60 dark:bg-amber-950/95">
-            <p>{refused}</p>
-            <button type="button" onClick={clearRefused} className="mt-1.5 text-[11px] underline">dismiss</button>
-          </div>
-        )}
-      </div>
-
       {/* The game itself. The same screens the solo game uses - the only difference is which
           carrier the actions were built around, which is the whole point of one surface. */}
       <ZooGameScreens game={{ ...session, state }} saves={false}
         seat={mySeat?.seat ?? null} observer={ctx.observer}
         covering={ctx.emptySeats}
+        said={saidBy} onDismissSaid={() => setSaid(null)}
+        refused={refused} onDismissRefused={clearRefused}
         // Every accountability with somebody in it - a person or an AI - has to agree the
         // Sprint Goal. Empty seats cannot agree, so they are not waited on.
         mustAgree={[...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))]} />
