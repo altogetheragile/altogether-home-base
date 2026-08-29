@@ -47,7 +47,11 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   // "The Developers are always accountable for creating a plan for the Sprint, the Sprint
   // Backlog." Sizing is theirs, and so is how the work gets done.
   ESTIMATE_ITEM:     { who: 'developer', because: 'The people who will do the work are the people who size it.' },
-  PLAN_SPRINT:       { who: 'developer', because: 'The Developers select what they forecast they can finish.' },
+  // Selecting what fits is the Developers'. Concluding Sprint Planning is not: the Guide
+  // gives that to nobody, and gating it meant a Product Owner sitting with AI Developers
+  // could never start a Sprint at all - the forecast was made, the steps were planned, and
+  // the button refused them with a sentence about selecting. So SET_FORECAST is theirs and
+  // PLAN_SPRINT, which only ends the event, is the whole Scrum Team's.
   SET_FORECAST:      { who: 'developer', because: 'The Developers select what they forecast they can finish.' },
   MOVE_SPRINT_ITEM:  { who: 'developer', because: 'The Sprint Backlog is a plan by and for the Developers.' },
   MOVE_FORECAST_ITEM:{ who: 'developer', because: 'The Sprint Backlog is a plan by and for the Developers.' },
