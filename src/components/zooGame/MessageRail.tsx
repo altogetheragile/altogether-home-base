@@ -10,10 +10,10 @@ import { cn } from '@/lib/utils';
 // Two rails, split by who is talking, because they are not the same kind of message and
 // answering them is not the same act:
 //
-//   left   the coach and the rules - a nudge about how you are playing, or a refusal
-//          naming whose call something was. You read these and carry on.
-//   right  your team - what a seat just did and why, and the Product Owner's account of a
-//          refinement. These are colleagues, and on a shared game some of them are people.
+//   left   things to read - a coach nudge, a refusal naming whose call something was, or
+//          the Product Owner's account of what they changed in a refinement.
+//   right  your team - what a seat just did and why. Running commentary: short, and it
+//          keeps arriving, so it is kept apart from the things you stop and read.
 //
 // Below xl there are no margins to put them in, so they become a stack at the bottom.
 
@@ -26,6 +26,9 @@ export function MessageRail({ side, children }: { side: 'left' | 'right'; childr
       // Wide: a rail in the empty margin. Only left/right utilities here, never the inset-x
       // shorthand - Tailwind orders utilities by kind rather than by the order they appear
       // in the class string, so inset-x-auto won the cascade and both rails landed left.
+      // Capped and scrollable, so a rail holding a coach nudge, a refusal and a long
+      // refinement note at once cannot run off the bottom of the screen.
+      'max-h-[45vh] overflow-y-auto xl:max-h-[calc(100vh-11rem)]',
       'xl:bottom-auto xl:top-36 xl:w-72',
       side === 'left' ? 'xl:left-3 xl:right-auto' : 'xl:right-3 xl:left-auto',
     )}>
