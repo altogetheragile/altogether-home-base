@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Bot, Eye, Check, Copy, Play } from 'lucide-react';
+import { Users, Bot, Eye, Check, Copy, Play, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useZooSessions, type Seat, type Participant, type SeatName } from './useZooSessions';
 import { PADDING, SURFACE, TEXT, FOCUS } from './ui/tokens';
@@ -111,6 +111,9 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
   const seated = s.seats.some((x) => x.participant_id === s.me?.id);
   const observing = s.me?.role === 'observer';
   const byKind = (k: SeatName) => s.seats.filter((x) => x.seat === k).sort((a, b) => a.seat_no - b.seat_no);
+  // Seats with nobody and no AI: the state that quietly switched the gate off, and which
+  // games created before that was fixed still carry.
+  const emptyCount = s.seats.filter((x) => !x.participant_id && !x.is_ai).length;
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
@@ -161,6 +164,34 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
               {observing ? 'Take a seat instead' : 'Watch instead'}
             </Button>
           </div>
+
+          {/* A session is several games with reflection between them, not one long run. This
+              is where the next one starts, and where seats rotate - which is the whole
+              reason seats belong to the game rather than to the session. */}
+          {s.isHost && (
+            <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start another game</div>
+              <p className="text-[11px] text-muted-foreground">
+                A game is one run toward one Product Goal. Rotating moves everyone one accountability
+                along, so after three games each of you has held each one - which is what makes the
+                reflection between them worth having.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" disabled={s.busy} onClick={() => void s.startGame(true)}>
+                  <RotateCw className="mr-1.5 h-3.5 w-3.5" /> Next game, rotate seats
+                </Button>
+                <Button size="sm" variant="outline" disabled={s.busy} onClick={() => void s.startGame(false)}>
+                  Next game, keep seats
+                </Button>
+                {emptyCount > 0 && (
+                  <Button size="sm" variant="ghost" disabled={s.busy}
+                    onClick={() => { for (const seat of s.seats.filter((x) => !x.participant_id && !x.is_ai)) void s.fillWithAi(seat.id, true); }}>
+                    Let AI play the {emptyCount} empty seat{emptyCount === 1 ? '' : 's'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
