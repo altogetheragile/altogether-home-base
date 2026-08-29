@@ -1,6 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady } from './engine';
+import { presetFor, floraColors, isLandscapeType, isDesignDone, type ItemDesign } from './design';
 
 // A seat nobody is sitting in, played by the game.
 //
@@ -36,6 +37,36 @@ const settle = (hand: number[]): number => [...hand].sort((a, b) => a - b)[Math.
 
 const topUnsized = (s: ZooGameState): BacklogItem | undefined =>
   s.backlog.find((it) => it.status === 'backlog' && it.unsized && it.category !== 'epic');
+
+/** A design that meets the Definition of Done for whatever this is.
+ *
+ *  Built from the same lists the studio's controls are built from, rather than a fixed palette,
+ *  so it can only ever satisfy criteria the game actually asks for. A car park has tarmac and
+ *  markings and no foliage; asking for foliage would leave it unbuildable forever. */
+export function aiDesign(item: BacklogItem): ItemDesign {
+  const base = presetFor(item);
+  const colors: Record<string, string> = { ...base.colors };
+  const parts: Record<string, string> = { ...(base.parts as Record<string, string>) };
+  const paint = (key: string, fallback: string) => { if (!colors[key]) colors[key] = fallback; };
+
+  if (item.category === 'exhibit') {
+    // Stocked rather than painted: a pair, which fits any habitat the game offers.
+    return { ...base, colors, parts, group: base.group ?? { males: 1, females: 1, juveniles: 0, cubs: 0 } };
+  }
+  if (item.category === 'enclosure') { paint('ground', '#8c7a5b'); paint('fence', '#6b5b45'); }
+  if (item.category === 'amenity') {
+    paint('walls', '#cfd4d8'); paint('roof', '#9aa3ab'); paint('sign', '#e6842a');
+    if (parts.sign === 'off') delete parts.sign;      // a building visitors cannot find is not Done
+  }
+  if (item.category === 'path') { parts.thickness = parts.thickness ?? 'medium'; paint('path', '#b9a888'); }
+  if (item.category === 'flora') {
+    const type = parts.type ?? item.template ?? 'oak';
+    parts.type = type;
+    if (isLandscapeType(type) && !parts.piece) parts.piece = type;
+    for (const c of floraColors(type)) paint(c.key, '#5b8f3a');
+  }
+  return { ...base, colors, parts } as ItemDesign;
+}
 
 /** What this AI accountability would do now, or nothing if it is not their turn. */
 export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
@@ -79,10 +110,23 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
     // Self-managing: they pull their own next piece when there is room, rather than waiting
     // to be given one. Bounded by the WIP limit, so they finish before starting more.
     if (state.phase === 'sprint' && state.dayStage === 'building') {
+      // Finish before starting. Pulling work and never building it left a Sprint that could
+      // only end with nothing Done, which is the opposite of the lesson - and a team that
+      // pulls a second thing while the first is unfinished is the habit the WIP limit exists
+      // to break, so it would have been the wrong order even if it worked.
+      const building = state.backlog.find((it) => it.status === 'committed' && it.started
+        && !isDesignDone(it, it.design ?? it.draftDesign ?? presetFor(it)));
+      if (building) return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
+                             says: `Built ${building.name} to the Definition of Done.` };
+
       const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
       const wip = activeWipLimit(state);
       if (wip === 0 || doing < wip) {
-        const next = state.backlog.find((it) => it.status === 'committed' && !it.started);
+        // Only something that can actually start. An animal whose habitat is not built yet
+        // cannot, and proposing it anyway spun forever: the move was refused by the engine,
+        // the item stayed unstarted, and the same move came back on the next tick.
+        const next = state.backlog.find((it) => it.status === 'committed' && !it.started
+          && enclosureReady(state, it));
         if (next) return { action: { type: 'START_ITEM', id: next.id },
                            says: `Taking ${next.name} next.` };
       }

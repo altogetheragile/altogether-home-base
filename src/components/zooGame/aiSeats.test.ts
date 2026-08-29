@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic } from './engine';
+import { splitEpic, planSprint, isReady } from './engine';
+import { isDesignDone, presetFor } from './design';
 import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
@@ -120,6 +121,50 @@ describe('a seat nobody is sitting in', () => {
     }
     expect(s.sprintGoalAgreed.sort(), 'somebody never got to agree')
       .toEqual(['developer', 'product_owner', 'scrum_master']);
+  });
+
+  it('builds what it pulls, and finishes a Sprint', () => {
+    // Reported as "I assume the Devs will build the selected items?" - they did not. They
+    // pulled work into Doing and stopped, so a Sprint could only ever end with nothing Done.
+    let s: ZooGameState = withWork(1);
+    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
+    const take = s.backlog.filter((x) => x.status === 'backlog' && isReady(x)).slice(0, 6);
+    for (const it of take) s = reducer(s, { type: 'SET_TASKS', id: it.id, tasks: [{ id: 't1', label: 'do it', done: true }] });
+    s = planSprint({ ...s, phase: 'planning' }, take.map((x) => x.id));
+
+    let moves = 0;
+    for (let i = 0; i < 300; i += 1) { const m = aiTurn(s, 'developer'); if (!m) break; s = reducer(s, m.action); moves += 1; }
+    expect(moves, 'the Developers looped instead of finishing').toBeLessThan(300);
+
+    const worked = s.backlog.filter((x) => take.some((t) => t.id === x.id));
+    const done = worked.filter((x) => x.status === 'done' || x.status === 'open');
+    expect(done.length, 'the Sprint ended with nothing Done').toBeGreaterThan(0);
+    // Everything they touched is built to the Definition of Done, whatever kind of thing it
+    // is - a habitat, an animal, planting. A design built from a fixed palette would satisfy
+    // some categories and quietly never satisfy others.
+    for (const it of done) {
+      expect(isDesignDone(it, it.design ?? presetFor(it)), `${it.name} was called Done without meeting the DoD`).toBe(true);
+    }
+  });
+
+  it('does not propose starting an animal whose habitat is not built', () => {
+    // The loop this caused: START_ITEM on an animal is refused by the engine while its
+    // enclosure is unbuilt, so the item stayed unstarted and the same move came back every
+    // tick, forever. The animal has to be the ONLY thing left to pull, or the Developers
+    // simply reach for the habitat first and the guard is never exercised.
+    let s: ZooGameState = withWork(1);
+    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
+    const animal = s.backlog.find((x) => x.category === 'exhibit' && isReady(x))!;
+    s = reducer(s, { type: 'SET_TASKS', id: animal.id, tasks: [{ id: 't1', label: 'do it', done: true }] });
+    s = planSprint({ ...s, phase: 'planning' }, [animal.id]);   // the animal, and nothing else
+
+    const move = aiTurn(s, 'developer');
+    expect(move, 'they proposed starting an animal with nowhere to live').toBeNull();
+
+    // ...and once its habitat exists they take it.
+    const withHome = { ...s, backlog: s.backlog.map((it) =>
+      it.id === animal.enclosureId ? { ...it, status: 'open' as const } : it) };
+    expect(aiTurn(withHome, 'developer')?.action.type).toBe('START_ITEM');
   });
 
   it('runs out of things to do instead of looping', () => {
