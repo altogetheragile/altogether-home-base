@@ -1,4 +1,4 @@
-import type { ZooGameState, ZooAction, BacklogItem } from './types';
+import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask } from './engine';
 import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './design';
@@ -68,6 +68,28 @@ export function aiDesign(item: BacklogItem): ItemDesign {
   return { ...base, colors, parts } as ItemDesign;
 }
 
+/** A run of pathway from the park's entrance to something in the zone this path serves.
+ *
+ *  Deliberately simple: two ends and no bends. The park's own check asks whether a run
+ *  reaches anything in the zone, so a straight run to the thing that most needs reaching is
+ *  a true answer to it rather than a way round it. */
+function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null {
+  const here = state.backlog.filter((i) => i.zone === item.zone && i.pos);
+  const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => i.category === 'amenity') ?? here[0];
+  if (!target?.pos) return null;
+  const design = item.design ?? presetFor(item);
+  return {
+    id: `run-${item.id}`,
+    itemId: item.id,
+    // From the way in, to the thing worth walking to.
+    a: { x: Math.round(target.pos.x), y: Math.round(target.pos.y) + 220 },
+    b: { x: Math.round(target.pos.x), y: Math.round(target.pos.y), featureId: target.id },
+    bends: [],
+    thickness: Number(design.parts.thickness ?? 14) || 14,
+    color: design.colors.path ?? '#b9a888',
+  };
+}
+
 /** What this AI accountability would do now, or nothing if it is not their turn. */
 export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
   if (seat === 'developer') {
@@ -129,6 +151,19 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
         const task = (it.tasks ?? []).find((t) => !t.done && t.label.trim() && !isSignOffTask(t.label));
         if (task) return { action: { type: 'TOGGLE_TASK', id: it.id, taskId: task.id },
                            says: `${task.label} - done, on ${it.name}.` };
+      }
+
+      // A pathway is only finished when a run of it actually reaches the zone. The park
+      // answers that criterion itself - it either has a path running there or it does not -
+      // so a path could be built, planned and Done, and still never be releasable, because
+      // nobody had drawn the run. Deploying it is the Developers' work, like building it.
+      const undeployed = state.backlog.find((it) => it.category === 'path' && it.design
+        && (it.status === 'done' || it.status === 'committed') && it.started
+        && !(state.connectors ?? []).some((c) => c.itemId === it.id));
+      if (undeployed) {
+        const run = pathRunFor(state, undeployed);
+        if (run) return { action: { type: 'ADD_CONNECTOR', connector: run },
+                          says: `Ran ${undeployed.name} to the ${run.b.featureId ? 'zone' : 'park'}, so you can get there without crossing the grass.` };
       }
 
       const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
