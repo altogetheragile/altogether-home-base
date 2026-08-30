@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
 import { availableItems, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
 import { checkCriterion } from './parkChecks';
+import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
@@ -171,6 +172,50 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
  *  (Build) card expanded; `interactive` allows ticking tasks. A criterion is green only once
  *  somebody has ticked it; a card
  *  still in Build/To Do shows them pending. Each card keeps its own open state. */
+/** The agreed Definition of Done, as it stands for this item.
+ *
+ *  Two tones, the same two the acceptance criteria use: what the park measured, with what it read
+ *  beside it, and what nobody but the Scrum Team can judge. A line that cannot apply to this kind
+ *  of thing says so rather than counting against it - a kiosk has no fence to make escape-proof.
+ */
+function DodList({ state, item }: { state: ZooGameState; item: BacklogItem }) {
+  const lines = dodVerdicts(state, item);
+  if (!lines.length) return null;
+  const facts = lines.filter((l) => l.answer?.kind === 'fact');
+  const met = facts.filter((l) => l.answer?.kind === 'fact' && l.answer.met).length;
+  return (
+    <div>
+      <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+        Definition of Done <span className="font-normal normal-case tracking-normal">the same bar for every item</span>
+        {facts.length > 0 && (
+          <span className="ml-1 font-normal normal-case tracking-normal text-muted-foreground/70">
+            &middot; {met} of {facts.length} met
+          </span>
+        )}
+      </div>
+      <ul className="space-y-0.5">
+        {lines.map(({ line, answer }) => {
+          const ok = answer?.kind === 'fact' && answer.met;
+          return (
+            <li key={line} className="flex w-full items-start gap-1.5 text-[11px]">
+              <span className={cn('mt-[1px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full',
+                ok ? 'bg-emerald-500 text-white' : 'border border-dashed border-border')}>{ok && <Check className="h-2 w-2" />}</span>
+              <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{line}</span>
+              <span className={cn('ml-auto shrink-0 rounded px-1 text-[9px] font-medium',
+                answer?.kind === 'fact'
+                  ? answer.met ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                  : 'bg-muted text-muted-foreground')}
+                title={answer ? undefined : 'Nothing in the park can measure this one - it is yours to judge'}>
+                {answer ? answer.evidence : 'your word'}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function CardDetail({ item, state, showAcceptance = false, interactive = false, defaultOpen = false, bare = false, onToggleTask, onConfirmAc }:
   { item: BacklogItem;
     /** Given, the park answers the criteria it can answer for itself, and shows its working. */
@@ -276,6 +321,13 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
             </div>
           )}
           {tasks.length > 0 && <TaskChecklist item={item} onToggle={onToggleTask} readOnly={!interactive} />}
+
+          {/* The Definition of Done: the same bar for every item, where each item's acceptance
+              criteria are its own. It is listed here because this is where somebody asks "is it
+              finished?", and until now the answer never mentioned the agreement they made.
+              Read-only on purpose. Nothing here decides anything yet - the park says what it can
+              see, and the rest is the Scrum Team's word. */}
+          {state && showAcceptance && <DodList state={state} item={item} />}
         </div>
       )}
     </div>

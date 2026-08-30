@@ -26,34 +26,26 @@ export interface Verdict {
 
 const named = (state: ZooGameState, id?: string) => state.backlog.find((i) => i.id === id)?.name;
 
-/** The park's answer to one criterion, or null when it is a matter of judgement. */
-export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
-  const design = item.design ?? item.draftDesign ?? presetFor(item);
+/** Whether an animal is living in a habitat that exists, and what the park saw.
+ *
+ *  Exported for the same reason as `pathReaches`: an animal's own criterion asks it, and so does a
+ *  Definition of Done line about a thing standing where it will stand. An exhibit has no position
+ *  of its own - it lives inside its enclosure - so "is it placed?" is this question for an animal. */
+export function inHabitat(state: ZooGameState, item: BacklogItem): Verdict {
+  const home = state.backlog.find((i) => i.id === item.enclosureId);
+  const built = home && (home.status === 'open' || (home.status === 'done' && home.placed));
+  return built
+    ? { met: true, evidence: `in the ${home.name}` }
+    : { met: false, evidence: home ? `the ${home.name} is not built yet` : 'no habitat to go in' };
+}
 
-  if (label === 'Can I see a group rather than one animal on its own?') {
-    const n = groupSize(design.group);
-    return { met: n > 1, evidence: n > 1 ? `${n} of them` : 'one on its own' };
-  }
+/** Whether a path run reaches anything in this item's zone, and what the park saw.
+ *
+ *  Exported because more than one agreement asks it: the item's own "can I get to this zone
+ *  without crossing the grass?", and a Definition of Done line about the zoo being accessible.
+ *  One implementation, so the two can never disagree about the same park. */
+export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict {
 
-  if (label === 'Can I fit them in the habitat with room to spare?') {
-    const size = item.enclosureSize;
-    const n = groupSize(design.group);
-    if (!design.group) return { met: false, evidence: 'not stocked yet' };
-    return {
-      met: hasRoomToRoam(design.group, size),
-      evidence: `${n} in ${size === 'large' ? 'a large' : size === 'small' ? 'a small' : 'a medium'} habitat`,
-    };
-  }
-
-  if (label === 'Can I find them in their habitat?') {
-    const home = state.backlog.find((i) => i.id === item.enclosureId);
-    const built = home && (home.status === 'open' || (home.status === 'done' && home.placed));
-    return built
-      ? { met: true, evidence: `in the ${home.name}` }
-      : { met: false, evidence: home ? `the ${home.name} is not built yet` : 'no habitat to go in' };
-  }
-
-  if (label === 'Can I get to this zone without crossing the grass?') {
     // A path run reaches something in this zone - either snapped to it, or laid up against it.
     //
     // Only counting the snapped ones was wrong, and wrong in the worst direction: a run drawn right
@@ -79,7 +71,30 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     // criterion. Name the thing to run a path to.
     const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => i.pos) ?? here[0];
     return { met: false, evidence: target ? `draw a run up to the ${target.name}` : 'nothing here to reach yet' };
+}
+
+/** The park's answer to one criterion, or null when it is a matter of judgement. */
+export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
+  const design = item.design ?? item.draftDesign ?? presetFor(item);
+
+  if (label === 'Can I see a group rather than one animal on its own?') {
+    const n = groupSize(design.group);
+    return { met: n > 1, evidence: n > 1 ? `${n} of them` : 'one on its own' };
   }
+
+  if (label === 'Can I fit them in the habitat with room to spare?') {
+    const size = item.enclosureSize;
+    const n = groupSize(design.group);
+    if (!design.group) return { met: false, evidence: 'not stocked yet' };
+    return {
+      met: hasRoomToRoam(design.group, size),
+      evidence: `${n} in ${size === 'large' ? 'a large' : size === 'small' ? 'a small' : 'a medium'} habitat`,
+    };
+  }
+
+  if (label === 'Can I find them in their habitat?') return inHabitat(state, item);
+
+  if (label === 'Can I get to this zone without crossing the grass?') return pathReaches(state, item);
 
   return null; // judgement: yours to make
 }
