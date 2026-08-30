@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint } from './engine';
+import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity } from './engine';
 import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
@@ -167,6 +167,24 @@ describe('a seat nobody is sitting in', () => {
     const withHome = { ...s, backlog: s.backlog.map((it) =>
       it.id === animal.enclosureId ? { ...it, status: 'open' as const } : it) };
     expect(aiTurn(withHome, 'developer')?.action.type).toBe('START_ITEM');
+  });
+
+  it('still forecasts after a Sprint that delivered nothing', () => {
+    // Velocity is measured, so a Sprint that delivered nothing leaves a capacity of zero.
+    // Taking only what fits inside zero is taking nothing, so the Developers forecast
+    // nothing - and a team that had one bad Sprint could never start another. Reported as a
+    // Planning screen stuck on "0 items in this Sprint, 0 / 0 pts".
+    let s: ZooGameState = withWork(1);
+    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
+    s = { ...s, phase: 'planning', sprintNumber: 2, velocity: [0],
+          sprintGoal: 'Open the Big Cats zone',
+          sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'] };
+    expect(sprintCapacity(s).points, 'this test is not exercising a zero capacity').toBe(0);
+
+    const move = aiTurn(s, 'developer');
+    expect(move?.action.type, 'the Developers forecast nothing, so Planning cannot move on').toBe('SET_FORECAST');
+    expect((move!.action as { ids: string[] }).ids.length).toBeGreaterThan(0);
+    expect(move!.says, 'they did not say why they were guessing').toMatch(/no velocity/i);
   });
 
   it('stops building when the day cannot afford it', () => {
