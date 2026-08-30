@@ -15,8 +15,12 @@ import { FOCUS } from './ui/tokens';
  *  with a tap; an item that is not ready wears a padlock and, when you press it, says what would
  *  make it ready and offers the fix.
  */
-export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
+export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arriving }: {
   item: BacklogItem;
+  /** Just moved into the Sprint. The card slides in and holds a ring for a moment, because a
+   *  seat played by the game pulls work while you are reading something else, and an item that
+   *  is simply there when you look back tells you nothing about what happened. */
+  arriving?: boolean;
   /** Already in the Sprint: the card shows a remove affordance instead of a plus. */
   chosen?: boolean;
   /** Why it cannot be picked, or null if it can. */
@@ -74,7 +78,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly }: {
   );
 
   if (!why) return (
-    <div className="flex items-stretch gap-1">
+    <div className={cn('flex items-stretch gap-1', arriving && 'zoo-arriving')}>
       {detail}
       {!readOnly && (
         <button type="button" onClick={onPick} aria-label={chosen ? `Take ${item.name} out of the Sprint` : `Add ${item.name} to the Sprint`}
