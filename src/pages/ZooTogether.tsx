@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { ZooGameScreens } from './ZooGame';
@@ -7,6 +7,11 @@ import { useZooSessions } from '@/components/zooGame/useZooSessions';
 import type { SeatContext } from '@/components/zooGame/seatRules';
 import { useAuth } from '@/contexts/AuthContext';
 import { TEXT } from '@/components/zooGame/ui/tokens';
+
+/** How long a line from a seat played by the game stays on the rail. Long enough to move to
+ *  another topic and still read what happened while you were away; short enough that the
+ *  Sprint board is not permanently under a stack of them. */
+const SAY_SECONDS = 25;
 
 // Build A Zoo, played together. The lobby seats a Scrum Team; the panel below is the seam
 // where the game itself attaches - it holds a live shared game and proves the whole stack
@@ -27,9 +32,47 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   useSharedClock(session);
   // Seats with nobody in them are played by the game, so a pair can still field a whole
   // Scrum Team. What they do, they say - that is the part a solo player never gets.
-  const [saidBy, setSaid] = useState<{ seat: string; says: string } | null>(null);
+  //
+  // Kept as a short history rather than one line replaced by the next. They act on their own
+  // beat, several moves inside a few seconds, and the most consequential thing they say - what
+  // they forecast, and why - used to be overwritten before you had walked to the topic that
+  // shows it. Four is what fits the rail; the oldest falls off.
+  //
+  // Each line then goes quiet on its own. The rail floats over the screen, and during a Sprint
+  // the board is the full width of it, so a history that never cleared would sit permanently
+  // on top of the park it is describing.
+  const [saidBy, setSaid] = useState<{ id: number; seat: string; says: string; kind: string; also: number }[]>([]);
+  const nextId = useRef(0);
+  const top = useRef<{ id: number; seat: string; kind: string } | null>(null);
+  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const forget = useCallback((id: number) => {
+    const t = timers.current.get(id);
+    if (t) clearTimeout(t);
+    timers.current.delete(id);
+    setSaid((prev) => prev.filter((x) => x.id !== id));
+  }, []);
+  useEffect(() => {
+    const running = timers.current;
+    return () => { for (const t of running.values()) clearTimeout(t); running.clear(); };
+  }, []);
+
   const aiSeats = lobby.seats.filter((x) => x.is_ai).map((x) => x.seat);
-  useAiSeats(session, aiSeats, useCallback((seat: string, says: string) => setSaid({ seat, says }), []));
+  useAiSeats(session, aiSeats, useCallback((seat: string, says: string, kind: string) => {
+    // The same seat doing the same kind of thing again takes the slot it already has,
+    // counting up. Planning the steps for five items is one piece of news; letting each one
+    // have a slot pushed the forecast - the line that explains the whole screen - off the
+    // rail before you had walked to the topic that shows it.
+    const same = top.current && top.current.seat === seat && top.current.kind === kind;
+    const id = same ? top.current!.id : nextId.current++;
+    top.current = { id, seat, kind };
+    setSaid((prev) => (same && prev[0]?.id === id
+      ? [{ ...prev[0], says, also: prev[0].also + 1 }, ...prev.slice(1)]
+      : [{ id, seat, says, kind, also: 0 }, ...prev.filter((x) => x.id !== id)].slice(0, 4)));
+    // A repeat renews its own slot rather than dying on the first one's clock.
+    const running = timers.current.get(id);
+    if (running) clearTimeout(running);
+    timers.current.set(id, setTimeout(() => forget(id), SAY_SECONDS * 1000));
+  }, [forget]));
   const { state, ready, present, drivesClock, error, refused, clearRefused } = session;
 
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;
@@ -42,7 +85,7 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
       <ZooGameScreens game={{ ...session, state }} saves={false}
         seat={mySeat?.seat ?? null} observer={ctx.observer}
         covering={ctx.emptySeats}
-        said={saidBy} onDismissSaid={() => setSaid(null)}
+        said={saidBy} onDismissSaid={forget}
         refused={refused} onDismissRefused={clearRefused}
         // Every accountability with somebody in it - a person or an AI - has to agree the
         // Sprint Goal. Empty seats cannot agree, so they are not waited on.

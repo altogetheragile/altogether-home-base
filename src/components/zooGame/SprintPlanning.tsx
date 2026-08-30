@@ -82,6 +82,40 @@ const TOPIC_CARDS: Record<Step, string[]> = {
   how: ['sprint-backlog', 'developers'],
 };
 
+/** Which of `keys` turned up since the last time you could have seen them.
+ *
+ *  The seats played by the game move on their own beat, and mostly while you are looking at
+ *  another topic. So the mark is made when the change lands but only expires once it has been
+ *  on screen for a moment: arrive at topic two after the Developers forecast, and the items
+ *  they pulled are still ringed when you get there. `visible` is whether the screen showing
+ *  them is the one being looked at.
+ *
+ *  The first run only takes a baseline. Otherwise a game resumed mid-Sprint would light up
+ *  everything at once, which says nothing about what just happened. */
+function useJustArrived(keys: string[], visible: boolean) {
+  const [marked, setMarked] = useState<Set<string>>(new Set());
+  const seen = useRef<string[] | null>(null);
+  const sig = keys.join(',');
+  useEffect(() => {
+    const now = sig.split(',').filter(Boolean);
+    const before = seen.current;
+    seen.current = now;
+    if (before === null) return;
+    const fresh = now.filter((k) => !before.includes(k));
+    if (!fresh.length) return;
+    // Marked on the next frame rather than in the effect body, so React is not asked to
+    // render again inside a render.
+    const on = requestAnimationFrame(() => setMarked((m) => new Set([...m, ...fresh])));
+    return () => cancelAnimationFrame(on);
+  }, [sig]);
+  useEffect(() => {
+    if (!visible || !marked.size) return;
+    const t = setTimeout(() => setMarked(new Set()), 2600);
+    return () => clearTimeout(t);
+  }, [visible, marked]);
+  return marked;
+}
+
 /** The shape every topic of Sprint Planning takes: the Product Backlog on the left, the Sprint you
  *  are assembling on the right. Topic two was the one screen that read well, and this is why - the
  *  thing you are choosing from and the thing you are building are side by side, and you can see one
@@ -141,44 +175,15 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // The forecast is shared state, not this component's: another player at Planning must see
   // the same one, and an AI Developer cannot plan steps for work it cannot see.
   const selected = new Set(state.forecast);
-  // What has just arrived in the Sprint. A seat played by the game pulls work while you are
-  // reading something else, so an item that is simply there when you look back tells you
-  // nothing about what happened. Held briefly, then let go.
-  const [arrived, setArrived] = useState<Set<string>>(new Set());
-  const seenForecast = useRef<string[]>(state.forecast);
-  useEffect(() => {
-    const fresh = state.forecast.filter((id) => !seenForecast.current.includes(id));
-    seenForecast.current = state.forecast;
-    if (!fresh.length) return;
-    setArrived(new Set(fresh));
-    const t = setTimeout(() => setArrived(new Set()), 2400);
-    return () => clearTimeout(t);
-  }, [state.forecast]);
-
-  // ...and the same for a plan being written. At topic three the steps simply appeared as a
-  // number, so "4 steps" told you the work had been done but nothing about it happening.
-  const [planned, setPlanned] = useState<Set<string>>(new Set());
-  const seenSteps = useRef<Record<string, number>>({});
-  const stepCounts = state.backlog.filter((x) => state.forecast.includes(x.id))
-    .map((x) => `${x.id}:${(x.tasks ?? []).filter((t) => t.label.trim()).length}`).join(',');
-  useEffect(() => {
-    const now: Record<string, number> = {};
-    const fresh: string[] = [];
-    for (const pair of stepCounts.split(',').filter(Boolean)) {
-      const i = pair.lastIndexOf(':');
-      const id = pair.slice(0, i); const n = Number(pair.slice(i + 1));
-      now[id] = n;
-      if (n > (seenSteps.current[id] ?? 0)) fresh.push(id);
-    }
-    const first = Object.keys(seenSteps.current).length === 0;
-    seenSteps.current = now;
-    if (first || !fresh.length) return;      // do not flash everything on arrival at the screen
-    // Marked on the next frame rather than in the effect body: the plan lands with the paint
-    // that shows it, and React is not asked to re-render inside a render.
-    const on = requestAnimationFrame(() => setPlanned(new Set(fresh)));
-    const off = setTimeout(() => setPlanned(new Set()), 2400);
-    return () => { cancelAnimationFrame(on); clearTimeout(off); };
-  }, [stepCounts]);
+  // What the game's own seats have just done, held until you are actually looking at it.
+  // A seat played by the game pulls work and writes plans on its own beat, which is usually
+  // while you are reading a different topic - so a highlight that starts its clock the moment
+  // the change lands has always burned out by the time you arrive, and topic two is a Sprint
+  // that was simply full when you got there.
+  const arrived = useJustArrived(state.forecast, step === 'what');
+  const planned = useJustArrived(
+    state.backlog.filter((x) => state.forecast.includes(x.id) && (x.tasks ?? []).some((t) => t.label.trim())).map((x) => x.id),
+    step === 'how');
   const setSelected = (next: Set<string> | ((s: Set<string>) => Set<string>)) =>
     onSetForecast([...(typeof next === 'function' ? next(new Set(state.forecast)) : next)]);
   const [fixing, setFixing] = useState<string | null>(null);   // refining an item mid-Planning
