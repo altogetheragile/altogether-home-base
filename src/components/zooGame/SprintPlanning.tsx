@@ -141,6 +141,44 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // The forecast is shared state, not this component's: another player at Planning must see
   // the same one, and an AI Developer cannot plan steps for work it cannot see.
   const selected = new Set(state.forecast);
+  // What has just arrived in the Sprint. A seat played by the game pulls work while you are
+  // reading something else, so an item that is simply there when you look back tells you
+  // nothing about what happened. Held briefly, then let go.
+  const [arrived, setArrived] = useState<Set<string>>(new Set());
+  const seenForecast = useRef<string[]>(state.forecast);
+  useEffect(() => {
+    const fresh = state.forecast.filter((id) => !seenForecast.current.includes(id));
+    seenForecast.current = state.forecast;
+    if (!fresh.length) return;
+    setArrived(new Set(fresh));
+    const t = setTimeout(() => setArrived(new Set()), 2400);
+    return () => clearTimeout(t);
+  }, [state.forecast]);
+
+  // ...and the same for a plan being written. At topic three the steps simply appeared as a
+  // number, so "4 steps" told you the work had been done but nothing about it happening.
+  const [planned, setPlanned] = useState<Set<string>>(new Set());
+  const seenSteps = useRef<Record<string, number>>({});
+  const stepCounts = state.backlog.filter((x) => state.forecast.includes(x.id))
+    .map((x) => `${x.id}:${(x.tasks ?? []).filter((t) => t.label.trim()).length}`).join(',');
+  useEffect(() => {
+    const now: Record<string, number> = {};
+    const fresh: string[] = [];
+    for (const pair of stepCounts.split(',').filter(Boolean)) {
+      const i = pair.lastIndexOf(':');
+      const id = pair.slice(0, i); const n = Number(pair.slice(i + 1));
+      now[id] = n;
+      if (n > (seenSteps.current[id] ?? 0)) fresh.push(id);
+    }
+    const first = Object.keys(seenSteps.current).length === 0;
+    seenSteps.current = now;
+    if (first || !fresh.length) return;      // do not flash everything on arrival at the screen
+    // Marked on the next frame rather than in the effect body: the plan lands with the paint
+    // that shows it, and React is not asked to re-render inside a render.
+    const on = requestAnimationFrame(() => setPlanned(new Set(fresh)));
+    const off = setTimeout(() => setPlanned(new Set()), 2400);
+    return () => { cancelAnimationFrame(on); clearTimeout(off); };
+  }, [stepCounts]);
   const setSelected = (next: Set<string> | ((s: Set<string>) => Set<string>)) =>
     onSetForecast([...(typeof next === 'function' ? next(new Set(state.forecast)) : next)]);
   const [fixing, setFixing] = useState<string | null>(null);   // refining an item mid-Planning
@@ -333,7 +371,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">
                 {chosen.map((it) => (
-                  <PickCard key={it.id} item={it} chosen why={null} onPick={() => toggle(it.id)} />
+                  <PickCard key={it.id} item={it} chosen why={null} arriving={arrived.has(it.id)} onPick={() => toggle(it.id)} />
                 ))}
               </div>
               {chosen.length > 1 && onReorderForecast && (
@@ -413,7 +451,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
                   const open = openPlan === it.id;
                   return (
-                    <div key={it.id}>
+                    <div key={it.id} className={cn(planned.has(it.id) && 'zoo-arriving')}>
                       {open ? (
                         <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
                           {/* What kind of thing, before how it gets built - the first "how" is what shape
@@ -441,7 +479,20 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                             <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
                               onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
                               {tasks.length ? `${tasks.length} steps` : 'Plan it'}
-                            </Button>} />
+                            </Button>}
+                          detail={tasks.length ? (
+                            // The steps themselves, not just how many there are. A seat played by
+                            // the game writes this plan while you are reading something else, and
+                            // a count that has quietly gone from nothing to "4 steps" shows you
+                            // that it happened without ever showing you what it decided.
+                            <ol className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 pl-0.5 text-[11px] text-muted-foreground">
+                              {tasks.map((t, i) => (
+                                <li key={t.id} className="flex items-center gap-1">
+                                  <span className="text-muted-foreground/50">{i + 1}.</span>{t.label}
+                                </li>
+                              ))}
+                            </ol>
+                          ) : undefined} />
                       )}
                     </div>
                   );
