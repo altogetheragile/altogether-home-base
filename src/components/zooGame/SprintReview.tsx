@@ -1,8 +1,9 @@
 import { Suspense, lazy, useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, GOAL_HAPPINESS_TARGET } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET } from './engine';
 import { PbiCard } from './PbiCard';
+import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
 // nobody needs any of it until they reach a Review. Loading it with the game made opening the game
 // slower to pay for a picture shown at the end of a Sprint.
@@ -33,6 +34,15 @@ interface SprintReviewProps {
   onContinue: () => void;
   /** The PO judging the Product Goal met - the game has no fixed length. */
   onWrapUp?: () => void;
+  /** Release something Done to visitors, from the Review. The Guide is explicit that the Review
+   *  is not a gate to releasing value, so this is not "approving" anything: it is the Product
+   *  Owner doing here what they could have done the day the item was Done. */
+  onOpen?: (id: string) => void;
+  /** Accepting a criterion, and ticking the plan, from the Review. Whatever is holding a Done item
+   *  shut is nearly always the Product Owner's own sign-off, and sending them back to a board that
+   *  belongs to a Sprint which has ended would be a dead end. */
+  onConfirmAc?: (id: string, index: number, value: boolean) => void;
+  onToggleTask?: (id: string, taskId: string) => void;
   /** The Sprint Review teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -44,7 +54,7 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachCard, onMarkTaught }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, teachCard, onMarkTaught }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const slices = zoneSlices(state);
@@ -57,6 +67,12 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
   const history = (state.happiness ?? []).slice(-6);
   // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
   const outputChasing = velocity >= 8 && r != null && r.totalAttendance > 0 && r.overallHappiness < 34;
+
+  // Built, accepted, and still nobody can see it. The Guide: an Increment may be delivered to
+  // stakeholders before the end of the Sprint, and "the Sprint Review should never be considered
+  // a gate to releasing value" - so arriving here with Done work unreleased is not tidy, it is a
+  // Sprint's worth of value that no visitor has had yet.
+  const unreleased = state.backlog.filter((it) => it.status === 'done');
 
   const [step, setStep] = useState<Step>('done');
   const [taken, setTaken] = useState(0); // signals turned into Backlog items in this Review
@@ -93,6 +109,50 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, teachC
           <IsoZoo state={state} height={470} className="px-3 pb-2" />
         </Suspense>
       </section>
+
+      {/* Work that is Done and still shut. It sits directly under the picture, because it is the
+          honest caption for it: what you are looking at is not everything the Sprint finished.
+          The Review is where it becomes obvious, and it is the one screen that never said so. */}
+      {unreleased.length > 0 && (
+        <section className="rounded-lg border border-amber-400/60 bg-amber-500/[0.06] px-3 py-2.5">
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-amber-700 dark:text-amber-400')}>
+            Done, and nobody can see it
+            <ExplainButton cards={['increment', 'sprint-review']} compact />
+          </div>
+          <p className="mb-2 text-sm">
+            {unreleased.length === 1 ? 'One item met' : `${unreleased.length} items met`} the Definition of Done and
+            {unreleased.length === 1 ? ' is' : ' are'} not open to visitors. The Review is not the gate: this could have
+            gone live the day it was Done, and until it does, nobody gets anything from it.
+          </p>
+          <ul className="space-y-1.5">
+            {unreleased.map((it) => {
+              // The same guard the engine applies, said out loud rather than pressed and ignored.
+              const waiting = (it.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done);
+              return (
+                <li key={it.id}>
+                  {/* "built" is the card's own word for finished and not yet released, so the row
+                      says it without a badge repeating the heading. Nothing is said twice. */}
+                  <PbiCard item={it} state="built" density="row"
+                    note={waiting ? 'Not open yet: its acceptance criteria are below, and the sign-off follows them.' : undefined}
+                    detail={waiting && onToggleTask ? (
+                      <CardDetail item={it} state={state} showAcceptance interactive defaultOpen
+                        onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                    ) : undefined}
+                    trailing={onOpen && (
+                      <Button size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={waiting}
+                        title={waiting ? 'Accept its acceptance criteria first' : undefined}
+                        onClick={() => onOpen(it.id)}>
+                        <Check className="mr-1 h-3.5 w-3.5" /> Open it to visitors
+                      </Button>
+                    )} />
+                </li>
+              );
+            })}
+          </ul>
+          {/* Releasing is the Product Owner's, so a Developer pressing this is refused by the same
+              gate as anywhere else, and told whose call it is. Nothing extra is said here. */}
+        </section>
+      )}
 
       {/* Progress toward the Product Goal opens the Review: the widest question first, before the
           Sprint that just ran. The Product Owner's decision on it comes at the end, once the
