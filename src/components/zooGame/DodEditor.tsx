@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DOD_LIBRARY } from './config';
+import { dodKind } from './dodChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, ClipboardCheck, Sparkles } from 'lucide-react';
@@ -36,6 +37,10 @@ export function DodEditor({ dod, onSave }: DodEditorProps) {
         The product-wide quality bar every item clears to be Done - the same for all items, unlike each PBI&rsquo;s own
         acceptance criteria. Inspect and refine it here; it applies to every item from now on.
       </p>
+      <p className="text-[11px] text-muted-foreground">
+        Some of these the park can see for itself and will answer on the card. The rest are yours to
+        hold each other to, which is true of every real Definition of Done.
+      </p>
 
       <div className="space-y-1.5">
         {items.map((c, i) => (
@@ -43,6 +48,15 @@ export function DodEditor({ dod, onSave }: DodEditorProps) {
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
             <input value={c} onChange={(e) => edit(i, e.target.value)} placeholder="A general Done criterion"
               className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2.5 py-1.5 text-sm outline-none focus:border-primary')} />
+            {/* Which of these the park will read, and which you are holding each other to. Both
+                kinds belong in a Definition of Done - a team that only writes measurable lines
+                ends up gaming its own tests - but knowing which is which while you write it is
+                the difference between an agreement and a wish. */}
+            {c.trim() && (dodKind(c) === 'fact'
+              ? <span title="The park can see this one for itself"
+                  className="shrink-0 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">the park checks this</span>
+              : <span title="Nothing in the park can measure this - it is the Scrum Team's word"
+                  className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">your word</span>)}
             {items.length > 1 && (
               <button type="button" onClick={() => remove(i)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove criterion"><X className="h-4 w-4" /></button>
             )}
