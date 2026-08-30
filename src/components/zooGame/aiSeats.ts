@@ -120,14 +120,22 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
     if (state.phase === 'planning' && state.sprintGoal.trim()) {
       if (state.forecast.length === 0) {
         const capacity = sprintCapacity(state).points;
+        const ready = state.backlog.filter((x) => x.status === 'backlog' && isReady(x));
         const take: string[] = [];
         let pts = 0;
-        for (const it of state.backlog.filter((x) => x.status === 'backlog' && isReady(x))) {
-          if (pts + it.estimate > capacity) continue;
+        for (const it of ready) {
+          if (take.length && pts + it.estimate > capacity) continue;
           take.push(it.id); pts += it.estimate;
         }
+        // Always at least the top item, whatever the measurement says. A Sprint that
+        // delivered nothing leaves a velocity of zero, and taking only what fits inside
+        // zero is taking nothing - so the Developers forecast nothing, forever, and a team
+        // that had one bad Sprint could never start another. A team in that position picks
+        // up the most valuable thing and finds out.
         if (take.length) return { action: { type: 'SET_FORECAST', ids: take },
-          says: `We think we can finish ${take.length} item${take.length === 1 ? '' : 's'}, about ${pts} points. That is what our last Sprints say we manage.` };
+          says: capacity > 0
+            ? `We think we can finish ${take.length} item${take.length === 1 ? '' : 's'}, about ${pts} points. That is what our last Sprints say we manage.`
+            : `We delivered nothing last Sprint, so we have no velocity to go on. We will take ${take.length === 1 ? 'the top item' : `${take.length} items`} and find out.` };
       }
       // Topic three: how it gets done. Also theirs, and the step the game blocked on when a
       // Product Owner sat alone - gated away from them, and nobody else to do it.
