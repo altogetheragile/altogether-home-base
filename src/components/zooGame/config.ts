@@ -67,11 +67,21 @@ export const DEFAULT_DOR: string[] = [
   'Understood well enough to start',
 ];
 
+// Note where this stops. "Done" is the state an item has to reach before it COULD go live: built,
+// accepted, standing where it will stand. Whether it does go live, and when, is the Product Owner's
+// decision and a separate act - which is the whole of the Guide's "the Sprint Review should never be
+// considered a gate to releasing value".
+//
+// The last line used to read "Placed and opened", which made the DoD contradict every other rule in
+// the game: velocity and the Sprint Goal count work that is Done, visitors only ever see work that
+// is open, and the coach says "anything Done can go live now" - all of which need Done and released
+// to be different states. A DoD that claims an item is open before anybody opened it also quietly
+// removes the decision this game exists to teach.
 export const DEFAULT_DOD: string[] = [
   'Meets its acceptance criteria',
   'Peer-reviewed by another Developer',
   'Approved by the PO',
-  'Placed and opened',
+  'Placed on the park, ready to open',
 ];
 
 /** Coached suggestions for the Definition of Done: general, product-wide criteria the
