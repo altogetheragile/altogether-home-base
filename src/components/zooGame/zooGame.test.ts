@@ -1115,13 +1115,24 @@ describe('zoo game: enclosures are built before their animals', () => {
 describe('zoo game: the Definition of Done is the completion gate, not a happiness dial', () => {
   const NICE = ['lion', 'tiger', 'kiosk', 'penguins', 'reef', 'wc'];
 
-  it('the default DoD is the four-step workflow (build, review, PO sign-off, place & open)', () => {
+  it('the default DoD is the four-step workflow (build, review, PO sign-off, place it ready)', () => {
     expect(initialZooState(1).definitionOfDone).toEqual([
       'Meets its acceptance criteria',
       'Peer-reviewed by another Developer',
       'Approved by the PO',
-      'Placed and opened',
+      'Placed on the park, ready to open',
     ]);
+  });
+
+  it('does not claim an item is open to visitors', () => {
+    // If the DoD says released, then meeting it means released, and "Done but not open" is a
+    // contradiction rather than a lesson. Everything else here needs the two to be different
+    // states: velocity counts Done, visitors see only what is open, and the release is the
+    // Product Owner's decision to make at a moment of their choosing.
+    for (const line of initialZooState(1).definitionOfDone) {
+      expect(line, `the DoD line "${line}" makes being open part of being Done`)
+        .not.toMatch(/\bopened\b|\breleased\b|\blive\b/i);
+    }
   });
 
   it('editing the DoD text does not change visitor happiness - that comes from the design', () => {
