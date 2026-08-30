@@ -221,31 +221,53 @@ const WORK_BEAT_MS = 2200;
  *  the gate if it does not belong to that accountability. An AI seat is a player, not a back
  *  door - and now it works at something like the pace of one.
  */
-export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string) => void) {
+export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, kind: string) => void) {
   const { state, drivesClock, sendAs } = session;
   const seats = aiSeats.join(',');
+  // The state is read when the beat lands, not captured when it was scheduled.
+  //
+  // This used to be an effect that took `state` as a dependency and scheduled the move on a
+  // timeout. During a Sprint the shared clock rewrites the state every second, so the effect
+  // tore down and rescheduled every second too - and any beat longer than that never arrived.
+  // Building is the one move with a long beat, so the Developers could forecast, plan and pull
+  // work, and then never build a single thing: the board sat still for a whole day with an
+  // item in Doing and nobody saying why.
+  const latest = useRef<{ state: typeof state; sendAs: typeof sendAs; onSay: typeof onSay }>({ state, sendAs, onSay });
+  useEffect(() => { latest.current = { state, sendAs, onSay }; });
+
   useEffect(() => {
-    if (!drivesClock || !state || !seats) return;
-    // Look at the next move first, so its own size decides how long it takes.
-    let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
-    for (const seat of seats.split(',') as SeatName[]) {
-      const move = aiTurn(state, seat);
-      // A move its own accountability may not take is skipped rather than sent, so a seat
-      // that keeps proposing something impossible cannot starve the seats behind it in this
-      // list - which is how the Scrum Master ended up never getting to agree.
-      if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
-      next = { seat, move }; break;
-    }
-    if (!next) return;
-    const { seat, move } = next;
-    const id = setTimeout(() => {
-      onSay?.(seat, move.says);
-      sendAs(seat, move.action);       // one move at a time, so it reads as somebody working
-      // ...and the work costs the day, the way it would if a person had done it. Charged
-      // rather than waited out, so a five-point build does not leave the board dead for a
-      // minute while the clock runs down behind it.
-      if (move.weight) sendAs(seat, { type: 'SPEND_DAY', seconds: Math.round(secondsPerPoint(state) * move.weight) });
-    }, move.weight ? WORK_BEAT_MS : BEAT_MS);
-    return () => clearTimeout(id);
-  }, [state, drivesClock, seats, sendAs, onSay]);
+    if (!drivesClock || !seats) return;
+    let live = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const beat = () => {
+      const { state: now, sendAs: send, onSay: say } = latest.current;
+      let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
+      if (now) {
+        for (const seat of seats.split(',') as SeatName[]) {
+          const move = aiTurn(now, seat);
+          // A move its own accountability may not take is skipped rather than sent, so a seat
+          // that keeps proposing something impossible cannot starve the seats behind it in
+          // this list - which is how the Scrum Master ended up never getting to agree.
+          if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
+          next = { seat, move }; break;
+        }
+      }
+      if (next) {
+        const { seat, move } = next;
+        // The action type travels with the line so a rail can tell one kind of move from
+        // another - five items planned in a row is one thing happening, not five.
+        say?.(seat, move.says, move.action.type);
+        send(seat, move.action);       // one move at a time, so it reads as somebody working
+        // ...and the work costs the day, the way it would if a person had done it. Charged
+        // rather than waited out, so a five-point build does not leave the board dead for a
+        // minute while the clock runs down behind it.
+        if (move.weight && now) send(seat, { type: 'SPEND_DAY', seconds: Math.round(secondsPerPoint(now) * move.weight) });
+      }
+      // Nothing to do is not a reason to stop looking: what the seats can do next changes
+      // with the clock as much as with anybody's move.
+      if (live) timer = setTimeout(beat, next?.move.weight ? WORK_BEAT_MS : BEAT_MS);
+    };
+    timer = setTimeout(beat, BEAT_MS);
+    return () => { live = false; clearTimeout(timer); };
+  }, [drivesClock, seats]);
 }
