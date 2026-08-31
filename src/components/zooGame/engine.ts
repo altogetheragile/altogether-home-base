@@ -377,6 +377,23 @@ export function nothingFitsToday(state: ZooGameState): boolean {
 export const buildTasksDone = (item: BacklogItem): boolean =>
   (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
 
+/** Everything the Definition of Done asks of an item before anybody may call it Done: the build
+ *  finished, and the Product Owner's approval on it.
+ *
+ *  The approval used to be left out. The gate was the Developers' plan alone, so an item they had
+ *  built moved itself to Done with "Approved by the PO" - the team's own third Definition of Done
+ *  line - still outstanding, and a Product Owner watched work they had never accepted land in the
+ *  Done column. The sign-off is not an extra hoop: it ticks itself the moment every acceptance
+ *  criterion is met, so this is the criteria, said once.
+ *
+ *  An item with no sign-off task at all (older saves, and anything built before plans had one) is
+ *  judged on its build alone rather than held at Doing forever. */
+export function readyForDone(item: BacklogItem): boolean {
+  if (!buildTasksDone(item)) return false;
+  const signOff = (item.tasks ?? []).find((t) => isSignOffTask(t.label));
+  return signOff ? signOff.done : true;
+}
+
 /** Whether the Product Owner can sign the item off yet: every acceptance criterion has to be met.
  *  The build criteria are accepted in the studio - an item cannot leave it otherwise - and the
  *  placement criteria are confirmed on the park, which cannot happen until the item is placed. So
@@ -418,6 +435,23 @@ export function syncSignOff(item: BacklogItem): BacklogItem {
   return { ...item, tasks: tasks.map((t) => (isSignOffTask(t.label) ? { ...t, done: ready } : t)) };
 }
 
+/** The column this item belongs in, after whatever just changed about it.
+ *
+ *  One rule in one place, because there are three ways to reach Done - the last plan task ticked,
+ *  the build finished, the last criterion accepted - and when each decided for itself the third
+ *  one did not decide at all: accepting the work ticked the sign-off and left the card sitting in
+ *  Doing, and ticking a task moved it to Done with the approval outstanding. */
+export function settleStatus(item: BacklogItem): BacklogItem {
+  const synced = syncSignOff(item);
+  if (synced.status === 'committed' && synced.design && readyForDone(synced)) {
+    return { ...synced, status: 'done' as const };
+  }
+  if (synced.status === 'done' && !readyForDone(synced)) {
+    return { ...synced, status: 'committed' as const };
+  }
+  return synced;
+}
+
 /** Save an item's in-progress design while it is still being built in the studio, so partial work
  *  survives the studio closing or the Sprint ending. Does not change status - it stays in Doing. */
 export function setDraftDesign(state: ZooGameState, id: string, design: ItemDesign): ZooGameState {
@@ -440,8 +474,9 @@ export function confirmAcceptance(state: ZooGameState, id: string, index: number
       const ac = [...(it.acConfirmed ?? Array(it.acceptance.length).fill(false))];
       ac[index] = value;
       // Confirming the last criterion is what earns the Product Owner's sign-off; withdrawing one
-      // takes it back off again.
-      return syncSignOff({ ...it, acConfirmed: ac });
+      // takes it back off again. And the sign-off is the last thing Done waits for, so accepting
+      // the work is what moves the card.
+      return settleStatus({ ...it, acConfirmed: ac });
     }),
   };
 }
@@ -461,9 +496,7 @@ export function toggleItemTask(state: ZooGameState, id: string, taskId: string):
     // criteria, so a click on it does nothing.
     if ((it.tasks ?? []).some((t) => t.id === taskId && isSignOffTask(t.label))) return it;
     const next = syncSignOff({ ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) });
-    if (next.status === 'committed' && next.design && buildTasksDone(next)) return syncSignOff({ ...next, status: 'done' as const });
-    if (next.status === 'done' && !buildTasksDone(next)) return syncSignOff({ ...next, status: 'committed' as const });
-    return next;
+    return settleStatus(next);
   });
   return { ...state, backlog };
 }
@@ -494,12 +527,16 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   const wip = activeWipLimit(state);
   if (wip > 0 && doingCount(state) >= wip) return state; // WIP limit reached (0 = no limit, or not met yet)
   if (!enclosureReady(state, item)) return state; // build the enclosure before the animals
-  // Starting work puts it ON the park - that is where it gets built. Dropped onto a spot it keeps
-  // that spot; started from its card it takes the next free one, laid out in rows away from the
-  // park's edges so there is room around it and room above it for its toolbar.
-  const taken = state.backlog.filter((it) => it.pos && it.id !== id).length;
-  const pos = item.pos ?? { x: 220 + (taken % 2) * 280, y: 170 + Math.floor(taken / 2) * 200 };
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true, pos } : it)) };
+  // Starting work puts it ON the park - that is where it gets built - but it does not pick a spot
+  // for it. It used to: the next slot in a fixed grid, two hundred pixel rows marching down a park
+  // seven hundred pixels tall, so the fifth row was off the bottom, the sixth further off, and
+  // everything past the edge was clamped back to it - one habitat drawn on top of another.
+  //
+  // The park already knows how to lay out what nobody has placed: it packs by footprint and
+  // tightens up rather than piling up, and it is tested with a full zoo's worth of boxes. Taking a
+  // position at all was what opted an item OUT of that. Dropped onto a spot by hand
+  // (START_ITEM_AT) it keeps that spot, because a position somebody chose is a decision.
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
 
 /** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */
@@ -1059,7 +1096,7 @@ export function buildItem(state: ZooGameState, id: string, design?: ItemDesign):
     const built = design
       ? { ...it, started: true, design, draftDesign: undefined, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
       : { ...it, started: true };
-    return syncSignOff(buildTasksDone(built) ? { ...built, status: 'done' as const } : { ...built, status: 'committed' as const });
+    return settleStatus(built);
   });
   return { ...state, backlog };
 }

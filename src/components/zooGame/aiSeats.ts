@@ -2,6 +2,8 @@ import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford } from './engine';
 import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './design';
+import { isChecked } from './parkChecks';
+import { whereItStands } from './parkModel';
 
 // A seat nobody is sitting in, played by the game.
 //
@@ -80,16 +82,19 @@ export function aiDesign(item: BacklogItem): ItemDesign {
  *  reaches anything in the zone, so a straight run to the thing that most needs reaching is
  *  a true answer to it rather than a way round it. */
 function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null {
-  const here = state.backlog.filter((i) => i.zone === item.zone && i.pos);
-  const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => i.category === 'amenity') ?? here[0];
-  if (!target?.pos) return null;
+  // Where the things in this zone actually stand. Most of them have never been dragged anywhere,
+  // so they have no position of their own: the park lays them out, and the park is what to ask.
+  const here = state.backlog.map((i) => ({ item: i, at: i.zone === item.zone ? (i.pos ?? whereItStands(state, i)) : null }))
+    .filter((x): x is { item: BacklogItem; at: { x: number; y: number } } => !!x.at);
+  const target = here.find((x) => x.item.category === 'enclosure') ?? here.find((x) => x.item.category === 'amenity') ?? here[0];
+  if (!target) return null;
   const design = item.design ?? presetFor(item);
   return {
     id: `run-${item.id}`,
     itemId: item.id,
     // From the way in, to the thing worth walking to.
-    a: { x: Math.round(target.pos.x), y: Math.round(target.pos.y) + 220 },
-    b: { x: Math.round(target.pos.x), y: Math.round(target.pos.y), featureId: target.id },
+    a: { x: Math.round(target.at.x), y: Math.round(target.at.y) + 220 },
+    b: { x: Math.round(target.at.x), y: Math.round(target.at.y), featureId: target.item.id },
     bends: [],
     thickness: Number(design.parts.thickness ?? 14) || 14,
     color: design.colors.path ?? '#b9a888',
@@ -269,6 +274,19 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' },
              says: 'That is the value I am proposing this Sprint.' };
   }
+  // Accepting the work. Done waits for the Product Owner's sign-off, and the sign-off follows the
+  // acceptance criteria - so with nobody in this seat the Developers would build everything and
+  // none of it could ever be Done. They only answer the ones that are theirs: half of every list
+  // is a fact the park measures for itself, and agreeing with a measurement is not a decision.
+  if (state.phase === 'sprint') {
+    for (const it of state.backlog.filter((x) => x.sprintNumber === state.sprintNumber
+      && x.status === 'committed' && x.design)) {
+      const i = (it.acceptance ?? []).findIndex((label, k) => !it.acConfirmed?.[k] && !isChecked(state, it, label));
+      if (i >= 0) return { action: { type: 'CONFIRM_AC', id: it.id, index: i, value: true },
+        says: `Looked at ${it.name}: yes, ${it.acceptance[i].replace(/\?$/, '').replace(/^Can I /, 'I can ')}.` };
+    }
+  }
+
   // What the visitors asked for becomes a Backlog item when they decide it does, which is
   // the value call the Review exists to produce.
   if (state.phase === 'review' && state.signals.length > 0) {

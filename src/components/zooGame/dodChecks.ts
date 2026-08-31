@@ -67,8 +67,10 @@ export function checkDodLine(state: ZooGameState, item: BacklogItem, line: strin
       const v = inHabitat(state, item);
       return { kind: 'fact', met: v.met, evidence: v.evidence };
     }
-    const put = !!item.placed || !!item.pos;
-    return { kind: 'fact', met: put, evidence: put ? 'standing on the park' : 'not placed yet' };
+    // Anything the Developers have started is standing on the park, whether or not anybody has
+    // dragged it: the park lays out what has not been placed by hand.
+    const put = !!item.placed || !!item.started || item.status === 'done' || item.status === 'open';
+    return { kind: 'fact', met: put, evidence: put ? 'standing on the park' : 'not started yet' };
   }
 
   // A second pair of hands. This is the one line in the shipped library that nothing in the game
@@ -110,6 +112,7 @@ export function checkDodLine(state: ZooGameState, item: BacklogItem, line: strin
   // acceptance criteria cannot disagree about the same park.
   if (/accessible|crossing the grass|walk to|reachable/.test(s)) {
     const v = pathReaches(state, item);
+    if (!v) return null;   // nothing standing in this zone to reach, so nobody can measure it
     return { kind: 'fact', met: v.met, evidence: v.evidence };
   }
 
@@ -124,22 +127,25 @@ export function checkDodLine(state: ZooGameState, item: BacklogItem, line: strin
   return null;   // judgement: the team's word, and rightly
 }
 
-/** Whether the park can answer this line at all, from the wording alone.
- *
- *  Wording alone, because the Definition of Done editor has no item in front of it: the team is
- *  agreeing a bar for everything, and what they want to know while they write it is which lines
- *  the game will read and which are theirs to hold each other to. */
-export function dodKind(line: string): 'fact' | 'judgement' {
-  return checkDodLine(PROBE_STATE, PROBE_ITEM, line) === null ? 'judgement' : 'fact';
-}
+/** Every wording the park recognises. One list, because the editor asks "will the game read this
+ *  line?" of the wording alone - the team is agreeing a bar for everything, with no item in front
+ *  of them - and the answer has to be the same list the check itself uses. */
+const READABLE: RegExp[] = [
+  /acceptance criteri/, /sign ?off|approved by the (po|product owner)/, /placed|on the park/,
+  /peer.?review|another developer|reviewed by/, /fully finished|no gaps|every part built/,
+  /signpost|signage|find it|signed so/, /escape|secure/,
+  /accessible|crossing the grass|walk to|reachable/, /open to visitors|released|goes live|is live/,
+];
 
-// A one-item park to ask the wording against. Nothing is read from it except the shape of the
-// answer, so it only has to exist.
-const PROBE_ITEM = {
-  id: '', name: '', zone: '', category: 'enclosure', status: 'backlog',
-  estimate: 0, acceptance: [], acConfirmed: [], tasks: [{ id: 's', label: 'Get the PO’s sign-off', done: false }],
-} as unknown as BacklogItem;
-const PROBE_STATE = { backlog: [], connectors: [] } as unknown as ZooGameState;
+/** Whether the park can answer this kind of line at all, from the wording.
+ *
+ *  A line it recognises can still come back unanswerable for a particular item - "can I get to
+ *  this zone" means nothing about a zone with nothing standing in it - and that is the item's
+ *  business rather than the wording's. */
+export function dodKind(line: string): 'fact' | 'judgement' {
+  const s = norm(line);
+  return READABLE.some((r) => r.test(s)) ? 'fact' : 'judgement';
+}
 
 /** Every line of the agreed Definition of Done, with the park's answer where it has one. */
 export function dodVerdicts(state: ZooGameState, item: BacklogItem): { line: string; answer: DodAnswer | null }[] {

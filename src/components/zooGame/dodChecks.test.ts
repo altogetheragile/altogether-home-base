@@ -85,6 +85,19 @@ describe('the Definition of Done, as far as the park can see it', () => {
       .toMatchObject({ kind: 'fact', met: false });
   });
 
+  it('recognises exactly the wordings it can answer, and no others', () => {
+    // Two lists that have to agree: the one the editor asks ("will the game read this line?")
+    // and the branches that answer it. They live in one place for that reason, and this holds
+    // them to it - a branch added without its wording would read as the team's word forever.
+    const enc = item({ acceptance: ['a'], acConfirmed: [false], design: { parts: {}, colors: {} } } as Partial<BacklogItem>);
+    for (const line of ['Meets its acceptance criteria', 'Approved by the PO', 'Placed on the park, ready to open',
+      'Peer-reviewed by another Developer', 'Fully finished - every part built, no gaps',
+      'Signposted so visitors can find it', 'Enclosures secure and escape-proof', 'Open to visitors']) {
+      expect(dodKind(line), `"${line}" is answered but the editor calls it judgement`).toBe('fact');
+      expect(checkDodLine(park([enc]), enc, line), `"${line}" is advertised as read and answers nothing`).not.toBeNull();
+    }
+  });
+
   it('leaves judgement alone rather than guessing at it', () => {
     const enc = item();
     for (const line of ['No known defects', 'On-brand and fits the park look',
@@ -111,7 +124,7 @@ describe('the Definition of Done, as far as the park can see it', () => {
 });
 
 describe('increment one changes nothing about what Done costs', () => {
-  const AI: SeatName[] = ['scrum_master', 'developer'];
+  const AI: SeatName[] = ['scrum_master', 'developer', 'product_owner'];
 
   it('an item still reaches Done with a Definition of Done the park can see is unmet', () => {
     let s: ZooGameState = initialZooState(7);

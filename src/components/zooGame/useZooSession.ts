@@ -220,6 +220,10 @@ const WORK_BEAT_MS = 2200;
  *  breath in between, and it is a display decision, which is why it lives out here and not in the
  *  seats' judgement. */
 const TOPIC_BEAT_MS = 5000;
+/** How long an event of its own stays on screen before a seat played by the game concludes it.
+ *  Longer than a topic: the Daily Scrum has something to read on it, and holding or skipping it
+ *  is a decision somebody at the table might want to make themselves. */
+const EVENT_BEAT_MS = 9000;
 
 /** Play the seats nobody is sitting in.
  *
@@ -274,8 +278,13 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
         // appear a second after the move before them: an item was taken and built inside one
         // beat, and a Product Owner who agreed the Sprint Goal was on topic two before they had
         // let go of the mouse.
+        // A Daily Scrum is an event, not a move: the Scrum Master used to hold it about a second
+        // after it opened, so the screen appeared and was gone before anybody had read the
+        // blocker on it - and a human who wanted to hold or skip it themselves never got the
+        // chance. It waits the longest of anything here.
         const lead = next.move.weight ? WORK_BEAT_MS
-          : next.move.action.type === 'SET_PLANNING_TOPIC' ? TOPIC_BEAT_MS : 0;
+          : next.move.action.type === 'RUN_DAILY_SCRUM' ? EVENT_BEAT_MS
+            : next.move.action.type === 'SET_PLANNING_TOPIC' ? TOPIC_BEAT_MS : 0;
         const key = `${next.seat}:${next.move.action.type}:${'id' in next.move.action ? next.move.action.id : ''}`;
         if (lead && waitedFor !== key) {
           waitedFor = key;

@@ -1,6 +1,7 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, presetFor } from './design';
 import { syncSignOff } from './engine';
+import { whereItStands } from './parkModel';
 
 // ============= The criteria the park can answer for itself =============
 //
@@ -33,7 +34,11 @@ const named = (state: ZooGameState, id?: string) => state.backlog.find((i) => i.
  *  of its own - it lives inside its enclosure - so "is it placed?" is this question for an animal. */
 export function inHabitat(state: ZooGameState, item: BacklogItem): Verdict {
   const home = state.backlog.find((i) => i.id === item.enclosureId);
-  const built = home && (home.status === 'open' || (home.status === 'done' && home.placed));
+  // Built is built. `placed` is only set when somebody asks the park to show them an item, so it
+  // says "a human looked at this", not "this exists" - and an animal in a habitat the Developers
+  // had built could never satisfy its own criterion because nobody had clicked "show me on the
+  // park". The park draws every Done habitat, wherever it decided to put it.
+  const built = home && (home.status === 'open' || home.status === 'done');
   return built
     ? { met: true, evidence: `in the ${home.name}` }
     : { met: false, evidence: home ? `the ${home.name} is not built yet` : 'no habitat to go in' };
@@ -44,7 +49,7 @@ export function inHabitat(state: ZooGameState, item: BacklogItem): Verdict {
  *  Exported because more than one agreement asks it: the item's own "can I get to this zone
  *  without crossing the grass?", and a Definition of Done line about the zoo being accessible.
  *  One implementation, so the two can never disagree about the same park. */
-export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict {
+export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict | null {
 
     // A path run reaches something in this zone - either snapped to it, or laid up against it.
     //
@@ -56,11 +61,19 @@ export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict {
     const here = state.backlog.filter((i) => i.zone === item.zone);
     const ids = new Set(here.map((i) => i.id));
     const NEAR = 110; // design px - about half the diagonal of the largest habitat
+    // Where things ARE, which is the park's answer and not the item's own field: most of the zoo
+    // has never been dragged anywhere, so it has no position of its own and is laid out with
+    // everything else. Reading the field alone said "nothing here to reach" about a zone full of
+    // habitats.
+    const at = (i: BacklogItem) => i.pos ?? whereItStands(state, i);
     let reachedId: string | undefined;
     for (const c of state.connectors ?? []) {
       for (const end of [c.a, c.b]) {
         if (end.featureId && ids.has(end.featureId)) { reachedId = end.featureId; break; }
-        const closest = here.find((i) => i.pos && Math.hypot(i.pos.x - end.x, i.pos.y - end.y) <= NEAR);
+        const closest = here.find((i) => {
+          const p = at(i);
+          return p && Math.hypot(p.x - end.x, p.y - end.y) <= NEAR;
+        });
         if (closest) { reachedId = closest.id; break; }
       }
       if (reachedId) break;
@@ -69,8 +82,12 @@ export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict {
     // What is missing, not merely that something is. The park answers this one, so the player
     // cannot tick it and move on - which makes "no" without a way forward a dead end rather than a
     // criterion. Name the thing to run a path to.
-    const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => i.pos) ?? here[0];
-    return { met: false, evidence: target ? `draw a run up to the ${target.name}` : 'nothing here to reach yet' };
+    const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => at(i));
+    // Nothing standing in this zone at all. "Can I get to it without crossing the grass?" is not
+    // a measurement about an empty field - there is nothing there to reach and nothing to fail -
+    // so it goes back to being a judgement, like every other criterion the park cannot answer.
+    if (!target) return null;
+    return { met: false, evidence: `draw a run up to the ${target.name}` };
 }
 
 /** The park's answer to one criterion, or null when it is a matter of judgement. */
