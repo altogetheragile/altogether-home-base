@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady, nothingFitsToday } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
@@ -733,8 +733,14 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
           Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads
           as though the Scrum is an end-of-day event. */}
+      {/* Why a quiet board is quiet. Work costs the day, so what is left of one is sometimes too
+          small to build anything with, and the board used to go silent for twenty seconds with no
+          way to tell that from the game having stopped. A day running out with work still in the
+          Sprint is the lesson, not a fault to hide. */}
       {!dayStarting && (
-        <ActionBar docked>
+        <ActionBar docked hint={nothingFitsToday(state)
+          ? 'Nothing left fits in what is left of today.'
+          : undefined}>
           <Button onClick={onEndDay}>
             {state.dayNumber === state.sprintDays
               ? 'End day \u2192 Review'

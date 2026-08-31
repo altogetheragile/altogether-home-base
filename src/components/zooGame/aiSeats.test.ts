@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity } from './engine';
+import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity, dayCanAfford } from './engine';
 import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
@@ -265,6 +265,30 @@ describe('a seat nobody is sitting in', () => {
     expect(move?.action.type, 'the Developers forecast nothing, so Planning cannot move on').toBe('SET_FORECAST');
     expect((move!.action as { ids: string[] }).ids.length).toBeGreaterThan(0);
     expect(move!.says, 'they did not say why they were guessing').toMatch(/no velocity/i);
+  });
+
+  it('can build the biggest item in the Backlog at all', () => {
+    // Every day after the first opens with what is left of ninety seconds once the Daily Scrum
+    // has been held. An eight point item costs ninety eight seconds, and the rule that lets an
+    // item bigger than a day start anyway was measured against the nominal ninety - so it wanted
+    // more of the day than a day ever has. The Developers took the item at the top of a day and
+    // then sat beside it, every day, while the clock ran out.
+    //
+    // Driven through the engine rather than with a hand-set clock: the number that matters is
+    // the one a real day actually starts with, and a test that picks its own lands on whichever
+    // side of the boundary the author expected.
+    let s = at({ phase: 'sprint', dayStage: 'dailyScrum', dayNumber: 2 });
+    const big = s.backlog.find((it) => it.estimate >= 8)!;
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === big.id
+      ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber } : it)) };
+    s = reducer(s, { type: 'RUN_DAILY_SCRUM' });   // the day the team actually gets
+    s = reducer(s, { type: 'TICK_DAY' });          // ...and a second of it gone, as in play
+    expect(s.dayStage, 'the Daily Scrum did not hand over to a build day').toBe('building');
+    expect(secondsPerPoint(s) * big.estimate, 'this test needs an item bigger than the day it has')
+      .toBeGreaterThan(s.daySecondsLeft);
+    expect(dayCanAfford(s, big),
+      `${big.name} costs ${Math.round(secondsPerPoint(s) * big.estimate)}s and no day the team gets is long enough to start it`)
+      .toBe(true);
   });
 
   it('stops building when the day cannot afford it', () => {

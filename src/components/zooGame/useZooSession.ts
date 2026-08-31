@@ -252,6 +252,10 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
     if (!drivesClock || !seats) return;
     let live = true;
     let timer: ReturnType<typeof setTimeout>;
+    // A move that deserves watching gets its pause BEFORE it lands as well as after, so it reads
+    // as somebody about to do something rather than as something already done. Held once per
+    // move: the same move coming back after its wait is taken rather than deferred forever.
+    let waitedFor: string | null = null;
     const beat = () => {
       const { state: now, sendAs: send, onSay: say } = latest.current;
       let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
@@ -266,6 +270,19 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
         }
       }
       if (next) {
+        // A build is the work itself, and a topic change is the event moving on. Both used to
+        // appear a second after the move before them: an item was taken and built inside one
+        // beat, and a Product Owner who agreed the Sprint Goal was on topic two before they had
+        // let go of the mouse.
+        const lead = next.move.weight ? WORK_BEAT_MS
+          : next.move.action.type === 'SET_PLANNING_TOPIC' ? TOPIC_BEAT_MS : 0;
+        const key = `${next.seat}:${next.move.action.type}:${'id' in next.move.action ? next.move.action.id : ''}`;
+        if (lead && waitedFor !== key) {
+          waitedFor = key;
+          if (live) timer = setTimeout(beat, lead);
+          return;
+        }
+        waitedFor = null;
         const { seat, move } = next;
         // The action type travels with the line so a rail can tell one kind of move from
         // another - five items planned in a row is one thing happening, not five.
@@ -276,10 +293,11 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
         // minute while the clock runs down behind it.
         if (move.weight && now) send(seat, { type: 'SPEND_DAY', seconds: Math.round(secondsPerPoint(now) * move.weight) });
       }
-      // Nothing to do is not a reason to stop looking: what the seats can do next changes
+      // ...and how long before the next one. A topic change, and the selection that finishes a
+      // topic, are each left on screen long enough to read.
+      //
+      // Nothing to do is not a reason to stop looking, either: what the seats can do next changes
       // with the clock as much as with anybody's move.
-      // How long before the next move. A topic change, and the selection that finishes a topic,
-      // each get a beat long enough to look at.
       const kind = next?.move.action.type;
       const pause = next?.move.weight ? WORK_BEAT_MS
         : kind === 'SET_PLANNING_TOPIC' || kind === 'SET_FORECAST' ? TOPIC_BEAT_MS
