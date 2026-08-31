@@ -1,7 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, secondsPerPoint } from './engine';
-import { DAY_SECONDS } from './config';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford } from './engine';
 import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './design';
 
 // A seat nobody is sitting in, played by the game.
@@ -182,9 +181,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         // a day with five seconds left absorb an eight-point item, so a Sprint delivered
         // whatever it liked and capacity meant nothing. A day that cannot take it ends, and
         // the work waits for tomorrow - which is what running out of day looks like.
-        const cost = secondsPerPoint(state) * building.estimate;
-        const wholeDay = cost >= DAY_SECONDS;   // bigger than any day; it has to start somewhere
-        if (state.daySecondsLeft >= cost || (wholeDay && state.daySecondsLeft >= DAY_SECONDS * 0.9)) {
+        if (dayCanAfford(state, building)) {
           return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
                    says: `Built ${building.name} to the Definition of Done.`,
                    weight: building.estimate };
@@ -220,8 +217,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         // Only something that can actually start. An animal whose habitat is not built yet
         // cannot, and proposing it anyway spun forever: the move was refused by the engine,
         // the item stayed unstarted, and the same move came back on the next tick.
+        // ...and only something today can actually pay for. Pulling an item the day cannot
+        // build left it sitting in Doing while nothing happened for the rest of the day: work
+        // in progress that nobody was working on, and a board that said nothing about why.
         const next = state.backlog.find((it) => it.status === 'committed' && !it.started
-          && enclosureReady(state, it));
+          && enclosureReady(state, it) && dayCanAfford(state, it));
         if (next) return { action: { type: 'START_ITEM', id: next.id },
                            says: `Taking ${next.name} next.` };
       }

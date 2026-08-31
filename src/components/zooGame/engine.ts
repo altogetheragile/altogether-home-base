@@ -340,6 +340,40 @@ export const isSignOffTask = (label: string): boolean => /sign[- ]?off/i.test(la
 
 /** The plan minus the sign-off: the Developers' own work, which is what takes an item out of Doing.
  *  The sign-off is not theirs to tick and comes later, once the item is on the park. */
+/** Whether what is left of today can pay for building this item.
+ *
+ *  Work costs the day, or a Sprint delivers whatever it likes and the capacity the whole game
+ *  turns on means nothing. An item bigger than any whole day has to start somewhere, so it goes
+ *  at the top of a day rather than never.
+ *
+ *  Shared, because the Developers decide with it and the board says the same thing with it. When
+ *  they were separate, the board showed an item in Doing that nobody was building and said
+ *  nothing about why. */
+export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
+  const cost = secondsPerPoint(state) * item.estimate;
+  // Measured against the day this team actually gets, not the nominal one. A Daily Scrum costs
+  // time, so every day after the first opens with about eighty seconds of a ninety second day -
+  // and an eight point item costs ninety eight. Compared against the nominal day it needed
+  // eighty one seconds it could never have, so the biggest items in the Backlog could not be
+  // built at all: taken at the top of a day, then sat in Doing while the day ran out, every day.
+  const total = dayTotalSeconds(state.dayTimeMult ?? 1);
+  if (cost >= total) return state.daySecondsLeft >= total * 0.9;
+  return state.daySecondsLeft >= cost;
+}
+
+/** Nothing the Developers could pick up fits in what is left of today. The day is spent, even
+ *  though the clock has not finished running down. */
+export function nothingFitsToday(state: ZooGameState): boolean {
+  if (state.phase !== 'sprint' || state.dayStage !== 'building') return false;
+  const inSprint = state.backlog.filter((it) => it.status === 'committed');
+  // Something already started and not yet built, that today could still pay for.
+  if (inSprint.some((it) => it.started && !it.design && dayCanAfford(state, it))) return false;
+  // ...or a plan still to tick, or a pathway still to run: those cost nothing but a moment.
+  if (inSprint.some((it) => it.started && it.design && (it.tasks ?? []).some((t) => !t.done && t.label.trim() && !isSignOffTask(t.label)))) return false;
+  // ...or something not started that today could take.
+  return !inSprint.some((it) => !it.started && enclosureReady(state, it) && dayCanAfford(state, it));
+}
+
 export const buildTasksDone = (item: BacklogItem): boolean =>
   (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done);
 
