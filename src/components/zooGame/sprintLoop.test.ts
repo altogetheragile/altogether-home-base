@@ -56,14 +56,12 @@ describe('a Sprint, played through to the Review', () => {
 
     for (let day = 0; day <= s.sprintDays && s.phase === 'sprint'; day += 1) {
       settle();                                                   // build, plan-tick, run the pathways
-      for (const it of s.backlog.filter((x) => x.status === 'done')) {
-        // The Product Owner accepts: each criterion, then the sign-off, then the release.
-        // Placement criteria are answered by the park itself, so a tick alone will not do.
+      // The Product Owner accepts what the Developers have built, which is what makes it Done -
+      // the card waits in Doing until they do - and then releases it. Placement criteria are
+      // answered by the park itself, so a tick alone will not do.
+      for (const it of s.backlog.filter((x) => x.status === 'committed' && x.started && x.design)) {
         (it.acceptance ?? []).forEach((_, i) => { s = reducer(s, { type: 'CONFIRM_AC', id: it.id, index: i, value: true }); });
-        const fresh = s.backlog.find((x) => x.id === it.id)!;
-        const signOff = (fresh.tasks ?? []).find((t) => /sign[- ]?off/i.test(t.label) && !t.done);
-        if (signOff) s = reducer(s, { type: 'TOGGLE_TASK', id: it.id, taskId: signOff.id });
-        po({ type: 'OPEN_ITEM', id: it.id });
+        if (s.backlog.find((x) => x.id === it.id)!.status === 'done') po({ type: 'OPEN_ITEM', id: it.id });
       }
       s = reducer(s, { type: 'END_DAY' });
       if (s.dayStage === 'dailyScrum') settle();

@@ -18,7 +18,10 @@ import type { SeatName } from './useZooSessions';
 // The Guide's line is the teaching: an Increment may be delivered before the end of the Sprint,
 // and "the Sprint Review should never be considered a gate to releasing value".
 
-const AI: SeatName[] = ['scrum_master', 'developer'];
+// The Product Owner seat accepts the work, because nothing reaches Done without it. What this
+// seat never does is open anything: releasing is a decision, and this is a test about the one
+// nobody made.
+const AI: SeatName[] = ['scrum_master', 'developer', 'product_owner'];
 
 /** Play a Sprint with the game holding every seat but the Product Owner, who does the least
  *  they can get away with: they never open anything. */
@@ -66,11 +69,28 @@ describe('the Review, when Done work was never released', () => {
     render(<SprintReview state={s} onTakeSignal={() => {}} onContinue={() => {}} onOpen={() => {}}
       onConfirmAc={() => {}} onToggleTask={() => {}} />);
 
-    expect(screen.getByText(/Done, and nobody can see it/i),
+    expect(screen.getByText(/Built, and nobody can see it/i),
       'the Review said nothing about work that is finished and shut').toBeTruthy();
     // Named, not counted: "3 items" tells a Product Owner nothing they can act on.
     for (const it of shut) {
       expect(screen.getAllByText(it.name).length, `${it.name} is Done and shut, and the Review never named it`)
+        .toBeGreaterThan(0);
+    }
+  });
+
+  it('names work the Developers finished that is waiting on the Product Owner', () => {
+    // Since Done waits for the approval, this is where a Sprint most easily goes: everything
+    // built, nothing accepted, an empty park in the Increment picture and - until this - nothing
+    // on the screen saying why.
+    const s = sprintWithNothingReleased();
+    const built = s.backlog.filter((it) => it.status === 'committed' && it.started && it.design);
+    if (!built.length) return;   // the seats accepted everything themselves; nothing to say
+    render(<SprintReview state={s} onTakeSignal={() => {}} onContinue={() => {}} onOpen={() => {}}
+      onConfirmAc={() => {}} onToggleTask={() => {}} />);
+    expect(screen.getByText(/waiting on you to accept/i),
+      'the Review said nothing about work waiting on the Product Owner').toBeTruthy();
+    for (const it of built) {
+      expect(screen.getAllByText(it.name).length, `${it.name} is waiting on acceptance and was never named`)
         .toBeGreaterThan(0);
     }
   });
@@ -92,7 +112,7 @@ describe('the Review, when Done work was never released', () => {
 
     const { unmount } = render(<SprintReview state={s} onTakeSignal={() => {}} onContinue={() => {}} onOpen={() => {}} />);
     if (stillShut.length === 0) {
-      expect(screen.queryByText(/Done, and nobody can see it/i),
+      expect(screen.queryByText(/Built, and nobody can see it/i),
         'the Review nagged about work that is already open').toBeNull();
     } else {
       // Whatever is left is exactly what is still shut, and nothing that has gone live.

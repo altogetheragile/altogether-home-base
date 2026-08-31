@@ -10,6 +10,7 @@ import { itemKind, KIND_LABEL } from './itemKinds';
 import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion } from './parkChecks';
 import { lookAhead } from './lookAhead';
+import { standingOnPark, parkPositions, restingPlace } from './parkModel';
 import { autoLayout, insidePark, parkBounds, shapeEdge, insideShape, CANVAS_W, PLAY_H } from './parkLayout';
 import { type AnimalGroup, KIND_SCALE, groupMembers, groupSize, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
@@ -865,9 +866,15 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
     expect(lion(s).status).toBe('committed'); // built, but the plan is not complete
     expect(allTasksDone(lion(s))).toBe(false);
 
-    // Tick every task; the last one promotes it Doing -> Done.
+    // Tick every task. The plan is the Developers' half, and on its own it is not Done: the
+    // Definition of Done says approved by the Product Owner, and until they have accepted it the
+    // card stays in Doing. Reported from a game: "Lion was moved to Done without PO sign-off".
     for (const t of tasks) s = toggleItemTask(s, 'lion', t.id);
-    expect(lion(s).status).toBe('done');
+    expect(lion(s).status, 'the build alone moved it to Done, with the approval outstanding').toBe('committed');
+
+    // The Product Owner accepts it. That is what finishes it.
+    s = accept(s, 'lion');
+    expect(lion(s).status, 'accepted and built, and still not Done').toBe('done');
 
     // Un-ticking a task on a Done (not yet open) item sends it back to Doing.
     s = toggleItemTask(s, 'lion', tasks[0].id);
@@ -883,6 +890,8 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
     s = buildItem(s, 'penguins', { parts: {}, colors: { body: '#6db6d8', tail: '#4f9cbf' } });
     expect(p().status).toBe('committed'); // built, but plan not ticked -> still Doing
     for (const t of p().tasks ?? []) s = toggleItemTask(s, 'penguins', t.id);
+    expect(p().status, 'the plan alone finished it, without the Product Owner').toBe('committed');
+    s = accept(s, 'penguins');
     expect(p().status).toBe('done');
   });
 
@@ -1236,16 +1245,17 @@ describe('zoo game: the toolbox', () => {
     // Its plan is the width/colour design + the standing workflow (no route step - the route is drawn at deploy).
     const tasks = suggestTasks(item).map((t) => t.label);
     expect(tasks).toEqual(['Set its width and colour', "Get the PO's sign-off"]);
-    // Building it (no design) with its plan complete takes it to Done.
+    // Building it (no design) with its plan complete leaves it in Doing: the Product Owner has
+    // not accepted it yet, and Done is the two halves together.
     s = estimateItem(s, item.id, 3);
     s = planSprint(s, [item.id]);
     s = setItemTasks(s, item.id, suggestTasks(item));
     let built = buildItem(s, item.id, presetFor(item)); // the studio passes the (empty) path design
     for (const t of built.backlog.find((x) => x.id === item.id)!.tasks ?? []) built = toggleItemTask(built, item.id, t.id);
-    expect(built.backlog.find((x) => x.id === item.id)!.status).toBe('done');
+    expect(built.backlog.find((x) => x.id === item.id)!.status).toBe('committed');
     // Delivering it does not add a park feature (it is the connectors it drew). It cannot be
-    // released until it is drawn on the park and that criterion is confirmed - the sign-off.
-    expect(openItem(built, item.id).backlog.find((x) => x.id === item.id)!.status).toBe('done');
+    // released until it is drawn on the park and every criterion is confirmed - the sign-off.
+    expect(openItem(built, item.id).backlog.find((x) => x.id === item.id)!.status).toBe('committed');
     const open = openItem(accept(built, item.id), item.id);
     expect(open.backlog.find((x) => x.id === item.id)!.status).toBe('open');
   });
@@ -2138,6 +2148,92 @@ describe('zoo game: the seeded Backlog reads correctly', () => {
   });
 });
 
+describe('zoo game: where work stands while it is being built', () => {
+  it('never starts one thing on top of another, however much gets started', () => {
+    // Reported from a game, and measured in the state of it: work started from its card took the
+    // next slot in a fixed grid marching down the park in two hundred pixel rows - so the fifth
+    // row sat at y=770 and the sixth at y=970 in a park seven hundred pixels tall. Everything
+    // past the bottom was clamped back to the edge, and the clamp put them in the same place.
+    //
+    // Asked of the park itself rather than of the raw positions: standingOnPark and restingPlace
+    // are what decide where a thing is drawn, and a position off the bottom of the park is not
+    // where the thing is - which is exactly the difference that broke.
+    let s = bigCatsSplit(1);
+    // Everything the zone offers, which is what a Sprint or two of building looks like: the
+    // reported park had nine things standing in it.
+    const wanted = s.backlog.filter((it) => it.category !== 'epic' && it.category !== 'path');
+    expect(wanted.length, 'this test needs a park with plenty in it').toBeGreaterThan(7);
+    s = { ...s, wipLimit: 0, backlog: s.backlog.map((it) => (it.category === 'enclosure'
+      ? { ...it, enclosureSize: 'large' as const } : it)) };
+    s = planSprint(s, wanted.map((h) => h.id));
+    const habitats = wanted.filter((w) => w.category === 'enclosure');
+    for (const h of habitats) s = startItem(s, h.id);
+    s = withEnclosuresBuilt(s, ...habitats.map((h) => h.id));
+    for (const w of wanted.filter((x) => x.category !== 'enclosure')) s = startItem(s, w.id);
+
+    const standing = standingOnPark(s);
+    const auto = parkPositions(standing);
+    const where = standing.map((st) => ({ name: st.item.name, size: st.size, at: restingPlace(st.item, st.size, auto) }));
+    // The park draws fewer boxes than there are items: an animal in a built habitat is drawn
+    // inside it rather than beside it. What matters is that none of the boxes it does draw sit
+    // on top of each other.
+    expect(where.length, 'nothing is standing in the park, so this proves nothing').toBeGreaterThan(3);
+    for (let a = 0; a < where.length; a += 1) {
+      for (let b = a + 1; b < where.length; b += 1) {
+        const A = where[a], B = where[b];
+        const on = Math.abs(A.at.x - B.at.x) < (A.size.w + B.size.w) / 2
+          && Math.abs(A.at.y - B.at.y) < (A.size.h + B.size.h) / 2;
+        expect(on, `${A.name} is drawn on top of ${B.name}`).toBe(false);
+      }
+    }
+  });
+
+  it('leaves a spot somebody chose alone', () => {
+    // Dropping a thing on the park is a decision. The park does not tidy it away.
+    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
+    s = startItemAt(s, 'lion-enc', { x: 300, y: 260 });
+    expect(s.backlog.find((it) => it.id === 'lion-enc')!.pos).toEqual({ x: 300, y: 260 });
+  });
+});
+
+describe('zoo game: nothing is Done without the Product Owner', () => {
+  const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
+
+  it('leaves work the Developers have finished in Doing until it is accepted', () => {
+    // Reported from a game: "Lion was moved to Done without PO sign-off". The gate was the
+    // Developers' plan alone, so the card crossed the board on their say-so while the team's own
+    // Definition of Done said "Approved by the PO" and nobody had.
+    let s = withEnclosuresBuilt(initialZooState(1), 'lion-enc');
+    s = setItemTasks(s, 'lion', suggestTasks(lion(s)));
+    s = planSprint(s, ['lion']);
+    s = startItem(s, 'lion');
+    s = buildItem(s, 'lion', FULL_DESIGN);
+    for (const t of lion(s).tasks ?? []) if (!t.done) s = toggleItemTask(s, 'lion', t.id);
+
+    expect(lion(s).design, 'the build never finished, so this proves nothing').toBeTruthy();
+    expect(lion(s).status, 'the Developers finished it and it called itself Done').toBe('committed');
+    expect(s.definitionOfDone.some((d) => /approved by the po/i.test(d)),
+      'this test leans on the DoD saying the Product Owner approves it').toBe(true);
+
+    s = accept(s, 'lion');
+    expect(lion(s).status, 'accepted, and still not Done').toBe('done');
+  });
+
+  it('takes Done back off if the Product Owner withdraws acceptance', () => {
+    // Un-accepting is not a small thing: what the Product Owner has taken back is not finished
+    // work waiting to be released, it is work again.
+    let s = withEnclosuresBuilt(initialZooState(1), 'lion-enc');
+    s = setItemTasks(s, 'lion', suggestTasks(lion(s)));
+    s = planSprint(s, ['lion']);
+    s = accept(buildItem(startItem(s, 'lion'), 'lion', FULL_DESIGN), 'lion');
+    for (const t of lion(s).tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'lion', t.id);
+    expect(lion(s).status).toBe('done');
+
+    s = confirmAcceptance(s, 'lion', 0, false);
+    expect(lion(s).status, 'it stayed Done with a criterion withdrawn').toBe('committed');
+  });
+});
+
 describe("zoo game: the Product Owner's sign-off follows the acceptance criteria", () => {
   const path = () => {
     let s = addPbi(initialZooState(1), toolboxDraft(TOOLBOX.flatMap((g) => g.items).find((t) => t.category === 'path')!));
@@ -2154,8 +2250,11 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
     let s = start;
     s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
     for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
-    // The Developers' own steps are what take it out of Doing; the sign-off is not one of them.
-    expect(s.backlog.find((x) => x.id === id)!.status).toBe('done');
+    // The Developers' own steps are their half of it. The sign-off is not one of them, and Done
+    // waits for it: the Definition of Done says approved by the Product Owner, so a card the
+    // Developers have finished sits in Doing until somebody accepts it.
+    expect(s.backlog.find((x) => x.id === id)!.status,
+      'the build alone moved it to Done, with the approval outstanding').toBe('committed');
     expect(signOff(s, id).done).toBe(false);
     expect(signOffReady(s.backlog.find((x) => x.id === id)!)).toBe(false);
   });
@@ -2187,7 +2286,9 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
     // ...and comes back off if a criterion is withdrawn, taking the release with it.
     const back = confirmAcceptance(s, id, 0, false);
     expect(signOff(back, id).done).toBe(false);
-    expect(openItem(back, id).backlog.find((x) => x.id === id)!.status).toBe('done');
+    // Withdrawing acceptance takes the release with it, and takes Done with it too: what the
+    // Product Owner has un-accepted is not finished work waiting to go live, it is work again.
+    expect(openItem(back, id).backlog.find((x) => x.id === id)!.status).toBe('committed');
   });
 
   it('is what lets an item go live', () => {
@@ -2195,7 +2296,8 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
     let s = start;
     s = buildItem(s, id, presetFor(s.backlog.find((x) => x.id === id)!));
     for (const t of s.backlog.find((x) => x.id === id)!.tasks ?? []) s = toggleItemTask(s, id, t.id);
-    expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('done'); // no sign-off, no release
+    // No sign-off, no release - and no Done either, which is the same rule read from the front.
+    expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('committed');
     s = accept(s, id);
     expect(openItem(s, id).backlog.find((x) => x.id === id)!.status).toBe('open');
   });
@@ -2870,6 +2972,9 @@ describe('zoo game: a thing you have built stays where you built it', () => {
     for (const t of s.backlog.find((x) => x.id === 'leopard-enc')!.tasks ?? []) {
       if (!t.done) s = toggleItemTask(s, 'leopard-enc', t.id);
     }
+    // Accepted where it stands, which is the route that never goes near placeOnPark.
+    (s.backlog.find((x) => x.id === 'leopard-enc')!.acceptance ?? [])
+      .forEach((_, i) => { s = confirmAcceptance(s, 'leopard-enc', i, true); });
     const built = s.backlog.find((x) => x.id === 'leopard-enc')!;
     expect(built.status).toBe('done');
     expect(built.placed).toBeFalsy();      // nothing on this path ever set it

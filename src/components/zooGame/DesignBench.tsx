@@ -84,10 +84,13 @@ function Empty({ next, wentBack }: { next?: BacklogItem; wentBack?: BacklogItem 
 
 /** The design bench: the controls for whatever is being built, plus its plan and the Product
  *  Owner's criteria - everything you need to finish one item, in one place under the board. */
-export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun }: {
+export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
+  /** True when the bench is showing what the team is building rather than something you picked
+   *  up yourself, so it can say whose work you are looking at. */
+  following?: boolean;
   edit: EditApi;
   part?: { id: string; key: string } | null;
   onPart?: (p: { id: string; key: string } | null) => void;
@@ -127,6 +130,10 @@ export function DesignBench({ state, itemId, edit, part, onPart, onToggleTask, o
             {(item.status === 'done' || item.status === 'open') && (
               <Chip tone="done">{item.status === 'open' ? 'live' : 'built'}</Chip>
             )}
+            {/* Whose work this is. The bench follows what the team has in Doing when you have not
+                picked anything up yourself, so it should say so rather than let you assume you
+                selected it. You can still touch it: joining in is what Developers do. */}
+            {following && <Chip>the team is on this</Chip>}
           </>}
         </h3>
         <ExplainButton cards={['increment', 'definition-of-done']} />

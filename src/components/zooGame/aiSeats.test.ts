@@ -213,9 +213,15 @@ describe('a seat nobody is sitting in', () => {
     for (const it of take) s = reducer(s, { type: 'SET_TASKS', id: it.id, tasks: suggestTasks(it) });
     s = planSprint({ ...s, phase: 'planning' }, take.map((x) => x.id));
 
+    // Both seats, because neither can finish anything alone: the Developers build it and the
+    // Product Owner accepts it, and Done is the two of them agreeing that it is.
     let moves = 0;
-    for (let i = 0; i < 400; i += 1) { const m = aiTurn(s, 'developer'); if (!m) break; s = reducer(s, m.action); moves += 1; }
-    expect(moves, 'the Developers looped instead of finishing').toBeLessThan(400);
+    for (let i = 0; i < 400; i += 1) {
+      const m = aiTurn(s, 'developer') ?? aiTurn(s, 'product_owner');
+      if (!m) break;
+      s = reducer(s, m.action); moves += 1;
+    }
+    expect(moves, 'the seats looped instead of finishing').toBeLessThan(400);
 
     const worked = s.backlog.filter((x) => take.some((t) => t.id === x.id));
     const unfinished = worked.filter((x) => x.status !== 'done' && x.status !== 'open');

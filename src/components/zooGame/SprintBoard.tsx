@@ -380,7 +380,15 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   }
   const dayStarting = state.dayStage === 'dayStart';
   // Something actually on the bench: it takes the room it needs then, and steps back when it is idle.
-  const onBench = !!building && state.backlog.some((i) => i.id === building);
+  // What the bench is showing. Yours if you have picked something up; otherwise whatever the
+  // Developers have in Doing, because a bench that says "nothing on the bench" while the team is
+  // visibly building something is a window with the curtains shut. Seats played by the game do
+  // not select anything, so with nobody in the Developer seats the studio sat empty all Sprint.
+  const beingBuilt = state.backlog.find((it) => it.status === 'committed' && it.started
+    && it.sprintNumber === state.sprintNumber);
+  const bench = building ?? beingBuilt?.id ?? null;
+  const following = !building && !!beingBuilt;
+  const onBench = !!bench && state.backlog.some((i) => i.id === bench);
 
   // A card that is Done but not yet open. It was built on the park, so it is already standing where
   // it will stand: what is left is confirming where that is, and opening it. "Deploy complete" was
@@ -664,7 +672,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}
           style={{ bottom: DOCKED_BAR_H }}>
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
-            <DesignBench state={state} itemId={building} edit={edit} part={part} onPart={onPart}
+            <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
               drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun}
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
           </div>

@@ -180,3 +180,17 @@ export function habitatSpot(animal: BacklogItem, i: number, n: number,
   }
   return { x: n <= 1 ? 0.5 : 0.14 + (i / (n - 1)) * 0.72, y: 0.62 + (i % 2 === 0 ? -0.06 : 0.06) };
 }
+
+/** Where one item is actually drawn in the park, or null if it is not standing in it.
+ *
+ *  The park is the only thing that knows: an item nobody has dragged has no position of its own
+ *  and is laid out with everything else. Anything asking "where is that?" - a path looking for
+ *  what it reaches, a Definition of Done line about being accessible - has to ask here, or it is
+ *  reading a field that is empty for most of the zoo.
+ */
+export function whereItStands(state: ZooGameState, item: BacklogItem): { x: number; y: number } | null {
+  const standing = standingOnPark(state);
+  const mine = standing.find((s) => s.item.id === item.id);
+  if (!mine) return null;
+  return restingPlace(mine.item, mine.size, parkPositions(standing));
+}

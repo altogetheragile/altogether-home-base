@@ -43,10 +43,14 @@ export function RailNote({ title, tone = 'coach', onDismiss, dismissLabel = 'dis
   title?: string; tone?: 'coach' | 'rule' | 'team'; onDismiss?: () => void;
   dismissLabel?: string; children: ReactNode;
 }) {
+  // All three are solid. The team tone used to be a five per cent wash of the accent, which was
+  // a pleasant tint over a white page and unreadable over the park: the rail floats above the
+  // board, and on the blueprint the notes turned into ghosts with the grid showing through the
+  // words. A running commentary you cannot read is not a commentary.
   const skin = tone === 'rule'
     ? 'border-amber-300 bg-amber-50/95 dark:border-amber-700/60 dark:bg-amber-950/95'
     : tone === 'team'
-      ? 'border-primary/30 bg-primary/5 backdrop-blur'
+      ? 'border-primary/40 bg-background/95 backdrop-blur'
       : 'border-border bg-background/95 backdrop-blur';
   return (
     <div className={cn('pointer-events-auto max-h-[42vh] overflow-y-auto rounded-lg border p-3 text-xs shadow-lg', skin)}>

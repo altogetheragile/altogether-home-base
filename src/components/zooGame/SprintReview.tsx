@@ -73,6 +73,12 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
   // a gate to releasing value" - so arriving here with Done work unreleased is not tidy, it is a
   // Sprint's worth of value that no visitor has had yet.
   const unreleased = state.backlog.filter((it) => it.status === 'done');
+  // ...and work the Developers finished that is waiting on the Product Owner to accept it. Since
+  // Done waits for that approval, this is where a Sprint quietly goes: five things built, none of
+  // them Done, an empty park in the picture above and nothing on this screen saying why.
+  const waiting = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
+    && it.status === 'committed' && it.started && it.design);
+  const finished = [...waiting, ...unreleased];
 
   const [step, setStep] = useState<Step>('done');
   const [taken, setTaken] = useState(0); // signals turned into Backlog items in this Review
@@ -113,19 +119,26 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
       {/* Work that is Done and still shut. It sits directly under the picture, because it is the
           honest caption for it: what you are looking at is not everything the Sprint finished.
           The Review is where it becomes obvious, and it is the one screen that never said so. */}
-      {unreleased.length > 0 && (
+      {finished.length > 0 && (
         <section className="rounded-lg border border-amber-400/60 bg-amber-500/[0.06] px-3 py-2.5">
           <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-amber-700 dark:text-amber-400')}>
-            Done, and nobody can see it
+            Built, and nobody can see it
             <ExplainButton cards={['increment', 'sprint-review']} compact />
           </div>
           <p className="mb-2 text-sm">
-            {unreleased.length === 1 ? 'One item met' : `${unreleased.length} items met`} the Definition of Done and
-            {unreleased.length === 1 ? ' is' : ' are'} not open to visitors. The Review is not the gate: this could have
-            gone live the day it was Done, and until it does, nobody gets anything from it.
+            {finished.length === 1 ? 'One item is' : `${finished.length} items are`} finished and shut.
+            {waiting.length > 0 && <>
+              {' '}<strong>{waiting.length}</strong> {waiting.length === 1 ? 'is' : 'are'} waiting on you to accept
+              {waiting.length === 1 ? ' it' : ' them'}: the Definition of Done says approved by the Product Owner, so
+              until you do, the work the Developers finished is not Done.
+            </>}
+            {unreleased.length > 0 && <>
+              {' '}<strong>{unreleased.length}</strong> met the Definition of Done and {unreleased.length === 1 ? 'is' : 'are'} not
+              open to visitors. The Review is not the gate: that could have gone live the day it was Done.
+            </>}
           </p>
           <ul className="space-y-1.5">
-            {unreleased.map((it) => {
+            {finished.map((it) => {
               // The same guard the engine applies, said out loud rather than pressed and ignored.
               const waiting = (it.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done);
               return (
