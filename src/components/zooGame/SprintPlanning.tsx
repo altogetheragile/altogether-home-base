@@ -55,6 +55,8 @@ interface SprintPlanningProps {
   /** Called when the player moves between planning topics - used to clear the transient
    *  "Ask the PO" note so it doesn't linger onto the next topic. */
   onNavigateStep?: () => void;
+  /** Move the whole team to another topic. It is one event, so this is shared rather than local. */
+  onSetTopic?: (topic: 'why' | 'what' | 'how') => void;
   /** The Sprint Planning teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -169,9 +171,12 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, teachCard, onMarkTaught }: SprintPlanningProps) {
-  const [step, setStepState] = useState<Step>('why');
-  const setStep = (s: Step) => { onNavigateStep?.(); setStepState(s); };
+export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, teachCard, onMarkTaught }: SprintPlanningProps) {
+  // Where the Scrum Team is in the event, not where this browser is. Sprint Planning has three
+  // topics in an order, and a topic each player was privately on meant the seats played by the
+  // game could not tell which one the team was in.
+  const step: Step = state.planningTopic ?? 'why';
+  const setStep = (s: Step) => { onNavigateStep?.(); onSetTopic?.(s); };
   // The forecast is shared state, not this component's: another player at Planning must see
   // the same one, and an AI Developer cannot plan steps for work it cannot see.
   const selected = new Set(state.forecast);
@@ -313,12 +318,28 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               </div>
             )}
 
-            {/* The right-hand column is the Sprint. At topic one it is empty on purpose, and saying
-                so is better than leaving a blank panel: the Goal comes before the work, not after. */}
-            <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
-              <p className="text-xs font-medium text-muted-foreground">Nothing forecast yet</p>
-              <p className="text-[11px] text-muted-foreground/70">The Sprint Backlog fills at topic two, once you know what this Sprint is for.</p>
-            </div>
+            {/* The right-hand column is the Sprint. At topic one it is usually empty, and saying so
+                is better than leaving a blank panel: the Goal comes before the work, not after.
+                But it is only usually empty - come back to topic one from topic two and there is a
+                forecast sitting there, and this panel used to go on insisting there was nothing.
+                It is the same panel either way: what the Sprint holds, whenever you look at it. */}
+            {chosen.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
+                <p className="text-xs font-medium text-muted-foreground">Nothing forecast yet</p>
+                <p className="text-[11px] text-muted-foreground/70">The Sprint Backlog fills at topic two, once you know what this Sprint is for.</p>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-semibold">{chosen.length} item{chosen.length === 1 ? '' : 's'} forecast</span>
+                  <span className="font-mono text-xs text-muted-foreground">{committed} pts</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Chosen at topic two, against this Goal. Change the Goal and it is worth looking at them again.</p>
+                <div className="max-h-[28vh] space-y-1 overflow-y-auto pr-1">
+                  {chosen.map((it) => <PbiCard key={it.id} item={it} state="forecast" density="row" />)}
+                </div>
+              </div>
+            )}
           </>} />
       )}
 

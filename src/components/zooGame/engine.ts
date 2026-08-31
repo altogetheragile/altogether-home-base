@@ -1443,6 +1443,8 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
+    // A new Sprint Planning opens on topic one, the way the event opens.
+    planningTopic: 'why' as const,
     committedIds: [],
     backlog,
     dayNumber: 1,
@@ -1473,6 +1475,8 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
+    // A new Sprint Planning opens on topic one, the way the event opens.
+    planningTopic: 'why' as const,
     wipLimit,
     scrumDiscipline,
     improvements: imp ? [...state.improvements, imp] : state.improvements,

@@ -211,6 +211,15 @@ export { reducer };
  *  that a move reads as somebody doing something rather than the board twitching. */
 const BEAT_MS = 900;
 const WORK_BEAT_MS = 2200;
+/** The pause either side of moving the event on to the next topic.
+ *
+ *  Sprint Planning is three topics with an order, and the seats played by the game can do a
+ *  topic's work in about a second - so the whole of topic two happened between two blinks and a
+ *  Product Owner saw the Sprint Backlog full without ever seeing it fill. The work is not the
+ *  event: arriving at a topic, doing the one thing it is for, and then moving on is. This is the
+ *  breath in between, and it is a display decision, which is why it lives out here and not in the
+ *  seats' judgement. */
+const TOPIC_BEAT_MS = 5000;
 
 /** Play the seats nobody is sitting in.
  *
@@ -221,9 +230,13 @@ const WORK_BEAT_MS = 2200;
  *  the gate if it does not belong to that accountability. An AI seat is a player, not a back
  *  door - and now it works at something like the pace of one.
  */
-export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, kind: string) => void) {
+export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, kind: string) => void,
+  /** Who still has to agree a Sprint Goal before topic two begins: the seats somebody or some AI
+   *  is holding. An empty seat cannot agree, so waiting on it would stall the game. */
+  mustAgree?: readonly string[]) {
   const { state, drivesClock, sendAs } = session;
   const seats = aiSeats.join(',');
+  const agreers = (mustAgree ?? []).join(',');
   // The state is read when the beat lands, not captured when it was scheduled.
   //
   // This used to be an effect that took `state` as a dependency and scheduled the move on a
@@ -244,7 +257,7 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
       let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
       if (now) {
         for (const seat of seats.split(',') as SeatName[]) {
-          const move = aiTurn(now, seat);
+          const move = aiTurn(now, seat, agreers ? agreers.split(',') : undefined);
           // A move its own accountability may not take is skipped rather than sent, so a seat
           // that keeps proposing something impossible cannot starve the seats behind it in
           // this list - which is how the Scrum Master ended up never getting to agree.
@@ -265,9 +278,15 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
       }
       // Nothing to do is not a reason to stop looking: what the seats can do next changes
       // with the clock as much as with anybody's move.
-      if (live) timer = setTimeout(beat, next?.move.weight ? WORK_BEAT_MS : BEAT_MS);
+      // How long before the next move. A topic change, and the selection that finishes a topic,
+      // each get a beat long enough to look at.
+      const kind = next?.move.action.type;
+      const pause = next?.move.weight ? WORK_BEAT_MS
+        : kind === 'SET_PLANNING_TOPIC' || kind === 'SET_FORECAST' ? TOPIC_BEAT_MS
+          : BEAT_MS;
+      if (live) timer = setTimeout(beat, pause);
     };
     timer = setTimeout(beat, BEAT_MS);
     return () => { live = false; clearTimeout(timer); };
-  }, [drivesClock, seats]);
+  }, [drivesClock, seats, agreers]);
 }
