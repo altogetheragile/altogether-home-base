@@ -289,6 +289,12 @@ export interface ZooGameState {
    *  and not yet a Sprint Goal. Changing the wording clears this, because agreement was to
    *  the words that were there. */
   sprintGoalAgreed: string[];
+  /** Which topic of Sprint Planning the Scrum Team is on. In state rather than in the component
+   *  because Sprint Planning is one event that a team attends together: a topic each player was
+   *  privately on is three separate meetings, and the seats played by the game could not tell
+   *  which one anybody was in - so they did topic two's work while a Product Owner was still
+   *  reading topic one, which is not a team working, it is a team being overtaken. */
+  planningTopic?: 'why' | 'what' | 'how';
   /** What the Developers have selected at Sprint Planning topic two, before the Sprint
    *  starts. In state rather than in the Planning component because a selection nobody else
    *  can see is not a forecast: another player would have their own, and an AI Developer
@@ -433,6 +439,7 @@ export type ZooAction =
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_SPRINT_GOAL'; goal: string }
+  | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
   | { type: 'SET_DOD'; dod: string[] }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number }

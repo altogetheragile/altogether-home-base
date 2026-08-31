@@ -97,8 +97,24 @@ function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null
   };
 }
 
-/** What this AI accountability would do now, or nothing if it is not their turn. */
-export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
+/** Every accountability, which is who has to agree a Sprint Goal unless a caller says otherwise. */
+const ALL_SEATS: SeatName[] = ['product_owner', 'scrum_master', 'developer'];
+
+/** What this AI accountability would do now, or nothing if it is not their turn.
+ *
+ *  `mustAgree` is who still has to agree the Sprint Goal before topic two can begin - the same
+ *  list the screen waits on. It is passed in rather than assumed because a seat nobody is holding
+ *  and no AI is playing cannot agree to anything, and the Developers would wait on it forever. */
+export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly string[] = ALL_SEATS): AiMove | null {
+  // Topic one before topic two, for the seats played by the game as much as for anybody.
+  //
+  // They used to select and plan against a Sprint Goal that had only been PROPOSED: the Product
+  // Owner wrote it, the Developers agreed with themselves, and off they went - so a Product Owner
+  // still reading it was told the work had been chosen and the steps written for it, on a screen
+  // that said nothing was forecast yet. Agreeing the Goal is what topic one is; work chosen
+  // before it is work chosen against nothing.
+  const goalAgreed = mustAgree.every((s) => state.sprintGoalAgreed.includes(s));
+  const topic = state.planningTopic ?? 'why';
   if (seat === 'developer') {
     // Topic one comes before the work. The whole Scrum Team defines the Sprint Goal, so the
     // Developers say whether they are in before they start sizing or selecting against it.
@@ -117,7 +133,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
     // Sprint Planning topic two: what they think they can finish. The Product Owner proposes
     // where the value is; selecting against it is the Developers' call, so if nobody is in
     // those seats this is where the game would otherwise sit and wait forever.
-    if (state.phase === 'planning' && state.sprintGoal.trim()) {
+    if (state.phase === 'planning' && state.sprintGoal.trim() && goalAgreed && topic === 'what') {
       if (state.forecast.length === 0) {
         const capacity = sprintCapacity(state).points;
         const ready = state.backlog.filter((x) => x.status === 'backlog' && isReady(x));
@@ -137,8 +153,13 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
             ? `We think we can finish ${take.length} item${take.length === 1 ? '' : 's'}, about ${pts} points. That is what our last Sprints say we manage.`
             : `We delivered nothing last Sprint, so we have no velocity to go on. We will take ${take.length === 1 ? 'the top item' : `${take.length} items`} and find out.` };
       }
-      // Topic three: how it gets done. Also theirs, and the step the game blocked on when a
-      // Product Owner sat alone - gated away from them, and nobody else to do it.
+    }
+
+    // Topic three: how it gets done. Also theirs, and the step the game blocked on when a
+    // Product Owner sat alone - gated away from them, and nobody else to do it. It waits for
+    // topic three: writing the steps while the team is still choosing the work is answering a
+    // question nobody has asked yet.
+    if (state.phase === 'planning' && goalAgreed && topic === 'how') {
       const unplanned = state.backlog.find((it) => state.forecast.includes(it.id) && !(it.tasks ?? []).some((t) => t.label.trim()));
       if (unplanned) return { action: { type: 'SET_TASKS', id: unplanned.id, tasks: suggestTasks(unplanned) },
         says: `We planned the steps for ${unplanned.name}.` };
@@ -216,6 +237,22 @@ export function aiTurn(state: ZooGameState, seat: SeatName): AiMove | null {
         && !state.sprintGoalAgreed.includes('scrum_master')) {
       return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'scrum_master' },
                says: 'Agreed. It says why the Sprint is valuable, which is what it is for.' };
+    }
+    // "Ensure that all Scrum events take place." Sprint Planning is one event with three topics
+    // in an order, and somebody has to move the agenda on - otherwise a team of seats played by
+    // the game sits on topic one forever waiting to be told.
+    //
+    // Each of these fires once and only forwards: once there is a forecast the first cannot fire
+    // again, and once there are steps the second cannot. So a Product Owner who walks back to
+    // topic one to re-read the Goal is left there rather than being dragged forward again.
+    if (state.phase === 'planning' && goalAgreed && topic === 'why' && state.forecast.length === 0) {
+      return { action: { type: 'SET_PLANNING_TOPIC', topic: 'what' },
+               says: 'The Goal is agreed, so that is topic one. What can we finish this Sprint?' };
+    }
+    if (state.phase === 'planning' && topic === 'what' && state.forecast.length > 0
+        && !state.backlog.some((it) => state.forecast.includes(it.id) && (it.tasks ?? []).some((t) => t.label.trim()))) {
+      return { action: { type: 'SET_PLANNING_TOPIC', topic: 'how' },
+               says: 'We have what. Topic three is how it gets done.' };
     }
     if (state.phase === 'sprint' && state.dayStage === 'dailyScrum') {
       return { action: { type: 'RUN_DAILY_SCRUM' },

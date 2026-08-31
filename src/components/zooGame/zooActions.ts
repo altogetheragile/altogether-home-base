@@ -18,6 +18,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     setPhase: (phase: ZooPhase) => send({ type: 'SET_PHASE', phase }),
     setGoal: (goal: string) => send({ type: 'SET_PRODUCT_GOAL', goal }),
     setSprintGoal: (goal: string) => send({ type: 'SET_SPRINT_GOAL', goal }),
+    setPlanningTopic: (topic: 'why' | 'what' | 'how') => send({ type: 'SET_PLANNING_TOPIC', topic }),
     setDor: (dor: string[]) => send({ type: 'SET_DOR', dor }),
     setDod: (dod: string[]) => send({ type: 'SET_DOD', dod }),
     takeSignal: (index: number) => send({ type: 'ACCEPT_SIGNAL', index }),

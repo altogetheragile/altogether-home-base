@@ -57,6 +57,9 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   }, []);
 
   const aiSeats = lobby.seats.filter((x) => x.is_ai).map((x) => x.seat);
+  // The same list the Sprint Goal panel waits on, so the seats played by the game hold topic one
+  // open exactly as long as the screen does.
+  const mustAgree = [...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))];
   useAiSeats(session, aiSeats, useCallback((seat: string, says: string, kind: string) => {
     // The same seat doing the same kind of thing again takes the slot it already has,
     // counting up. Planning the steps for five items is one piece of news; letting each one
@@ -72,7 +75,7 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
     const running = timers.current.get(id);
     if (running) clearTimeout(running);
     timers.current.set(id, setTimeout(() => forget(id), SAY_SECONDS * 1000));
-  }, [forget]));
+  }, [forget]), mustAgree);
   const { state, ready, present, drivesClock, error, refused, clearRefused } = session;
 
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;
@@ -89,7 +92,7 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
         refused={refused} onDismissRefused={clearRefused}
         // Every accountability with somebody in it - a person or an AI - has to agree the
         // Sprint Goal. Empty seats cannot agree, so they are not waited on.
-        mustAgree={[...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))]} />
+        mustAgree={mustAgree} />
 
       <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground">
         <span>

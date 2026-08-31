@@ -180,6 +180,9 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return renameItem(state, action.id, action.name);
     case 'OPEN_ITEM':
       return openItem(state, action.id);
+    case 'SET_PLANNING_TOPIC':
+      // Sprint Planning is one event. Whoever moves the agenda on moves it for everybody.
+      return { ...state, planningTopic: action.topic };
     case 'AGREE_SPRINT_GOAL':
       return agreeSprintGoal(state, action.seat);
     case 'SET_FORECAST':

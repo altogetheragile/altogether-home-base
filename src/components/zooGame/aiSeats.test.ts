@@ -88,10 +88,15 @@ describe('a seat nobody is sitting in', () => {
     // The reported deadlock. Sitting as Product Owner, topic three needs steps, SET_TASKS is
     // the Developers' and correctly refused - so with nobody in those seats the game sat on
     // "5 items have no steps yet" forever and Start Sprint stayed disabled.
+    //
+    // Played as the event now runs: the Product Owner agrees their own Goal, and the seats work
+    // through the topics in order rather than doing all three at once. Both accountabilities take
+    // turns here, because it is the Scrum Master who moves the agenda on.
     let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' });
     const moves: string[] = [];
     for (let i = 0; i < 200; i += 1) {
-      const move = aiTurn(s, 'developer');
+      const move = aiTurn(s, 'developer') ?? aiTurn(s, 'scrum_master');
       if (!move) break;
       moves.push(move.action.type);
       s = reducer(s, move.action);
@@ -101,6 +106,79 @@ describe('a seat nobody is sitting in', () => {
     expect(s.forecast.length, 'nothing was forecast').toBeGreaterThan(0);
     const unplanned = s.backlog.filter((it) => s.forecast.includes(it.id) && !(it.tasks ?? []).some((t) => t.label.trim()));
     expect(unplanned, 'items were left without steps, so Start Sprint stays disabled').toHaveLength(0);
+  });
+
+  /** Sizing is refinement and belongs to no topic, so it happens whenever there is something
+   *  unsized. These tests are about the three topics, so settle it first and out of the way. */
+  const sized = (s0: ZooGameState): ZooGameState => {
+    let s = s0;
+    for (let i = 0; i < 50; i += 1) {
+      const m = aiTurn(s, 'developer');
+      if (m?.action.type !== 'ESTIMATE_ITEM') return s;
+      s = reducer(s, m.action);
+    }
+    throw new Error('the Developers never finished sizing');
+  };
+
+  it('does topic two\u2019s work at topic two, and not before', () => {
+    // Reported from a game: the rail said the Developers had chosen the work and written the
+    // steps for it while the screen was still on topic one, asking the Product Owner to agree
+    // the Sprint Goal - and the panel beside it said nothing was forecast yet. They had selected
+    // against a Goal that had only been proposed.
+    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
+    expect(s.planningTopic ?? 'why', 'this test needs to start at topic one').toBe('why');
+
+    // The Developers agree, and then stop, because agreeing is what topic one is for. Sizing is
+    // refinement and belongs to no topic, so it is settled first and out of the way.
+    const first = aiTurn(s, 'developer');
+    expect(first?.action.type).toBe('AGREE_SPRINT_GOAL');
+    s = sized(reducer(s, first!.action));
+    expect(aiTurn(s, 'developer'), 'they selected the work while the Goal was still only proposed').toBeNull();
+
+    // ...and they stay stopped once the Scrum Master agrees, because the Product Owner has not.
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'scrum_master' });
+    expect(aiTurn(s, 'developer'), 'two out of three agreeing was treated as the team agreeing').toBeNull();
+
+    // The Product Owner agrees. Now the Scrum Master moves the event on, and only then do they
+    // select - which is the order the three topics are in.
+    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' });
+    expect(aiTurn(s, 'developer'), 'they selected before the team had moved off topic one').toBeNull();
+    const moveOn = aiTurn(s, 'scrum_master');
+    expect(moveOn?.action).toEqual({ type: 'SET_PLANNING_TOPIC', topic: 'what' });
+    s = reducer(s, moveOn!.action);
+
+    const select = aiTurn(s, 'developer');
+    expect(select?.action.type, 'nobody selected anything at topic two').toBe('SET_FORECAST');
+    s = reducer(s, select!.action);
+    // Still nothing written about how: that is topic three, and the team is not there yet.
+    expect(aiTurn(s, 'developer'), 'the steps were written while the team was still choosing the work').toBeNull();
+
+    const onToHow = aiTurn(s, 'scrum_master');
+    expect(onToHow?.action).toEqual({ type: 'SET_PLANNING_TOPIC', topic: 'how' });
+    s = reducer(s, onToHow!.action);
+    expect(aiTurn(s, 'developer')?.action.type, 'nobody planned the steps at topic three').toBe('SET_TASKS');
+  });
+
+  it('leaves a Product Owner alone when they walk back to re-read the Goal', () => {
+    // The agenda only moves forwards, and each move fires once. Otherwise looking back at topic
+    // one would be a fight with the Scrum Master rather than a look back.
+    let s = sized(at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone',
+      sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'], planningTopic: 'what' }));
+    const select = aiTurn(s, 'developer')!;
+    expect(select.action.type).toBe('SET_FORECAST');
+    s = reducer(s, select.action);
+    expect(s.forecast.length, 'nothing was forecast, so this proves nothing').toBeGreaterThan(0);
+    s = reducer(s, { type: 'SET_PLANNING_TOPIC', topic: 'why' });   // the Product Owner looks back
+    expect(aiTurn(s, 'scrum_master'), 'the Scrum Master dragged them forward again').toBeNull();
+  });
+
+  it('does not wait on a seat nobody is holding', () => {
+    // An empty seat cannot agree to anything. Waiting for all three regardless would leave the
+    // Developers waiting forever on a chair.
+    const s = sized(at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone',
+      sprintGoalAgreed: ['developer', 'product_owner'], planningTopic: 'what' }));
+    expect(aiTurn(s, 'developer', ['developer', 'product_owner'])?.action.type,
+      'the Developers waited on a Scrum Master seat nobody was in').toBe('SET_FORECAST');
   });
 
   it('lets every seat get a turn, rather than one starving the others', () => {
@@ -178,7 +256,9 @@ describe('a seat nobody is sitting in', () => {
     for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
     s = { ...s, phase: 'planning', sprintNumber: 2, velocity: [0],
           sprintGoal: 'Open the Big Cats zone',
-          sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'] };
+          sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'],
+          // Selecting work is topic two's business, and this is a test about selecting work.
+          planningTopic: 'what' };
     expect(sprintCapacity(s).points, 'this test is not exercising a zero capacity').toBe(0);
 
     const move = aiTurn(s, 'developer');
