@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, presetFor } from './design';
-import { syncSignOff } from './engine';
+import { settleStatus } from './engine';
 import { whereItStands } from './parkModel';
 
 // ============= The criteria the park can answer for itself =============
@@ -148,10 +148,11 @@ export function applyParkChecks(state: ZooGameState): ZooGameState {
     if (!touched) return item;
     changed = true;
     // The Product Owner's sign-off is DERIVED from the criteria, so anything that moves a criterion
-    // has to move the sign-off with it. Ticking the last one by hand re-derived it; the park
-    // answering the last one did not, so every criterion went green and the approval sat there
-    // unticked with no way to shift it.
-    return syncSignOff({ ...item, acConfirmed: next });
+    // has to move the sign-off with it - and the sign-off is what Done waits for, so it has to
+    // move the card too. Ticking the last one by hand did all three; the park answering the last
+    // one did the first, so a path with every criterion green and its plan ticked sat in Doing
+    // for the rest of the Sprint with nothing left to do to it.
+    return settleStatus({ ...item, acConfirmed: next });
   });
   return changed ? { ...state, backlog } : state;
 }

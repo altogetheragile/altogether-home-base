@@ -394,6 +394,16 @@ export function readyForDone(item: BacklogItem): boolean {
   return signOff ? signOff.done : true;
 }
 
+/** Whether this item can go live: accepted, and the approval that follows from it.
+ *
+ *  It used to also require `placed` - the flag set by pressing "show me on the park". That flag
+ *  means a human went and looked, not that the thing exists: work the Developers built and stood
+ *  on the park could not be released at all until somebody pressed a button about looking at it.
+ *  Where it stands is the park's business, and the placement criteria are already in the list. */
+export function readyToOpen(item: BacklogItem): boolean {
+  return signOffReady(item) && !(item.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done);
+}
+
 /** Whether the Product Owner can sign the item off yet: every acceptance criterion has to be met.
  *  The build criteria are accepted in the studio - an item cannot leave it otherwise - and the
  *  placement criteria are confirmed on the park, which cannot happen until the item is placed. So

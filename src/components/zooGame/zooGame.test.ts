@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday } from './engine';
+  endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -2193,6 +2193,51 @@ describe('zoo game: where work stands while it is being built', () => {
     let s = planSprint(bigCatsSplit(1), ['lion-enc']);
     s = startItemAt(s, 'lion-enc', { x: 300, y: 260 });
     expect(s.backlog.find((it) => it.id === 'lion-enc')!.pos).toEqual({ x: 300, y: 260 });
+  });
+});
+
+describe('zoo game: the last criterion, whoever answers it', () => {
+  it('moves the card when the PARK answers the last one, not just when a person does', () => {
+    // Found by playing: a pathway with every criterion green, its plan ticked and the sign-off
+    // on it sat in Doing for the rest of the Sprint. The park answers "can I get to this zone
+    // without crossing the grass?" itself, and answering it re-derived the sign-off without
+    // moving the card - so the one route to Done that nobody clicks was the one that stopped.
+    let s = planSprint(bigCatsSplit(1), ['bigcats-paths', 'lion-enc']);
+    s = startItem(s, 'lion-enc');
+    s = buildItem(s, 'lion-enc', FULL_DESIGN);
+    s = startItem(s, 'bigcats-paths');
+    const path = () => s.backlog.find((i) => i.id === 'bigcats-paths')!;
+    s = buildItem(s, 'bigcats-paths', presetFor(path()));
+    for (const t of path().tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'bigcats-paths', t.id);
+    // Everything a person can accept, accepted - and then the park has its say, which is what
+    // the reducer does after every action. It reads its own criteria back off again.
+    (path().acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, 'bigcats-paths', i, true); });
+    s = applyParkChecks(s);
+    expect(path().status, 'the park has not answered its criterion yet').toBe('committed');
+
+    // Run the path to the zone. The park sees it, ticks its own criterion - and that is the last
+    // one, so the card is finished.
+    const home = s.backlog.find((i) => i.id === 'lion-enc')!;
+    s = applyParkChecks(addConnector(s, { id: 'run-1', itemId: 'bigcats-paths', bends: [], thickness: 14, color: '#b9a888',
+      a: { x: 200, y: 500 }, b: { x: home.pos?.x ?? 200, y: home.pos?.y ?? 200, featureId: 'lion-enc' } }));
+    expect(path().status, 'the park answered the last criterion and the card stayed in Doing').toBe('done');
+  });
+
+  it('lets Done work go live without anybody pressing "show me on the park"', () => {
+    // `placed` means a human went and looked at it, not that the thing exists. Requiring it to
+    // release meant work the Developers built and stood on the park could not go live at all.
+    let s = withEnclosuresBuilt(initialZooState(1), 'lion-enc');
+    s = setItemTasks(s, 'lion', suggestTasks(s.backlog.find((i) => i.id === 'lion')!));
+    s = planSprint(s, ['lion']);
+    s = buildItem(startItem(s, 'lion'), 'lion', FULL_DESIGN);
+    for (const t of s.backlog.find((i) => i.id === 'lion')!.tasks ?? []) {
+      if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'lion', t.id);
+    }
+    (s.backlog.find((i) => i.id === 'lion')!.acceptance ?? [])
+      .forEach((_, i) => { s = confirmAcceptance(s, 'lion', i, true); });
+    const it = s.backlog.find((i) => i.id === 'lion')!;
+    expect(it.placed, 'nothing in this test ever pressed it').toBeFalsy();
+    expect(readyToOpen(it), 'finished work could not be released without a button about looking at it').toBe(true);
   });
 });
 

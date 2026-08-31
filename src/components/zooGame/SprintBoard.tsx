@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, isSignOffTask, signOffReady, nothingFitsToday } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, nothingFitsToday, readyToOpen } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
@@ -308,7 +308,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // park. You can't accept placement before you have placed it.
   const deployReady = (id: string) => {
     const it = deploy.find((x) => x.id === id);
-    return !!it && !!it.placed && signOffReady(it) && !(it.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done);
+    return !!it && readyToOpen(it);
   };
   // Everything the Definition of Done asks of this item: it is built, the Developers' plan is
   // ticked, and the Product Owner's criteria are accepted. The sign-off task follows the criteria
