@@ -204,7 +204,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         // the work waits for tomorrow - which is what running out of day looks like.
         if (dayCanAfford(state, building)) {
           return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
-                   says: `Built ${building.name} to the Definition of Done.`,
+                   // What they did, not what they wish they had done. Done is the whole team's
+                   // word and it waits for the Product Owner's: saying "built to the Definition
+                   // of Done" while four acceptance criteria sat untouched was the Developers
+                   // declaring something that is not theirs to declare.
+                   says: `Built ${building.name}. Not Done until its criteria are accepted.`,
                    weight: building.estimate };
         }
         return null;   // out of day. The clock runs down and the Daily Scrum comes round.

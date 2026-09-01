@@ -244,7 +244,7 @@ const EVENT_BEAT_MS = 9000;
  *  the gate if it does not belong to that accountability. An AI seat is a player, not a back
  *  door - and now it works at something like the pace of one.
  */
-export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, kind: string) => void,
+export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, action: ZooAction) => void,
   /** Who still has to agree a Sprint Goal before topic two begins: the seats somebody or some AI
    *  is holding. An empty seat cannot agree, so waiting on it would stall the game. */
   mustAgree?: readonly string[]) {
@@ -303,9 +303,11 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
         }
         waitedFor = null;
         const { seat, move } = next;
-        // The action type travels with the line so a rail can tell one kind of move from
-        // another - five items planned in a row is one thing happening, not five.
-        say?.(seat, move.says, move.action.type);
+        // The whole action travels with the line, so a rail can tell one kind of move from
+        // another - five items planned in a row is one thing happening, not five - and can tell
+        // which screen the line belongs to, which is not always the screen it was said on: the
+        // move that changes the topic is about the topic it moves to.
+        say?.(seat, move.says, move.action);
         send(seat, move.action);       // one move at a time, so it reads as somebody working
         // ...and the work costs the day, the way it would if a person had done it. Charged
         // rather than waited out, so a five-point build does not leave the board dead for a
