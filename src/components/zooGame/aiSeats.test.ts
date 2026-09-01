@@ -326,6 +326,23 @@ describe('a seat nobody is sitting in', () => {
       .toBe(true);
   });
 
+  it('never says the work is Done, because that is not theirs to say', () => {
+    // Reported from a game: "Built Big Cats Planting to the Definition of Done" while four
+    // acceptance criteria sat untouched and the card said "accept 4 more criteria". Done is the
+    // whole team's word and it waits on the Product Owner's, so the Developers saying it is
+    // both wrong and the wrong lesson.
+    let s = at({ phase: 'sprint', dayStage: 'building' });
+    const item = s.backlog.find((it) => it.category === 'enclosure')!;
+    s = { ...s, daySecondsLeft: 90, backlog: s.backlog.map((it) => (it.id === item.id
+      ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, started: true, unsized: false, estimate: 3 } : it)) };
+
+    const move = aiTurn(s, 'developer')!;
+    expect(move.action.type).toBe('BUILD_ITEM');
+    expect(move.says, 'the Developers declared something Done that nobody had accepted')
+      .not.toMatch(/definition of done|\bis Done\b/i);
+    expect(move.says, 'they did not say what they had actually done').toMatch(/^Built /);
+  });
+
   it('stops building when the day cannot afford it', () => {
     // Work has to cost time, or a Sprint delivers whatever it likes and the capacity the
     // whole game turns on means nothing. Building first and charging afterwards let a day
