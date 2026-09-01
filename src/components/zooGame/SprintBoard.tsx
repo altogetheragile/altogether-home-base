@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, nothingFitsToday, readyToOpen } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
@@ -746,9 +746,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           way to tell that from the game having stopped. A day running out with work still in the
           Sprint is the lesson, not a fault to hide. */}
       {!dayStarting && (
-        <ActionBar docked hint={nothingFitsToday(state)
-          ? 'Nothing left fits in what is left of today.'
-          : undefined}>
+        <ActionBar docked hint={(() => {
+          const why = whyNothingMoves(state);
+          if (why === 'day') return 'Nothing left fits in what is left of today.';
+          if (why === 'blocked') return 'Nothing in this Sprint can start: what is here is waiting on something that is not.';
+          return undefined;
+        })()}>
           <Button onClick={onEndDay}>
             {state.dayNumber === state.sprintDays
               ? 'End day \u2192 Review'

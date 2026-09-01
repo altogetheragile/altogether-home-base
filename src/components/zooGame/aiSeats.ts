@@ -141,12 +141,28 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       if (state.forecast.length === 0) {
         const capacity = sprintCapacity(state).points;
         const ready = state.backlog.filter((x) => x.status === 'backlog' && isReady(x));
-        const take: string[] = [];
+        const taken = new Set<string>();
         let pts = 0;
+        const room = (cost: number) => taken.size === 0 || pts + cost <= capacity;
+        const add = (it: BacklogItem) => { taken.add(it.id); pts += it.estimate; };
         for (const it of ready) {
-          if (take.length && pts + it.estimate > capacity) continue;
-          take.push(it.id); pts += it.estimate;
+          if (taken.has(it.id)) continue;
+          // An animal cannot start until its habitat is built, so selecting one without the
+          // other is selecting work the Sprint cannot begin. Reported from a game: the Lion was
+          // taken at eight points, the Lion Enclosure it needed was one point and did not fit,
+          // and a whole Sprint went by with a Sprint Backlog of one item nobody could start.
+          if (it.category === 'exhibit' && !enclosureReady(state, it)) {
+            const home = state.backlog.find((x) => x.id === it.enclosureId);
+            if (!home || home.status !== 'backlog' || !isReady(home)) continue;   // nothing we can do about it here
+            if (!taken.has(home.id)) {
+              if (!room(home.estimate + it.estimate)) continue;   // the pair does not fit; leave both
+              add(home);
+            }
+          }
+          if (!room(it.estimate)) continue;
+          add(it);
         }
+        const take = [...taken];
         // Always at least the top item, whatever the measurement says. A Sprint that
         // delivered nothing leaves a velocity of zero, and taking only what fits inside
         // zero is taking nothing - so the Developers forecast nothing, forever, and a team
