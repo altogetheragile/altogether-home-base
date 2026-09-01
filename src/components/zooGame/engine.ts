@@ -361,6 +361,25 @@ export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
   return state.daySecondsLeft >= cost;
 }
 
+/** Why the board is standing still, when it is.
+ *
+ *  'day' means the work is there and the day cannot pay for it, which is a day running out.
+ *  'blocked' means the day has time and there is nothing in the Sprint anybody could start:
+ *  an animal whose habitat is not built, and no habitat in the Sprint to build. That is a
+ *  Sprint Backlog that cannot move, and telling somebody their day ran out would be a lie.
+ *  Reported from a game: a Sprint Backlog of one Lion whose enclosure was left in the Product
+ *  Backlog, three days of nothing, and a board that said the day had run out of room. */
+export function whyNothingMoves(state: ZooGameState): 'day' | 'blocked' | null {
+  if (state.phase !== 'sprint' || state.dayStage !== 'building') return null;
+  const inSprint = state.backlog.filter((it) => it.status === 'committed');
+  if (!inSprint.length) return null;
+  if (inSprint.some((it) => it.started)) return nothingFitsToday(state) ? 'day' : null;
+  // Nothing started, so the question is whether anything COULD be, time aside.
+  const startable = inSprint.filter((it) => enclosureReady(state, it));
+  if (!startable.length) return 'blocked';
+  return nothingFitsToday(state) ? 'day' : null;
+}
+
 /** Nothing the Developers could pick up fits in what is left of today. The day is spent, even
  *  though the clock has not finished running down. */
 export function nothingFitsToday(state: ZooGameState): boolean {

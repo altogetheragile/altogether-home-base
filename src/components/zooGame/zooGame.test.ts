@@ -3,7 +3,7 @@ import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRU
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
   setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen } from './engine';
+  endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -2145,6 +2145,23 @@ describe('zoo game: the seeded Backlog reads correctly', () => {
       expect(it, name).toBeTruthy();
       expect(iconKey(it as BacklogItem), name).toBe(key);
     }
+  });
+});
+
+describe('zoo game: a board that will not move says which kind of stuck it is', () => {
+  it('tells a blocked Sprint from a spent day', () => {
+    // Two very different things look identical from the outside: a day with no room left in it,
+    // and a Sprint Backlog nobody can start. The reported game was the second and the board said
+    // the first, which sends a player looking at the clock for a problem that is in the Backlog.
+    let s = planSprint(withEnclosuresBuilt(initialZooState(1)), ['lion']);
+    s = { ...s, dayStage: 'building', daySecondsLeft: 90 };
+    // The Lion is in the Sprint and its habitat is not: nothing here can start, whatever the time.
+    expect(whyNothingMoves(s), 'a Sprint that cannot start anything was called a spent day').toBe('blocked');
+
+    // ...and with the habitat built, the same Sprint is only ever short of time.
+    const unblocked = withEnclosuresBuilt(s, 'lion-enc');
+    expect(whyNothingMoves(unblocked)).not.toBe('blocked');
+    expect(whyNothingMoves({ ...unblocked, daySecondsLeft: 1 }), 'a day with a second left is a spent day').toBe('day');
   });
 });
 

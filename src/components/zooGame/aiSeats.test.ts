@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity, dayCanAfford } from './engine';
+import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity, dayCanAfford, enclosureReady } from './engine';
 import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
@@ -231,6 +231,35 @@ describe('a seat nobody is sitting in', () => {
     for (const it of worked) {
       expect(it.design, `${it.name} reached Done with no design`).toBeTruthy();
     }
+  });
+
+  it('does not forecast an animal without the habitat it cannot start without', () => {
+    // Reported from a game, and read out of its state: the Lion Enclosure came back from Sprint
+    // one re-sized at one point, capacity was eight, the Lion was eight - so the Lion went in
+    // first, the one-point enclosure it needs did not fit after it, and Sprint two was a Sprint
+    // Backlog of one item nobody could start. Three days of nothing.
+    //
+    // Built as that Backlog and no other, because with a fuller one the Developers find
+    // something startable by luck and the test passes while the fault is still there.
+    const base = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone',
+      sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'], planningTopic: 'what' });
+    const lion = { ...base.backlog.find((x) => x.id === 'lion')!, estimate: 8, unsized: false, status: 'backlog' as const };
+    const home = { ...base.backlog.find((x) => x.id === 'lion-enc')!, estimate: 1, unsized: false, status: 'backlog' as const,
+      carriedOver: true, started: true, design: { parts: {}, colors: { ground: '#8c7a5b', fence: '#6b5b45' } } };
+    const s: ZooGameState = { ...base, velocity: [8], backlog: [lion, home] };
+    expect(sprintCapacity(s).points, 'this test needs the pair to be a tight fit').toBe(8);
+
+    const move = aiTurn(s, 'developer')!;
+    expect(move.action.type).toBe('SET_FORECAST');
+    const ids = (move.action as { ids: string[] }).ids;
+    expect(ids.length, 'they forecast nothing at all').toBeGreaterThan(0);
+
+    // Whatever they took, they can start something. A Sprint Backlog nobody can begin is three
+    // days of watching a board that will not move.
+    const committed: ZooGameState = { ...s, backlog: s.backlog.map((x) => (ids.includes(x.id) ? { ...x, status: 'committed' as const } : x)) };
+    const canStart = committed.backlog.filter((x) => x.status === 'committed' && enclosureReady(committed, x));
+    expect(canStart.map((x) => x.name), 'nothing in the Sprint Backlog could be started at all').not.toEqual([]);
+    if (ids.includes('lion')) expect(ids, 'the Lion went in without its enclosure').toContain('lion-enc');
   });
 
   it('does not propose starting an animal whose habitat is not built', () => {
