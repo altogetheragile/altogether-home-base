@@ -84,6 +84,20 @@ export type ItemStatus = 'backlog' | 'committed' | 'done' | 'open';
 /** One task in a PBI's build plan: a small step the Developers tick off as they work. */
 export interface SprintTask { id: string; label: string; done: boolean }
 
+/** One thing the Scrum Team did that is worth showing them again at the Retrospective.
+ *
+ *  Deliberately not a judgement. `kind` is what sort of thing it was, so a later increment can
+ *  attach a cost to it without having to guess from the wording, and `what` is the line a person
+ *  reads. Nothing in the game reads these except the Retrospective. */
+export interface TeamDecision {
+  sprint: number;
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement';
+  /** The accountability that did it, where the game knows. Playing alone you are all three, so
+   *  there is nobody to name and this is left off. */
+  by?: string;
+  what: string;
+}
+
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
  *  seating). Carries the attributes the visitor simulation reads, plus game fields
  *  (estimate, per-item acceptance criteria, status). */
@@ -289,6 +303,17 @@ export interface ZooGameState {
    *  and not yet a Sprint Goal. Changing the wording clears this, because agreement was to
    *  the words that were there. */
   sprintGoalAgreed: string[];
+  /** What the Scrum Team did, as it did it: who chose the Sprint Backlog, whether the Daily Scrum
+   *  was held, whether anything was pulled in unready. Recorded rather than judged - the game has
+   *  no opinion about any of it yet. It is here so the Retrospective can show a team what they
+   *  actually did beside what actually happened, which is the whole of inspect and adapt.
+   *
+   *  Append-only, and kept across Sprints so a habit is visible as a habit. */
+  decisions?: TeamDecision[];
+  /** The accountability that last chose the Sprint Backlog, remembered until the Sprint starts,
+   *  because a forecast is built up item by item and only the last state of it was committed. */
+  forecastBy?: string;
+
   /** Which topic of Sprint Planning the Scrum Team is on. In state rather than in the component
    *  because Sprint Planning is one event that a team attends together: a topic each player was
    *  privately on is three separate meetings, and the seats played by the game could not tell
@@ -432,7 +457,7 @@ export interface ZooGameState {
 export type ZooAction =
   | { type: 'START'; gameSeed?: number }
   | { type: 'SET_PHASE'; phase: ZooPhase }
-  | { type: 'SET_FORECAST'; ids: string[] }
+  | { type: 'SET_FORECAST'; ids: string[]; by?: string }
   | { type: 'AGREE_SPRINT_GOAL'; seat: string }
   | { type: 'SPEND_DAY'; seconds: number }
   | { type: 'TICK_DAY' }
@@ -440,9 +465,9 @@ export type ZooAction =
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
-  | { type: 'SET_DOD'; dod: string[] }
+  | { type: 'SET_DOD'; dod: string[]; by?: string }
   | { type: 'ACCEPT_SIGNAL'; index: number }
-  | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number }
+  | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number; by?: string }
   | { type: 'HOLD_REFINEMENT' }
   | { type: 'AGREE_DOD' }
   | { type: 'WRITE_BACKLOG'; brief: ZooBrief }
@@ -471,7 +496,7 @@ export type ZooAction =
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
   | { type: 'CANCEL_SPRINT' }
-  | { type: 'SET_WIP_LIMIT'; limit: number }
+  | { type: 'SET_WIP_LIMIT'; limit: number; by?: string }
   | { type: 'SET_TEACHING'; on: boolean }
   | { type: 'MARK_TAUGHT'; id: string }
   | { type: 'SET_DOR'; dor: string[] }
@@ -499,7 +524,7 @@ export type ZooAction =
   | { type: 'ADD_CONNECTOR'; connector: ZooConnector }
   | { type: 'UPDATE_CONNECTOR'; id: string; patch: Partial<ZooConnector> }
   | { type: 'DELETE_CONNECTOR'; id: string }
-  | { type: 'PULL_ITEM'; id: string }
+  | { type: 'PULL_ITEM'; id: string; by?: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
   | { type: 'ADD_ANOTHER'; id: string }
@@ -512,8 +537,8 @@ export type ZooAction =
   | { type: 'RENAME_ITEM'; id: string; name: string }
   | { type: 'OPEN_ITEM'; id: string }
   | { type: 'END_DAY' }
-  | { type: 'RUN_DAILY_SCRUM' }
-  | { type: 'SKIP_DAILY_SCRUM' }
+  | { type: 'RUN_DAILY_SCRUM'; by?: string }
+  | { type: 'SKIP_DAILY_SCRUM'; by?: string }
   | { type: 'START_DAY' }
   | { type: 'REVIEW_SPRINT' }
   | { type: 'NEXT_SPRINT'; improvement: string }

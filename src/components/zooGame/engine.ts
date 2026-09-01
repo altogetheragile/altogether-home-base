@@ -1,4 +1,4 @@
-import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief } from './types';
+import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily } from './design';
@@ -549,6 +549,26 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
 
+/** Notice something the Scrum Team did, without having an opinion about it.
+ *
+ *  The Retrospective reads these back to them beside what actually happened. Nothing else in the
+ *  game looks at them: no rule turns on them and nothing costs anything yet. A team that cannot
+ *  see what it did cannot inspect it, and that is the first half of inspect and adapt. */
+export function note(state: ZooGameState, d: Omit<TeamDecision, 'sprint'>): ZooGameState {
+  return { ...state, decisions: [...(state.decisions ?? []), { sprint: state.sprintNumber, ...d }] };
+}
+
+/** What the Scrum Team did in one Sprint, newest last. */
+export const decisionsIn = (state: ZooGameState, sprint: number): TeamDecision[] =>
+  (state.decisions ?? []).filter((d) => d.sprint === sprint);
+
+/** How the game names an accountability when it is telling a team what they did. Playing alone
+ *  there is nobody to name, because you are all three of them. */
+export const whoIs = (by?: string): string =>
+  by === 'product_owner' ? 'The Product Owner'
+    : by === 'scrum_master' ? 'The Scrum Master'
+      : by === 'developer' ? 'The Developers' : 'You';
+
 /** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */
 export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, goalCritical: !it.goalCritical } : it)) };
@@ -581,8 +601,11 @@ export function markTaught(state: ZooGameState, id: string): ZooGameState {
 
 /** Set the work in progress limit, or turn it off with 0. A WIP limit is Lean thinking, not part
  *  of Scrum - the Developers are self-managing, so it is their agreement to make and to drop. */
-export function setWipLimit(state: ZooGameState, limit: number): ZooGameState {
-  return { ...state, wipLimit: Math.max(0, Math.round(limit)) };
+export function setWipLimit(state: ZooGameState, limit: number, by?: string): ZooGameState {
+  const next = Math.max(0, Math.round(limit));
+  if (next === state.wipLimit) return state;
+  return note({ ...state, wipLimit: next }, { kind: 'wip', by,
+    what: next === 0 ? 'The WIP limit was taken off.' : `The WIP limit was set to ${next}.` });
 }
 
 export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
@@ -985,7 +1008,10 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     committed.has(it.id) ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it,
   );
   const committedPts = [...committed].reduce((s, id) => s + (backlog.find((it) => it.id === id)?.estimate ?? 0), 0);
-  return {
+  // What the team just did, for the Retrospective to read back. The forecast is built item by item
+  // and only its last state is committed, so who chose it is remembered from then rather than now.
+  const turnedAway = ids.filter((id) => !committed.has(id));
+  const started: ZooGameState = {
     ...state, phase: 'sprint', committedIds: [...committed], backlog, forecast: [],
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
     sprintForecast: sprintCapacity(state).points,
@@ -1002,6 +1028,20 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     daySecondsLeft: DAY_SECONDS,
     scrumSecondsLeft: DAILY_SCRUM_SECONDS,
   };
+
+  let out = started;
+  out = note(out, { kind: 'forecast', by: state.forecastBy,
+    what: `${whoIs(state.forecastBy)} chose the Sprint Backlog: ${committed.size} item${committed.size === 1 ? '' : 's'}, ${committedPts} points against a forecast of ${sprintCapacity(state).points}.` });
+  if (turnedAway.length) {
+    out = note(out, { kind: 'unready', by: state.forecastBy,
+      what: `${turnedAway.length} item${turnedAway.length === 1 ? '' : 's'} could not go in: not ready by the team's own Definition of Ready.` });
+  }
+  if (refinementPoints > 0) {
+    out = note(out, { kind: 'refinement', what: `${refinementPoints} point${refinementPoints === 1 ? '' : 's'} of the Sprint set aside to refine the Backlog together.` });
+  } else {
+    out = note(out, { kind: 'refinement', what: 'No time set aside this Sprint to refine the Backlog.' });
+  }
+  return out;
 }
 
 /** Write the Product Backlog from the brief. The game starts with none, because a Backlog that is
@@ -1084,12 +1124,14 @@ export function sprintProgress(state: ZooGameState): { pointsCommitted: number; 
 /** Pull a Backlog item into the current Sprint mid-Sprint. Scope can grow by
  *  agreement during the Sprint, as long as the Sprint's goal is not put at risk -
  *  so the Backlog stays visible and pullable while building. Must be estimated first. */
-export function pullIntoSprint(state: ZooGameState, id: string): ZooGameState {
+export function pullIntoSprint(state: ZooGameState, id: string, by?: string): ZooGameState {
   if (state.phase !== 'sprint') return state;
   const item = state.backlog.find((it) => it.id === id && it.status === 'backlog' && !it.unsized);
   if (!item) return state;
   const backlog = state.backlog.map((it) => (it.id === id ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it));
-  return { ...state, committedIds: [...state.committedIds, id], backlog };
+  const pulled = { ...state, committedIds: [...state.committedIds, id], backlog };
+  return note(pulled, { kind: isReady(item) ? 'forecast' : 'unready', by,
+    what: `${item.name} was pulled into the Sprint on day ${state.dayNumber}${isReady(item) ? '' : ', and it was not ready'}.` });
 }
 
 // ============= Building and releasing =============
@@ -1312,8 +1354,12 @@ export function setDefinitionOfReady(state: ZooGameState, dor: string[]): ZooGam
   return { ...state, definitionOfReady: dor.map((d) => d.trim()).filter((d) => d.length > 0) };
 }
 
-export function setDefinitionOfDone(state: ZooGameState, dod: string[]): ZooGameState {
-  return { ...state, definitionOfDone: dod.map((d) => d.trim()).filter((d) => d.length > 0) };
+export function setDefinitionOfDone(state: ZooGameState, dod: string[], by?: string): ZooGameState {
+  const next = dod.map((d) => d.trim()).filter((d) => d.length > 0);
+  const before = state.definitionOfDone;
+  if (next.length === before.length && next.every((d, i) => d === before[i])) return state;
+  return note({ ...state, definitionOfDone: next }, { kind: 'dod', by,
+    what: `The Definition of Done changed: ${before.length} criteria became ${next.length}.` });
 }
 
 // ============= Timed days and the Daily Scrum =============
@@ -1379,8 +1425,10 @@ export function startDay(state: ZooGameState): ZooGameState {
  *  re-planning the day, surfaces any blocker early - so it can be removed before it
  *  grows (outside the event). It costs a little of the next day (the sync is
  *  timeboxed). */
-export function runDailyScrum(state: ZooGameState): ZooGameState {
+export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
+  state = note(state, { kind: 'daily-scrum', by,
+    what: `Day ${state.dayNumber}: the Daily Scrum was held${by && by !== 'developer' ? `, by ${whoIs(by).replace(/^The /, 'the ')}` : ''}.` });
   // A disciplined team (the "hold the Daily Scrum every day" improvement) runs an
   // efficient, timeboxed Daily Scrum that costs no build time.
   const mult = state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
@@ -1399,8 +1447,10 @@ export function runDailyScrum(state: ZooGameState): ZooGameState {
 /** Carry on with the original plan instead of adapting. With a blocker surfaced, ignoring
  *  it lets it grow overnight (a big cost tomorrow). With nothing surfaced, this is just the
  *  Daily Scrum concluding - it still costs its small timebox (the event is not skippable). */
-export function skipDailyScrum(state: ZooGameState): ZooGameState {
+export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
+  state = note(state, { kind: 'daily-scrum', by,
+    what: `Day ${state.dayNumber}: the Daily Scrum was skipped${state.pendingImpediment ? ', with something waiting to be raised' : ''}.` });
   const imp = state.pendingImpediment;
   const mult = imp ? SKIP_PENALTY_MULT : state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
   const base = {
