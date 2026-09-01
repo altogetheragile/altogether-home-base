@@ -4,12 +4,12 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
-import { retroQuestions } from './engine';
+import { retroQuestions, decisionsIn } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Zap, MessageCircleQuestion } from 'lucide-react';
+import { Zap, ClipboardList, MessageCircleQuestion } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 type Step = 'inspect' | 'adapt';
@@ -47,6 +47,19 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
   const [selected, setSelected] = useState<string | null>(null);
   const [step, setStep] = useState<Step>('inspect');
   const questions = retroQuestions(state);
+  // What the game noticed this Sprint, and anything that has now happened often enough to be a
+  // habit rather than a one-off. A habit is the thing worth inspecting; a single Sprint is noise.
+  const did = decisionsIn(state, state.sprintNumber);
+  const habits = (() => {
+    const out: string[] = [];
+    const skipped = (state.decisions ?? []).filter((d) => d.kind === 'daily-scrum' && /skipped/.test(d.what));
+    if (skipped.length > 1) out.push(`The Daily Scrum has been skipped ${skipped.length} times across this game.`);
+    const unready = (state.decisions ?? []).filter((d) => d.kind === 'unready');
+    if (unready.length > 1) out.push(`Work that was not ready has gone into a Sprint ${unready.length} times.`);
+    const noRefine = (state.decisions ?? []).filter((d) => d.kind === 'refinement' && /^No time/.test(d.what));
+    if (noRefine.length > 1) out.push(`${noRefine.length} Sprints have set aside no time to refine the Backlog.`);
+    return out;
+  })();
   const current = STEPS.find((s) => s.key === step)!;
 
   return (
@@ -63,8 +76,34 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
         </div>
       </header>
 
-      {/* Coaching questions: open prompts drawn from what happened, to inspect before adapting.
-          Reflective and unscored - the point is the thinking, not a right answer. */}
+      {/* What the team actually did, before anybody discusses how it went.
+          
+          The Retrospective inspects "individuals, interactions, processes and tools", and a team
+          cannot inspect what it cannot remember: who chose the Sprint Backlog, whether the Daily
+          Scrum was held on the third day, whether anything went in unready. The game noticed at
+          the time and says so here, without an opinion. Nothing in this list is marked good or
+          bad, because whether it was is the conversation, and the conversation is the event. */}
+      {step === 'inspect' && did.length > 0 && (
+        <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+          <div className="flex items-center gap-1.5 text-sm font-semibold">
+            <ClipboardList className="h-4 w-4" /> What we did this Sprint
+          </div>
+          <ul className="space-y-1">
+            {did.map((d, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
+                <span>{d.what}</span>
+              </li>
+            ))}
+          </ul>
+          {habits.length > 0 && (
+            <p className="text-[11px] text-muted-foreground/80">
+              {habits.join(' ')}
+            </p>
+          )}
+        </section>
+      )}
+
       {step === 'inspect' && (
         <section className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-4">
           <div className="flex items-center gap-1.5 text-sm font-semibold text-primary"><MessageCircleQuestion className="h-4 w-4" /> Talk these through</div>

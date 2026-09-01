@@ -50,6 +50,16 @@ export interface ZooSession extends ZooActions {
  *  is one write rather than forty; short enough that nobody notices. */
 const FLUSH_MS = 250;
 
+/** The actions where "who did this?" is the lesson rather than a detail.
+ *
+ *  The accountability travels IN the action, not beside it, because an action is a message: it is
+ *  written to the shared game and replayed by every other browser, and an actor left on the
+ *  outside would be lost the moment it crossed the wire. */
+const ACTOR_MATTERS = new Set(['SET_FORECAST', 'PLAN_SPRINT', 'PULL_ITEM', 'RUN_DAILY_SCRUM',
+  'SKIP_DAILY_SCRUM', 'SET_WIP_LIMIT', 'SET_DOD']);
+const stamped = (action: ZooAction, seat: SeatName | null | undefined): ZooAction =>
+  (seat && ACTOR_MATTERS.has(action.type) ? { ...action, by: seat } as ZooAction : action);
+
 export function useZooSession(gameId: string | null, seat: SeatContext = { seat: null }): ZooSession {
   const { user } = useAuth();
   const [sync, setSync] = useState<SyncState | null>(null);
@@ -134,14 +144,14 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
     const verdict = mayTake(action.type, seatRef.current);
     if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
     setRefused(null);
-    apply(action);
+    apply(stamped(action, seatRef.current.seat));
   }, [apply]);
 
   // An AI seat is a player, so its move is judged the same way - just against its own
   // accountability rather than against whoever happens to be sitting here.
   const sendAs = useCallback((asSeat: SeatName, action: ZooAction) => {
     if (!mayTake(action.type, { seat: asSeat }).allowed) return;
-    apply(action);
+    apply(stamped(action, asSeat));
   }, [apply]);
 
   // ---- listen ----

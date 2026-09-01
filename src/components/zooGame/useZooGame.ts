@@ -45,7 +45,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'SET_DOR':
       return setDefinitionOfReady(state, action.dor);
     case 'SET_DOD':
-      return setDefinitionOfDone(state, action.dod);
+      return setDefinitionOfDone(state, action.dod, action.by);
     case 'ACCEPT_SIGNAL':
       return acceptSignal(state, action.index);
     case 'START_ITEM_AT':
@@ -61,7 +61,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'WRITE_BACKLOG':
       return writeBacklog(state, action.brief);
     case 'PLAN_SPRINT':
-      return planSprint(state, action.ids, action.refinementPoints);
+      // Who chose the work, not who pressed the button. The Product Owner starting the Sprint is
+      // not the Product Owner selecting the Sprint Backlog, and telling a team it was would be
+      // worse than saying nothing: the whole point of the record is that it is accurate.
+      return planSprint({ ...state, forecastBy: state.forecastBy ?? action.by }, action.ids, action.refinementPoints);
     case 'ESTIMATE_ITEM':
       return estimateItem(state, action.id, action.points);
     case 'SET_TASKS':
@@ -81,7 +84,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'SET_SPRINT_DAYS':
       return setSprintDays(state, action.days);
     case 'SET_WIP_LIMIT':
-      return setWipLimit(state, action.limit);
+      return setWipLimit(state, action.limit, action.by);
     case 'SET_TEACHING':
       return setTeaching(state, action.on);
     case 'MARK_TAUGHT':
@@ -157,7 +160,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'DELETE_CONNECTOR':
       return deleteConnector(state, action.id);
     case 'PULL_ITEM':
-      return pullIntoSprint(state, action.id);
+      return pullIntoSprint(state, action.id, action.by);
     case 'BUILD_ITEM':
       return buildItem(state, action.id, action.design);
     case 'EDIT_ITEM':
@@ -186,7 +189,9 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'AGREE_SPRINT_GOAL':
       return agreeSprintGoal(state, action.seat);
     case 'SET_FORECAST':
-      return setForecast(state, action.ids);
+      // Remembered rather than noted: a forecast is built item by item, and what matters is who
+      // chose the one that got committed.
+      return setForecast({ ...state, forecastBy: action.by ?? state.forecastBy }, action.ids);
     case 'SPEND_DAY':
       return spendDay(state, action.seconds);
     case 'TICK_DAY':
@@ -196,9 +201,9 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'END_DAY':
       return endDay(state);
     case 'RUN_DAILY_SCRUM':
-      return runDailyScrum(state);
+      return runDailyScrum(state, action.by);
     case 'SKIP_DAILY_SCRUM':
-      return skipDailyScrum(state);
+      return skipDailyScrum(state, action.by);
     case 'START_DAY':
       return startDay(state);
     case 'CANCEL_SPRINT':
