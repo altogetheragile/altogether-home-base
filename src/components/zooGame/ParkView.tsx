@@ -274,7 +274,7 @@ function ViewSwitch({ view, onView }: { view: 'plan' | 'iso'; onView: (v: 'plan'
     <div className="flex items-center overflow-hidden rounded-md border border-border" role="group" aria-label="How to draw the park">
       {([['plan', 'Plan', Map], ['iso', 'Increment', Box]] as const).map(([key, label, Icon]) => (
         <button key={key} type="button" onClick={() => onView(key)} aria-pressed={view === key}
-          title={key === 'plan' ? 'The drawing: lay the zoo out and design it' : 'Inspect the Increment - what you have delivered, as a visitor would see it'}
+          title={key === 'plan' ? 'The drawing, for laying out a route by hand' : 'The zoo as a visitor sees it'}
           className={cn(FOCUS, 'flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium transition-colors',
             view === key ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground')}>
           <Icon className="h-3.5 w-3.5" /> {label}
@@ -1522,7 +1522,10 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
   // Held OUTSIDE when somebody else needs to move it: pressing "Inspect" on the bench has to be able
   // to turn the park to the Increment, which is the whole point of the button. It keeps its own
   // state when nobody is holding it, so the small read-only views still work on their own.
-  const [ownView, setOwnView] = useState<'plan' | 'iso'>('plan');
+  // The park opens as the zoo, not as the drawing of it. The blueprint is on its way out: it is
+  // the surface a route is still drawn on, which is the one thing the Increment view cannot do
+  // yet, so it stays reachable rather than default.
+  const [ownView, setOwnView] = useState<'plan' | 'iso'>('iso');
   const [turn, setTurn] = useState(0); // quarter-turns of the Increment view
   const view = viewProp ?? ownView;
   const setView = onView ?? setOwnView;

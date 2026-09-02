@@ -44,7 +44,7 @@ describe('the park', () => {
     // problem with it - nothing errors, the animal simply does not follow the pointer.
     const onSetSpot = vi.fn();
     const { container } = render(
-      <ParkView state={zooWithALion()} large onSetSpot={onSetSpot} />,
+      <ParkView state={zooWithALion()} large view="plan" onSetSpot={onSetSpot} />,
     );
     const lion = container.querySelector('[style*="cursor"], .cursor-grab')
       ?? [...container.querySelectorAll('div')].find((d) => d.className.includes('cursor-grab'));
@@ -84,7 +84,7 @@ function busyPark(): ZooGameState {
 
 /** Where the park puts everything, read off the rendered park. */
 function layout(state: ZooGameState): string[] {
-  const { container } = render(<ParkView state={state} large />);
+  const { container } = render(<ParkView state={state} large view="plan" />);
   return [...container.querySelectorAll<HTMLElement>('[style*="left:"]')]
     .filter((e) => e.style.top && e.style.left)
     .map((e) => `${e.style.left},${e.style.top}`)
@@ -117,7 +117,7 @@ describe('the two views draw the same zoo', () => {
 
     // The plan draws one positioned feature for each, plus whatever it positions that is not a
     // feature (a path label, a copy). Every standing item must be there.
-    const plan = render(<ParkView state={state} large />).container;
+    const plan = render(<ParkView state={state} large view="plan" />).container;
     const planCount = [...plan.querySelectorAll<HTMLElement>('[style*="left:"]')]
       .filter((e) => e.style.top && e.style.left).length;
     expect(planCount).toBeGreaterThanOrEqual(expected.length);
@@ -141,7 +141,7 @@ describe('the plan is a plan', () => {
     // pixel-art buildings, visitors on the promenade - competing with the isometric view, losing,
     // and costing every feature twice. It is a blueprint now: the drawing you build FROM, next to
     // the isometric view, which is the thing you built.
-    const { container } = render(<ParkView state={zooWithALion()} large />);
+    const { container } = render(<ParkView state={zooWithALion()} large view="plan" />);
 
     // Drawn on a sheet, not on grass.
     const sheet = [...container.querySelectorAll<HTMLElement>('div')]
@@ -173,7 +173,7 @@ describe('arranging a family', () => {
   it('lets every animal of a family be picked up, not just the first', () => {
     // "If I add a family I need to be able to place them individually." Only the first of a pride
     // could be taken hold of; the rest were scenery arranged around it.
-    const { container } = render(<ParkView state={pride()} large onSetSpot={() => {}} onSetMemberSpot={() => {}} />);
+    const { container } = render(<ParkView state={pride()} large view="plan" onSetSpot={() => {}} onSetMemberSpot={() => {}} />);
     const grabbable = [...container.querySelectorAll('div')].filter((d) => d.className.includes('cursor-grab'));
     // five lions in the pride, and every one of them can be moved
     expect(grabbable.length, 'not every animal of the family can be picked up').toBeGreaterThanOrEqual(5);
@@ -182,7 +182,7 @@ describe('arranging a family', () => {
   it('puts the one that was dragged where it was dropped, and leaves the others alone', () => {
     const placed: { id: string; member: number }[] = [];
     const { container } = render(
-      <ParkView state={pride()} large onSetSpot={() => {}} onSetMemberSpot={(id, member) => placed.push({ id, member })} />,
+      <ParkView state={pride()} large view="plan" onSetSpot={() => {}} onSetMemberSpot={(id, member) => placed.push({ id, member })} />,
     );
     const lions = [...container.querySelectorAll('div')].filter((d) => d.className.includes('cursor-grab'));
     drag(lions[2], { x: 100, y: 100 }, { x: 150, y: 120 });
@@ -207,7 +207,7 @@ describe('rock is drawn as rock, not as a shrub', () => {
     ] } as ZooGameState;
   };
 
-  const planView = (s: ZooGameState) => render(<ParkView state={s} large />).container.innerHTML;
+  const planView = (s: ZooGameState) => render(<ParkView state={s} large view="plan" />).container.innerHTML;
   const isoView = (s: ZooGameState) => render(<IsoZoo state={s} height={460} />).container.innerHTML;
 
   it('tells a rock from a tree in BOTH drawings', () => {
@@ -248,7 +248,7 @@ describe('the grips for arranging a landscape feature', () => {
 
   const grips = (opts: { building?: string } = {}) => {
     const { container } = render(
-      <ParkView state={riverPark()} large building={opts.building} onSetSize={() => {}} onSetRot={() => {}} onOpenBuild={() => {}} />,
+      <ParkView state={riverPark()} large view="plan" building={opts.building} onSetSize={() => {}} onSetRot={() => {}} onOpenBuild={() => {}} />,
     );
     return [...container.querySelectorAll<HTMLElement>('[title]')]
       .filter((e) => /longer|wider|turn it/i.test(e.getAttribute('title') ?? ''));
@@ -263,7 +263,7 @@ describe('the grips for arranging a landscape feature', () => {
       item({ id: 'shop', name: 'Gift Shop', category: 'amenity', template: 'shop', zone: 'Grounds', pos: { x: 520, y: 300 } }),
     ] } as ZooGameState;
     const { container } = render(
-      <ParkView state={park} large onSetSize={() => {}} onSetRot={() => {}} onOpenBuild={() => {}} />,
+      <ParkView state={park} large view="plan" onSetSize={() => {}} onSetRot={() => {}} onOpenBuild={() => {}} />,
     );
     const turns = [...container.querySelectorAll('[title]')]
       .filter((e) => /turn it/i.test(e.getAttribute('title') ?? ''));

@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
@@ -73,6 +73,8 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
   // a gate to releasing value" - so arriving here with Done work unreleased is not tidy, it is a
   // Sprint's worth of value that no visitor has had yet.
   const unreleased = state.backlog.filter((it) => it.status === 'done');
+  // What the Sprint predicted, and what the visitors did about it.
+  const verdict = betVerdict(state);
   // ...and work the Developers finished that is waiting on the Product Owner to accept it. Since
   // Done waits for that approval, this is where a Sprint quietly goes: five things built, none of
   // them Done, an empty park in the picture above and nothing on this screen saying why.
@@ -115,6 +117,32 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
           <IsoZoo state={state} height={470} className="px-3 pb-2" />
         </Suspense>
       </section>
+
+      {/* The bet, answered. This is the Sprint's own question, and the Review is the only place it
+          can be settled: what the team predicted their work would do to the people the zoo is for,
+          and what the visitors actually did. Right or wrong is not the point of it - either way
+          they know something about these visitors they did not know last Sprint. */}
+      {verdict && (
+        <section className={cn('rounded-lg border px-3 py-2.5',
+          verdict.met ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5',
+            verdict.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+            Your bet &middot; {verdict.met ? 'it came off' : 'it did not'}
+            <ExplainButton cards={['empiricism', 'sprint-review']} compact />
+          </div>
+          <p className="text-sm">
+            You said <strong>{betLine(verdict.bet)}</strong>.{' '}
+            {verdict.moved === 0
+              ? 'It did not move at all.'
+              : <>It {verdict.moved > 0 ? 'rose' : 'fell'} by <strong>{Math.abs(verdict.moved)}</strong>, from {verdict.bet.from} to {verdict.now}.</>}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {verdict.met
+              ? 'You predicted what this work would do to the people it was for, and you were right. That is worth more than the points.'
+              : 'A bet you get wrong is worth as much as one you get right: you know something about these visitors now that you did not know when you made it.'}
+          </p>
+        </section>
+      )}
 
       {/* Work that is Done and still shut. It sits directly under the picture, because it is the
           honest caption for it: what you are looking at is not everything the Sprint finished.
