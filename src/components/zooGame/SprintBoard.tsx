@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen, PLACEMENT_CHOICES } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
@@ -26,8 +26,8 @@ import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Boxes, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
-import { FOCUS, SURFACE, TONE } from './ui/tokens';
+import { Boxes, MessageCircleQuestion, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, ClipboardList, X } from 'lucide-react';
+import { EYEBROW, FOCUS, SURFACE, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -48,6 +48,8 @@ interface SprintBoardProps {
   onSetWipLimit?: (n: number) => void;
   onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
+  /** Answer the Developers' question about where something goes. */
+  onAnswerPlacement?: (id: string, choice: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
   onAssignDev: (itemId: string, devId: string) => void;
   onRenameMember: (memberId: string, name: string) => void;
@@ -228,7 +230,7 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
   // it is how the board came to have less room reserved than the bench takes: with nothing on the
@@ -378,6 +380,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       </div>
     );
   }
+  // What the Developers have asked about, if anything.
+  const asked = state.pendingPlacement
+    ? state.backlog.find((it) => it.id === state.pendingPlacement!.itemId) ?? null : null;
   const dayStarting = state.dayStage === 'dayStart';
   // Something actually on the bench: it takes the room it needs then, and steps back when it is idle.
   // What the bench is showing. Yours if you have picked something up; otherwise whatever the
@@ -492,6 +497,31 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           <div>
             <div className="min-w-0 space-y-2">
               <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({sprintTotal})</span></h3>
+
+              {/* The Developers have a question, and it is above the board because a question you
+                  have to go looking for is a question nobody answers. Where a habitat or a
+                  building goes is what a visitor meets and in what order, so it is the Product
+                  Owner's - and they get on with it if nobody answers, which costs you the say. */}
+              {asked && onAnswerPlacement && (
+                <div className="rounded-lg border-2 border-primary/50 bg-primary/5 px-3 py-2.5">
+                  <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-primary')}>
+                    <MessageCircleQuestion className="h-3.5 w-3.5" /> The Developers are asking
+                  </div>
+                  <p className="mb-2 text-sm">
+                    Where should <strong>{asked.name}</strong> go? It is what visitors walk up to, so it is your call.
+                    They will place it themselves if you would rather not say.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PLACEMENT_CHOICES.map((c) => (
+                      <Button key={c.key} size="sm" variant="outline" className="h-7 px-2 text-xs"
+                        onClick={() => onAnswerPlacement(asked.id, c.key)}>{c.label}</Button>
+                    ))}
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
+                      onClick={() => onAnswerPlacement(asked.id, 'them')}>You choose</Button>
+                  </div>
+                </div>
+              )}
+
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}

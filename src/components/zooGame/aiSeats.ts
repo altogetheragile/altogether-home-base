@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
 import { isChecked } from './parkChecks';
 import { whereItStands } from './parkModel';
@@ -108,6 +108,11 @@ function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null
     color: design.colors.path ?? '#b9a888',
   };
 }
+
+/** How long the Developers wait for an answer before getting on with it, in day seconds. Long
+ *  enough to read the question and choose; short enough that nobody watches a still board because
+ *  the Product Owner went to make tea. */
+const ASK_PATIENCE_SECONDS = 12;
 
 /** Every accountability, which is who has to agree a Sprint Goal unless a caller says otherwise. */
 const ALL_SEATS: SeatName[] = ['product_owner', 'scrum_master', 'developer'];
@@ -255,8 +260,28 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         // in progress that nobody was working on, and a board that said nothing about why.
         const next = state.backlog.find((it) => it.status === 'committed' && !it.started
           && enclosureReady(state, it) && dayCanAfford(state, it));
-        if (next) return { action: { type: 'START_ITEM', id: next.id },
-                           says: `Taking ${next.name} next.` };
+        if (next) {
+          // Where a habitat or a building goes is a product decision - it is what a visitor walks
+          // up to, and in what order - so they ask rather than let the layout decide it quietly.
+          // Only for things with a footprint worth arguing about: nobody needs consulting about
+          // where a path is drawn or which patch of grass a shrub goes on.
+          const worthAsking = (next.category === 'enclosure' || next.category === 'amenity') && !next.pos;
+          const asked = state.pendingPlacement;
+          if (worthAsking && !asked) {
+            return { action: { type: 'ASK_PLACEMENT', id: next.id },
+                     says: `Where do you want ${next.name}? You know what the visitors are here for.` };
+          }
+          if (worthAsking && asked?.itemId === next.id) {
+            // They do not wait forever. An unanswered question costs you the decision, which is
+            // the truer lesson and means a Product Owner who has wandered off cannot stall a
+            // Sprint. Measured on the day clock, so the wait is in the game's own time.
+            if (asked.askedAt - state.daySecondsLeft < ASK_PATIENCE_SECONDS) return null;
+            return { action: { type: 'START_ITEM', id: next.id },
+                     says: `No word on where ${next.name} goes, so we have put it where there is room.` };
+          }
+          return { action: { type: 'START_ITEM', id: next.id },
+                   says: `Taking ${next.name} next.` };
+        }
       }
     }
     return null;
@@ -302,6 +327,21 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' },
              says: 'That is the value I am proposing this Sprint.' };
   }
+  // Answering the Developers when they ask where something goes. It is a product decision - what
+  // a visitor meets first, and in what order - so it belongs in this seat, and a game where every
+  // seat is played would otherwise sit waiting for an answer nobody was there to give.
+  if (state.pendingPlacement) {
+    const item = state.backlog.find((it) => it.id === state.pendingPlacement!.itemId);
+    if (item) {
+      // The first thing goes where people come in, and the zoo fills up from there. Deterministic,
+      // because a trainer replaying a seed has to get the same zoo.
+      const placed = state.backlog.filter((it) => it.pos).length;
+      const choice = PLACEMENT_CHOICES[Math.min(placed, PLACEMENT_CHOICES.length - 1)];
+      return { action: { type: 'ANSWER_PLACEMENT', id: item.id, choice: choice.key },
+               says: `${choice.label} for ${item.name} - that is where I want people to meet it.` };
+    }
+  }
+
   // Accepting the work. Done waits for the Product Owner's sign-off, and the sign-off follows the
   // acceptance criteria - so with nobody in this seat the Developers would build everything and
   // none of it could ever be Done. They only answer the ones that are theirs: half of every list

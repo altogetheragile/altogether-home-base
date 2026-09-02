@@ -144,3 +144,25 @@ export function shapeEdge(shape: string, cx: number, cy: number, hw: number, hh:
   }
   return { x: cx + ux * last, y: cy + uy * last };
 }
+
+/** The nearest clear ground to where somebody asked for a thing to go.
+ *
+ *  A Product Owner saying "by the entrance" means roughly there, not exactly there and on top of
+ *  the gift shop. So the answer is honoured as closely as the park allows: search outwards from
+ *  the spot they chose until there is room for the thing. */
+export function nearestFreeSpot(taken: (LayoutBox & { x: number; y: number })[], box: LayoutBox,
+  preferred: { x: number; y: number }): { x: number; y: number } {
+  const clear = (x: number, y: number) => taken.every((t) =>
+    Math.abs(t.x - x) >= (t.w + box.w) / 2 + GAP || Math.abs(t.y - y) >= (t.h + box.h) / 2 + GAP);
+  const b = parkBounds(box);
+  const fit = (x: number, y: number) => ({ x: clamp(x, b.minX, b.maxX), y: clamp(y, b.minY, b.maxY) });
+  const first = fit(preferred.x, preferred.y);
+  if (clear(first.x, first.y)) return first;
+  for (let r = 24; r <= 480; r += 24) {
+    for (let a = 0; a < 12; a += 1) {
+      const p = fit(preferred.x + r * Math.cos((a * Math.PI) / 6), preferred.y + r * Math.sin((a * Math.PI) / 6));
+      if (clear(p.x, p.y)) return p;
+    }
+  }
+  return first;   // a full park. Where they asked for, and they can see the problem.
+}

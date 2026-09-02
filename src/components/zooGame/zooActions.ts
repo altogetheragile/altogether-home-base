@@ -19,6 +19,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     setGoal: (goal: string) => send({ type: 'SET_PRODUCT_GOAL', goal }),
     setSprintGoal: (goal: string) => send({ type: 'SET_SPRINT_GOAL', goal }),
     setPlanningTopic: (topic: 'why' | 'what' | 'how') => send({ type: 'SET_PLANNING_TOPIC', topic }),
+    answerPlacement: (id: string, choice: string) => send({ type: 'ANSWER_PLACEMENT', id, choice }),
     setDor: (dor: string[]) => send({ type: 'SET_DOR', dor }),
     setDod: (dod: string[]) => send({ type: 'SET_DOD', dod }),
     takeSignal: (index: number) => send({ type: 'ACCEPT_SIGNAL', index }),

@@ -56,6 +56,11 @@ describe('a Sprint, played through to the Review', () => {
 
     for (let day = 0; day <= s.sprintDays && s.phase === 'sprint'; day += 1) {
       settle();                                                   // build, plan-tick, run the pathways
+      // The Developers ask where a habitat or a building should go. A Product Owner who is
+      // present answers; one who is not loses the decision after a while, which the game measures
+      // on the day clock and this test does not run.
+      if (s.pendingPlacement) po({ type: 'ANSWER_PLACEMENT', id: s.pendingPlacement.itemId, choice: 'middle' });
+      settle();
       // The Product Owner accepts what the Developers have built, which is what makes it Done -
       // the card waits in Doing until they do - and then releases it. Placement criteria are
       // answered by the park itself, so a tick alone will not do.
