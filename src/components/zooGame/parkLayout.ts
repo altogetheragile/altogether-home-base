@@ -16,7 +16,11 @@ export const CANVAS_W = 820;
 // thing had ended up, which meant the park grew when you added a gift shop and the whole scene
 // rescaled to fit - so laying down one more thing resized everything already laid down.
 export const PLAY_H = 700;
-export const PAD = 20;
+// Room to walk. The park's edge is a boundary, not a wall you can put a habitat against: a
+// visitor asked "can I walk right round it?" and a Product Owner looking at an enclosure jammed
+// into the corner has to answer no, with nothing they can do about it - the layout put it there.
+// Wide enough for the path a person would take, so the criterion is answerable either way.
+export const PAD = 56;
 export const GAP = 18;
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));

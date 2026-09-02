@@ -3,7 +3,8 @@ import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
 import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity, dayCanAfford, enclosureReady } from './engine';
-import { aiTurn } from './aiSeats';
+import { enclosureWater, enclosureFlora, designSatisfiesTask } from './design';
+import { aiTurn, aiDesign } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
 // only does its own job, that it says why, and - the one that would really bite - that a
@@ -324,6 +325,22 @@ describe('a seat nobody is sitting in', () => {
     expect(dayCanAfford(s, big),
       `${big.name} costs ${Math.round(secondsPerPoint(s) * big.estimate)}s and no day the team gets is long enough to start it`)
       .toBe(true);
+  });
+
+  it('builds what the plan says it built', () => {
+    // Reported from a game: "Lay the ground, shelter and water" ticked itself on a bare hatched
+    // box - the ground was painted and there was no shelter and no water anywhere in it. Three
+    // things promised, one done, and the tick said otherwise.
+    const habitat = withWork(1).backlog.find((it) => it.category === 'enclosure')!;
+    const design = aiDesign(habitat);
+    expect(enclosureWater(design).length, 'a habitat with no water in it').toBeGreaterThan(0);
+    expect(enclosureFlora(design).length, 'a habitat with nothing growing in it').toBeGreaterThan(0);
+    expect(designSatisfiesTask(habitat, design, 'Lay the ground, shelter and water')).toBe(true);
+
+    // ...and the ground on its own does not tick it any more.
+    const bare = { ...design, water: [], flora: [] };
+    expect(designSatisfiesTask(habitat, bare, 'Lay the ground, shelter and water'),
+      'a bare box ticked off the shelter and the water').toBe(false);
   });
 
   it('never says the work is Done, because that is not theirs to say', () => {
