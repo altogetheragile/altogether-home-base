@@ -1,7 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford } from './engine';
-import { presetFor, floraColors, isLandscapeType, type ItemDesign } from './design';
+import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
 import { isChecked } from './parkChecks';
 import { whereItStands } from './parkModel';
 
@@ -61,7 +61,15 @@ export function aiDesign(item: BacklogItem): ItemDesign {
     // Stocked rather than painted: a pair, which fits any habitat the game offers.
     return { ...base, colors, parts, group: base.group ?? { males: 1, females: 1, juveniles: 0, cubs: 0 } };
   }
-  if (item.category === 'enclosure') { paint('ground', '#8c7a5b'); paint('fence', '#6b5b45'); }
+  if (item.category === 'enclosure') {
+    paint('ground', '#8c7a5b'); paint('fence', '#6b5b45');
+    // ...and the shelter and water the plan says they laid. They used to paint the ground and
+    // tick "Lay the ground, shelter and water", which is three things promised and one done -
+    // and it left a hatched box that no Product Owner could look at and say an animal lives
+    // here rather than a shed. Doing what the step says is cheaper than arguing about it.
+    const withWater = { ...base, colors, parts, water: addWaterTo({ ...base, colors, parts }) };
+    return { ...withWater, flora: addFloraTo(withWater, 'oak') } as ItemDesign;
+  }
   if (item.category === 'amenity') {
     paint('walls', '#cfd4d8'); paint('roof', '#9aa3ab'); paint('sign', '#e6842a');
     if (parts.sign === 'off') delete parts.sign;      // a building visitors cannot find is not Done

@@ -3072,6 +3072,21 @@ describe('zoo game: laying out a full zoo', () => {
     return count;
   };
 
+  it('never lays a habitat against the edge of the park', () => {
+    // Reported from a game: the Lion Enclosure was laid in the corner, and the Product Owner
+    // could not answer "can I walk right round it?" with anything but no - about a placement
+    // nobody had chosen. A criterion the layout makes unmeetable is not a criterion.
+    const boxes = zooBoxes(12);
+    const pos = autoLayout(boxes);
+    const WALK = 40;   // enough ground for the path a visitor would take
+    for (const b of boxes) {
+      const p = pos.get(b.id)!;
+      expect(p.x - b.w / 2, `${b.id} is against the left edge`).toBeGreaterThanOrEqual(WALK);
+      expect(p.y - b.h / 2, `${b.id} is against the top edge`).toBeGreaterThanOrEqual(WALK);
+      expect(CANVAS_W - (p.x + b.w / 2), `${b.id} is against the right edge`).toBeGreaterThanOrEqual(WALK);
+    }
+  });
+
   it('never buries one thing under another, however full the zoo gets', () => {
     // The bug this is here for: rows used to be clamped one at a time as they were laid, so every
     // row past the bottom of the park landed on the SAME line - a habitat you had just delivered

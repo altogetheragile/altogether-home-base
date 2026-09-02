@@ -1060,7 +1060,12 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
   if (item.category === 'enclosure') {
     if (/footprint|size/.test(s)) return !!item.enclosureSize;
     if (/fence/.test(s)) return !!c.fence;
-    if (/ground|shelter|water|lay/.test(s)) return !!c.ground;
+    // Three things are promised by this step, so three things are what it takes. Checking the
+    // ground colour alone let a bare box tick "Lay the ground, shelter and water" with no
+    // shelter and no water anywhere in it.
+    if (/ground|shelter|water|lay/.test(s)) {
+      return !!c.ground && (enclosureWater(design).length > 0 || enclosureFlora(design).length > 0);
+    }
     return false;
   }
   if (item.category === 'flora') {
