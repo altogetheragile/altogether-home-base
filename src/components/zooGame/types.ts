@@ -91,7 +91,7 @@ export interface SprintTask { id: string; label: string; done: boolean }
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement';
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -314,6 +314,17 @@ export interface ZooGameState {
    *  because a forecast is built up item by item and only the last state of it was committed. */
   forecastBy?: string;
 
+  /** A question the Developers have put to the Product Owner and are waiting on.
+   *
+   *  Where a habitat or a building goes is a product decision - it is what a visitor walks up to,
+   *  and in what order - so the Developers ask rather than let a layout decide it silently. They
+   *  do not wait forever: an unanswered question costs you the decision, which is the truer
+   *  lesson and also means a Product Owner who has wandered off cannot stall a Sprint.
+   *
+   *  `askedAt` is the day clock when they asked, so the wait is measured in the game's own time
+   *  rather than in anybody's browser. */
+  pendingPlacement?: { itemId: string; askedAt: number } | null;
+
   /** Which topic of Sprint Planning the Scrum Team is on. In state rather than in the component
    *  because Sprint Planning is one event that a team attends together: a topic each player was
    *  privately on is three separate meetings, and the seats played by the game could not tell
@@ -465,6 +476,8 @@ export type ZooAction =
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
+  | { type: 'ASK_PLACEMENT'; id: string }
+  | { type: 'ANSWER_PLACEMENT'; id: string; choice: string }
   | { type: 'SET_DOD'; dod: string[]; by?: string }
   | { type: 'ACCEPT_SIGNAL'; index: number }
   | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number; by?: string }

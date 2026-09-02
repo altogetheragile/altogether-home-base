@@ -1,7 +1,8 @@
 import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily } from './design';
+import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
+import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE } from './design';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -565,7 +566,9 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   // tightens up rather than piling up, and it is tested with a full zoo's worth of boxes. Taking a
   // position at all was what opted an item OUT of that. Dropped onto a spot by hand
   // (START_ITEM_AT) it keeps that spot, because a position somebody chose is a decision.
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
+  const pending = state.pendingPlacement?.itemId === id ? null : state.pendingPlacement;
+  return { ...state, pendingPlacement: pending,
+    backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
 }
 
 /** Notice something the Scrum Team did, without having an opinion about it.
@@ -587,6 +590,48 @@ export const whoIs = (by?: string): string =>
   by === 'product_owner' ? 'The Product Owner'
     : by === 'scrum_master' ? 'The Scrum Master'
       : by === 'developer' ? 'The Developers' : 'You';
+
+/** The Developers put the placement question to the Product Owner. */
+export function askPlacement(state: ZooGameState, id: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || item.pos || state.pendingPlacement) return state;
+  return { ...state, pendingPlacement: { itemId: id, askedAt: state.daySecondsLeft } };
+}
+
+/** Where the Product Owner may say a thing should go, in the words a person would use.
+ *
+ *  Named spots rather than a free drag, because the answer is a product decision and not a
+ *  pixel: what a visitor meets first, what is worth walking to, what fills the empty middle. */
+export const PLACEMENT_CHOICES: { key: string; label: string; of: (box: { w: number; h: number }) => { x: number; y: number } }[] = [
+  { key: 'entrance', label: 'By the entrance', of: () => ({ x: CANVAS_W / 2, y: PLAY_H - 140 }) },
+  { key: 'middle', label: 'In the middle', of: () => ({ x: CANVAS_W / 2, y: PLAY_H / 2 }) },
+  { key: 'back', label: 'At the back', of: () => ({ x: CANVAS_W / 2, y: 150 }) },
+  { key: 'side', label: 'Off to one side', of: () => ({ x: CANVAS_W - 200, y: PLAY_H / 2 }) },
+];
+
+/** The Product Owner answers, and the thing goes as near to there as the park allows. */
+export function answerPlacement(state: ZooGameState, id: string, choice: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item) return state;
+  // Leaving it to them is an answer, and a decision worth recording: you were asked where
+  // something visitors walk up to should go, and you said you did not mind.
+  if (choice === 'them') {
+    return note({ ...state, pendingPlacement: null }, { kind: 'placement', by: 'product_owner',
+      what: `The Developers asked where ${item.name} should go and the Product Owner left it to them.` });
+  }
+  const spot = PLACEMENT_CHOICES.find((c) => c.key === choice);
+  if (!spot) return state;
+  const ground = (it: BacklogItem) => (it.category === 'enclosure'
+    ? ENCLOSURE_SIZE[it.enclosureSize ?? 'medium'] : footprintFor(it));
+  const taken = state.backlog.filter((it) => it.pos && it.id !== id)
+    .map((it) => ({ id: it.id, ...ground(it), ...it.pos! }));
+  const box = { id, ...ground(item) };
+  const pos = nearestFreeSpot(taken, box, spot.of(box));
+  const placed = { ...state, pendingPlacement: null,
+    backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
+  return note(placed, { kind: 'placement', by: 'product_owner',
+    what: `${spot.label.toLowerCase().replace(/^by /, 'By ')}: the Product Owner said where ${item.name} goes.` });
+}
 
 /** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */
 export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameState {
@@ -1417,7 +1462,7 @@ export function endDay(state: ZooGameState): ZooGameState {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
     return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0,
-      daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
+      pendingPlacement: null, daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
   return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
@@ -1430,8 +1475,12 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
   // A new day gets a fresh build clock, so the refinement spend resets too.
+  // A question asked yesterday is not still hanging over today. The wait is measured on the day
+  // clock, so a question that outlived the clock it was asked against would be waited on for
+  // ever - which is why every reset of that clock clears it, not just this one. They ask again
+  // if they still need to know.
   return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0,
-    daySecondsLeft: dayTotalSeconds(nextMult) };
+    pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult) };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */
@@ -1456,7 +1505,7 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
   // has to happen here rather than when the day turned over - otherwise holding the event
   // costs nothing, which is the opposite of what it should teach.
-  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, daySecondsLeft: dayTotalSeconds(mult) };
+  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(cleared, mult);
 }
 
@@ -1478,7 +1527,7 @@ export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
     carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
     missedScrums: state.missedScrums + (imp ? 1 : 0),
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, daySecondsLeft: dayTotalSeconds(mult) };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(base, mult);
 }
 
