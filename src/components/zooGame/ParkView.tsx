@@ -1774,6 +1774,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                   <IsoZoo state={state} height={520 * zoom} turn={turn}
                     onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild}
                     tool={effectiveTool} newConn={newConn}
+                    building={edit ? building : null} onPart={edit ? onPart : undefined}
                     onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); }} />
                 </div>
               </div>

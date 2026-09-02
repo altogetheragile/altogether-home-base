@@ -147,7 +147,7 @@ function along(route: Pt[], t: number): Pt {
 }
 
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
-  tool = 'none', onAddConnector, newConn }: {
+  tool = 'none', onAddConnector, newConn, building, onPart }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -166,6 +166,12 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   onAddConnector?: (c: ZooConnector) => void;
   /** The width and colour the run is laid with - the pathway's own, while one is on the bench. */
   newConn?: { thickness: number; color: string };
+  /** Which item is open on the design bench. Only its own parts answer to a touch: a park where
+   *  every fence in sight opens somebody else's controls is a park you cannot build in. */
+  building?: string | null;
+  /** Touching a part of the thing on the bench, so the bench opens that part's controls. What the
+   *  bench has always said to do, and what only the blueprint could do. */
+  onPart?: (p: { id: string; key: string } | null) => void;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -226,6 +232,18 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       window.addEventListener('pointerup', up);
       return;
     }
+    // Touching a part of the thing on the bench. Read off what was actually drawn under the
+    // pointer rather than worked out from the box, so the part you get is the part you can see -
+    // the water in the corner of a habitat is water, not the ground it lies on.
+    let touched: { id: string; key: string } | null = null;
+    if (onPart && building) {
+      const tag = (e.target as Element | null)?.closest?.('[data-part]');
+      const id = tag?.getAttribute('data-item');
+      if (id === building) {
+        touched = { id, key: tag!.getAttribute('data-part') ?? 'ground' };
+        onPart(touched);
+      }
+    }
     if (!onPlaceItem) return;
     const w = worldAt(e);
     if (!w) return;
@@ -237,7 +255,11 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
     const grabX = w.x - hit.x, grabY = w.y - hit.y;
     const move = (ev: PointerEvent) => {
       const p = worldAt(ev);
-      if (p) onPlaceItem(hit.id, insidePark({ w: hit.w, h: hit.h }, { x: p.x - grabX, y: p.y - grabY }));
+      if (!p) return;
+      // A press that turned into a drag was moving the thing, not choosing a part of it. The
+      // blueprint drops the part the same way, and for the same reason.
+      if (touched && Math.hypot(p.x - w.x, p.y - w.y) > 4) { onPart?.(null); touched = null; }
+      onPlaceItem(hit.id, insidePark({ w: hit.w, h: hit.h }, { x: p.x - grabX, y: p.y - grabY }));
     };
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move);
@@ -600,13 +622,15 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     // The habitat floor, laid flat, in the shape it was given.
     const outline = outlineOf(d?.parts.shape ?? 'rounded', size.w, size.h)
       .map(([px, py]: [number, number]) => ({ x: x0 + px, y: y0 + py }));
-    nodes.push(<polygon key={`floor-${e.id}`} fill={floor}
+    // Tagged with what it is, so a touch on the park can say which part was touched. The bench has
+    // always told you to touch a part of it; in this view there was nothing to touch.
+    nodes.push(<polygon key={`floor-${e.id}`} fill={floor} data-item={e.id} data-part="ground"
       points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
 
     // Water lies on the floor, in its own corner of the habitat - held as fractions of the box, so
     // it stays where it was put whatever size the habitat is.
     for (const [i, wf] of enclosureWater(d).entries()) {
-      nodes.push(<polygon key={`water-${e.id}-${i}`}
+      nodes.push(<polygon key={`water-${e.id}-${i}`} data-item={e.id} data-part="water"
         points={ground(x0 + wf.x * size.w, y0 + wf.y * size.h, x0 + (wf.x + wf.w) * size.w, y0 + (wf.y + wf.h) * size.h)}
         fill={d?.colors.water ?? '#5aa9c8'} />);
     }
@@ -632,6 +656,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           nodes.push(null); // keep the key space stable
           push(pl.z, (
             <svg key={`f-${e.id}-${ri}-${pi}`} x={pl.x + ox} y={pl.y + oy} width={pl.w} height={pl.h} viewBox={pr.viewBox} overflow="visible"
+              data-item={e.id} data-part="fence"
               dangerouslySetInnerHTML={{ __html: tint(pr.body, fence, pr.tint ?? 3) }} />
           ));
         }
@@ -644,7 +669,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         const a = P(from.x, from.y), b = P(to.x, to.y);
         // Each side is its own piece, sorted with everything else, so the near ones stand in front.
         push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
-          <g key={`w-${e.id}-${i}`}>
+          <g key={`w-${e.id}-${i}`} data-item={e.id} data-part="fence">
             <polygon points={[a, b, up(b, wallH), up(a, wallH)].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
               fill={shade(fence, -18)} />
             <line x1={up(a, wallH).x} y1={up(a, wallH).y} x2={up(b, wallH).x} y2={up(b, wallH).y}
@@ -653,6 +678,16 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         ));
       });
     }
+
+    // A band round the edge that answers for the fence.
+    //
+    // A picket is a few pixels of drawing, and a pointer that misses one by a hair lands on the
+    // grass behind it - so touching the fence to colour it was a game of its own. Invisible, and
+    // laid over the ground the same way the blueprint's outer edge is: near the edge means the
+    // fence, inside means the ground.
+    nodes.push(<polygon key={`fence-hit-${e.id}`} fill="none" stroke="transparent"
+      strokeWidth={Math.max(3, u * 11)} strokeLinejoin="round" data-item={e.id} data-part="fence"
+      points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
 
     // Planting inside the habitat: both the enclosure's own greenery, which is part of its design
     // and holds its own spot in the box, and any planting item dragged in on top of it.
