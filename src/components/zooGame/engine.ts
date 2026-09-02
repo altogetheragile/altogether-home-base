@@ -1,4 +1,4 @@
-import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision } from './types';
+import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
@@ -632,6 +632,50 @@ export function answerPlacement(state: ZooGameState, id: string, choice: string)
   return note(placed, { kind: 'placement', by: 'product_owner',
     what: `${spot.label.toLowerCase().replace(/^by /, 'By ')}: the Product Owner said where ${item.name} goes.` });
 }
+
+// ============= The bet: a Sprint with a question in it =============
+//
+// Evidence-Based Management's Experiment Loop is the best gameplay idea in any of the guides: form
+// a hypothesis, run it, measure, inspect, adapt. A Sprint without one is a list of work that got
+// finished or did not. A Sprint with one is a question somebody wants the answer to, and it turns
+// the visitor simulation from scenery into the thing you are arguing with.
+
+/** What a measure stands at now, for one kind of visitor or for everybody. */
+export function betReading(state: ZooGameState, who: SprintBet['who'], metric: SprintBet['metric']): number {
+  const r = state.lastReview;
+  if (!r) return 0;
+  if (who === 'all') {
+    return Math.round(metric === 'happiness' ? r.overallHappiness : r.totalAttendance);
+  }
+  const seg = r.segments.find((s) => s.segmentId === who);
+  if (!seg) return 0;
+  return Math.round(metric === 'happiness' ? seg.happiness : seg.attendance);
+}
+
+/** Make the prediction, or take it back. The reading it starts from is kept with it, because
+ *  "it rose by 13" is the interesting sentence and it cannot be said without knowing where it
+ *  started from. */
+export function setSprintBet(state: ZooGameState, bet: { who: SprintBet['who']; metric: SprintBet['metric']; by: number } | null): ZooGameState {
+  if (!bet) return { ...state, sprintBet: null };
+  return { ...state, sprintBet: { ...bet, sprint: state.sprintNumber, from: betReading(state, bet.who, bet.metric) } };
+}
+
+/** What the Sprint Review has to say about the bet. Null when none was made, or when it was made
+ *  for a different Sprint and nobody has replaced it. */
+export function betVerdict(state: ZooGameState): { bet: SprintBet; now: number; moved: number; met: boolean } | null {
+  const bet = state.sprintBet;
+  if (!bet || bet.sprint !== state.sprintNumber || !state.lastReview) return null;
+  const now = betReading(state, bet.who, bet.metric);
+  const moved = now - bet.from;
+  return { bet, now, moved, met: moved >= bet.by };
+}
+
+/** How the game says a bet out loud, in one line. */
+export const WHO_LABEL: Record<string, string> = {
+  all: 'everybody', families: 'families', enthusiasts: 'enthusiasts', comfortSeekers: 'comfort seekers',
+};
+export const betLine = (bet: { who: string; metric: string; by: number }): string =>
+  `${WHO_LABEL[bet.who] ?? bet.who}${bet.metric === 'happiness' ? '\u2019 happiness' : ' coming'} rises by ${bet.by}`;
 
 /** Mark / unmark an item as essential to the Sprint Goal (done at Planning). */
 export function toggleGoalCritical(state: ZooGameState, id: string): ZooGameState {

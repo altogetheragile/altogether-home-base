@@ -84,6 +84,28 @@ export type ItemStatus = 'backlog' | 'committed' | 'done' | 'open';
 /** One task in a PBI's build plan: a small step the Developers tick off as they work. */
 export interface SprintTask { id: string; label: string; done: boolean }
 
+/** A prediction the Scrum Team makes at Sprint Planning, and the Sprint Review answers.
+ *
+ *  Evidence-Based Management's Experiment Loop, made into the shape of a Sprint: form a
+ *  hypothesis, run it, measure, inspect. Without one a Sprint is a list of work that either got
+ *  finished or did not; with one it is a question somebody wants the answer to, and the visitor
+ *  simulation stops being scenery and becomes the thing you are arguing with.
+ *
+ *  Deliberately narrow. Two measures the game already keeps and one number, so the Review can
+ *  answer it with a fact rather than a discussion. */
+export interface SprintBet {
+  /** The Sprint it was made for. A bet is about one Sprint's work. */
+  sprint: number;
+  /** Whose experience: one kind of visitor, or everybody who comes. */
+  who: SegmentId | 'all';
+  metric: 'happiness' | 'visitors';
+  /** By at least how much it is expected to move. */
+  by: number;
+  /** What it stood at when the bet was made, so the Review can say what actually happened
+   *  rather than only whether the bet came off. */
+  from: number;
+}
+
 /** One thing the Scrum Team did that is worth showing them again at the Retrospective.
  *
  *  Deliberately not a judgement. `kind` is what sort of thing it was, so a later increment can
@@ -314,6 +336,9 @@ export interface ZooGameState {
    *  because a forecast is built up item by item and only the last state of it was committed. */
   forecastBy?: string;
 
+  /** The prediction this Sprint is testing, if the team made one. */
+  sprintBet?: SprintBet | null;
+
   /** A question the Developers have put to the Product Owner and are waiting on.
    *
    *  Where a habitat or a building goes is a product decision - it is what a visitor walks up to,
@@ -476,6 +501,7 @@ export type ZooAction =
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_SPRINT_GOAL'; goal: string }
   | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
+  | { type: 'SET_SPRINT_BET'; bet: { who: SegmentId | 'all'; metric: 'happiness' | 'visitors'; by: number } | null }
   | { type: 'ASK_PLACEMENT'; id: string }
   | { type: 'ANSWER_PLACEMENT'; id: string; choice: string }
   | { type: 'SET_DOD'; dod: string[]; by?: string }

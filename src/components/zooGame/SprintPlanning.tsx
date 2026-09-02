@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { ZooGameState, SprintTask } from './types';
-import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed } from './engine';
+import type { ZooGameState, SprintTask, SprintBet } from './types';
+import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL } from './engine';
 import { NewHere } from './NewHere';
 
 
@@ -57,6 +57,8 @@ interface SprintPlanningProps {
   onNavigateStep?: () => void;
   /** Move the whole team to another topic. It is one event, so this is shared rather than local. */
   onSetTopic?: (topic: 'why' | 'what' | 'how') => void;
+  /** The prediction this Sprint is testing, which the Review answers. */
+  onSetBet?: (bet: { who: SprintBet['who']; metric: SprintBet['metric']; by: number } | null) => void;
   /** The Sprint Planning teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -118,6 +120,80 @@ function useJustArrived(keys: string[], visible: boolean) {
   return marked;
 }
 
+/** The prediction this Sprint is testing.
+ *
+ *  Evidence-Based Management's experiment loop in one line: say what you expect this Sprint's work
+ *  to do to the people the zoo is for, and let the Sprint Review answer it. Without it a Sprint is
+ *  a list of work that got finished or did not; with it there is a question in the Sprint that
+ *  somebody wants the answer to.
+ *
+ *  Three choices and no free text, because the Review has to be able to answer it with a fact. */
+function TheBet({ state, onSetBet }: { state: ZooGameState; onSetBet: (bet: { who: SprintBet['who']; metric: SprintBet['metric']; by: number } | null) => void }) {
+  const bet = state.sprintBet?.sprint === state.sprintNumber ? state.sprintBet : null;
+  const [open, setOpen] = useState(false);
+  const [who, setWho] = useState<SprintBet['who']>(bet?.who ?? 'families');
+  const [metric, setMetric] = useState<SprintBet['metric']>(bet?.metric ?? 'happiness');
+  const [by, setBy] = useState(bet?.by ?? 10);
+
+  if (bet && !open) {
+    return (
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-sm dark:border-amber-800/50 dark:bg-amber-950/20">
+        <span className={cn(EYEBROW, 'text-amber-700 dark:text-amber-400')}>Our bet</span>
+        <span className="font-medium">{betLine(bet)}</span>
+        <span className="text-[11px] text-muted-foreground">
+          {state.lastReview
+            ? `${bet.metric === 'happiness' ? 'Happiness' : 'Visitors'} stood at ${bet.from} when you said so.`
+            : 'Nothing measured before this Sprint, so the Review sets the first reading.'} The Review will tell you.
+        </span>
+        <button type="button" onClick={() => setOpen(true)} className={cn(FOCUS, 'ml-auto text-[11px] underline text-muted-foreground hover:text-foreground')}>change it</button>
+      </div>
+    );
+  }
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)}
+        className={cn(FOCUS, 'w-full rounded-lg border border-dashed border-border px-3 py-2 text-left text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground')}>
+        <span className="font-medium text-foreground">Make a bet on this Sprint.</span> Say what you expect this work to do
+        to the people the zoo is for, and the Review will tell you whether it did.
+      </button>
+    );
+  }
+  const pick = <T extends string | number>(value: T, current: T, set: (v: T) => void, label: string) => (
+    <button key={String(value)} type="button" onClick={() => set(value)}
+      className={cn(FOCUS, 'rounded-md border px-2 py-1 text-xs',
+        value === current ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
+      {label}
+    </button>
+  );
+  return (
+    <div className="space-y-2 rounded-lg border border-amber-300/70 bg-amber-50/70 p-3 dark:border-amber-800/50 dark:bg-amber-950/20">
+      <div className={cn(EYEBROW, 'text-amber-700 dark:text-amber-400')}>Our bet on this Sprint</div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {(['families', 'enthusiasts', 'comfortSeekers', 'all'] as SprintBet['who'][]).map((k) => pick(k, who, setWho, WHO_LABEL[k]))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {pick('happiness' as const, metric, setMetric, 'happiness')}
+        {pick('visitors' as const, metric, setMetric, 'visitors')}
+        <span className="text-xs text-muted-foreground">rises by</span>
+        {[5, 10, 20].map((n) => pick(n, by, setBy, String(n)))}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {state.lastReview
+          ? <>It stands at {betReading(state, who, metric)} now. </>
+          : <>Nothing has been measured yet, so this Sprint sets the first reading and the bet is a guess about
+              people you have not met. </>}
+        A bet you get wrong is worth as much as one you get right: either way you know something about these
+        visitors you did not know before.
+      </p>
+      <div className="flex gap-1.5">
+        <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onSetBet({ who, metric, by }); setOpen(false); }}>That is our bet</Button>
+        {bet && <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { onSetBet(null); setOpen(false); }}>No bet this Sprint</Button>}
+        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setOpen(false)}>Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
 /** The shape every topic of Sprint Planning takes: the Product Backlog on the left, the Sprint you
  *  are assembling on the right. Topic two was the one screen that read well, and this is why - the
  *  thing you are choosing from and the thing you are building are side by side, and you can see one
@@ -171,7 +247,7 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
   // Where the Scrum Team is in the event, not where this browser is. Sprint Planning has three
   // topics in an order, and a topic each player was privately on meant the seats played by the
   // game could not tell which one the team was in.
@@ -393,6 +469,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             </>}
             right={<>
               <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
+              {onSetBet && <TheBet state={state} onSetBet={onSetBet} />}
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
               {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">

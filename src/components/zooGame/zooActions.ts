@@ -20,6 +20,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     setSprintGoal: (goal: string) => send({ type: 'SET_SPRINT_GOAL', goal }),
     setPlanningTopic: (topic: 'why' | 'what' | 'how') => send({ type: 'SET_PLANNING_TOPIC', topic }),
     answerPlacement: (id: string, choice: string) => send({ type: 'ANSWER_PLACEMENT', id, choice }),
+    setSprintBet: (bet: { who: 'all' | 'families' | 'enthusiasts' | 'comfortSeekers'; metric: 'happiness' | 'visitors'; by: number } | null) => send({ type: 'SET_SPRINT_BET', bet }),
     setDor: (dor: string[]) => send({ type: 'SET_DOR', dor }),
     setDod: (dod: string[]) => send({ type: 'SET_DOD', dod }),
     takeSignal: (index: number) => send({ type: 'ACCEPT_SIGNAL', index }),
