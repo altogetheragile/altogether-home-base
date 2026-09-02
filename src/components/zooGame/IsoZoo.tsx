@@ -1,5 +1,5 @@
-import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
-import type { BacklogItem, ZooGameState } from './types';
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
 import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
@@ -146,7 +146,8 @@ function along(route: Pt[], t: number): Pt {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
 }
 
-export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect }: {
+export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
+  tool = 'none', onAddConnector, newConn }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -156,10 +157,24 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   selected?: string | null;
   onSelect?: (id: string | null) => void;
+  /** 'connect' lays a run of path: press where it starts, drag to where it goes, let go.
+   *
+   *  A route was the one thing this view could not do, which is why the blueprint was still here.
+   *  It needs no new geometry: the pointer is already answered by running the projection
+   *  backwards, and that is the whole of the problem. */
+  tool?: 'none' | 'connect';
+  onAddConnector?: (c: ZooConnector) => void;
+  /** The width and colour the run is laid with - the pathway's own, while one is on the bench. */
+  newConn?: { thickness: number; color: string };
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
+  const laying = tool === 'connect' && !!onAddConnector;
+  // The run being laid, while the pointer is down. Local, because it is not a run until it is let
+  // go of - a half-drawn path is a gesture, not a decision.
+  const [run, setRun] = useState<{ a: ConnectorEnd; b: { x: number; y: number } } | null>(null);
+  const runs = useRef(0);
 
   /** Where the pointer is, in the world the zoo is laid out in.
    *
@@ -179,7 +194,38 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   const pick = (w: { x: number; y: number }) => [...scene.movable].sort((a, b) => b.z - a.z)
     .find((m) => Math.abs(w.x - m.x) <= m.w / 2 && Math.abs(w.y - m.y) <= m.h / 2);
 
+  /** Where a run's end is anchored: to the thing under the pointer, or to the ground it landed on.
+   *  Snapping to the feature matters - the park asks whether a run REACHES something, and a run
+   *  that stops two pixels short of a habitat reaches nothing. */
+  const endAt = (w: { x: number; y: number }): ConnectorEnd => {
+    const hit = pick(w);
+    return hit ? { featureId: hit.id, x: hit.x, y: hit.y } : { x: w.x, y: w.y };
+  };
+
   const onPointerDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (laying) {
+      const w = worldAt(e);
+      if (!w) return;
+      e.preventDefault();
+      const a = endAt(w);
+      setRun({ a, b: { x: w.x, y: w.y } });
+      const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) setRun((r) => (r ? { ...r, b: p } : r)); };
+      const up = (ev: PointerEvent) => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        const p = worldAt(ev);
+        setRun(null);
+        // A press with no drag is somebody clicking the park, not laying a path across it.
+        if (p && Math.hypot(p.x - w.x, p.y - w.y) > 12) {
+          onAddConnector?.({ id: `iso-run-${state.connectors?.length ?? 0}-${runs.current++}`,
+            a, b: endAt(p), bends: [],
+            thickness: newConn?.thickness ?? 14, color: newConn?.color ?? '#c9a86a' });
+        }
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      return;
+    }
     if (!onPlaceItem) return;
     const w = worldAt(e);
     if (!w) return;
@@ -208,14 +254,41 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
       <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
-        onPointerDown={editable ? onPointerDown : undefined}
+        onPointerDown={editable || laying ? onPointerDown : undefined}
         // Clipped. A prop is drawn ABOVE the point it stands on, so a tall tree at the back of the
         // park reaches past the top of the scene - and with the picture uncropped it was painted
         // over the page instead: a tree in the corner of the screen, cars and people off the park.
         // The scene keeps headroom for the tallest thing in it, and then holds its edges.
         style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height,
-          touchAction: editable ? 'none' : undefined, cursor: editable ? 'grab' : undefined }}>
+          touchAction: editable || laying ? 'none' : undefined,
+          // A pen when there is one, a hand when there is not.
+          cursor: laying ? 'crosshair' : editable ? 'grab' : undefined }}>
         {scene.nodes}
+        {/* The run as it is being laid. Drawn over the scene rather than in it, because it is not
+            part of the zoo until the pointer is let go. */}
+        {run && (() => {
+          // The run as it will actually be laid: the same quad the finished path is drawn as, at
+          // the same width and colour. A hairline preview lies about the width, and a path's width
+          // is the whole of "can two people walk it side by side?".
+          const wdt = Math.max(4, (newConn?.thickness ?? 14) * 1.15);
+          const dx = run.b.x - run.a.x, dy = run.b.y - run.a.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = (-dy / len) * wdt, ny = (dx / len) * wdt;
+          const ex = (dx / len) * wdt, ey = (dy / len) * wdt;
+          const a2 = { x: run.a.x - ex, y: run.a.y - ey }, b2 = { x: run.b.x + ex, y: run.b.y + ey };
+          const corners = [scene.at(a2.x + nx, a2.y + ny), scene.at(b2.x + nx, b2.y + ny),
+            scene.at(b2.x - nx, b2.y - ny), scene.at(a2.x - nx, a2.y - ny)];
+          const start = scene.at(run.a.x, run.a.y);
+          return (
+            <g pointerEvents="none">
+              <polygon points={corners.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+                fill={newConn?.color ?? '#c9a86a'} fillOpacity={0.85} stroke="#f97316"
+                strokeWidth={Math.max(1, scene.u * 1.5)} strokeLinejoin="round" />
+              {/* Where you put the pen down, so a run that has gone the wrong way is obvious. */}
+              <circle cx={start.x} cy={start.y} r={Math.max(3, scene.u * 4)} fill="#f97316" />
+            </g>
+          );
+        })()}
         {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
       </svg>
     </div>
@@ -1137,6 +1210,9 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     /** A pointer arrives on the park as it is being LOOKED at; the zoo is laid out on the park as it
      *  IS. One of these undoes the turn, the other draws a box in the picture. */
     unturn,
+    /** ...and the other way, for anything drawn over the scene rather than in it - the run being
+     *  laid, while the pointer is still down. */
+    at: P,
     ground,
     movable: [...encs, ...loose].map((it) => {
       const c = posOf(it), s = sizeOf(it);
