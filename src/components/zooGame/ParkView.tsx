@@ -1620,12 +1620,17 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
           </p>
           {statsBar}
           <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* One instruction at a time. With the pen out the amber bar below is saying how, and
+                two lines telling you different things about the same drag is how somebody ends up
+                clicking twice and wondering why nothing was laid. */}
             {isoView ? (
-              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                {onPlaceItem
-                  ? <><Move className="h-3.5 w-3.5" /> The zoo as a visitor would see it. Drag a habitat, building or planting to arrange it, the same as in Plan.</>
-                  : <><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands.</>}
-              </p>
+              effectiveTool === 'connect' ? <span /> : (
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  {onPlaceItem
+                    ? <><Move className="h-3.5 w-3.5" /> The zoo as a visitor would see it. Drag a habitat, building or planting to arrange it.</>
+                    : <><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands.</>}
+                </p>
+              )
             ) : features.length > 0 && onPlaceItem ? (
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Move className="h-3.5 w-3.5" /> Drag an enclosure, building or planting to arrange your zoo.</p>
             ) : <span />}
@@ -1644,7 +1649,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                 </button>
               )}
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
-              {!isoView && canConnect && onAddConnector && !drawRoute && (
+              {canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
                   className={cn(FOCUS, 'flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
                     effectiveTool === 'connect' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
@@ -1698,7 +1703,11 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
           {/* Connect-tool guidance. */}
           {canConnect && effectiveTool === 'connect' && (
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 px-2 py-1.5 text-[11px]">
-              <span className="font-medium text-primary">Click a start (an enclosure to attach, or empty grass to free-place), then click where it ends. It attaches if you finish on a feature.</span>
+              {/* The two views are drawn on differently, so they are asked for differently. Saying
+                  "click, then click" over a view that wants a drag is worse than saying nothing. */}
+              <span className="font-medium text-primary">{isoView
+                ? 'Press where the path starts and drag to where it goes. It joins on if you finish on a habitat or a building.'
+                : 'Click a start (an enclosure to attach, or empty grass to free-place), then click where it ends. It attaches if you finish on a feature.'}</span>
               <button type="button" onClick={stopDrawing} className={cn(FOCUS, "ml-auto flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 font-medium text-muted-foreground hover:text-foreground")}><X className="h-3 w-3" /> Done</button>
             </div>
           )}
@@ -1763,7 +1772,9 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                   {/* The same handlers the plan uses. One zoo, two ways of drawing it, and either
                       one is somewhere you can arrange it. */}
                   <IsoZoo state={state} height={520 * zoom} turn={turn}
-                    onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild} />
+                    onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild}
+                    tool={effectiveTool} newConn={newConn}
+                    onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); }} />
                 </div>
               </div>
             </Suspense>
