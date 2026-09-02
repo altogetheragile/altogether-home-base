@@ -147,7 +147,8 @@ function along(route: Pt[], t: number): Pt {
 }
 
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
-  tool = 'none', onAddConnector, newConn }: {
+  tool = 'none', onAddConnector, newConn, building, onPart,
+  onSetSpot, onSetMemberSpot, onNest, onUnnest }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -166,6 +167,19 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   onAddConnector?: (c: ZooConnector) => void;
   /** The width and colour the run is laid with - the pathway's own, while one is on the bench. */
   newConn?: { thickness: number; color: string };
+  /** Which item is open on the design bench. Only its own parts answer to a touch: a park where
+   *  every fence in sight opens somebody else's controls is a park you cannot build in. */
+  building?: string | null;
+  /** Touching a part of the thing on the bench, so the bench opens that part's controls. What the
+   *  bench has always said to do, and what only the blueprint could do. */
+  onPart?: (p: { id: string; key: string } | null) => void;
+  /** Where one animal of a family stands inside its habitat, as a fraction of the habitat's box.
+   *  A pride is not a blob, and arranging them is most of what a habitat is. */
+  onSetSpot?: (id: string, spot: { x: number; y: number }) => void;
+  onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
+  /** Planting dragged into a habitat, and dragged back out of it. */
+  onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
+  onUnnest?: (id: string) => void;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -193,6 +207,11 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
    *  in front, which is the one you can see. */
   const pick = (w: { x: number; y: number }) => [...scene.movable].sort((a, b) => b.z - a.z)
     .find((m) => Math.abs(w.x - m.x) <= m.w / 2 && Math.abs(w.y - m.y) <= m.h / 2);
+
+  /** One animal or one plant standing inside a habitat, under that point. Nearest first, as with
+   *  everything else: the pointer means the one you can see. */
+  const spotAt = (w: { x: number; y: number }) => [...scene.spots].sort((a, b) => b.z - a.z)
+    .find((sp) => Math.abs(w.x - sp.x) <= sp.w / 2 && Math.abs(w.y - sp.y) <= sp.h / 2);
 
   /** Where a run's end is anchored: to the thing under the pointer, or to the ground it landed on.
    *  Snapping to the feature matters - the park asks whether a run REACHES something, and a run
@@ -226,20 +245,95 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       window.addEventListener('pointerup', up);
       return;
     }
-    if (!onPlaceItem) return;
+    // Touching a part of the thing on the bench. Read off what was actually drawn under the
+    // pointer rather than worked out from the box, so the part you get is the part you can see -
+    // the water in the corner of a habitat is water, not the ground it lies on.
+    let touched: { id: string; key: string } | null = null;
+    if (onPart && building) {
+      const tag = (e.target as Element | null)?.closest?.('[data-part]');
+      const id = tag?.getAttribute('data-item');
+      if (id === building) {
+        touched = { id, key: tag!.getAttribute('data-part') ?? 'ground' };
+        onPart(touched);
+      }
+    }
     const w = worldAt(e);
     if (!w) return;
-    const hit = pick(w);
+
+    // One animal of a family, or a plant standing in with them: picked up on its own, and put
+    // where it is dropped as a fraction of its own habitat. Checked before the habitat itself,
+    // because the pointer means the thing you can see and the animal is the thing on top.
+    const spotTag = (e.target as Element | null)?.closest?.('[data-spot]')?.getAttribute('data-spot');
+    const sp = onSetSpot ? (spotTag ? scene.spots.find((q) => `${q.id}:${q.member}` === spotTag) : spotAt(w)) : undefined;
+    if (sp) {
+      e.preventDefault();
+      // Where in its habitat the pointer is, whatever size that habitat is or how far the park is
+      // zoomed. Outside 0..1 means it has been taken off the habitat altogether.
+      const frac = (p: { x: number; y: number }) => ({ x: (p.x - sp.box.x) / sp.box.w, y: (p.y - sp.box.y) / sp.box.h });
+      const put = (f: { x: number; y: number }) => {
+        const c = { x: Math.min(0.92, Math.max(0.08, f.x)), y: Math.min(0.94, Math.max(0.1, f.y)) };
+        // An animal goes to its OWN place in the family; a plant has no family, so the whole thing
+        // is what is being put somewhere.
+        if (sp.member > 0 || (!sp.unnestable && onSetMemberSpot)) onSetMemberSpot?.(sp.id, sp.member, c);
+        else onSetSpot?.(sp.id, c);
+      };
+      const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) put(frac(p)); };
+      const up = (ev: PointerEvent) => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        const p = worldAt(ev);
+        if (!p) return;
+        const f = frac(p);
+        // Dragged well clear of the fence: taking it back out, which is how planting leaves a
+        // habitat. An animal has no way out - it is stocked, and it is stocked until it is not.
+        if (sp.unnestable && onUnnest && (f.x < -0.05 || f.x > 1.05 || f.y < -0.05 || f.y > 1.05)) onUnnest(sp.id);
+        else put(f);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      return;
+    }
+
+    if (!onPlaceItem) return;
+    // What the pointer landed ON beats what its footprint says. A prop is drawn ABOVE the ground it
+    // stands on, so grabbing a tree by its canopy read as a press on the grass behind the tree.
+    // Only drawings that stand up count: the habitat's own ground and fence lie flat, and are found
+    // by where they are.
+    const prop = (e.target as Element | null)?.closest?.('[data-item]:not([data-part])')?.getAttribute('data-item');
+    const grabbed = prop ? scene.movable.find((m) => m.id === prop) : undefined;
+    const hit = grabbed ?? pick(w);
     if (!hit) { onSelect?.(null); return; }
     onSelect?.(hit.id);
     e.preventDefault();
-    // Held where it was grabbed, so it does not jump its own centre under the pointer.
-    const grabX = w.x - hit.x, grabY = w.y - hit.y;
+    // Held where it was grabbed, so it does not jump its own centre under the pointer. A prop
+    // grabbed by its canopy is the exception: the pointer is nowhere near its feet, and keeping
+    // that offset walks the tree along a stride behind wherever it was let go.
+    const grabX = grabbed ? 0 : w.x - hit.x, grabY = grabbed ? 0 : w.y - hit.y;
     const move = (ev: PointerEvent) => {
       const p = worldAt(ev);
-      if (p) onPlaceItem(hit.id, insidePark({ w: hit.w, h: hit.h }, { x: p.x - grabX, y: p.y - grabY }));
+      if (!p) return;
+      // A press that turned into a drag was moving the thing, not choosing a part of it. The
+      // blueprint drops the part the same way, and for the same reason.
+      if (touched && Math.hypot(p.x - w.x, p.y - w.y) > 4) { onPart?.(null); touched = null; }
+      onPlaceItem(hit.id, insidePark({ w: hit.w, h: hit.h }, { x: p.x - grabX, y: p.y - grabY }));
     };
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      // Planting dropped on a habitat is planting IN that habitat, standing where it was let go.
+      // Anything else dropped on one is just standing on top of it: an animal arrives by being
+      // stocked, which is a decision about the exhibit and not a place to drop something.
+      const p = worldAt(ev);
+      const item = state.backlog.find((it) => it.id === hit.id);
+      if (!onNest || !p || item?.category !== 'flora') return;
+      const enc = [...scene.rooms].sort((a, b) => b.z - a.z)
+        .find((r) => Math.abs(p.x - r.x) <= r.w / 2 && Math.abs(p.y - r.y) <= r.h / 2);
+      if (!enc || enc.id === item.enclosureId) return;
+      onNest(hit.id, enc.id, {
+        x: Math.min(0.92, Math.max(0.08, (p.x - (enc.x - enc.w / 2)) / enc.w)),
+        y: Math.min(0.94, Math.max(0.1, (p.y - (enc.y - enc.h / 2)) / enc.h)),
+      });
+    };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
@@ -438,7 +532,11 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
    *  place. It makes it stay in the picture, where it can be seen to be wrong, instead of floating
    *  in the white beside the park looking like the game has come apart. */
   const onLand = (v: number, hi: number) => Math.max(0, Math.min(hi, v));
-  const place = (name: string, rawX: number, rawY: number, k: number, key: string, tintTo?: string, filter?: string) => {
+  const place = (name: string, rawX: number, rawY: number, k: number, key: string, tintTo?: string, filter?: string,
+    /** What this drawing IS, so a pointer that lands on it can say what it touched. A prop is drawn
+     *  above the ground it stands on - you grab a tree by its canopy, and its canopy is nowhere
+     *  near its footprint - so what was touched cannot be worked out from where its feet are. */
+    tag?: Record<string, string>) => {
     const p = prop(name);
     if (!p) return;
     const wx = onLand(rawX, CANVAS_W), wy = onLand(rawY, worldH);
@@ -447,7 +545,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const body = p.tint && tintTo ? tint(p.body, tintTo, p.tint) : p.body;
     push(depth(wx, wy), (
       <svg key={key} x={at.x - w / 2} y={at.y - h + w * 0.29} width={w} height={h} viewBox={p.viewBox} overflow="visible"
-        style={filter ? { filter } : undefined} dangerouslySetInnerHTML={{ __html: body }} />
+        {...tag} style={filter ? { filter } : undefined} dangerouslySetInnerHTML={{ __html: body }} />
     ));
   };
 
@@ -456,6 +554,11 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
   // the outside of the lot. Giving the park its own edge put a cliff between the fence and the
   // tarmac that visitors were then seen to walk off.
   const nodes: React.ReactNode[] = [];
+  /** Everything standing INSIDE a habitat that can be picked up on its own: each animal of a
+   *  family, and any planting nested in with them. Held as a world box and the habitat box it
+   *  belongs to, because a spot is a fraction of its own habitat and nothing else. */
+  const spots: { id: string; member: number; enc: string; x: number; y: number; w: number; h: number;
+    z: number; box: { x: number; y: number; w: number; h: number }; unnestable: boolean }[] = [];
   const EDGE = 13;
   const grass = '#8cc063';
   const tarmac = '#9a9ea3';
@@ -600,13 +703,15 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     // The habitat floor, laid flat, in the shape it was given.
     const outline = outlineOf(d?.parts.shape ?? 'rounded', size.w, size.h)
       .map(([px, py]: [number, number]) => ({ x: x0 + px, y: y0 + py }));
-    nodes.push(<polygon key={`floor-${e.id}`} fill={floor}
+    // Tagged with what it is, so a touch on the park can say which part was touched. The bench has
+    // always told you to touch a part of it; in this view there was nothing to touch.
+    nodes.push(<polygon key={`floor-${e.id}`} fill={floor} data-item={e.id} data-part="ground"
       points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
 
     // Water lies on the floor, in its own corner of the habitat - held as fractions of the box, so
     // it stays where it was put whatever size the habitat is.
     for (const [i, wf] of enclosureWater(d).entries()) {
-      nodes.push(<polygon key={`water-${e.id}-${i}`}
+      nodes.push(<polygon key={`water-${e.id}-${i}`} data-item={e.id} data-part="water"
         points={ground(x0 + wf.x * size.w, y0 + wf.y * size.h, x0 + (wf.x + wf.w) * size.w, y0 + (wf.y + wf.h) * size.h)}
         fill={d?.colors.water ?? '#5aa9c8'} />);
     }
@@ -632,6 +737,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           nodes.push(null); // keep the key space stable
           push(pl.z, (
             <svg key={`f-${e.id}-${ri}-${pi}`} x={pl.x + ox} y={pl.y + oy} width={pl.w} height={pl.h} viewBox={pr.viewBox} overflow="visible"
+              data-item={e.id} data-part="fence"
               dangerouslySetInnerHTML={{ __html: tint(pr.body, fence, pr.tint ?? 3) }} />
           ));
         }
@@ -644,7 +750,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         const a = P(from.x, from.y), b = P(to.x, to.y);
         // Each side is its own piece, sorted with everything else, so the near ones stand in front.
         push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
-          <g key={`w-${e.id}-${i}`}>
+          <g key={`w-${e.id}-${i}`} data-item={e.id} data-part="fence">
             <polygon points={[a, b, up(b, wallH), up(a, wallH)].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
               fill={shade(fence, -18)} />
             <line x1={up(a, wallH).x} y1={up(a, wallH).y} x2={up(b, wallH).x} y2={up(b, wallH).y}
@@ -653,6 +759,16 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         ));
       });
     }
+
+    // A band round the edge that answers for the fence.
+    //
+    // A picket is a few pixels of drawing, and a pointer that misses one by a hair lands on the
+    // grass behind it - so touching the fence to colour it was a game of its own. Invisible, and
+    // laid over the ground the same way the blueprint's outer edge is: near the edge means the
+    // fence, inside means the ground.
+    nodes.push(<polygon key={`fence-hit-${e.id}`} fill="none" stroke="transparent"
+      strokeWidth={Math.max(3, u * 11)} strokeLinejoin="round" data-item={e.id} data-part="fence"
+      points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
 
     // Planting inside the habitat: both the enclosure's own greenery, which is part of its design
     // and holds its own spot in the box, and any planting item dragged in on top of it.
@@ -675,7 +791,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       const wx = x0 + 16 + t * Math.max(4, size.w - 32);
       const wy = y0 + 12 + jitter(i + 2, e.id.length + 7) * Math.max(4, size.h - 24);
       place(treeProp(landType(pl)), wx, wy, u * 1.2, `pl-${e.id}-${pl.id}-${i}`,
-        undefined, foliageFilter(working(pl).colors.foliage));
+        undefined, foliageFilter(working(pl).colors.foliage), { 'data-spot': `${pl.id}:0` });
+      // Planting can be dragged back out of a habitat; an animal cannot walk itself out.
+      spots.push({ id: pl.id, member: 0, enc: e.id, x: wx, y: wy, w: 24, h: 24,
+        z: depth(wx, wy), box: { x: x0, y: y0, w: size.w, h: size.h }, unnestable: true });
     });
 
     // The animals themselves, in the side view they were drawn in.
@@ -702,6 +821,10 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         const coat = coatFilter(working(a).parts.coat);
         const at = P(wx, wy);
         const key = `a-${e.id}-${a.id}-${mi}`;
+        // Each animal of the family, on its own. A pride is not a blob, and arranging them is the
+        // point - so each one is something the pointer can find, at about its own size.
+        spots.push({ id: a.id, member: mi, enc: e.id, x: wx, y: wy, w: 22 * m.scale, h: 22 * m.scale,
+          z: depth(wx, wy), box: { x: x0, y: y0, w: size.w, h: size.h }, unnestable: false });
         if (art) {
           const h = art.h * u * 0.30 * m.scale;
           const w = h * (art.w / art.h);
@@ -723,7 +846,8 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
             // `scale(-1,1)` alone reflects through the origin and sends it off the far side, so the
             // translate brings it back. A CSS transform with transform-box: fill-box looked like the
             // tidier way to say this and put two lions in four somewhere off the picture entirely.
-            <g key={key} transform={mirror ? `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)` : undefined}>
+            <g key={key} data-spot={`${a.id}:${mi}`}
+              transform={mirror ? `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)` : undefined}>
               <svg x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
                 style={coat ? { filter: coat } : undefined}
                 dangerouslySetInnerHTML={{ __html: art.body }} />
@@ -734,7 +858,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
           const cols = speciesColors(a);
           const r = Math.max(2, u * 7 * m.scale);
           push(depth(wx, wy), (
-            <g key={key}>
+            <g key={key} data-spot={`${a.id}:${mi}`}>
               <ellipse cx={at.x} cy={at.y} rx={r * 1.1} ry={r * 0.5} fill="rgba(0,0,0,.16)" />
               <ellipse cx={at.x} cy={at.y - r * 0.8} rx={r} ry={r * 0.8} fill={cols.body} />
             </g>
@@ -1066,7 +1190,8 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
-          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage));
+          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage),
+            { 'data-item': it.id });
         plant(treeProp(type), c.x, c.y, `t-${it.id}`, working(it).colors.foliage);
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
@@ -1081,7 +1206,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     }
     // A facility, drawn as the kind of building it is.
     const special = amenityProp(it);
-    if (special) { place(special, c.x, c.y, u * 0.85, `am-${it.id}`); continue; }
+    if (special) { place(special, c.x, c.y, u * 0.85, `am-${it.id}`, undefined, undefined, { 'data-item': it.id }); continue; }
     facility(it, c, size);
   }
 
@@ -1214,6 +1339,13 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
      *  laid, while the pointer is still down. */
     at: P,
     ground,
+    spots,
+    /** The habitats, as boxes something can be dropped into. The same list as `movable` filtered,
+     *  but naming it says what it is for: a plant let go over one is planted in it. */
+    rooms: encs.map((it) => {
+      const c = posOf(it), sz = sizeOf(it);
+      return { id: it.id, x: c.x, y: c.y, w: sz.w, h: sz.h, z: depth(c.x, c.y) };
+    }),
     movable: [...encs, ...loose].map((it) => {
       const c = posOf(it), s = sizeOf(it);
       return { id: it.id, name: it.name, x: c.x, y: c.y, w: s.w, h: s.h, z: depth(c.x, c.y) };
