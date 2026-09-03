@@ -1776,6 +1776,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                     tool={effectiveTool} newConn={newConn}
                     building={edit ? building : null} onPart={edit ? onPart : undefined}
                     onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onNest={onNest} onUnnest={onUnnest}
+                    onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy}
                     onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); }} />
                 </div>
               </div>

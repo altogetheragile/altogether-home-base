@@ -148,7 +148,7 @@ function along(route: Pt[], t: number): Pt {
 
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
-  onSetSpot, onSetMemberSpot, onNest, onUnnest }: {
+  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -180,6 +180,15 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   /** Planting dragged into a habitat, and dragged back out of it. */
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
+  /** How long and how wide a landscape feature is. A river has to be able to reach both banks, and
+   *  a bridge has to be able to cross it, which is a size and not a design. */
+  onSetSize?: (id: string, size: { w: number; h: number }) => void;
+  /** Which way it faces. */
+  onSetRot?: (id: string, rot: number) => void;
+  /** One planting is several trees. Each of them stands somewhere of its own, and can be moved
+   *  there or taken out without touching the rest. */
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
+  onRemoveCopy?: (id: string, index: number) => void;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -294,6 +303,19 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       return;
     }
 
+    // One of an item's other plantings, moved on its own. Same drag as anything else; it writes
+    // back to that tree rather than to the item's own position.
+    const copyTag = (e.target as Element | null)?.closest?.('[data-copy]')?.getAttribute('data-copy');
+    if (copyTag && onMoveCopy) {
+      const [id, ix] = [copyTag.slice(0, copyTag.lastIndexOf(':')), Number(copyTag.slice(copyTag.lastIndexOf(':') + 1))];
+      e.preventDefault();
+      const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) onMoveCopy(id, ix, insidePark({ w: 8, h: 8 }, p)); };
+      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      return;
+    }
+
     if (!onPlaceItem) return;
     // What the pointer landed ON beats what its footprint says. A prop is drawn ABOVE the ground it
     // stands on, so grabbing a tree by its canopy read as a press on the grass behind the tree.
@@ -343,6 +365,55 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   const held = selected ? scene.movable.find((m) => m.id === selected) : undefined;
   const ring = held && scene.ground(held.x - held.w / 2, held.y - held.h / 2, held.x + held.w / 2, held.y + held.h / 2);
 
+  // ---- grips: how long a thing is, how wide, and which way it faces ------------------------
+  //
+  // A river has to reach both banks and a bridge has to cross it, which is a size and not a design.
+  // The blueprint grew grips on whatever you were working on; this view had none, so a river drawn
+  // here could only be moved. They lie on the ground in the same projection as everything else,
+  // because a browser handle floating over an isometric park belongs to neither.
+  const heldItem = held ? state.backlog.find((it) => it.id === held.id) : undefined;
+  const isLand = !!heldItem && heldItem.category === 'flora' && isLandscapeType(landType(heldItem));
+  const canSize = isLand && !!onSetSize && !laying;
+  const canTurn = !!onSetRot && !laying && !!heldItem
+    && (isLand || heldItem.category === 'enclosure' || heldItem.category === 'amenity');
+
+  /** Drag a grip, in the world the zoo is laid out in. What it does with the point it is given is
+   *  the only thing that differs between them. */
+  const grip = (e: ReactPointerEvent<SVGCircleElement>, apply: (p: { x: number; y: number }, ev: PointerEvent) => void) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) apply(p, ev); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  /** The dragged edge moves and the opposite edge stays put, so lengthening a river grows it
+   *  towards the far bank rather than from its middle. The same rule the blueprint uses. */
+  const resize = (axis: 'len' | 'wid') => (p: { x: number; y: number }) => {
+    if (!held || !onSetSize) return;
+    const left = held.x - held.w / 2, top = held.y - held.h / 2;
+    if (axis === 'len') {
+      const w = Math.round(Math.min(Math.max(p.x - left, 40), Math.max(40, CANVAS_W - 8 - left)));
+      onSetSize(held.id, { w, h: held.h });
+      onPlaceItem?.(held.id, { x: left + w / 2, y: held.y });
+    } else {
+      const h = Math.round(Math.min(Math.max(p.y - top, 24), Math.max(24, PLAY_H - 8 - top)));
+      onSetSize(held.id, { w: held.w, h });
+      onPlaceItem?.(held.id, { x: held.x, y: top + h / 2 });
+    }
+  };
+
+  /** Landscape is an organic shape, so it swings to any angle and settles on fifteens. A habitat or
+   *  a building is a box, and every box in an isometric park shares the same two axes - so those go
+   *  round in quarters, which is the turn anybody actually wants anyway. */
+  const turn3 = (p: { x: number; y: number }, ev: PointerEvent) => {
+    if (!held || !onSetRot) return;
+    const deg = (Math.atan2(p.y - held.y, p.x - held.x) * 180) / Math.PI;
+    const step = isLand ? 15 : 90;
+    onSetRot(held.id, ev.shiftKey && isLand ? deg : (((Math.round(deg / step) * step) % 360) + 360) % 360);
+  };
+
   return (
     <div className={className}>
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
@@ -384,6 +455,51 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
           );
         })()}
         {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
+        {/* Taking one of the other plantings out. Shown on whatever is open on the bench rather
+            than on hover: the machine this game is mostly played on has no hover, and an X you can
+            only find by guessing it is there is one nobody finds. */}
+        {onRemoveCopy && !laying && building && scene.copies.filter((c) => c.id === building).map((c) => {
+          const g = scene.at(c.x, c.y);
+          const q = c.over ?? { x: g.x, y: g.y - Math.max(10, scene.u * 13) };
+          const r = Math.max(5, scene.u * 6);
+          const arm = r * 0.45;
+          const line = Math.max(0.9, scene.u * 1.4);
+          return (
+            <g key={`rm-${c.id}-${c.index}`} style={{ cursor: 'pointer' }}
+              onPointerDown={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
+              onClick={(ev) => { ev.stopPropagation(); onRemoveCopy(c.id, c.index); }}>
+              <title>Take this one out</title>
+              <circle cx={q.x} cy={q.y} r={r} fill="#fff" stroke="#b91c1c" strokeWidth={line} />
+              <path d={`M${q.x - arm},${q.y - arm} L${q.x + arm},${q.y + arm} M${q.x + arm},${q.y - arm} L${q.x - arm},${q.y + arm}`}
+                stroke="#b91c1c" strokeWidth={line} strokeLinecap="round" />
+            </g>
+          );
+        })}
+        {/* The grips themselves: one to lengthen, one to widen, one to turn. On the ground where
+            the thing is, not floating over the picture in browser coordinates. */}
+        {held && (canSize || canTurn) && (() => {
+          const r = Math.max(4, scene.u * 6);
+          const dot = (key: string, wx: number, wy: number, hint: string, fill: string,
+            apply: (p: { x: number; y: number }, ev: PointerEvent) => void) => {
+            // Held inside the park. A river runs the full width of it, so its end grip sat past the
+            // edge of the picture and off the side of the screen - a grip nobody can reach is a
+            // grip that is not there. Found by dragging one in a browser.
+            const q = scene.at(Math.min(Math.max(wx, 8), CANVAS_W - 8), Math.min(Math.max(wy, 8), PLAY_H - 8));
+            return (
+              <circle key={key} cx={q.x} cy={q.y} r={r} fill={fill} stroke="#fff" strokeWidth={Math.max(0.8, scene.u * 1.2)}
+                style={{ cursor: 'grab', touchAction: 'none' }} onPointerDown={(ev) => grip(ev, apply)}>
+                <title>{hint}</title>
+              </circle>
+            );
+          };
+          return (
+            <g>
+              {canSize && dot('len', held.x + held.w / 2, held.y, 'Drag to make it longer or shorter', '#0ea5e9', resize('len'))}
+              {canSize && dot('wid', held.x, held.y + held.h / 2, 'Drag to make it wider or narrower', '#0ea5e9', resize('wid'))}
+              {canTurn && dot('rot', held.x, held.y - held.h / 2 - 18, 'Drag to turn it (hold Shift on landscape for any angle)', '#10b981', turn3)}
+            </g>
+          );
+        })()}
       </svg>
     </div>
   );
@@ -543,10 +659,13 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const at = P(wx, wy);
     const w = p.w * k, h = p.h * k;
     const body = p.tint && tintTo ? tint(p.body, tintTo, p.tint) : p.body;
+    const top = at.y - h + w * 0.29;
     push(depth(wx, wy), (
-      <svg key={key} x={at.x - w / 2} y={at.y - h + w * 0.29} width={w} height={h} viewBox={p.viewBox} overflow="visible"
+      <svg key={key} x={at.x - w / 2} y={top} width={w} height={h} viewBox={p.viewBox} overflow="visible"
         {...tag} style={filter ? { filter } : undefined} dangerouslySetInnerHTML={{ __html: body }} />
     ));
+    // Where the top of the drawing came out, for anything that has to sit clear of it.
+    return { x: at.x, top };
   };
 
   // ---- the land itself -------------------------------------------------------------------
@@ -559,6 +678,9 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
    *  belongs to, because a spot is a fraction of its own habitat and nothing else. */
   const spots: { id: string; member: number; enc: string; x: number; y: number; w: number; h: number;
     z: number; box: { x: number; y: number; w: number; h: number }; unnestable: boolean }[] = [];
+  /** The extra plantings one item puts in the park, each standing somewhere of its own. */
+  const copies: { id: string; index: number; x: number; y: number; z: number;
+    over: { x: number; y: number } | null }[] = [];
   const EDGE = 13;
   const grass = '#8cc063';
   const tarmac = '#9a9ea3';
@@ -1189,17 +1311,24 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         if (!lie.length) continue;
         nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92} />);
       } else {
-        const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
+        const plant = (name: string, wx: number, wy: number, key: string, foliage?: string, copy?: number) =>
           place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage),
-            { 'data-item': it.id });
+            // One planting is several trees, and each of them stands somewhere of its own. Tagged
+            // as which one it is, or dragging the third tree walked the whole planting across the
+            // park - they are all drawn from the same item.
+            copy === undefined ? { 'data-item': it.id } : { 'data-copy': `${it.id}:${copy}` });
         plant(treeProp(type), c.x, c.y, `t-${it.id}`, working(it).colors.foliage);
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
         for (const [i, k] of (it.copies ?? []).entries()) {
           const at = insidePark({ w: 8, h: 8 }, { x: k.x, y: k.y });
           const piece = pieceByKey(k.piece);
-          plant(treeProp(piece?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`,
-            piece?.colors.foliage ?? working(it).colors.foliage);
+          const drawn = plant(treeProp(piece?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`,
+            piece?.colors.foliage ?? working(it).colors.foliage, i);
+          copies.push({ id: it.id, index: i, x: at.x, y: at.y, z: depth(at.x, at.y),
+            // Above the tree, not on its trunk: a mark the same colour as the bark behind it is a
+            // mark nobody sees. Screen coordinates, because that is where the drawing ended up.
+            over: drawn ? { x: drawn.x, y: drawn.top - Math.max(5, u * 6) } : null });
         }
       }
       continue;
@@ -1340,6 +1469,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     at: P,
     ground,
     spots,
+    copies,
     /** The habitats, as boxes something can be dropped into. The same list as `movable` filtered,
      *  but naming it says what it is for: a plant let go over one is planted in it. */
     rooms: encs.map((it) => {
