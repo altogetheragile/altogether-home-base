@@ -148,7 +148,7 @@ function along(route: Pt[], t: number): Pt {
 
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
-  onSetSpot, onSetMemberSpot, onNest, onUnnest }: {
+  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -180,6 +180,11 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   /** Planting dragged into a habitat, and dragged back out of it. */
   onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void;
   onUnnest?: (id: string) => void;
+  /** How long and how wide a landscape feature is. A river has to be able to reach both banks, and
+   *  a bridge has to be able to cross it, which is a size and not a design. */
+  onSetSize?: (id: string, size: { w: number; h: number }) => void;
+  /** Which way it faces. */
+  onSetRot?: (id: string, rot: number) => void;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -343,6 +348,55 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   const held = selected ? scene.movable.find((m) => m.id === selected) : undefined;
   const ring = held && scene.ground(held.x - held.w / 2, held.y - held.h / 2, held.x + held.w / 2, held.y + held.h / 2);
 
+  // ---- grips: how long a thing is, how wide, and which way it faces ------------------------
+  //
+  // A river has to reach both banks and a bridge has to cross it, which is a size and not a design.
+  // The blueprint grew grips on whatever you were working on; this view had none, so a river drawn
+  // here could only be moved. They lie on the ground in the same projection as everything else,
+  // because a browser handle floating over an isometric park belongs to neither.
+  const heldItem = held ? state.backlog.find((it) => it.id === held.id) : undefined;
+  const isLand = !!heldItem && heldItem.category === 'flora' && isLandscapeType(landType(heldItem));
+  const canSize = isLand && !!onSetSize && !laying;
+  const canTurn = !!onSetRot && !laying && !!heldItem
+    && (isLand || heldItem.category === 'enclosure' || heldItem.category === 'amenity');
+
+  /** Drag a grip, in the world the zoo is laid out in. What it does with the point it is given is
+   *  the only thing that differs between them. */
+  const grip = (e: ReactPointerEvent<SVGCircleElement>, apply: (p: { x: number; y: number }, ev: PointerEvent) => void) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) apply(p, ev); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  /** The dragged edge moves and the opposite edge stays put, so lengthening a river grows it
+   *  towards the far bank rather than from its middle. The same rule the blueprint uses. */
+  const resize = (axis: 'len' | 'wid') => (p: { x: number; y: number }) => {
+    if (!held || !onSetSize) return;
+    const left = held.x - held.w / 2, top = held.y - held.h / 2;
+    if (axis === 'len') {
+      const w = Math.round(Math.min(Math.max(p.x - left, 40), Math.max(40, CANVAS_W - 8 - left)));
+      onSetSize(held.id, { w, h: held.h });
+      onPlaceItem?.(held.id, { x: left + w / 2, y: held.y });
+    } else {
+      const h = Math.round(Math.min(Math.max(p.y - top, 24), Math.max(24, PLAY_H - 8 - top)));
+      onSetSize(held.id, { w: held.w, h });
+      onPlaceItem?.(held.id, { x: held.x, y: top + h / 2 });
+    }
+  };
+
+  /** Landscape is an organic shape, so it swings to any angle and settles on fifteens. A habitat or
+   *  a building is a box, and every box in an isometric park shares the same two axes - so those go
+   *  round in quarters, which is the turn anybody actually wants anyway. */
+  const turn3 = (p: { x: number; y: number }, ev: PointerEvent) => {
+    if (!held || !onSetRot) return;
+    const deg = (Math.atan2(p.y - held.y, p.x - held.x) * 180) / Math.PI;
+    const step = isLand ? 15 : 90;
+    onSetRot(held.id, ev.shiftKey && isLand ? deg : (((Math.round(deg / step) * step) % 360) + 360) % 360);
+  };
+
   return (
     <div className={className}>
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
@@ -384,6 +438,31 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
           );
         })()}
         {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
+        {/* The grips themselves: one to lengthen, one to widen, one to turn. On the ground where
+            the thing is, not floating over the picture in browser coordinates. */}
+        {held && (canSize || canTurn) && (() => {
+          const r = Math.max(4, scene.u * 6);
+          const dot = (key: string, wx: number, wy: number, hint: string, fill: string,
+            apply: (p: { x: number; y: number }, ev: PointerEvent) => void) => {
+            // Held inside the park. A river runs the full width of it, so its end grip sat past the
+            // edge of the picture and off the side of the screen - a grip nobody can reach is a
+            // grip that is not there. Found by dragging one in a browser.
+            const q = scene.at(Math.min(Math.max(wx, 8), CANVAS_W - 8), Math.min(Math.max(wy, 8), PLAY_H - 8));
+            return (
+              <circle key={key} cx={q.x} cy={q.y} r={r} fill={fill} stroke="#fff" strokeWidth={Math.max(0.8, scene.u * 1.2)}
+                style={{ cursor: 'grab', touchAction: 'none' }} onPointerDown={(ev) => grip(ev, apply)}>
+                <title>{hint}</title>
+              </circle>
+            );
+          };
+          return (
+            <g>
+              {canSize && dot('len', held.x + held.w / 2, held.y, 'Drag to make it longer or shorter', '#0ea5e9', resize('len'))}
+              {canSize && dot('wid', held.x, held.y + held.h / 2, 'Drag to make it wider or narrower', '#0ea5e9', resize('wid'))}
+              {canTurn && dot('rot', held.x, held.y - held.h / 2 - 18, 'Drag to turn it (hold Shift on landscape for any angle)', '#10b981', turn3)}
+            </g>
+          );
+        })()}
       </svg>
     </div>
   );
