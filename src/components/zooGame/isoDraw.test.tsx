@@ -37,6 +37,30 @@ function dragAcross(svg: SVGElement, from: [number, number], to: [number, number
   fireEvent.pointerUp(window, { clientX: to[0], clientY: to[1] });
 }
 
+describe('picking a run that has been laid', () => {
+  it('picks the run that was touched, and drops it when the grass is touched instead', () => {
+    // What is offered for a run - its width, its colour, taking it back up - is the same panel the
+    // blueprint puts above the drawing. It only ever appeared for a run picked in the blueprint.
+    const onSelectConn = vi.fn();
+    const state = parkWithTwo();
+    const laid: ZooConnector = { id: 'run-1', a: { x: 120, y: 200 }, b: { x: 480, y: 420 }, bends: [], thickness: 14, color: '#c9a86a' };
+    const { container } = render(
+      <IsoZoo state={{ ...state, connectors: [laid] }} selectedConn="run-1" onSelectConn={onSelectConn} onPlaceItem={() => {}} />,
+    );
+    const svg = container.querySelector('svg')!;
+    svg.getBoundingClientRect = () => ({ x: 0, y: 0, top: 0, left: 0, right: 900, bottom: 700,
+      width: 900, height: 700, toJSON: () => ({}) }) as DOMRect;
+    const run = container.querySelector('[data-conn="run-1"]');
+    expect(run, 'a laid run is not something a pointer can find').toBeTruthy();
+    fireEvent.pointerDown(run!, { clientX: 400, clientY: 350 });
+    expect(onSelectConn, 'touching a run picked nothing').toHaveBeenCalledWith('run-1');
+
+    onSelectConn.mockClear();
+    fireEvent.pointerDown(svg, { clientX: 40, clientY: 40 });
+    expect(onSelectConn, 'the run stayed picked after the grass was touched').toHaveBeenCalledWith(null);
+  });
+});
+
 describe('laying a path in the Increment view', () => {
   it('lays a run from where you pressed to where you let go', () => {
     const laid: ZooConnector[] = [];

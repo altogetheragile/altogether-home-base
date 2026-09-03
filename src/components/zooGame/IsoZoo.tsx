@@ -148,7 +148,8 @@ function along(route: Pt[], t: number): Pt {
 
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
-  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy }: {
+  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
+  selectedConn, onSelectConn }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -189,6 +190,10 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
    *  there or taken out without touching the rest. */
   onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
   onRemoveCopy?: (id: string, index: number) => void;
+  /** Which run of path is picked, so its width, its colour and taking it back up are offered for
+   *  the run you touched. The controls for that already sit above both drawings. */
+  selectedConn?: string | null;
+  onSelectConn?: (id: string | null) => void;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -254,6 +259,14 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       window.addEventListener('pointerup', up);
       return;
     }
+    // A run of path, picked by touching it. What is offered for it then - its width, its colour,
+    // taking it back up - is the same panel the blueprint puts above the drawing.
+    if (onSelectConn) {
+      const conn = (e.target as Element | null)?.closest?.('[data-conn]')?.getAttribute('data-conn');
+      if (conn) { onSelectConn(conn); e.preventDefault(); return; }
+      if (selectedConn) onSelectConn(null);
+    }
+
     // Touching a part of the thing on the bench. Read off what was actually drawn under the
     // pointer rather than worked out from the box, so the part you get is the part you can see -
     // the water in the corner of a habitat is water, not the ground it lies on.
@@ -728,7 +741,8 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const ex = (dx / len) * wdt, ey = (dy / len) * wdt;
     const a2 = { x: a.x - ex, y: a.y - ey }, z2 = { x: z.x + ex, y: z.y + ey };
     const corners = [P(a2.x + nx, a2.y + ny), P(z2.x + nx, z2.y + ny), P(z2.x - nx, z2.y - ny), P(a2.x - nx, a2.y - ny)];
-    nodes.push(<polygon key={`path-${c.id}`} points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill={c.color || '#ddc79a'} />);
+    nodes.push(<polygon key={`path-${c.id}`} data-conn={c.id}
+      points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill={c.color || '#ddc79a'} />);
     walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
   }
 
