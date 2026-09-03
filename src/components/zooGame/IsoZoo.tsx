@@ -162,9 +162,8 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   onSelect?: (id: string | null) => void;
   /** 'connect' lays a run of path: press where it starts, drag to where it goes, let go.
    *
-   *  A route was the one thing this view could not do, which is why the blueprint was still here.
    *  It needs no new geometry: the pointer is already answered by running the projection
-   *  backwards, and that is the whole of the problem. */
+   *  backwards, and laying a path is that same question asked twice. */
   tool?: 'none' | 'connect';
   onAddConnector?: (c: ZooConnector) => void;
   /** The width and colour the run is laid with - the pathway's own, while one is on the bench. */
@@ -172,8 +171,8 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   /** Which item is open on the design bench. Only its own parts answer to a touch: a park where
    *  every fence in sight opens somebody else's controls is a park you cannot build in. */
   building?: string | null;
-  /** Touching a part of the thing on the bench, so the bench opens that part's controls. What the
-   *  bench has always said to do, and what only the blueprint could do. */
+  /** Touching a part of the thing on the bench, so the bench opens that part's controls, which is
+   *  what the bench has always said to do. */
   onPart?: (p: { id: string; key: string } | null) => void;
   /** Where one animal of a family stands inside its habitat, as a fraction of the habitat's box.
    *  A pride is not a blob, and arranging them is most of what a habitat is. */
@@ -268,7 +267,7 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       return;
     }
     // A run of path, picked by touching it. What is offered for it then - its width, its colour,
-    // taking it back up - is the same panel the blueprint puts above the drawing.
+    // taking it back up - is the panel above the drawing.
     if (onSelectConn) {
       const conn = (e.target as Element | null)?.closest?.('[data-conn]')?.getAttribute('data-conn');
       if (conn) { onSelectConn(conn); e.preventDefault(); return; }
@@ -355,8 +354,7 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
     const move = (ev: PointerEvent) => {
       const p = worldAt(ev);
       if (!p) return;
-      // A press that turned into a drag was moving the thing, not choosing a part of it. The
-      // blueprint drops the part the same way, and for the same reason.
+      // A press that turned into a drag was moving the thing, not choosing a part of it.
       if (touched && Math.hypot(p.x - w.x, p.y - w.y) > 4) { onPart?.(null); touched = null; }
       onPlaceItem(hit.id, insidePark({ w: hit.w, h: hit.h }, { x: p.x - grabX, y: p.y - grabY }));
     };
@@ -389,8 +387,7 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   // ---- grips: how long a thing is, how wide, and which way it faces ------------------------
   //
   // A river has to reach both banks and a bridge has to cross it, which is a size and not a design.
-  // The blueprint grew grips on whatever you were working on; this view had none, so a river drawn
-  // here could only be moved. They lie on the ground in the same projection as everything else,
+  // The grips lie on the ground in the same projection as everything else,
   // because a browser handle floating over an isometric park belongs to neither.
   const heldItem = held ? state.backlog.find((it) => it.id === held.id) : undefined;
   const isLand = !!heldItem && heldItem.category === 'flora' && isLandscapeType(landType(heldItem));
@@ -942,8 +939,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     //
     // A picket is a few pixels of drawing, and a pointer that misses one by a hair lands on the
     // grass behind it - so touching the fence to colour it was a game of its own. Invisible, and
-    // laid over the ground the same way the blueprint's outer edge is: near the edge means the
-    // fence, inside means the ground.
+    // laid over the ground: near the edge means the fence, inside means the ground.
     nodes.push(<polygon key={`fence-hit-${e.id}`} fill="none" stroke="transparent"
       strokeWidth={Math.max(3, u * 11)} strokeLinejoin="round" data-item={e.id} data-part="fence"
       points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
