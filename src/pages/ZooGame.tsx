@@ -110,6 +110,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // back here, so the park is not showing a copy of the design - it IS the design. A build in
   // progress saves as a draft (it survives the day ending); an already-built item is edited outright.
   const edit = {
+    onRename: renameItem,
     onDesign: (id: string, design: ItemDesign) => {
       const it = state.backlog.find((x) => x.id === id);
       if (it?.status === 'committed') saveDraftDesign(id, design); else editBuild(id, design);
