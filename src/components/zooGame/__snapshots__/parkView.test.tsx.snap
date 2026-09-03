@@ -2,15 +2,13 @@
 
 exports[`where the park puts things > lays the same zoo out the same way 1`] = `
 [
-  "110px,294px",
-  "122px,113px",
-  "242px,294px",
-  "292px,113px",
-  "410px,211px",
-  "428px,113px",
-  "50%,56%",
-  "50%,56%",
-  "510px,113px",
-  "592px,113px",
+  "bridge at 242,294 in 120x60",
+  "cafe at 110,294 in 108x84",
+  "enc at 122,113 in 132x90",
+  "enc2 at 292,113 in 172x114",
+  "kiosk at 510,113 in 64x54",
+  "riv at 410,211 in 1180x46",
+  "stray at 428,113 in 64x60",
+  "trees at 592,113 in 64x60",
 ]
 `;

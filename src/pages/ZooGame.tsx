@@ -84,7 +84,6 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   const [onePagerSeen, setOnePagerSeen] = useState(false); // ...and re-openable from the intro
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
-  const [justOpened, setJustOpened] = useState<string | null>(null);
   // Viewport point the delivery confetti bursts from - the card as it lands in Done.
   const [celebrateOrigin, setCelebrateOrigin] = useState<{ x: number; y: number } | null>(null);
   // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
@@ -132,7 +131,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
     // Inspect and adapt: pick the item out and turn the park to the Increment, so what is judged
     // against the acceptance criteria is the thing that was built rather than the drawing of it.
-    onInspect: (id: string) => { setBuildingId(id); setParkView('iso'); setParkTab('park'); },
+    onInspect: (id: string) => { setBuildingId(id); setParkTab('park'); },
     // Something of the same kind you have already built, to start from rather than begin again.
     // Where the new plant goes. The studio has no park to point at, so it asks the one place that
     // knows where a thing stands - the same answer both views draw from - and stands the plant
@@ -178,8 +177,6 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     setParkTab('work');
     // Celebrate the delivery: this increment is now live to visitors. Burst the confetti from the
     // card once it has landed in the Done column (measured after the re-render).
-    setJustOpened(shownId);
-    window.setTimeout(() => setJustOpened((cur) => (cur === shownId ? null : cur)), 900);
     toast.success(`🎉 ${name} is live to visitors!`);
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const el = document.querySelector(`[data-done-card="${shownId}"]`);
@@ -274,7 +271,6 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // Which drawing the park is showing. Held here because Inspect, down on the bench, has to move it.
   // The park opens as the zoo a visitor would see, not as the drawing of it. The blueprint stays
   // reachable only because a route is still drawn on it by hand.
-  const [parkView, setParkView] = useState<'plan' | 'iso'>('iso');
   // Which part of the selected thing is picked out - 'ground', 'fence', 'water', 'flora:2'. It has
   // to live up here now that the controls are in the bench and the thing is on the park: touching
   // the ground out there is what opens the ground's swatches over here, and neither half can own a
@@ -311,7 +307,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }
     : null;
 
-  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, parkView, onParkView: setParkView, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, part: partFocus, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, justOpened, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onRename: renameItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {

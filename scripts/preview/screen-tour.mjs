@@ -65,9 +65,8 @@ await click('Suggest steps for all', 1500);
 await shot('planning-steps-planned');
 await click('Start Sprint', 2500);
 await shot('sprint-board-day-1');
-// the park, both ways of drawing it
-await click('^Increment$', 1200); await shot('park-isometric');
-await click('^Plan$', 1200); await shot('park-plan-blueprint');
+// the park - one drawing of it, since the blueprint was retired
+await shot('park-isometric');
 await click('Product Backlog', 1200); await shot('sprint-pull-from-backlog');
 await click('^Artifacts', 1200); await shot('artifacts-drawer');
 await click('Scrum', 1200); await shot('scrum-on-a-page');
