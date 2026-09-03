@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import type { EditApi } from './ParkView';
 import { themeFor } from './zoneTheme';
@@ -84,6 +85,30 @@ function Empty({ next, wentBack }: { next?: BacklogItem; wentBack?: BacklogItem 
 
 /** The design bench: the controls for whatever is being built, plus its plan and the Product
  *  Owner's criteria - everything you need to finish one item, in one place under the board. */
+/** The name of the thing on the bench, which is also where you change it.
+ *
+ *  Naming used to be a plate under the habitat on the blueprint - so the one view that draws the
+ *  zoo as a visitor sees it could not name anything, and hanging labels over an isometric park to
+ *  fix that would clutter the one picture whose job is to look like a zoo. The name belongs with
+ *  the rest of the thing's details, which is here.
+ */
+function BenchName({ name, onRename }: { name: string; onRename: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(name);
+  const commit = () => { setEditing(false); const t = val.trim(); if (t && t !== name) onRename(t); };
+  if (editing) {
+    return (
+      <input autoFocus value={val} aria-label="Name" onChange={(e) => setVal(e.target.value)} onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setVal(name); setEditing(false); } }}
+        className={cn(FOCUS, 'w-[150px] min-w-0 rounded bg-background px-1 font-normal outline-none ring-2 ring-amber-500')} />
+    );
+  }
+  return (
+    <button type="button" title="Rename this" onClick={() => { setVal(name); setEditing(true); }}
+      className={cn(FOCUS, 'min-w-0 truncate rounded px-1 font-normal hover:bg-muted')}>{name}</button>
+  );
+}
+
 export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
@@ -121,7 +146,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
           {item && <>
             <span className="text-muted-foreground">&middot;</span>
             <CategoryIcon item={item} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="truncate font-normal">{item.name}</span>
+            <BenchName key={item.id} name={item.name} onRename={(nm) => edit.onRename(item.id, nm)} />
             <Chip>{item.zone}</Chip>
             {/* Say when it is finished. The bench looked identical whether a thing was being built or
                 had been delivered a Sprint ago, so a habitat that was Done and live sat here looking

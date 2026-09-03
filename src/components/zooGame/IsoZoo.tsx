@@ -6,6 +6,7 @@ import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
+import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
 import { animalArtFor, coatFilter } from './art/animalArt';
 import { KIND_SCALE, groupMembers } from './design';
@@ -149,7 +150,7 @@ function along(route: Pt[], t: number): Pt {
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
   onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
-  selectedConn, onSelectConn }: {
+  selectedConn, onSelectConn, onStartHere, onImprove, improving }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -194,6 +195,13 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
    *  the run you touched. The controls for that already sit above both drawings. */
   selectedConn?: string | null;
   onSelectConn?: (id: string | null) => void;
+  /** A card from the Sprint Backlog dropped on the park: the patch it lands on becomes its
+   *  construction site. Whether it may start at all is the engine's business, not the drawing's. */
+  onStartHere?: (id: string, pos: { x: number; y: number }) => void;
+  /** Raise an Improve item for something already live. Feedback about a thing that exists is the
+   *  Product Backlog's business, so the park is where you say it. */
+  onImprove?: (id: string) => void;
+  improving?: Set<string>;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -427,8 +435,22 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
     onSetRot(held.id, ev.shiftKey && isLand ? deg : (((Math.round(deg / step) * step) % 360) + 360) % 360);
   };
 
+  const [dropping, setDropping] = useState(false);
+
   return (
-    <div className={className}>
+    <div className={cn(className, dropping && 'rounded-lg ring-4 ring-primary/40')}
+      onDragOver={onStartHere ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDropping(true); } : undefined}
+      onDragLeave={onStartHere ? () => setDropping(false) : undefined}
+      onDrop={onStartHere ? (e) => {
+        e.preventDefault();
+        setDropping(false);
+        const id = e.dataTransfer.getData('text/plain');
+        const w = worldAt(e);
+        // Inside the park, and inside it by enough that the site is not half off the grass. A drop
+        // that landed nowhere in particular starts nothing: a site at no coordinates is a site
+        // nobody can find, and it would be drawn as one.
+        if (id && w && Number.isFinite(w.x) && Number.isFinite(w.y)) onStartHere(id, insidePark({ w: 80, h: 80 }, w));
+      } : undefined}>
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
       <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
@@ -468,6 +490,26 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
           );
         })()}
         {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
+        {/* Improve. Only for something LIVE: there is nothing to improve about a construction
+            site, and nothing to improve about work that has not been released - you are still
+            building that one. Over the thing itself, since that is what the feedback is about. */}
+        {held && heldItem?.status === 'open' && !laying && onImprove && (() => {
+          const q = scene.at(held.x, held.y - held.h / 2);
+          const queued = improving?.has(held.id);
+          const h = Math.max(11, scene.u * 13), w = h * (queued ? 5.2 : 4.4);
+          const y = q.y - h * 1.8;
+          return (
+            <g style={{ cursor: queued ? 'default' : 'pointer' }}
+              onPointerDown={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
+              onClick={queued ? undefined : (ev) => { ev.stopPropagation(); onImprove(held.id); }}>
+              <title>{queued ? 'An Improve item is already waiting' : `Raise an Improve item for ${held.name}`}</title>
+              <rect x={q.x - w / 2} y={y} width={w} height={h} rx={h / 2}
+                fill={queued ? '#f59e0b' : '#fff'} stroke={queued ? '#f59e0b' : '#d97706'} strokeWidth={Math.max(0.8, scene.u * 1.1)} />
+              <text x={q.x} y={y + h * 0.72} textAnchor="middle" fontSize={h * 0.62} fontWeight={600}
+                fill={queued ? '#fff' : '#b45309'}>{queued ? 'Improving' : 'Improve'}</text>
+            </g>
+          );
+        })()}
         {/* Taking one of the other plantings out. Shown on whatever is open on the bench rather
             than on hover: the machine this game is mostly played on has no hover, and an X you can
             only find by guessing it is there is one nobody finds. */}

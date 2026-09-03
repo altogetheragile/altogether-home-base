@@ -584,6 +584,9 @@ function Enclosure({ enc, animals, plants = [], theme, design, onSetDesign, onSe
  *  hands every edit straight back rather than keeping a copy of the design to reconcile later. */
 export interface EditApi {
   onDesign: (id: string, design: ItemDesign) => void;
+  /** Give it a name of its own. A zoo of "Enclosure 3"s is a zoo nobody has thought about, and
+   *  naming a thing is the cheapest way a team says what it is for. */
+  onRename: (id: string, name: string) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   onToggleTask: (id: string, taskId: string) => void;
   onConfirmAc: (id: string, index: number, value: boolean) => void;
@@ -1778,6 +1781,7 @@ export function ParkView({ state, compact = false, large = false, view: viewProp
                     onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onNest={onNest} onUnnest={onUnnest}
                     onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy}
                     selectedConn={selectedConn} onSelectConn={canConnect ? setSelectedConn : undefined}
+                    onStartHere={onStartHere} onImprove={onImprove} improving={improving}
                     onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); }} />
                 </div>
               </div>
