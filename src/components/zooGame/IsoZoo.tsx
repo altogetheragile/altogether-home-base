@@ -148,7 +148,7 @@ function along(route: Pt[], t: number): Pt {
 
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
-  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot }: {
+  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -185,6 +185,10 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   /** Which way it faces. */
   onSetRot?: (id: string, rot: number) => void;
+  /** One planting is several trees. Each of them stands somewhere of its own, and can be moved
+   *  there or taken out without touching the rest. */
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
+  onRemoveCopy?: (id: string, index: number) => void;
 }) {
   const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -294,6 +298,19 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
         if (sp.unnestable && onUnnest && (f.x < -0.05 || f.x > 1.05 || f.y < -0.05 || f.y > 1.05)) onUnnest(sp.id);
         else put(f);
       };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+      return;
+    }
+
+    // One of an item's other plantings, moved on its own. Same drag as anything else; it writes
+    // back to that tree rather than to the item's own position.
+    const copyTag = (e.target as Element | null)?.closest?.('[data-copy]')?.getAttribute('data-copy');
+    if (copyTag && onMoveCopy) {
+      const [id, ix] = [copyTag.slice(0, copyTag.lastIndexOf(':')), Number(copyTag.slice(copyTag.lastIndexOf(':') + 1))];
+      e.preventDefault();
+      const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) onMoveCopy(id, ix, insidePark({ w: 8, h: 8 }, p)); };
+      const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
       return;
@@ -438,6 +455,26 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
           );
         })()}
         {ring && <polygon points={ring} fill="none" stroke="#f97316" strokeWidth={Math.max(1.2, scene.u * 2)} strokeLinejoin="round" pointerEvents="none" />}
+        {/* Taking one of the other plantings out. Shown on whatever is open on the bench rather
+            than on hover: the machine this game is mostly played on has no hover, and an X you can
+            only find by guessing it is there is one nobody finds. */}
+        {onRemoveCopy && !laying && building && scene.copies.filter((c) => c.id === building).map((c) => {
+          const g = scene.at(c.x, c.y);
+          const q = c.over ?? { x: g.x, y: g.y - Math.max(10, scene.u * 13) };
+          const r = Math.max(5, scene.u * 6);
+          const arm = r * 0.45;
+          const line = Math.max(0.9, scene.u * 1.4);
+          return (
+            <g key={`rm-${c.id}-${c.index}`} style={{ cursor: 'pointer' }}
+              onPointerDown={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
+              onClick={(ev) => { ev.stopPropagation(); onRemoveCopy(c.id, c.index); }}>
+              <title>Take this one out</title>
+              <circle cx={q.x} cy={q.y} r={r} fill="#fff" stroke="#b91c1c" strokeWidth={line} />
+              <path d={`M${q.x - arm},${q.y - arm} L${q.x + arm},${q.y + arm} M${q.x + arm},${q.y - arm} L${q.x - arm},${q.y + arm}`}
+                stroke="#b91c1c" strokeWidth={line} strokeLinecap="round" />
+            </g>
+          );
+        })}
         {/* The grips themselves: one to lengthen, one to widen, one to turn. On the ground where
             the thing is, not floating over the picture in browser coordinates. */}
         {held && (canSize || canTurn) && (() => {
@@ -622,10 +659,13 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     const at = P(wx, wy);
     const w = p.w * k, h = p.h * k;
     const body = p.tint && tintTo ? tint(p.body, tintTo, p.tint) : p.body;
+    const top = at.y - h + w * 0.29;
     push(depth(wx, wy), (
-      <svg key={key} x={at.x - w / 2} y={at.y - h + w * 0.29} width={w} height={h} viewBox={p.viewBox} overflow="visible"
+      <svg key={key} x={at.x - w / 2} y={top} width={w} height={h} viewBox={p.viewBox} overflow="visible"
         {...tag} style={filter ? { filter } : undefined} dangerouslySetInnerHTML={{ __html: body }} />
     ));
+    // Where the top of the drawing came out, for anything that has to sit clear of it.
+    return { x: at.x, top };
   };
 
   // ---- the land itself -------------------------------------------------------------------
@@ -638,6 +678,9 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
    *  belongs to, because a spot is a fraction of its own habitat and nothing else. */
   const spots: { id: string; member: number; enc: string; x: number; y: number; w: number; h: number;
     z: number; box: { x: number; y: number; w: number; h: number }; unnestable: boolean }[] = [];
+  /** The extra plantings one item puts in the park, each standing somewhere of its own. */
+  const copies: { id: string; index: number; x: number; y: number; z: number;
+    over: { x: number; y: number } | null }[] = [];
   const EDGE = 13;
   const grass = '#8cc063';
   const tarmac = '#9a9ea3';
@@ -1268,17 +1311,24 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
         if (!lie.length) continue;
         nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92} />);
       } else {
-        const plant = (name: string, wx: number, wy: number, key: string, foliage?: string) =>
+        const plant = (name: string, wx: number, wy: number, key: string, foliage?: string, copy?: number) =>
           place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage),
-            { 'data-item': it.id });
+            // One planting is several trees, and each of them stands somewhere of its own. Tagged
+            // as which one it is, or dragging the third tree walked the whole planting across the
+            // park - they are all drawn from the same item.
+            copy === undefined ? { 'data-item': it.id } : { 'data-copy': `${it.id}:${copy}` });
         plant(treeProp(type), c.x, c.y, `t-${it.id}`, working(it).colors.foliage);
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
         for (const [i, k] of (it.copies ?? []).entries()) {
           const at = insidePark({ w: 8, h: 8 }, { x: k.x, y: k.y });
           const piece = pieceByKey(k.piece);
-          plant(treeProp(piece?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`,
-            piece?.colors.foliage ?? working(it).colors.foliage);
+          const drawn = plant(treeProp(piece?.type ?? type, k.piece), at.x, at.y, `t-${it.id}-${i}`,
+            piece?.colors.foliage ?? working(it).colors.foliage, i);
+          copies.push({ id: it.id, index: i, x: at.x, y: at.y, z: depth(at.x, at.y),
+            // Above the tree, not on its trunk: a mark the same colour as the bark behind it is a
+            // mark nobody sees. Screen coordinates, because that is where the drawing ended up.
+            over: drawn ? { x: drawn.x, y: drawn.top - Math.max(5, u * 6) } : null });
         }
       }
       continue;
@@ -1419,6 +1469,7 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
     at: P,
     ground,
     spots,
+    copies,
     /** The habitats, as boxes something can be dropped into. The same list as `movable` filtered,
      *  but naming it says what it is for: a plant let go over one is planted in it. */
     rooms: encs.map((it) => {
