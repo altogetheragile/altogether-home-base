@@ -60,6 +60,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     reorderForecast: (id: string, dir: 'up' | 'down', picked: string[]) => send({ type: 'MOVE_FORECAST_ITEM', id, dir, picked }),
     setUserStories: (on: boolean) => send({ type: 'SET_USE_USER_STORIES', on }),
     pull: (id: string) => send({ type: 'PULL_ITEM', id }),
+    dropFromSprint: (id: string) => send({ type: 'DROP_FROM_SPRINT', id }),
     moveZone: (id: string, zone: string) => send({ type: 'MOVE_TO_ZONE', id, zone }),
     createZone: (name: string) => send({ type: 'ADD_ZONE', name }),
     renameZone: (oldName: string, newName: string) => send({ type: 'RENAME_ZONE', oldName, newName }),

@@ -118,6 +118,10 @@ export interface TeamDecision {
    *  there is nobody to name and this is left off. */
   by?: string;
   what: string;
+  /** What it cost, where the game can say. A Retrospective reading "carried on past the blocker"
+   *  learns less than one reading it beside "45% of the next day". Left off when the game does not
+   *  know - an invented cost is worse than none. */
+  cost?: string;
 }
 
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
@@ -564,6 +568,7 @@ export type ZooAction =
   | { type: 'UPDATE_CONNECTOR'; id: string; patch: Partial<ZooConnector> }
   | { type: 'DELETE_CONNECTOR'; id: string }
   | { type: 'PULL_ITEM'; id: string; by?: string }
+  | { type: 'DROP_FROM_SPRINT'; id: string; by?: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
   | { type: 'ADD_ANOTHER'; id: string }

@@ -1573,7 +1573,10 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
 export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   state = note(state, { kind: 'daily-scrum', by,
-    what: `Day ${state.dayNumber}: the Daily Scrum was skipped${state.pendingImpediment ? ', with something waiting to be raised' : ''}.` });
+    what: `Day ${state.dayNumber}: the Daily Scrum was skipped${state.pendingImpediment ? ', with something waiting to be raised' : ''}.`,
+    cost: state.pendingImpediment
+      ? `the blocker grew overnight: about ${Math.round((1 - SKIP_PENALTY_MULT) * 100)}% of the next day`
+      : undefined });
   const imp = state.pendingImpediment;
   const mult = imp ? SKIP_PENALTY_MULT : state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
   const base = {
@@ -2023,4 +2026,60 @@ export function zonesOpenedSince(before: ZooGameState, after: ZooGameState): str
  */
 export function zooIsOpen(state: ZooGameState): boolean {
   return zoneSlices(state).some((z) => z.open);
+}
+
+/** Take an item back out of the Sprint Backlog.
+ *
+ *  The Developers' call, and the one the Daily Scrum exists to make: the Sprint Goal is the
+ *  commitment, and the Sprint Backlog is their plan for meeting it. Dropping work that is not
+ *  essential to the Goal, in time for the rest to land, is protecting the commitment - not failing
+ *  it. Scope is renegotiated as more is learned; the Goal is not.
+ *
+ *  It goes back to the Product Backlog rather than anywhere else, because that is where work that
+ *  is not being done this Sprint lives. */
+export function dropFromSprint(state: ZooGameState, id: string, by?: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || item.sprintNumber !== state.sprintNumber || item.status !== 'committed') return state;
+  const out: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === id
+    ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, assignedDevs: [] }
+    : it)) };
+  return note(out, { kind: 'moved', by: by ?? 'developer',
+    what: `${whoIs(by ?? 'developer')} dropped ${item.name} (${item.estimate} points) to protect the Sprint Goal.` });
+}
+
+/** The decision in front of the Developers today, with the arithmetic done.
+ *
+ *  "Are we on track for the Sprint Goal?" is answerable: what is left, how long is left, and what
+ *  of it the Goal actually depends on. Where the forecast no longer fits, the honest move is to
+ *  drop what the Goal does not need while there is still time for what it does - so the game says
+ *  which item that would be and what each choice leaves.
+ *
+ *  Null when there is nothing to decide: the work fits, or nothing left is optional. */
+export function todaysDecision(state: ZooGameState): {
+  candidate: BacklogItem; left: number; daysLeft: number; capacity: number;
+  ifDropped: string; ifKept: string;
+} | null {
+  if (state.phase !== 'sprint') return null;
+  const prog = sprintProgress(state);
+  const daysLeft = Math.max(0, state.sprintDays - state.dayNumber + 1);
+  if (!daysLeft || !prog.remaining) return null;
+  // What a day is worth, from the game's own numbers rather than a guess.
+  const capacity = Math.round((daysLeft * DAY_SECONDS) / Math.max(1, secondsPerPoint(state)));
+  if (prog.remaining <= capacity) return null;    // it fits; there is nothing to decide
+
+  const open = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status === 'committed');
+  // The biggest thing the Goal does not depend on. Dropping the essential one is not an option the
+  // game offers: that is the Goal, and the Goal is the commitment.
+  const optional = open.filter((it) => !it.goalCritical).sort((a, z) => z.estimate - a.estimate);
+  const candidate = optional[0];
+  if (!candidate) return null;
+
+  const after = prog.remaining - candidate.estimate;
+  return {
+    candidate, left: prog.remaining, daysLeft, capacity,
+    ifDropped: after <= capacity
+      ? `Drop it: the Goal is safe, and ${prog.pointsCommitted - candidate.estimate} of ${prog.pointsCommitted} points still land.`
+      : `Drop it and ${after} points are still left against ${capacity} you can do - it helps, but it may not be enough.`,
+    ifKept: `Keep everything: ${prog.remaining} points left against ${capacity} you can do, and the Goal is at risk if anything slips.`,
+  };
 }
