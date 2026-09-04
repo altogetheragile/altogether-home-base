@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen, PLACEMENT_CHOICES } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen, betLine, PLACEMENT_CHOICES } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
@@ -230,6 +230,28 @@ function RefineChip({ horizon, onOpen, planned }: { horizon: number; onOpen: () 
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
+/** The Developers' steps, on the card, always.
+ *
+ *  The frames draw a card as its name, its size and what it takes to finish it - so "what is left
+ *  on this one" is answered by looking at the board rather than by opening the card. Four lines is
+ *  the most a column can carry without becoming a document; the rest is on the bench. */
+function CardSteps({ item }: { item: BacklogItem }) {
+  const steps = (item.tasks ?? []).filter((t) => t.label.trim());
+  if (!steps.length) return null;
+  return (
+    <ul className="mt-1 space-y-0.5 pl-6">
+      {steps.slice(0, 4).map((t) => (
+        <li key={t.id} className="flex items-center gap-1.5 text-[11px]">
+          <span className={cn('h-2.5 w-2.5 shrink-0 rounded-full border',
+            t.done ? 'border-emerald-500 bg-emerald-500' : 'border-border bg-muted')} />
+          <span className={cn('truncate', t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
+        </li>
+      ))}
+      {steps.length > 4 && <li className="pl-4 text-[10px] text-muted-foreground">and {steps.length - 4} more</li>}
+    </ul>
+  );
+}
+
 export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
@@ -250,6 +272,10 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
   // caveat that pulling more in is a negotiation, not a default, is written on it.
   const [showBacklog, setShowBacklog] = useState(false);
+  // Plan or Build: two states of the Sprint Backlog, not two tabs. Planning is the board; building
+  // is the one item in hand with the studio beside it. The bench used to be docked under the board,
+  // which gave the work a fifth of the screen and the columns you were not looking at the rest.
+  const [mode, setMode] = useState<'plan' | 'build'>('plan');
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   const [writing, setWriting] = useState(false);              // writing a new one, mid-Sprint
   const [showToolbox, setShowToolbox] = useState(false);
@@ -406,6 +432,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const beingBuilt = state.backlog.find((it) => it.status === 'committed' && it.started
     && it.sprintNumber === state.sprintNumber);
   const bench = building ?? beingBuilt?.id ?? null;
+  const inHand = bench ? state.backlog.find((it) => it.id === bench) : undefined;
+  // Nothing in hand means there is nothing to build, so the switch goes back on its own.
+  const inBuild = mode === 'build' && !!inHand;
   const following = !building && !!beingBuilt;
   const onBench = !!bench && state.backlog.some((i) => i.id === bench);
 
@@ -448,6 +477,24 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          {/* Plan or Build. Two states of one artifact, and the switch says which you are in - the
+              board when you are deciding what to take on, the thing in your hands when you are
+              building it. */}
+          {!dayStarting && (
+            <div className="flex overflow-hidden rounded-md border border-border">
+              {(['plan', 'build'] as const).map((m) => (
+                <button key={m} type="button" onClick={() => setMode(m)}
+                  disabled={m === 'build' && !inHand}
+                  title={m === 'build' && !inHand ? 'Start something first - Build is the item in your hands' : undefined}
+                  className={cn(FOCUS, 'px-2.5 py-1 text-xs font-semibold transition-colors',
+                    mode === m ? 'bg-primary text-primary-foreground'
+                      : m === 'build' && !inHand ? 'cursor-not-allowed text-muted-foreground/40'
+                        : 'text-muted-foreground hover:text-foreground')}>
+                  {m === 'plan' ? 'Plan' : 'Build'}
+                </button>
+              ))}
+            </div>
+          )}
           {!dayStarting && revealed(state, 'burndown') && (
             <span className="flex items-center gap-1">
               <BurndownChip state={state} />
@@ -539,8 +586,51 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               {atWipLimit && deploy.length === 0 && done.length === 0 && (
                 <CoachTip>You&rsquo;re at your WIP limit with nothing built yet. Swarm to finish one item before starting more - a team delivers more by limiting work in progress, not by starting everything at once.</CoachTip>
               )}
-              {/* Four equal columns at sm+ (a 2x2 grid on mobile) - uniform, whatever each holds. */}
-              <div className="grid grid-cols-3 gap-2 items-start">
+              {/* In Build the board stands down: what is in your hands gets the screen, which is the
+                  whole point of the switch. The goal band stays either way - it is what both states
+                  are for. */}
+              {/* The commitment the Sprint Backlog is FOR, over the board it is made of. It used to
+                  live in the strip at the top of the window with everything else; a goal read as one
+                  more chip among chips is a goal nobody is holding. */}
+              <section className="rounded-lg border border-border bg-secondary/50 px-3 py-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+                      Sprint Goal <span className="font-semibold text-muted-foreground">· commitment of the Sprint Backlog</span>
+                    </div>
+                    <p className="text-base font-semibold leading-snug sm:text-lg">
+                      {state.sprintGoal || <span className="font-normal text-muted-foreground">No Sprint Goal agreed</span>}
+                    </p>
+                  </div>
+                  {state.sprintBet && (
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
+                      Bet: {betLine(state.sprintBet)} · answered at the Review
+                    </span>
+                  )}
+                </div>
+              </section>
+
+              {/* Four columns, in the order work moves: what you could pull from, what you have not
+                  started, what is in hand, and what is Done. The Product Backlog was a panel you
+                  opened - which hid the cost of a mid-Sprint pull behind a button. It is a rail
+                  again, deliberately: the pull should be visible, and it should look like a
+                  negotiation rather than a menu. */}
+              <div className={cn('grid grid-cols-1 gap-2 items-start md:grid-cols-2 xl:grid-cols-4', inBuild && 'hidden')}>
+                <BoardColumn title="Product Backlog" count={availableItems(state).length}
+                  hint="Nothing left to pull from"
+                  note={<button type="button" onClick={() => setShowBacklog(true)}
+                    className={cn(FOCUS, 'rounded px-1 text-[10px] font-semibold uppercase tracking-wide text-primary hover:underline')}>open</button>}>
+                  <p className="px-0.5 pb-1 text-[11px] leading-snug text-muted-foreground">
+                    Not taken. Pull one in by agreement, if it does not put the Sprint Goal at risk - and it costs
+                    the Developers the time it takes.
+                  </p>
+                  {availableItems(state).slice(0, 6).map((it) => (
+                    <PbiCard key={it.id} item={it} state={it.unsized ? 'locked' : 'backlog'} density="row"
+                      badges={<Chip>{it.unsized ? 'to estimate' : `${it.estimate}`}</Chip>}
+                      onClick={() => onPull(it.id)}
+                      label={`Pull ${it.name} into the Sprint`} />
+                  ))}
+                </BoardColumn>
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
@@ -595,11 +685,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         note={needsEnc ? `Needs ${encName} built first` : undefined}
                         trailing={<Button size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={blocked} title={why}
                           onClick={(e) => { e.stopPropagation(); onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>}
-                        detail={<CardDetail item={it} state={state} showAcceptance onToggleTask={onToggleTask} />} />
+                        detail={<CardSteps item={it} />} />
                       </div>
                     );
                   })}
                 </BoardColumn>
+                <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Every drag is a decision. It is recorded, with who did it, for the Retrospective.</p>
                 </div>
                 <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow', dropClass('doing'))}>
                 <BoardColumn title="Doing" count={doing.length} limit={activeWipLimit(state) || undefined} hint="Nothing in progress"
@@ -609,6 +700,20 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                       <p>You have run a Sprint now, so it means something: things finish sooner when fewer are in flight. It is Lean thinking rather than part of Scrum, it is the Developers&rsquo; own agreement, and you can change or switch it off in board settings.</p>
                     </NewHere>
                   ) : undefined}>
+                  {/* Where the next thing lands, and what it costs to put it there. The frames put
+                      this in the column rather than in a tooltip: a WIP limit you only meet when it
+                      refuses you is a rule you learn by being told off. */}
+                  {doing.length < (activeWipLimit(state) || Infinity) && (
+                    <div className="rounded-lg border border-dashed border-primary/60 bg-primary/5 p-2">
+                      <p className="text-[12px] font-semibold text-foreground">Drop here to start it</p>
+                      <p className="text-[11px] text-muted-foreground">Who takes it? {state.team.developers.map((d) => d.name).join(' · ')}</p>
+                      {!!activeWipLimit(state) && (
+                        <p className="text-[11px] text-muted-foreground">
+                          WIP limit {activeWipLimit(state)}: room for {Math.max(0, activeWipLimit(state) - doing.length)} more.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
@@ -698,6 +803,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     </div>
                   ))}
                 </BoardColumn>
+                <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Dropping here runs the Done check. Not Done and the card comes back, with reasons.</p>
                 </div>
               </div>
             </div>
@@ -716,7 +822,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
         // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
         // fault rather than depth.
         <div ref={benchRef} className={cn('absolute inset-x-0 z-20 flex flex-col border-t border-border bg-background',
-          onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}
+          // In Build it IS the screen: from under the goal band to the day bar, with the board out
+          // of the way behind it. In Plan it is a bench at the foot, as it was.
+          inBuild ? 'top-[8.5rem] border-t-0' : onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}
           style={{ bottom: DOCKED_BAR_H }}>
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
             <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
