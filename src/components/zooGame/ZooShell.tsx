@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
 import { DoneGate } from './DoneGate';
+import { valueMeasures } from './engine';
 import { DayTimer } from './DayTimer';
 import { ArtifactsPanel } from './ArtifactsPanel';
 import { CopyEditor } from './CopyEditor';
@@ -258,7 +259,20 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
               </button>
             )}
-            {/* One control for the artifacts, their commitments and the team's agreements, and one
+            {/* The four key value measures, on the band, all the time. Evidence-Based Management asks
+              four questions and this zoo can answer all four - so they are where you can see them
+              while you decide, rather than produced once at the Review as a verdict. A measure with
+              nothing behind it yet shows a dash: zero is a claim, and "not measured yet" is true. */}
+          <div className="hidden shrink-0 items-center gap-1 lg:flex">
+            {valueMeasures(state).map((m) => (
+              <span key={m.key} title={`${m.label} · ${m.detail}`}
+                className="flex items-center gap-1 rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-semibold">
+                <span className="uppercase tracking-wide opacity-70">{m.key}</span>
+                <span className="tabular-nums">{m.value === null ? '—' : `${m.value}${m.unit}`}</span>
+              </span>
+            ))}
+          </div>
+          {/* One control for the artifacts, their commitments and the team's agreements, and one
                 for the game itself. The header used to carry ten. */}
             <ArtifactsPanel state={state} onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
             <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />

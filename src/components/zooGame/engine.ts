@@ -3,7 +3,7 @@ import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
 import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE } from './design';
-import { DEFAULT_CONFIG } from './simulation/config';
+import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
@@ -2082,4 +2082,61 @@ export function todaysDecision(state: ZooGameState): {
       : `Drop it and ${after} points are still left against ${capacity} you can do - it helps, but it may not be enough.`,
     ifKept: `Keep everything: ${prog.remaining} points left against ${capacity} you can do, and the Goal is at risk if anything slips.`,
   };
+}
+
+/** The four key value measures, read off the game rather than invented.
+ *
+ *  Evidence-Based Management asks four questions, and this zoo can answer all four honestly:
+ *
+ *    Current Value        what visitors are getting now - happiness, and how many came
+ *    Unrealized Value     what they are not getting - the worst-served segment's gap
+ *    Time to Market       how long work takes to reach them - Sprints from forecast to open
+ *    Ability to Innovate  how much capacity goes on new capability rather than fixing
+ *
+ *  A measure with nothing behind it yet returns null rather than zero. Zero is a claim; "we have
+ *  not measured that yet" is the truth before the first Review, and the difference matters when
+ *  the whole point is to teach a team to act on evidence.
+ */
+export function valueMeasures(state: ZooGameState): {
+  key: 'cv' | 'uv' | 't2m' | 'a2i'; label: string; value: number | null; unit: string; detail: string;
+}[] {
+  const review = state.lastReview;
+  const segments = review?.segments ?? [];
+  // The segment served worst is where the value is not: an average hides the group that left early.
+  const worst = segments.length
+    ? segments.reduce((a, b) => (a.happiness <= b.happiness ? a : b))
+    : null;
+
+  // Delivered work, and how long it took to arrive. `openedIn` is the Sprint it went live in, and
+  // an item carries the Sprint it was forecast into, so the two give a lead time in Sprints.
+  const opened = state.backlog.filter((it) => it.status === 'open' && it.openedIn);
+  const leads = opened
+    .map((it) => (it.openedIn ?? 0) - (it.sprintNumber ?? it.openedIn ?? 0) + 1)
+    .filter((n) => n > 0);
+  const leadDays = leads.length
+    ? Math.round((leads.reduce((a, b) => a + b, 0) / leads.length) * state.sprintDays)
+    : null;
+
+  // New capability against rework. An improvement item exists because something delivered was not
+  // good enough, so the points it costs are capacity that did not go into anything new.
+  const delivered = state.backlog.filter((it) => it.status === 'open' || it.status === 'done');
+  const deliveredPts = delivered.reduce((s, it) => s + it.estimate, 0);
+  const reworkPts = delivered.filter((it) => it.enhancesId).reduce((s, it) => s + it.estimate, 0);
+  const a2i = deliveredPts ? Math.round(((deliveredPts - reworkPts) / deliveredPts) * 100) : null;
+
+  return [
+    { key: 'cv', label: 'Current Value', unit: '', value: review ? Math.round(review.overallHappiness) : null,
+      detail: review
+        ? `happiness ${Math.round(review.overallHappiness)} · ${Math.round(review.totalAttendance).toLocaleString()} visitors`
+        : 'measured at the first Sprint Review' },
+    { key: 'uv', label: 'Unrealized Value', unit: '', value: worst ? Math.round(100 - worst.happiness) : null,
+      detail: worst
+        ? `${DEFAULT_SEGMENTS.find((sg) => sg.id === worst.segmentId)?.label ?? worst.segmentId} are ${Math.round(100 - worst.happiness)} short of happy`
+        : 'what visitors are not getting yet' },
+    { key: 't2m', label: 'Time to Market', unit: 'd', value: leadDays,
+      detail: leadDays === null ? 'nothing has reached visitors yet' : 'forecast to open, on average' },
+    { key: 'a2i', label: 'Ability to Innovate', unit: '%', value: a2i,
+      detail: a2i === null ? 'nothing delivered yet'
+        : reworkPts ? `${reworkPts} of ${deliveredPts} points went on fixing` : 'no capacity lost to rework' },
+  ];
 }
