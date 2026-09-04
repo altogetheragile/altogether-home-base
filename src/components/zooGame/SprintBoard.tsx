@@ -650,7 +650,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 </BoardColumn>
                 </div>
                 <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open" tone="done">
+                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
                       or hold it. A whole column for "Done but not opened" said that badly: since the

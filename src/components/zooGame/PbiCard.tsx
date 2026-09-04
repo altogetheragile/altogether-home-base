@@ -28,13 +28,19 @@ export type PbiState =
   | 'built'     // built, waiting to be placed and released
   | 'live';     // released to visitors
 
+/** How a card looks in each state.
+ *
+ *  The accent belongs to the work in hand, and to nothing else. Three To Do cards outlined in
+ *  orange shout at you from a column you are not working in - and then the one card you ARE working
+ *  on has nothing left to be. So To Do is a white card with a rule, Doing wears the accent, and
+ *  what is Done says so in green on white rather than being washed in it. */
 const STATE_STYLE: Record<PbiState, { shell: string; icon: string }> = {
   backlog: { shell: 'border-border bg-card hover:border-primary/60 hover:bg-primary/5', icon: 'text-muted-foreground' },
   locked: { shell: 'border-dashed border-border bg-muted/20 text-muted-foreground', icon: 'text-muted-foreground/60' },
-  forecast: { shell: 'border-primary bg-primary/5', icon: 'text-primary' },
-  doing: { shell: 'border-amber-400/70 bg-amber-500/5', icon: 'text-amber-700 dark:text-amber-400' },
-  built: { shell: 'border-sky-400/70 bg-sky-500/5', icon: 'text-sky-700 dark:text-sky-400' },
-  live: { shell: 'border-emerald-400/70 bg-emerald-500/5', icon: 'text-emerald-700 dark:text-emerald-300' },
+  forecast: { shell: 'border-border bg-card hover:border-primary/50', icon: 'text-muted-foreground' },
+  doing: { shell: 'border-primary bg-primary/5 shadow-sm', icon: 'text-primary' },
+  built: { shell: 'border-sky-300/80 bg-card', icon: 'text-sky-700 dark:text-sky-400' },
+  live: { shell: 'border-emerald-300/80 bg-card', icon: 'text-emerald-700 dark:text-emerald-300' },
 };
 
 /** The category, as a word - what this item becomes in the park. */
