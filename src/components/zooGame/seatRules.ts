@@ -58,6 +58,10 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   SET_TASKS:         { who: 'developer', because: 'How the work gets done is the Developers’ to plan.' },
   TOGGLE_TASK:       { who: 'developer', because: 'How the work gets done is the Developers’ to plan.' },
   PULL_ITEM:         { who: 'developer', because: 'The Developers pull their own work. Nobody assigns it to them.' },
+  // Scope is renegotiated as more is learned; the Sprint Goal is not. The Sprint Backlog is the
+  // Developers' plan, so taking something back out of it is theirs - and the Daily Scrum is where
+  // they do it, with the Product Owner not in the room.
+  DROP_FROM_SPRINT:  { who: 'developer', because: 'The Sprint Backlog is the Developers\' plan. Dropping work to protect the Goal is their call.' },
   ASSIGN_DEV:        { who: 'developer', because: 'A self-managing team decides who does what. Nobody assigns work to a Developer.' },
   SPEND_DAY:         { who: 'developer', because: 'Build time is spent by the people doing the building.' },
   SET_WIP_LIMIT:     { who: 'developer', because: 'How much the Developers take on at once is theirs to manage.' },

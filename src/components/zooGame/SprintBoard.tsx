@@ -48,6 +48,8 @@ interface SprintBoardProps {
   onSetWipLimit?: (n: number) => void;
   onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
+  /** Take work back out of the Sprint Backlog: the Developers protecting the Sprint Goal. */
+  onDropFromSprint?: (id: string) => void;
   /** Answer the Developers' question about where something goes. */
   onAnswerPlacement?: (id: string, choice: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
@@ -252,7 +254,7 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
   // it is how the board came to have less room reserved than the bench takes: with nothing on the
@@ -416,7 +418,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
     // than a screen, so the button that ends it was off the end of a page that would not turn.
     return (
       <div className="min-h-0 flex-1 overflow-y-auto pb-4 pr-0.5">
-        <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} />
+        <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} />
       </div>
     );
   }

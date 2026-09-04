@@ -2,7 +2,7 @@ import type { ZooGameState } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
 import { DAILY_SCRUM_SECONDS } from './config';
-import { sprintProgress } from './engine';
+import { sprintProgress, todaysDecision } from './engine';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
 import { PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
@@ -11,6 +11,9 @@ interface DailyScrumProps {
   state: ZooGameState;
   onHold: () => void;
   onSkip: () => void;
+  /** Take something back out of the Sprint Backlog to protect the Goal. The Developers' call, and
+   *  the one this event exists to make. */
+  onDrop?: (id: string) => void;
 }
 
 /** The Daily Scrum: the Developers' short, TIMEBOXED daily event to inspect progress toward
@@ -19,9 +22,13 @@ interface DailyScrumProps {
  *  real choice is whether you ADAPT to what it surfaced or carry on regardless (letting a
  *  blocker grow overnight). The timebox counts down; on expiry it adapts (the disciplined
  *  default), so you decide within the box. In learn mode the timebox is paused. */
-export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
+export function DailyScrum({ state, onHold, onSkip, onDrop }: DailyScrumProps) {
+  const decision = todaysDecision(state);
   const prog = sprintProgress(state);
-  const daysLeft = state.sprintDays - state.dayNumber;
+  // Today counts. The Daily Scrum is held at the start of the day it is named for, so "days left"
+  // that excluded it disagreed with the decision panel underneath, which counts the day you are
+  // about to spend - two numbers for the same thing, on the same screen.
+  const daysLeft = Math.max(0, state.sprintDays - state.dayNumber + 1);
   const imp = state.pendingImpediment;
   const pct = prog.pointsCommitted ? Math.round((prog.pointsDone / prog.pointsCommitted) * 100) : 0;
 
@@ -84,6 +91,33 @@ export function DailyScrum({ state, onHold, onSkip }: DailyScrumProps) {
             : `${prog.remaining} pts remain over ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Above the ideal line = behind; adapt by focusing the essentials.`}
         </p>
       </div>
+
+      {/* "Are we on track for the Sprint Goal?" answered with the arithmetic rather than asked as a
+          question. Where the forecast no longer fits, the honest move is to drop what the Goal does
+          not need while there is still time for what it does - so the game says which item that
+          would be, and what each choice leaves. */}
+      {decision && onDrop && (
+        <div className="rounded-lg border border-amber-400/60 bg-amber-500/[0.06] p-3">
+          <div className="text-sm font-semibold">Decision for today</div>
+          <p className="mt-1 text-sm">
+            {decision.left} points left and {decision.daysLeft} day{decision.daysLeft === 1 ? '' : 's'} to do
+            about {decision.capacity} of them. <strong>{decision.candidate.name}</strong> is not what the Goal
+            depends on.
+          </p>
+          <p className="mt-1.5 text-[12px] text-muted-foreground">{decision.ifDropped}</p>
+          <p className="text-[12px] text-muted-foreground">{decision.ifKept}</p>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <Button size="sm" onClick={() => { onDrop(decision.candidate.id); onHold(); }}>
+              Drop {decision.candidate.name}, protect the Goal
+            </Button>
+            <Button size="sm" variant="outline" onClick={onHold}>Keep the plan</Button>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            The Developers hold this. The Product Owner is not in the room, and that is the point: the plan is
+            theirs to change, and the Goal is the thing being protected.
+          </p>
+        </div>
+      )}
 
       {imp ? (
         <>
