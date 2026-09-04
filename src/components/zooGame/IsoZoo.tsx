@@ -150,7 +150,7 @@ function along(route: Pt[], t: number): Pt {
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
   onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
-  selectedConn, onSelectConn, onStartHere, onImprove, improving }: {
+  selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -201,8 +201,11 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
    *  Product Backlog's business, so the park is where you say it. */
   onImprove?: (id: string) => void;
   improving?: Set<string>;
+  /** Show what has been delivered and nothing else - no building sites. The Review turns it on:
+   *  the Increment is the thing being inspected, and a site is not part of it. */
+  incrementOnly?: boolean;
 }) {
-  const scene = useMemo(() => build(state, height, turn), [state, height, turn]);
+  const scene = useMemo(() => build(state, height, turn, incrementOnly), [state, height, turn, incrementOnly]);
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
   const laying = tool === 'connect' && !!onAddConnector;
@@ -557,10 +560,13 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   );
 }
 
-function build(state: ZooGameState, targetH: number, turn = 0) {
+function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false) {
   // WHAT is on the park, how big it is and where it stands are decided in one place, shared with
   // the plan view - see parkModel. This file's job is to draw it from the corner, nothing else.
-  const standing = standingOnPark(state);
+  // "Show the Increment only" takes the sites away: what is left is what has actually been
+  // delivered, which is what the Sprint Review inspects. A site is a promise, and a promise is not
+  // part of an Increment.
+  const standing = standingOnPark(state).filter((s) => !incrementOnly || !s.underWay);
   const underWay = new Set(standing.filter((s) => s.underWay).map((s) => s.item.id));
   // Delivered work, for the counts: an animal living in a habitat is nested inside it rather than
   // standing on its own patch of ground, so it is not in `standing` and has to be counted from the
@@ -800,6 +806,30 @@ function build(state: ZooGameState, targetH: number, turn = 0) {
       <polygon key={`site-edge-${id}`} points={ground(a, b, c, d)} fill="none" stroke="#f59e0b"
         strokeWidth={Math.max(0.7, u * 1.6)} strokeDasharray={`${dash} ${dash * 0.7}`} strokeLinejoin="round" />,
     );
+    // Named, and said. Orange hoardings read as "something is happening here"; the name and the
+    // words say WHAT is happening and that it is not Done yet, which is the difference the whole
+    // Increment tab is about.
+    const label = state.backlog.find((it) => it.id === id)?.name;
+    if (label) {
+      const at = P((a + c) / 2, b);
+      // Two lines, spaced by what they actually measure rather than by a guess: at the size a park
+      // is drawn, both sizes clamp to their minimums and a fixed gap put one line through the other.
+      const name = Math.max(9, u * 10);
+      const note = Math.max(7, u * 7.5);
+      const noteY = at.y - Math.max(5, u * 6);
+      push(depth((a + c) / 2, b) + 0.5, (
+        <g key={`site-name-${id}`} pointerEvents="none">
+          <text x={at.x} y={noteY - note * 1.25} textAnchor="middle" fontSize={name}
+            fontWeight={700} fill="#b45309" stroke="#fff" strokeWidth={Math.max(1.6, u * 2.2)} paintOrder="stroke">
+            {label}
+          </text>
+          <text x={at.x} y={noteY} textAnchor="middle" fontSize={note}
+            fontWeight={600} fill="#b45309" stroke="#fff" strokeWidth={Math.max(1.3, u * 1.8)} paintOrder="stroke">
+            built, not Done
+          </text>
+        </g>
+      ));
+    }
     const posts: [number, number][] = [[a, b], [c, b], [c, d], [a, d]];
     for (const [i, [px, py]] of posts.entries()) {
       const f = boxFaces(px - 3, py - 3, px + 3, py + 3, Math.max(2.5, u * 9), u);
