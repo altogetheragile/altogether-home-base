@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
 import { DayTimer } from './DayTimer';
@@ -12,12 +12,11 @@ import { SeatBadge } from './SeatBadge';
 import { MessageRail, RailNote } from './MessageRail';
 import { whatIsYours } from './seatCopy';
 import type { SeatName } from './useZooSessions';
-import { Target, Trees, ClipboardList, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft } from 'lucide-react';
 import { FOCUS, SURFACE } from './ui/tokens';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
-const WORK_TAB: Record<string, string> = { refine: 'Refine', planning: 'Plan', sprint: 'Sprint Backlog Board', review: 'Review', retro: 'Retro' };
 /** Which Scrum accountabilities you are wearing in each phase - a solo game plays all
  *  three, so naming the "hat" keeps who-does-what visible (shown as a tooltip to save space). */
 const ROLE_HINT: Record<string, string> = {
@@ -60,13 +59,87 @@ function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: 
   );
 }
 
-function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string }) {
+/** The Product Backlog when it is not the screen you are on: what is in it, in the Product Owner's
+ *  order, so it can be read at any time without leaving what you were doing.
+ *
+ *  Read-only on purpose. Ordering and refining are the Product Owner's work at Refinement, and
+ *  during a Sprint they cost the Developers time - so they belong to a screen that can say so,
+ *  not to a glance. */
+function BacklogGlance({ state }: { state: ZooGameState }) {
+  const items = state.backlog.filter((it) => it.status === 'backlog');
+  const ready = items.filter((it) => !it.unsized).length;
   return (
-    <button type="button" onClick={onClick}
+    <section className="space-y-2">
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-sm font-semibold">Product Backlog</h2>
+        <span className="text-xs text-muted-foreground">{items.length} items · {ready} sized</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Everything the product might need, in the Product Owner's order. Pulling from it mid-Sprint
+        is a negotiation, and it costs the Developers build time.
+      </p>
+      <ul className="divide-y divide-border rounded-lg border border-border">
+        {items.map((it) => (
+          <li key={it.id} className="flex items-center gap-2 px-2.5 py-1.5 text-sm">
+            <span className="min-w-0 flex-1 truncate">{it.name}</span>
+            <span className="shrink-0 text-[11px] uppercase tracking-wide text-muted-foreground">{it.zone}</span>
+            {it.epicMembers?.length
+              ? <span className="shrink-0 rounded-full bg-muted px-1.5 text-[11px] font-semibold text-muted-foreground">epic</span>
+              : <span className="shrink-0 tabular-nums text-xs font-semibold text-muted-foreground">{it.unsized ? '?' : it.estimate}</span>}
+          </li>
+        ))}
+        {!items.length && <li className="px-2.5 py-3 text-sm text-muted-foreground">Nothing in it yet.</li>}
+      </ul>
+    </section>
+  );
+}
+
+/** The Sprint Backlog when it is not the screen you are on - or before there is one at all. */
+function SprintBacklogGlance({ state, locked }: { state: ZooGameState; locked: boolean }) {
+  const inSprint = state.backlog.filter((it) => it.status === 'committed' || (it.status !== 'backlog' && it.sprintNumber === state.sprintNumber));
+  if (locked) {
+    return (
+      <section className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+        <p className="font-semibold text-foreground">There is no Sprint Backlog yet.</p>
+        <p className="mt-1">The Developers make one at Sprint Planning: what they forecast, and their plan for
+          delivering it. Until then this artifact does not exist - which is why the tab is locked rather than empty.</p>
+      </section>
+    );
+  }
+  return (
+    <section className="space-y-2">
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-sm font-semibold">Sprint Backlog</h2>
+        <span className="text-xs text-muted-foreground">Sprint {state.sprintNumber} · {inSprint.length} items</span>
+      </div>
+      {state.sprintGoal && <p className="text-sm"><span className="font-semibold">Sprint Goal:</span> {state.sprintGoal}</p>}
+      <ul className="divide-y divide-border rounded-lg border border-border">
+        {inSprint.map((it) => (
+          <li key={it.id} className="flex items-center gap-2 px-2.5 py-1.5 text-sm">
+            <span className="min-w-0 flex-1 truncate">{it.name}</span>
+            <span className="shrink-0 text-[11px] uppercase tracking-wide text-muted-foreground">{it.status}</span>
+          </li>
+        ))}
+        {!inSprint.length && <li className="px-2.5 py-3 text-sm text-muted-foreground">Nothing forecast.</li>}
+      </ul>
+    </section>
+  );
+}
+
+/** Which artifact you are looking at. */
+export type ArtifactTab = 'backlog' | 'sprint' | 'increment';
+
+function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string; locked?: string }) {
+  return (
+    <button type="button" onClick={locked ? undefined : onClick} disabled={!!locked} title={locked}
       className={cn(FOCUS, 'flex items-center gap-1.5 rounded-t-md border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors',
-        active ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
+        locked ? 'cursor-not-allowed border-transparent text-muted-foreground/45'
+          : active ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
       <Icon className="h-4 w-4" /> {label}
-      {badge && <span className="rounded-full bg-muted px-1.5 text-[11px] font-semibold text-muted-foreground">{badge}</span>}
+      {/* The lock is written on the tab. "Sprint Backlog" greyed out with no reason is a dead
+          control; with the reason on it, it is the rule being taught. */}
+      {locked && <span className="rounded-full bg-muted px-1.5 text-[10px] font-medium normal-case">{locked}</span>}
+      {!locked && badge && <span className="rounded-full bg-muted px-1.5 text-[11px] font-semibold text-muted-foreground">{badge}</span>}
     </button>
   );
 }
@@ -74,16 +147,34 @@ function Tab({ active, onClick, icon: Icon, label, badge }: { active: boolean; o
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: 'work' | 'park'; onSetTab?: (t: 'work' | 'park') => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
-  // `tab` is controlled from above when provided, so an event (place & open) can switch to
-  // the Park view; otherwise the shell owns it. Placing & opening jumps to Park so you can
-  // position the released item there.
-  const [localTab, setLocalTab] = useState<'work' | 'park'>('work');
-  const tab = parkTab ?? localTab;
-  const setTab = onSetTab ?? setLocalTab;
+export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
+  // The navigation is the three artifacts. A learner who can name the tabs can name the artifacts,
+  // which is most of what this game is for - so Product Backlog, Sprint Backlog and Increment are
+  // the whole of it, and there is no tab called Build or Sprint. Building is the Sprint Backlog in
+  // use, and Sprint Planning is the first thing IN the Sprint, so neither earns a tab of its own.
+  //
+  // Controlled from above when something outside decides which artifact you are looking at -
+  // Inspect goes to the Increment - and owned here otherwise.
+  const [localTab, setLocalTab] = useState<ArtifactTab>('sprint');
   const open = state.backlog.filter((it) => it.status === 'open').length;
-  // During a Sprint the park is the working surface and the board docks over it.
-  const canvas = state.phase === 'sprint';
+  // Locked until there is one. The Sprint Backlog is made at Planning; before that the tab says so
+  // rather than opening on an empty board, because an empty artifact and an artifact that does not
+  // exist yet are different things.
+  const sprintBacklog = state.phase !== 'intro' && state.phase !== 'brief' && state.phase !== 'refine';
+  /** Where each screen lives. The events are takeovers OVER their tab, not tabs of their own. */
+  const home: ArtifactTab = state.phase === 'refine' ? 'backlog'
+    : state.phase === 'review' ? 'increment' : 'sprint';
+  const setTab = onSetTab ?? setLocalTab;
+  // An artifact that does not exist yet cannot be the one you are looking at, whoever asked for it.
+  const wanted = parkTab ?? localTab;
+  const tab: ArtifactTab = wanted === 'sprint' && !sprintBacklog ? 'backlog' : wanted;
+  /** An event fills the screen over the tab it belongs to: Planning and the Retrospective over the
+   *  Sprint Backlog, the Review over the Increment. Tabs are artifacts; events are moments. */
+  const takeover = state.phase === 'planning' || state.phase === 'review' || state.phase === 'retro';
+  // The game moves you to the artifact it is about: Refinement to the Product Backlog, a Sprint to
+  // the Sprint Backlog, the Review to the Increment. You can go anywhere from there; this only says
+  // where each part of the game starts, so nobody arrives at a screen behind the wrong tab.
+  useEffect(() => { setTab(home); }, [state.phase, home, setTab]);
   const dayStage = state.dayStage;
   // Building happens during the build stage. At the Daily Scrum the event is what you are in, so
   // the park lets go of whatever was selected rather than floating a toolbar over it.
@@ -172,16 +263,15 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
             <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} />
           </div>
         </div>
-        {/* Tabs where the park is somewhere you visit. During a Sprint it is the surface you work
-            on and the board docks over it, so there is nothing to switch between. */}
-        {!canvas && (
-          <div className="mt-1 flex gap-1">
-            <Tab active={tab === 'work'} onClick={() => setTab('work')} icon={ClipboardList} label={WORK_TAB[state.phase] ?? 'Work'} />
-            {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
-                Increment. A learner who never connects the two is playing a building game. */}
-            <Tab active={tab === 'park'} onClick={() => setTab('park')} icon={Trees} label={"Park \u00b7 the product"} badge={open ? String(open) : undefined} />
-          </div>
-        )}
+        {/* The three artifacts, in the order work moves through them. */}
+        <div className="mt-1 flex gap-1">
+          <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} icon={ClipboardList} label="Product Backlog" />
+          <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} icon={ListChecks} label="Sprint Backlog"
+            locked={sprintBacklog ? undefined : 'made at Planning'} />
+          {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
+              Increment. A learner who never connects the two is playing a building game. */}
+          <Tab active={tab === 'increment'} onClick={() => setTab('increment')} icon={Trees} label="Increment" badge={open ? String(open) : undefined} />
+        </div>
       </header>
 
       {/* Everything the game says, in the margins rather than in the flow. Split by who is
@@ -222,48 +312,41 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
         </div>
       )}
 
-      {/* Body: fills the remaining height and scrolls INTERNALLY so the page never scrolls.
-          During the SPRINT the park is the surface you work on, not a place you visit: it fills the
-          body and the Sprint Backlog sits in a dock over it, pulled up to pick the next thing and
-          pushed down while you build. Everywhere else it is one pane at a time via the tabs, because
-          those screens are events and the park is not what they act on.
-          Both panes stay mounted (toggled with CSS) so the day clock / studio work survive. */}
+      {/* Body: one artifact at a time, filling the width. Each pane stays mounted and is toggled
+          with CSS, so the day clock, a half-finished design and the park's own scroll all survive
+          a look at another artifact. */}
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        {canvas ? (
-          // During a Sprint the screen reads left to right, the way the work flows: the Product
-          // Backlog you pull from, the Sprint Backlog you pulled into, and the park you build on.
-          // The board used to sit UNDER the park in a dock, which put the thing you pull from below
-          // the thing you build on and made "where does work come from" a question about geography.
-          <div className="flex h-full min-h-0">
-            {/* Half and half: the work on the left, the product on the right. The board fills its
-                half rather than being a rail, so the Sprint Backlog can lay its columns out the way
-                a board does - To Do, Doing, Done, left to right. */}
-            {/* The half is exactly the window, never taller. Its own scrolling belongs to the parts
-                inside it - the board's columns - so that the design bench can be pinned to the foot
-                of it and stay pinned. A pane that grows with its contents has no foot to pin to. */}
-            <div className="relative flex min-h-0 w-1/2 shrink-0 flex-col overflow-hidden border-r border-border">
-              <div className="flex h-full min-h-0 flex-col gap-3 px-2 py-2">
-                {children}
-              </div>
-            </div>
-            <div className="min-h-0 w-1/2 overflow-y-auto px-2 pb-20 pt-3 sm:px-3">
-              <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+        {/* The Product Backlog. Before the first Sprint this is where the Backlog is written and
+            the three agreements are made; during a Sprint it is what you pull from, and pulling
+            costs the Developers time. */}
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'backlog' && 'hidden')}>
+          <div className="mx-auto max-w-5xl space-y-3 pb-24">
+            {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+            {home === 'backlog' && !takeover ? children : <BacklogGlance state={state} />}
+          </div>
+        </div>
+
+        {/* The Sprint Backlog: the board, and the studio when something is in hand. Full width,
+            because this is the artifact the Sprint is worked through. */}
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'sprint' && 'hidden')}>
+          <div className="mx-auto flex h-full min-h-0 max-w-[1600px] flex-col gap-3 pb-24">
+            {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
+          </div>
+        </div>
+
+        {/* The Increment: the park, all the time, at the width it deserves. */}
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'increment' && 'hidden')}>
+          <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+        </div>
+
+        {/* An event is a moment, not an artifact: it dims the tab it belongs to and fills the
+            screen over it. You can still see which artifact it is about behind it. */}
+        {takeover && (
+          <div className="absolute inset-0 z-30 overflow-y-auto bg-background/80 px-2 py-3 backdrop-blur-sm sm:px-3">
+            <div className="mx-auto max-w-5xl rounded-xl border border-border bg-background p-3 shadow-xl">
+              {children}
             </div>
           </div>
-        ) : (
-          <>
-            {/* The park: a place you visit, on its own tab. */}
-            <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'park' && 'hidden')}>
-              <ParkView state={state} large building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
-            </div>
-            <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab === 'park' && 'hidden')}>
-              <div className="mx-auto max-w-3xl space-y-3 pb-24">
-                {/* One card at a time, for the element they have just arrived at, once each. */}
-                {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-                {children}
-              </div>
-            </div>
-          </>
         )}
       </div>
     </div>

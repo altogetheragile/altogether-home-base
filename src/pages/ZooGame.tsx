@@ -19,7 +19,7 @@ import { SprintBoard } from '@/components/zooGame/SprintBoard';
 import { SprintReview } from '@/components/zooGame/SprintReview';
 import { SprintRetro } from '@/components/zooGame/SprintRetro';
 import { ZooFinal } from '@/components/zooGame/ZooFinal';
-import { ZooShell } from '@/components/zooGame/ZooShell';
+import { ZooShell, type ArtifactTab } from '@/components/zooGame/ZooShell';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
@@ -87,7 +87,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // Viewport point the delivery confetti bursts from - the card as it lands in Done.
   const [celebrateOrigin, setCelebrateOrigin] = useState<{ x: number; y: number } | null>(null);
   // The Work/Park tab lives here so the "place & open" event can switch to the Park view.
-  const [parkTab, setParkTab] = useState<'work' | 'park'>('work');
+  const [parkTab, setParkTab] = useState<ArtifactTab>('sprint');
   // Deploying an item: placing it AND laying the paths that link it in. Holds the item name for the
   // banner; while set, the park's Connect tool is available. Cleared by "Finish deploying".
   const [deploying, setDeploying] = useState<string | null>(null);
@@ -98,7 +98,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   const [deployStyle, setDeployStyle] = useState<{ thickness: number; color: string } | null>(null);
   // Ending a day (clock ran out or "End Day") moves to the Daily Scrum or the Sprint Review, which
   // live in the work pane - so focus it, or the transition is invisible when you're on the Park tab.
-  const endDay = () => { closeDay(); setParkTab('work'); };
+  const endDay = () => { closeDay(); setParkTab('sprint'); };
 
   // Nothing here closes the board. Doing it automatically meant pressing Start swept the board away
   // before you could see the card change column - and watching work move across the board is most of
@@ -131,7 +131,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
     // Inspect and adapt: pick the item out and turn the park to the Increment, so what is judged
     // against the acceptance criteria is the thing that was built rather than the drawing of it.
-    onInspect: (id: string) => { setBuildingId(id); setParkTab('park'); },
+    onInspect: (id: string) => { setBuildingId(id); setParkTab('increment'); },
     // Something of the same kind you have already built, to start from rather than begin again.
     // Where the new plant goes. The studio has no park to point at, so it asks the one place that
     // knows where a thing stands - the same answer both views draw from - and stands the plant
@@ -157,7 +157,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     // An improvement re-delivers its target; deploy against the target's name.
     const shownId = it?.enhancesId ?? id;
     const shown = state.backlog.find((x) => x.id === shownId);
-    setParkTab('park');
+    setParkTab('increment');
     setDeploying(shown?.name ?? it?.name ?? 'this item');
     setDeployId(id);
     setDeployStyle(it?.category === 'path' ? { thickness: pathWidthPx(it.design?.parts.thickness), color: it.design?.colors.path ?? '#c9a86a' } : null);
@@ -174,7 +174,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     const name = state.backlog.find((x) => x.id === shownId)?.name ?? it?.name ?? 'It';
     open(id);
     clearDeploy();
-    setParkTab('work');
+    setParkTab('sprint');
     // Celebrate the delivery: this increment is now live to visitors. Burst the confetti from the
     // card once it has landed in the Done column (measured after the re-render).
     toast.success(`🎉 ${name} is live to visitors!`);
@@ -195,7 +195,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
   const raiseImprovement = (id: string) => {
     const target = state.backlog.find((it) => it.id === id);
-    setParkTab('work');
+    setParkTab('sprint');
     if (state.backlog.some((it) => it.enhancesId === id && it.status !== 'open')) {
       toast.info(`An improvement for "${target?.name ?? 'this item'}" is already in the Backlog`);
       return;
@@ -307,7 +307,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }
     : null;
 
-  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('work'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
 
   const render = () => {
