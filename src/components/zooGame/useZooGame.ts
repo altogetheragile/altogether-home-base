@@ -78,7 +78,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'PLACE_ON_PARK':
       return placeOnPark(state, action.id);
     case 'START_ITEM':
-      return startItem(state, action.id);
+      return startItem(state, action.id, action.by);
     case 'TOGGLE_GOAL_CRITICAL':
       return toggleGoalCritical(state, action.id);
     case 'SET_SPRINT_DAYS':
@@ -182,7 +182,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'RENAME_ITEM':
       return renameItem(state, action.id, action.name);
     case 'OPEN_ITEM':
-      return openItem(state, action.id);
+      return openItem(state, action.id, action.by);
     case 'SET_SPRINT_BET':
       return setSprintBet(state, action.bet);
     case 'ASK_PLACEMENT':

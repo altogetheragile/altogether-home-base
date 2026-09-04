@@ -113,7 +113,7 @@ export interface SprintBet {
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement';
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -519,7 +519,7 @@ export type ZooAction =
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
   | { type: 'SET_DRAFT_DESIGN'; id: string; design: ItemDesign }
   | { type: 'PLACE_ON_PARK'; id: string }
-  | { type: 'START_ITEM'; id: string }
+  | { type: 'START_ITEM'; id: string; by?: string }
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
   | { type: 'SET_SPRINT_DAYS'; days: number }
   | { type: 'SET_LEARN_MODE'; on: boolean }
@@ -574,7 +574,7 @@ export type ZooAction =
   | { type: 'NEST_ITEM'; id: string; enclosureId: string; spot: { x: number; y: number } }
   | { type: 'UNNEST_ITEM'; id: string }
   | { type: 'RENAME_ITEM'; id: string; name: string }
-  | { type: 'OPEN_ITEM'; id: string }
+  | { type: 'OPEN_ITEM'; id: string; by?: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'SKIP_DAILY_SCRUM'; by?: string }
