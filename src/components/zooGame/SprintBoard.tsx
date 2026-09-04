@@ -48,6 +48,10 @@ interface SprintBoardProps {
   onSetWipLimit?: (n: number) => void;
   onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
+  /** Plan or Build: two states of the Sprint Backlog, not two tabs. Held above this screen because
+   *  the park belongs in the Build state, and there must only ever be one park. */
+  mode?: 'plan' | 'build';
+  onMode?: (m: 'plan' | 'build') => void;
   /** Take work back out of the Sprint Backlog: the Developers protecting the Sprint Goal. */
   onDropFromSprint?: (id: string) => void;
   /** Answer the Developers' question about where something goes. */
@@ -254,7 +258,7 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onMode, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
   // it is how the board came to have less room reserved than the bench takes: with nothing on the
@@ -274,10 +278,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
   // caveat that pulling more in is a negotiation, not a default, is written on it.
   const [showBacklog, setShowBacklog] = useState(false);
-  // Plan or Build: two states of the Sprint Backlog, not two tabs. Planning is the board; building
-  // is the one item in hand with the studio beside it. The bench used to be docked under the board,
-  // which gave the work a fifth of the screen and the columns you were not looking at the rest.
-  const [mode, setMode] = useState<'plan' | 'build'>('plan');
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   const [writing, setWriting] = useState(false);              // writing a new one, mid-Sprint
   const [showToolbox, setShowToolbox] = useState(false);
@@ -485,7 +485,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           {!dayStarting && (
             <div className="flex overflow-hidden rounded-md border border-border">
               {(['plan', 'build'] as const).map((m) => (
-                <button key={m} type="button" onClick={() => setMode(m)}
+                <button key={m} type="button" onClick={() => onMode?.(m)}
                   disabled={m === 'build' && !inHand}
                   title={m === 'build' && !inHand ? 'Start something first - Build is the item in your hands' : undefined}
                   className={cn(FOCUS, 'px-2.5 py-1 text-xs font-semibold transition-colors',
@@ -520,8 +520,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           past the window and the bench stays pinned to its foot. The bench covers the last stretch
           of it, which the padding at the end gives back: a card at the bottom of To Do can always be
           scrolled out from behind it. */}
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5"
-        style={{ paddingBottom: benchH + DOCKED_BAR_PX + 12 }}>
+      {/* In Plan this scrolls under a bench pinned to the foot, so it reserves the bench's height.
+          In Build the bench is the content, so the pane shrinks to what is in it - otherwise the
+          studio is pushed to the bottom of an empty screen. */}
+      <div className={cn('space-y-3 pr-0.5', inBuild ? 'shrink-0' : 'min-h-0 flex-1 overflow-y-auto')}
+        style={inBuild ? undefined : { paddingBottom: benchH + DOCKED_BAR_PX + 12 }}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : (
@@ -823,12 +826,17 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {edit && !dayStarting && (
         // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
         // fault rather than depth.
-        <div ref={benchRef} className={cn('absolute inset-x-0 z-20 flex flex-col border-t border-border bg-background',
-          // In Build it IS the screen: from under the goal band to the day bar, with the board out
-          // of the way behind it. In Plan it is a bench at the foot, as it was.
-          inBuild ? 'top-[8.5rem] border-t-0' : onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto')}
-          style={{ bottom: DOCKED_BAR_H }}>
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
+        <div ref={benchRef} className={cn('flex flex-col bg-background',
+          // In Build it IS the screen, so it sits in the flow under the goal band rather than being
+          // pinned over it - pinned, it covered the commitment the whole state is for. In Plan it
+          // is a bench docked at the foot, as it was.
+          inBuild ? 'relative mt-1' : 'absolute inset-x-0 z-20 border-t border-border',
+          !inBuild && (onBench ? 'h-[19rem] shadow-[0_-10px_28px_-16px_rgba(0,0,0,0.35)]' : 'h-auto'))}
+          style={inBuild ? undefined : { bottom: DOCKED_BAR_H }}>
+          {/* Docked, it scrolls inside its own height. In Build there is no fixed height to scroll
+              inside - the studio is the screen - so it grows to what is in it and the page carries
+              the scrolling. Left as a scroll box, the criteria were cut off half way down. */}
+          <div className={cn('px-2 pb-2 pt-2', inBuild ? '' : 'min-h-0 flex-1 overflow-y-auto')}>
             <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
               drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun}
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
