@@ -279,9 +279,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
         </div>
       </header>
 
-      {/* Everything the game says, in the margins rather than in the flow. Split by who is
-          talking: the coach and the rules on the left, your team on the right. */}
-      <MessageRail side="left">
+      {/* Everything the game says, in one stack in the corner. Each note says who is talking, so
+          they do not need a rail each - and the board fills the width now, so there is no margin
+          for a second one to live in. */}
+      <MessageRail>
         {nudge && onDismissNudge && (
           <RailNote title="Coach" onDismiss={() => onDismissNudge(nudge.id)}>{nudge.text}</RailNote>
         )}
@@ -295,11 +296,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
             <span className="whitespace-pre-line">{poNote}</span>
           </RailNote>
         )}
-      </MessageRail>
-
-      <MessageRail side="right">
-        {/* Newest first, and the last few kept. What a seat played by the game did while you
-            were reading a different screen is the only account you get of it. */}
+        {/* ...and what a seat played by the game did while you were reading a different screen,
+            which is the only account you get of it. Newest first, the last few kept. */}
         {(said ?? []).map((one) => (
           <RailNote key={one.id} title={`${one.seat.replace('_', ' ')} (AI)`} tone="team"
             onDismiss={() => onDismissSaid?.(one.id)} dismissLabel="ok">
@@ -356,8 +354,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
 
         {/* An event is a moment, not an artifact: it dims the tab it belongs to and fills the
             screen over it. You can still see which artifact it is about behind it. */}
+        {/* Room at the foot for the action bar, which floats over the window rather than sitting in
+            the flow. Without it the last card on an event screen - the Sprint Goal verdict at the
+            Review - sits under the button that takes you onward, and scrolling does not help,
+            because the bottom of the page is where the button is. */}
         {takeover && (
-          <div className="absolute inset-0 z-30 overflow-y-auto bg-background/80 px-2 py-3 backdrop-blur-sm sm:px-3">
+          <div className="absolute inset-0 z-30 overflow-y-auto bg-background/80 px-2 py-3 pb-24 backdrop-blur-sm sm:px-3">
             <div className="mx-auto max-w-5xl rounded-xl border border-border bg-background p-3 shadow-xl">
               {children}
             </div>
