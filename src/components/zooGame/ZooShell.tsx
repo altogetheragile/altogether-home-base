@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
+import { DoneGate } from './DoneGate';
 import { DayTimer } from './DayTimer';
 import { ArtifactsPanel } from './ArtifactsPanel';
 import { CopyEditor } from './CopyEditor';
@@ -180,6 +181,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   // the park lets go of whatever was selected rather than floating a toolbar over it.
   const onPark = state.phase !== 'sprint' || dayStage === 'building';
   const selected = onPark ? building : null;
+  /** The item the Done gate is about: whatever is in hand, once there is something to judge. */
+  const gateItem = state.phase === 'sprint' && building
+    ? state.backlog.find((it) => it.id === building && (it.status === 'committed' || it.status === 'done'))
+    : undefined;
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
@@ -336,7 +341,17 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
 
         {/* The Increment: the park, all the time, at the width it deserves. */}
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'increment' && 'hidden')}>
-          <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+          <div className={cn('flex min-h-0 gap-3', gateItem ? 'flex-col xl:flex-row' : '')}>
+            <div className="min-w-0 flex-1">
+            <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+            </div>
+            {/* The Done gate stands beside the thing it is judging. This is where the item was
+                placed and where the park's evidence comes from, so it is where the question
+                "is it Done?" is worth asking. */}
+            {gateItem && (
+              <DoneGate state={state} item={gateItem} className="w-full shrink-0 xl:w-[26rem]" />
+            )}
+          </div>
         </div>
 
         {/* An event is a moment, not an artifact: it dims the tab it belongs to and fills the
