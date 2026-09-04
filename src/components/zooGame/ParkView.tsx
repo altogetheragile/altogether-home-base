@@ -8,10 +8,11 @@ import type { ItemDesign } from './design';
 import type { CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
+import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zoneSlices, zooIsOpen } from './engine';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, Lock, Eye } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // ============= The Park View =============
@@ -205,6 +206,10 @@ export function ParkView({ state, compact = false, large = false, building, onOp
   // a blueprint, drawn from overhead - and everything you could do to the park you could only do
   // there. It is gone, and everything it could do is done here.
   const [turn, setTurn] = useState(0); // quarter-turns of the park
+  // On at the Review, off while you are building: the Review inspects the Increment, and the rest
+  // of the time you want to see the site you are standing work on.
+  const [ownIncrementOnly, setIncrementOnly] = useState(false);
+  const incrementOnly = state.phase === 'review' || ownIncrementOnly;
   // While a pathway is on the bench the bench holds the pen; otherwise it is the park's own toggle.
   const effectiveTool: 'none' | 'connect' = !canConnect ? 'none' : (drawRoute ? (drawing ? 'connect' : 'none') : (tool ?? 'none'));
   const stopDrawing = () => { setTool('none'); onDrawing?.(false); };
@@ -241,6 +246,10 @@ export function ParkView({ state, compact = false, large = false, building, onOp
     }
   }
 
+  // Done work and a building site stand on the same ground, and the Increment is only one of them.
+  // "Done work is real. A site is a promise." - so they are counted apart, and the Increment's own
+  // count is the one that answers "what have we actually delivered".
+  const sites = standingOnPark(state).filter((st) => st.underWay).map((st) => st.item);
   const statsBar = (
     <div className={cn(SURFACE.card, PADDING.tight, 'flex flex-wrap items-center gap-x-5 gap-y-1.5')}>
       <Stat icon={LayoutGrid} value={`${openSlices.length}/${slices.length}`} label="zones open"
@@ -259,6 +268,14 @@ export function ParkView({ state, compact = false, large = false, building, onOp
         <span className={cn(TONE.attention.text, "flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium")}
           title="Visitors still turn up - and go home disappointed. Paths and grass are a park; a zoo needs an animal.">
           <Lock className="h-3 w-3 shrink-0" /> Nothing on show
+        </span>
+      )}
+      {/* Counted apart, and named. A site standing on the park looks like progress; it is a promise
+          until it is Done, and the number that matters is the one beside "in the Increment". */}
+      {sites.length > 0 && (
+        <span className="flex items-center gap-1.5 rounded-full border border-orange-400/60 bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-700 dark:text-orange-300"
+          title={`Built, not Done: ${sites.map((it) => it.name).join(', ')}. Done work is real; a site is a promise.`}>
+          <TrafficCone className="h-3 w-3 shrink-0" /> {sites.length} {sites.length === 1 ? 'site' : 'sites'} · not Done
         </span>
       )}
     </div>
@@ -296,6 +313,17 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               </p>
             )}
             <div className="flex items-center gap-3">
+              {/* Done work and a site stand on the same ground, which is honest and, when you are
+                  asking "what have we delivered", unhelpful. This takes the promises away and
+                  leaves the Increment. The Sprint Review turns it on for you. */}
+              {sites.length > 0 && (
+                <label className={cn(FOCUS, 'flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] font-medium')}
+                  title="Hide the building sites. What is left is what has actually been delivered - which is what an Increment is.">
+                  <input type="checkbox" className="h-3 w-3 accent-primary" checked={incrementOnly}
+                    onChange={(e) => setIncrementOnly(e.target.checked)} />
+                  Show the Increment only
+                </label>
+              )}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
               {/* Walk round it. A quarter at a time, because every prop is drawn from one angle. */}
               {(
@@ -421,7 +449,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
                 as walking up to it. At 100% it fits, and there is nothing to scroll. */}
             <div className="overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
               <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
-                <IsoZoo state={state} height={520 * zoom} turn={turn}
+                <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly}
                   onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild}
                   tool={effectiveTool} newConn={newConn}
                   building={edit ? building : null} onPart={edit ? onPart : undefined}

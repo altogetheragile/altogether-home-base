@@ -67,7 +67,12 @@ Tabs are artifacts. Events are moments. Each event dims the tab it belongs to an
 
 ## What This Changes In The Code
 
-- **Two renderers become one.** The blueprint and the isometric view go. One top-down park component, drawn at full width on the Increment tab and nowhere else. Sites and Done items are a filter on the same data.
+- **One renderer, and it is the isometric one.** Settled 4 September, correcting the line this note
+  first carried: the blueprint is retired (PRs #459-#464) and the ISOMETRIC view stays. It is the
+  one carrying the licensed artwork, and it is the view the park is meant to be seen in. Where the
+  frames show a flat plan, read them as wireframes of the layout rather than of the projection.
+  Drawn at full width on the Increment tab and nowhere else. Sites and Done items are a filter on
+  the same data.
 - **The AI seats advise rather than act.** If a drag is a decision, the AI Developers cannot drag for you or there is nothing to record. In the guided run they say what they would pull and you pull it. `aiSeats` changes from actor to adviser.
 - **The Done gate is one card.** Steps, acceptance criteria and Definition of Done in one place, each line carrying the park's evidence or "your judgement". That is increment one of the DoD teeth scope.
 - **Moments, not popovers.** The bet at Planning, the room at the Daily Scrum, the four measures at the Review, the attributed cost at the Retro. Coach cards go.
@@ -84,7 +89,7 @@ Tabs are artifacts. Events are moments. Each event dims the tab it belongs to an
 ## Build Order Suggested
 
 1. The three tabs and the persistent strip. Layout only, no rule changes.
-2. One park on the Increment tab, with sites. Retire the blueprint and the isometric view.
+2. One park on the Increment tab, with sites. (The blueprint is already retired; the isometric view stays.)
 3. Drag between columns, recorded. Done column runs the gate.
 4. The Done gate card with park evidence.
 5. The refinement bench.
