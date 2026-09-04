@@ -190,10 +190,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
     : undefined;
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Slim header: everything that used to be a stack of bands, in one row + a tabs row. */}
-      <header className="shrink-0 border-b border-border bg-background/95 px-2 pt-1.5 sm:px-3">
-        <div className="flex items-center gap-2">
+    <div className="zoo-theme flex h-full flex-col bg-background">
+      {/* Where you are, on one dark band; the artifacts themselves are the white below it. */}
+      <header className="shrink-0 border-b border-border px-2 pt-1.5 sm:px-3">
+        <div className="zoo-band -mx-2 mb-1.5 flex items-center gap-2 px-2 py-1.5 sm:-mx-3 sm:px-3">
           {/* Back, wherever going back is honest. Where it is not, the control says why - a Sprint
               that has started cannot be un-started, and that is the lesson, not an oversight. */}
           {back && (
