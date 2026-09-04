@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { BacklogItem, PbiDraft, ItemCategory } from './types';
+import type { BacklogItem, PbiDraft, ItemCategory, ZooGameState } from './types';
+import { checkCriterion } from './parkChecks';
 import { suggestStory } from './engine';
 import { SPECIES_SHAPES } from './design';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,9 @@ import { FOCUS, SURFACE } from './ui/tokens';
 
 interface PbiEditorProps {
   zones: string[];
+  /** The game, so each criterion can say whether the park will be able to answer it. Optional:
+   *  writing a brand-new item there is nothing yet to check it against. */
+  state?: ZooGameState;
   /** The item being refined; omit to create a new PBI. */
   item?: BacklogItem;
   /** Existing enclosures an animal can be assigned to live in. */
@@ -57,7 +61,7 @@ function suggestedCategory(name: string): ItemCategory | null {
  *  acceptance criteria. New PBIs arrive unsized, ready to estimate. */
 const POINTS = [1, 2, 3, 5, 8, 13, 21];
 
-export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleStories, onSave, onEstimate, onCancel }: PbiEditorProps) {
+export function PbiEditor({ zones, state, item, enclosures = [], useStories, onToggleStories, onSave, onEstimate, onCancel }: PbiEditorProps) {
   const editing = !!item;
   const [points, setPoints] = useState<number | null>(item && !item.unsized ? item.estimate : null);
   const [name, setName] = useState(item?.name ?? '');
@@ -223,15 +227,30 @@ export function PbiEditor({ zones, item, enclosures = [], useStories, onToggleSt
       <div className="space-y-1">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Acceptance criteria</span>
         <div className="space-y-1.5">
-          {acceptance.map((a, i) => (
-            <div key={i} className="flex items-center gap-1.5">
-              <input value={a} onChange={(e) => setAc(i, e.target.value)} placeholder="What makes it done and right?"
-                className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2.5 py-1.5 text-sm outline-none focus:border-primary')} />
-              {acceptance.length > 1 && (
-                <button type="button" onClick={() => setAcceptance((arr) => arr.filter((_, j) => j !== i))} className={cn(FOCUS, "text-muted-foreground hover:text-foreground")} aria-label="Remove criterion"><X className="h-4 w-4" /></button>
-              )}
-            </div>
-          ))}
+          {acceptance.map((a, i) => {
+            // Whether the park can answer this one, said while it is being written rather than
+            // discovered at the Done gate. A criterion nobody can check is a criterion taken on
+            // trust - fine, sometimes, but worth knowing you have written one.
+            const checked = state && item && a.trim() ? checkCriterion(state, item, a.trim()) !== null : null;
+            return (
+              <div key={i} className="flex items-center gap-1.5">
+                <input value={a} onChange={(e) => setAc(i, e.target.value)} placeholder="What makes it done and right?"
+                  className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2.5 py-1.5 text-sm outline-none focus:border-primary')} />
+                {checked !== null && (
+                  <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+                    checked ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-muted text-muted-foreground')}
+                    title={checked
+                      ? 'The park can answer this one for itself when the item is built.'
+                      : 'Nothing in the park can measure this - it stays the Product Owner\u2019s judgement.'}>
+                    {checked ? 'the park checks this' : 'your judgement'}
+                  </span>
+                )}
+                {acceptance.length > 1 && (
+                  <button type="button" onClick={() => setAcceptance((arr) => arr.filter((_, j) => j !== i))} className={cn(FOCUS, "text-muted-foreground hover:text-foreground")} aria-label="Remove criterion"><X className="h-4 w-4" /></button>
+                )}
+              </div>
+            );
+          })}
           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAcceptance((a) => [...a, ''])}><Plus className="mr-1 h-3.5 w-3.5" /> Add criterion</Button>
         </div>
       </div>
