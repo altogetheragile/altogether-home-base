@@ -55,8 +55,11 @@ const FLUSH_MS = 250;
  *  The accountability travels IN the action, not beside it, because an action is a message: it is
  *  written to the shared game and replayed by every other browser, and an actor left on the
  *  outside would be lost the moment it crossed the wire. */
+// Moving a card across the board is a decision like the rest of these, so it is stamped with the
+// seat that made it. Playing alone there is no seat, and the engine names the accountability the
+// move belongs to instead: only the Developers change the Sprint Backlog.
 const ACTOR_MATTERS = new Set(['SET_FORECAST', 'PLAN_SPRINT', 'PULL_ITEM', 'RUN_DAILY_SCRUM',
-  'SKIP_DAILY_SCRUM', 'SET_WIP_LIMIT', 'SET_DOD']);
+  'SKIP_DAILY_SCRUM', 'SET_WIP_LIMIT', 'SET_DOD', 'START_ITEM', 'OPEN_ITEM']);
 const stamped = (action: ZooAction, seat: SeatName | null | undefined): ZooAction =>
   (seat && ACTOR_MATTERS.has(action.type) ? { ...action, by: seat } as ZooAction : action);
 

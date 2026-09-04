@@ -551,7 +551,7 @@ export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean 
 /** Start work on a committed item: it moves from To Do into Doing (the studio opens).
  *  Blocked once the WIP limit is reached - finish something before starting more - and,
  *  for an animal, until its enclosure is built (you build the habitat first). */
-export function startItem(state: ZooGameState, id: string): ZooGameState {
+export function startItem(state: ZooGameState, id: string, by?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || item.status !== 'committed' || item.started) return state;
   const wip = activeWipLimit(state);
@@ -567,8 +567,13 @@ export function startItem(state: ZooGameState, id: string): ZooGameState {
   // position at all was what opted an item OUT of that. Dropped onto a spot by hand
   // (START_ITEM_AT) it keeps that spot, because a position somebody chose is a decision.
   const pending = state.pendingPlacement?.itemId === id ? null : state.pendingPlacement;
-  return { ...state, pendingPlacement: pending,
+  const moved: ZooGameState = { ...state, pendingPlacement: pending,
     backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
+  // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
+  // may make it - the Sprint Backlog belongs to them - which is why the accountability is named
+  // even when one person is playing all three.
+  return note(moved, { kind: 'moved', by: by ?? 'developer',
+    what: `${whoIs(by ?? 'developer')} took ${item.name} into Doing (${item.estimate} points).` });
 }
 
 /** Notice something the Scrum Team did, without having an opinion about it.
@@ -1322,7 +1327,7 @@ export function improveItem(state: ZooGameState, id: string): ZooGameState {
 /** Release a Done item to visitors. Decoupled from the Review: you can open a Done
  *  item at any time during the Sprint. Once open it is part of the zoo the visitors
  *  experience. */
-export function openItem(state: ZooGameState, id: string): ZooGameState {
+export function openItem(state: ZooGameState, id: string, by?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   // Nothing goes live before the Product Owner has signed it off, and they cannot sign it off until
   // every acceptance criterion is met - the placement ones included.
@@ -1339,7 +1344,13 @@ export function openItem(state: ZooGameState, id: string): ZooGameState {
     return { ...state, backlog };
   }
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, status: 'open' as const, openedIn: state.sprintNumber } : it));
-  return { ...state, backlog };
+  const opened: ZooGameState = { ...state, backlog };
+  // Reaching Done is the move the whole Sprint is for, so it is recorded like the rest - and with
+  // what it was worth, because a Retrospective reading "3 items" learns less than one reading the
+  // points beside the forecast.
+  if (!item || item.status !== 'done') return opened;
+  return note(opened, { kind: 'moved', by: by ?? 'developer',
+    what: `${whoIs(by ?? 'developer')} moved ${item.name} to Done (${item.estimate} points).` });
 }
 
 // ============= Signals (persist and worsen) =============

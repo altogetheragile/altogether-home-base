@@ -336,6 +336,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
     if (o === 'finish') { const it = doing.find((x) => x.id === id); return !!it && readyForDone(it); }
     return false;
   };
+  /** Why the last drop came back, and which card it came back to. On the card rather than in a
+   *  toast: a toast about a card you are looking at is a second place to look, and it is gone by
+   *  the time you have read it. */
+  const [refusedMove, setRefusedMove] = useState<{ id: string; why: string } | null>(null);
+  const refuse = (id: string, why: string) => setRefusedMove({ id, why });
   const handleDrop = (to: string) => {
     if (!drag) return;
     const { id, from } = drag;
@@ -344,13 +349,15 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
     if (o === 'start') {
       const it = todo.find((x) => x.id === id);
       if (!it) return;
-      if (!enclosureReady(state, it)) { toast.error(`Build ${enclosureOf(state, it)?.name ?? 'its enclosure'} first - the animal goes in once its habitat is ready.`); return; }
-      if (atWipLimit) { toast.error(`WIP limit ${activeWipLimit(state)} reached - finish something in Doing first.`); return; }
+      if (!enclosureReady(state, it)) { refuse(id, `${enclosureOf(state, it)?.name ?? 'Its enclosure'} has to be built first - the animal goes in once its habitat is ready.`); return; }
+      if (atWipLimit) { refuse(id, `Work in progress is limited to ${activeWipLimit(state)}. Finish something in Doing before starting this.`); return; }
+      setRefusedMove(null);
       onStartItem(id);
     } else if (o === 'finish') {
       const it = doing.find((x) => x.id === id);
       if (!it) return;
-      if (!readyForDone(it)) { toast.error(whyNotDone(it)); return; }
+      if (!readyForDone(it)) { refuse(id, `${whyNotDone(it).replace(/^Next: /, 'Not Done yet. ')}.`); return; }
+      setRefusedMove(null);
       onFinishItem(id);
     } else if (o === 'studio') {
       toast('Build it on the park to finish it - it moves to Done once it is built and the plan is ticked off.');
@@ -358,6 +365,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       toast('One column at a time - a card moves to the next stage, not past it.');
     }
   };
+  /** The note a refused card carries, under the card itself. */
+  const cameBack = (id: string) => (refusedMove?.id === id ? (
+    <div role="status" className="mt-1 flex items-start gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1 text-[11px] text-destructive">
+      <X className="mt-0.5 h-3 w-3 shrink-0" />
+      <span>{refusedMove.why}</span>
+    </div>
+  ) : null);
   const dragProps = (id: string, from: string) => ({
     draggable: true,
     onDragStart: (e: DragEvent) => { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', id); } catch { /* some browsers */ } setDrag({ id, from }); },
@@ -566,6 +580,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                       : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
+                      {cameBack(it.id)}
                       <PbiCard item={it} state="forecast" density="row"
                         badges={<Chip>{it.zone}</Chip>}
                         lead={onReorderSprint && todo.length > 1 && (
@@ -598,6 +613,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
                       <div key={it.id} {...dragProps(it.id, 'doing')} className="cursor-grab active:cursor-grabbing">
+                      {cameBack(it.id)}
                       <PbiCard item={it} state="doing" density="row"
                         badges={<>
                           <Chip>{it.zone}</Chip>
@@ -645,6 +661,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     // to visitors" on - so without this the confetti came from the middle of the
                     // screen instead of from the thing you had just delivered.
                     <div key={it.id} data-done-card={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
+                    {cameBack(it.id)}
                     <PbiCard item={it} state="built" density="row"
                       // Built in an earlier Sprint and still not released: say so, so a finished
                       // Increment waiting on deployment does not read as this Sprint's work.
