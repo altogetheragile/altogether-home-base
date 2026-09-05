@@ -118,6 +118,10 @@ export interface TeamDecision {
    *  there is nobody to name and this is left off. */
   by?: string;
   what: string;
+  /** What it cost, where the game can say. A Retrospective reading "carried on past the blocker"
+   *  learns less than one reading it beside "45% of the next day". Left off when the game does not
+   *  know - an invented cost is worse than none. */
+  cost?: string;
 }
 
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
@@ -417,7 +421,15 @@ export interface ZooGameState {
    *  because a clock in a component cannot be saved, shared or paused: each browser would
    *  run its own countdown and each would end the day. Advanced by TICK_DAY, which also
    *  ends the day when it reaches zero, so the expiry cannot fire twice. */
+  /** What the Developers forecast this Sprint, in points, as it stood when they took it on. Kept
+   *  because unfinished work leaves the Sprint at the Review, and a Retrospective needs to know
+   *  what was promised, not what survived. */
+  forecastPoints?: number;
   daySecondsLeft: number;
+  /** Work the Developers have taken on and not yet worked off, in seconds. It drains a second per
+   *  second while the day runs, so a five-point build takes five points' worth of day rather than
+   *  vanishing off the clock the moment somebody starts it. */
+  owedSeconds?: number;
   /** Seconds left in the Daily Scrum's timebox, for the same reasons. Reset each time the
    *  event opens; on expiry the disciplined default is taken (adapt and continue). */
   scrumSecondsLeft: number;
@@ -564,6 +576,7 @@ export type ZooAction =
   | { type: 'UPDATE_CONNECTOR'; id: string; patch: Partial<ZooConnector> }
   | { type: 'DELETE_CONNECTOR'; id: string }
   | { type: 'PULL_ITEM'; id: string; by?: string }
+  | { type: 'DROP_FROM_SPRINT'; id: string; by?: string }
   | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
   | { type: 'ADD_ANOTHER'; id: string }

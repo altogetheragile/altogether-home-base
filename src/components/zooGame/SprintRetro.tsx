@@ -4,7 +4,7 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
-import { retroQuestions, decisionsIn } from './engine';
+import { retroQuestions, decisionsIn, whoIs, sprintProgress } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,12 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
   // What the game noticed this Sprint, and anything that has now happened often enough to be a
   // habit rather than a one-off. A habit is the thing worth inspecting; a single Sprint is noise.
   const did = decisionsIn(state, state.sprintNumber);
+  const prog = sprintProgress(state);
+  // What was promised, and what arrived. By now the unfinished work has gone back to the Product
+  // Backlog, so counting the Sprint's own items says "0 of 0" - which tells a team that
+  // over-forecast by eighteen points nothing at all.
+  const forecast = state.forecastPoints ?? prog.pointsCommitted;
+  const delivered = state.velocity.length ? state.velocity[state.velocity.length - 1] : prog.pointsDone;
   const habits = (() => {
     const out: string[] = [];
     const skipped = (state.decisions ?? []).filter((d) => d.kind === 'daily-scrum' && /skipped/.test(d.what));
@@ -83,25 +89,54 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           Scrum was held on the third day, whether anything went in unready. The game noticed at
           the time and says so here, without an opinion. Nothing in this list is marked good or
           bad, because whether it was is the conversation, and the conversation is the event. */}
+      {/* What you did, beside what happened. The log on the left is the Sprint as the team actually
+          worked it - each line attributed, and carrying its cost where the game knows one. The
+          right-hand column is what it came to. Two columns because they are read together: a
+          decision means little without its outcome, and an outcome without its decisions is luck. */}
       {step === 'inspect' && did.length > 0 && (
-        <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
-          <div className="flex items-center gap-1.5 text-sm font-semibold">
-            <ClipboardList className="h-4 w-4" /> What we did this Sprint
-          </div>
-          <ul className="space-y-1">
-            {did.map((d, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
-                <span>{d.what}</span>
-              </li>
-            ))}
-          </ul>
-          {habits.length > 0 && (
-            <p className="text-[11px] text-muted-foreground/80">
-              {habits.join(' ')}
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+          <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
+              <ClipboardList className="h-4 w-4" /> Decision log <span className="font-normal text-muted-foreground">· this Sprint</span>
+            </div>
+            <ul className="divide-y divide-border">
+              {did.map((d, i) => (
+                <li key={i} className="flex items-start gap-2 py-1.5 text-sm">
+                  <span className="mt-[1px] shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">
+                    {whoIs(d.by).replace(/^The /, '')}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="text-foreground">{d.what.replace(/^(The Developers|The Product Owner|The Scrum Master|You) /, '')}</span>
+                    {d.cost && <span className="block text-[11px] text-amber-700 dark:text-amber-300">{d.cost}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {habits.length > 0 && (
+              <p className="text-[11px] text-muted-foreground/80">{habits.join(' ')}</p>
+            )}
+          </section>
+
+          {/* What it cost, and what it earned. The numbers the team is inspecting, in one place, so
+              the conversation is about the Sprint rather than about where to find the figures. */}
+          <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+            <div className="text-sm font-semibold">What it cost, and what it earned</div>
+            <p className={cn('text-sm font-semibold', state.sprintGoalMet ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
+              Delivered {delivered} of {forecast} points · goal {state.sprintGoalMet ? 'met' : 'not met'}
             </p>
-          )}
-        </section>
+            {prog.essentialsTotal > 0 && (
+              <p className="text-[12px] text-muted-foreground">
+                {prog.essentialsDone} of {prog.essentialsTotal} essential item{prog.essentialsTotal === 1 ? '' : 's'} finished -
+                the ones the Sprint Goal actually depended on.
+              </p>
+            )}
+            {state.velocity.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Velocity so far: {state.velocity.join(', ')} ({state.sprintDays}-day Sprints). It is measured, not chosen.
+              </p>
+            )}
+          </section>
+        </div>
       )}
 
       {step === 'inspect' && (

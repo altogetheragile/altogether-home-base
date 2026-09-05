@@ -65,7 +65,7 @@ export function BoardColumn({ title, count, hint, limit, note, children }: { tit
           has reached it; what is Done is said by the cards in it, and by the tick on the heading. */}
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',
         full ? 'bg-amber-100/70 dark:bg-amber-950/30' : 'bg-muted')}>
-        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? `/${limit}` : ''})</span></h3>
+        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? ` of ${limit}` : ''})</span></h3>
         <span className="flex items-center gap-1">
           {limit != null && <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground" title="Work-in-progress limit - Lean thinking that supports Scrum, not a Scrum Guide rule">WIP</span>}
           {note}
@@ -560,7 +560,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
         <Workspace title={editingPbi === 'new' ? 'A new Product Backlog item' : `Refine ${editingPbi.name}`}
           subtitle="What it is, who it is for, and how you will know it is done."
           onClose={() => setEditingPbi(null)}>
-          <PbiEditor zones={state.zones} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
+          <PbiEditor zones={state.zones} state={state} item={editingPbi === 'new' ? undefined : editingPbi} enclosures={enclosures}
             useStories={state.useUserStories} onToggleStories={onSetUseStories}
             onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
             onEstimate={editingPbi !== 'new' ? (pts) => onEstimate?.(editingPbi.id, pts) : undefined}

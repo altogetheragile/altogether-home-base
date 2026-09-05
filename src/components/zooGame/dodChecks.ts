@@ -152,3 +152,38 @@ export function dodVerdicts(state: ZooGameState, item: BacklogItem): { line: str
   return (state.definitionOfDone ?? []).filter((l) => l.trim())
     .map((line) => ({ line, answer: checkDodLine(state, item, line) }));
 }
+
+/** What is standing between this item and Done that somebody else's work would settle.
+ *
+ *  A team looking at four red lines cannot tell which ones are theirs to fix and which will turn
+ *  green when the pathway two cards over is delivered. That is the difference between "we are
+ *  behind" and "we are waiting", and it is the sort of thing a Daily Scrum is for.
+ *
+ *  Worked out by asking rather than by guessing at the wording: deliver the candidate, on a copy of
+ *  the state, and see which lines change their mind. The checks are pure, so the question is safe
+ *  to ask and the answer is the truth rather than a rule about paths that somebody has to maintain.
+ */
+export function unlockedBy(state: ZooGameState, item: BacklogItem): { item: BacklogItem; lines: string[] }[] {
+  const unmet = dodVerdicts(state, item)
+    .filter((l) => l.answer?.kind === 'fact' && !l.answer.met)
+    .map((l) => l.line);
+  if (!unmet.length) return [];
+
+  // Everything else in this Sprint that is not delivered yet. Work outside the Sprint is not an
+  // answer to "why is this not Done" - it is a different conversation, at Refinement.
+  const others = state.backlog.filter((it) => it.id !== item.id
+    && it.sprintNumber === state.sprintNumber
+    && (it.status === 'committed' || it.status === 'done'));
+
+  const out: { item: BacklogItem; lines: string[] }[] = [];
+  for (const other of others) {
+    // ...as if it had been delivered, and nothing else changed.
+    const delivered: ZooGameState = { ...state,
+      backlog: state.backlog.map((it) => (it.id === other.id ? { ...it, status: 'open' as const } : it)) };
+    const lines = dodVerdicts(delivered, item)
+      .filter((l) => unmet.includes(l.line) && l.answer?.kind === 'fact' && l.answer.met)
+      .map((l) => l.line);
+    if (lines.length) out.push({ item: other, lines });
+  }
+  return out;
+}

@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
+import { DoneGate } from './DoneGate';
+import { valueMeasures } from './engine';
 import { DayTimer } from './DayTimer';
 import { ArtifactsPanel } from './ArtifactsPanel';
 import { CopyEditor } from './CopyEditor';
@@ -147,7 +149,10 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, nudge, onDismissNudge, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; nudge?: { id: string; text: string } | null; onDismissNudge?: (id: string) => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
+export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan', links, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; buildMode?: 'plan' | 'build';
+  /** The way back to the site and who is signed in, handed in rather than reached for: the shell
+   *  should not need to know there is such a thing as signing in. */
+  links?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
   // The navigation is the three artifacts. A learner who can name the tabs can name the artifacts,
   // which is most of what this game is for - so Product Backlog, Sprint Backlog and Increment are
   // the whole of it, and there is no tab called Build or Sprint. Building is the Sprint Backlog in
@@ -170,6 +175,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   const tab: ArtifactTab = wanted === 'sprint' && !sprintBacklog ? 'backlog' : wanted;
   /** An event fills the screen over the tab it belongs to: Planning and the Retrospective over the
    *  Sprint Backlog, the Review over the Increment. Tabs are artifacts; events are moments. */
+  // The park follows the work: beside the item while it is being built, on its own tab otherwise.
+  const inBuild = tab === 'sprint' && buildMode === 'build' && state.phase === 'sprint';
   const takeover = state.phase === 'planning' || state.phase === 'review' || state.phase === 'retro';
   // The game moves you to the artifact it is about: Refinement to the Product Backlog, a Sprint to
   // the Sprint Backlog, the Review to the Increment. You can go anywhere from there; this only says
@@ -180,6 +187,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
   // the park lets go of whatever was selected rather than floating a toolbar over it.
   const onPark = state.phase !== 'sprint' || dayStage === 'building';
   const selected = onPark ? building : null;
+  /** The item the Done gate is about: whatever is in hand, once there is something to judge. */
+  const gateItem = state.phase === 'sprint' && building
+    ? state.backlog.find((it) => it.id === building && (it.status === 'committed' || it.status === 'done'))
+    : undefined;
 
   // The next thing worth explaining here, if the teaching is on and it has not been read yet.
   const back = BACK_FROM[state.phase];
@@ -194,6 +205,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
       {/* Where you are, on one dark band; the artifacts themselves are the white below it. */}
       <header className="shrink-0 border-b border-border px-2 pt-1.5 sm:px-3">
         <div className="zoo-band -mx-2 mb-1.5 flex items-center gap-2 px-2 py-1.5 sm:-mx-3 sm:px-3">
+          {/* The mark, on the one strip. There were two headers: a white brand bar and this, saying
+              where you are in two visual registers and seventy pixels. One strip carries all of it. */}
+          <span aria-hidden className="hidden shrink-0 select-none text-lg font-bold leading-none sm:inline">皆</span>
           {/* Back, wherever going back is honest. Where it is not, the control says why - a Sprint
               that has started cannot be un-started, and that is the lesson, not an oversight. */}
           {back && (
@@ -253,7 +267,20 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
               </button>
             )}
-            {/* One control for the artifacts, their commitments and the team's agreements, and one
+            {/* The four key value measures, on the band, all the time. Evidence-Based Management asks
+              four questions and this zoo can answer all four - so they are where you can see them
+              while you decide, rather than produced once at the Review as a verdict. A measure with
+              nothing behind it yet shows a dash: zero is a claim, and "not measured yet" is true. */}
+          <div className="hidden shrink-0 items-center gap-1 lg:flex">
+            {valueMeasures(state).map((m) => (
+              <span key={m.key} title={`${m.label} · ${m.detail}`}
+                className="flex items-center gap-1 rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-semibold">
+                <span className="uppercase tracking-wide opacity-70">{m.key}</span>
+                <span className="tabular-nums">{m.value === null ? '—' : `${m.value}${m.unit}`}</span>
+              </span>
+            ))}
+          </div>
+          {/* One control for the artifacts, their commitments and the team's agreements, and one
                 for the game itself. The header used to carry ten. */}
             <ArtifactsPanel state={state} onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
             <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />
@@ -261,6 +288,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
                 in an admin screen. Admins only - it renders nothing for everyone else. */}
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
             <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} />
+            {links}
           </div>
         </div>
         {/* The three artifacts, in the order work moves through them. */}
@@ -274,12 +302,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
         </div>
       </header>
 
-      {/* Everything the game says, in the margins rather than in the flow. Split by who is
-          talking: the coach and the rules on the left, your team on the right. */}
-      <MessageRail side="left">
-        {nudge && onDismissNudge && (
-          <RailNote title="Coach" onDismiss={() => onDismissNudge(nudge.id)}>{nudge.text}</RailNote>
-        )}
+      {/* Everything the game says, in one stack in the corner. Each note says who is talking, so
+          they do not need a rail each - and the board fills the width now, so there is no margin
+          for a second one to live in. */}
+      <MessageRail>
         {refused && (
           <RailNote title="Whose call it is" tone="rule" onDismiss={onDismissRefused}>{refused}</RailNote>
         )}
@@ -290,11 +316,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
             <span className="whitespace-pre-line">{poNote}</span>
           </RailNote>
         )}
-      </MessageRail>
-
-      <MessageRail side="right">
-        {/* Newest first, and the last few kept. What a seat played by the game did while you
-            were reading a different screen is the only account you get of it. */}
+        {/* ...and what a seat played by the game did while you were reading a different screen,
+            which is the only account you get of it. Newest first, the last few kept. */}
         {(said ?? []).map((one) => (
           <RailNote key={one.id} title={`${one.seat.replace('_', ' ')} (AI)`} tone="team"
             onDismiss={() => onDismissSaid?.(one.id)} dismissLabel="ok">
@@ -329,20 +352,44 @@ export function ZooShell({ state, children, parkTab, onSetTab, building, onOpenB
         {/* The Sprint Backlog: the board, and the studio when something is in hand. Full width,
             because this is the artifact the Sprint is worked through. */}
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'sprint' && 'hidden')}>
-          <div className="mx-auto flex h-full min-h-0 max-w-[1600px] flex-col gap-3 pb-24">
+          {/* Building means the thing in your hands and the park you are building it on, side by
+              side - which is the whole point of the Build state. There is only ever one park in the
+              game, so while it is here the Increment tab does without it rather than drawing a
+              second one: two isometric scenes rebuilding every second is a slow game. */}
+          <div className={cn('mx-auto flex h-full min-h-0 flex-col gap-3 pb-24',
+            inBuild ? 'max-w-none xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,46%)] xl:items-start' : 'max-w-[1600px]')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
+            {inBuild && (
+              <div className="min-w-0 rounded-lg border border-border bg-card p-2">
+                <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+              </div>
+            )}
           </div>
         </div>
 
         {/* The Increment: the park, all the time, at the width it deserves. */}
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'increment' && 'hidden')}>
-          <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', (tab !== 'increment' || inBuild) && 'hidden')}>
+          <div className={cn('flex min-h-0 gap-3', gateItem ? 'flex-col xl:flex-row' : '')}>
+            <div className="min-w-0 flex-1">
+            <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+            </div>
+            {/* The Done gate stands beside the thing it is judging. This is where the item was
+                placed and where the park's evidence comes from, so it is where the question
+                "is it Done?" is worth asking. */}
+            {gateItem && (
+              <DoneGate state={state} item={gateItem} className="w-full shrink-0 xl:w-[26rem]" />
+            )}
+          </div>
         </div>
 
         {/* An event is a moment, not an artifact: it dims the tab it belongs to and fills the
             screen over it. You can still see which artifact it is about behind it. */}
+        {/* Room at the foot for the action bar, which floats over the window rather than sitting in
+            the flow. Without it the last card on an event screen - the Sprint Goal verdict at the
+            Review - sits under the button that takes you onward, and scrolling does not help,
+            because the bottom of the page is where the button is. */}
         {takeover && (
-          <div className="absolute inset-0 z-30 overflow-y-auto bg-background/80 px-2 py-3 backdrop-blur-sm sm:px-3">
+          <div className="absolute inset-0 z-30 overflow-y-auto bg-background/80 px-2 py-3 pb-24 backdrop-blur-sm sm:px-3">
             <div className="mx-auto max-w-5xl rounded-xl border border-border bg-background p-3 shadow-xl">
               {children}
             </div>

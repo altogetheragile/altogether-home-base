@@ -112,7 +112,10 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   );
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-3">
+    // Two panes, the way the redesign frames it: what is in the Product Backlog on the left, and
+    // the card that acts on it on the right. The card has two faces - the agreements before the
+    // first Sprint, and the item you are refining once you pick one.
+    <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3">
       {/* The first pass through the Backlog is not the same conversation as the ones after it: nothing
           has been built, nothing is ready, and there is no Sprint yet to be "in". Either way what
           refining costs comes out of the Sprint you are about to forecast, not one you are inside. */}
@@ -133,64 +136,75 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           Scrum Team wants to change its mind before the first Sprint starts. */}
       {/* Green when it is settled, like the Definition of Done below - the three steps then read as
           a checklist you are working through rather than three panels that always look the same. */}
-      {first && onSetSprintDays && (
-        <Step n={1} title="First, agree how long a Sprint is" done={state.sprintDaysAgreed} onToggle={() => setLengthOpen((o) => !o)}
-          right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-            <strong className="text-foreground">{state.sprintDays} days</strong>
-            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !lengthOpen && '-rotate-90')} />
-          </span>}>
-          {lengthOpen && (
-            <div className="mt-1.5">
-              <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
-            </div>
-          )}
-        </Step>
-      )}
-
-      {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
-          Each one is now a labelled figure in the colour of what it means. */}
-      {/* A Sprint's worth of Ready work is what step two is FOR, so that is when it is done. */}
-      {first ? (
-        <Step n={2} title="Then get the top ready" done={horizon >= 1} right={figures} />
-      ) : (
-        <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
-      )}
-
-      {/* Nothing can be Done against a bar nobody has read. The Definition of Done is the Increment's
-          commitment and it belongs to the whole Scrum Team, so it is agreed here - before the first
-          Sprint - rather than discovered halfway through one. */}
-      {first && onSetDod && (
-        <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
-          onToggle={() => setDodOpen((o) => !o)}
-          right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-            {!dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>}
-            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
-          </span>}>
-          {dodOpen && (
-            <div className="mt-1.5 space-y-2">
-              <p className="text-[11px] text-muted-foreground">
-                The bar every item clears before it is Done, and the same bar for every item. It is the whole Scrum
-                Team&rsquo;s, and you can raise it at a Retrospective as the team gets better - but not lower it to get
-                something through.
-              </p>
-              <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
-              {!state.dodAgreed && onAgreeDod && (
-                <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodOpen(false); }}>
-                  <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done
-                </Button>
-              )}
-            </div>
-          )}
-        </Step>
-      )}
-
-      {/* The list scrolls inside itself, so the question, the Sprint length and the readiness bar
-          stay put - nothing important goes below the fold just because the Backlog is long. */}
-      <div className="max-h-[42vh] overflow-y-auto pr-1">
-      <ProductBacklogSidebar state={state} mode="refine" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-        onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+      {/* The Backlog on the left, and the card that acts on it on the right: what the Product
+          Owner has ordered, beside the agreements that have to be made before any of it can be
+          built. On a narrow screen they stack, list first - it is the thing being talked about. */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
+        <div className="min-w-0">
+        {/* One scrollbar for the screen, not one per column. The list used to scroll inside itself,
+            which was fine when it was the whole screen and wrong beside a second column: the two
+            columns then ended at different heights, and the agreements on the right needed the page
+            scrolled while the list on the left did not. Reported from playing it. */}
+        <div className="pr-1">
+        <ProductBacklogSidebar state={state} mode="refine" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+          onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+        </div>
+  
+        </div>
+        <div className="min-w-0 space-y-3">
+        {first && onSetSprintDays && (
+          <Step n={1} title="First, agree how long a Sprint is" done={state.sprintDaysAgreed} onToggle={() => setLengthOpen((o) => !o)}
+            right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <strong className="text-foreground">{state.sprintDays} days</strong>
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !lengthOpen && '-rotate-90')} />
+            </span>}>
+            {lengthOpen && (
+              <div className="mt-1.5">
+                <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
+              </div>
+            )}
+          </Step>
+        )}
+  
+        {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
+            Each one is now a labelled figure in the colour of what it means. */}
+        {/* A Sprint's worth of Ready work is what step two is FOR, so that is when it is done. */}
+        {first ? (
+          <Step n={2} title="Then get the top ready" done={horizon >= 1} right={figures} />
+        ) : (
+          <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
+        )}
+  
+        {/* Nothing can be Done against a bar nobody has read. The Definition of Done is the Increment's
+            commitment and it belongs to the whole Scrum Team, so it is agreed here - before the first
+            Sprint - rather than discovered halfway through one. */}
+        {first && onSetDod && (
+          <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
+            onToggle={() => setDodOpen((o) => !o)}
+            right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              {!dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>}
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
+            </span>}>
+            {dodOpen && (
+              <div className="mt-1.5 space-y-2">
+                <p className="text-[11px] text-muted-foreground">
+                  The bar every item clears before it is Done, and the same bar for every item. It is the whole Scrum
+                  Team&rsquo;s, and you can raise it at a Retrospective as the team gets better - but not lower it to get
+                  something through.
+                </p>
+                <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+                {!state.dodAgreed && onAgreeDod && (
+                  <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodOpen(false); }}>
+                    <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done
+                  </Button>
+                )}
+              </div>
+            )}
+          </Step>
+        )}
+  
+        </div>
       </div>
-
       <ActionBar hint={!canPlan ? 'Estimate at least one item so it is Ready to plan'
         : first && !state.dodAgreed ? 'Agree the Definition of Done before the first Sprint' : undefined}>
         <Button disabled={!canPlan || (first && !state.dodAgreed)} onClick={onPlan}>Go to Sprint Planning &rarr;</Button>

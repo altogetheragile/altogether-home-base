@@ -3,6 +3,7 @@ import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {
+  dropFromSprint,
   planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, acceptSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
   agreeSprintGoal, setForecast, spendDay, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, skipDailyScrum, startDay, tickDay, tickScrum,
 } from './engine';
@@ -161,6 +162,8 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return deleteConnector(state, action.id);
     case 'PULL_ITEM':
       return pullIntoSprint(state, action.id, action.by);
+    case 'DROP_FROM_SPRINT':
+      return dropFromSprint(state, action.id, action.by);
     case 'BUILD_ITEM':
       return buildItem(state, action.id, action.design);
     case 'EDIT_ITEM':

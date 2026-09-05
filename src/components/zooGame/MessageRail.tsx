@@ -1,38 +1,40 @@
-import type { ReactNode } from 'react';
+import { Children, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { FOCUS } from './ui/tokens';
 
-// Everything the game wants to say to you, in the margins rather than in the way.
+// Everything the game wants to say to you, in one line at the foot of the screen.
 //
-// These all used to sit above the board and push the whole page down as each one arrived,
-// which on a screen with wide empty margins was the wrong place for them: the thing you were
-// reading moved while you were reading it.
+// It has been three things and all three were wrong. Two rails in the margins, until the board
+// filled the width and there were no margins. Then one stack in the corner - which on a Sprint with
+// seats played by the game became four cards over the park, reported as "blocking out the park view
+// and too much to follow".
 //
-// Two rails, split by who is talking, because they are not the same kind of message and
-// answering them is not the same act:
-//
-//   left   things to read - a coach nudge, a refusal naming whose call something was, or
-//          the Product Owner's account of what they changed in a refinement.
-//   right  your team - what a seat just did and why. Running commentary: short, and it
-//          keeps arriving, so it is kept apart from the things you stop and read.
-//
-// Below xl there are no margins to put them in, so they become a stack at the bottom.
+// So: one line, the newest thing said, with a count of what came before it. It never covers the
+// work, because it is a strip and not a stack. Open it to read the rest; it closes itself when you
+// take the next thing off it. What a seat did is commentary - the decision log at the Retrospective
+// is the record, and that is where a team inspects what happened.
 
-export function MessageRail({ side, children }: { side: 'left' | 'right'; children: ReactNode }) {
+export function MessageRail({ children }: { children: ReactNode }) {
+  const items = Children.toArray(children).filter(Boolean);
+  const [open, setOpen] = useState(false);
+  if (!items.length) return null;
+  const newest = items[0];
+  const rest = items.length - 1;
   return (
-    <div className={cn(
-      'pointer-events-none fixed z-40 flex flex-col gap-2',
-      // Narrow: no margin to put them in, so they stack at the bottom.
-      'bottom-2 left-2 right-2',
-      // Wide: a rail in the empty margin. Only left/right utilities here, never the inset-x
-      // shorthand - Tailwind orders utilities by kind rather than by the order they appear
-      // in the class string, so inset-x-auto won the cascade and both rails landed left.
-      // Capped and scrollable, so a rail holding a coach nudge, a refusal and a long
-      // refinement note at once cannot run off the bottom of the screen.
-      'max-h-[45vh] overflow-y-auto xl:max-h-[calc(100vh-11rem)]',
-      'xl:bottom-auto xl:top-36 xl:w-72',
-      side === 'left' ? 'xl:left-3 xl:right-auto' : 'xl:right-3 xl:left-auto',
-    )}>
-      {children}
+    <div className="pointer-events-none fixed inset-x-2 bottom-2 z-40 flex justify-center sm:bottom-3">
+      <div className="pointer-events-auto w-full max-w-3xl overflow-hidden rounded-lg border border-border bg-background/95 shadow-lg backdrop-blur">
+        {open ? (
+          <div className="max-h-[40vh] space-y-1.5 overflow-y-auto p-1.5">{items}</div>
+        ) : (
+          <div className="p-1.5">{newest}</div>
+        )}
+        {rest > 0 && (
+          <button type="button" onClick={() => setOpen((o) => !o)}
+            className={cn(FOCUS, 'flex w-full items-center justify-center gap-1 border-t border-border/60 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground')}>
+            {open ? 'show less' : `and ${rest} more`}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
 import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE } from './design';
-import { DEFAULT_CONFIG } from './simulation/config';
+import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
@@ -43,9 +43,16 @@ export function secondsPerPoint(state: ZooGameState): number {
  *  way and for the same reason. */
 export function spendDay(state: ZooGameState, seconds: number): ZooGameState {
   if (state.learnMode || state.phase !== 'sprint') return state;
-  const left = state.daySecondsLeft - Math.max(0, Math.round(seconds));
-  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0 }) : { ...state, daySecondsLeft: left };
+  // Owed, not taken. Charging the whole cost at once made the clock lie: a five-point habitat came
+  // out of the day in one jump, a Sprint's forecast in a few seconds, and the day timer stopped
+  // meaning anything you could watch. The work now takes the time it costs - the debt drains one
+  // second per second while the team is visibly busy with it, which is what a Sprint looks like.
+  return { ...state, owedSeconds: (state.owedSeconds ?? 0) + Math.max(0, Math.round(seconds)) };
 }
+
+/** Whether the Developers are still working off something they have taken on. Seats played by the
+ *  game wait while they are: work that appeared instantly and cost nothing is not work. */
+export const teamIsBusy = (state: ZooGameState): boolean => (state.owedSeconds ?? 0) > 0;
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
@@ -54,7 +61,11 @@ export function tickDay(state: ZooGameState): ZooGameState {
   if (state.learnMode || state.phase !== 'sprint') return state;
   if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
   const left = state.daySecondsLeft - 1;
-  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0 }) : { ...state, daySecondsLeft: left };
+  // A second of the day is a second of the work owed. The day and the work run down together, so
+  // the clock you are watching is the truth about how much is left to build in.
+  const owed = Math.max(0, (state.owedSeconds ?? 0) - 1);
+  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0, owedSeconds: owed })
+    : { ...state, daySecondsLeft: left, owedSeconds: owed };
 }
 
 /** One second of the Daily Scrum's timebox. On expiry the disciplined default is taken:
@@ -1130,6 +1141,10 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     sprintForecast: sprintCapacity(state).points,
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
     burndown: [committedPts],
+    // What was forecast, kept as a number. By the Retrospective, unfinished work has gone back to
+    // the Product Backlog, so counting the Sprint's items then gives "delivered 0 of 0" - which
+    // told a team that had over-forecast by eighteen points nothing at all.
+    forecastPoints: committedPts,
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
     // Topic three's decision. Refinement planned into a Sprint is work in the plan, with a size,
     // that somebody has to actually hold - not a tax quietly docked from every day whether or not
@@ -1242,7 +1257,10 @@ export function pullIntoSprint(state: ZooGameState, id: string, by?: string): Zo
   const item = state.backlog.find((it) => it.id === id && it.status === 'backlog' && !it.unsized);
   if (!item) return state;
   const backlog = state.backlog.map((it) => (it.id === id ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it));
-  const pulled = { ...state, committedIds: [...state.committedIds, id], backlog };
+  // Pulled work is forecast too: the Retrospective compares what was delivered against everything
+  // the Sprint took on, not just what it started with.
+  const pulled = { ...state, committedIds: [...state.committedIds, id], backlog,
+    forecastPoints: (state.forecastPoints ?? 0) + item.estimate };
   return note(pulled, { kind: isReady(item) ? 'forecast' : 'unready', by,
     what: `${item.name} was pulled into the Sprint on day ${state.dayNumber}${isReady(item) ? '' : ', and it was not ready'}.` });
 }
@@ -1573,7 +1591,10 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
 export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   state = note(state, { kind: 'daily-scrum', by,
-    what: `Day ${state.dayNumber}: the Daily Scrum was skipped${state.pendingImpediment ? ', with something waiting to be raised' : ''}.` });
+    what: `Day ${state.dayNumber}: the Daily Scrum was skipped${state.pendingImpediment ? ', with something waiting to be raised' : ''}.`,
+    cost: state.pendingImpediment
+      ? `the blocker grew overnight: about ${Math.round((1 - SKIP_PENALTY_MULT) * 100)}% of the next day`
+      : undefined });
   const imp = state.pendingImpediment;
   const mult = imp ? SKIP_PENALTY_MULT : state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
   const base = {
@@ -2023,4 +2044,118 @@ export function zonesOpenedSince(before: ZooGameState, after: ZooGameState): str
  */
 export function zooIsOpen(state: ZooGameState): boolean {
   return zoneSlices(state).some((z) => z.open);
+}
+
+/** Take an item back out of the Sprint Backlog.
+ *
+ *  The Developers' call, and the one the Daily Scrum exists to make: the Sprint Goal is the
+ *  commitment, and the Sprint Backlog is their plan for meeting it. Dropping work that is not
+ *  essential to the Goal, in time for the rest to land, is protecting the commitment - not failing
+ *  it. Scope is renegotiated as more is learned; the Goal is not.
+ *
+ *  It goes back to the Product Backlog rather than anywhere else, because that is where work that
+ *  is not being done this Sprint lives. */
+export function dropFromSprint(state: ZooGameState, id: string, by?: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || item.sprintNumber !== state.sprintNumber || item.status !== 'committed') return state;
+  const out: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === id
+    ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, assignedDevs: [] }
+    : it)) };
+  return note({ ...out, forecastPoints: Math.max(0, (state.forecastPoints ?? 0) - item.estimate) },
+    { kind: 'moved', by: by ?? 'developer',
+      what: `${whoIs(by ?? 'developer')} dropped ${item.name} (${item.estimate} points) to protect the Sprint Goal.` });
+}
+
+/** The decision in front of the Developers today, with the arithmetic done.
+ *
+ *  "Are we on track for the Sprint Goal?" is answerable: what is left, how long is left, and what
+ *  of it the Goal actually depends on. Where the forecast no longer fits, the honest move is to
+ *  drop what the Goal does not need while there is still time for what it does - so the game says
+ *  which item that would be and what each choice leaves.
+ *
+ *  Null when there is nothing to decide: the work fits, or nothing left is optional. */
+export function todaysDecision(state: ZooGameState): {
+  candidate: BacklogItem; left: number; daysLeft: number; capacity: number;
+  ifDropped: string; ifKept: string;
+} | null {
+  if (state.phase !== 'sprint') return null;
+  const prog = sprintProgress(state);
+  const daysLeft = Math.max(0, state.sprintDays - state.dayNumber + 1);
+  if (!daysLeft || !prog.remaining) return null;
+  // What a day is worth, from the game's own numbers rather than a guess.
+  const capacity = Math.round((daysLeft * DAY_SECONDS) / Math.max(1, secondsPerPoint(state)));
+  if (prog.remaining <= capacity) return null;    // it fits; there is nothing to decide
+
+  const open = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status === 'committed');
+  // The biggest thing the Goal does not depend on. Dropping the essential one is not an option the
+  // game offers: that is the Goal, and the Goal is the commitment.
+  const optional = open.filter((it) => !it.goalCritical).sort((a, z) => z.estimate - a.estimate);
+  const candidate = optional[0];
+  if (!candidate) return null;
+
+  const after = prog.remaining - candidate.estimate;
+  return {
+    candidate, left: prog.remaining, daysLeft, capacity,
+    ifDropped: after <= capacity
+      ? `Drop it: the Goal is safe, and ${prog.pointsCommitted - candidate.estimate} of ${prog.pointsCommitted} points still land.`
+      : `Drop it and ${after} points are still left against ${capacity} you can do - it helps, but it may not be enough.`,
+    ifKept: `Keep everything: ${prog.remaining} points left against ${capacity} you can do, and the Goal is at risk if anything slips.`,
+  };
+}
+
+/** The four key value measures, read off the game rather than invented.
+ *
+ *  Evidence-Based Management asks four questions, and this zoo can answer all four honestly:
+ *
+ *    Current Value        what visitors are getting now - happiness, and how many came
+ *    Unrealized Value     what they are not getting - the worst-served segment's gap
+ *    Time to Market       how long work takes to reach them - Sprints from forecast to open
+ *    Ability to Innovate  how much capacity goes on new capability rather than fixing
+ *
+ *  A measure with nothing behind it yet returns null rather than zero. Zero is a claim; "we have
+ *  not measured that yet" is the truth before the first Review, and the difference matters when
+ *  the whole point is to teach a team to act on evidence.
+ */
+export function valueMeasures(state: ZooGameState): {
+  key: 'cv' | 'uv' | 't2m' | 'a2i'; label: string; value: number | null; unit: string; detail: string;
+}[] {
+  const review = state.lastReview;
+  const segments = review?.segments ?? [];
+  // The segment served worst is where the value is not: an average hides the group that left early.
+  const worst = segments.length
+    ? segments.reduce((a, b) => (a.happiness <= b.happiness ? a : b))
+    : null;
+
+  // Delivered work, and how long it took to arrive. `openedIn` is the Sprint it went live in, and
+  // an item carries the Sprint it was forecast into, so the two give a lead time in Sprints.
+  const opened = state.backlog.filter((it) => it.status === 'open' && it.openedIn);
+  const leads = opened
+    .map((it) => (it.openedIn ?? 0) - (it.sprintNumber ?? it.openedIn ?? 0) + 1)
+    .filter((n) => n > 0);
+  const leadDays = leads.length
+    ? Math.round((leads.reduce((a, b) => a + b, 0) / leads.length) * state.sprintDays)
+    : null;
+
+  // New capability against rework. An improvement item exists because something delivered was not
+  // good enough, so the points it costs are capacity that did not go into anything new.
+  const delivered = state.backlog.filter((it) => it.status === 'open' || it.status === 'done');
+  const deliveredPts = delivered.reduce((s, it) => s + it.estimate, 0);
+  const reworkPts = delivered.filter((it) => it.enhancesId).reduce((s, it) => s + it.estimate, 0);
+  const a2i = deliveredPts ? Math.round(((deliveredPts - reworkPts) / deliveredPts) * 100) : null;
+
+  return [
+    { key: 'cv', label: 'Current Value', unit: '', value: review ? Math.round(review.overallHappiness) : null,
+      detail: review
+        ? `happiness ${Math.round(review.overallHappiness)} · ${Math.round(review.totalAttendance).toLocaleString()} visitors`
+        : 'measured at the first Sprint Review' },
+    { key: 'uv', label: 'Unrealized Value', unit: '', value: worst ? Math.round(100 - worst.happiness) : null,
+      detail: worst
+        ? `${DEFAULT_SEGMENTS.find((sg) => sg.id === worst.segmentId)?.label ?? worst.segmentId} are ${Math.round(100 - worst.happiness)} short of happy`
+        : 'what visitors are not getting yet' },
+    { key: 't2m', label: 'Time to Market', unit: 'd', value: leadDays,
+      detail: leadDays === null ? 'nothing has reached visitors yet' : 'forecast to open, on average' },
+    { key: 'a2i', label: 'Ability to Innovate', unit: '%', value: a2i,
+      detail: a2i === null ? 'nothing delivered yet'
+        : reworkPts ? `${reworkPts} of ${deliveredPts} points went on fixing` : 'no capacity lost to rework' },
+  ];
 }

@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
@@ -310,6 +310,26 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
             <Stat label="Visitors today" value={r.totalAttendance.toLocaleString()} />
             <Stat label="Happiness" value={`${r.overallHappiness}`} accent={barTone(r.overallHappiness)} />
           </div>
+
+          {/* The four questions Evidence-Based Management asks, answered from this zoo. Two are
+              about value the visitors are getting or missing; two are about the team's ability to
+              keep giving it to them. They are read together on purpose: a zoo that delivers fast
+              and makes nobody happy is failing at the thing that matters, and so is one that makes
+              people happy once and cannot do it again. */}
+          <section className={cn(SURFACE.quiet, PADDING.roomy, 'space-y-2')}>
+            <div className="text-sm font-semibold">Key value measures</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {valueMeasures(state).map((m) => (
+                <div key={m.key} className={cn(SURFACE.card, PADDING.default)}>
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</div>
+                  <div className="text-xl font-bold tabular-nums">
+                    {m.value === null ? <span className="text-base font-normal text-muted-foreground">not measured yet</span> : `${m.value}${m.unit}`}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">{m.detail}</div>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* Per-segment happiness */}
           <section className={cn(SURFACE.quiet, PADDING.roomy, 'space-y-2')}>
