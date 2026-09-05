@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen, betLine, PLACEMENT_CHOICES } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen, betLine, inHandItem, PLACEMENT_CHOICES } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_H, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
@@ -51,7 +51,6 @@ interface SprintBoardProps {
   /** Plan or Build: two states of the Sprint Backlog, not two tabs. Held above this screen because
    *  the park belongs in the Build state, and there must only ever be one park. */
   mode?: 'plan' | 'build';
-  onMode?: (m: 'plan' | 'build') => void;
   /** Take work back out of the Sprint Backlog: the Developers protecting the Sprint Goal. */
   onDropFromSprint?: (id: string) => void;
   /** Answer the Developers' question about where something goes. */
@@ -258,7 +257,45 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onMode, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
+/** The board while something else has your attention.
+ *
+ *  In Build the columns are not the work - the thing in your hands is - but they are still where you
+ *  are in the Sprint, and a state that hides them entirely leaves you working in a room with no
+ *  windows. So they shrink to a rail down the side at sixty per cent: there if you want it, not
+ *  asking for anything. Picking a card here puts it on the bench.
+ */
+function BoardRail({ doing, todo, done, held, onPick }: {
+  doing: BacklogItem[]; todo: BacklogItem[]; done: BacklogItem[];
+  held?: string | null; onPick: (id: string) => void;
+}) {
+  const group = (label: string, items: BacklogItem[]) => (
+    <div key={label} className="space-y-1">
+      <div className={cn(EYEBROW, 'text-muted-foreground')}>{label} &middot; {items.length}</div>
+      {items.map((it) => (
+        <button key={it.id} type="button" onClick={() => onPick(it.id)}
+          className={cn(FOCUS, 'flex w-full items-start gap-2 rounded-md border px-2 py-1.5 text-left transition-colors',
+            held === it.id ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/50')}>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-semibold">{it.name}</span>
+            {it.started && !it.design && <span className="block text-[10px] text-muted-foreground">being built</span>}
+          </span>
+          <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">{it.estimate}</span>
+        </button>
+      ))}
+      {!items.length && <p className="text-[11px] text-muted-foreground/70">nothing</p>}
+    </div>
+  );
+  return (
+    <aside data-part="board-rail" className="w-full space-y-2.5 opacity-60 transition-opacity hover:opacity-100 xl:w-[13rem] xl:shrink-0">
+      <div className="text-xs font-bold">Board</div>
+      {group('Doing', doing)}
+      {group('To Do', todo)}
+      {group('Done', done)}
+    </aside>
+  );
+}
+
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -420,7 +457,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const beingBuilt = state.backlog.find((it) => it.status === 'committed' && it.started
     && it.sprintNumber === state.sprintNumber);
   const bench = building ?? beingBuilt?.id ?? null;
-  const inHand = bench ? state.backlog.find((it) => it.id === bench) : undefined;
+  const inHand = inHandItem(state, building);
   // Nothing in hand means there is nothing to build, so the switch goes back on its own.
   const inBuild = mode === 'build' && !!inHand;
   const following = !building && !!beingBuilt;
@@ -458,7 +495,10 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           Plan/Build switch was top-right in Plan and top-left in Build: the same control in two
           places depending on which state you were in, which is exactly the thing you then have to
           hunt for. Its own row, left-aligned, whatever the width. */}
-      <div className="flex flex-col gap-1.5">
+      {/* In Build every one of these belongs to the other state: the question is about what to
+          take on, the chips are about the Backlog, and the Sprint Goal is on the strip. What is in
+          your hands gets the screen. */}
+      <div className={cn('flex flex-col gap-1.5', inBuild && 'hidden')}>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             {/* The shell's header already says which Sprint and which day, and the dock says what
@@ -469,24 +509,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           </div>
         </div>
         <div data-part="board-controls" className="flex flex-wrap items-center gap-1.5">
-          {/* Plan or Build. Two states of one artifact, and the switch says which you are in - the
-              board when you are deciding what to take on, the thing in your hands when you are
-              building it. */}
-          {!dayStarting && (
-            <div className="flex overflow-hidden rounded-md border border-border">
-              {(['plan', 'build'] as const).map((m) => (
-                <button key={m} type="button" onClick={() => onMode?.(m)}
-                  disabled={m === 'build' && !inHand}
-                  title={m === 'build' && !inHand ? 'Start something first - Build is the item in your hands' : undefined}
-                  className={cn(FOCUS, 'px-2.5 py-1 text-xs font-semibold transition-colors',
-                    mode === m ? 'bg-primary text-primary-foreground'
-                      : m === 'build' && !inHand ? 'cursor-not-allowed text-muted-foreground/40'
-                        : 'text-muted-foreground hover:text-foreground')}>
-                  {m === 'plan' ? 'Plan' : 'Build'}
-                </button>
-              ))}
-            </div>
-          )}
           {!dayStarting && revealed(state, 'burndown') && (
             <span className="flex items-center gap-1">
               <BurndownChip state={state} />
@@ -546,7 +568,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               exactly the mid-Sprint scope creep the Guide asks you to negotiate rather than assume. */}
           <div>
             <div className="min-w-0 space-y-2">
-              <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({sprintTotal})</span></h3>
+              {/* The tab says which artifact this is; in Build the item in hand is the heading. */}
+              <h3 className={cn('text-sm font-semibold', inBuild && 'hidden')}>Sprint Backlog <span className="font-normal text-muted-foreground">({sprintTotal})</span></h3>
 
               {/* The Developers have a question, and it is above the board because a question you
                   have to go looking for is a question nobody answers. Where a habitat or a
@@ -581,7 +604,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               {/* The commitment the Sprint Backlog is FOR, over the board it is made of. It used to
                   live in the strip at the top of the window with everything else; a goal read as one
                   more chip among chips is a goal nobody is holding. */}
-              <section className="rounded-lg border border-border bg-secondary/50 px-3 py-2">
+              <section className={cn('rounded-lg border border-border bg-secondary/50 px-3 py-2', inBuild && 'hidden')}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   <div className="min-w-0">
                     <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
@@ -830,10 +853,14 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           {/* Docked, it scrolls inside its own height. In Build there is no fixed height to scroll
               inside - the studio is the screen - so it grows to what is in it and the page carries
               the scrolling. Left as a scroll box, the criteria were cut off half way down. */}
-          <div className={cn('px-2 pb-2 pt-2', inBuild ? '' : 'min-h-0 flex-1 overflow-y-auto')}>
-            <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
-              drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun}
-              onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
+          <div className={cn('px-2 pb-2 pt-2', inBuild ? 'flex flex-col gap-3 xl:flex-row xl:items-start' : 'min-h-0 flex-1 overflow-y-auto')}>
+            {/* The board, at sixty per cent, beside the one thing that is not. */}
+            {inBuild && <BoardRail doing={doing} todo={todo} done={[...deploy, ...done]} held={bench} onPick={onBuilding} />}
+            <div className="min-w-0 flex-1">
+              <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
+                drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus={inBuild}
+                onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
+            </div>
           </div>
         </div>
       )}

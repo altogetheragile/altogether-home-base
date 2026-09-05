@@ -1933,6 +1933,17 @@ export function refinementTalk(state: ZooGameState, item: BacklogItem): {
   };
 }
 
+/** What is in the Developers' hands: whatever you picked up, or failing that whatever the team has
+ *  in Doing. The Build state is that item and the park it stands on, so the board and the tab row
+ *  have to agree on what it is - when they each worked it out for themselves, the switch offered
+ *  Build on a screen with nothing to build. */
+export function inHandItem(state: ZooGameState, picked?: string | null): BacklogItem | undefined {
+  const beingBuilt = state.backlog.find((it) => it.status === 'committed' && it.started
+    && it.sprintNumber === state.sprintNumber);
+  const id = picked ?? beingBuilt?.id ?? null;
+  return id ? state.backlog.find((it) => it.id === id) : undefined;
+}
+
 // ============= Is the Sprint Goal safe? =============
 
 /** The one line the strip carries during a Sprint, and the sentence it drops when the answer

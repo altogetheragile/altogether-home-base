@@ -109,7 +109,7 @@ function BenchName({ name, onRename }: { name: string; onRename: (name: string) 
   );
 }
 
-export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun }: {
+export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun, focus = false }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
@@ -129,6 +129,9 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   onDrawing?: (on: boolean) => void;
   /** Take one run of a pathway back up. */
   onRemoveRun?: (connectorId: string) => void;
+  /** The Build state: this card IS the screen, so it leads with the item and its next step, and the
+   *  controls fold down to one line until a part of the thing is touched. */
+  focus?: boolean;
 }) {
   // The bench holds what is being built. It used to hold whatever was last selected, which is not
   // the same thing: an item that runs out of Sprint goes back to the Product Backlog, and the bench
@@ -137,10 +140,44 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   const held = itemId ? state.backlog.find((i) => i.id === itemId) : undefined;
   const wentBack = held?.status === 'backlog' ? held : undefined;
   const item = wentBack ? undefined : held;
+  // Touching a part of the thing out on the park opens its controls in here - that link is the
+  // whole reason a row of coloured squares is comprehensible at all - so a touch counts as asking.
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const showControls = !focus || controlsOpen || !!part;
+
+  // The one thing to do next: the first step of the plan nobody has ticked. It is the only orange
+  // thing on the tab, because it is the only thing being asked of you.
+  const steps = (item?.tasks ?? []).filter((t) => t.label.trim());
+  const nextStep = steps.findIndex((t) => !t.done);
 
   return (
     <section className="flex min-h-0 flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
+      {focus && item && (
+        <header className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Chip tone="attention">In hand</Chip>
+            {following && <Chip>the team is on this</Chip>}
+            {(item.status === 'done' || item.status === 'open') && (
+              <Chip tone="done">{item.status === 'open' ? 'live' : 'built'}</Chip>
+            )}
+          </div>
+          {/* The largest text on the tab is the thing you are building. */}
+          <h3 className="flex min-w-0 items-center gap-2 text-2xl font-bold leading-tight">
+            <CategoryIcon item={item} className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <BenchName key={item.id} name={item.name} onRename={(nm) => edit.onRename(item.id, nm)} />
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {item.estimate} pts &middot; {item.zone} &middot; {item.category}
+          </p>
+          {nextStep >= 0 && (
+            <div data-part="next-step" className="rounded-lg border-2 border-primary bg-primary/5 px-3 py-2">
+              <div className={cn(EYEBROW, 'text-primary')}>Next step</div>
+              <p className="text-sm font-bold leading-snug">{nextStep + 1}. {steps[nextStep].label}</p>
+            </div>
+          )}
+        </header>
+      )}
+      <div className={cn('flex items-center justify-between gap-2', focus && item && 'hidden')}>
         <h3 className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
           Design bench
           {item && <>
@@ -169,8 +206,11 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
         // Product Owner's side is what it has to be true of before anyone calls it Done. Told apart
         // by a wash of colour rather than a rule, so the bench reads as two things at a glance
         // without the screen turning into a chart.
-        <div className="grid gap-2 sm:grid-cols-2 sm:items-start">
-          <div className="rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2">
+        <div className={cn('grid gap-2 sm:items-start', focus ? 'sm:grid-cols-1' : 'sm:grid-cols-2')}>
+          {/* In Build the controls are one grey line at the foot of the card until you touch a part
+              of the thing on the park - or ask for them. A row of menus open beside the work is a
+              second thing shouting at you while the next step is trying to say one sentence. */}
+          <div className={cn('rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2', focus && 'order-last', focus && !showControls && 'hidden')}>
             <div className={cn(EYEBROW, 'mb-1.5 text-sky-700 dark:text-sky-300')}>How it is made</div>
             {/* The same controls that used to float over the park, docked. Identical component, so
                 there is one place a control is defined and one place it can go wrong. */}
@@ -215,9 +255,9 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
           </div>
           {/* The plan and the criteria, open. On the card they are a row of pips you expand; here,
               where you are actually doing the work, they are the work. */}
-          <div className="rounded-lg border border-emerald-400/40 bg-emerald-500/[0.05] p-2">
+          <div className={cn('rounded-lg border p-2', focus ? 'border-border bg-card' : 'border-emerald-400/40 bg-emerald-500/[0.05]')}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <div className={cn(EYEBROW, 'text-emerald-700 dark:text-emerald-300')}>What Done looks like</div>
+              <div className={cn(EYEBROW, focus ? 'text-muted-foreground' : 'text-emerald-700 dark:text-emerald-300')}>What Done looks like</div>
               {/* Inspect and adapt. These criteria are about the thing that was built, and until now
                   they were being judged from the drawing of it - the Increment was a toggle above the
                   park that you had to notice. Nothing to inspect until it has been built once. */}
@@ -233,6 +273,14 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
               onToggleTask={(id, taskId) => onToggleTask(id, taskId)}
               onConfirmAc={(id, i, v) => onConfirmAc(id, i, v)} />
           </div>
+          {focus && !showControls && (
+            <button type="button" onClick={() => setControlsOpen(true)} data-part="controls-line"
+              className={cn(FOCUS, 'order-last flex w-full items-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:text-foreground')}>
+              <Hammer className="h-3.5 w-3.5 shrink-0" />
+              Controls: size &middot; shape &middot; ground &middot; fence &middot; water &middot; planting
+              <span className="ml-auto shrink-0 underline">open</span>
+            </button>
+          )}
         </div>
       )}
     </section>
