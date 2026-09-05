@@ -72,10 +72,15 @@ Whether the value dials leave the strip during the Sprint or stay in small grey 
 
 ## Build Progress
 
-Steps 1, 2, 3 and 5 are done: the strip is the clock, the goal line and one Learn button; the drawer
+All five steps are done. The strip is the clock, the goal line and one Learn button; the drawer
 holds Scrum, Value, This Sprint and Notes; the Artifacts and Scrum drawers moved into it; the
-warning state drops one sentence under the strip and nothing else moves. Step 4, the Build state's
-attention order, is next.
+warning state drops one sentence under the strip and nothing else moves; and the Build state greys
+the board to a rail, gives the item in hand the screen, makes its next step the only orange box,
+folds the controls to one line until a part is touched, and puts the park's stats on the park.
+
+One thing settled while building it: Plan and Build are two states of the Sprint Backlog, so the
+switch rides on the tab row rather than inside whichever state is showing. That is what stopped it
+moving between top-left and top-right.
 
 The one decision left is settled the way the frames assume: the value dials leave the strip during
 the Sprint and live in Learn, where each has an explanation.

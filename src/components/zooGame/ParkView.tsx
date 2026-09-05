@@ -126,6 +126,9 @@ function ZoomControl({ zoom, onZoom }: { zoom: number; onZoom: (z: number) => vo
 
 interface ParkViewProps {
   state: ZooGameState;
+  /** The park while you are building on it: one line of stats on the drawing, and nothing above it.
+   *  The thing you are working on gets the room, which is the point of the Build state. */
+  focus?: boolean;
   /** The item whose build inspector is open. */
   building?: string | null;
   /** Select an item on the park - its toolbar appears above it. */
@@ -185,7 +188,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, focus = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -294,13 +297,19 @@ export function ParkView({ state, compact = false, large = false, building, onOp
         <>
           {/* Everything above the park image stays pinned to the top of the scroll area, so the
               stats, the description and the toolbar are always visible while you scroll the park. */}
-          <div className="sticky top-0 z-30 -mx-2 -mt-3 space-y-2 border-b border-border bg-background/95 px-2 pb-2 pt-3 backdrop-blur-sm sm:-mx-3 sm:px-3">
+          <div className={cn('sticky top-0 z-30 -mx-2 space-y-2 border-b border-border bg-background/95 px-2 pb-2 backdrop-blur-sm sm:-mx-3 sm:px-3',
+            focus ? '-mt-2 pt-2' : '-mt-3 pt-3')}>
+          {/* While you are building on it, the park says what it is in one line ON the drawing, and
+              nothing above it. Two hundred pixels of paragraph, stats and toolbar over the thing you
+              are working on is the park explaining itself instead of being looked at. */}
+          {!focus && (<>
           <p className="max-w-prose text-left text-[11px] text-muted-foreground">
             <strong className="text-foreground">The park is your product.</strong> Everything live here is the sum of the
             Increments you have delivered - each Sprint adds to it. Drag an enclosure, building or planting to lay out your
             zoo; animals move with their enclosure.
           </p>
           {statsBar}
+          </>)}
           <div className="flex flex-wrap items-center justify-between gap-2">
             {/* One instruction at a time. With the pen out the amber bar below is saying how, and
                 two lines telling you different things about the same drag is how somebody ends up
@@ -316,7 +325,7 @@ export function ParkView({ state, compact = false, large = false, building, onOp
               {/* Done work and a site stand on the same ground, which is honest and, when you are
                   asking "what have we delivered", unhelpful. This takes the promises away and
                   leaves the Increment. The Sprint Review turns it on for you. */}
-              {sites.length > 0 && (
+              {sites.length > 0 && !focus && (
                 <label className={cn(FOCUS, 'flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] font-medium')}
                   title="Hide the building sites. What is left is what has actually been delivered - which is what an Increment is.">
                   <input type="checkbox" className="h-3 w-3 accent-primary" checked={incrementOnly}
@@ -447,7 +456,15 @@ export function ParkView({ state, compact = false, large = false, building, onOp
           <Suspense fallback={<div className="h-[440px] animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
             {/* Zoomed in, the drawing grows past its window and the window is scrolled - the same
                 as walking up to it. At 100% it fits, and there is nothing to scroll. */}
-            <div className="overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
+            <div className="relative overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
+              {/* What is standing here, counted apart: what has been delivered, what is still a
+                  promise, and who is walking round it. One line, on the park. */}
+              {focus && (
+                <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-md border border-border bg-background/90 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm">
+                  Increment {open.length} <span className="font-normal text-muted-foreground">&middot;</span> Site{sites.length === 1 ? '' : 's'} {sites.length}
+                  <span className="font-normal text-muted-foreground"> &middot; {total ? total.toLocaleString() : 'no'} visitors</span>
+                </div>
+              )}
               <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
                 <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly}
                   onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild}
