@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, suggestTasks, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL } from './engine';
-import { NewHere } from './NewHere';
+import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL } from './engine';
 
 
 import { TaskEditor, SplitEpicPanel } from './Board';
@@ -9,6 +8,7 @@ import { PbiCard } from './PbiCard';
 import { ShapeChooser } from './ShapeChooser';
 import { Workspace } from './ui/Workspace';
 import { PickCard } from './PickCard';
+import { itemKind } from './itemKinds';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
@@ -18,7 +18,7 @@ import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight, ListChecks } from 'lucide-react';
+import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 // ============= Sprint Planning =============
@@ -485,132 +485,134 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
       )}
 
       {/* ---- HOW ---- */}
-      {step === 'how' && (
-        <div className="space-y-3">
-          <PlanColumns
-            left={<>
-              <BacklogHeading count={items.length - chosen.length} note="what you did NOT take - still the Product Owner's to order" />
-              <p className="text-[11px] text-muted-foreground/70">
-                Left where it was. Seeing it beside the Sprint is the point: this is what the next Planning will choose
-                from, and it is the reason refining costs you something now.
+      {step === 'how' && (() => {
+        // One item at a time. Topic three used to open every item down a scrolling column, so the
+        // plan you were writing moved while you wrote it and the item above it was a page away.
+        // Al's shape: the Sprint Backlog on the left, the plan for whichever one you picked on the
+        // right, edited without paging. Another item is topic two's business, not this screen's.
+        const planFor = chosen.find((it) => it.id === openPlan) ?? chosen[0];
+        const nextUnplanned = chosen.find((it) => it.id !== planFor?.id && !(it.tasks ?? []).some((t) => t.label.trim()));
+        const steps = (it: typeof chosen[number]) => (it.tasks ?? []).filter((t) => t.label.trim());
+        return (
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
+          <div className="space-y-2">
+            <div>
+              <h3 className="text-sm font-semibold">
+                Sprint Backlog <span className="font-normal text-muted-foreground">· {chosen.length} item{chosen.length === 1 ? '' : 's'} · {chosen.reduce((n, it) => n + it.estimate, 0)} pts</span>
+              </h3>
+              <p className="text-[11px] text-muted-foreground">
+                Select one to plan it on the right. Need another item? Go back to topic two.
               </p>
+            </div>
 
-              {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
-                  somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
-              <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.07]' : 'border-border bg-muted/20')}>
-                <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
-                  {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
-                    : horizon > 3 ? ' That is plenty - build instead.'
-                      : ' Enough for now, but it burns down as you go.'}
-                </p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  {REFINE_POINT_OPTIONS.map((v) => (
-                    <button key={v} type="button" onClick={() => setRefinePts(v)}
-                      className={cn(FOCUS, 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                        refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border text-muted-foreground hover:text-foreground')}>
-                      {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
-                    </button>
-                  ))}
-                </div>
-                {refinePts > 0 && (
-                  <p className="mt-1.5 text-[11px] text-muted-foreground">
-                    {refinePts} point{refinePts === 1 ? '' : 's'} set aside for the whole Scrum Team to refine together. It
-                    goes on the board like any other work and it is not Done until you have held it.
-                  </p>
-                )}
-              </section>
+            <div className="space-y-1.5">
+              {chosen.map((it) => {
+                const mine = steps(it);
+                const on = planFor?.id === it.id;
+                return (
+                  <button key={it.id} type="button" onClick={() => setOpenPlan(it.id)}
+                    className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors',
+                      on ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/50',
+                      planned.has(it.id) && 'zoo-arriving')}>
+                    {stars && (
+                      <span onClick={(e) => { e.stopPropagation(); onToggleGoalCritical?.(it.id); }}
+                        title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'}>
+                        <Star className={cn('h-4 w-4 shrink-0', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40')} />
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{it.name}</span>
+                      <span className={cn('block text-[11px]', mine.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}>
+                        {mine.length ? `${mine.length} step${mine.length === 1 ? '' : 's'} · planned` : 'no steps yet'}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{it.estimate}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-              <div className="max-h-[32vh] space-y-1.5 overflow-y-auto pr-1">
-                {items.filter((i) => !selected.has(i.id)).map((it) => (
-                  <PickCard key={it.id} item={it} why={notReady(it)} readOnly onPick={() => {}} />
+            {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
+                somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
+            <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.06]' : 'border-border')}>
+              <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
+                {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
+                  : horizon > 3 ? ' That is plenty - build instead.'
+                    : ' Enough for now, but it burns down as you go.'}
+              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {REFINE_POINT_OPTIONS.map((v) => (
+                  <button key={v} type="button" onClick={() => setRefinePts(v)}
+                    className={cn(FOCUS, 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                      refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border hover:bg-muted')}>
+                    {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
+                  </button>
                 ))}
               </div>
-            </>}
-            right={<>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold">Sprint Backlog <span className="font-normal text-muted-foreground">({chosen.length})</span></h3>
-                  <p className="text-[11px] text-muted-foreground">
-                    {stars ? 'Star what the Goal depends on, and break each item into steps.' : 'Open each item to decide what it will be, and the steps that build it.'}
-                    {' '}<strong className="text-foreground">{totalSteps} step{totalSteps === 1 ? '' : 's'}</strong> so far.
-                  </p>
-                </div>
-                <Button size="sm" className={cn(TONE.teach.solid, TONE.teach.solid, TONE.teach.solid, "h-8 gap-1 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark: dark:hover:")}
-                  onClick={() => chosen.forEach((it) => { if (!(it.tasks ?? []).length) onSetTasks(it.id, suggestTasks(it)); })}>
-                  <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all
-                </Button>
+            </section>
+          </div>
+
+          {/* The plan for the one you picked. */}
+          {planFor ? (
+            <section className="min-w-0 space-y-2 rounded-lg border-2 border-primary/40 p-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="text-sm font-semibold">
+                  Plan <span className="text-muted-foreground">·</span> {planFor.name}
+                  <span className="font-normal text-muted-foreground"> · {planFor.estimate} pts · {itemKind(planFor)} · {planFor.zone}</span>
+                </h3>
+                {/* The step editor carries its own "suggest" - two buttons that do the same thing,
+                    a hand's width apart, is one too many. */}
               </div>
-              {stars && state.sprintNumber === 2 && (
-                <NewHere title="Marking the essentials">
-                  <p>Star the items the Sprint Goal truly depends on. The Goal is an outcome, not a to-do list: deliver the essentials and it is met, even if you drop the rest.</p>
-                  <p>It appears now because you have watched a Sprint end. Protecting the Goal by dropping scope is a win, not a miss - but only if you have said what the Goal actually rests on.</p>
-                </NewHere>
+
+              {/* Read-only here: the criteria were agreed when the item was refined, and Planning is
+                  not where the Product Owner rewrites them. They are shown because the steps have to
+                  add up to them. */}
+              {(planFor.acceptance ?? []).length > 0 && (
+                <div>
+                  <div className="text-[11px] font-semibold text-muted-foreground">
+                    Acceptance criteria <span className="font-normal">· agreed at refinement · read-only here</span>
+                  </div>
+                  <ul className="mt-0.5 space-y-0.5">
+                    {(planFor.acceptance ?? []).map((ac) => (
+                      <li key={ac} className="flex gap-1.5 text-[12px] text-muted-foreground">
+                        <span className="text-muted-foreground/50">·</span>{ac}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
-              <div className="max-h-[46vh] space-y-2 overflow-y-auto pr-1">
-                {chosen.map((it) => {
-                  const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
-                  const open = openPlan === it.id;
-                  return (
-                    <div key={it.id} className={cn(planned.has(it.id) && 'zoo-arriving')}>
-                      {open ? (
-                        <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-2">
-                          {/* What kind of thing, before how it gets built - the first "how" is what shape
-                              it takes, and it decides the order of the Sprint. */}
-                          {(() => {
-                            const shape = <ShapeChooser item={it} enclosures={habitats} onPlan={(patch) => onPlanShape(it.id, patch)} />;
-                            return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
-                          })()}
-                          <TaskEditor item={it} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} onClose={() => setOpenPlan(null)} />
-                        </div>
-                      ) : (
-                        // Everything here is already in the Sprint, so tinting every row orange says
-                        // nothing. What differs between these rows is whether they have been planned -
-                        // so THAT is what carries the colour.
-                        <PbiCard item={it} state="backlog" onClick={() => setOpenPlan(it.id)} label={`Plan ${it.name}`}
-                          className={cn(it.goalCritical && 'border-l-4 border-l-amber-400',
-                            tasks.length ? 'border-emerald-400/60 bg-emerald-500/[0.04]' : 'border-dashed')}
-                          lead={stars ? (
-                            <button type="button" onClick={(e) => { e.stopPropagation(); onToggleGoalCritical(it.id); }} aria-label={`Mark ${it.name} essential to the Sprint Goal`}
-                              title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'} className={cn(FOCUS, "shrink-0")}>
-                              <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40 hover:text-amber-500')} />
-                            </button>
-                          ) : undefined}
-                          trailing={
-                            <Button size="sm" variant={tasks.length ? 'ghost' : 'outline'} className="h-7 shrink-0 px-2 text-xs"
-                              onClick={(e) => { e.stopPropagation(); setOpenPlan(it.id); }}>
-                              {tasks.length ? `${tasks.length} steps` : 'Plan it'}
-                            </Button>}
-                          detail={tasks.length ? (
-                            // The steps themselves, not just how many there are. A seat played by
-                            // the game writes this plan while you are reading something else, and
-                            // a count that has quietly gone from nothing to "4 steps" shows you
-                            // that it happened without ever showing you what it decided.
-                            <ol className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 pl-0.5 text-[11px] text-muted-foreground">
-                              {tasks.map((t, i) => (
-                                <li key={t.id} className="flex items-center gap-1">
-                                  <span className="text-muted-foreground/50">{i + 1}.</span>{t.label}
-                                </li>
-                              ))}
-                            </ol>
-                          ) : undefined} />
-                      )}
-                    </div>
-                  );
-                })}
-                {refinePts > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/60 bg-violet-500/[0.07] px-2 py-1.5 text-xs">
-                    <ListChecks className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
-                    <span className="min-w-0 flex-1 font-medium">Refine the Product Backlog</span>
-                    <span className={cn(TONE.teach.text, "shrink-0 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[11px] font-semibold")}>{refinePts} pts</span>
-                  </div>
+              {/* What kind of thing, before how it gets built - the first "how" is what shape it
+                  takes, and it decides the order of the Sprint. */}
+              {(() => {
+                const shape = <ShapeChooser item={planFor} enclosures={habitats} onPlan={(patch) => onPlanShape?.(planFor.id, patch)} />;
+                return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
+              })()}
+
+              <TaskEditor item={planFor} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} />
+
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {nextUnplanned ? <>Next item without a plan: <strong className="text-foreground">{nextUnplanned.name}</strong></>
+                    : 'Every item has steps.'}
+                </span>
+                {nextUnplanned && (
+                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setOpenPlan(nextUnplanned.id)}>
+                    Plan the next item <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
                 )}
               </div>
-            </>} />
+            </section>
+          ) : (
+            <section className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+              Nothing is in the Sprint Backlog yet. Go back to topic two and take some work.
+            </section>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {/* One primary action, always in the same place. */}
       <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>
