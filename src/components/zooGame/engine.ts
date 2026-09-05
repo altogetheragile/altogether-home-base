@@ -1933,6 +1933,73 @@ export function refinementTalk(state: ZooGameState, item: BacklogItem): {
   };
 }
 
+// ============= Is the Sprint Goal safe? =============
+
+/** The one line the strip carries during a Sprint, and the sentence it drops when the answer
+ *  changes.
+ *
+ *  A learner in the middle of a build day needs three things: how much of today is left, whether
+ *  the Sprint Goal is safe, and what is in their hand. The clock answers the first. This answers
+ *  the second - and it answers it with the Sprint's own arithmetic rather than a mood: what the
+ *  essentials still cost at this team's measured rate, against the time the Sprint has left.
+ *
+ *  Essentials are the items the Scrum Team marked as the ones the Goal depends on. Where nothing
+ *  was marked, everything forecast counts, because a Sprint Goal nobody attached to any item is
+ *  still a commitment.
+ */
+export function goalPulse(state: ZooGameState): {
+  level: 'safe' | 'risk' | 'met';
+  /** "Goal safe · 1 of 2 essentials · 8 of 18 pts" */
+  line: string;
+  /** The first, bold sentence of the warning: what is wrong, in one breath. */
+  headline?: string;
+  /** ...and the two decisions available, because both of them are decisions. */
+  sentence?: string;
+} {
+  const prog = sprintProgress(state);
+  const forecast = state.forecastPoints ?? prog.pointsCommitted;
+  const points = `${prog.pointsDone} of ${forecast} pt${forecast === 1 ? '' : 's'}`;
+  const committed = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.status === 'committed');
+  const essentials = prog.essentialsTotal > 0
+    ? committed.filter((it) => it.goalCritical)
+    : committed;
+  // Marking essentials is revealed after the first Sprint, so before then the Goal rests on
+  // everything forecast - and the line counts items rather than announcing an absence.
+  const done = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && (it.status === 'done' || it.status === 'open')).length;
+  const all = done + committed.length;
+  const essentialsLine = prog.essentialsTotal > 0
+    ? `${prog.essentialsDone} of ${prog.essentialsTotal} essential${prog.essentialsTotal === 1 ? '' : 's'}`
+    : `${done} of ${all} item${all === 1 ? '' : 's'}`;
+
+  // Everything the Goal still needs, at what this team has actually been managing per point.
+  const owed = essentials.reduce((s, it) => s + it.estimate, 0) * secondsPerPoint(state);
+  const daysAfterToday = Math.max(0, state.sprintDays - state.dayNumber);
+  const left = state.daySecondsLeft + daysAfterToday * dayTotalSeconds(state.dayTimeMult ?? 1);
+
+  if (!essentials.length) {
+    return { level: prog.pointsCommitted > 0 && prog.remaining === 0 ? 'met' : 'safe',
+      line: prog.pointsCommitted === 0 ? 'Nothing forecast yet' : `Goal safe · ${points}` };
+  }
+
+  if (owed <= left) return { level: 'safe', line: `Goal safe · ${essentialsLine} · ${points}` };
+
+  // At risk. Name the one item that says so: the biggest thing still to do that nobody has picked
+  // up, or failing that the biggest thing still open. A warning that names nothing is a mood.
+  const worst = [...essentials].sort((a, z) => z.estimate - a.estimate);
+  const unstarted = worst.find((it) => !it.started);
+  const named = unstarted ?? worst[0];
+  const seconds = Math.max(0, Math.round(state.daySecondsLeft));
+  const lastDay = state.dayNumber >= state.sprintDays;
+  return {
+    level: 'risk',
+    line: `Goal at risk · ${named.name} ${unstarted ? 'not started' : 'unfinished'} · ${essentialsLine}`,
+    headline: `${seconds} second${seconds === 1 ? '' : 's'} left today. ${named.name} is essential to the goal and ${unstarted ? 'has not started' : 'is not finished'}.`,
+    sentence: lastDay
+      ? `Finish it, or stop and take it to the Review as work that did not land. Either is a decision; both are recorded.`
+      : `Finish it, or stop and take it to tomorrow’s Daily Scrum. Either is a decision; both are recorded.`,
+  };
+}
+
 // ============= The artifacts, as they actually stand =============
 
 /** Every artifact, whether it exists yet, and what is in it. Transparency is the point of an
@@ -2118,6 +2185,12 @@ export function todaysDecision(state: ZooGameState): {
  */
 export function valueMeasures(state: ZooGameState): {
   key: 'cv' | 'uv' | 't2m' | 'a2i'; label: string; value: number | null; unit: string; detail: string;
+  /** What the measure is, in one line - the sentence a learner needs before the number means anything. */
+  what: string;
+  /** How this zoo computes it, so the number is not a black box. */
+  how: string;
+  /** What makes it move, which is the only reason to watch it. */
+  moves: string;
 }[] {
   const review = state.lastReview;
   const segments = review?.segments ?? [];
@@ -2147,15 +2220,27 @@ export function valueMeasures(state: ZooGameState): {
     { key: 'cv', label: 'Current Value', unit: '', value: review ? Math.round(review.overallHappiness) : null,
       detail: review
         ? `happiness ${Math.round(review.overallHappiness)} · ${Math.round(review.totalAttendance).toLocaleString()} visitors`
-        : 'measured at the first Sprint Review' },
+        : 'measured at the first Sprint Review',
+      what: 'How happy today\u2019s visitors are.',
+      how: 'Average happiness across the three visitor groups, out of 100.',
+      moves: 'Rises when Done work opens to visitors. Falls when a group finds nothing for them.' },
     { key: 'uv', label: 'Unrealized Value', unit: '', value: worst ? Math.round(100 - worst.happiness) : null,
       detail: worst
         ? `${DEFAULT_SEGMENTS.find((sg) => sg.id === worst.segmentId)?.label ?? worst.segmentId} are ${Math.round(100 - worst.happiness)} short of happy`
-        : 'what visitors are not getting yet' },
+        : 'what visitors are not getting yet',
+      what: 'Value you could add but have not.',
+      how: 'The gap between the unhappiest visitor group and happy, out of 100.',
+      moves: 'Falls when you serve the group that is missing out. It is the size of the opportunity, not a fault.' },
     { key: 't2m', label: 'Time to Market', unit: 'd', value: leadDays,
-      detail: leadDays === null ? 'nothing has reached visitors yet' : 'forecast to open, on average' },
+      detail: leadDays === null ? 'nothing has reached visitors yet' : 'forecast to open, on average',
+      what: 'How fast an idea reaches visitors.',
+      how: 'Days from an item entering the Sprint to the day it opens.',
+      moves: 'Falls when items are small and open early. Rises when Done work waits for the end of a Sprint.' },
     { key: 'a2i', label: 'Ability to Innovate', unit: '%', value: a2i,
       detail: a2i === null ? 'nothing delivered yet'
-        : reworkPts ? `${reworkPts} of ${deliveredPts} points went on fixing` : 'no capacity lost to rework' },
+        : reworkPts ? `${reworkPts} of ${deliveredPts} points went on fixing` : 'no capacity lost to rework',
+      what: 'How much of your capacity goes on new work.',
+      how: 'Points delivered on new items, over all points delivered.',
+      moves: 'Rises when the Definition of Done holds. Falls when work comes back to be fixed.' },
   ];
 }

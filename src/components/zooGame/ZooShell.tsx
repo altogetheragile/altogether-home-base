@@ -2,11 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
 import { DoneGate } from './DoneGate';
-import { valueMeasures } from './engine';
+import { goalPulse } from './engine';
 import { DayTimer } from './DayTimer';
-import { ArtifactsPanel } from './ArtifactsPanel';
 import { CopyEditor } from './CopyEditor';
-import { TeachingCard, ScrumReference } from './ScrumTeaching';
+import { TeachingCard } from './ScrumTeaching';
+import { LearnDrawer } from './LearnDrawer';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -34,8 +34,8 @@ const ROLE_HINT: Record<string, string> = {
 
 
 /** The game's own controls - save, resume - out of the way of the Scrum. */
-function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: () => void }) {
-  if (!onSave && !onOpenSaves) return null;
+function GameMenu({ onSave, onOpenSaves, links }: { onSave?: () => void; onOpenSaves?: () => void; links?: ReactNode }) {
+  if (!onSave && !onOpenSaves && !links) return null;
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -56,6 +56,7 @@ function GameMenu({ onSave, onOpenSaves }: { onSave?: () => void; onOpenSaves?: 
               <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Saved games
             </button>
           )}
+          {links}
         </div>
       </PopoverContent>
     </Popover>
@@ -150,10 +151,12 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan', links, backlogTab, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; buildMode?: 'plan' | 'build';
+export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan', links, menuLinks, backlogTab, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; buildMode?: 'plan' | 'build';
   /** The way back to the site and who is signed in, handed in rather than reached for: the shell
    *  should not need to know there is such a thing as signing in. */
   links?: ReactNode;
+  /** ...and what belongs in the game menu rather than the strip: signing in, and who is signed in. */
+  menuLinks?: ReactNode;
   /** The Product Backlog tab when the Refinement screen is not on it: the list and the bench that
    *  works on it, handed in by the page because the shell holds no game handlers of its own. */
   backlogTab?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
@@ -208,6 +211,14 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
   // the same pill as the button that moves you on. A refusal is the teaching, the Product Owner's
   // account of a refinement is a long read, and what a seat played by the game did is commentary -
   // three registers, one place, never over the work.
+  // Is the Sprint Goal safe, and if it is not, what the two ways out of it are. Only during a
+  // Sprint: before one there is nothing to be at risk, and after it the Review has the answer.
+  const pulse = state.phase === 'sprint' ? goalPulse(state) : null;
+  // ...and the sentence only while the day is being built. At the Daily Scrum you are already in
+  // the conversation it would send you to, and "take it to tomorrow's Daily Scrum" said during one
+  // is the game talking over itself.
+  const warn = pulse?.level === 'risk' && state.dayStage === 'building' ? pulse : null;
+
   const notes: GameNote[] = [];
   if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, onDismiss: onDismissRefused });
   if (poNote) notes.push({ id: 'refinement', title: 'Refinement session · the Scrum Team', body: <span className="whitespace-pre-line">{poNote}</span>, onDismiss: onDismissPoNote });
@@ -224,64 +235,75 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
     <div className="zoo-theme flex h-full flex-col bg-background">
       {/* Where you are, on one dark band; the artifacts themselves are the white below it. */}
       <header className="shrink-0 border-b border-border px-2 pt-1.5 sm:px-3">
-        <div className="zoo-band -mx-2 mb-1.5 flex items-center gap-2 px-2 py-1.5 sm:-mx-3 sm:px-3">
-          {/* The mark, on the one strip. There were two headers: a white brand bar and this, saying
-              where you are in two visual registers and seventy pixels. One strip carries all of it. */}
-          <span aria-hidden className="hidden shrink-0 select-none text-lg font-bold leading-none sm:inline">皆</span>
-          {/* Back, wherever going back is honest. Where it is not, the control says why - a Sprint
-              that has started cannot be un-started, and that is the lesson, not an oversight. */}
-          {back && (
-            'blocked' in back
-              ? (
-                <span title={back.blocked} className="flex shrink-0 cursor-help items-center rounded-md border border-border/60 p-1 text-muted-foreground/40">
-                  <ChevronLeft className="h-4 w-4" />
-                </span>
-              ) : onBack && (
-                <button type="button" onClick={() => onBack(back.to)} title={back.label} aria-label={back.label}
-                  className={cn(FOCUS, SURFACE.inset, 'flex shrink-0 items-center p-1 text-muted-foreground transition-colors hover:text-foreground')}>
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              )
-          )}
-          {/* Whose hat you are wearing, said rather than implied. The gate only speaks when
-              you reach outside your accountability, so a Product Owner doing Product Owner
-              things would otherwise be told nothing at all. */}
-          <SeatBadge seat={seat} phase={state.phase} observer={observer} covering={covering} />
-          <span title={ROLE_HINT[state.phase]} className="shrink-0 rounded-md bg-muted/60 px-2 py-1 text-xs font-semibold">
-            {state.phase === 'refine'
-              ? 'Before Sprint 1'
-              : <>Sprint {state.sprintNumber}{state.phase === 'sprint' && <><span className="mx-1 text-muted-foreground">·</span>Day {state.dayNumber}/{state.sprintDays}</>}{state.phase !== 'sprint' && <><span className="mx-1 text-muted-foreground">·</span><span className="font-bold uppercase tracking-wide text-primary">{PHASE_LABEL[state.phase] ?? ''}</span></>}</>}
-          </span>
-          {/* The day clock lives here so it stays visible on both the Build and Park tabs. The
-              z-index lifts it above the design-studio modal (z-40) so the Sprint clock is never
-              hidden while you build - the build spends the day's time, so you need to see it. */}
-          {state.phase === 'sprint' && state.dayStage !== 'dailyScrum' && onEndDay && (
-            <span className="relative z-[45] rounded-full bg-background">
-              <DayTimer compact dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} secondsLeft={state.daySecondsLeft} />
+        {/* The strip, in the order the learner needs it.
+            
+            It carried twelve pills of equal weight: four dials with no values, two drawer buttons, a
+            help icon, a wordmark, the clock, the goal, the seat, the phase. When nothing is bigger,
+            nothing is important - and the one element that decides what to do next was the same size
+            as an abbreviation nobody had explained.
+            
+            So: where you are, small. The clock, big, with a bar that empties. Whether the Goal is
+            safe, in one line, with the Goal itself under it in small type. Then one button: Learn.
+            Everything that is words went behind it. */}
+        <div className="zoo-band -mx-2 mb-1.5 flex items-center gap-3 px-2 py-1.5 sm:-mx-3 sm:px-3">
+          {/* The mark is the way back to the site: it says whose game this is and does the wordmark's
+              job in a fifth of the room. */}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {links}
+            {/* Back, wherever going back is honest. Where it is not, the control says why - a Sprint
+                that has started cannot be un-started, and that is the lesson, not an oversight. */}
+            {back && (
+              'blocked' in back
+                ? (
+                  <span title={back.blocked} className="flex shrink-0 cursor-help items-center rounded-md border border-white/25 p-1 opacity-40">
+                    <ChevronLeft className="h-4 w-4" />
+                  </span>
+                ) : onBack && (
+                  <button type="button" onClick={() => onBack(back.to)} title={back.label} aria-label={back.label}
+                    className={cn(FOCUS, 'flex shrink-0 items-center rounded-md border border-white/25 p-1 opacity-80 transition-opacity hover:opacity-100')}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )
+            )}
+            {/* Whose hat you are wearing, where somebody else is wearing the others. In a solo game
+                you are all three, and a chip saying so on every screen is noise. */}
+            {seat && <SeatBadge seat={seat} phase={state.phase} observer={observer} covering={covering} />}
+            <span title={ROLE_HINT[state.phase]} className="text-xs font-medium opacity-90">
+              {state.phase === 'refine'
+                ? 'Before Sprint 1'
+                : <>Sprint {state.sprintNumber}{state.phase === 'sprint'
+                  ? <> &middot; Day {state.dayNumber} of {state.sprintDays}</>
+                  : <> &middot; <span className="font-bold uppercase tracking-wide">{PHASE_LABEL[state.phase] ?? ''}</span></>}</>}
             </span>
-          )}
-          {/* The Sprint's commitment, on screen at all times - so it needs to read as more than one
-              more grey line in a crowded bar. Labelled, tinted and set in medium weight.
+          </div>
 
-              A band is one row tall and a Sprint Goal is a sentence, so on any screen narrower than
-              the sentence the end of it was simply gone: "...so that visitors have more to ..." with
-              no way to reach the rest. It opens now. The whole goal, wrapped, under the chip it
-              came from - and the chip still says as much of it as fits. */}
+          {/* How much of today is left. The one thing on this screen that changes what you do next,
+              so it is the biggest thing on it. */}
+          {state.phase === 'sprint' && state.dayStage !== 'dailyScrum' && onEndDay && (
+            <DayTimer big dayTimeMult={state.dayTimeMult} refinePenalty={state.refinePenalty} impeded={!!state.carriedImpediment} learnMode={state.learnMode} secondsLeft={state.daySecondsLeft} />
+          )}
+
+          {/* Is the Sprint Goal safe. The answer in bold, from the Sprint's own arithmetic; the Goal
+              itself in small type under it, opening in full when you ask for it. */}
           <Popover>
             <PopoverTrigger asChild>
-              <button type="button" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
-                className={cn(FOCUS, 'flex min-w-0 flex-1 items-center gap-1.5 rounded-md border px-2 py-1 text-left text-xs',
-                  state.sprintGoal.trim() ? 'border-primary/30 bg-primary/5 hover:bg-primary/10' : 'border-dashed border-border')}>
-                <Target className={cn('h-3.5 w-3.5 shrink-0', state.sprintGoal.trim() ? 'text-primary' : 'text-muted-foreground')} />
-                <span className="hidden shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] text-primary lg:inline">Sprint Goal</span>
-                <span className={cn('truncate', state.sprintGoal.trim() ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+              <button type="button" data-part="goal-line" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
+                className={cn(FOCUS, 'flex min-w-0 flex-1 flex-col items-start rounded-md px-1 py-0.5 text-left hover:bg-white/10')}>
+                {state.phase === 'sprint' && pulse ? (
+                  <span className={cn('truncate text-sm font-bold leading-tight', pulse.level === 'risk' && 'text-amber-300')}>{pulse.line}</span>
+                ) : (
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] opacity-70">
+                    <Target className="h-3 w-3" /> Sprint Goal
+                  </span>
+                )}
+                <span className={cn('w-full truncate text-[11px]', state.sprintGoal.trim() ? 'opacity-80' : 'opacity-60')}>
                   {state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
                 </span>
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[min(92vw,32rem)]">
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                Sprint Goal{state.phase === 'sprint' ? ` · Sprint ${state.sprintNumber}` : ''}
+                Sprint Goal{state.phase === 'sprint' ? ` \u00b7 Sprint ${state.sprintNumber}` : ''}
               </div>
               <p className="mt-1 text-sm font-semibold leading-snug">
                 {state.sprintGoal.trim() || 'No Sprint Goal yet - the Scrum Team agrees one at Sprint Planning.'}
@@ -294,47 +316,41 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
               )}
             </PopoverContent>
           </Popover>
+
           <div className="flex shrink-0 items-center gap-1.5">
             {/* Refinement belongs where refinement happens: shaping the Backlog before the first
                 Sprint, and adapting it at the Review. Not in Sprint Planning, which forecasts from
                 the Backlog rather than changing it, and not mid-Sprint, where the Developers refine
-                on the board and it costs the day's build time. */}
+                on the board and it costs the day's build time. It stays in the strip because it is
+                work rather than words. */}
             {onPoRefine && (state.phase === 'refine' || state.phase === 'review') && (
-              // Not the same thing as the "Word it for me" draft in Planning: this is the Product
-              // Owner doing THEIR job on the Product BACKLOG - splitting, adding, clarifying,
-              // ordering by value. It changes the Backlog, it runs an AI, and it needs signing in.
               <button type="button" onClick={onPoRefine} disabled={poRefining}
                 title="Hold a Product Backlog refinement session: the Product Owner brings value and order, the Developers bring what is too big, unclear or dependent on something else. Sizing stays yours - you are the Developers - and nothing here touches a Sprint Goal you have agreed."
-                className={cn(FOCUS, "flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-60")}>
+                className={cn(FOCUS, 'flex items-center gap-1.5 rounded-md border border-white/30 bg-white/10 px-2 py-1 text-xs font-medium hover:bg-white/20 disabled:opacity-60')}>
                 {poRefining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                <span className="hidden md:inline">{poRefining ? 'Refining together…' : 'Refine with the Scrum Team'}</span>
-                <span className="md:hidden">{poRefining ? '…' : 'Refine'}</span>
+                <span className="hidden md:inline">{poRefining ? 'Refining together\u2026' : 'Refine with the Scrum Team'}</span>
+                <span className="md:hidden">{poRefining ? '\u2026' : 'Refine'}</span>
               </button>
             )}
-            {/* The four key value measures, on the band, all the time. Evidence-Based Management asks
-              four questions and this zoo can answer all four - so they are where you can see them
-              while you decide, rather than produced once at the Review as a verdict. A measure with
-              nothing behind it yet shows a dash: zero is a claim, and "not measured yet" is true. */}
-          <div className="hidden shrink-0 items-center gap-1 lg:flex">
-            {valueMeasures(state).map((m) => (
-              <span key={m.key} title={`${m.label} · ${m.detail}`}
-                className="flex items-center gap-1 rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-semibold">
-                <span className="uppercase tracking-wide opacity-70">{m.key}</span>
-                <span className="tabular-nums">{m.value === null ? '—' : `${m.value}${m.unit}`}</span>
-              </span>
-            ))}
-          </div>
-          {/* One control for the artifacts, their commitments and the team's agreements, and one
-                for the game itself. The header used to carry ten. */}
-            <ArtifactsPanel state={state} onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
-            <ScrumReference teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} />
+            {/* One button for everything the game can explain. It replaced Artifacts, Scrum, the four
+                dials and the help icons - each of those is a section in it now. */}
+            <LearnDrawer state={state} notes={notes} teaching={state.teaching ?? true} onSetTeaching={onSetTeaching}
+              onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
             {/* Polishing the teaching happens while playing, so the editor lives here rather than
                 in an admin screen. Admins only - it renders nothing for everyone else. */}
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
-            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} />
-            {links}
+            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} links={menuLinks} />
           </div>
         </div>
+
+        {/* ...and when the answer changes, the strip says so in a sentence and nothing else on the
+            screen moves. Both ways out of it are decisions, and the game records either. */}
+        {warn?.headline && (
+          <div data-part="goal-warning" className="mb-1.5 rounded-lg border-2 border-primary bg-primary/5 px-3 py-1.5">
+            <p className="text-xs font-bold text-foreground">{warn.headline}</p>
+            <p className="text-[11px] text-muted-foreground">{warn.sentence}</p>
+          </div>
+        )}
         {/* The three artifacts, in the order work moves through them. */}
         <div className="mt-1 flex gap-1">
           <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} icon={ClipboardList} label="Product Backlog" />

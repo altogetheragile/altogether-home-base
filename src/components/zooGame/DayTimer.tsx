@@ -9,7 +9,10 @@ import { TONE } from './ui/tokens';
  *  been spent, and why two browsers could never have shared one. `compact` renders a tight
  *  chip for the app header; the default is the full labelled bar. In learn mode the clock is
  *  paused - no countdown and no auto-expire, so days are ended by hand. */
-export function DayTimer({ dayTimeMult, refinePenalty, impeded, learnMode, secondsLeft, compact = false }: { dayTimeMult: number; refinePenalty: number; impeded: boolean; learnMode: boolean; secondsLeft: number; compact?: boolean }) {
+export function DayTimer({ dayTimeMult, refinePenalty, impeded, learnMode, secondsLeft, compact = false, big = false }: { dayTimeMult: number; refinePenalty: number; impeded: boolean; learnMode: boolean; secondsLeft: number; compact?: boolean;
+  /** The strip's clock during a Sprint: the biggest thing on the screen, with a bar that empties.
+   *  It is the one element that changes what the learner does next, so it is drawn like it. */
+  big?: boolean }) {
   const total = dayTotalSeconds(dayTimeMult);
   const left = secondsLeft;
 
@@ -19,6 +22,31 @@ export function DayTimer({ dayTimeMult, refinePenalty, impeded, learnMode, secon
   const low = pct <= 25;
   const cut = Math.round((1 - dayTimeMult) * 100);
   const note = dayTimeMult < 1 ? (impeded ? `−${cut}% today: dealing with yesterday's blocker` : `−${cut}%: the Daily Scrum takes a little time`) : '';
+
+  if (big) {
+    const title = ['Day time' + (note ? ` (${note})` : ''), refinePenalty > 0 ? `−${refinePenalty}s refining the Backlog` : ''].filter(Boolean).join(' · ');
+    if (learnMode) {
+      return (
+        <span title="Learn mode - the clock is paused, so days are ended by hand"
+          className="flex shrink-0 items-baseline gap-1.5 text-lg font-bold leading-none">
+          <Clock className="h-4 w-4 self-center opacity-70" /> Paused
+        </span>
+      );
+    }
+    return (
+      <span title={title} data-part="day-clock" className="flex shrink-0 flex-col gap-1">
+        <span className="flex items-baseline gap-1.5">
+          <span className={cn('text-3xl font-bold leading-none tabular-nums', low && 'text-amber-300')}>{mm}:{ss}</span>
+          <span className="text-[11px] opacity-70">left today</span>
+        </span>
+        {/* The bar empties with the day, and turns as the day gets short. The urgency is carried
+            here so no other part of the screen has to raise its voice. */}
+        <span className="block h-1.5 w-40 overflow-hidden rounded-full bg-white/20">
+          <span className={cn('block h-full rounded-full transition-[width] duration-500 ease-linear', low ? 'bg-amber-400' : 'bg-white/85')} style={{ width: `${pct}%` }} />
+        </span>
+      </span>
+    );
+  }
 
   if (compact) {
     if (learnMode) {
