@@ -11,6 +11,7 @@ import { EYEBROW, TONE, type Tone } from './ui/tokens';
 import { useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
+import { ItemBench } from './BacklogBench';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
  *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
@@ -92,8 +93,11 @@ interface RefineBacklogProps {
  *  list here; the screen just stops telling you to finish it first. */
 export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan, teachCard, onMarkTaught }: RefineBacklogProps) {
   const [lengthOpen, setLengthOpen] = useState(true);
+  // Which item is on the bench. Nothing, until you pick one.
+  const [focus, setFocus] = useState<string | null>(null);
   const [dodOpen, setDodOpen] = useState(false);
   const items = availableItems(state);
+  const benchItem = items.find((it) => it.id === focus) ?? null;
   const ready = items.filter((it) => !it.unsized);
   const unsized = items.length - ready.length;
   const canPlan = ready.length > 0;
@@ -146,12 +150,19 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
             columns then ended at different heights, and the agreements on the right needed the page
             scrolled while the list on the left did not. Reported from playing it. */}
         <div className="pr-1">
-        <ProductBacklogSidebar state={state} mode="refine" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+        <ProductBacklogSidebar state={state} mode="refine" focus={focus} onFocus={setFocus} onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
           onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
   
         </div>
         <div className="min-w-0 space-y-3">
+        {/* The card on the right has two faces. The agreements before the first Sprint, and the
+            item you picked - the same bench the Product Backlog tab uses for the rest of the game.
+            Picking an item used to do nothing at all, which made the list a list. */}
+        {benchItem && (
+          <ItemBench state={state} item={benchItem} onEstimate={onEstimate} onRefinePbi={onRefinePbi}
+            onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} onClose={() => setFocus(null)} />
+        )}
         {first && onSetSprintDays && (
           <Step n={1} title="First, agree how long a Sprint is" done={state.sprintDaysAgreed} onToggle={() => setLengthOpen((o) => !o)}
             right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">

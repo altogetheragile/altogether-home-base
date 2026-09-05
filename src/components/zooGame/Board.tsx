@@ -359,12 +359,16 @@ interface SidebarProps {
   /** Delete or duplicate a Backlog PBI. */
   onDeletePbi?: (id: string) => void;
   onDuplicatePbi?: (id: string) => void;
+  /** The item open on the refinement bench beside this list, and how to change it. Given, the whole
+   *  card picks the item up rather than only the chevron opening it in place. */
+  focus?: string | null;
+  onFocus?: (id: string) => void;
 }
 
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
@@ -429,9 +433,9 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             {on ? 'In Sprint ✓' : <><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</>}
           </Button>
         )
-      ) : (
-        <Button size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onPull?.(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</Button>
-      );
+      ) : onPull ? (
+        <Button size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => onPull(it.id)}><Plus className="mr-1 h-3.5 w-3.5" /> Pull in</Button>
+      ) : null;
     return (
       <div key={it.id}
         draggable={!!onMoveBefore}
@@ -446,11 +450,17 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             be sized is amber, an item that meets the Definition of Ready is green. One glance tells
             you what is left to do, which is the question this screen is asking. */}
         <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'}
-          className={mode === 'refine' || mode === 'plan'
+          // Where there is a bench beside the list, the card IS the way onto it: picking an item up
+          // should not mean finding a chevron the width of a thumbnail.
+          onClick={onFocus ? () => onFocus(it.id) : undefined}
+          label={onFocus ? `Refine ${it.name}` : undefined}
+          className={cn(
+            focus === it.id && 'ring-2 ring-primary ring-offset-1',
+            mode === 'refine' || mode === 'plan'
             ? cn('border-2', it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
               : why ? 'border-amber-400 bg-amber-500/[0.05]'
               : 'border-emerald-400 bg-emerald-500/[0.04]')
-            : undefined}
+            : undefined)}
           lead={<>
             {onReorder && (
               <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
