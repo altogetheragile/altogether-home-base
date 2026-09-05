@@ -141,9 +141,11 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           built. On a narrow screen they stack, list first - it is the thing being talked about. */}
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <div className="min-w-0">
-        {/* The list scrolls inside itself, so the question, the Sprint length and the readiness bar
-            stay put - nothing important goes below the fold just because the Backlog is long. */}
-        <div className="max-h-[62vh] overflow-y-auto pr-1">
+        {/* One scrollbar for the screen, not one per column. The list used to scroll inside itself,
+            which was fine when it was the whole screen and wrong beside a second column: the two
+            columns then ended at different heights, and the agreements on the right needed the page
+            scrolled while the list on the left did not. Reported from playing it. */}
+        <div className="pr-1">
         <ProductBacklogSidebar state={state} mode="refine" onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
           onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
