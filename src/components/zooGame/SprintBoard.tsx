@@ -435,16 +435,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   });
   const dropClass = (to: string) => (!drag || dropCol !== to ? '' : willSucceed(drag.from, to, drag.id) ? 'rounded-lg ring-2 ring-emerald-400' : 'rounded-lg ring-2 ring-amber-400');
 
-  if (state.dayStage === 'dailyScrum') {
-    // Its own scroll box. The half is exactly the window now, so anything returned straight out of
-    // here with nowhere to scroll simply ran off the bottom of it - and the Daily Scrum is longer
-    // than a screen, so the button that ends it was off the end of a page that would not turn.
-    return (
-      <div className="min-h-0 flex-1 overflow-y-auto pb-4 pr-0.5">
-        <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} />
-      </div>
-    );
-  }
   // What the Developers have asked about, if anything.
   const asked = state.pendingPlacement
     ? state.backlog.find((it) => it.id === state.pendingPlacement!.itemId) ?? null : null;
@@ -459,7 +449,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const bench = building ?? beingBuilt?.id ?? null;
   const inHand = inHandItem(state, building);
   // Nothing in hand means there is nothing to build, so the switch goes back on its own.
-  const inBuild = mode === 'build' && !!inHand;
+  // Behind the Daily Scrum the board is what the event is about, so the Build state stands down for
+  // the length of it rather than leaving one item and a park under the panel.
+  const inBuild = mode === 'build' && !!inHand && state.dayStage !== 'dailyScrum';
   const following = !building && !!beingBuilt;
   const onBench = !!bench && state.backlog.some((i) => i.id === bench);
 
@@ -924,6 +916,20 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
         </div>
       )}
 
+      {/* The Daily Scrum is an event, and every other event in this game runs as a takeover over the
+          artifact it is about: Planning and the Retrospective over the Sprint Backlog, the Review
+          over the Increment. This one replaced the board instead, so a short conversation about the
+          board looked like a different page - and the board it is about was nowhere in sight.
+
+          It fills the pane over the dimmed board, and hands it back when the decision is made. */}
+      {state.dayStage === 'dailyScrum' && (
+        <div data-part="daily-scrum" className="absolute inset-0 z-40 overflow-y-auto bg-background/70 px-2 py-3 backdrop-blur-sm">
+          <div className="mx-auto max-w-3xl rounded-xl border border-border bg-background p-3 shadow-xl">
+            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} />
+          </div>
+        </div>
+      )}
+
       {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
           Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads
           as though the Scrum is an end-of-day event. */}
@@ -931,7 +937,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           small to build anything with, and the board used to go silent for twenty seconds with no
           way to tell that from the game having stopped. A day running out with work still in the
           Sprint is the lesson, not a fault to hide. */}
-      {!dayStarting && (
+      {/* Not during the Daily Scrum: the event is the way on, and a floating "End day" beside it is
+          a second way out of a conversation the game is asking you to have. */}
+      {!dayStarting && state.dayStage !== 'dailyScrum' && (
         <ActionBar hint={(() => {
           const why = whyNothingMoves(state);
           if (why === 'day') return 'Nothing left fits in what is left of today.';

@@ -2155,6 +2155,10 @@ export function dropFromSprint(state: ZooGameState, id: string, by?: string): Zo
 export function todaysDecision(state: ZooGameState): {
   candidate: BacklogItem; left: number; daysLeft: number; capacity: number;
   ifDropped: string; ifKept: string;
+  /** Whether the Scrum Team marked what the Goal depends on. Until they can - marking essentials is
+   *  revealed after the first Sprint - the game must not claim the Goal does not need something it
+   *  has never been told about. Then it is the Developers' judgement, and it says so. */
+  essentialsKnown: boolean;
 } | null {
   if (state.phase !== 'sprint') return null;
   const prog = sprintProgress(state);
@@ -2172,12 +2176,13 @@ export function todaysDecision(state: ZooGameState): {
   if (!candidate) return null;
 
   const after = prog.remaining - candidate.estimate;
+  const known = prog.essentialsTotal > 0;
   return {
-    candidate, left: prog.remaining, daysLeft, capacity,
+    candidate, left: prog.remaining, daysLeft, capacity, essentialsKnown: known,
     ifDropped: after <= capacity
-      ? `Drop it: the Goal is safe, and ${prog.pointsCommitted - candidate.estimate} of ${prog.pointsCommitted} points still land.`
+      ? `Drop it: ${known ? 'the Goal is safe, and ' : ''}${prog.pointsCommitted - candidate.estimate} of ${prog.pointsCommitted} points still land.`
       : `Drop it and ${after} points are still left against ${capacity} you can do - it helps, but it may not be enough.`,
-    ifKept: `Keep everything: ${prog.remaining} points left against ${capacity} you can do, and the Goal is at risk if anything slips.`,
+    ifKept: `Keep everything: ${prog.remaining} points left against ${capacity} you can do${known ? ', and the Goal is at risk if anything slips' : ', so something will not be finished'}.`,
   };
 }
 
