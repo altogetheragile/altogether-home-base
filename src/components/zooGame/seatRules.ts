@@ -36,6 +36,7 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   MOVE_ITEM_BEFORE:  { who: 'product_owner', because: 'Ordering the Product Backlog is the Product Owner’s call.' },
   MOVE_ZONE:         { who: 'product_owner', because: 'Ordering the Product Backlog is the Product Owner’s call.' },
   ACCEPT_SIGNAL:     { who: 'product_owner', because: 'What the visitors asked for becomes a Backlog item when the Product Owner decides it does.' },
+  DECLINE_SIGNAL:    { who: 'product_owner', because: 'Turning down what the visitors asked for is a decision about value, and value is the Product Owner\u2019s.' },
   DECLINE_PROPOSAL:  { who: 'product_owner', because: 'Turning something down is a Backlog decision, and the Backlog is the Product Owner’s.' },
   PO_REFINE:         { who: 'product_owner', because: 'This is the Product Owner doing their own work on the Product Backlog.' },
   OPEN_ITEM:         { who: 'product_owner', because: 'When something Done is released to visitors is the Product Owner’s call.' },

@@ -936,13 +936,23 @@ describe('zoo game: WIP limit and improvements with teeth', () => {
     expect(s.wipLimit).toBe(1);
   });
 
-  it('committing to the Daily Scrum every day makes it efficient (no time cost)', () => {
+  it('makes the blockers cheaper, not the event free', () => {
+    // The improvement used to make a disciplined team's Daily Scrum cost nothing, which rewards
+    // the wrong thing: the event is fifteen minutes whoever holds it. What the habit buys is the
+    // price of what it catches - a team that looks every morning finds a blocker the morning it
+    // appears, so one that does get carried costs them less.
     let s = startNextSprint(initialZooState(1), 'Hold the Daily Scrum every day and catch issues early');
     expect(s.scrumDiscipline).toBe(true);
     s = { ...s, phase: 'sprint', dayStage: 'dailyScrum', dayNumber: 1, sprintDays: 3 };
-    expect(runDailyScrum(s).dayTimeMult).toBe(1); // efficient: no cut
-    // Without the discipline, holding the Daily Scrum costs a little time.
+    expect(runDailyScrum(s).dayTimeMult, 'the habit made the team\u2019s own event free').toBe(DAILY_SCRUM_MULT);
     expect(runDailyScrum({ ...s, scrumDiscipline: false }).dayTimeMult).toBe(DAILY_SCRUM_MULT);
+
+    // ...and a blocker carried past a skipped Daily Scrum costs the disciplined team less.
+    const withBlocker = { ...s, pendingImpediment: { id: 'i1', title: 'A blocker', detail: 'in the way' } } as typeof s;
+    const disciplined = skipDailyScrum(withBlocker).dayTimeMult;
+    const not = skipDailyScrum({ ...withBlocker, scrumDiscipline: false }).dayTimeMult;
+    expect(disciplined, 'the habit bought nothing at all').toBeGreaterThan(not);
+    expect(not).toBe(SKIP_PENALTY_MULT);
   });
 });
 

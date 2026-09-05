@@ -271,7 +271,10 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   const [openPlan, setOpenPlan] = useState<string | null>(null); // which item's task plan is open
   // Topic three's other question, which the Guide asks and the game did not: does the state of the
   // Backlog mean refinement has to be planned INTO this Sprint?
-  const [refinePts, setRefinePts] = useState(0);
+  // A Scrum Team that took "set aside time to refine" out of a Retrospective opens Planning with a
+  // point of it already set aside. That is what the improvement bought them; making them remember
+  // to click it every Sprint would be the same as not having it.
+  const [refinePts, setRefinePts] = useState(state.refineHabit ? 1 : 0);
 
   const items = availableItems(state);
   const chosen = items.filter((i) => selected.has(i.id));
@@ -463,7 +466,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
                   <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
-                    note={"You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
+                    note={state.readyHabit && notReady(it)
+                      ? 'You agreed at a Retrospective to forecast only what is Ready. Put this right first, or take it knowing what you agreed.'
+                      : "You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
                 ))}
               </div>
             </>}

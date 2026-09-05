@@ -113,7 +113,7 @@ export interface SprintBet {
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved';
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -195,6 +195,9 @@ export interface BacklogItem {
    *  estimation so the team re-points the work that is LEFT before re-planning it. Cleared once
    *  re-estimated. Its build progress (design, plan) is kept. */
   carriedOver?: boolean;
+  /** What it was sized at before it was carried over, so the screen can say "5 → 3, sized to what
+   *  is left" rather than quietly showing a different number. */
+  wasEstimate?: number;
   /** Hidden intended size; what planning poker clusters the cards around. */
   trueSize?: number;
   /** The Sprint this item was RELEASED in (opened to visitors). Usually the Sprint it was built
@@ -446,6 +449,10 @@ export interface ZooGameState {
   /** Set by the "hold the Daily Scrum every day" improvement: disciplined Daily Scrums
    *  become efficient, so holding one costs no build time. */
   scrumDiscipline: boolean;
+  /** Improvements the Scrum Team has carried forward, as the game applies them: time set aside to
+   *  refine, and forecasting only what is Ready. Both are habits made into defaults. */
+  refineHabit?: boolean;
+  readyHabit?: boolean;
   /** Learn mode: pause the day clock so there is no real-time pressure - days end only
    *  when you choose. The timed mode teaches Sprint pressure; this is the reflective one. */
   learnMode: boolean;
@@ -517,7 +524,8 @@ export type ZooAction =
   | { type: 'ASK_PLACEMENT'; id: string }
   | { type: 'ANSWER_PLACEMENT'; id: string; choice: string }
   | { type: 'SET_DOD'; dod: string[]; by?: string }
-  | { type: 'ACCEPT_SIGNAL'; index: number }
+  | { type: 'ACCEPT_SIGNAL'; index: number; by?: string }
+  | { type: 'DECLINE_SIGNAL'; index: number; by?: string }
   | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number; by?: string }
   | { type: 'HOLD_REFINEMENT' }
   | { type: 'AGREE_DOD' }

@@ -35,6 +35,11 @@ export const REFINE_COSTS = { estimate: 8, split: 12, addPbi: 6, refinePbi: 5 } 
  *  anyone did it, which taught that the cost is a tax rather than work you actually do.
  *  Multiplied by the points the Scrum Team set aside for it. */
 export const PLANNED_REFINE_SECONDS = 10;
+/** A team that holds its Daily Scrum every day catches a blocker the morning it appears, so one
+ *  that does get carried costs them less than it costs a team that was not looking. The event
+ *  itself still costs its timebox - it always does, and rewarding a team by making their own event
+ *  free taught the opposite of what the event is for. */
+export const CAUGHT_EARLY_MULT = 0.8;
 /** What a point of planned refinement is worth in the forecast, so it competes with building. */
 export const REFINE_POINT_OPTIONS = [0, 1, 2, 3] as const;
 /** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */

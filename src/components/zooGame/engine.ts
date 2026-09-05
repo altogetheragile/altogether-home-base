@@ -6,21 +6,33 @@ import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAccept
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
+import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
  *  Refinement and Planning phases are the dedicated time to refine), so this is a no-op
  *  unless a Sprint is in progress. */
-const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number): ZooGameState =>
-  before.phase === 'sprint'
-    ? { ...after,
-        // refinePenalty is the day's tally, shown so the cost is visible; daySecondsLeft is
-        // the clock it comes out of. The DayTimer used to do this subtraction itself, which
-        // is why the spend vanished on reload.
-        refinePenalty: after.refinePenalty + seconds,
-        daySecondsLeft: Math.max(0, after.daySecondsLeft - seconds) }
-    : after;
+const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number): ZooGameState => {
+  if (before.phase !== 'sprint') return after;
+  const charged = { ...after,
+    // refinePenalty is the day's tally, shown so the cost is visible; daySecondsLeft is
+    // the clock it comes out of. The DayTimer used to do this subtraction itself, which
+    // is why the spend vanished on reload.
+    refinePenalty: after.refinePenalty + seconds,
+    daySecondsLeft: Math.max(0, after.daySecondsLeft - seconds) };
+  // ...and in the log, where the Retrospective reads it. One line a day rather than one per act:
+  // a team that sized four items on Tuesday wants to see what Tuesday's refining cost, not four
+  // identical lines. The day's line grows as the day goes on.
+  const log = charged.decisions ?? [];
+  const last = log[log.length - 1];
+  const mine = last && last.kind === 'refinement' && last.sprint === charged.sprintNumber
+    && last.what === `Day ${charged.dayNumber}: the Backlog was refined during the Sprint.`;
+  const spent = (mine ? Number(/(\d+)s of build time/.exec(last.cost ?? '')?.[1] ?? 0) : 0) + seconds;
+  const line = { sprint: charged.sprintNumber, kind: 'refinement' as const,
+    what: `Day ${charged.dayNumber}: the Backlog was refined during the Sprint.`,
+    cost: `${spent}s of build time, spent on the Sprints after this one` };
+  return { ...charged, decisions: mine ? [...log.slice(0, -1), line] : [...log, line] };
+};
 
 /** How long a build day is, given how much of it this day has. */
 export const dayTotalSeconds = (mult: number): number => Math.round(DAY_SECONDS * mult);
@@ -222,7 +234,10 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
   }
 
   const remaining = members.filter((mem) => !memberIds.includes(mem.id));
-  const replacement = remaining.length ? [{ ...epicItem, epicMembers: remaining }, ...created] : created;
+  // The pieces first, then whatever is left of the epic. The epic used to sit above the items split
+  // out of it, which reads as though nothing had been split at all - and the leftover is the smaller
+  // question now, so it belongs under the answer.
+  const replacement = remaining.length ? [...created, { ...epicItem, epicMembers: remaining }] : created;
   const backlog = [...state.backlog.slice(0, idx), ...replacement, ...state.backlog.slice(idx + 1)];
   return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.split);
 }
@@ -1165,7 +1180,9 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
       what: `${turnedAway.length} item${turnedAway.length === 1 ? '' : 's'} could not go in: not ready by the team's own Definition of Ready.` });
   }
   if (refinementPoints > 0) {
-    out = note(out, { kind: 'refinement', what: `${refinementPoints} point${refinementPoints === 1 ? '' : 's'} of the Sprint set aside to refine the Backlog together.` });
+    out = note(out, { kind: 'refinement',
+      what: `${refinementPoints} point${refinementPoints === 1 ? '' : 's'} of the Sprint set aside to refine the Backlog together.`,
+      cost: `about ${PLANNED_REFINE_SECONDS * refinementPoints}s of a build day, spent on the Sprints after this one` });
   } else {
     out = note(out, { kind: 'refinement', what: 'No time set aside this Sprint to refine the Backlog.' });
   }
@@ -1262,7 +1279,8 @@ export function pullIntoSprint(state: ZooGameState, id: string, by?: string): Zo
   const pulled = { ...state, committedIds: [...state.committedIds, id], backlog,
     forecastPoints: (state.forecastPoints ?? 0) + item.estimate };
   return note(pulled, { kind: isReady(item) ? 'forecast' : 'unready', by,
-    what: `${item.name} was pulled into the Sprint on day ${state.dayNumber}${isReady(item) ? '' : ', and it was not ready'}.` });
+    what: `${item.name} was pulled into the Sprint on day ${state.dayNumber}${isReady(item) ? '' : ', and it was not ready'}.`,
+    cost: `${item.estimate} points onto a forecast the Sprint had already made` });
 }
 
 // ============= Building and releasing =============
@@ -1402,13 +1420,32 @@ function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   return null;
 }
 
-/** Accept a signal: add the candidate item to the Backlog and clear the signal. */
-export function acceptSignal(state: ZooGameState, index: number): ZooGameState {
+/** Accept a signal: add the candidate item to the Backlog and clear the signal.
+ *
+ *  Recorded, because it is a Product Owner decision about value and the Retrospective reads the
+ *  decisions back. What the visitors said is evidence; what you did about it is the choice. */
+export function acceptSignal(state: ZooGameState, index: number, by?: string): ZooGameState {
   const sig = state.signals[index];
   if (!sig) return state;
   const item = itemFromSignal(sig, state);
   if (!item) return state;
-  return { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index) };
+  const taken = { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index) };
+  return note(taken, { kind: 'signal', by: by ?? 'product_owner',
+    what: `Took what the visitors said into the Backlog: ${sig.suggestion}`,
+    cost: `${item.name} joins the Backlog unsized - the Developers size it` });
+}
+
+/** Turn a signal down. The other half of the same decision, and the half the game used to make for
+ *  you: a line you did not press was indistinguishable from a line you had thought about and said
+ *  no to. Declining is a decision with a reason behind it, so it is recorded like one - and the
+ *  cause does not go away, so if it is still true after the next Sprint it comes back louder. */
+export function declineSignal(state: ZooGameState, index: number, by?: string): ZooGameState {
+  const sig = state.signals[index];
+  if (!sig) return state;
+  const gone = { ...state, signals: state.signals.filter((_, i) => i !== index) };
+  return note(gone, { kind: 'signal', by: by ?? 'product_owner',
+    what: `Turned down what the visitors said: ${sig.suggestion}`,
+    cost: 'the cause is still there - if it holds it comes back louder next Review' });
 }
 
 // ============= Product Goal, Sprint Goal and Definition of Done =============
@@ -1568,11 +1605,17 @@ export function startDay(state: ZooGameState): ZooGameState {
  *  timeboxed). */
 export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
+  // What it cost and what it caught, beside each other. A log line reading "the Daily Scrum was
+  // held" teaches nothing; the same line beside "blocker cleared, 10% of the day" is the trade the
+  // event actually is.
+  const caught = state.pendingImpediment;
   state = note(state, { kind: 'daily-scrum', by,
-    what: `Day ${state.dayNumber}: the Daily Scrum was held${by && by !== 'developer' ? `, by ${whoIs(by).replace(/^The /, 'the ')}` : ''}.` });
-  // A disciplined team (the "hold the Daily Scrum every day" improvement) runs an
-  // efficient, timeboxed Daily Scrum that costs no build time.
-  const mult = state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
+    what: `Day ${state.dayNumber}: the Daily Scrum was held${by && by !== 'developer' ? `, by ${whoIs(by).replace(/^The /, 'the ')}` : ''}.`,
+    cost: `${caught ? `${caught.title} surfaced and cleared \u00b7 ` : ''}the timebox costs about ${Math.round((1 - DAILY_SCRUM_MULT) * 100)}% of the day` });
+  // The event costs its timebox, every time. It used to cost a disciplined team nothing at all,
+  // which rewarded the wrong thing: a Daily Scrum is fifteen minutes whoever holds it, and what
+  // improves with the habit is the price of the blockers it catches (see skipDailyScrum).
+  const mult = DAILY_SCRUM_MULT;
   const cleared = { ...state, pendingImpediment: null, carriedImpediment: null };
   // Start-of-day scrums are held ON the day (endDay already advanced it): begin building.
   // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
@@ -1593,10 +1636,11 @@ export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   state = note(state, { kind: 'daily-scrum', by,
     what: `Day ${state.dayNumber}: the Daily Scrum was skipped${state.pendingImpediment ? ', with something waiting to be raised' : ''}.`,
     cost: state.pendingImpediment
-      ? `the blocker grew overnight: about ${Math.round((1 - SKIP_PENALTY_MULT) * 100)}% of the next day`
+      ? `the blocker grew overnight: about ${Math.round((1 - (state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT)) * 100)}% of the next day`
       : undefined });
   const imp = state.pendingImpediment;
-  const mult = imp ? SKIP_PENALTY_MULT : state.scrumDiscipline ? 1 : DAILY_SCRUM_MULT;
+  // A team in the habit of holding it spots a carried blocker first thing and pays less for it.
+  const mult = imp ? (state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT) : DAILY_SCRUM_MULT;
   const base = {
     ...state,
     pendingImpediment: null,
@@ -1644,7 +1688,10 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
     const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
     const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
     const remaining = Math.max(1, Math.round((it.trueSize ?? it.estimate ?? 5) * (1 - doneFrac)));
-    return { ...back, carriedOver: true, unsized: false, estimate: remaining, trueSize: remaining };
+    // Keep what it was sized at. The number changing on its own is right - the Developers re-size
+    // their remaining work every day - but a 5 that is a 3 next time you look, with nothing saying
+    // why, reads as the game losing count. Reported from playing it.
+    return { ...back, carriedOver: true, wasEstimate: it.estimate, unsized: false, estimate: remaining, trueSize: remaining };
   });
 }
 
@@ -1742,6 +1789,11 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
   const imp = improvement.trim();
   const wipLimit = /finish fewer/i.test(imp) && state.wipLimit > 0 ? Math.max(1, state.wipLimit - 1) : state.wipLimit;
   const scrumDiscipline = state.scrumDiscipline || /daily scrum every day/i.test(imp);
+  // Set aside time to refine, and the next Planning opens with a point of it already set aside -
+  // the habit made into a default rather than a thing to remember.
+  const refineHabit = state.refineHabit || /set aside time/i.test(imp);
+  // ...and forecast only what is Ready: Planning says so before an unready item goes in.
+  const readyHabit = state.readyHabit || /definition of ready/i.test(imp);
   return {
     ...state,
     // Straight to Planning. Refinement is not a step between Sprints - there is no gap between
@@ -1754,8 +1806,62 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     planningTopic: 'why' as const,
     wipLimit,
     scrumDiscipline,
+    refineHabit,
+    readyHabit,
     improvements: imp ? [...state.improvements, imp] : state.improvements,
   };
+}
+
+/** What this team could improve, drawn from what this team actually did.
+ *
+ *  The Retrospective offered the same four options whatever had happened, which makes inspect-and-
+ *  adapt a menu rather than a conversation about the Sprint you just ran. These come from the
+ *  decision log: each one names the evidence for it, and each one changes how the next Sprint works.
+ *
+ *  An improvement with no mechanical effect is a poster. So the catalogue is only things the game
+ *  can actually do - the WIP limit, the habit of holding the Daily Scrum, and setting time aside to
+ *  refine - and where the log shows nothing to inspect, the general ones are offered with the
+ *  evidence line left off rather than invented.
+ */
+export function improvementsFrom(state: ZooGameState): {
+  text: string; effect: string; because?: string;
+}[] {
+  const log = state.decisions ?? [];
+  const count = (fn: (d: TeamDecision) => boolean) => log.filter(fn).length;
+  const skipped = count((d) => d.kind === 'daily-scrum' && /skipped/.test(d.what));
+  const unready = count((d) => d.kind === 'unready');
+  const noRefine = count((d) => d.kind === 'refinement' && /^No time/.test(d.what));
+  const pulled = count((d) => d.kind === 'forecast' && /pulled into the Sprint/.test(d.what));
+  const started = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.started && it.status === 'committed').length;
+
+  const all = [
+    { key: 'wip', text: 'Finish fewer things properly, rather than starting more',
+      effect: 'Tightens the WIP limit by 1',
+      when: started > 1 || pulled > 0,
+      because: started > 1 ? `${started} items were in progress at once and unfinished when the Sprint ended.`
+        : pulled > 0 ? `${pulled} thing${pulled === 1 ? ' was' : 's were'} pulled in after the forecast was made.` : undefined },
+    { key: 'scrum', text: 'Hold the Daily Scrum every day and catch issues early',
+      effect: 'A blocker that does get carried costs about half what it costs now',
+      when: skipped > 0,
+      because: skipped > 0 ? `The Daily Scrum was skipped ${skipped} time${skipped === 1 ? '' : 's'}.` : undefined },
+    { key: 'refine', text: 'Set aside time each Sprint to refine the Backlog together',
+      effect: 'Sprint Planning opens with a point of the forecast already set aside for it',
+      when: noRefine > 0,
+      because: noRefine > 0 ? `${noRefine} Sprint${noRefine === 1 ? ' has' : 's have'} set aside no time to refine.` : undefined },
+    { key: 'ready', text: 'Forecast only what meets the Definition of Ready',
+      effect: 'Planning warns before an unready item can be taken into a Sprint',
+      when: unready > 0,
+      because: unready > 0 ? `Work that was not ready went into a Sprint ${unready} time${unready === 1 ? '' : 's'}.` : undefined },
+  ];
+
+  // What the log gives evidence for comes first, and the rest of the catalogue follows it: a
+  // Retrospective with one option on it is not a choice, and a team may always decide the thing
+  // their own Sprint did not happen to point at. Only the drawn ones carry a reason, because only
+  // they have one - an invented reason is worse than none.
+  const drawn = all.filter((o) => o.when);
+  const rest = all.filter((o) => !o.when);
+  const chosen = [...drawn, ...rest].slice(0, Math.max(3, drawn.length));
+  return chosen.map(({ text, effect, because }) => ({ text, effect, because }));
 }
 
 export function endGame(state: ZooGameState): ZooGameState {
@@ -2141,7 +2247,8 @@ export function dropFromSprint(state: ZooGameState, id: string, by?: string): Zo
     : it)) };
   return note({ ...out, forecastPoints: Math.max(0, (state.forecastPoints ?? 0) - item.estimate) },
     { kind: 'moved', by: by ?? 'developer',
-      what: `${whoIs(by ?? 'developer')} dropped ${item.name} (${item.estimate} points) to protect the Sprint Goal.` });
+      what: `${whoIs(by ?? 'developer')} dropped ${item.name} (${item.estimate} points) to protect the Sprint Goal.`,
+      cost: `${item.estimate} points came back out of the forecast - it goes to the top of the Product Backlog` });
 }
 
 /** The decision in front of the Developers today, with the arithmetic done.

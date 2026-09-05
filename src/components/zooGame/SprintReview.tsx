@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
@@ -31,6 +31,8 @@ const STEP_CARDS: Record<Step, string[]> = { done: ['sprint-review', 'increment'
 interface SprintReviewProps {
   state: ZooGameState;
   onTakeSignal: (index: number) => void;
+  /** ...and turning one down, which is the same decision with the other answer. */
+  onDeclineSignal?: (index: number) => void;
   onContinue: () => void;
   /** The PO judging the Product Goal met - the game has no fixed length. */
   onWrapUp?: () => void;
@@ -54,7 +56,7 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, teachCard, onMarkTaught }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, teachCard, onMarkTaught }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const slices = zoneSlices(state);
@@ -84,6 +86,10 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
 
   const [step, setStep] = useState<Step>('done');
   const [taken, setTaken] = useState(0); // signals turned into Backlog items in this Review
+  const [declined, setDeclined] = useState(0);
+  // Every call made on what the visitors said, this Sprint - both answers, in the order they were
+  // given.
+  const signalCalls = decisionsIn(state, state.sprintNumber).filter((d) => d.kind === 'signal');
   const upNext = availableItems(state).slice(0, 6);
   const current = STEPS.find((s) => s.key === step)!;
   const seen = STEPS.findIndex((s) => s.key === step);
@@ -204,12 +210,29 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
           <span className="text-[11px] text-muted-foreground">Sprint {state.sprintNumber} &middot; no set number of Sprints</span>
         </div>
         <p className="text-sm font-medium">{state.productGoal}</p>
-        <div className="flex items-center gap-2">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-            <div className={cn('h-full rounded-full', progress >= 80 ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
-          </div>
-          <span className="font-mono text-xs text-muted-foreground" title="Measured by how much visitors love the zoo (happiness), not by how much of the Backlog is built.">{progress}%</span>
-        </div>
+        {/* A bar implies a finish line, so the finish line is named. And a bar reading 0% before
+            anything has been measured is a claim: until the first Review has run there is no
+            happiness to read, and "not measured yet" is the true thing to say. */}
+        {r ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                <div className={cn('h-full rounded-full', progress >= 80 ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
+              </div>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{progress}%</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Visitor happiness <strong className="text-foreground">{Math.round(r.overallHappiness)}</strong> of {GOAL_HAPPINESS_TARGET} -
+              that is the finish line this bar is measured against, not how much of the Backlog is built. There is no set
+              number of Sprints; you get there when the visitors say so.
+            </p>
+          </>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">
+            Not measured yet. It is measured by how much visitors love the zoo - happiness of {GOAL_HAPPINESS_TARGET} is the
+            finish line - and nothing is open for them to love.
+          </p>
+        )}
         {/* If the Scrum Team wrote measures with their Goal, this is where they pay for themselves:
             the Review stops being a feeling about progress and becomes a comparison. Every one of
             them is something the park counts, so none of it is anybody's opinion. */}
@@ -367,17 +390,47 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
 
       {/* ---- What next: adapt the Backlog, and the Product Goal call ---- */}
       {step === 'next' && (<>
+          {/* What the visitors said, as decisions rather than as a list with one button on it.
+              Each line is the Product Owner's call - take it into the Backlog, or turn it down -
+              and either way the game writes down what was decided, because the Retrospective reads
+              the decisions back and "we ignored the queues twice" is the sort of thing a team
+              should be able to see. Turning one down does not make the cause go away: if it is
+              still true after the next Sprint the visitors say it again, louder. */}
           {state.signals.length > 0 && (
             <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800/50 dark:bg-amber-950/20">
-              <div className={cn(TONE.attention.text, "flex items-center gap-2 text-sm font-semibold")}><Lightbulb className="h-4 w-4" /> Adapt the Backlog</div>
-              <p className={cn(TONE.attention.text, "text-[11px]")}>You are the Product Owner. Turn a signal into work now, or decide it can wait - ignored ones get louder.</p>
+              <div className={cn(TONE.attention.text, "flex items-center gap-2 text-sm font-semibold")}><Lightbulb className="h-4 w-4" /> What the visitors said &middot; your call on each</div>
+              <p className={cn(TONE.attention.text, "text-[11px]")}>
+                You are the Product Owner: take it into the Backlog now, or turn it down. Both are decisions and both
+                are recorded. A cause you turn down is still there - if it holds, they say it again louder.
+              </p>
               {state.signals.map((sig, i) => (
-                <div key={sig.drivenBy} className="flex items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
-                  <span className="flex-1">{sig.suggestion}</span>
+                <div key={sig.drivenBy} className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
+                  <span className="min-w-0 flex-1">{sig.suggestion}</span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
-                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to Backlog</Button>
+                  <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to Backlog</Button>
+                  {onDeclineSignal && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground"
+                      onClick={() => { onDeclineSignal(i); setDeclined((n) => n + 1); }}>Decline</Button>
+                  )}
                 </div>
               ))}
+            </section>
+          )}
+          {/* ...and what you decided, kept on the screen. A choice that vanishes the moment it is
+              made cannot be reconsidered, and a Product Owner should be able to see their own
+              answers before moving on. */}
+          {signalCalls.length > 0 && (
+            <section className={cn(SURFACE.quiet, PADDING.default, 'space-y-1')}>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Decided this Review</div>
+              <ul className="space-y-0.5">
+                {signalCalls.map((d, i) => (
+                  <li key={i} className="text-[12px]">
+                    <span className="text-foreground">{d.what}</span>
+                    {d.cost && <span className="block text-[11px] text-muted-foreground">{d.cost}</span>}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[11px] text-muted-foreground">The Retrospective reads these back.</p>
             </section>
           )}
           {state.signals.length === 0 && (
@@ -393,13 +446,19 @@ export function SprintReview({ state, onTakeSignal, onContinue, onWrapUp, onOpen
           <h3 className="text-sm font-semibold">What is next</h3>
           <span className="text-[11px] text-muted-foreground">
             {taken > 0 ? `${taken} item${taken === 1 ? '' : 's'} added from what the visitors said` : 'Nothing added this time'}
+            {declined > 0 && ` \u00b7 ${declined} turned down`}
             {' \u00b7 '}about {readyHorizon(state)} Sprint{readyHorizon(state) === 1 ? '' : 's'} of ready work
           </span>
         </div>
         <div className="grid gap-1.5 sm:grid-cols-2">
           {upNext.length === 0
             ? <p className="text-xs text-muted-foreground">Nothing ready. The next Sprint starts with refinement.</p>
-            : upNext.map((it) => <PbiCard key={it.id} item={it} state={notReady(it) ? 'locked' : 'backlog'} />)}
+            : upNext.map((it) => (
+              <PbiCard key={it.id} item={it} state={notReady(it) ? 'locked' : 'backlog'}
+                note={it.carriedOver
+                  ? `Carried over${it.wasEstimate && it.wasEstimate !== it.estimate ? `: it was ${it.wasEstimate} points, and what is left of it is ${it.estimate}` : ''}. What was built is kept.`
+                  : undefined} />
+            ))}
         </div>
         <p className="text-[11px] text-muted-foreground">
           The order is yours as Product Owner, and it is not settled here - the next Sprint Planning forecasts from whatever
