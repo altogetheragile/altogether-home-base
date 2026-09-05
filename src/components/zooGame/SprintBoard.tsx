@@ -452,9 +452,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col gap-3">
-      {/* One slim board toolbar: the day + the visible Scrum Team (left), and the burndown
-          pulse, settings and End Day (right). Replaces the old stack of separate bands. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+      {/* The board's question, then the board's controls - two rows, in that order, always.
+
+          They were one row that split left and right and wrapped when the pane narrowed, so the
+          Plan/Build switch was top-right in Plan and top-left in Build: the same control in two
+          places depending on which state you were in, which is exactly the thing you then have to
+          hunt for. Its own row, left-aligned, whatever the width. */}
+      <div className="flex flex-col gap-1.5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             {/* The shell's header already says which Sprint and which day, and the dock says what
@@ -464,7 +468,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div data-part="board-controls" className="flex flex-wrap items-center gap-1.5">
           {/* Plan or Build. Two states of one artifact, and the switch says which you are in - the
               board when you are deciding what to take on, the thing in your hands when you are
               building it. */}
@@ -901,7 +905,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           way to tell that from the game having stopped. A day running out with work still in the
           Sprint is the lesson, not a fault to hide. */}
       {!dayStarting && (
-        <ActionBar docked hint={(() => {
+        <ActionBar hint={(() => {
           const why = whyNothingMoves(state);
           if (why === 'day') return 'Nothing left fits in what is left of today.';
           if (why === 'blocked') return 'Nothing in this Sprint can start: what is here is waiting on something that is not.';

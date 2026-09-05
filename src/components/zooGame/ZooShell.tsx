@@ -11,7 +11,8 @@ import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { SeatBadge } from './SeatBadge';
-import { MessageRail, RailNote } from './MessageRail';
+import { GameNotesProvider } from './GameNotes';
+import type { GameNote } from './notesDock';
 import { whatIsYours } from './seatCopy';
 import type { SeatName } from './useZooSessions';
 import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft } from 'lucide-react';
@@ -200,7 +201,23 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
     ? (CARDS_BY_PHASE[state.phase] ?? []).find((id) => !(state.taught ?? []).includes(id))
     : undefined;
 
+  // Everything the game has to say, newest first, handed to the dock in the corner so it rides in
+  // the same pill as the button that moves you on. A refusal is the teaching, the Product Owner's
+  // account of a refinement is a long read, and what a seat played by the game did is commentary -
+  // three registers, one place, never over the work.
+  const notes: GameNote[] = [];
+  if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, onDismiss: onDismissRefused });
+  if (poNote) notes.push({ id: 'refinement', title: 'Refinement session · the Scrum Team', body: <span className="whitespace-pre-line">{poNote}</span>, onDismiss: onDismissPoNote });
+  for (const one of said ?? []) {
+    notes.push({
+      id: `said-${one.id}`, title: `${one.seat.replace('_', ' ')} (AI)`, tone: 'team', dismissLabel: 'ok',
+      onDismiss: () => onDismissSaid?.(one.id),
+      body: <>{one.says}{one.also > 0 && <div className="mt-1 text-muted-foreground">and {one.also} more like it</div>}</>,
+    });
+  }
+
   return (
+    <GameNotesProvider notes={notes}>
     <div className="zoo-theme flex h-full flex-col bg-background">
       {/* Where you are, on one dark band; the artifacts themselves are the white below it. */}
       <header className="shrink-0 border-b border-border px-2 pt-1.5 sm:px-3">
@@ -241,15 +258,39 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
             </span>
           )}
           {/* The Sprint's commitment, on screen at all times - so it needs to read as more than one
-              more grey line in a crowded bar. Labelled, tinted and set in medium weight. */}
-          <span className={cn('flex min-w-0 flex-1 items-center gap-1.5 rounded-md border px-2 py-1 text-xs',
-            state.sprintGoal.trim() ? 'border-primary/30 bg-primary/5' : 'border-dashed border-border')}>
-            <Target className={cn('h-3.5 w-3.5 shrink-0', state.sprintGoal.trim() ? 'text-primary' : 'text-muted-foreground')} />
-            <span className="hidden shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] text-primary lg:inline">Sprint Goal</span>
-            <span className={cn('truncate', state.sprintGoal.trim() ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
-              {state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
-            </span>
-          </span>
+              more grey line in a crowded bar. Labelled, tinted and set in medium weight.
+
+              A band is one row tall and a Sprint Goal is a sentence, so on any screen narrower than
+              the sentence the end of it was simply gone: "...so that visitors have more to ..." with
+              no way to reach the rest. It opens now. The whole goal, wrapped, under the chip it
+              came from - and the chip still says as much of it as fits. */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
+                className={cn(FOCUS, 'flex min-w-0 flex-1 items-center gap-1.5 rounded-md border px-2 py-1 text-left text-xs',
+                  state.sprintGoal.trim() ? 'border-primary/30 bg-primary/5 hover:bg-primary/10' : 'border-dashed border-border')}>
+                <Target className={cn('h-3.5 w-3.5 shrink-0', state.sprintGoal.trim() ? 'text-primary' : 'text-muted-foreground')} />
+                <span className="hidden shrink-0 text-[9px] font-bold uppercase tracking-[0.08em] text-primary lg:inline">Sprint Goal</span>
+                <span className={cn('truncate', state.sprintGoal.trim() ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
+                  {state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-[min(92vw,32rem)]">
+              <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                Sprint Goal{state.phase === 'sprint' ? ` · Sprint ${state.sprintNumber}` : ''}
+              </div>
+              <p className="mt-1 text-sm font-semibold leading-snug">
+                {state.sprintGoal.trim() || 'No Sprint Goal yet - the Scrum Team agrees one at Sprint Planning.'}
+              </p>
+              {state.sprintGoal.trim() && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  The single objective for the Sprint. It is the commitment of the Sprint Backlog, and it
+                  does not change while the Sprint runs - what is built to meet it can.
+                </p>
+              )}
+            </PopoverContent>
+          </Popover>
           <div className="flex shrink-0 items-center gap-1.5">
             {/* Refinement belongs where refinement happens: shaping the Backlog before the first
                 Sprint, and adapting it at the Review. Not in Sprint Planning, which forecasts from
@@ -301,31 +342,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
           <Tab active={tab === 'increment'} onClick={() => setTab('increment')} icon={Trees} label="Increment" badge={open ? String(open) : undefined} />
         </div>
       </header>
-
-      {/* Everything the game says, in one stack in the corner. Each note says who is talking, so
-          they do not need a rail each - and the board fills the width now, so there is no margin
-          for a second one to live in. */}
-      <MessageRail>
-        {refused && (
-          <RailNote title="Whose call it is" tone="rule" onDismiss={onDismissRefused}>{refused}</RailNote>
-        )}
-        {/* The Product Owner's account of a refinement is a long read rather than a passing
-            remark, so it sits with the things you read and not with the running commentary. */}
-        {poNote && (
-          <RailNote title="Refinement session · the Scrum Team" onDismiss={onDismissPoNote}>
-            <span className="whitespace-pre-line">{poNote}</span>
-          </RailNote>
-        )}
-        {/* ...and what a seat played by the game did while you were reading a different screen,
-            which is the only account you get of it. Newest first, the last few kept. */}
-        {(said ?? []).map((one) => (
-          <RailNote key={one.id} title={`${one.seat.replace('_', ' ')} (AI)`} tone="team"
-            onDismiss={() => onDismissSaid?.(one.id)} dismissLabel="ok">
-            {one.says}
-            {one.also > 0 && <div className="mt-1 text-muted-foreground">and {one.also} more like it</div>}
-          </RailNote>
-        ))}
-      </MessageRail>
 
       {/* What that accountability holds on THIS screen. Its own row, because the header is
           already full and squeezing it in there collided with the Sprint Goal field. */}
@@ -397,5 +413,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
         )}
       </div>
     </div>
+    </GameNotesProvider>
   );
 }
