@@ -51,6 +51,11 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
   // habit rather than a one-off. A habit is the thing worth inspecting; a single Sprint is noise.
   const did = decisionsIn(state, state.sprintNumber);
   const prog = sprintProgress(state);
+  // What was promised, and what arrived. By now the unfinished work has gone back to the Product
+  // Backlog, so counting the Sprint's own items says "0 of 0" - which tells a team that
+  // over-forecast by eighteen points nothing at all.
+  const forecast = state.forecastPoints ?? prog.pointsCommitted;
+  const delivered = state.velocity.length ? state.velocity[state.velocity.length - 1] : prog.pointsDone;
   const habits = (() => {
     const out: string[] = [];
     const skipped = (state.decisions ?? []).filter((d) => d.kind === 'daily-scrum' && /skipped/.test(d.what));
@@ -117,7 +122,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
             <div className="text-sm font-semibold">What it cost, and what it earned</div>
             <p className={cn('text-sm font-semibold', state.sprintGoalMet ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
-              Delivered {prog.pointsDone} of {prog.pointsCommitted} points · goal {state.sprintGoalMet ? 'met' : 'not met'}
+              Delivered {delivered} of {forecast} points · goal {state.sprintGoalMet ? 'met' : 'not met'}
             </p>
             {prog.essentialsTotal > 0 && (
               <p className="text-[12px] text-muted-foreground">

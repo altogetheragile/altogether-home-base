@@ -1141,6 +1141,10 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     sprintForecast: sprintCapacity(state).points,
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
     burndown: [committedPts],
+    // What was forecast, kept as a number. By the Retrospective, unfinished work has gone back to
+    // the Product Backlog, so counting the Sprint's items then gives "delivered 0 of 0" - which
+    // told a team that had over-forecast by eighteen points nothing at all.
+    forecastPoints: committedPts,
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
     // Topic three's decision. Refinement planned into a Sprint is work in the plan, with a size,
     // that somebody has to actually hold - not a tax quietly docked from every day whether or not
@@ -1253,7 +1257,10 @@ export function pullIntoSprint(state: ZooGameState, id: string, by?: string): Zo
   const item = state.backlog.find((it) => it.id === id && it.status === 'backlog' && !it.unsized);
   if (!item) return state;
   const backlog = state.backlog.map((it) => (it.id === id ? withPlan({ ...it, status: 'committed' as const, sprintNumber: state.sprintNumber }) : it));
-  const pulled = { ...state, committedIds: [...state.committedIds, id], backlog };
+  // Pulled work is forecast too: the Retrospective compares what was delivered against everything
+  // the Sprint took on, not just what it started with.
+  const pulled = { ...state, committedIds: [...state.committedIds, id], backlog,
+    forecastPoints: (state.forecastPoints ?? 0) + item.estimate };
   return note(pulled, { kind: isReady(item) ? 'forecast' : 'unready', by,
     what: `${item.name} was pulled into the Sprint on day ${state.dayNumber}${isReady(item) ? '' : ', and it was not ready'}.` });
 }
@@ -2054,8 +2061,9 @@ export function dropFromSprint(state: ZooGameState, id: string, by?: string): Zo
   const out: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === id
     ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, assignedDevs: [] }
     : it)) };
-  return note(out, { kind: 'moved', by: by ?? 'developer',
-    what: `${whoIs(by ?? 'developer')} dropped ${item.name} (${item.estimate} points) to protect the Sprint Goal.` });
+  return note({ ...out, forecastPoints: Math.max(0, (state.forecastPoints ?? 0) - item.estimate) },
+    { kind: 'moved', by: by ?? 'developer',
+      what: `${whoIs(by ?? 'developer')} dropped ${item.name} (${item.estimate} points) to protect the Sprint Goal.` });
 }
 
 /** The decision in front of the Developers today, with the arithmetic done.

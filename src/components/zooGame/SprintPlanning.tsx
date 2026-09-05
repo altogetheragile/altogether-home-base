@@ -636,11 +636,14 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           )}
           {step === 'how' && (
             <>
-              {/* Topic three is where the Developers plan HOW. Letting the Sprint start with nothing
-                  planned makes the topic optional, which teaches that it is. It is not. */}
+              {/* Topic three is where the Developers plan HOW, and the screen says what is still
+                  unplanned - but it does not refuse. The Guide is explicit that the Sprint Backlog
+                  emerges as the Sprint goes on, and the plan for the first days is enough to start:
+                  refusing taught that a Sprint cannot begin until every step is written, which is
+                  the up-front planning the whole game exists to argue with. */}
               {unplanned > 0 ? (
                 <span className="text-[11px] text-muted-foreground">
-                  {unplanned} item{unplanned === 1 ? ' has' : 's have'} no steps yet
+                  {unplanned} item{unplanned === 1 ? ' has' : 's have'} no steps yet. You can start anyway - the plan is yours to finish in the Sprint.
                 </span>
               ) : (
                 // What the three topics just produced, said at the moment it comes into being. The
@@ -649,7 +652,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   Creates the <strong className="text-foreground">Sprint Backlog</strong>: your Sprint Goal, {chosen.length} item{chosen.length === 1 ? '' : 's'} ({committed} pts){totalSteps > 0 ? `, ${totalSteps} steps` : ''}
                 </span>
               )}
-              <Button disabled={unplanned > 0} onClick={() => onPlan([...selected], refinePts)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
+              <Button onClick={() => onPlan([...selected], refinePts)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
         </div>

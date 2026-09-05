@@ -57,12 +57,14 @@ export function SplitEpicPanel({ epic, onSplit }: { epic: BacklogItem; onSplit: 
 
 /** One board column - To Do / Doing / Done - with a header count and an empty hint. When
  *  `limit` is set (a WIP limit) the header shows count/limit and flags when it is full. */
-export function BoardColumn({ title, count, hint, tone = 'default', limit, note, children }: { title: string; count: number; hint?: string; tone?: 'default' | 'done'; limit?: number; note?: ReactNode; children?: ReactNode }) {
+export function BoardColumn({ title, count, hint, limit, note, children }: { title: string; count: number; hint?: string; limit?: number; note?: ReactNode; children?: ReactNode }) {
   const full = limit != null && count >= limit;
   return (
     <div className="flex min-w-0 flex-col">
+      {/* One panel for every column. A green Done column reads as "the good one" before anything
+          has reached it; what is Done is said by the cards in it, and by the tick on the heading. */}
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',
-        tone === 'done' ? 'bg-emerald-100/60 dark:bg-emerald-950/30' : full ? 'bg-amber-100/70 dark:bg-amber-950/30' : 'bg-muted')}>
+        full ? 'bg-amber-100/70 dark:bg-amber-950/30' : 'bg-muted')}>
         <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? ` of ${limit}` : ''})</span></h3>
         <span className="flex items-center gap-1">
           {limit != null && <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground" title="Work-in-progress limit - Lean thinking that supports Scrum, not a Scrum Guide rule">WIP</span>}

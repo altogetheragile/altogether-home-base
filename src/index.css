@@ -296,3 +296,65 @@
 @media (prefers-reduced-motion: reduce) {
   .zoo-arriving { animation: none; box-shadow: 0 0 0 3px hsl(var(--primary) / 0.65); }
 }
+
+/* ============================================================================
+   The zoo game's own colours.
+   ----------------------------------------------------------------------------
+   Taken from the three-tab redesign frames (docs/ZOO_THREE_TABS.md): a deep
+   teal band for where-you-are, white for the artifacts themselves, orange kept
+   for the one thing you are being asked to do, and a pale cool ground so the
+   cards carry the page rather than the background.
+
+   Scoped to `.zoo-theme`, which sits on the game's own root. The zoo is a page
+   on a marketing site: repainting the site's tokens would repaint everything
+   else with it.
+   ========================================================================= */
+.zoo-theme {
+  --background: 180 17% 98%;      /* #f8fafa - the ground the cards sit on */
+  --foreground: 217 19% 27%;      /* #374151 - body text, not pure black */
+  --card: 0 0% 100%;
+  --card-foreground: 217 19% 27%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 217 19% 27%;
+  --primary: 33 100% 54%;         /* #ff9715 - the next thing to do, and only that */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 180 50% 96%;       /* #f0fafa - a tinted panel */
+  --secondary-foreground: 180 100% 15%;
+  --muted: 180 50% 96%;
+  --muted-foreground: 220 9% 46%; /* #6b7280 */
+  --accent: 180 49% 90%;          /* #d9f2f2 */
+  --accent-foreground: 180 100% 15%;
+  --border: 220 13% 91%;          /* #e5e7eb */
+  --input: 220 13% 91%;
+  --ring: 180 100% 24%;
+  /* The band itself, and the chips on it. */
+  --zoo-band: 180 100% 15%;       /* #004d4d */
+  --zoo-chip: 180 100% 24%;       /* #007a7a */
+}
+
+/* The strip: which Sprint, which day, how long is left, and what the Sprint is for.
+   One dark band, so the artifacts below it are the only white things on screen. */
+.zoo-band {
+  background: hsl(var(--zoo-band));
+  color: #fff;
+  border-color: hsl(var(--zoo-chip));
+}
+/* The controls in the band belong to the band. Written here rather than on each child because
+   several of them are shared components with their own colours - a menu, a reference, a timer -
+   and none of them should have to know it is standing on a dark strip today. */
+.zoo-band .text-muted-foreground,
+.zoo-band .text-foreground,
+.zoo-band button:not([class*="bg-primary"]) { color: rgba(255, 255, 255, 0.88); }
+.zoo-band .text-primary { color: hsl(33 100% 66%); }
+.zoo-band button:not([class*="bg-primary"]):hover { color: #fff; }
+.zoo-band .bg-muted\/60,
+.zoo-band .bg-background,
+.zoo-band .bg-background\/95 { background: rgba(255, 255, 255, 0.13) !important; }
+.zoo-band .border-border,
+.zoo-band .border-border\/60 { border-color: rgba(255, 255, 255, 0.22) !important; }
+.zoo-band input, .zoo-band textarea {
+  background: rgba(255, 255, 255, 0.10);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.zoo-band input::placeholder, .zoo-band textarea::placeholder { color: rgba(255, 255, 255, 0.55); }

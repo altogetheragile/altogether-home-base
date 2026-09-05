@@ -24,7 +24,8 @@ const shot = async (name, ms = 900) => {
   await p.waitForTimeout(ms);
   const file = `${OUT}/${String(++n).padStart(2, '0')}-${name}.png`;
   await p.screenshot({ path: file, fullPage: true });
-  const h = ((await p.$$eval('h1,h2', xs => xs.map(x => x.innerText.trim())))[0] ?? '').replace(/\s+/g, ' ');
+  const h = ((await p.$$eval('h1,h2', (xs) => xs.filter((x) => x.offsetParent && x.getBoundingClientRect().width > 0)
+    .map((x) => x.innerText.trim())))[0] ?? '').replace(/\s+/g, ' ');
   console.log(String(n).padStart(2), name.padEnd(26), '|', h.slice(0, 46));
 };
 const click = async (re, ms = 1300) => { try { await p.getByRole('button', { name: new RegExp(re, 'i') }).first().click({ timeout: 6000 }); } catch { console.log('   MISS', re); } await p.waitForTimeout(ms); };
@@ -61,21 +62,40 @@ for (let k = 0; k < 4; k++) {
 await shot('planning-topic-2-chosen');
 await click('Next: how', 1400);
 await shot('planning-topic-3-how');
-await click('Suggest steps for all', 1500);
+// One item at a time, the way the screen works: pick it on the left, take the suggested steps.
+for (let k = 0; k < 4; k += 1) {
+  await p.evaluate((i) => {
+    const rows = [...document.querySelectorAll('button')].filter((x) => /no steps yet|steps . planned/.test(x.innerText ?? ''));
+    rows[i]?.click();
+  }, k);
+  await p.waitForTimeout(500);
+  await click('Suggest tasks', 700);
+}
 await shot('planning-steps-planned');
 await click('Start Sprint', 2500);
-await shot('sprint-board-day-1');
-// the park - one drawing of it, since the blueprint was retired
-await shot('park-isometric');
-await click('Product Backlog', 1200); await shot('sprint-pull-from-backlog');
+await shot('sprint-backlog-plan');
+// The three artifacts, each on its own tab.
+await click('^Product Backlog$', 1400); await shot('tab-product-backlog');
+await click('^Increment$', 1600); await shot('tab-increment');
+await click('^Sprint Backlog$', 1400);
+// Start something, so there is work in hand and the Build state has something to be about.
+await p.evaluate(() => {
+  const card = [...document.querySelectorAll('div')]
+    .filter((d) => /Enclosure/.test(d.innerText) && [...d.querySelectorAll('button')].some((x) => x.innerText.trim() === 'Start'))
+    .sort((a, z) => a.innerText.length - z.innerText.length)[0];
+  [...(card?.querySelectorAll('button') ?? [])].find((x) => x.innerText.trim() === 'Start')?.click();
+});
+await shot('sprint-backlog-work-started', 1600);
+await click('^Build$', 1800); await shot('sprint-backlog-build');
+await click('^Plan$', 1200);
 await click('^Artifacts', 1200); await shot('artifacts-drawer');
 await click('Scrum', 1200); await shot('scrum-on-a-page');
 
 // ...and on to the Review and the Retrospective, letting the days run out.
-await click('End Day', 2000);
+await click('End [Dd]ay', 2200);
 await shot('daily-scrum');
-for (let d = 0; d < 6; d++) {
-  await click('End Day', 2000);
+for (let d = 0; d < 8; d++) {
+  await click('End [Dd]ay|Keep the plan|Carry on regardless|Adapt the plan|Start Day', 2200);
   const h = ((await p.$$eval('h1,h2', xs => xs.map(x => x.innerText.trim())))[0] ?? '');
   if (/What did we get Done/.test(h)) break;
 }

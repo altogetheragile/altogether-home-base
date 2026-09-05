@@ -421,6 +421,10 @@ export interface ZooGameState {
    *  because a clock in a component cannot be saved, shared or paused: each browser would
    *  run its own countdown and each would end the day. Advanced by TICK_DAY, which also
    *  ends the day when it reaches zero, so the expiry cannot fire twice. */
+  /** What the Developers forecast this Sprint, in points, as it stood when they took it on. Kept
+   *  because unfinished work leaves the Sprint at the Review, and a Retrospective needs to know
+   *  what was promised, not what survived. */
+  forecastPoints?: number;
   daySecondsLeft: number;
   /** Work the Developers have taken on and not yet worked off, in seconds. It drains a second per
    *  second while the day runs, so a five-point build takes five points' worth of day rather than

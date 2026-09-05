@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
@@ -20,36 +18,15 @@ import { SprintReview } from '@/components/zooGame/SprintReview';
 import { SprintRetro } from '@/components/zooGame/SprintRetro';
 import { ZooFinal } from '@/components/zooGame/ZooFinal';
 import { ZooShell, type ArtifactTab } from '@/components/zooGame/ZooShell';
+import { GameLinks } from '@/components/zooGame/GameLinks';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import type { ZooGameState, PbiDraft } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance, presetFor, type ItemDesign } from '@/components/zooGame/design';
-import { nextNudge } from '@/components/zooGame/engine';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 import { useZooCopy } from '@/components/zooGame/useZooCopy';
-
-/** A slim game-only top bar, in place of the tall marketing site nav, so the game runs close
- *  to full-screen (built to fit a tablet without page scrolling) while still keeping the two
- *  things the game needs from the nav: a way back to the site, and sign-in (needed to save). */
-function GameTopBar() {
-  const { user } = useAuth();
-  return (
-    <div className="flex shrink-0 items-center justify-between border-b border-border bg-background px-3 py-1">
-      <Link to="/" aria-label="Back to Altogether Agile"
-        className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground">
-        <ChevronLeft className="h-4 w-4" />
-        <span>Altogether <span className="text-primary">Agile</span></span>
-      </Link>
-      <div className="flex items-center gap-2 text-xs">
-        {user
-          ? <span className="max-w-[40vw] truncate text-muted-foreground" title={user.email}>{user.email}</span>
-          : <Link to="/auth" className="rounded-md border border-border px-2.5 py-1 font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40">Sign in</Link>}
-      </div>
-    </div>
-  );
-}
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
@@ -78,8 +55,6 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // Bumped on each delivery (Deploy Complete) to fire a confetti burst - a celebration of the
   // shippable increment reaching visitors.
   const [celebrate, setCelebrate] = useState(0);
-  // The coach's nudges: one at a time, and any the player waves away stays away for the session.
-  const [hushed, setHushed] = useState<Set<string>>(new Set());
   const [onePager, setOnePager] = useState(true); // shown once per visit, before the intro
   const [onePagerSeen, setOnePagerSeen] = useState(false); // ...and re-openable from the intro
 
@@ -310,8 +285,13 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }
     : null;
 
-  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, buildMode, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
-    nudge: nextNudge(state, hushed), onDismissNudge: (id: string) => setHushed((h) => new Set(h).add(id)) };
+  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, buildMode, links: <GameLinks />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+    // The Coach is gone. It floated advice over whatever you were doing - often about refinement,
+    // often at the wrong moment, twice over the button you needed. Every lesson it carried belongs
+    // in the flow, at the moment it applies, as part of the screen that applies it. What survives
+    // of it lives on the screens themselves: the readiness figures at Refinement, the WIP note in
+    // the Doing column, the arithmetic at the Daily Scrum, the evidence at the Done gate.
+  };
 
   const render = () => {
     switch (state.phase) {
@@ -351,7 +331,6 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     // Fixed viewport height so the game frame never scrolls - the shell scrolls internally.
     // The marketing footer is omitted here to reclaim the full screen for the game.
     <div className="flex h-dvh flex-col overflow-hidden">
-      <GameTopBar />
       {/* Hold the game for the one query that decides which words it uses. A blank half-second
           beats a visible flash of superseded wording in front of a class. */}
       <main className="min-h-0 flex-1 overflow-hidden">{zooCopy.ready ? render() : null}</main>

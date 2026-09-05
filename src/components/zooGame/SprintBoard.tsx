@@ -515,12 +515,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
         <DayStart state={state} onStart={onStartDay} />
       ) : (
         <>
-          {/* Said while the Sprint runs, because that is when it is useful: the zone you are opening
-              is the one being built this minute. */}
-          {onAddProposal && onDeclineProposal && (
-            <PoLookAhead proposals={lookAhead(state)} onAdd={onAddProposal} onSplit={onSplitEpic} onDecline={onDeclineProposal} />
-          )}
-
           {state.carriedImpediment && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
               <div className="flex items-start gap-2.5">
@@ -674,7 +668,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                           </div>
                         )}
                         note={needsEnc ? `Needs ${encName} built first` : undefined}
-                        trailing={<Button size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={blocked} title={why}
+                        trailing={<Button size="sm" variant="ghost" className="h-7 shrink-0 px-2 text-xs" disabled={blocked} title={why ?? 'Or drag the card into Doing'}
                           onClick={(e) => { e.stopPropagation(); onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>}
                         detail={<CardSteps item={it} />} />
                       </div>
@@ -746,7 +740,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 </BoardColumn>
                 </div>
                 <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open" tone="done">
+                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
                       or hold it. A whole column for "Done but not opened" said that badly: since the
@@ -796,6 +790,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 </BoardColumn>
                 <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Dropping here runs the Done check. Not Done and the card comes back, with reasons.</p>
                 </div>
+
+              {/* What the Product Owner is looking at next. Worth reading during a Sprint - the zone
+                  you are opening is the one being built this minute - and not worth 170 pixels above
+                  the board, where it stood between you and the work. */}
+              {onAddProposal && onDeclineProposal && (
+                <PoLookAhead proposals={lookAhead(state)} onAdd={onAddProposal} onSplit={onSplitEpic} onDecline={onDeclineProposal} />
+              )}
               </div>
             </div>
           </div>
