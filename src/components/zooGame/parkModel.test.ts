@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import type { BacklogItem, ZooGameState } from './types';
-import { standingOnPark, groundSize, quarterOf, workingDesign, parkPositions, restingPlace, habitatSpot } from './parkModel';
+import { standingOnPark, groundSize, quarterOf, workingDesign, parkPositions, restingPlace, habitatSpot, type Standing } from './parkModel';
 import { CANVAS_W } from './parkLayout';
 
 const item = (over: Partial<BacklogItem>): BacklogItem => ({
@@ -174,5 +174,43 @@ describe('turning a box', () => {
     const river = box({ category: 'flora', template: 'river', rot: 37 });
     expect(quarterOf(river), 'a river was snapped to a quarter').toBe(0);
     expect(groundSize(river), 'a river had its length and width swapped').toEqual(groundSize({ ...river, rot: 0 }));
+  });
+});
+
+// Nothing stands on top of anything else.
+//
+// Reported from a live game: "The Tiger enclosure was placed over the lion enclosure." The packer
+// laid out every standing item, including the ones carrying a position of their own - so it
+// reserved them a slot they were never going to stand in, and handed the ground they actually
+// occupy to the next thing built.
+describe('two things cannot stand on the same ground', () => {
+  const overlap = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
+    Math.abs(a.x - b.x) < (a.w + b.w) / 2 && Math.abs(a.y - b.y) < (a.h + b.h) / 2;
+
+  it('lays a new habitat clear of one somebody has placed', () => {
+    const size = { w: 220, h: 160 };
+    const placed = { item: { id: 'lion-enc', pos: { x: 300, y: 300 } }, size } as unknown as Standing;
+    const fresh = { item: { id: 'tiger-enc' }, size } as unknown as Standing;
+    const where = parkPositions([placed, fresh]);
+    const tiger = where.get('tiger-enc')!;
+    expect(tiger, 'the new habitat was never given a place at all').toBeTruthy();
+    expect(overlap({ ...tiger, ...size }, { x: 300, y: 300, ...size }),
+      'the new habitat was laid down on top of the one that was already there').toBe(false);
+  });
+
+  it('keeps every automatic position clear of every other one', () => {
+    const size = { w: 200, h: 150 };
+    const standing = [
+      { item: { id: 'a', pos: { x: 200, y: 200 } }, size },
+      { item: { id: 'b', pos: { x: 520, y: 220 } }, size },
+      ...['c', 'd', 'e'].map((id) => ({ item: { id }, size })),
+    ] as unknown as Standing[];
+    const where = parkPositions(standing);
+    const boxes = standing.map((s) => ({ id: s.item.id, ...size, ...(s.item.pos ?? where.get(s.item.id)!) }));
+    for (let i = 0; i < boxes.length; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        expect(overlap(boxes[i], boxes[j]), `${boxes[i].id} and ${boxes[j].id} are standing on each other`).toBe(false);
+      }
+    }
   });
 });

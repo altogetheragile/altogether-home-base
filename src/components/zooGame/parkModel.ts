@@ -118,7 +118,12 @@ export function standingOnPark(state: ZooGameState): Standing[] {
  *  An item that has been dragged holds its spot. Everything else is laid out automatically, and both
  *  views have to lay it out the SAME way or the two drawings disagree about where the zoo is. */
 export function parkPositions(standing: Standing[]): Map<string, { x: number; y: number }> {
-  return autoLayout(standing.map((s) => ({ id: s.item.id, w: s.size.w, h: s.size.h })));
+  // Only the ones nobody has placed are laid out. The ones that carry a position are where they
+  // are, so they are passed in as ground already taken rather than packed as though they were
+  // going to move - which is how something ended up standing on top of something else.
+  const box = (s: Standing) => ({ id: s.item.id, w: s.size.w, h: s.size.h });
+  const fixed = standing.filter((s) => s.item.pos).map((s) => ({ ...box(s), ...insidePark(s.size, s.item.pos!) }));
+  return autoLayout(standing.filter((s) => !s.item.pos).map(box), fixed);
 }
 
 /** Where one thing stands, given how much ground it takes. */

@@ -27,7 +27,7 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 
 /** Default tidy layout for features without a saved position: shelf-pack left-to-right,
  *  wrapping within the canvas width. Returns each feature's CENTRE in design px. */
-export function autoLayout(boxes: LayoutBox[]): Map<string, { x: number; y: number }> {
+export function autoLayout(boxes: LayoutBox[], taken: (LayoutBox & { x: number; y: number })[] = []): Map<string, { x: number; y: number }> {
   // Two passes: shelf-pack into rows by width, then space the rows down the park.
   //
   // It used to be one pass that clamped each feature into the park as it went, which was fine until
@@ -62,7 +62,27 @@ export function autoLayout(boxes: LayoutBox[]): Map<string, { x: number; y: numb
     }
     top += heights[i] + squeeze;
   });
-  return pos;
+  // Anything standing where somebody put it is ground that is already spoken for.
+  //
+  // The packer used to lay out EVERYTHING, including items that carry their own position - it
+  // reserved them a slot in the shelf, and then they went and stood somewhere else, leaving the
+  // slot to be handed to the next item and the ground they actually occupy free to be handed out
+  // too. So a Tiger Enclosure was laid down on top of a Lion Enclosure somebody had placed by hand.
+  // Reported from a live game.
+  //
+  // Now the shelf slot is a preference rather than a verdict: where it collides with occupied
+  // ground, the item takes the nearest clear ground to it, and joins the occupied list itself.
+  if (!taken.length) return pos;
+  const occupied = [...taken];
+  const out = new Map<string, { x: number; y: number }>();
+  for (const f of boxes) {
+    const want = pos.get(f.id);
+    if (!want) continue;
+    const at = nearestFreeSpot(occupied, f, want);
+    occupied.push({ ...f, ...at });
+    out.set(f.id, at);
+  }
+  return out;
 }
 
 
@@ -164,5 +184,18 @@ export function nearestFreeSpot(taken: (LayoutBox & { x: number; y: number })[],
       if (clear(p.x, p.y)) return p;
     }
   }
-  return first;   // a full park. Where they asked for, and they can see the problem.
+  // Twelve directions off a ring is a coarse net, and it missed room that was plainly there: with
+  // two habitats placed by hand, a third was reported standing on one of them in a park that was
+  // half empty. So where the rings find nothing, sweep the whole park on a grid and take the
+  // nearest clear ground to where they asked. Only ever runs when the quick search has failed.
+  let best: { x: number; y: number } | null = null;
+  let bestD = Infinity;
+  for (let y = b.minY; y <= b.maxY; y += 12) {
+    for (let x = b.minX; x <= b.maxX; x += 12) {
+      if (!clear(x, y)) continue;
+      const d = (x - first.x) ** 2 + (y - first.y) ** 2;
+      if (d < bestD) { bestD = d; best = { x, y }; }
+    }
+  }
+  return best ?? first;   // a full park. Where they asked for, and they can see the problem.
 }
