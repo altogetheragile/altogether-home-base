@@ -107,6 +107,63 @@ describe('the Build state', () => {
     expect(container.querySelector('[data-part="controls-line"]'), 'touching a part left the controls folded away').toBeNull();
   });
 
+  it('never folds away the only way to make progress', () => {
+    // A pathway is drawn with the pen, and the pen is one of these controls. Folded, the park said
+    // "pick up the pen on the design bench" with no bench on the screen to pick it up from - which
+    // is where a live game stopped dead.
+    const s = state();
+    const path = s.backlog.find((it) => it.category === 'path')!;
+    const held = {
+      ...s,
+      backlog: s.backlog.map((it) => (it.id === path.id
+        ? { ...it, status: 'committed' as const, sprintNumber: 1, started: true }
+        : { ...it, started: false, status: it.status === 'committed' ? 'backlog' as const : it.status })),
+    } as ZooGameState;
+    const { container } = render(
+      <MemoryRouter>
+        <SprintBoard state={held} mode="build" building={path.id} edit={edit}
+          onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
+          onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
+          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
+          onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop}
+          onDrawing={noop} />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('[data-part="controls-line"]'), 'the pen is behind a fold').toBeNull();
+    expect(container.textContent, 'nothing offers to draw the route').toMatch(/Draw its route/);
+  });
+
+  it('names the controls this item actually has', () => {
+    // "ground · fence · water · planting" on a pathway is a label for a different item.
+    const { container } = board('build');
+    expect(container.querySelector('[data-part="controls-line"]')!.textContent).toMatch(/ground · fence · water/);
+  });
+
+  it('does not offer a Product Owner the Developers’ bench', () => {
+    // Reported from a live game: sitting as the Product Owner, the Build state put a design studio
+    // and a plan step in front of them - work the seat gate then refused. A screen that invites
+    // what the rules refuse teaches the opposite of the accountability it is trying to teach.
+    const s = state();
+    const held = s.backlog.find((it) => it.started)!;
+    const { container } = render(
+      <MemoryRouter>
+        <SprintBoard state={s} mode="build" building={held.id} edit={edit} canBuild={false}
+          onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
+          onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
+          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
+          onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop} />
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('[data-part="controls-line"]'), 'the bench was offered to a Product Owner').toBeNull();
+    expect(container.textContent, 'the studio is open to somebody who cannot build').not.toMatch(/How it is made/);
+    // What they get instead: what the Developers are on, and what is theirs to do about it.
+    const next = container.querySelector('[data-part="next-step"]')!;
+    expect(next.textContent).toMatch(/The Developers are on/);
+    expect(next.textContent).toMatch(/tick what the build actually meets/i);
+    // ...and the acceptance criteria, which ARE the Product Owner's.
+    expect(container.textContent).toMatch(/Acceptance criteria/i);
+  });
+
   it('keeps the controls open in Plan, where the bench is a bench', () => {
     const { container } = board('plan');
     expect(container.querySelector('[data-part="controls-line"]')).toBeNull();

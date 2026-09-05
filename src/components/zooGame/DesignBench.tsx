@@ -109,7 +109,7 @@ function BenchName({ name, onRename }: { name: string; onRename: (name: string) 
   );
 }
 
-export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun, focus = false }: {
+export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun, focus = false, canBuild = true }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
@@ -132,6 +132,11 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   /** The Build state: this card IS the screen, so it leads with the item and its next step, and the
    *  controls fold down to one line until a part of the thing is touched. */
   focus?: boolean;
+  /** Whether the person looking at this holds the Developers' work. A Product Owner watching a
+   *  Sprint is not building anything, so they are not offered a bench and a plan step to tick -
+   *  the gate would refuse it anyway, and a screen that invites what the rules then refuse teaches
+   *  the opposite of the accountability it is trying to teach. Reported from a live game. */
+  canBuild?: boolean;
 }) {
   // The bench holds what is being built. It used to hold whatever was last selected, which is not
   // the same thing: an item that runs out of Sprint goes back to the Product Backlog, and the bench
@@ -143,7 +148,21 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   // Touching a part of the thing out on the park opens its controls in here - that link is the
   // whole reason a row of coloured squares is comprehensible at all - so a touch counts as asking.
   const [controlsOpen, setControlsOpen] = useState(false);
-  const showControls = !focus || controlsOpen || !!part;
+  // ...and the fold never hides the only way to make progress. A pathway is drawn with the pen, and
+  // the pen lives in these controls: folded away, the park said "pick up the pen on the design
+  // bench" and there was no bench on the screen to pick it up from. Reported from a live game.
+  const needsPen = !!item && item.category === 'path' && !(state.connectors ?? []).some((c) => c.itemId === item.id);
+  const showControls = canBuild && (!focus || controlsOpen || !!part || needsPen);
+
+  // What this thing's controls actually are. A pathway has a width, a colour and a route; naming
+  // ground, fence and water on the line that opens them is a label for a different item.
+  const CONTROL_WORDS: Record<string, string> = {
+    path: 'width \u00b7 colour \u00b7 its route',
+    enclosure: 'size \u00b7 shape \u00b7 ground \u00b7 fence \u00b7 water \u00b7 planting',
+    flora: 'kind \u00b7 size \u00b7 colours',
+    amenity: 'size \u00b7 shape \u00b7 colours',
+    exhibit: 'how many \u00b7 which habitat \u00b7 colours',
+  };
 
   // The one thing to do next: the first step of the plan nobody has ticked. It is the only orange
   // thing on the tab, because it is the only thing being asked of you.
@@ -169,12 +188,23 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
           <p className="text-xs text-muted-foreground">
             {item.estimate} pts &middot; {item.zone} &middot; {item.category}
           </p>
-          {nextStep >= 0 && (
+          {nextStep >= 0 && (canBuild ? (
             <div data-part="next-step" className="rounded-lg border-2 border-primary bg-primary/5 px-3 py-2">
               <div className={cn(EYEBROW, 'text-primary')}>Next step</div>
               <p className="text-sm font-bold leading-snug">{nextStep + 1}. {steps[nextStep].label}</p>
             </div>
-          )}
+          ) : (
+            // Watching the work, not doing it. What the Developers are on, and what is yours here:
+            // judging what they have built against what it was supposed to be.
+            <div data-part="next-step" className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+              <div className={cn(EYEBROW, 'text-muted-foreground')}>The Developers are on</div>
+              <p className="text-sm font-semibold leading-snug">{nextStep + 1}. {steps[nextStep].label}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                How it gets built is theirs. Yours is below: tick what the build actually meets, and the
+                sign-off follows once every criterion is met.
+              </p>
+            </div>
+          ))}
         </header>
       )}
       <div className={cn('flex items-center justify-between gap-2', focus && item && 'hidden')}>
@@ -210,7 +240,10 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
           {/* In Build the controls are one grey line at the foot of the card until you touch a part
               of the thing on the park - or ask for them. A row of menus open beside the work is a
               second thing shouting at you while the next step is trying to say one sentence. */}
-          <div className={cn('rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2', focus && 'order-last', focus && !showControls && 'hidden')}>
+          {/* Not rendered at all where the person looking cannot build: hidden is for a fold you can
+              open, and this is not theirs to open. */}
+          {canBuild && (
+          <div data-part="studio" className={cn('rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2', focus && 'order-last', focus && !showControls && 'hidden')}>
             <div className={cn(EYEBROW, 'mb-1.5 text-sky-700 dark:text-sky-300')}>How it is made</div>
             {/* The same controls that used to float over the park, docked. Identical component, so
                 there is one place a control is defined and one place it can go wrong. */}
@@ -253,6 +286,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
                   : 'Touch a part of it on the park to open that part\u2019s controls here. Where it stands is settled out there, by dragging it.'}
             </p>
           </div>
+          )}
           {/* The plan and the criteria, open. On the card they are a row of pips you expand; here,
               where you are actually doing the work, they are the work. */}
           <div className={cn('rounded-lg border p-2', focus ? 'border-border bg-card' : 'border-emerald-400/40 bg-emerald-500/[0.05]')}>
@@ -273,11 +307,11 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
               onToggleTask={(id, taskId) => onToggleTask(id, taskId)}
               onConfirmAc={(id, i, v) => onConfirmAc(id, i, v)} />
           </div>
-          {focus && !showControls && (
+          {focus && canBuild && !showControls && (
             <button type="button" onClick={() => setControlsOpen(true)} data-part="controls-line"
               className={cn(FOCUS, 'order-last flex w-full items-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:text-foreground')}>
               <Hammer className="h-3.5 w-3.5 shrink-0" />
-              Controls: size &middot; shape &middot; ground &middot; fence &middot; water &middot; planting
+              Controls: {CONTROL_WORDS[item.category] ?? 'size \u00b7 shape \u00b7 colours'}
               <span className="ml-auto shrink-0 underline">open</span>
             </button>
           )}
