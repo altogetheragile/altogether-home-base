@@ -1,10 +1,9 @@
 import { useState, type ReactNode } from 'react';
-import { BookOpen, X, GraduationCap, Clock, Users, Boxes, Heart, Microscope, Recycle, Repeat, Target, Hammer, HeartHandshake, ClipboardList, ListTodo, Package, CalendarRange, ClipboardCheck, Sunrise, Presentation, MessageCircleQuestion } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { X, GraduationCap, Clock, Users, Boxes, Heart, Microscope, Recycle, Repeat, Target, Hammer, HeartHandshake, ClipboardList, ListTodo, Package, CalendarRange, ClipboardCheck, Sunrise, Presentation, MessageCircleQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
-import { FOCUS, SURFACE, TEXT, TONE } from './ui/tokens';
+import { FOCUS, TEXT, TONE } from './ui/tokens';
 
 // The teaching, on screen. Three pieces: a card shown in context the first time an element is met,
 // a reference panel that is always to hand, and the one-page introduction before play. All of it can
@@ -83,17 +82,13 @@ export function TeachingCard({ id, onDismiss }: { id: string; onDismiss: (id: st
 }
 
 /** Every card, always to hand, whether or not the teaching is switched on. */
-export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean; onSetTeaching?: (on: boolean) => void }) {
+/** Every element of Scrum, in the shape Scrum is in. Its own component because it is now the first
+ *  section of the Learn drawer rather than a control of its own in the strip - the reference was
+ *  always the right shape, so it became the model for everything else that is words. */
+export function ScrumReferenceBody({ teaching, onSetTeaching }: { teaching: boolean; onSetTeaching?: (on: boolean) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" title="Scrum reference - every element, what it is for" aria-label="Scrum reference"
-          className={cn(FOCUS, SURFACE.inset, 'flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground')}>
-          <BookOpen className="h-3.5 w-3.5" /> <span className="hidden md:inline">Scrum</span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="max-h-[70vh] w-96 overflow-y-auto">
+      <div>
         <div className="mb-1 flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum reference</span>
           {onSetTeaching && (
@@ -131,8 +126,7 @@ export function ScrumReference({ teaching, onSetTeaching }: { teaching: boolean;
             </section>
           ))}
         </div>
-      </PopoverContent>
-    </Popover>
+      </div>
   );
 }
 

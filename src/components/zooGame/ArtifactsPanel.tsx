@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Boxes, ClipboardList, ListTodo, Package, Pencil, Check, Eye, Sparkles, Trophy } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ClipboardList, ListTodo, Package, Pencil, Check, Eye, Sparkles, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ZooGameState } from './types';
 import { artifactState } from './engine';
@@ -79,28 +78,17 @@ function GoalEditor({ goal, onSetGoal }: { goal: string; onSetGoal?: (g: string)
   );
 }
 
-/** One control for all three artifacts: what is in each, its commitment, and what this event is
- *  doing to it. The button carries a dot while an artifact is being adapted or created, so the
- *  transparency signal survives being folded away. */
-export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: {
+/** All three artifacts: what is in each, its commitment, and what the event you are in is doing to
+ *  it. It was a control of its own in the strip; it is the "This Sprint" section of the Learn
+ *  drawer now, because the strip is for what you act on and this is what you look up. */
+export function ArtifactsBody({ state, onSetProductGoal, onSetDod, onSetDor }: {
   state: ZooGameState;
   onSetProductGoal?: (g: string) => void;
   onSetDod?: (dod: string[]) => void;
   onSetDor?: (dor: string[]) => void;
 }) {
   const artifacts = artifactState(state);
-  const active = artifacts.some((a) => roleFor(state.phase, a.id) === 'creates' || roleFor(state.phase, a.id) === 'adapts');
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" title="The three artifacts, what is in them, and their commitments"
-          className={cn(FOCUS, SURFACE.inset, 'flex shrink-0 items-center gap-1.5 px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground')}>
-          <Boxes className="h-3.5 w-3.5" />
-          <span className="hidden md:inline">Artifacts</span>
-          {active && <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="max-h-[75vh] w-96 overflow-y-auto">
         <div className="space-y-2">
           <p className="text-[11px] text-muted-foreground">
             Scrum has three artifacts. Each holds one kind of truth about the work, and each carries a commitment that says
@@ -148,7 +136,5 @@ export function ArtifactsPanel({ state, onSetProductGoal, onSetDod, onSetDor }: 
             );
           })}
         </div>
-      </PopoverContent>
-    </Popover>
   );
 }

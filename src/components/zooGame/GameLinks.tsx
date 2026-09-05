@@ -1,29 +1,31 @@
 import { Link } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-/** The way back to the site, and who is signed in.
+/** The mark, and the way back to the site it belongs to.
  *
- *  These were a bar of their own above the game's strip: two headers, two visual registers, and
- *  seventy pixels spent saying where you are twice. They ride IN the strip now, so the strip is the
- *  only thing above the tabs.
+ *  It was a bar of its own above the strip, then a wordmark and an email address inside it. The mark
+ *  does the wordmark's job in a fifth of the room and says whose game this is, so it is the mark and
+ *  nothing else - and it is the link home, which is the only thing anybody ever clicked it for.
  *
- *  Their own file rather than the page's, because the shell renders them and the page renders the
- *  shell - taking them from the page would be a circle, and a circular import of a component is the
- *  kind that fails as a blank screen rather than as an error.
+ *  Its own file rather than the page's, because the shell renders it and the page renders the shell:
+ *  taking it from the page would be a circle, and a circular import of a component is the kind that
+ *  fails as a blank screen rather than as an error.
  */
-export function GameLinks() {
+export function GameLinks({ variant = 'mark' }: {
+  /** `mark` is the strip's one glyph; `menu` is the row inside the game menu, where signing in
+   *  belongs - it is done once, and it is not part of playing. */
+  variant?: 'mark' | 'menu';
+}) {
   const { user } = useAuth();
+  if (variant === 'menu') {
+    return user
+      ? <div className="px-2 py-1.5 text-[11px] text-muted-foreground">Signed in as {user.email}</div>
+      : <Link to="/auth" className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-muted/60">Sign in</Link>;
+  }
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <Link to="/" aria-label="Back to Altogether Agile" title="Back to Altogether Agile"
-        className="flex items-center gap-1 font-semibold opacity-80 hover:opacity-100">
-        <ChevronLeft className="h-4 w-4" />
-        <span className="hidden sm:inline">Altogether Agile</span>
-      </Link>
-      {user
-        ? <span className="hidden max-w-[18vw] truncate opacity-70 lg:inline" title={user.email}>{user.email}</span>
-        : <Link to="/auth" className="rounded-md border border-white/25 px-2 py-0.5 font-medium opacity-80 hover:opacity-100">Sign in</Link>}
-    </div>
+    <Link to="/" aria-label="Back to Altogether Agile" title="Back to Altogether Agile"
+      className="shrink-0 select-none text-lg font-bold leading-none opacity-90 transition-opacity hover:opacity-100">
+      皆
+    </Link>
   );
 }
