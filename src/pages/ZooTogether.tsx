@@ -11,7 +11,9 @@ import { TEXT } from '@/components/zooGame/ui/tokens';
 /** How long a line from a seat played by the game stays on the rail. Long enough to move to
  *  another topic and still read what happened while you were away; short enough that the
  *  Sprint board is not permanently under a stack of them. */
-const SAY_SECONDS = 25;
+// How long a line from a seat stays up. Twenty-five seconds meant several were always on screen at
+// once during a Sprint; at eight, one is read and gone before the next arrives.
+const SAY_SECONDS = 8;
 
 // Build A Zoo, played together. The lobby seats a Scrum Team; the panel below is the seam
 // where the game itself attaches - it holds a live shared game and proves the whole stack
@@ -82,7 +84,10 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
     top.current = { id, seat, kind };
     setSaid((prev) => (same && prev[0]?.id === id
       ? [{ ...prev[0], says, also: prev[0].also + 1 }, ...prev.slice(1)]
-      : [{ id, seat, says, kind, also: 0, where }, ...prev.filter((x) => x.id !== id)].slice(0, 4)));
+      // Two at a time. Four was "too much to follow", and on a Sprint with every seat played by
+      // the game it was four cards over the park. What a seat did is commentary; the record is the
+      // decision log at the Retrospective.
+      : [{ id, seat, says, kind, also: 0, where }, ...prev.filter((x) => x.id !== id)].slice(0, 2)));
     // A repeat renews its own slot rather than dying on the first one's clock.
     const running = timers.current.get(id);
     if (running) clearTimeout(running);

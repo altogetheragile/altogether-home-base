@@ -422,6 +422,10 @@ export interface ZooGameState {
    *  run its own countdown and each would end the day. Advanced by TICK_DAY, which also
    *  ends the day when it reaches zero, so the expiry cannot fire twice. */
   daySecondsLeft: number;
+  /** Work the Developers have taken on and not yet worked off, in seconds. It drains a second per
+   *  second while the day runs, so a five-point build takes five points' worth of day rather than
+   *  vanishing off the clock the moment somebody starts it. */
+  owedSeconds?: number;
   /** Seconds left in the Daily Scrum's timebox, for the same reasons. Reset each time the
    *  event opens; on expiry the disciplined default is taken (adapt and continue). */
   scrumSecondsLeft: number;

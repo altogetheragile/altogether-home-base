@@ -43,9 +43,16 @@ export function secondsPerPoint(state: ZooGameState): number {
  *  way and for the same reason. */
 export function spendDay(state: ZooGameState, seconds: number): ZooGameState {
   if (state.learnMode || state.phase !== 'sprint') return state;
-  const left = state.daySecondsLeft - Math.max(0, Math.round(seconds));
-  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0 }) : { ...state, daySecondsLeft: left };
+  // Owed, not taken. Charging the whole cost at once made the clock lie: a five-point habitat came
+  // out of the day in one jump, a Sprint's forecast in a few seconds, and the day timer stopped
+  // meaning anything you could watch. The work now takes the time it costs - the debt drains one
+  // second per second while the team is visibly busy with it, which is what a Sprint looks like.
+  return { ...state, owedSeconds: (state.owedSeconds ?? 0) + Math.max(0, Math.round(seconds)) };
 }
+
+/** Whether the Developers are still working off something they have taken on. Seats played by the
+ *  game wait while they are: work that appeared instantly and cost nothing is not work. */
+export const teamIsBusy = (state: ZooGameState): boolean => (state.owedSeconds ?? 0) > 0;
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
@@ -54,7 +61,11 @@ export function tickDay(state: ZooGameState): ZooGameState {
   if (state.learnMode || state.phase !== 'sprint') return state;
   if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
   const left = state.daySecondsLeft - 1;
-  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0 }) : { ...state, daySecondsLeft: left };
+  // A second of the day is a second of the work owed. The day and the work run down together, so
+  // the clock you are watching is the truth about how much is left to build in.
+  const owed = Math.max(0, (state.owedSeconds ?? 0) - 1);
+  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0, owedSeconds: owed })
+    : { ...state, daySecondsLeft: left, owedSeconds: owed };
 }
 
 /** One second of the Daily Scrum's timebox. On expiry the disciplined default is taken:
