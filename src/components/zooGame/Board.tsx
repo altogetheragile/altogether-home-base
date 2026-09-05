@@ -476,7 +476,14 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           </>}
           badges={<>
             <CategoryChip item={it} />
-            {it.carriedOver && <Chip tone="attention" title={`Carried over unfinished - already sized to the ${it.estimate} pts left of it`}>carried over</Chip>}
+            {/* Say the arithmetic, not just the fact. An item that was 5 and is now 3 with nothing
+                explaining it reads as the game losing count; "5 → 3" reads as the Developers
+                re-sizing what is left, which is what happened. */}
+            {it.carriedOver && (
+              <Chip tone="attention" title={`Carried over unfinished. It was sized at ${it.wasEstimate ?? '?'} points; what is left of it is ${it.estimate}. The build so far is kept.`}>
+                carried over{it.wasEstimate && it.wasEstimate !== it.estimate ? ` · ${it.wasEstimate} \u2192 ${it.estimate}` : ''}
+              </Chip>
+            )}
             {status}
           </>}
           trailing={action}

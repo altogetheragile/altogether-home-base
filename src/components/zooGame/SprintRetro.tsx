@@ -4,7 +4,7 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
-import { retroQuestions, decisionsIn, whoIs, sprintProgress } from './engine';
+import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
@@ -32,14 +32,6 @@ interface SprintRetroProps {
   onMarkTaught?: (id: string) => void;
 }
 
-/** Improvements the Scrum Team can pick. Some have a real mechanical effect next Sprint,
- *  so inspect-and-adapt actually changes how the team works. */
-const IMPROVEMENTS: { text: string; effect?: string }[] = [
-  { text: 'Finish fewer things properly, rather than starting more', effect: 'Tightens the WIP limit by 1' },
-  { text: 'Hold the Daily Scrum every day and catch issues early', effect: 'Daily Scrums become efficient - they cost no build time' },
-  { text: 'Serve each zone before adding the next exhibit' },
-  { text: 'Read the visitor feedback before adapting the plan' },
-];
 
 /** Retrospective: inspect how the Scrum Team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
@@ -47,6 +39,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
   const [selected, setSelected] = useState<string | null>(null);
   const [step, setStep] = useState<Step>('inspect');
   const questions = retroQuestions(state);
+  // What to improve, drawn from what this team did rather than from a fixed list. Every option
+  // changes how the next Sprint works, and each one that came out of the log says what put it there.
+  const improvements = improvementsFrom(state);
   // What the game noticed this Sprint, and anything that has now happened often enough to be a
   // habit rather than a one-off. A habit is the thing worth inspecting; a single Sprint is noise.
   const did = decisionsIn(state, state.sprintNumber);
@@ -153,9 +148,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       {step === 'adapt' && (<>
       {/* The Retrospective is where the team inspects and adapts the Definition of Done. It is a
           long editor, so it scrolls inside itself rather than pushing the improvements off screen. */}
-      <div className="max-h-[22vh] overflow-y-auto pr-1">
-        <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
-      </div>
+      {/* Not a scroll box. The Definition of Done is the Increment's commitment and the whole point
+          of inspecting it here is to read it; a list that scrolls inside a card on a page that also
+          scrolls is a list nobody reads to the end of. */}
+      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
 
       {/* ...and the only place the Sprint's own length changes, because a fixed container is the
           point of it. Never in Planning, where the box would just be sized to the work. */}
@@ -165,15 +161,21 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
 
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Pick one improvement</h3>
-        <p className="text-[11px] text-muted-foreground">Inspect-and-adapt has teeth: some improvements change how the Scrum Team works next Sprint. Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · Daily Scrums are efficient' : ''}.</p>
+        <p className="text-[11px] text-muted-foreground">
+          Drawn from your own decision log, and every one of them changes how the next Sprint works.
+          Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · blockers are caught early' : ''}{state.refineHabit ? ' · refinement time is set aside' : ''}.
+        </p>
       </div>
-      <div className="max-h-[22vh] space-y-2 overflow-y-auto pr-1">
-        {IMPROVEMENTS.map((imp) => (
+      <div className="max-h-[26vh] space-y-2 overflow-y-auto pr-1">
+        {improvements.map((imp) => (
           <button key={imp.text} type="button" onClick={() => setSelected(imp.text)}
             className={cn(FOCUS, 'w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
               selected === imp.text ? 'border-primary bg-primary/10 font-medium' : 'border-border bg-card hover:border-primary hover:bg-primary/5')}>
             {imp.text}
-            {imp.effect && <span className={cn(TONE.attention.text, "mt-1 flex items-center gap-1 text-[11px] font-medium")}><Zap className="h-3 w-3" /> {imp.effect}</span>}
+            {/* Every option changes something. An improvement with no effect is a poster. */}
+            <span className={cn(TONE.attention.text, 'mt-1 flex items-center gap-1 text-[11px] font-medium')}><Zap className="h-3 w-3" /> {imp.effect}</span>
+            {/* ...and where the log put it on the list, the log gets to say so. */}
+            {imp.because && <span className="mt-0.5 block text-[11px] text-muted-foreground">{imp.because}</span>}
           </button>
         ))}
       </div>

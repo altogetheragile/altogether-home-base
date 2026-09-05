@@ -24,6 +24,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     setDor: (dor: string[]) => send({ type: 'SET_DOR', dor }),
     setDod: (dod: string[]) => send({ type: 'SET_DOD', dod }),
     takeSignal: (index: number) => send({ type: 'ACCEPT_SIGNAL', index }),
+    declineSignal: (index: number) => send({ type: 'DECLINE_SIGNAL', index }),
     setForecast: (ids: string[]) => send({ type: 'SET_FORECAST', ids }),
     agreeSprintGoal: (seat: string) => send({ type: 'AGREE_SPRINT_GOAL', seat }),
     spendDay: (seconds: number) => send({ type: 'SPEND_DAY', seconds }),
