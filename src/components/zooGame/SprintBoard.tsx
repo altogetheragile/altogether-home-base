@@ -86,6 +86,9 @@ interface SprintBoardProps {
   /** The Product Owner's look-ahead: add what the forecast implies, or turn it down. */
   onAddProposal?: (draft: PbiDraft) => void;
   onDeclineProposal?: (proposalId: string) => void;
+  /** Whether this player holds the Developers' work: a solo player holds all three, and a Product
+   *  Owner sitting with real Developers holds none of it. The bench follows it. */
+  canBuild?: boolean;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -295,7 +298,7 @@ function BoardRail({ doing, todo, done, held, onPick }: {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -850,7 +853,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             {inBuild && <BoardRail doing={doing} todo={todo} done={[...deploy, ...done]} held={bench} onPick={onBuilding} />}
             <div className="min-w-0 flex-1">
               <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
-                drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus={inBuild}
+                drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus={inBuild} canBuild={canBuild}
                 onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
             </div>
           </div>
