@@ -18,6 +18,7 @@ import { SprintReview } from '@/components/zooGame/SprintReview';
 import { SprintRetro } from '@/components/zooGame/SprintRetro';
 import { ZooFinal } from '@/components/zooGame/ZooFinal';
 import { ZooShell, type ArtifactTab } from '@/components/zooGame/ZooShell';
+import { BacklogTab } from '@/components/zooGame/BacklogBench';
 import { GameLinks } from '@/components/zooGame/GameLinks';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { Celebration } from '@/components/zooGame/Celebration';
@@ -285,7 +286,17 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }
     : null;
 
-  const shellProps = { seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, buildMode, links: <GameLinks />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  // The Product Backlog tab is a bench, not a glance: refinement is ongoing work, so it has to be
+  // possible while a Sprint runs - and cost the day's build time when it is. Refinement is the
+  // screen on that tab before the first Sprint, so the bench takes over from there on.
+  const backlogTab = (
+    <BacklogTab state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi}
+      onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories}
+      onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi}
+      onPull={state.phase === 'sprint' ? pull : undefined} />
+  );
+
+  const shellProps = { backlogTab, seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, buildMode, links: <GameLinks />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     // The Coach is gone. It floated advice over whatever you were doing - often about refinement,
     // often at the wrong moment, twice over the button you needed. Every lesson it carried belongs
     // in the flow, at the moment it applies, as part of the screen that applies it. What survives
