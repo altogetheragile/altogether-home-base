@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
@@ -260,20 +260,6 @@ function CardSteps({ item }: { item: BacklogItem }) {
 
 export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onMode, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
-  // How much of the board the bench and the day bar cover between them. MEASURED, because guessing
-  // it is how the board came to have less room reserved than the bench takes: with nothing on the
-  // bench there was no scroll at all and the last two cards were simply unreachable. Nothing here
-  // feeds back - the bench is positioned absolutely, so its height does not depend on this padding.
-  const benchWatch = useRef<ResizeObserver | null>(null);
-  const [benchH, setBenchH] = useState(0);
-  const benchRef = useCallback((el: HTMLDivElement | null) => {
-    benchWatch.current?.disconnect();
-    if (!el) { setBenchH(0); return; }
-    setBenchH(el.offsetHeight);
-    const ro = new ResizeObserver(() => setBenchH((h) => (Math.abs(el.offsetHeight - h) > 1 ? el.offsetHeight : h)));
-    ro.observe(el);
-    benchWatch.current = ro;
-  }, []);
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
   // caveat that pulling more in is a negotiation, not a default, is written on it.
@@ -524,7 +510,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           In Build the bench is the content, so the pane shrinks to what is in it - otherwise the
           studio is pushed to the bottom of an empty screen. */}
       <div className={cn('space-y-3 pr-0.5', inBuild ? 'shrink-0' : 'min-h-0 flex-1 overflow-y-auto')}
-        style={inBuild ? undefined : { paddingBottom: benchH + DOCKED_BAR_PX + 12 }}>
+        style={inBuild ? undefined : { paddingBottom: DOCKED_BAR_PX + 12 }}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : (
@@ -823,10 +809,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           one thing meant scrolling up to see where it was and down again to work on it. Pinned to
           the bottom of the half it is always there and the board is always there, and neither has
           to move. It gives most of its height back when there is nothing on it. */}
-      {edit && !dayStarting && (
+      {/* The studio belongs to Build and nowhere else. Docked under the board in Plan it covered the
+          columns you were trying to work - the board became unusable, which is exactly what the
+          Plan/Build switch exists to prevent. Reported from playing it. */}
+      {edit && !dayStarting && inBuild && (
         // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
         // fault rather than depth.
-        <div ref={benchRef} className={cn('flex flex-col bg-background',
+        <div className={cn('flex flex-col bg-background',
           // In Build it IS the screen, so it sits in the flow under the goal band rather than being
           // pinned over it - pinned, it covered the commitment the whole state is for. In Plan it
           // is a bench docked at the foot, as it was.

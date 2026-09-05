@@ -1,26 +1,40 @@
-import type { ReactNode } from 'react';
+import { Children, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { FOCUS } from './ui/tokens';
 
-// Everything the game wants to say to you, in one place, out of the way of the thing it is about.
+// Everything the game wants to say to you, in one line at the foot of the screen.
 //
-// It used to be two rails in the empty margins beside the board - one for things to read, one for
-// what your team just did. Then the board grew to fill the width, and there were no margins: a
-// coach card landed on top of the day's event banner, which is two messages about the same moment
-// covering each other up.
+// It has been three things and all three were wrong. Two rails in the margins, until the board
+// filled the width and there were no margins. Then one stack in the corner - which on a Sprint with
+// seats played by the game became four cards over the park, reported as "blocking out the park view
+// and too much to follow".
 //
-// So: one stack, in the corner, above the action bar. Each note already says who is talking - the
-// coach, the rules, a seat - and with them in one column that is the only thing you need to tell
-// them apart. Newest at the bottom, nearest the corner your eye is already in.
+// So: one line, the newest thing said, with a count of what came before it. It never covers the
+// work, because it is a strip and not a stack. Open it to read the rest; it closes itself when you
+// take the next thing off it. What a seat did is commentary - the decision log at the Retrospective
+// is the record, and that is where a team inspects what happened.
 
 export function MessageRail({ children }: { children: ReactNode }) {
+  const items = Children.toArray(children).filter(Boolean);
+  const [open, setOpen] = useState(false);
+  if (!items.length) return null;
+  const newest = items[0];
+  const rest = items.length - 1;
   return (
-    <div className={cn(
-      'pointer-events-none fixed bottom-20 right-2 z-40 flex w-[min(20rem,calc(100vw-1rem))] flex-col gap-2',
-      // Capped and scrollable: a coach nudge, a refusal and a long refinement note at once cannot
-      // run off the top of the screen.
-      'max-h-[55vh] overflow-y-auto',
-    )}>
-      {children}
+    <div className="pointer-events-none fixed inset-x-2 bottom-2 z-40 flex justify-center sm:bottom-3">
+      <div className="pointer-events-auto w-full max-w-3xl overflow-hidden rounded-lg border border-border bg-background/95 shadow-lg backdrop-blur">
+        {open ? (
+          <div className="max-h-[40vh] space-y-1.5 overflow-y-auto p-1.5">{items}</div>
+        ) : (
+          <div className="p-1.5">{newest}</div>
+        )}
+        {rest > 0 && (
+          <button type="button" onClick={() => setOpen((o) => !o)}
+            className={cn(FOCUS, 'flex w-full items-center justify-center gap-1 border-t border-border/60 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground')}>
+            {open ? 'show less' : `and ${rest} more`}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
