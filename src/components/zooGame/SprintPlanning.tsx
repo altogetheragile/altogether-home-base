@@ -14,6 +14,7 @@ import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { REFINE_POINT_OPTIONS } from './config';
 import { ActionBar } from './ActionBar';
+import { EventStage } from './EventStage';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -201,9 +202,12 @@ function TheBet({ state, onSetBet }: { state: ZooGameState; onSetBet: (bet: { wh
  *  them is moving through one event rather than arriving somewhere new. */
 function PlanColumns({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-      <section className="min-w-0 space-y-1.5">{left}</section>
-      <section className="min-w-0 space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3">{right}</section>
+    <div className="grid gap-4 2xl:grid-cols-2 2xl:items-start">
+      {/* Stacked - which is what half a screen means - the thing you are being asked to do goes
+          first, and the Backlog you are reading it against under it. Side by side, the Backlog is
+          back on the left, where it is read from. */}
+      <section className="min-w-0 space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3 2xl:order-2">{right}</section>
+      <section className="min-w-0 space-y-1.5 2xl:order-1">{left}</section>
     </div>
   );
 }
@@ -318,7 +322,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   const current = STEPS.find((s) => s.key === step)!;
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 overflow-y-auto pr-1">
+    <div className="flex h-full min-h-0 w-full flex-col gap-3">
       {/* Where you are, what you are being asked, and where the words are. Nothing else. */}
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
@@ -334,6 +338,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         </div>
       </header>
 
+      <EventStage state={state} at={step} title="The zoo as it stands"
+        note="What this Sprint is being planned against - the Increment so far.">
       {/* ---- WHY ---- */}
       {step === 'why' && (
         <PlanColumns
@@ -618,6 +624,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         </div>
         );
       })()}
+      </EventStage>
 
       {/* One primary action, always in the same place. */}
       <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>

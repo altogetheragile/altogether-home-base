@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, useCallback } from 'react';
+import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn } from './engine';
@@ -7,12 +7,12 @@ import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
 // nobody needs any of it until they reach a Review. Loading it with the game made opening the game
 // slower to pay for a picture shown at the end of a Sprint.
-const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
+import { EventStage } from './EventStage';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
@@ -94,17 +94,6 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   const current = STEPS.find((s) => s.key === step)!;
   const seen = STEPS.findIndex((s) => s.key === step);
   const goTo = (k: Step) => setStep(k);
-  // The Increment is drawn at whatever height the column it sits in actually has. It used to be a
-  // fixed 470px in a column down the middle of the screen, which pushed everything said about it
-  // below the fold on the very screens with the most room to spare.
-  const [picture, setPicture] = useState(470);
-  const frame = useCallback((el: HTMLDivElement | null) => {
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => setPicture(Math.max(240, Math.round(el.clientHeight - 34))));
-    ro.observe(el);
-    setPicture(Math.max(240, Math.round(el.clientHeight - 34)));
-  }, []);
-
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-3">
       {/* The Review has a real agenda, so it walks: what was Done, what the visitors made of it,
@@ -120,23 +109,8 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:overflow-hidden">
-      {/* The Increment itself, before anything is said about it. A Review that opens with a chart
-          is a status meeting; a Review that opens with the product is an inspection. This is the
-          same zoo the park view holds, seen the way a visitor arriving at the gate would see it. */}
-      <section ref={frame} className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-[#8cc063]/25">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">The Increment &middot; everything delivered so far</span>
-          <span className="text-[11px] text-muted-foreground">Not this Sprint's work alone - the whole zoo, which is what an Increment is.</span>
-        </div>
-        <Suspense fallback={<div className="mx-3 mb-2 flex-1 animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
-          <IsoZoo state={state} height={picture} className="px-3 pb-2" />
-        </Suspense>
-      </section>
-
-      {/* ...and everything the Review has to say about it, beside it rather than under it - on
-          every step of the agenda, because the Increment is what all three of them are about. */}
-      <div data-part="review-read" className="min-h-0 space-y-3 overflow-y-auto pr-1">
+      <EventStage state={state} at={step} title="The Increment &middot; everything delivered so far"
+        note="Not this Sprint's work alone - the whole zoo, which is what an Increment is.">
       {step === 'done' && (<>
 
       {/* The bet, answered. This is the Sprint's own question, and the Review is the only place it
@@ -500,8 +474,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       </section>
 
       </>)}
-      </div>
-      </div>
+      </EventStage>
 
       <ActionBar left={step !== 'done' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button> : undefined}>
         {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
