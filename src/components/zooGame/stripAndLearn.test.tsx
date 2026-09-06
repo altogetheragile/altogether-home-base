@@ -29,8 +29,8 @@ const sprint = (over: Partial<ZooGameState> = {}): ZooGameState => {
   } as ZooGameState;
 };
 
-const shell = (state: ZooGameState, onSetClockPaused: (p: boolean) => void = () => {}) =>
-  render(<MemoryRouter><ZooShell state={state} onSetClockPaused={onSetClockPaused}><div>the screen</div></ZooShell></MemoryRouter>);
+const shell = (state: ZooGameState, onSetClockPaused: (p: boolean) => void = () => {}, more: Record<string, unknown> = {}) =>
+  render(<MemoryRouter><ZooShell state={state} onSetClockPaused={onSetClockPaused} {...more}><div>the screen</div></ZooShell></MemoryRouter>);
 
 describe('the strip', () => {
   it('draws the day as a clock, on the row where the eye already goes', () => {
@@ -141,5 +141,21 @@ describe('holding the clock', () => {
     // Learn mode already stops it: two ways to say "paused" on one clock is one too many.
     shell(sprint({ learnMode: true } as Partial<ZooGameState>));
     expect(screen.queryByRole('button', { name: /Hold the clock/i })).toBeNull();
+  });
+});
+
+// The numbers, where numbers belong.
+//
+// From the layout sketch: "I would also add the metrics as a menu option." They are reference
+// during a Sprint - they have their answers at the Review - so they live behind a menu rather than
+// on the band, where four abbreviations with no values used to sit at the same weight as the clock.
+describe('the value measures', () => {
+  it('open from the game menu, at the measures', () => {
+    shell(sprint(), () => {}, { onSave: () => {} });
+    fireEvent.click(screen.getByRole('button', { name: /Game menu/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Value measures/i }));
+    const drawer = screen.getByRole('dialog', { name: 'Learn' });
+    expect(drawer.textContent, 'the menu opened Learn somewhere else').toContain('Current Value');
+    expect(drawer.textContent).toMatch(/How:/);
   });
 });

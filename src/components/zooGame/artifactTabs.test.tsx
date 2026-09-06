@@ -68,8 +68,7 @@ describe('the three artifact tabs', () => {
       expect(tabs(container).map((t) => t.label.split(' ').slice(0, 2).join(' ')),
         `${phase} became a tab`).toEqual(['Product Backlog', 'Sprint Backlog', 'Increment']);
       // ...and the artifact it is about is the one showing behind it.
-      const active = [...container.querySelectorAll('button')]
-        .find((b) => (b.className ?? '').includes('border-primary'));
+      const active = container.querySelector('button[aria-current="page"]');
       expect((active?.textContent ?? '').trim(), `${phase} took over the wrong artifact`).toContain(artifact);
     }
   });
