@@ -593,8 +593,19 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   // position at all was what opted an item OUT of that. Dropped onto a spot by hand
   // (START_ITEM_AT) it keeps that spot, because a position somebody chose is a decision.
   const pending = state.pendingPlacement?.itemId === id ? null : state.pendingPlacement;
+  // Whoever takes it is on it. Nothing recorded that before: `assignedDevs` was only ever filled by
+  // somebody choosing a name from a menu, so an item the Developers had visibly built still said
+  // "nobody picked it up" against the Definition of Done - and where the Developers are played by
+  // the game, nobody ever chose. The team is self-managing, so this is not the game assigning work:
+  // it is the game writing down who took it. Deterministic - the Developer with the least on -
+  // so the same game always reads the same way.
+  const load = (dev: { id: string }) => state.backlog.filter((it) => it.status === 'committed' && it.started
+    && (it.assignedDevs ?? []).includes(dev.id)).length;
+  const freest = [...state.team.developers].sort((a, z) => load(a) - load(z) || a.id.localeCompare(z.id))[0];
   const moved: ZooGameState = { ...state, pendingPlacement: pending,
-    backlog: state.backlog.map((it) => (it.id === id ? { ...it, started: true } : it)) };
+    backlog: state.backlog.map((it) => (it.id === id
+      ? { ...it, started: true, assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (freest ? [freest.id] : []) }
+      : it)) };
   // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
   // may make it - the Sprint Backlog belongs to them - which is why the accountability is named
   // even when one person is playing all three.

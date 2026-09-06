@@ -236,6 +236,27 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
                            says: `${task.label} - done, on ${it.name}.` };
       }
 
+      // A second pair of eyes on something that is otherwise finished.
+      //
+      // "Peer-reviewed by another Developer" is a line in the shipped Definition of Done, and the
+      // only thing that satisfies it is a second Developer being on the item. Nobody ever was:
+      // seats played by the game built the work and never reviewed each other's, so an item could
+      // meet every acceptance criterion, be signed off, stand on the park - and sit unfinishable
+      // for the rest of the Sprint. A Product Owner watching that could do nothing about it either,
+      // because assigning a Developer is not their call and should not be. Reported from a live
+      // game, on day 3 of Sprint 3, with the Sprint Goal at risk over it.
+      const needsEyes = state.backlog.find((it) => it.status === 'committed' && it.started && it.design
+        && (it.assignedDevs ?? []).length === 1
+        && (it.tasks ?? []).every((t) => !t.label.trim() || t.done || isSignOffTask(t.label)));
+      if (needsEyes) {
+        const already = new Set(needsEyes.assignedDevs ?? []);
+        const free = state.team.developers.find((d) => !already.has(d.id));
+        if (free) {
+          return { action: { type: 'ASSIGN_DEV', itemId: needsEyes.id, devId: free.id },
+                   says: `Took a look over ${needsEyes.name} with the second pair of eyes our Definition of Done asks for.` };
+        }
+      }
+
       // A pathway is only finished when a run of it actually reaches the zone. The park
       // answers that criterion itself - it either has a path running there or it does not -
       // so a path could be built, planned and Done, and still never be releasable, because
