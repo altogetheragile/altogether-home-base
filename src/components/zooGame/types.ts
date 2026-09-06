@@ -465,6 +465,9 @@ export interface ZooGameState {
   /** Set by the "hold the Daily Scrum every day" improvement: disciplined Daily Scrums
    *  become efficient, so holding one costs no build time. */
   scrumDiscipline: boolean;
+  /** A hand on the clock. The day stops until it comes off - state, not a browser's own idea, so a
+   *  shared game holds everybody at the same second. */
+  clockPaused?: boolean;
   /** What surfaced and what was done about it, Sprint by Sprint. The Retrospective's mirror reads
    *  this: six things removed and none left to the Developers is a pattern worth seeing. */
   impedimentLog?: { id: string; sprint: number; day: number; kind: 'block' | 'impediment'; how: ImpedimentAnswer; goal: boolean }[];
@@ -535,6 +538,7 @@ export type ZooAction =
   | { type: 'AGREE_SPRINT_GOAL'; seat: string }
   | { type: 'SPEND_DAY'; seconds: number }
   | { type: 'TICK_DAY' }
+  | { type: 'SET_CLOCK_PAUSED'; paused: boolean }
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
   | { type: 'SET_SPRINT_GOAL'; goal: string }

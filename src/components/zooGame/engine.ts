@@ -70,6 +70,10 @@ export const teamIsBusy = (state: ZooGameState): boolean => (state.owedSeconds ?
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
  *  at once. Paused in learn mode and outside a running build day. */
 export function tickDay(state: ZooGameState): ZooGameState {
+  // Held. A hand on the clock is a real thing a team does - to talk, to look at something, to be
+  // taught at - and it is game state rather than one browser's idea, so in a shared game the hold
+  // is everybody's. That is the trainer's pause-all in miniature.
+  if (state.clockPaused) return state;
   if (state.learnMode || state.phase !== 'sprint') return state;
   if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
   const left = state.daySecondsLeft - 1;
@@ -80,9 +84,17 @@ export function tickDay(state: ZooGameState): ZooGameState {
     : { ...state, daySecondsLeft: left, owedSeconds: owed };
 }
 
+/** Put a hand on the clock, or take it off. The Sprint's time is real, and stopping it is a
+ *  decision somebody takes rather than something that happens - so it is recorded nowhere and costs
+ *  nothing, but it is state, so everybody in a shared game is held at the same second. */
+export function setClockPaused(state: ZooGameState, paused: boolean): ZooGameState {
+  return state.clockPaused === paused ? state : { ...state, clockPaused: paused };
+}
+
 /** One second of the Daily Scrum's timebox. On expiry the disciplined default is taken:
  *  the plan is adapted and the day continues, so you decide inside the box. */
 export function tickScrum(state: ZooGameState): ZooGameState {
+  if (state.clockPaused) return state;
   if (state.learnMode || state.phase !== 'sprint' || state.dayStage !== 'dailyScrum') return state;
   const left = state.scrumSecondsLeft - 1;
   return left <= 0 ? runDailyScrum({ ...state, scrumSecondsLeft: 0 }) : { ...state, scrumSecondsLeft: left };

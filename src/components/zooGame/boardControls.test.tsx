@@ -33,7 +33,7 @@ describe('the Sprint Backlog screen', () => {
   it('has no Plan and Build switch to get lost in', () => {
     render(
       <MemoryRouter>
-        <ZooShell state={state()} onEndDay={noop}><div>the board</div></ZooShell>
+        <ZooShell state={state()}><div>the board</div></ZooShell>
       </MemoryRouter>,
     );
     const labels = screen.getAllByRole('button').map((b) => (b.textContent ?? '').trim());
