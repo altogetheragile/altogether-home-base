@@ -2185,6 +2185,89 @@ export function inHandItem(state: ZooGameState, picked?: string | null): Backlog
   return id ? state.backlog.find((it) => it.id === id) : undefined;
 }
 
+/** What is being asked of each accountability, right now.
+ *
+ *  A learner sitting in a seat could not tell what was theirs to do. The game knew - the Developers
+ *  had built something and were waiting on the criteria being ticked, a question about where a
+ *  habitat goes had been put and not answered, work had met the Definition of Done and nobody had
+ *  released it - and it said none of it out loud, on the screen where the work is. "How do I know
+ *  what to do as a PO?" was the question, and this is the answer.
+ *
+ *  Derived, never stored: an ask exists exactly as long as the thing it is about is true. Nothing
+ *  here decides anything - each one names what is being asked, who of, and by whom where the game
+ *  knows a name.
+ */
+export type Ask = {
+  id: string;
+  /** Whose it is. Not "who said it": the panel answers "what is being asked of me". */
+  of: 'product_owner' | 'developer' | 'scrum_master';
+  kind: 'question' | 'accept' | 'release' | 'review' | 'blocker' | 'ready' | 'start';
+  /** Who is asking, where the game knows a name. */
+  from?: string;
+  text: string;
+  itemId?: string;
+};
+
+export function asksNow(state: ZooGameState): Ask[] {
+  if (state.phase !== 'sprint') return [];
+  const out: Ask[] = [];
+  const devs = state.team.developers;
+  const nameOn = (item: BacklogItem) => devs.find((d) => (item.assignedDevs ?? []).includes(d.id))?.name;
+  const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
+
+  // A question the Developers have put, and are waiting on. It costs them the decision if nobody
+  // answers, which is the truer lesson - and a question nobody can see is a question nobody answers.
+  const asked = state.pendingPlacement
+    ? state.backlog.find((it) => it.id === state.pendingPlacement!.itemId) : null;
+  if (asked) {
+    out.push({ id: `place-${asked.id}`, of: 'product_owner', kind: 'question', from: nameOn(asked) ?? devs[0]?.name,
+      text: `Where should ${asked.name} go? It is what visitors walk up to, so it is your call.`, itemId: asked.id });
+  }
+
+  for (const it of inSprint) {
+    // Built, and waiting on the Product Owner to say whether it is what they asked for. This is the
+    // commonest thing anybody is waiting on, and nothing said it.
+    if (it.status === 'committed' && it.started && it.design && it.acceptance.length
+      && !it.acceptance.every((_, i) => !!it.acConfirmed?.[i])) {
+      const left = it.acceptance.filter((_, i) => !it.acConfirmed?.[i]).length;
+      out.push({ id: `accept-${it.id}`, of: 'product_owner', kind: 'accept', from: nameOn(it),
+        text: `${it.name} is built. ${left} criteri${left === 1 ? 'on' : 'a'} still to check against what we made.`,
+        itemId: it.id });
+    }
+    // Done, and not open. The Review is not the gate: anything Done can go live the day it is Done.
+    if (it.status === 'done' && readyToOpen(it)) {
+      out.push({ id: `release-${it.id}`, of: 'product_owner', kind: 'release',
+        text: `${it.name} is Done. Visitors cannot see it until you release it.`, itemId: it.id });
+    }
+    // A second pair of eyes, which the Definition of Done asks for and only a Developer can give.
+    if (it.status === 'committed' && it.started && it.design && (it.assignedDevs ?? []).length < 2
+      && state.definitionOfDone.some((l) => /peer.?review|another developer|reviewed by/i.test(l))) {
+      out.push({ id: `review-${it.id}`, of: 'developer', kind: 'review',
+        text: `${it.name} is waiting for a second pair of eyes.`, itemId: it.id });
+    }
+  }
+
+  // Nothing in progress, with a day to spend on it.
+  if (state.dayStage === 'building' && !inSprint.some((it) => it.status === 'committed' && it.started)
+    && inSprint.some((it) => it.status === 'committed')) {
+    out.push({ id: 'start', of: 'developer', kind: 'start', text: 'Nothing is in progress. What are we taking next?' });
+  }
+
+  // Something surfaced and is still here, which is the Scrum Master's to do something about.
+  if (state.carriedImpediment) {
+    out.push({ id: `imp-${state.carriedImpediment.id}`, of: 'scrum_master', kind: 'blocker',
+      text: `${state.carriedImpediment.title} is still with us.` });
+  }
+
+  // ...and whether there is anything to plan the next Sprint from. Refining is the whole Scrum
+  // Team's work, but what is in the Backlog and in what order is the Product Owner's.
+  if (readyHorizon(state) < 1) {
+    out.push({ id: 'ready', of: 'product_owner', kind: 'ready',
+      text: 'Less than a Sprint of ready work is left. The next Planning will have little to choose from.' });
+  }
+  return out;
+}
+
 // ============= Is the Sprint Goal safe? =============
 
 /** The one line the strip carries during a Sprint, and the sentence it drops when the answer
