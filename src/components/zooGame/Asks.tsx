@@ -1,10 +1,11 @@
-import type { ZooGameState } from './types';
+import type { ZooGameState, PbiDraft } from './types';
 import type { Ask } from './engine';
 import { asksNow, decisionsIn, whoIs, PLACEMENT_CHOICES } from './engine';
+import { lookAhead } from './lookAhead';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { MessageCircleQuestion, CheckCircle2, Rocket, Eye, AlertTriangle, ListChecks, Hammer, ArrowRight, Users, Megaphone } from 'lucide-react';
+import { MessageCircleQuestion, CheckCircle2, Rocket, Eye, AlertTriangle, ListChecks, Hammer, ArrowRight, Users, Megaphone, Lightbulb } from 'lucide-react';
 import type { SeatName } from './useZooSessions';
 import type { GameNote } from './notesDock';
 
@@ -35,7 +36,7 @@ const KIND: Record<Ask['kind'], { icon: typeof MessageCircleQuestion; what: stri
   start: { icon: Hammer, what: 'to start' },
 };
 
-export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlacement, onOpen, className }: {
+export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlacement, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
   state: ZooGameState;
   /** Which accountability is looking. Theirs comes first; a solo player holds all three, so nothing
    *  is hidden - the badge is what says whose it is. */
@@ -47,9 +48,17 @@ export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlace
   onAnswerPlacement?: (id: string, choice: string) => void;
   /** Release Done work to visitors. */
   onOpen?: (id: string) => void;
+  /** The Product Owner's look-ahead: take what the forecast implies into the Backlog, split what is
+   *  hiding inside an epic, or turn it down. It was a card of its own on the board; it is an ask
+   *  with two answers, so it belongs with the other asks. */
+  onAddProposal?: (draft: PbiDraft) => void;
+  onSplitEpic?: (id: string, memberIds: string[]) => void;
+  onDeclineProposal?: (id: string) => void;
   className?: string;
 }) {
   const asks = asksNow(state);
+  // What the Product Owner is looking at next, where they will see it.
+  const ahead = onDeclineProposal ? lookAhead(state) : [];
   // The last few things that actually happened, newest last as they were recorded. The log is the
   // Retrospective's record; this is its tail, so a learner meets it while it is still news.
   const said = decisionsIn(state, state.sprintNumber).slice(-4);
@@ -106,11 +115,44 @@ export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlace
         What is being asked, and of whom. {seat ? 'Yours first.' : 'You hold all three, so all of it is yours.'}
       </p>
 
-      {asks.length === 0 && notes.length === 0 && (
+      {asks.length === 0 && notes.length === 0 && ahead.length === 0 && (
         <p className="text-xs text-muted-foreground">Nothing is waiting on anybody. Build something.</p>
       )}
 
       {asks.length > 0 && <ul className="space-y-1.5">{mine.map(line)}{theirs.map(line)}</ul>}
+
+      {/* The Product Owner has been looking ahead. Two answers, and turning one down is a decision
+          too - it will not be put again. */}
+      {ahead.length > 0 && (
+        <ul className="mt-1.5 space-y-1.5">
+          {ahead.slice(0, 1).map((p) => (
+            <li key={p.id} className="rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2.5 py-2">
+              <div className="flex items-start gap-2">
+                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', OF.product_owner.cls)}>PO</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">looking ahead</span>
+                    {ahead.length > 1 && <span className="text-[11px] text-muted-foreground">{ahead.length - 1} more after this</span>}
+                  </div>
+                  <p className="mt-0.5 text-xs leading-snug">{p.why}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <Button size="sm" className="h-7 px-2 text-xs"
+                      onClick={() => (p.kind === 'add' ? onAddProposal?.(p.draft) : onSplitEpic?.(p.epicId, p.memberIds))}>
+                      {p.label}
+                    </Button>
+                    <button type="button" onClick={() => onDeclineProposal?.(p.id)}
+                      className={cn(FOCUS, 'text-[11px] text-muted-foreground underline hover:text-foreground')}>
+                      Not this one
+                    </button>
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Turning it down is a decision too - it will not be put again.</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* ...and what just happened. Half of what a panel like this is for is announcements - a task
           finished, work taken up, an event held - and the game already writes all of it down for the

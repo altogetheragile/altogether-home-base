@@ -64,7 +64,8 @@ export function spendDay(state: ZooGameState, seconds: number): ZooGameState {
 
 /** Whether the Developers are still working off something they have taken on. Seats played by the
  *  game wait while they are: work that appeared instantly and cost nothing is not work. */
-export const teamIsBusy = (state: ZooGameState): boolean => (state.owedSeconds ?? 0) > 0;
+export const teamIsBusy = (state: ZooGameState): boolean =>
+  state.phase === 'sprint' && state.dayStage === 'building' && (state.owedSeconds ?? 0) > 0;
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
@@ -1183,7 +1184,7 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     // the Product Backlog, so counting the Sprint's items then gives "delivered 0 of 0" - which
     // told a team that had over-forecast by eighteen points nothing at all.
     forecastPoints: committedPts,
-    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
+    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, owedSeconds: 0, pendingImpediment: null, carriedImpediment: null,
     // Topic three's decision. Refinement planned into a Sprint is work in the plan, with a size,
     // that somebody has to actually hold - not a tax quietly docked from every day whether or not
     // anyone does it. It takes capacity from building, which is the trade-off, and it is not Done
@@ -1665,6 +1666,12 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
     ? (carried.waitDays > 1 ? { ...carried, waitDays: carried.waitDays - 1 } : null)
     : carried;
   return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0,
+    // Work owed is work owed to TODAY. Whatever was taken on and not worked off ends with the day,
+    // the way an unfinished afternoon does - and carrying it was worse than untidy: seats played by
+    // the game take no new move while the team is busy, so a debt that outlived its day froze every
+    // one of them for the rest of the game. A Sprint 2 Planning sat waiting for Developers who were
+    // never going to answer. Reported from a live game.
+    owedSeconds: 0,
     carriedImpediment: waited, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult) };
 }
 
@@ -1696,7 +1703,7 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
   // has to happen here rather than when the day turned over - otherwise holding the event
   // costs nothing, which is the opposite of what it should teach.
-  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
+  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, owedSeconds: 0, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(cleared, mult);
 }
 
@@ -1757,7 +1764,7 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
     impedimentLog: [...(logged.impedimentLog ?? []),
       { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal }],
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult) };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, owedSeconds: 0, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult) };
   return advanceDay(base, outcome.mult);
 }
 
@@ -1783,7 +1790,7 @@ export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
     carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
     missedScrums: state.missedScrums + (imp ? 1 : 0),
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, owedSeconds: 0, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(base, mult);
 }
 
@@ -1832,6 +1839,8 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
 }
 
 export function reviewSprint(state: ZooGameState): ZooGameState {
+  // Nothing is owed to a Sprint that is over.
+  state = { ...state, owedSeconds: 0 };
   // Enclosures are infrastructure, not something visitors score directly - exclude them
   // from the simulation (the animals inside them carry the appeal).
   const openItems = state.backlog.filter((it) => it.status === 'open' && it.category !== 'enclosure').map(toZooItem);
@@ -1898,6 +1907,7 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
   return {
     ...state,
     phase: 'planning',
+    owedSeconds: 0,
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
@@ -1935,6 +1945,8 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     // Straight to Planning. Refinement is not a step between Sprints - there is no gap between
     // Sprints - it is work the Developers do DURING one, preparing the Backlog for later ones.
     phase: 'planning',
+    // Nothing is owed to the Sprint that just ended.
+    owedSeconds: 0,
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,

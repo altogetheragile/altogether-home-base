@@ -20,8 +20,6 @@ import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { DesignBench } from './DesignBench';
 import { Asks } from './Asks';
-import { PoLookAhead } from './PoLookAhead';
-import { lookAhead } from './lookAhead';
 import type { EditApi } from './ParkView';
 import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
@@ -410,7 +408,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   );
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col gap-3">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col gap-3">
       {/* The board's question, then the board's controls - two rows, in that order, always.
 
           They were one row that split left and right and wrapped when the pane narrowed, so the
@@ -453,7 +451,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {/* In Plan this scrolls under a bench pinned to the foot, so it reserves the bench's height.
           In Build the bench is the content, so the pane shrinks to what is in it - otherwise the
           studio is pushed to the bottom of an empty screen. */}
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-0.5"
+      <div className="flex min-h-0 flex-1 flex-col gap-3 pr-0.5"
         style={{ paddingBottom: DOCKED_BAR_PX + 12 }}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
@@ -484,8 +482,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
               you open when you want to pull something in, and close again. Most of a Sprint you are
               working the Sprint Backlog, and a permanent Product Backlog column beside it invites
               exactly the mid-Sprint scope creep the Guide asks you to negotiate rather than assume. */}
-          <div>
-            <div className="min-w-0 space-y-2">
+          {/* The height runs all the way down to the columns. These two wrappers used to be plain
+              blocks, so the board sized itself to its cards and pushed what is being asked and the
+              thing in your hands off the bottom of the screen - reported from a live game with a
+              full To Do column. */}
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
               {/* The tab says which artifact this is; in Build the item in hand is the heading. */}
 
               {/* The Developers have a question, and it is above the board because a question you
@@ -526,7 +528,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   negotiation rather than a menu. */}
               {/* One outlined region per thing, so the screen reads as areas rather than as a wall
                   of cards: the board here, what is being asked below it, the park beside both. */}
-              <div className="grid grid-cols-1 items-start gap-2 rounded-lg border-2 border-border p-2 md:grid-cols-3">
+              <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden rounded-lg border-2 border-border p-2 md:grid-cols-3">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
@@ -701,13 +703,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 </BoardColumn>
                 <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Dropping here runs the Done check. Not Done and the card comes back, with reasons.</p>
                 </div>
-
-              {/* What the Product Owner is looking at next. Worth reading during a Sprint - the zone
-                  you are opening is the one being built this minute - and not worth 170 pixels above
-                  the board, where it stood between you and the work. */}
-              {onAddProposal && onDeclineProposal && (
-                <PoLookAhead proposals={lookAhead(state)} onAdd={onAddProposal} onSplit={onSplitEpic} onDecline={onDeclineProposal} />
-              )}
               </div>
             </div>
           </div>
@@ -726,11 +721,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {/* What is being asked of whom, beside what is in your hands: the two halves of the middle of
           a Sprint. Somebody is waiting on you, and something is on the bench. */}
       {!dayStarting && (
-        <div className={cn('grid gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]' : '')}>
-          <Asks state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
-            onAnswerPlacement={onAnswerPlacement} onOpen={onOpen} />
+        <div className={cn('grid min-h-0 shrink-0 gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]' : '')}
+          style={{ height: onBench2 && edit ? '46%' : undefined, minHeight: 200 }}>
+          <Asks className="min-h-0 overflow-y-auto" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
+            onAnswerPlacement={onAnswerPlacement} onOpen={onOpen}
+            onAddProposal={onAddProposal} onSplitEpic={onSplitEpic} onDeclineProposal={onDeclineProposal} />
           {edit && onBench2 && (
-            <div className="relative min-w-0 rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
+            <div className="relative min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
               <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
                 drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild}
                 onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />

@@ -66,7 +66,13 @@ describe('what work costs the day', () => {
     expect(s.phase, 'the Sprint ran past its own length to finish the work').not.toBe('sprint');
     expect(ticked, 'a three-day Sprint took more than three days of clock')
       .toBeLessThanOrEqual(DAY_SECONDS * 3 + 5);
-    expect(s.owedSeconds ?? 0, 'work nobody had time for was quietly finished anyway').toBeGreaterThan(0);
+    // ...and the work nobody had time for is not quietly finished: it goes back to the Backlog.
+    expect(s.backlog.some((it) => it.carriedOver || it.status === 'backlog'),
+      'work nobody had time for was quietly finished anyway').toBe(true);
+    // The debt itself dies with the Sprint. It used to outlive it, and seats played by the game
+    // take no new move while the team is busy - so an unpaid second from Sprint 1 froze every one
+    // of them for the rest of the game.
+    expect(s.owedSeconds ?? 0, 'a debt outlived the Sprint that owed it').toBe(0);
   });
 
   it('is not charged in learn mode, where the clock is paused', () => {
