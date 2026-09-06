@@ -1,8 +1,7 @@
 import type { ZooGameState, PbiDraft } from './types';
 import type { Ask } from './engine';
-import { asksNow, decisionsIn, whoIs, PLACEMENT_CHOICES } from './engine';
+import { asksNow, decisionsIn, whoIs } from './engine';
 import { lookAhead } from './lookAhead';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { MessageCircleQuestion, CheckCircle2, Rocket, Eye, AlertTriangle, ListChecks, Hammer, ArrowRight, Users, Megaphone, Lightbulb } from 'lucide-react';
@@ -36,18 +35,17 @@ const KIND: Record<Ask['kind'], { icon: typeof MessageCircleQuestion; what: stri
   start: { icon: Hammer, what: 'to start' },
 };
 
-export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlacement, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
+export function Asks({ state, seat = null, notes = [], onOpenItem, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
   state: ZooGameState;
   /** Which accountability is looking. Theirs comes first; a solo player holds all three, so nothing
    *  is hidden - the badge is what says whose it is. */
   seat?: SeatName | null;
   /** ...and what has been said, under what is being asked. The dock flashes it; this keeps it. */
   notes?: GameNote[];
-  /** Put an item on the bench, which is where its criteria are ticked. */
+  /** Put an item on the bench, which is where its criteria are ticked - and where a question about
+   *  it is answered, and where Done work is released. The message says what is being asked; it does
+   *  not answer it here. */
   onOpenItem?: (id: string) => void;
-  onAnswerPlacement?: (id: string, choice: string) => void;
-  /** Release Done work to visitors. */
-  onOpen?: (id: string) => void;
   /** The Product Owner's look-ahead: take what the forecast implies into the Backlog, split what is
    *  hiding inside an epic, or turn it down. It was a card of its own on the board; it is an ask
    *  with two answers, so it belongs with the other asks. */
@@ -66,54 +64,55 @@ export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlace
   const mine = seat ? asks.filter((a) => a.of === seat) : asks;
   const theirs = seat ? asks.filter((a) => a.of !== seat) : [];
 
+  // A message says what is being asked and takes you to where it is answered. It carries no
+  // controls of its own: a row of buttons on every line turns a message board into a form, and the
+  // answering belongs to the board, the bench and the park - where the work actually is.
   const line = (a: Ask) => {
     const k = KIND[a.kind];
     const Icon = k.icon;
     const item = a.itemId ? state.backlog.find((it) => it.id === a.itemId) : undefined;
-    return (
-      <li key={a.id} className="rounded-lg border border-border bg-card px-2.5 py-2">
-        <div className="flex items-start gap-2">
-          <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', OF[a.of].cls)}>{OF[a.of].label}</span>
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.what}</span>
-              {a.from && <span className="text-[11px] text-muted-foreground">from {a.from}</span>}
-            </div>
-            <p className="mt-0.5 text-xs leading-snug">{a.text}</p>
-
-            {/* ...and the doing of it, where the game can offer it here. A list of things being
-                asked, with no way to answer any of them, is a nag. */}
-            {a.kind === 'question' && item && onAnswerPlacement && (
-              <div className="mt-1.5 flex flex-wrap gap-1">
-                {PLACEMENT_CHOICES.map((c) => (
-                  <button key={c.key} type="button" onClick={() => onAnswerPlacement(item.id, c.key)}
-                    className={cn(FOCUS, 'rounded-md border border-border px-1.5 py-0.5 text-[11px] hover:bg-muted/60')}>{c.label}</button>
-                ))}
-                <button type="button" onClick={() => onAnswerPlacement(item.id, 'them')}
-                  className={cn(FOCUS, 'rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground hover:text-foreground')}>You choose</button>
-              </div>
-            )}
-            {(a.kind === 'accept' || a.kind === 'review') && item && onOpenItem && (
-              <Button size="sm" variant="outline" className="mt-1.5 h-7 px-2 text-xs" onClick={() => onOpenItem(item.id)}>
-                {a.kind === 'accept' ? 'Check it against its criteria' : 'Open it'}
-              </Button>
-            )}
-            {a.kind === 'release' && item && onOpen && (
-              <Button size="sm" className="mt-1.5 h-7 px-2 text-xs" onClick={() => onOpen(item.id)}>Open it to visitors</Button>
-            )}
+    const go = item && onOpenItem ? () => onOpenItem(item.id) : undefined;
+    const body = (
+      <div className="flex items-start gap-2">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide', OF[a.of].cls)}>{OF[a.of].label}</span>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{k.what}</span>
+            {a.from && <span className="text-[11px] text-muted-foreground">from {a.from}</span>}
           </div>
+          <p className="mt-0.5 text-xs leading-snug">{a.text}</p>
         </div>
+      </div>
+    );
+    return (
+      <li key={a.id}>
+        {go ? (
+          <button type="button" onClick={go} title="Open it"
+            className={cn(FOCUS, 'w-full rounded-lg border border-border bg-card px-2.5 py-2 text-left hover:border-primary/60 hover:bg-muted/50')}>
+            {body}
+          </button>
+        ) : (
+          <div className="rounded-lg border border-border bg-card px-2.5 py-2">{body}</div>
+        )}
       </li>
     );
   };
 
   return (
-    <section data-part="asks" className={cn('rounded-lg border-2 border-border bg-background p-2.5', className)}>
-      <h3 className="text-sm font-bold">Actions &amp; Messages</h3>
-      <p className="mb-2 text-[11px] text-muted-foreground">
-        What is being asked, and of whom. {seat ? 'Yours first.' : 'You hold all three, so all of it is yours.'}
-      </p>
+    <section data-part="asks" className={cn('flex flex-col rounded-lg border-2 border-primary/70 bg-background', className)}>
+      {/* The heading is on the border, in the game's own colour: "the message centre is hard to
+          see" - it was a bold line inside a grey box, and it read as a footnote to the board. */}
+      <div className="sticky top-0 z-10 flex items-baseline gap-2 rounded-t-md bg-primary px-2.5 py-1.5 text-primary-foreground">
+        <h3 className="text-sm font-bold">Actions &amp; Messages</h3>
+        <span className="text-[11px] opacity-90">
+          {seat ? 'yours first' : 'you hold all three'}
+        </span>
+        {asks.length > 0 && (
+          <span className="ml-auto rounded-full bg-primary-foreground/20 px-1.5 text-[11px] font-bold tabular-nums">{asks.length}</span>
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
 
       {asks.length === 0 && notes.length === 0 && ahead.length === 0 && (
         <p className="text-xs text-muted-foreground">Nothing is waiting on anybody. Build something.</p>
@@ -136,11 +135,12 @@ export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlace
                     {ahead.length > 1 && <span className="text-[11px] text-muted-foreground">{ahead.length - 1} more after this</span>}
                   </div>
                   <p className="mt-0.5 text-xs leading-snug">{p.why}</p>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <Button size="sm" className="h-7 px-2 text-xs"
-                      onClick={() => (p.kind === 'add' ? onAddProposal?.(p.draft) : onSplitEpic?.(p.epicId, p.memberIds))}>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-3">
+                    <button type="button"
+                      onClick={() => (p.kind === 'add' ? onAddProposal?.(p.draft) : onSplitEpic?.(p.epicId, p.memberIds))}
+                      className={cn(FOCUS, 'text-xs font-semibold text-primary underline underline-offset-2 hover:text-primary/80')}>
                       {p.label}
-                    </Button>
+                    </button>
                     <button type="button" onClick={() => onDeclineProposal?.(p.id)}
                       className={cn(FOCUS, 'text-[11px] text-muted-foreground underline hover:text-foreground')}>
                       Not this one
@@ -182,6 +182,7 @@ export function Asks({ state, seat = null, notes = [], onOpenItem, onAnswerPlace
           })}
         </div>
       )}
+      </div>
     </section>
   );
 }

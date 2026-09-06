@@ -4,6 +4,7 @@ import { ParkView, type EditApi } from './ParkView';
 import { DoneGate } from './DoneGate';
 import { goalPulse } from './engine';
 import { DayClock } from './DayClock';
+import { TeamRow } from './ScrumTeam';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -163,7 +164,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused, onRenameMember, onWho, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -175,6 +176,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   menuLinks?: ReactNode;
   /** A hand on the clock, or off it. */
   onSetClockPaused?: (paused: boolean) => void;
+  /** The Scrum Team rides on the tab row: renaming a member, and what to say when somebody who
+   *  cannot take the work is dragged onto it. */
+  onRenameMember?: (id: string, name: string) => void;
+  onWho?: (why: string) => void;
   /** Somebody is reading what the game said, or has stopped. A solo game stops its clock while they
    *  are: the Sprint's time is for building, and charging a learner for reading what the game chose
    *  to tell them is the game punishing its own teaching. */
@@ -244,10 +249,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Where the Learn drawer has been sent from outside it - the value measures, from the game menu.
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
   const pulse = state.phase === 'sprint' ? goalPulse(state) : null;
-  // ...and the sentence only while the day is being built. At the Daily Scrum you are already in
-  // the conversation it would send you to, and "take it to tomorrow's Daily Scrum" said during one
-  // is the game talking over itself.
-  const warn = pulse?.level === 'risk' && state.dayStage === 'building' ? pulse : null;
 
   const notes: GameNote[] = [];
   if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, text: refused, onDismiss: onDismissRefused });
@@ -368,26 +369,25 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           </div>
         </div>
 
-        {/* ...and when the answer changes, the strip says so in a sentence and nothing else on the
-            screen moves. Both ways out of it are decisions, and the game records either. */}
-        {warn?.headline && (
-          <div data-part="goal-warning" className="mb-1.5 rounded-lg border-2 border-primary bg-primary/5 px-3 py-1.5">
-            <p className="text-xs font-bold text-foreground">{warn.headline}</p>
-            <p className="text-[11px] text-muted-foreground">{warn.sentence}</p>
-          </div>
-        )}
         {/* The three artifacts, in the order work moves through them - and, at the end of the row,
             which state the Sprint Backlog is in. The switch used to live on the board itself, where
             it wrapped from one side to the other as the pane narrowed: the same control in two
             places depending on which state you were in. It is a property of the tab, so it rides on
             the tab row, in one place, on both states. */}
-        <div className="mt-1 flex items-end gap-1 border-b-2 border-border">
+        <div data-part="tab-row" className="mt-1 flex items-end gap-1 border-b-2 border-border">
           <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} icon={ClipboardList} label="Product Backlog" />
           <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} icon={ListChecks} label="Sprint Backlog"
             locked={sprintBacklog ? undefined : 'made at Planning'} />
           {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
               Increment. A learner who never connects the two is playing a building game. */}
           <Tab active={tab === 'increment'} onClick={() => setTab('increment')} icon={Trees} label="Increment" badge={open ? String(open) : undefined} />
+          {/* The Scrum Team, on the row with the artifacts they work on - which is where the sketch
+              puts them. In a row of their own they cost a whole line and pushed the board down. */}
+          {state.phase === 'sprint' && onRenameMember && (
+            <div className="mb-1 ml-3 min-w-0 flex-1 overflow-x-auto">
+              <TeamRow team={state.team} onRename={onRenameMember} onWho={onWho} />
+            </div>
+          )}
           {/* The day, drawn like a clock rather than said like a label - and a hand you can put on
               it. It rides on the tab row so it is the same size and the same place on every tab. */}
           {state.phase === 'sprint' && (

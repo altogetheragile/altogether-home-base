@@ -60,7 +60,7 @@ export function SplitEpicPanel({ epic, onSplit }: { epic: BacklogItem; onSplit: 
 export function BoardColumn({ title, count, hint, limit, note, children }: { title: string; count: number; hint?: string; limit?: number; note?: ReactNode; children?: ReactNode }) {
   const full = limit != null && count >= limit;
   return (
-    <div className="flex min-h-0 min-w-0 flex-col">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
       {/* One panel for every column. A green Done column reads as "the good one" before anything
           has reached it; what is Done is said by the cards in it, and by the tick on the heading. */}
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',

@@ -53,16 +53,14 @@ describe('the strip', () => {
     expect(line.textContent, 'the Goal itself is not under its own verdict').toContain('Deliver the Big Cats zone');
   });
 
-  it('drops one sentence when the Goal is at risk, and nothing else moves', () => {
+  it('says the Goal is at risk on the strip, and nowhere else', () => {
+    // It used to say it twice: once on the strip, and again in a band across the top of the board.
+    // The band said what the strip already said, and pushed the work down to say it.
     const risky = sprint({ dayNumber: 3, daySecondsLeft: 22 });
     const { container } = shell(risky);
     expect(container.querySelector('[data-part="goal-line"]')!.textContent).toMatch(/Goal at risk/);
-    const warning = container.querySelector('[data-part="goal-warning"]');
-    expect(warning, 'the Goal is at risk and the screen says nothing').toBeTruthy();
-    expect(warning!.textContent).toMatch(/22 seconds left today/);
-    expect(warning!.textContent, 'the warning offers no way out of it').toMatch(/Finish it, or stop/);
-    // A safe Sprint carries no warning at all.
-    expect(shell(sprint()).container.querySelector('[data-part="goal-warning"]')).toBeNull();
+    expect(container.querySelector('[data-part="goal-warning"]'),
+      'the warning band is back above the board').toBeNull();
   });
 
   it('carries one button for everything that is words', () => {

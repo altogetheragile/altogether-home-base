@@ -2310,10 +2310,7 @@ export function goalPulse(state: ZooGameState): {
   level: 'safe' | 'risk' | 'met';
   /** "Goal safe · 1 of 2 essentials · 8 of 18 pts" */
   line: string;
-  /** The first, bold sentence of the warning: what is wrong, in one breath. */
-  headline?: string;
-  /** ...and the two decisions available, because both of them are decisions. */
-  sentence?: string;
+
 } {
   const prog = sprintProgress(state);
   const forecast = state.forecastPoints ?? prog.pointsCommitted;
@@ -2347,15 +2344,9 @@ export function goalPulse(state: ZooGameState): {
   const worst = [...essentials].sort((a, z) => z.estimate - a.estimate);
   const unstarted = worst.find((it) => !it.started);
   const named = unstarted ?? worst[0];
-  const seconds = Math.max(0, Math.round(state.daySecondsLeft));
-  const lastDay = state.dayNumber >= state.sprintDays;
   return {
     level: 'risk',
     line: `Goal at risk · ${named.name} ${unstarted ? 'not started' : 'unfinished'} · ${essentialsLine}`,
-    headline: `${seconds} second${seconds === 1 ? '' : 's'} left today. ${named.name} is essential to the goal and ${unstarted ? 'has not started' : 'is not finished'}.`,
-    sentence: lastDay
-      ? `Finish it, or stop and take it to the Review as work that did not land. Either is a decision; both are recorded.`
-      : `Finish it, or stop and take it to tomorrow’s Daily Scrum. Either is a decision; both are recorded.`,
   };
 }
 

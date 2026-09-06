@@ -82,12 +82,19 @@ describe('the panel', () => {
     <MemoryRouter><Asks state={state} {...props} /></MemoryRouter>,
   );
 
-  it('says whose each one is, and carries the doing of it', () => {
+  it('says whose each one is, and takes you to it - without a bar of buttons', () => {
+    // "Why are there action buttons on messages?" - a message says what is being asked and opens
+    // the thing it is about. Answering it belongs to the board, the bench and the park.
     const onOpenItem = vi.fn();
-    panel(sprint({}, built), { onOpenItem });
+    const { container } = panel(sprint({}, built), { onOpenItem });
     expect(screen.getAllByText('PO').length, 'nothing says which accountability is being asked').toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /Check it against its criteria/ }));
-    expect(onOpenItem, 'the ask named the work and then left you to find it').toHaveBeenCalled();
+    const labels = [...container.querySelectorAll('[data-part="asks"] li button')]
+      .map((b) => (b.textContent ?? ''));
+    expect(labels.some((t) => /Check it against its criteria|Open it to visitors/.test(t)),
+      'the messages grew action buttons again').toBe(false);
+    fireEvent.click([...container.querySelectorAll('[data-part="asks"] li button')]
+      .find((b) => /is built/.test(b.textContent ?? ''))!);
+    expect(onOpenItem, 'the message named the work and then left you to find it').toHaveBeenCalled();
   });
 
   it('announces what just happened, from the log the Retrospective reads', () => {
