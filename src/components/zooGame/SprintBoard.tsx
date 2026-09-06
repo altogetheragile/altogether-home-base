@@ -7,7 +7,7 @@ import { enclosureReady, enclosureOf, availableItems, notReady, revealed, active
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
-import { AssignDevs, TeamRow, MEMBER_DRAG } from './ScrumTeam';
+import { AssignDevs, MEMBER_DRAG } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
 import { ExplainButton } from './Explain';
 import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
@@ -210,7 +210,7 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -423,10 +423,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           <div className="flex flex-wrap items-center gap-1.5">
             {/* The shell's header already says which Sprint and which day, and the dock says what
                 this is - so on the canvas the board leads with its question and nothing else. */}
-            {/* The strip says which Sprint, which day and whether the Goal is safe; the tab says
-                which artifact this is. A heading here was the third thing saying where you are.
-                What belongs here is who is in the team, because they are what you move about. */}
-            <TeamRow team={state.team} onRename={onRenameMember} onWho={(why) => toast(why)} />
             <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
           </div>
         </div>
@@ -528,8 +524,11 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   negotiation rather than a menu. */}
               {/* One outlined region per thing, so the screen reads as areas rather than as a wall
                   of cards: the board here, what is being asked below it, the park beside both. */}
-              <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden rounded-lg border-2 border-border p-2 md:grid-cols-3">
-                <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
+              {/* One row, exactly as tall as the region: the columns scroll inside it. Without the
+                  explicit row the cells took their content's height and the region clipped them,
+                  so a card lower down the column could not be reached at all. */}
+              <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-lg border-2 border-border p-2 md:grid-cols-3">
+                <div {...dropProps('todo')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
                     // Refinement the Scrum Team put in the plan, sitting on the board like the work
@@ -590,7 +589,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                 </BoardColumn>
                 <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Every drag is a decision. It is recorded, with who did it, for the Retrospective.</p>
                 </div>
-                <div {...dropProps('doing')} className={cn('min-w-0 transition-shadow', dropClass('doing'))}>
+                <div {...dropProps('doing')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('doing'))}>
                 <BoardColumn title="Doing" count={doing.length} limit={activeWipLimit(state) || undefined} hint="Nothing in progress"
                   note={fresh && revealed(state, 'wip') ? (
                     <NewHere title="A work-in-progress limit">
@@ -652,7 +651,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   })}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('done')} className={cn('min-w-0 transition-shadow', dropClass('done'))}>
+                <div {...dropProps('done')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('done'))}>
                 <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
@@ -720,11 +719,13 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           Plan/Build switch exists to prevent. Reported from playing it. */}
       {/* What is being asked of whom, beside what is in your hands: the two halves of the middle of
           a Sprint. Somebody is waiting on you, and something is on the bench. */}
+      {/* The board and what is being asked share the height between them rather than one taking a
+          fixed slice - a fixed slice left white space under the panel on a tall screen and squeezed
+          the board on a short one. */}
       {!dayStarting && (
-        <div className={cn('grid min-h-0 shrink-0 gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]' : '')}
-          style={{ height: onBench2 && edit ? '46%' : undefined, minHeight: 200 }}>
-          <Asks className="min-h-0 overflow-y-auto" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
-            onAnswerPlacement={onAnswerPlacement} onOpen={onOpen}
+        <div className={cn('grid min-h-0 shrink-0 gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]' : '')}
+          style={{ maxHeight: '45%' }}>
+          <Asks className="min-h-0 max-h-full self-start" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
             onAddProposal={onAddProposal} onSplitEpic={onSplitEpic} onDeclineProposal={onDeclineProposal} />
           {edit && onBench2 && (
             <div className="relative min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">

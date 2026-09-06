@@ -32,7 +32,6 @@ describe('is the Sprint Goal safe', () => {
     expect(p.line).toMatch(/^Goal safe/);
     expect(p.line, 'the line does not count the essentials').toMatch(/0 of 2 essentials/);
     expect(p.line, 'the line does not count the points').toMatch(/0 of \d+ pts/);
-    expect(p.headline, 'a safe Sprint dropped a warning anyway').toBeUndefined();
   });
 
   it('turns when what is left will not fit in what is left', () => {
@@ -43,25 +42,13 @@ describe('is the Sprint Goal safe', () => {
     // It names the item, because "at risk" on its own is a mood.
     const worst = s.backlog.filter((it) => it.goalCritical).sort((a, z) => z.estimate - a.estimate)[0];
     expect(p.line).toContain(worst.name);
-    expect(p.headline, 'the warning does not say how long is left').toContain('22 seconds left today');
-    expect(p.headline).toContain('essential to the goal');
-    // Both ways out are decisions, and the game records either.
-    expect(p.sentence).toMatch(/Finish it, or stop/);
-    expect(p.sentence, 'on the last day it still pointed at tomorrow').toMatch(/Review/);
   });
 
-  it('offers tomorrow’s Daily Scrum while there is a tomorrow', () => {
-    // Day two of three, today spent, and more work owed than one day can pay for. There IS a
-    // tomorrow, so stopping means taking it to tomorrow's Daily Scrum rather than to the Review.
-    const s = sprint({ dayNumber: 2, sprintDays: 3, daySecondsLeft: 0 });
-    const heavy = {
-      ...s,
-      backlog: s.backlog.map((it) => (it.goalCritical ? { ...it, estimate: it.estimate * 4 } : it)),
-    } as ZooGameState;
-    const p = goalPulse(heavy);
-    expect(p.level).toBe('risk');
-    expect(p.sentence).toMatch(/Daily Scrum/);
-    expect(p.sentence, 'it sent a team with two days left to the Review').not.toMatch(/Review/);
+  it('says it in one line and nothing else - no band across the screen', () => {
+    // The strip already carries the answer and names what is doing it. A second copy of the same
+    // answer, in a band above the board, was one more thing between a learner and the work.
+    const p = goalPulse(sprint({ dayNumber: 3, daySecondsLeft: 22 }));
+    expect(Object.keys(p).sort(), 'the pulse grew a headline again').toEqual(['level', 'line']);
   });
 
   it('says nothing is forecast rather than claiming a goal is safe', () => {

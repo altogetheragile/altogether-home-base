@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
+import { ZooShell } from './ZooShell';
 import { TeamRow, MEMBER_DRAG } from './ScrumTeam';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
@@ -43,13 +44,20 @@ const payload = (data: string) => {
 };
 
 describe('the team along the top', () => {
-  it('shows who is in the Scrum Team, with their accountabilities', () => {
-    const { container } = board();
+  it('is on the tab row, with the artifacts and the clock - not above the board', () => {
+    // Asked for at the top of the screen, beside the tabs. In a row of its own above the board it
+    // cost a whole line and pushed the work down, which is not where it was asked to be.
+    const { container } = render(
+      <MemoryRouter><ZooShell state={state()} onRenameMember={noop}><div>the screen</div></ZooShell></MemoryRouter>,
+    );
     const row = container.querySelector('[data-part="team-row"]')!;
     expect(row, 'the team is not on the screen at all').toBeTruthy();
     expect(row.textContent).toMatch(/PO/);
     expect(row.textContent).toMatch(/SM/);
     for (const dev of state().team.developers) expect(row.textContent).toContain(dev.name);
+    expect(row.closest('[data-part="tab-row"]'), 'the team is not on the tab row').toBeTruthy();
+    expect(board().container.querySelector('[data-part="team-row"]'),
+      'the team is back above the board, pushing the work down').toBeNull();
   });
 
   it('lets a Developer be dragged onto a card, and that is them taking it', () => {

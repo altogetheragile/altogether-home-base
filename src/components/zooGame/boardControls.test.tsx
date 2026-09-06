@@ -52,6 +52,24 @@ describe('the Sprint Backlog screen', () => {
     expect(headings.some((h) => /^Product Backlog/.test(h)), 'the Product Backlog is a column again').toBe(false);
   });
 
+  it('carries the pane height down to the column, so a full column scrolls', () => {
+    // Reported from a live game: "I can't scroll on the Scrum board so cannot Open items lower
+    // down." Six items in To Do, one visible, no scrollbar. The cell the column sits in had no
+    // height of its own, so the column grew to its cards and the region simply cut them off.
+    const { container } = board();
+    const heading = [...container.querySelectorAll('h3')].find((h) => /^To Do/.test(h.textContent ?? ''))!;
+    const column = heading.closest('div')!.parentElement!;
+    const cell = column.parentElement!;
+    const region = cell.parentElement!;
+    expect(/grid-rows-1/.test(region.className), 'the row of columns takes its height from its cards').toBe(true);
+    for (const cls of ['flex', 'min-h-0', 'flex-col']) {
+      expect(cell.className, `the cell the column sits in is not a ${cls} box`).toContain(cls);
+    }
+    expect(column.className, 'the column does not fill its cell').toMatch(/h-full|flex-1/);
+    const body = column.lastElementChild!;
+    expect(body.className, 'the column itself does not scroll').toContain('overflow-y-auto');
+  });
+
   it('keeps what is left of the controls in one cluster', () => {
     const { container } = board();
     const row = controls(container);
