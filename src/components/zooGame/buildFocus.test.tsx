@@ -35,14 +35,14 @@ const state = (over: Partial<ZooGameState> = {}): ZooGameState => {
   } as ZooGameState;
 };
 
-const board = (mode: 'plan' | 'build', over: Partial<ZooGameState> = {}, part: { id: string; key: string } | null = null) => {
+const board = (_unused: 'plan' | 'build', over: Partial<ZooGameState> = {}, part: { id: string; key: string } | null = null) => {
   const s = state(over);
   const held = s.backlog.find((it) => it.started)!;
   return {
     held,
     ...render(
       <MemoryRouter>
-        <SprintBoard state={s} mode={mode} building={held.id} edit={edit} part={part}
+        <SprintBoard state={s} building={held.id} edit={edit} part={part}
           onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
           onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
           onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
@@ -53,15 +53,13 @@ const board = (mode: 'plan' | 'build', over: Partial<ZooGameState> = {}, part: {
 };
 
 describe('the Build state', () => {
-  it('greys the board back to a rail', () => {
+  it('keeps the board and the thing in your hands on one screen', () => {
+    // Plan and Build were two states with a switch between them, and the switch was reported as
+    // confusing: the board and the item you are building are the same work.
     const { container } = board('build');
-    const rail = container.querySelector('[data-part="board-rail"]');
-    expect(rail, 'the board vanished entirely in Build').toBeTruthy();
-    expect(rail!.className, 'the rail is asking for as much attention as the work').toMatch(/opacity-60/);
-    // It is still the board: where the Sprint stands, in three groups.
-    expect(rail!.textContent).toMatch(/Doing/);
-    expect(rail!.textContent).toMatch(/To Do/);
-    expect(rail!.textContent).toMatch(/Done/);
+    expect(container.textContent, 'the board went away while something was in hand').toMatch(/To Do/);
+    expect(container.textContent).toMatch(/Doing/);
+    expect(container.querySelector('[data-part="next-step"]'), 'the item in hand went away').toBeTruthy();
   });
 
   it('makes the next step the one thing being asked', () => {
@@ -71,20 +69,6 @@ describe('the Build state', () => {
     // The first step of the plan nobody has ticked, numbered as it is on the plan.
     expect(next!.textContent).toContain('3. Lay the ground, shelter and water');
     expect(next!.className, 'the next step is not the orange box').toMatch(/border-primary/);
-  });
-
-  it('leaves the Plan state’s furniture in the Plan state', () => {
-    // The question is about what to take on, and the Sprint Goal is on the strip. Neither belongs
-    // on a screen whose whole job is the one thing in your hands.
-    const build = board('build').container;
-    const plan = board('plan').container;
-    // The element that SAYS it, not an ancestor that contains it: every wrapper up to the root
-    // contains the words, so asking "does anything contain this" always answers yes.
-    const visible = (c: HTMLElement, re: RegExp) => [...c.querySelectorAll('h2, h3, div, span')]
-      .some((el) => re.test(el.textContent ?? '') && el.children.length === 0 && !el.closest('.hidden'));
-    expect(visible(plan, /What can we finish today\?/), 'Plan lost its own question').toBe(true);
-    expect(visible(build, /What can we finish today\?/), 'the Plan question is still on the Build screen').toBe(false);
-    expect(visible(build, /commitment of the Sprint Backlog/), 'the goal band is said twice').toBe(false);
   });
 
   it('folds the controls to one line until a part is touched', () => {
@@ -121,7 +105,7 @@ describe('the Build state', () => {
     } as ZooGameState;
     const { container } = render(
       <MemoryRouter>
-        <SprintBoard state={held} mode="build" building={path.id} edit={edit}
+        <SprintBoard state={held} building={path.id} edit={edit}
           onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
           onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
           onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
@@ -147,7 +131,7 @@ describe('the Build state', () => {
     const held = s.backlog.find((it) => it.started)!;
     const { container } = render(
       <MemoryRouter>
-        <SprintBoard state={s} mode="build" building={held.id} edit={edit} canBuild={false}
+        <SprintBoard state={s} building={held.id} edit={edit} canBuild={false}
           onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
           onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
           onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
@@ -164,8 +148,8 @@ describe('the Build state', () => {
     expect(container.textContent).toMatch(/Acceptance criteria/i);
   });
 
-  it('keeps the controls open in Plan, where the bench is a bench', () => {
+  it('folds the controls on every screen now there is only one', () => {
     const { container } = board('plan');
-    expect(container.querySelector('[data-part="controls-line"]')).toBeNull();
+    expect(container.querySelector('[data-part="controls-line"]'), 'the studio is open beside the board again').toBeTruthy();
   });
 });
