@@ -67,3 +67,43 @@ describe('the action dock', () => {
     expect(dock()!.textContent).not.toMatch(/Whose call it is|dismiss/);
   });
 });
+
+// Reading is not building.
+//
+// Reported from a live game: "Can new messages flash or something? A learner can view stacked up
+// messages. Maybe the clock stops when messages are being reviewed?" The strip changed in silence,
+// showed "read it" for anything whose body was more than a string, and the day's clock ran while
+// you read what the game had chosen to tell you.
+describe('what the dock does when the game speaks', () => {
+  const withNote = (onReading?: (b: boolean) => void) => render(
+    <MemoryRouter>
+      <ZooShell state={at('sprint')} refused="How the work gets done is the Developers’ to plan."
+        onDismissRefused={() => {}} onReading={onReading}>
+        <div>the screen</div>
+      </ZooShell>
+    </MemoryRouter>,
+  );
+
+  it('says what the note says, not "read it"', () => {
+    withNote();
+    expect(dock()!.textContent, 'the dock still asks you to go and find out what it said')
+      .toContain('How the work gets done');
+  });
+
+  it('flashes when something new arrives, and stops', () => {
+    withNote();
+    const flashing = dock()!.querySelector('.zoo-note-flash');
+    expect(flashing, 'a new note arrived in silence').toBeTruthy();
+  });
+
+  it('stops the clock while the stack is open, and starts it again', () => {
+    const reading: boolean[] = [];
+    withNote((b) => reading.push(b));
+    // The strip's own line, not the copy of it inside the panel that opening reveals.
+    const strip = () => dock()!.querySelector('button:not([aria-label])') as HTMLElement;
+    fireEvent.click(strip());
+    expect(reading[reading.length - 1], 'the day ran on while the learner read what the game said').toBe(true);
+    fireEvent.click(strip());
+    expect(reading[reading.length - 1], 'the clock never started again').toBe(false);
+  });
+});

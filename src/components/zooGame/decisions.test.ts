@@ -91,7 +91,8 @@ describe('what the game notices about how the team worked', () => {
   it('records the Definition of Done being changed, and by whom', () => {
     let s = playSprint();
     s = reducer(s, { type: 'SET_DOD', dod: ['Meets its acceptance criteria'], by: 'scrum_master' });
-    const dod = (s.decisions ?? []).filter((d) => d.kind === 'dod');
+    // A Sprint also records what Done meant when it started, so count the rewrites themselves.
+    const dod = (s.decisions ?? []).filter((d) => d.kind === 'dod' && /criteria became/.test(d.what));
     expect(dod.length, 'the team rewrote their Definition of Done and the game said nothing').toBe(1);
     expect(dod[0].by).toBe('scrum_master');
     expect(dod[0].what).toMatch(/criteria became 1/);

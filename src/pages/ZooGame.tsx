@@ -36,8 +36,10 @@ import { useZooCopy } from '@/components/zooGame/useZooCopy';
  *  same screens serve a game played alone and a game played by a team - the only difference
  *  being which carrier the actions were built around. `saves` is off in a shared session,
  *  where the session itself is the save and a private copy would be a fork of it. */
-export function ZooGameScreens({ game, saves = true, seat = null, observer, covering, mustAgree = [], said, onDismissSaid, refused, onDismissRefused }:
-  { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void }) {
+export function ZooGameScreens({ game, saves = true, seat = null, observer, covering, mustAgree = [], said, onDismissSaid, refused, onDismissRefused, onReading }:
+  { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
+    /** Somebody is reading what the game said; a solo game stops its clock while they are. */
+    onReading?: (reading: boolean) => void }) {
   const { state, start, setPhase, setGoal, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addCopy, setCopyPiece, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild, addAnotherPbi, improve, open, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
@@ -296,7 +298,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
       onPull={state.phase === 'sprint' ? pull : undefined} />
   );
 
-  const shellProps = { backlogTab, seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, buildMode, onSetBuildMode: setBuildMode, canBuild: !!inHandItem(state, buildingId), links: <GameLinks />, menuLinks: <GameLinks variant="menu" />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  const shellProps = { backlogTab, onReading, seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, buildMode, onSetBuildMode: setBuildMode, canBuild: !!inHandItem(state, buildingId), links: <GameLinks />, menuLinks: <GameLinks variant="menu" />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot, onSetMemberSpot: setMemberSpot, onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     // The Coach is gone. It floated advice over whatever you were doing - often about refinement,
     // often at the wrong moment, twice over the button you needed. Every lesson it carried belongs
     // in the flow, at the moment it applies, as part of the screen that applies it. What survives
@@ -354,5 +356,12 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
 
 /** Played alone: the same screens, with the reducer as the carrier. */
 export default function ZooGame() {
-  return <ZooGameScreens game={useZooGame()} />;
+  // Reading is not building. A solo player who opens what the game said - the notes in the dock, or
+  // the Learn drawer - stops the day's clock while they read it, because a Sprint's time is for
+  // building and charging somebody for reading the thing the game chose to tell them is the game
+  // punishing its own teaching. A shared game keeps running: a timebox the whole team is in is not
+  // one person's to pause.
+  const [reading, setReading] = useState(false);
+  const game = useZooGame(undefined, !reading);
+  return <ZooGameScreens game={game} onReading={setReading} />;
 }

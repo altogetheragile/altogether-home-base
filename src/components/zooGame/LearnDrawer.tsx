@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { BookOpen, X } from 'lucide-react';
 import type { ZooGameState } from './types';
@@ -46,7 +46,7 @@ function MeasureCard({ m }: { m: ReturnType<typeof valueMeasures>[number] }) {
 }
 
 /** The one button in the strip, and everything behind it. */
-export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProductGoal, onSetDod, onSetDor }: {
+export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProductGoal, onSetDod, onSetDor, onReading }: {
   state: ZooGameState;
   /** What the game has said this Sprint - kept, because a note you dismissed is not a note you
    *  never needed. */
@@ -56,8 +56,11 @@ export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProduc
   onSetProductGoal?: (g: string) => void;
   onSetDod?: (dod: string[]) => void;
   onSetDor?: (dor: string[]) => void;
+  /** Reading is not building: a solo game's clock stops while this is open. */
+  onReading?: (reading: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { onReading?.(open); return () => onReading?.(false); }, [open, onReading]);
   const [at, setAt] = useState<Section>('scrum');
   const decisions = decisionsIn(state, state.sprintNumber);
 

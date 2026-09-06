@@ -151,7 +151,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan', onSetBuildMode, canBuild, links, menuLinks, backlogTab, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; buildMode?: 'plan' | 'build';
+export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan', onSetBuildMode, canBuild, links, menuLinks, backlogTab, onReading, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; buildMode?: 'plan' | 'build';
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -161,6 +161,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
   links?: ReactNode;
   /** ...and what belongs in the game menu rather than the strip: signing in, and who is signed in. */
   menuLinks?: ReactNode;
+  /** Somebody is reading what the game said, or has stopped. A solo game stops its clock while they
+   *  are: the Sprint's time is for building, and charging a learner for reading what the game chose
+   *  to tell them is the game punishing its own teaching. */
+  onReading?: (reading: boolean) => void;
   /** The Product Backlog tab when the Refinement screen is not on it: the list and the bench that
    *  works on it, handed in by the page because the shell holds no game handlers of its own. */
   backlogTab?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onEndDay?: () => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
@@ -224,18 +228,18 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
   const warn = pulse?.level === 'risk' && state.dayStage === 'building' ? pulse : null;
 
   const notes: GameNote[] = [];
-  if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, onDismiss: onDismissRefused });
-  if (poNote) notes.push({ id: 'refinement', title: 'Refinement session · the Scrum Team', body: <span className="whitespace-pre-line">{poNote}</span>, onDismiss: onDismissPoNote });
+  if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, text: refused, onDismiss: onDismissRefused });
+  if (poNote) notes.push({ id: 'refinement', title: 'Refinement session · the Scrum Team', text: poNote, body: <span className="whitespace-pre-line">{poNote}</span>, onDismiss: onDismissPoNote });
   for (const one of said ?? []) {
     notes.push({
-      id: `said-${one.id}`, title: `${one.seat.replace('_', ' ')} (AI)`, tone: 'team', dismissLabel: 'ok',
+      id: `said-${one.id}`, title: `${one.seat.replace('_', ' ')} (AI)`, tone: 'team', dismissLabel: 'ok', text: one.says,
       onDismiss: () => onDismissSaid?.(one.id),
       body: <>{one.says}{one.also > 0 && <div className="mt-1 text-muted-foreground">and {one.also} more like it</div>}</>,
     });
   }
 
   return (
-    <GameNotesProvider notes={notes}>
+    <GameNotesProvider notes={notes} onReading={onReading}>
     <div className="zoo-theme flex h-full flex-col bg-background">
       {/* Where you are, on one dark band; the artifacts themselves are the white below it. */}
       <header className="shrink-0 border-b border-border px-2 pt-1.5 sm:px-3">
@@ -338,7 +342,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
             )}
             {/* One button for everything the game can explain. It replaced Artifacts, Scrum, the four
                 dials and the help icons - each of those is a section in it now. */}
-            <LearnDrawer state={state} notes={notes} teaching={state.teaching ?? true} onSetTeaching={onSetTeaching}
+            <LearnDrawer state={state} notes={notes} teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} onReading={onReading}
               onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
             {/* Polishing the teaching happens while playing, so the editor lives here rather than
                 in an admin screen. Admins only - it renders nothing for everyone else. */}

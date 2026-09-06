@@ -182,7 +182,19 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
  */
 function DodList({ state, item }: { state: ZooGameState; item: BacklogItem }) {
   const lines = dodVerdicts(state, item);
-  if (!lines.length) return null;
+  // No bar at all is a state worth saying out loud rather than an empty space. A team that started
+  // without a Definition of Done should be able to see, on the thing they are about to call Done,
+  // that nothing is being asked of it.
+  if (!lines.length) {
+    return (
+      <div data-part="no-dod" className="rounded-md border border-dashed border-amber-400/60 bg-amber-500/[0.06] px-2 py-1.5">
+        <div className="text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">No Definition of Done</div>
+        <p className="text-[11px] text-muted-foreground">
+          Nothing was agreed, so Done means whatever anybody says it means. You can write one at any Retrospective.
+        </p>
+      </div>
+    );
+  }
   const facts = lines.filter((l) => l.answer?.kind === 'fact');
   const met = facts.filter((l) => l.answer?.kind === 'fact' && l.answer.met).length;
   return (
