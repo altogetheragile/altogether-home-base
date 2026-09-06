@@ -60,7 +60,7 @@ export function SplitEpicPanel({ epic, onSplit }: { epic: BacklogItem; onSplit: 
 export function BoardColumn({ title, count, hint, limit, note, children }: { title: string; count: number; hint?: string; limit?: number; note?: ReactNode; children?: ReactNode }) {
   const full = limit != null && count >= limit;
   return (
-    <div className="flex min-w-0 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-col">
       {/* One panel for every column. A green Done column reads as "the good one" before anything
           has reached it; what is Done is said by the cards in it, and by the tick on the heading. */}
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',
@@ -71,7 +71,10 @@ export function BoardColumn({ title, count, hint, limit, note, children }: { tit
           {note}
         </span>
       </div>
-      <div className="flex-1 space-y-1.5 rounded-b-lg border border-border bg-card/40 p-2" style={{ minHeight: 84 }}>
+      {/* The column scrolls inside itself. A To Do column with five items used to grow the page and
+          push everything under the board - what is being asked, and the thing in your hands - off
+          the bottom of it. Reported from a live game: "we need it all on one page". */}
+      <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto rounded-b-lg border border-border bg-card/40 p-2" style={{ minHeight: 84 }}>
         {count === 0 && <div className="py-5 text-center text-[11px] text-muted-foreground/50">{hint ?? '—'}</div>}
         {children}
       </div>

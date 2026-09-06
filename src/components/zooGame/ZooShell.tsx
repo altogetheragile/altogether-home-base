@@ -430,11 +430,15 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           {/* The work on the left, the park on the right, for the whole Sprint. There is only ever one
               park in the game, so while it is here the Increment tab does without it rather than
               drawing a second one: two isometric scenes rebuilding every second is a slow game. */}
-          <div className={cn('mx-auto flex h-full min-h-0 flex-col gap-3 pb-24',
-            onSprint ? 'max-w-none xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,44%)] xl:items-start' : 'max-w-[1600px]')}>
+          {/* Both halves are exactly the height of the pane, so neither can push the other off the
+              screen: the board scrolls in its columns, what is being asked scrolls in its panel, and
+              the park stays where it is. Reported from a live game - a full To Do column pushed the
+              messages and the studio off the bottom of it. */}
+          <div className={cn('mx-auto flex h-full min-h-0 flex-col gap-3',
+            onSprint ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,44%)] xl:items-stretch' : 'max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && (
-              <div className="min-w-0 rounded-lg border-2 border-border bg-card p-2">
+              <div className="min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-card p-2 pb-16">
                 <ParkView state={state} large focus onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
               </div>
             )}
