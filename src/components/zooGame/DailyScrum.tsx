@@ -1,11 +1,12 @@
-import type { ZooGameState } from './types';
+import type { ZooGameState, ImpedimentAnswer } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
 import { DAILY_SCRUM_SECONDS } from './config';
-import { sprintProgress, todaysDecision } from './engine';
+import { sprintProgress, todaysDecision, inTheWayOfTheGoal } from './engine';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
-import { PADDING, SURFACE, TONE } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
+import { Chip } from './ui/Chip';
 
 interface DailyScrumProps {
   state: ZooGameState;
@@ -14,6 +15,8 @@ interface DailyScrumProps {
   /** Take something back out of the Sprint Backlog to protect the Goal. The Developers' call, and
    *  the one this event exists to make. */
   onDrop?: (id: string) => void;
+  /** What the Scrum Master does about what surfaced. Four answers, and the game charges each. */
+  onAnswer?: (how: ImpedimentAnswer) => void;
 }
 
 /** The Daily Scrum: the Developers' short, TIMEBOXED daily event to inspect progress toward
@@ -22,7 +25,7 @@ interface DailyScrumProps {
  *  real choice is whether you ADAPT to what it surfaced or carry on regardless (letting a
  *  blocker grow overnight). The timebox counts down; on expiry it adapts (the disciplined
  *  default), so you decide within the box. In learn mode the timebox is paused. */
-export function DailyScrum({ state, onHold, onSkip, onDrop }: DailyScrumProps) {
+export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScrumProps) {
   const decision = todaysDecision(state);
   const prog = sprintProgress(state);
   // Today counts. The Daily Scrum is held at the start of the day it is named for, so "days left"
@@ -47,6 +50,8 @@ export function DailyScrum({ state, onHold, onSkip, onDrop }: DailyScrumProps) {
   // Master take part only if they are working on Sprint Backlog items. The line is on the screen
   // because the accountability is the thing being taught, and implying it teaches nobody.
   const devs = state.team.developers.map((d) => d.name).join(', ');
+  const block = imp?.kind === 'block';
+  const goalRisk = inTheWayOfTheGoal(state, imp ?? null);
 
   return (
     <div className="space-y-3">
@@ -130,28 +135,57 @@ export function DailyScrum({ state, onHold, onSkip, onDrop }: DailyScrumProps) {
 
       {imp ? (
         <>
-          <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700/60 dark:bg-amber-950/30">
+          {/* What surfaced, and which kind of thing it is.
+              
+              A block stops one item and the Developers can clear it themselves; an impediment slows
+              the whole team and is beyond their self-management, which is what makes it the Scrum
+              Master's. The arbiter is the Sprint Goal, and the screen says which test it applied. */}
+          <div data-part="surfaced" className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700/60 dark:bg-amber-950/30">
             <div className="flex items-start gap-2.5">
               <AlertTriangle className={cn(TONE.attention.text, "mt-0.5 h-5 w-5 shrink-0")} />
-              <div>
-                <div className={cn(TONE.attention.text, "text-sm font-semibold")}>A blocker surfaced: {imp.title}</div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className={cn(TONE.attention.text, 'text-sm font-semibold')}>{imp.title}</span>
+                  <Chip tone={block ? 'quiet' : 'attention'}>{block ? 'a block · one item' : 'an impediment · the whole team'}</Chip>
+                </div>
                 <div className={cn(TONE.attention.text, "text-sm")}>{imp.detail}</div>
-                {/* Surfaced here, removed outside here. The screen used to say the Scrum Master
-                    removed it as part of adapting the plan, which put a Scrum Master act inside a
-                    Developers' event and contradicted the Daily Scrum card two clicks away. */}
-                <div className={cn(TONE.attention.text, "mt-1 text-xs")}>Do you adapt today&rsquo;s plan around it, so the Scrum Master can get it removed, or carry on with the original plan?</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {block
+                    ? (goalRisk
+                      ? 'It is on work the Sprint Goal depends on, so it is not just one item\u2019s problem any more.'
+                      : 'The Sprint Goal does not depend on it, and the Developers can clear their own blocks. Is this really yours?')
+                    : 'It is beyond what the Developers can sort out between themselves, which is what makes it yours.'}
+                </div>
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-start gap-3">
-            <div className="flex flex-col gap-1">
-              <Button onClick={onHold}>Adapt the plan</Button>
-              <span className="text-[11px] text-muted-foreground">{state.scrumDiscipline ? 'efficient - no time lost tomorrow' : 'the event takes ~10% of tomorrow'}</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
-              <span className="text-[11px] text-muted-foreground">the blocker grows overnight - ~45% of tomorrow</span>
-            </div>
+
+          {/* Four answers, none forbidden, each with what it costs written on it. */}
+          <div data-part="answers" className="grid gap-2 sm:grid-cols-2">
+            {([
+              { how: 'team' as const, label: 'Leave it to the Developers',
+                cost: block ? 'they clear it - about 5% of the day' : 'it is beyond them, and it grows overnight' },
+              { how: 'remove' as const, label: 'Remove it yourself',
+                cost: block ? 'cleared, and they learn to wait for you' : 'cleared today, at about 10% of the day' },
+              { how: 'around' as const, label: 'Work around it',
+                cost: 'a small cut today, and it is still there tomorrow' },
+              { how: 'escalate' as const, label: 'Escalate it',
+                cost: 'nothing today. It clears in a day or two, and nobody here solved it' },
+            ]).map((o) => (
+              // None of them is drawn as the answer. The screen leaned on one - the conventional
+              // move for whichever kind of thing it was - and a judgement with an orange button on
+              // it is not a judgement, it is a prompt. The costs are the argument; the choice is
+              // the Scrum Master's.
+              <button key={o.how} type="button" onClick={() => onAnswer?.(o.how)} disabled={!onAnswer}
+                className={cn(FOCUS, 'rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:border-primary/50 disabled:opacity-50')}>
+                <span className="block text-sm font-semibold">{o.label}</span>
+                <span className="block text-[11px] text-muted-foreground">{o.cost}</span>
+              </button>
+            ))}
+          </div>
+          <div>
+            <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
+            <span className="ml-2 text-[11px] text-muted-foreground">the event does not happen, and it grows overnight</span>
           </div>
         </>
       ) : (

@@ -1,4 +1,4 @@
-import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
+import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
@@ -1550,13 +1550,20 @@ export function setDefinitionOfDone(state: ZooGameState, dod: string[], by?: str
 // ============= Timed days and the Daily Scrum =============
 
 /** The pool of things that get in the team's way. Framed as zoo-build problems. */
-const IMPEDIMENTS: { title: string; detail: string }[] = [
-  { title: 'A keeper called in sick', detail: 'Nobody is free to prep the new enclosure, so the build is stalling.' },
-  { title: 'The paint delivery is late', detail: 'The colours for this zone have not arrived and work is piling up.' },
-  { title: 'A safety check is overdue', detail: 'The big enclosure cannot open until an inspection is signed off.' },
-  { title: 'The sign supplier changed the design', detail: 'The new signs do not match the zone and need reworking.' },
-  { title: 'The pond pump failed', detail: 'The Waterside filter needs an urgent fix before anything else there progresses.' },
-  { title: 'A volunteer no-showed', detail: 'You are short-handed today and the build is slower than planned.' },
+// What turns up, and whether it is one item's problem or the team's.
+//
+// "A block affects only a single task, whereas an impediment acts like a parachute, slowing down
+// overall progress. Quite often the Development Team can fix blocks themselves whereas impediments
+// need to be fixed by the Scrum Master" - Barry Overeem, The 8 Stances of a Scrum Master. That is
+// the whole reason for the split: with everything an impediment, the answer was always the same
+// button and nothing was learned.
+const IMPEDIMENTS: { title: string; detail: string; kind: 'block' | 'impediment' }[] = [
+  { kind: 'impediment', title: 'A keeper called in sick', detail: 'Nobody is free to prep the new enclosure, so the build is stalling.' },
+  { kind: 'block', title: 'The paint delivery is late', detail: 'The colours for this one have not arrived and the work on it is piling up.' },
+  { kind: 'block', title: 'A safety check is overdue', detail: 'This one cannot open until an inspection is signed off.' },
+  { kind: 'block', title: 'The sign supplier changed the design', detail: 'The new sign does not match the zone and needs reworking.' },
+  { kind: 'block', title: 'The pond pump failed', detail: 'The filter needs an urgent fix before this one progresses.' },
+  { kind: 'impediment', title: 'A volunteer no-showed', detail: 'You are short-handed today and the build is slower than planned.' },
 ];
 
 /** Deterministically decide the impediment (if any) waiting on a given day. Same
@@ -1565,7 +1572,36 @@ export function generateImpediment(gameSeed: number, sprintNumber: number, dayNu
   const rng = makeRng(hashStr('impediment:' + sprintNumber + ':' + dayNumber, gameSeed));
   if (rng.next() >= IMPEDIMENT_CHANCE) return null;
   const def = IMPEDIMENTS[Math.floor(rng.next() * IMPEDIMENTS.length)];
-  return { id: `imp-${sprintNumber}-${dayNumber}`, title: def.title, detail: def.detail };
+  return { id: `imp-${sprintNumber}-${dayNumber}`, title: def.title, detail: def.detail, kind: def.kind };
+}
+
+/** ...and which item a block has landed on. A block is one item's problem, so it needs an item; if
+ *  the Sprint has nothing in progress there is nothing to block, and it stands as an impediment. */
+export function landImpediment(state: ZooGameState, imp: Impediment | null): Impediment | null {
+  if (!imp || imp.kind !== 'block') return imp;
+  const inSprint = state.backlog.filter((it) => it.status === 'committed' && it.sprintNumber === state.sprintNumber);
+  const on = inSprint.find((it) => it.started) ?? inSprint[0];
+  if (!on) return { ...imp, kind: 'impediment' };
+  // A block names the item it is on, always. "The colours for this one have not arrived" is only
+  // half a sentence until the screen can say which one.
+  const detail = /this one/.test(imp.detail)
+    ? imp.detail.replace(/this one/g, on.name)
+    : `${imp.detail.replace(/\s+$/, '')} It is on ${on.name}.`;
+  return { ...imp, itemId: on.id, detail };
+}
+
+/** Whether what has surfaced is in the way of the Sprint Goal.
+ *
+ *  The paper's own test, and the one the game can actually answer: "use a Sprint Goal. If something
+ *  prevents the team from achieving the Sprint Goal, then it is definitely an impediment." A block
+ *  on an item the Goal depends on is not a block any more. */
+export function inTheWayOfTheGoal(state: ZooGameState, imp: Impediment | null): boolean {
+  if (!imp) return false;
+  if (imp.kind !== 'block') return true;
+  const on = state.backlog.find((it) => it.id === imp.itemId);
+  if (!on) return true;
+  const essentials = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber && it.goalCritical);
+  return essentials.length ? !!on.goalCritical : true;
 }
 
 /** Close the current day and pause for its Daily Scrum, surfacing whatever
@@ -1582,11 +1618,11 @@ export function endDay(state: ZooGameState): ZooGameState {
   if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
-    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, next), refinePenalty: 0,
+    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, next)), refinePenalty: 0,
       pendingPlacement: null, daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
-  return { ...s, dayStage: 'dailyScrum', pendingImpediment: generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
+  return { ...s, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber)), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
@@ -1600,8 +1636,15 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
   // clock, so a question that outlived the clock it was asked against would be waited on for
   // ever - which is why every reset of that clock clears it, not just this one. They ask again
   // if they still need to know.
+  // Something escalated upward resolves itself in a day or two. The team did not solve it and did
+  // not pay for it either, which is the whole lesson of escalating: serving is not commanding, and
+  // a team that escalates stops solving.
+  const carried = state.carriedImpediment;
+  const waited = carried?.waitDays
+    ? (carried.waitDays > 1 ? { ...carried, waitDays: carried.waitDays - 1 } : null)
+    : carried;
   return { ...state, dayNumber: next, dayStage: 'dayStart', dayTimeMult: nextMult, refinePenalty: 0,
-    pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult) };
+    carriedImpediment: waited, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult) };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */
@@ -1634,6 +1677,67 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   // costs nothing, which is the opposite of what it should teach.
   if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(cleared, mult);
+}
+
+/** What the Scrum Master did about what surfaced, and what it cost.
+ *
+ *  Four answers, none of them forbidden. The game charges each one honestly and the Retrospective
+ *  reads the pattern back - removing a block the Developers could have cleared themselves is the
+ *  Super Hero, and enduring an impediment is the Scrum Master who was not there. Neither is scored.
+ *
+ *  All four conclude the Daily Scrum, because this IS the Daily Scrum's decision: the event is where
+ *  it surfaced and the answer is what the team does about it today.
+ */
+export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?: string): ZooGameState {
+  if (state.dayStage !== 'dailyScrum') return state;
+  const imp = state.pendingImpediment;
+  if (!imp) return runDailyScrum(state, by);
+  const block = imp.kind === 'block';
+  const goal = inTheWayOfTheGoal(state, imp);
+
+  // What each answer does, and what it costs the day the team is about to work.
+  const outcome = ((): { mult: number; carry: Impediment | null; what: string; cost: string } => {
+    if (how === 'team') {
+      return block
+        ? { mult: 0.95, carry: null,
+          what: `${imp.title}: left to the Developers, who cleared it themselves.`,
+          cost: 'about 5% of the day, and the team solved their own problem' }
+        : { mult: state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT,
+          carry: { ...imp, missed: true, tip: MISSED_SCRUM_TIP },
+          what: `${imp.title}: left to the Developers, and it was beyond them.`,
+          cost: `it grew overnight: about ${Math.round((1 - (state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT)) * 100)}% of the next day` };
+    }
+    if (how === 'remove') {
+      return { mult: DAILY_SCRUM_MULT, carry: null,
+        what: `${imp.title}: the Scrum Master removed it${block ? ', though the Developers could have' : ''}.`,
+        cost: block
+          ? 'cleared today, and the team learned to wait for you'
+          : `cleared today, at about ${Math.round((1 - DAILY_SCRUM_MULT) * 100)}% of the day` };
+    }
+    if (how === 'around') {
+      return { mult: 0.95, carry: { ...imp },
+        what: `${imp.title}: worked around rather than removed.`,
+        cost: 'a small cut today, and it is still there tomorrow' };
+    }
+    return { mult: DAILY_SCRUM_MULT, carry: { ...imp, waitDays: 2 },
+      what: `${imp.title}: escalated, and the team waited.`,
+      cost: 'nothing today. It clears in a day or two, and nobody here solved it' };
+  })();
+
+  const logged = note(state, { kind: 'daily-scrum', by,
+    what: `Day ${state.dayNumber}: ${outcome.what}`, cost: outcome.cost });
+  const base: ZooGameState = { ...logged,
+    pendingImpediment: null,
+    carriedImpediment: outcome.carry,
+    // Only an unanswered blocker counts as a Daily Scrum missed. Answering it, however you
+    // answered it, is the event doing its job.
+    missedScrums: logged.missedScrums,
+    // What the Sprint Goal had to do with it, kept for the Retrospective's mirror.
+    impedimentLog: [...(logged.impedimentLog ?? []),
+      { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal }],
+  };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult) };
+  return advanceDay(base, outcome.mult);
 }
 
 /** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and

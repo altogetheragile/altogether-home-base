@@ -99,6 +99,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     tickDay: () => send({ type: 'TICK_DAY' }),
     tickScrum: () => send({ type: 'TICK_SCRUM' }),
     holdDailyScrum: () => send({ type: 'RUN_DAILY_SCRUM' }),
+    answerImpediment: (how: 'team' | 'remove' | 'around' | 'escalate') => send({ type: 'ANSWER_IMPEDIMENT', how }),
     skipDailyScrum: () => send({ type: 'SKIP_DAILY_SCRUM' }),
     beginDay: () => send({ type: 'START_DAY' }),
     cancelSprint: () => send({ type: 'CANCEL_SPRINT' }),

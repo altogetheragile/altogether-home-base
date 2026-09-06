@@ -72,9 +72,25 @@ export interface Impediment {
   id: string;
   title: string;
   detail: string;
+  /** What kind of thing it is, and therefore whose it is.
+   *
+   *  A **block** stops one item and the Developers can clear it themselves; an **impediment**
+   *  slows the whole team and is beyond their self-management, which is what makes it the Scrum
+   *  Master's. The distinction is Barry Overeem's - see docs/ZOO_SCRUM_MASTER.md - and it is what
+   *  turns "remove it" from a button into a judgement. The arbiter is the Sprint Goal: if it stops
+   *  the Goal, it is an impediment. */
+  kind?: 'block' | 'impediment';
+  /** For a block: the item it is on. A block with nothing to block is an impediment. */
+  itemId?: string;
   missed?: boolean;
   tip?: string;
+  /** Escalated upward: it resolves itself in a day or two, and the team learns to wait. */
+  waitDays?: number;
 }
+
+/** What the Scrum Master did about what surfaced. Four answers, none of them forbidden: the game
+ *  charges each one honestly and the Retrospective reads the pattern back. */
+export type ImpedimentAnswer = 'team' | 'remove' | 'around' | 'escalate';
 
 /** backlog -> committed (into a Sprint) -> done (meets AC + DoD) -> open (released
  *  to visitors). Release is decoupled from the Review: a Done item can be opened at
@@ -449,6 +465,9 @@ export interface ZooGameState {
   /** Set by the "hold the Daily Scrum every day" improvement: disciplined Daily Scrums
    *  become efficient, so holding one costs no build time. */
   scrumDiscipline: boolean;
+  /** What surfaced and what was done about it, Sprint by Sprint. The Retrospective's mirror reads
+   *  this: six things removed and none left to the Developers is a pattern worth seeing. */
+  impedimentLog?: { id: string; sprint: number; day: number; kind: 'block' | 'impediment'; how: ImpedimentAnswer; goal: boolean }[];
   /** Improvements the Scrum Team has carried forward, as the game applies them: time set aside to
    *  refine, and forecasting only what is Ready. Both are habits made into defaults. */
   refineHabit?: boolean;
@@ -598,6 +617,7 @@ export type ZooAction =
   | { type: 'OPEN_ITEM'; id: string; by?: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
+  | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
   | { type: 'SKIP_DAILY_SCRUM'; by?: string }
   | { type: 'START_DAY' }
   | { type: 'REVIEW_SPRINT' }
