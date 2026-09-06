@@ -40,6 +40,7 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   DECLINE_PROPOSAL:  { who: 'product_owner', because: 'Turning something down is a Backlog decision, and the Backlog is the Product Owner’s.' },
   PO_REFINE:         { who: 'product_owner', because: 'This is the Product Owner doing their own work on the Product Backlog.' },
   OPEN_ITEM:         { who: 'product_owner', because: 'When something Done is released to visitors is the Product Owner’s call.' },
+  SEND_BACK:         { who: 'product_owner', because: 'Whether the work meets what was asked for is the Product Owner’s call - they are accountable for the value of what the Developers deliver.' },
   // "A Sprint could be cancelled if the Sprint Goal becomes obsolete. Only the Product Owner
   // has the authority to cancel the Sprint." The one place the Guide says "only".
   CANCEL_SPRINT:     { who: 'product_owner', because: 'Only the Product Owner has the authority to cancel a Sprint.' },

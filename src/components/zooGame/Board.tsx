@@ -9,7 +9,7 @@ import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight, Undo2 } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
@@ -233,7 +233,7 @@ function DodList({ state, item }: { state: ZooGameState; item: BacklogItem }) {
   );
 }
 
-export function CardDetail({ item, state, showAcceptance = false, interactive = false, defaultOpen = false, bare = false, onToggleTask, onConfirmAc }:
+export function CardDetail({ item, state, showAcceptance = false, interactive = false, defaultOpen = false, bare = false, onToggleTask, onConfirmAc, onSendBack }:
   { item: BacklogItem;
     /** Given, the park answers the criteria it can answer for itself, and shows its working. */
     state?: ZooGameState;
@@ -244,7 +244,10 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
     /** Accepting a criterion. It belongs HERE, on the item's own card, not on a toolbar floating
      *  over the park or in a banner - the card is the Product Backlog item, and accepting is
      *  something you do to the item. */
-    onConfirmAc?: (id: string, index: number, value: boolean) => void }) {
+    onConfirmAc?: (id: string, index: number, value: boolean) => void;
+    /** ...and not accepting it. Ticking every criterion is how the Product Owner says yes; this is
+     *  how they say no, and the criteria left unticked are the reason. */
+    onSendBack?: (id: string) => void }) {
   const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
   const criteria = showAcceptance ? item.acceptance.filter(Boolean) : [];
   const [ownOpen, setOpen] = useState(defaultOpen);
@@ -335,7 +338,23 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                   );
                 })}
               </ul>
+              {/* Saying no. It appears only on work that has been built and does not meet all of
+                  its criteria: a Product Owner cannot refuse work that meets what was asked for,
+                  and there is nothing to refuse before anything is built. */}
+              {interactive && onSendBack && item.design && !acAll && (
+                <button type="button" onClick={(e) => { e.stopPropagation(); onSendBack(item.id); }}
+                  title={`Send it back to the Developers. ${criteria.length - acMet} of its criteria are not met, and those are the reason. Finishing it again costs Sprint time.`}
+                  className={cn(FOCUS, 'mt-1.5 flex items-center gap-1 rounded-md border border-amber-400/70 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 hover:bg-amber-500/10 dark:text-amber-300')}>
+                  <Undo2 className="h-3 w-3" /> Send it back &middot; {criteria.length - acMet} not met
+                </button>
+              )}
             </div>
+          )}
+          {/* It has been sent back once already, and the Developers have not finished it again. */}
+          {item.sentBack && (
+            <p className="rounded-md border border-amber-400/60 bg-amber-500/5 px-1.5 py-1 text-[11px] text-amber-700 dark:text-amber-300">
+              <span className="font-semibold">Sent back by the Product Owner:</span> {item.sentBack.criteria.join('; ')}
+            </p>
           )}
           {tasks.length > 0 && <TaskChecklist item={item} onToggle={onToggleTask} readOnly={!interactive} />}
 

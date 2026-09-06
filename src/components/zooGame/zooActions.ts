@@ -95,6 +95,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     unnestItem: (id: string) => send({ type: 'UNNEST_ITEM', id }),
     renameItem: (id: string, name: string) => send({ type: 'RENAME_ITEM', id, name }),
     open: (id: string) => send({ type: 'OPEN_ITEM', id }),
+    sendBack: (id: string) => send({ type: 'SEND_BACK', id }),
     closeDay: () => send({ type: 'END_DAY' }),
     tickDay: () => send({ type: 'TICK_DAY' }),
     tickScrum: () => send({ type: 'TICK_SCRUM' }),

@@ -33,6 +33,8 @@ interface SprintBoardProps {
   onToggleTask: (id: string, taskId: string) => void;
   /** Accepting a criterion, on the card the criterion belongs to. */
   onConfirmAc: (id: string, index: number, value: boolean) => void;
+  /** Not accepting what was built. The Product Owner's call, so the board only offers it. */
+  onSendBack?: (id: string) => void;
   /** Move it to Done: built, standing where it stands, and open to visitors. */
   onFinishItem: (id: string) => void;
   onStartItem: (id: string) => void;
@@ -135,7 +137,7 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onReorderSprint,  onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onSendBack, onFinishItem, onStartItem, onReorderSprint,  onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -537,7 +539,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         detail={<>
                           {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
                               and tick the detail. The real building happens on the park. */}
-                          <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                          <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} />
                           <div className="mt-1.5 flex items-center gap-1.5">
                             <span className="text-[11px] text-muted-foreground">Working it:</span>
                             <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
@@ -574,7 +576,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                         )}
                       </>}
                       detail={<>
-                        <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                        <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} />
                         <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">{deployActions(it)}</div>
                       </>} />
                     </div>
@@ -626,7 +628,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             <div className="relative min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
               <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
                 drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild}
-                onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
+                onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} nextUp={todo[0]} />
             </div>
           )}
         </div>

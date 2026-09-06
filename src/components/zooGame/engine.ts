@@ -2,7 +2,7 @@ import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Imp
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
-import { appealFromDesign, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE } from './design';
+import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -564,7 +564,14 @@ export function toggleItemTask(state: ZooGameState, id: string, taskId: string):
     // The Product Owner's sign-off is not a box the Developers tick: it follows the acceptance
     // criteria, so a click on it does nothing.
     if ((it.tasks ?? []).some((t) => t.id === taskId && isSignOffTask(t.label))) return it;
-    const next = syncSignOff({ ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) });
+    const ticked = syncSignOff({ ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) });
+    // The last step of the plan is the Developers saying "it is built". Until now nothing said it:
+    // an item was only ever marked built at the moment it moved to Done, which took the build and
+    // the Product Owner's acceptance in one gesture - so playing alone there was no moment where
+    // something stood built and unaccepted, and nothing for a Product Owner to judge or refuse.
+    const next = !ticked.design && ticked.status === 'committed' && buildTasksDone(ticked)
+      ? { ...ticked, design: ticked.draftDesign ?? presetFor(ticked), started: true }
+      : ticked;
     return settleStatus(next);
   });
   return { ...state, backlog };
@@ -1328,7 +1335,7 @@ export function buildItem(state: ZooGameState, id: string, design?: ItemDesign):
     // The design is built in the studio. The item is only Done when its plan is also
     // complete - otherwise it waits in Doing while the Developers tick the tasks off.
     const built = design
-      ? { ...it, started: true, design, draftDesign: undefined, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
+      ? { ...it, started: true, design, draftDesign: undefined, sentBack: undefined, appeal: it.category === 'exhibit' ? appealFromDesign(it, design) : it.appeal }
       : { ...it, started: true };
     return settleStatus(built);
   });
@@ -1396,6 +1403,44 @@ export function improveItem(state: ZooGameState, id: string): ZooGameState {
 /** Release a Done item to visitors. Decoupled from the Review: you can open a Done
  *  item at any time during the Sprint. Once open it is part of the zoo the visitors
  *  experience. */
+/** The Product Owner looks at what was built and does not accept it.
+ *
+ *  "There is no point adding a bridge that doesn't cross the river." Until now the only thing a
+ *  Product Owner could do with work that missed the point was to leave a criterion unticked, which
+ *  said nothing to anybody: the card sat in Doing, the Developers had no idea it had been looked
+ *  at, and nothing was recorded. Not accepting the work is a decision, and this is it.
+ *
+ *  The criteria it did not meet are the reason - that is what acceptance criteria are for, and it
+ *  is why the Product Owner cannot send back work that meets all of them. The build goes back on
+ *  the bench as it was, so nothing is thrown away, but it has to be finished again: building the
+ *  wrong thing costs the Sprint the time it took, which is the whole lesson. */
+export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || item.status === 'backlog' || item.status === 'open') return state;
+  // Nothing has been built yet, so there is nothing to judge.
+  if (!item.design) return state;
+  const unmet = item.acceptance.filter((_, i) => !item.acConfirmed?.[i]);
+  // Every criterion is met. That is acceptance, not rejection - and a Product Owner who wants
+  // something else says so by changing the criteria, not by refusing work that meets them.
+  if (!unmet.length) return state;
+
+  const backlog = state.backlog.map((it) => (it.id !== id ? it : settleStatus({
+    ...it,
+    status: 'committed' as const,
+    draftDesign: it.design ?? it.draftDesign,
+    design: undefined,
+    sentBack: { sprint: state.sprintNumber, day: state.dayNumber, criteria: unmet },
+  })));
+  return note({ ...state, backlog }, {
+    kind: 'sent-back',
+    by: by ?? 'product_owner',
+    what: `The Product Owner did not accept ${item.name}: ${unmet[0]}`,
+    cost: unmet.length > 1
+      ? `${unmet.length} criteria were not met. It goes back to the Developers, and finishing it again costs Sprint time.`
+      : 'It goes back to the Developers, and finishing it again costs Sprint time.',
+  });
+}
+
 export function openItem(state: ZooGameState, id: string, by?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   // Nothing goes live before the Product Owner has signed it off, and they cannot sign it off until
@@ -2225,7 +2270,7 @@ export type Ask = {
   id: string;
   /** Whose it is. Not "who said it": the panel answers "what is being asked of me". */
   of: 'product_owner' | 'developer' | 'scrum_master';
-  kind: 'question' | 'accept' | 'release' | 'review' | 'blocker' | 'ready' | 'start';
+  kind: 'question' | 'accept' | 'release' | 'review' | 'blocker' | 'ready' | 'start' | 'rework';
   /** Who is asking, where the game knows a name. */
   from?: string;
   text: string;
@@ -2262,6 +2307,13 @@ export function asksNow(state: ZooGameState): Ask[] {
     if (it.status === 'done' && readyToOpen(it)) {
       out.push({ id: `release-${it.id}`, of: 'product_owner', kind: 'release',
         text: `${it.name} is Done. Visitors cannot see it until you release it.`, itemId: it.id });
+    }
+    // Work the Product Owner did not accept. It is the Developers' to finish again, and the panel
+    // says which criterion it missed rather than "rejected" - the criteria are the conversation.
+    if (it.sentBack && it.status === 'committed') {
+      out.push({ id: `rework-${it.id}`, of: 'developer', kind: 'rework', from: 'the Product Owner',
+        text: `${it.name} came back: ${it.sentBack.criteria[0]}${it.sentBack.criteria.length > 1 ? ` (and ${it.sentBack.criteria.length - 1} more)` : ''}`,
+        itemId: it.id });
     }
     // A second pair of eyes, which the Definition of Done asks for and only a Developer can give.
     if (it.status === 'committed' && it.started && it.design && (it.assignedDevs ?? []).length < 2
