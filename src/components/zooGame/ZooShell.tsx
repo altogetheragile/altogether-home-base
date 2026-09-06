@@ -473,9 +473,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             the flow. Without it the last card on an event screen - the Sprint Goal verdict at the
             Review - sits under the button that takes you onward, and scrolling does not help,
             because the bottom of the page is where the button is. */}
+        {/* An event fills the screen it takes over: the whole width, and the whole height, so what
+            it has to say fits on it. It was a column down the middle of a wide screen with the room
+            either side of it left empty, which put half of a Sprint Review below the fold. */}
         {takeover && (
-          <div className="absolute inset-0 z-30 overflow-y-auto bg-background/80 px-2 py-3 pb-24 backdrop-blur-sm sm:px-3">
-            <div className="mx-auto max-w-5xl rounded-xl border border-border bg-background p-3 shadow-xl">
+          <div data-part="takeover" className="absolute inset-0 z-30 flex bg-background/80 p-2 pb-20 backdrop-blur-sm sm:p-3 sm:pb-20">
+            <div className="flex min-h-0 w-full flex-col overflow-hidden rounded-xl border border-border bg-background p-3 shadow-xl">
               {children}
             </div>
           </div>

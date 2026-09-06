@@ -318,7 +318,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   const current = STEPS.find((s) => s.key === step)!;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 overflow-y-auto pr-1">
       {/* Where you are, what you are being asked, and where the words are. Nothing else. */}
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
