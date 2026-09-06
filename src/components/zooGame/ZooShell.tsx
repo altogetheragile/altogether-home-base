@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils';
 import { SeatBadge } from './SeatBadge';
 import { GameNotesProvider } from './GameNotes';
 import type { GameNote } from './notesDock';
-import { whatIsYours } from './seatCopy';
 import type { SeatName } from './useZooSessions';
 import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge } from 'lucide-react';
 import { FOCUS, SURFACE } from './ui/tokens';
@@ -403,13 +402,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
         </div>
       </header>
 
-      {/* What that accountability holds on THIS screen. Its own row, because the header is
-          already full and squeezing it in there collided with the Sprint Goal field. */}
-      {seat && !observer && whatIsYours(seat, state.phase) && (
-        <div className="shrink-0 border-b border-border bg-primary/5 px-3 py-1 text-[11px] text-muted-foreground">
-          <span className="font-semibold text-primary">Yours here:</span> {whatIsYours(seat, state.phase)}
-        </div>
-      )}
+      {/* What your accountability holds on this screen is on the seat badge, where you can ask for
+          it. It was a band across the screen on every screen, saying the same thing all Sprint. */}
 
       {/* Body: one artifact at a time, filling the width. Each pane stays mounted and is toggled
           with CSS, so the day clock, a half-finished design and the park's own scroll all survive

@@ -42,9 +42,3 @@ export const YOURS: Record<SeatName, Record<string, string>> = {
     retro: 'How the work went is yours to inspect.',
   },
 };
-
-/** The one line about what is yours on this screen. Lives here rather than beside the badge
- *  so the badge file exports only a component - a non-component export in a .tsx trips
- *  react-refresh, and CI runs eslint at exactly 134 warnings. */
-export const whatIsYours = (seat: SeatName | null, phase: string): string | null =>
-  seat ? YOURS[seat][phase] ?? null : null;

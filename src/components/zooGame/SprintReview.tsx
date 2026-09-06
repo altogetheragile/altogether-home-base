@@ -120,7 +120,6 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         </div>
       </header>
 
-      {step === 'done' && (
       <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:overflow-hidden">
       {/* The Increment itself, before anything is said about it. A Review that opens with a chart
           is a status meeting; a Review that opens with the product is an inspection. This is the
@@ -135,8 +134,10 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         </Suspense>
       </section>
 
-      {/* ...and everything the Review has to say about it, beside it rather than under it. */}
+      {/* ...and everything the Review has to say about it, beside it rather than under it - on
+          every step of the agenda, because the Increment is what all three of them are about. */}
       <div data-part="review-read" className="min-h-0 space-y-3 overflow-y-auto pr-1">
+      {step === 'done' && (<>
 
       {/* The bet, answered. This is the Sprint's own question, and the Review is the only place it
           can be settled: what the team predicted their work would do to the people the zoo is for,
@@ -336,13 +337,9 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
             {velocity > state.sprintForecast ? ' - faster than forecast' : velocity < state.sprintForecast ? ' - short of the forecast' : ' - right on forecast'}.
         Velocity is measured, not fixed: next Sprint&rsquo;s forecast is your average over the last {sprintCapacity(state).measuredSprints} Sprint{sprintCapacity(state).measuredSprints === 1 ? '' : 's'} of this length (<strong>{sprintCapacity(state).points} pts</strong>).{sprintCapacity(state).discarded > 0 && ' Sprints run at a different length are left out - their delivery says nothing about this one.'}
       </p>
-      </div>
-      </div>
-      )}
+      </>)}
 
       {/* ---- The visitors ---- */}
-      {step !== 'done' && (
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
       {step === 'visitors' && (!r || r.totalAttendance === 0 ? (
         <p className={cn(SURFACE.quiet, 'px-5 py-4 text-sm text-muted-foreground')}>Nothing is open to visitors yet, so there is no crowd to inspect. Open some of what you built next Sprint and they will come.</p>
       ) : (
@@ -504,7 +501,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
 
       </>)}
       </div>
-      )}
+      </div>
 
       <ActionBar left={step !== 'done' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button> : undefined}>
         {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
