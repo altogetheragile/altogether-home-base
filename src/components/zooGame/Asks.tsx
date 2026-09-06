@@ -4,7 +4,7 @@ import { asksNow, decisionsIn, whoIs } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { MessageCircleQuestion, CheckCircle2, Rocket, Eye, AlertTriangle, ListChecks, Hammer, ArrowRight, Users, Megaphone, Lightbulb } from 'lucide-react';
+import { MessageCircleQuestion, CheckCircle2, Rocket, Eye, AlertTriangle, ListChecks, Hammer, ArrowRight, Users, Megaphone, Lightbulb, Undo2 } from 'lucide-react';
 import type { SeatName } from './useZooSessions';
 import type { GameNote } from './notesDock';
 
@@ -33,6 +33,7 @@ const KIND: Record<Ask['kind'], { icon: typeof MessageCircleQuestion; what: stri
   blocker: { icon: AlertTriangle, what: 'in the way' },
   ready: { icon: ListChecks, what: 'the Backlog' },
   start: { icon: Hammer, what: 'to start' },
+  rework: { icon: Undo2, what: 'came back' },
 };
 
 export function Asks({ state, seat = null, notes = [], onOpenItem, onAddProposal, onSplitEpic, onDeclineProposal, className }: {

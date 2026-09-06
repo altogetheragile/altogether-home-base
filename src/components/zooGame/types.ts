@@ -129,7 +129,7 @@ export interface SprintBet {
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal';
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -290,6 +290,9 @@ export interface BacklogItem {
    *  ACs are ticked in the studio; deploy-time ACs (sizing/placement) are ticked on the park when the
    *  item is placed & sized. undefined = none confirmed yet. */
   acConfirmed?: boolean[];
+  /** The Product Owner looked at the built work and did not accept it: which criteria it did not
+   *  meet, and when. Cleared when the Developers finish it again. */
+  sentBack?: { sprint: number; day: number; criteria: string[] };
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -619,6 +622,7 @@ export type ZooAction =
   | { type: 'UNNEST_ITEM'; id: string }
   | { type: 'RENAME_ITEM'; id: string; name: string }
   | { type: 'OPEN_ITEM'; id: string; by?: string }
+  | { type: 'SEND_BACK'; id: string; by?: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }

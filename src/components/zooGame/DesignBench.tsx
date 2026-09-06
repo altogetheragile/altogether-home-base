@@ -109,7 +109,7 @@ function BenchName({ name, onRename }: { name: string; onRename: (name: string) 
   );
 }
 
-export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, nextUp, drawing, onDrawing, onRemoveRun, focus = false, canBuild = true }: {
+export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, onSendBack, nextUp, drawing, onDrawing, onRemoveRun, focus = false, canBuild = true }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
@@ -121,6 +121,8 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   onPart?: (p: { id: string; key: string } | null) => void;
   onToggleTask: (id: string, taskId: string) => void;
   onConfirmAc: (id: string, index: number, value: boolean) => void;
+  /** The Product Owner's other answer: not accepted, and the criteria say why. */
+  onSendBack?: (id: string) => void;
   /** The next thing in To Do, so the empty bench can name it. */
   nextUp?: BacklogItem;
   /** Laying a pathway's route. The pen belongs here with the rest of the thing's controls; the park
@@ -305,7 +307,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
             </div>
             <CardDetail item={item} state={state} interactive showAcceptance bare
               onToggleTask={(id, taskId) => onToggleTask(id, taskId)}
-              onConfirmAc={(id, i, v) => onConfirmAc(id, i, v)} />
+              onConfirmAc={(id, i, v) => onConfirmAc(id, i, v)} onSendBack={onSendBack} />
           </div>
           {focus && canBuild && !showControls && (
             <button type="button" onClick={() => setControlsOpen(true)} data-part="controls-line"
