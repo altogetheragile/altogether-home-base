@@ -3,6 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ZooShell } from './ZooShell';
 import { initialZooState } from './config';
+import { tickDay } from './engine';
 import type { ZooGameState } from './types';
 
 // What matters on the screen, in order.
@@ -28,18 +29,21 @@ const sprint = (over: Partial<ZooGameState> = {}): ZooGameState => {
   } as ZooGameState;
 };
 
-const shell = (state: ZooGameState) =>
-  render(<MemoryRouter><ZooShell state={state} onEndDay={() => {}}><div>the screen</div></ZooShell></MemoryRouter>);
+const shell = (state: ZooGameState, onSetClockPaused: (p: boolean) => void = () => {}) =>
+  render(<MemoryRouter><ZooShell state={state} onSetClockPaused={onSetClockPaused}><div>the screen</div></ZooShell></MemoryRouter>);
 
 describe('the strip', () => {
-  it('draws the clock as the biggest thing on it', () => {
+  it('draws the day as a clock, on the row where the eye already goes', () => {
+    // It was a line of text on the strip - where a learner reads where they are, not where they
+    // watch time run out. It is a clock now: digits, a bar, and a hand you can put on it.
     const { container } = shell(sprint());
     const clock = container.querySelector('[data-part="day-clock"]');
-    expect(clock, 'no clock in the strip at all').toBeTruthy();
+    expect(clock, 'no clock on the screen at all').toBeTruthy();
     expect(clock!.textContent).toMatch(/1:28/);
-    expect(clock!.textContent).toMatch(/left today/);
-    // Big means big: a type scale, not a chip. The pill it used to be was text-[11px].
-    expect(clock!.innerHTML, 'the clock is still chip-sized').toMatch(/text-3xl/);
+    expect(clock!.textContent).toMatch(/left of\s*today/);
+    expect(clock!.innerHTML, 'the clock is chip-sized again').toMatch(/text-2xl/);
+    expect(container.querySelector('.zoo-band [data-part="day-clock"]'),
+      'the clock is back in the strip, competing with where you are').toBeNull();
   });
 
   it('says whether the Sprint Goal is safe, above the Goal itself', () => {
@@ -105,5 +109,37 @@ describe('the Learn drawer', () => {
     expect(drawer.textContent).toContain('Deliver the Big Cats zone');
     expect(drawer.textContent, 'the Definition of Done did not come with it').toMatch(/Definition of Done|Increment/);
     expect(drawer.textContent).toMatch(/Decision log/);
+  });
+});
+
+// A hand on the clock.
+//
+// From the layout sketch: a clock big enough to read across a room, with pause and play. Holding it
+// is a decision somebody takes, and it is game state rather than one browser's idea - so in a shared
+// game everybody is held at the same second, which is the trainer's pause-all in miniature.
+describe('holding the clock', () => {
+  it('offers the hand, and says what it does', () => {
+    const { container } = shell(sprint());
+    const hold = screen.getByRole('button', { name: /Hold the clock/i });
+    expect(hold, 'there is no way to stop the day').toBeTruthy();
+    expect(hold.getAttribute('title')).toMatch(/for everybody/);
+    expect(container.querySelector('[data-part="day-clock"]')!.textContent).not.toMatch(/held/);
+  });
+
+  it('stops the day while it is held, and says so', () => {
+    const { container } = shell(sprint({ clockPaused: true } as Partial<ZooGameState>));
+    expect(container.querySelector('[data-part="day-clock"]')!.textContent).toMatch(/held/);
+    expect(screen.getByRole('button', { name: /Start the clock/i }), 'no way to start it again').toBeTruthy();
+    // ...and the reducer is what actually holds it.
+    const running = sprint();
+    expect(tickDay({ ...running, clockPaused: true } as ZooGameState).daySecondsLeft,
+      'the day ran on while the clock was held').toBe(running.daySecondsLeft);
+    expect(tickDay(running).daySecondsLeft).toBe(running.daySecondsLeft - 1);
+  });
+
+  it('says nothing about holding a clock that is not running', () => {
+    // Learn mode already stops it: two ways to say "paused" on one clock is one too many.
+    shell(sprint({ learnMode: true } as Partial<ZooGameState>));
+    expect(screen.queryByRole('button', { name: /Hold the clock/i })).toBeNull();
   });
 });
