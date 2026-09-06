@@ -40,6 +40,61 @@ function EditableName({ member, onRename, className }: { member: ScrumTeamMember
   );
 }
 
+/** How a member travels from the team row to a card: the drag payload the board listens for.
+ *  Prefixed, because the board already drags CARDS between columns with a bare item id. */
+export const MEMBER_DRAG = 'zoo/member:';
+
+/** The Scrum Team along the top, each one draggable onto the work.
+ *
+ *  Dragging a person onto a Product Backlog item is how the Flow Game says "I will take that", and
+ *  it is how a self-managing team decides who does what: nobody is assigned, somebody takes it.
+ *  Only the Developers can be dropped on work - the Scrum Guide has the Product Owner and Scrum
+ *  Master taking part as Developers only when they are working on Sprint Backlog items, and this
+ *  game keeps the accountabilities separate so their names stay off the cards.
+ */
+export function TeamRow({ team, onRename, onWho }: {
+  team: ScrumTeam;
+  onRename?: (id: string, name: string) => void;
+  /** Somebody was dropped where they cannot be dropped, so the game says why rather than nothing. */
+  onWho?: (why: string) => void;
+}) {
+  const drag = (id: string) => ({
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.effectAllowed = 'copy';
+      try { e.dataTransfer.setData('text/plain', MEMBER_DRAG + id); } catch { /* some browsers */ }
+    },
+  });
+  const cannot = (who: string) => ({
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => {
+      e.preventDefault();
+      onWho?.(`${who} take part as Developers only when they are working on Sprint Backlog items. In this zoo their accountability is kept separate, so their name does not go on the work.`);
+    },
+  });
+  return (
+    <div data-part="team-row" className="flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1" {...cannot('Product Owners')} title="The Product Owner">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">PO</span>
+        <EditableName member={team.productOwner} onRename={onRename} className="text-[11px] font-medium" />
+      </span>
+      <span className={cn('flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1')} {...cannot('Scrum Masters')} title="The Scrum Master">
+        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white')}>SM</span>
+        <EditableName member={team.scrumMaster} onRename={onRename} className="text-[11px] font-medium" />
+      </span>
+      {team.developers.map((d) => (
+        <span key={d.id} {...drag(d.id)}
+          title={`${d.name} - drag onto a card to take that work`}
+          className="flex cursor-grab items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 active:cursor-grabbing">
+          <Avatar name={d.name} colour={devColor(d.id, team.developers)} size={24} />
+          <EditableName member={d} onRename={onRename} className="text-[11px] font-medium" />
+        </span>
+      ))}
+      <span className="text-[11px] text-muted-foreground">Drag a Developer onto a card to take that work.</span>
+    </div>
+  );
+}
+
 /** The Scrum Team, made visible: the three accountabilities in one strip. Names are editable
  *  (seats a future multiplayer mode can hand to real people). `compact` drops the border/label
  *  so it can ride inline in the board toolbar instead of eating a full row; the full detail
