@@ -4,6 +4,7 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
+import { EventStage } from './EventStage';
 import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
@@ -64,7 +65,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
   const current = STEPS.find((s) => s.key === step)!;
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-4 overflow-y-auto pr-1">
+    <div className="flex h-full min-h-0 w-full flex-col gap-3">
       {/* Inspect, then adapt - in that order, because that is the event. */}
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
@@ -76,6 +77,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           <p className="text-sm text-muted-foreground">{current.lead}</p>
         </div>
       </header>
+
+      <EventStage state={state} at={step} title="The zoo as it stands"
+        note="What the Sprint you are looking back on left behind.">
 
       {/* What the team actually did, before anybody discusses how it went.
           
@@ -89,7 +93,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           right-hand column is what it came to. Two columns because they are read together: a
           decision means little without its outcome, and an outcome without its decisions is luck. */}
       {step === 'inspect' && did.length > 0 && (
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+        <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] 2xl:items-start">
           <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
             <div className="flex items-center gap-1.5 text-sm font-semibold">
               <ClipboardList className="h-4 w-4" /> Decision log <span className="font-normal text-muted-foreground">· this Sprint</span>
@@ -146,19 +150,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       )}
 
       {step === 'adapt' && (<>
-      {/* The Retrospective is where the team inspects and adapts the Definition of Done. It is a
-          long editor, so it scrolls inside itself rather than pushing the improvements off screen. */}
-      {/* Not a scroll box. The Definition of Done is the Increment's commitment and the whole point
-          of inspecting it here is to read it; a list that scrolls inside a card on a page that also
-          scrolls is a list nobody reads to the end of. */}
-      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
-
-      {/* ...and the only place the Sprint's own length changes, because a fixed container is the
-          point of it. Never in Planning, where the box would just be sized to the work. */}
-      {onSetSprintDays && (
-        <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="retro" />
-      )}
-
+      {/* The one thing this topic is for goes first. The agreements the team owns - the Definition
+          of Done, the Sprint's length - are under it: they are read here, but picking what changes
+          next Sprint is what the screen is asking for, and it was below the fold. */}
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Pick one improvement</h3>
         <p className="text-[11px] text-muted-foreground">
@@ -166,7 +160,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · blockers are caught early' : ''}{state.refineHabit ? ' · refinement time is set aside' : ''}.
         </p>
       </div>
-      <div className="max-h-[26vh] space-y-2 overflow-y-auto pr-1">
+      <div className="space-y-2">
         {improvements.map((imp) => (
           <button key={imp.text} type="button" onClick={() => setSelected(imp.text)}
             className={cn(FOCUS, 'w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
@@ -187,7 +181,21 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
         </div>
       )}
 
+      {/* The Retrospective is where the team inspects and adapts the Definition of Done. It is a
+          long editor, so it scrolls inside itself rather than pushing the improvements off screen. */}
+      {/* Not a scroll box. The Definition of Done is the Increment's commitment and the whole point
+          of inspecting it here is to read it; a list that scrolls inside a card on a page that also
+          scrolls is a list nobody reads to the end of. */}
+      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+
+      {/* ...and the only place the Sprint's own length changes, because a fixed container is the
+          point of it. Never in Planning, where the box would just be sized to the work. */}
+      {onSetSprintDays && (
+        <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="retro" />
+      )}
+
       </>)}
+      </EventStage>
 
       <ActionBar left={step === 'adapt' ? <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button> : undefined}
         hint={step === 'adapt' && !selected ? 'Pick one improvement to carry forward' : undefined}>

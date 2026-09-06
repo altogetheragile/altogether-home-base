@@ -3,6 +3,8 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ZooShell } from './ZooShell';
 import { SprintReview } from './SprintReview';
+import { SprintPlanning } from './SprintPlanning';
+import { SprintRetro } from './SprintRetro';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 
@@ -38,6 +40,25 @@ describe('an event on the screen', () => {
   });
 });
 
+describe('every event, on half a screen of park', () => {
+  it('gives Planning and the Retrospective the same stage as the Review', () => {
+    // "Do the same for the Retrospective and Planning screens." One layout for all three: the zoo
+    // as it stands on the left, what the event is asking beside it.
+    for (const [phase, screen] of [
+      ['planning', <SprintPlanning state={at('planning')} onPlan={() => {}} onSetForecast={() => {}}
+        onEstimate={() => {}} onSetTasks={() => {}} onSetSprintGoal={() => {}} onRefine={() => {}}
+        onPlanShape={() => {}} onToggleGoalCritical={() => {}} onTakeSignal={() => {}} onSplitEpic={() => {}} />],
+      ['retro', <SprintRetro state={at('retro')} onNextSprint={() => {}} onSetDod={() => {}} onSetSprintDays={() => {}} />],
+    ] as const) {
+      const { container } = render(<MemoryRouter>{screen}</MemoryRouter>);
+      expect(container.querySelector('[data-part="event-park"]'), `${phase} has no park on it`).toBeTruthy();
+      const read = container.querySelector('[data-part="event-read"]') as HTMLElement;
+      expect(read, `${phase} is one column`).toBeTruthy();
+      expect(read.className, `${phase} does not scroll inside the event`).toMatch(/overflow-y-auto/);
+    }
+  });
+});
+
 describe('what the Review has to say', () => {
   it('sits beside the Increment rather than under it, on every step of the agenda', () => {
     // The picture and everything said about it used to be one column, so the honest caption for the
@@ -49,7 +70,7 @@ describe('what the Review has to say', () => {
           onConfirmAc={() => {}} onToggleTask={() => {}} onTakeSignal={() => {}} />
       </MemoryRouter>,
     );
-    const read = container.querySelector('[data-part="review-read"]') as HTMLElement;
+    const read = container.querySelector('[data-part="event-read"]') as HTMLElement;
     expect(read, 'the Review is one column again').toBeTruthy();
     expect(read.className, 'the column does not scroll inside the event').toMatch(/overflow-y-auto/);
     const columns = read.parentElement!;
