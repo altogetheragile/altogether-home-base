@@ -19,9 +19,11 @@ import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { DesignBench } from './DesignBench';
+import { Asks } from './Asks';
 import { PoLookAhead } from './PoLookAhead';
 import { lookAhead } from './lookAhead';
 import type { EditApi } from './ParkView';
+import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
@@ -88,6 +90,8 @@ interface SprintBoardProps {
   /** Whether this player holds the Developers' work: a solo player holds all three, and a Product
    *  Owner sitting with real Developers holds none of it. The bench follows it. */
   canBuild?: boolean;
+  /** Which accountability is looking, so what is asked of them comes first. */
+  seat?: SeatName | null;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -208,7 +212,7 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -701,24 +705,19 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {/* The studio belongs to Build and nowhere else. Docked under the board in Plan it covered the
           columns you were trying to work - the board became unusable, which is exactly what the
           Plan/Build switch exists to prevent. Reported from playing it. */}
-      {edit && !dayStarting && onBench2 && (
-        // Opaque, not frosted: a board scrolling past behind smoked glass reads as a rendering
-        // fault rather than depth.
-        <div className={cn('flex flex-col bg-background',
-          // In Build it IS the screen, so it sits in the flow under the goal band rather than being
-          // pinned over it - pinned, it covered the commitment the whole state is for. In Plan it
-          // is a bench docked at the foot, as it was.
-          'relative mt-1')}>
-          {/* Docked, it scrolls inside its own height. In Build there is no fixed height to scroll
-              inside - the studio is the screen - so it grows to what is in it and the page carries
-              the scrolling. Left as a scroll box, the criteria were cut off half way down. */}
-          <div className="px-2 pb-2 pt-2">
-            <div className="min-w-0 flex-1">
+      {/* What is being asked of whom, beside what is in your hands: the two halves of the middle of
+          a Sprint. Somebody is waiting on you, and something is on the bench. */}
+      {!dayStarting && (
+        <div className={cn('grid gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]' : '')}>
+          <Asks state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
+            onAnswerPlacement={onAnswerPlacement} onOpen={onOpen} />
+          {edit && onBench2 && (
+            <div className="relative min-w-0 rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
               <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
                 drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild}
                 onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} nextUp={todo[0]} />
             </div>
-          </div>
+          )}
         </div>
       )}
       </div>
