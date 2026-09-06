@@ -64,7 +64,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
   const current = STEPS.find((s) => s.key === step)!;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col gap-4 overflow-y-auto pr-1">
       {/* Inspect, then adapt - in that order, because that is the event. */}
       <header className="space-y-2">
         <div className="flex items-center justify-between gap-3">
