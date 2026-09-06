@@ -151,7 +151,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan', onSetBuildMode, canBuild, links, menuLinks, backlogTab, onReading, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void; buildMode?: 'plan' | 'build';
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onEndDay, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -191,7 +191,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
   /** An event fills the screen over the tab it belongs to: Planning and the Retrospective over the
    *  Sprint Backlog, the Review over the Increment. Tabs are artifacts; events are moments. */
   // The park follows the work: beside the item while it is being built, on its own tab otherwise.
-  const inBuild = tab === 'sprint' && buildMode === 'build' && state.phase === 'sprint';
+  // The Sprint Backlog tab is one screen: the board, whatever is in your hands, and the park you are
+  // building it on, all at once.
+  //
+  // It was two states with a switch between them - Plan and Build - and the switch was reported as
+  // confusing. It was: the board and the thing you are building are the same work, and hiding
+  // either of them to show the other made you flip back and forth to answer one question.
+  const onSprint = tab === 'sprint' && state.phase === 'sprint';
   const takeover = state.phase === 'planning' || state.phase === 'review' || state.phase === 'retro';
   // The game moves you to the artifact it is about: Refinement to the Product Backlog, a Sprint to
   // the Sprint Backlog, the Review to the Increment. You can go anywhere from there; this only says
@@ -371,20 +377,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
           {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
               Increment. A learner who never connects the two is playing a building game. */}
           <Tab active={tab === 'increment'} onClick={() => setTab('increment')} icon={Trees} label="Increment" badge={open ? String(open) : undefined} />
-          {tab === 'sprint' && state.phase === 'sprint' && onSetBuildMode && (
-            <div className="ml-auto mb-1 flex overflow-hidden rounded-md border border-border">
-              {(['plan', 'build'] as const).map((m) => (
-                <button key={m} type="button" onClick={() => onSetBuildMode(m)} disabled={m === 'build' && !canBuild}
-                  title={m === 'build' && !canBuild ? 'Start something first - Build is the item in your hands' : undefined}
-                  className={cn(FOCUS, 'px-3 py-1 text-xs font-semibold transition-colors',
-                    buildMode === m ? 'bg-primary text-primary-foreground'
-                      : m === 'build' && !canBuild ? 'cursor-not-allowed text-muted-foreground/40'
-                        : 'text-muted-foreground hover:text-foreground')}>
-                  {m === 'plan' ? 'Plan' : 'Build'}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </header>
 
@@ -419,15 +411,14 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
         {/* The Sprint Backlog: the board, and the studio when something is in hand. Full width,
             because this is the artifact the Sprint is worked through. */}
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'sprint' && 'hidden')}>
-          {/* Building means the thing in your hands and the park you are building it on, side by
-              side - which is the whole point of the Build state. There is only ever one park in the
-              game, so while it is here the Increment tab does without it rather than drawing a
-              second one: two isometric scenes rebuilding every second is a slow game. */}
+          {/* The work on the left, the park on the right, for the whole Sprint. There is only ever one
+              park in the game, so while it is here the Increment tab does without it rather than
+              drawing a second one: two isometric scenes rebuilding every second is a slow game. */}
           <div className={cn('mx-auto flex h-full min-h-0 flex-col gap-3 pb-24',
-            inBuild ? 'max-w-none xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,46%)] xl:items-start' : 'max-w-[1600px]')}>
+            onSprint ? 'max-w-none xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,44%)] xl:items-start' : 'max-w-[1600px]')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
-            {inBuild && (
-              <div className="min-w-0 rounded-lg border border-border bg-card p-2">
+            {onSprint && (
+              <div className="min-w-0 rounded-lg border-2 border-border bg-card p-2">
                 <ParkView state={state} large focus onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
               </div>
             )}
@@ -435,7 +426,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, buildMode = 'plan
         </div>
 
         {/* The Increment: the park, all the time, at the width it deserves. */}
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', (tab !== 'increment' || inBuild) && 'hidden')}>
+        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', (tab !== 'increment' || onSprint) && 'hidden')}>
           <div className={cn('flex min-h-0 gap-3', gateItem ? 'flex-col xl:flex-row' : '')}>
             <div className="min-w-0 flex-1">
             <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
