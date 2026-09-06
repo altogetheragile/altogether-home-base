@@ -524,7 +524,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   opened - which hid the cost of a mid-Sprint pull behind a button. It is a rail
                   again, deliberately: the pull should be visible, and it should look like a
                   negotiation rather than a menu. */}
-              <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-3">
+              {/* One outlined region per thing, so the screen reads as areas rather than as a wall
+                  of cards: the board here, what is being asked below it, the park beside both. */}
+              <div className="grid grid-cols-1 items-start gap-2 rounded-lg border-2 border-border p-2 md:grid-cols-3">
                 <div {...dropProps('todo')} className={cn('min-w-0 transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (

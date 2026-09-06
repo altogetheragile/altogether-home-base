@@ -6,7 +6,7 @@ import { goalPulse } from './engine';
 import { DayClock } from './DayClock';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
-import { LearnDrawer } from './LearnDrawer';
+import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ import { GameNotesProvider } from './GameNotes';
 import type { GameNote } from './notesDock';
 import { whatIsYours } from './seatCopy';
 import type { SeatName } from './useZooSessions';
-import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge } from 'lucide-react';
 import { FOCUS, SURFACE } from './ui/tokens';
 
 const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
@@ -34,8 +34,8 @@ const ROLE_HINT: Record<string, string> = {
 
 
 /** The game's own controls - save, resume - out of the way of the Scrum. */
-function GameMenu({ onSave, onOpenSaves, links }: { onSave?: () => void; onOpenSaves?: () => void; links?: ReactNode }) {
-  if (!onSave && !onOpenSaves && !links) return null;
+function GameMenu({ onSave, onOpenSaves, onMeasures, links }: { onSave?: () => void; onOpenSaves?: () => void; onMeasures?: () => void; links?: ReactNode }) {
+  if (!onSave && !onOpenSaves && !links && !onMeasures) return null;
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -46,6 +46,13 @@ function GameMenu({ onSave, onOpenSaves, links }: { onSave?: () => void; onOpenS
       </PopoverTrigger>
       <PopoverContent align="end" className="w-48">
         <div className="space-y-0.5">
+          {/* The four key value measures. They are reference during a Sprint - they have their
+              answers at the Review - so they live behind a menu rather than on the band. */}
+          {onMeasures && (
+            <button type="button" onClick={onMeasures} className={cn(FOCUS, "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60")}>
+              <Gauge className="h-3.5 w-3.5 text-muted-foreground" /> Value measures
+            </button>
+          )}
           {onSave && (
             <button type="button" onClick={onSave} className={cn(FOCUS, "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium hover:bg-muted/60")}>
               <Save className="h-3.5 w-3.5 text-muted-foreground" /> Save this game
@@ -136,9 +143,14 @@ export type ArtifactTab = 'backlog' | 'sprint' | 'increment';
 function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string; locked?: string }) {
   return (
     <button type="button" onClick={locked ? undefined : onClick} disabled={!!locked} title={locked}
-      className={cn(FOCUS, 'flex items-center gap-1.5 rounded-t-md border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors',
+      aria-current={active ? 'page' : undefined}
+      // Drawn as tabs: an outlined shape that the active one joins to the screen below it. They were
+      // three words with an underline, which reads as a menu rather than as three artifacts you are
+      // standing in front of.
+      className={cn(FOCUS, 'relative -mb-px flex items-center gap-1.5 rounded-t-lg border-2 px-3 py-1.5 text-sm font-semibold transition-colors',
         locked ? 'cursor-not-allowed border-transparent text-muted-foreground/45'
-          : active ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
+          : active ? 'border-border border-b-background bg-background text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground')}>
       <Icon className="h-4 w-4" /> {label}
       {/* The lock is written on the tab. "Sprint Backlog" greyed out with no reason is a dead
           control; with the reason on it, it is the rule being taught. */}
@@ -229,6 +241,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // three registers, one place, never over the work.
   // Is the Sprint Goal safe, and if it is not, what the two ways out of it are. Only during a
   // Sprint: before one there is nothing to be at risk, and after it the Review has the answer.
+  // Where the Learn drawer has been sent from outside it - the value measures, from the game menu.
+  const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
   const pulse = state.phase === 'sprint' ? goalPulse(state) : null;
   // ...and the sentence only while the day is being built. At the Daily Scrum you are already in
   // the conversation it would send you to, and "take it to tomorrow's Daily Scrum" said during one
@@ -345,11 +359,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {/* One button for everything the game can explain. It replaced Artifacts, Scrum, the four
                 dials and the help icons - each of those is a section in it now. */}
             <LearnDrawer state={state} notes={notes} teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} onReading={onReading}
+              openAt={learnAt} onOpenAt={setLearnAt}
               onSetProductGoal={onSetProductGoal} onSetDod={onSetDod} onSetDor={onSetDor} />
             {/* Polishing the teaching happens while playing, so the editor lives here rather than
                 in an admin screen. Admins only - it renders nothing for everyone else. */}
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
-            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} links={menuLinks} />
+            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} onMeasures={() => setLearnAt('value')} links={menuLinks} />
           </div>
         </div>
 
@@ -366,7 +381,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             it wrapped from one side to the other as the pane narrowed: the same control in two
             places depending on which state you were in. It is a property of the tab, so it rides on
             the tab row, in one place, on both states. */}
-        <div className="mt-1 flex items-end gap-1">
+        <div className="mt-1 flex items-end gap-1 border-b-2 border-border">
           <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} icon={ClipboardList} label="Product Backlog" />
           <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} icon={ListChecks} label="Sprint Backlog"
             locked={sprintBacklog ? undefined : 'made at Planning'} />
@@ -430,7 +445,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', (tab !== 'increment' || onSprint) && 'hidden')}>
           <div className={cn('flex min-h-0 gap-3', gateItem ? 'flex-col xl:flex-row' : '')}>
             <div className="min-w-0 flex-1">
-            <ParkView state={state} large onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+            <ParkView state={state} large focus increment onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
             </div>
             {/* The Done gate stands beside the thing it is judging. This is where the item was
                 placed and where the park's evidence comes from, so it is where the question

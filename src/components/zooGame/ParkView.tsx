@@ -129,6 +129,9 @@ interface ParkViewProps {
   /** The park while you are building on it: one line of stats on the drawing, and nothing above it.
    *  The thing you are working on gets the room, which is the point of the Build state. */
   focus?: boolean;
+  /** ...and on the Increment tab, where the park is the whole point: the same quiet frame, plus the
+   *  toggle that takes the building sites away and leaves what has actually been delivered. */
+  increment?: boolean;
   /** The item whose build inspector is open. */
   building?: string | null;
   /** Select an item on the park - its toolbar appears above it. */
@@ -188,7 +191,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, focus = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, compact = false, large = false, focus = false, increment = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -325,7 +328,7 @@ export function ParkView({ state, compact = false, large = false, focus = false,
               {/* Done work and a site stand on the same ground, which is honest and, when you are
                   asking "what have we delivered", unhelpful. This takes the promises away and
                   leaves the Increment. The Sprint Review turns it on for you. */}
-              {sites.length > 0 && !focus && (
+              {sites.length > 0 && (!focus || increment) && (
                 <label className={cn(FOCUS, 'flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] font-medium')}
                   title="Hide the building sites. What is left is what has actually been delivered - which is what an Increment is.">
                   <input type="checkbox" className="h-3 w-3 accent-primary" checked={incrementOnly}

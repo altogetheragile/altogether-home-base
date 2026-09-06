@@ -20,7 +20,7 @@ import type { GameNote } from './notesDock';
 // Artifacts drawer, and the notes the game has already said this Sprint. What went from the strip:
 // four dials with no values, two drawer buttons, a help icon and a wordmark.
 
-type Section = 'scrum' | 'value' | 'sprint' | 'notes';
+export type Section = 'scrum' | 'value' | 'sprint' | 'notes';
 const SECTIONS: { key: Section; label: string }[] = [
   { key: 'scrum', label: 'Scrum' },
   { key: 'value', label: 'Value' },
@@ -46,7 +46,7 @@ function MeasureCard({ m }: { m: ReturnType<typeof valueMeasures>[number] }) {
 }
 
 /** The one button in the strip, and everything behind it. */
-export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProductGoal, onSetDod, onSetDor, onReading }: {
+export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProductGoal, onSetDod, onSetDor, onReading, openAt, onOpenAt }: {
   state: ZooGameState;
   /** What the game has said this Sprint - kept, because a note you dismissed is not a note you
    *  never needed. */
@@ -58,10 +58,18 @@ export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProduc
   onSetDor?: (dor: string[]) => void;
   /** Reading is not building: a solo game's clock stops while this is open. */
   onReading?: (reading: boolean) => void;
+  /** Opened from somewhere else, at a section of its own choosing - the value measures from the
+   *  game menu, for instance. Null when nobody outside is asking. */
+  openAt?: Section | null;
+  onOpenAt?: (at: Section | null) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [ownOpen, setOwnOpen] = useState(false);
+  const open = ownOpen || !!openAt;
+  const setOpen = (o: boolean) => { setOwnOpen(o); if (!o) onOpenAt?.(null); };
   useEffect(() => { onReading?.(open); return () => onReading?.(false); }, [open, onReading]);
-  const [at, setAt] = useState<Section>('scrum');
+  const [ownAt, setOwnAt] = useState<Section>('scrum');
+  const at = openAt ?? ownAt;
+  const setAt = (s: Section) => { setOwnAt(s); if (openAt) onOpenAt?.(s); };
   const decisions = decisionsIn(state, state.sprintNumber);
 
   return (
