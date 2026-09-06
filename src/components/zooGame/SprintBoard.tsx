@@ -5,7 +5,7 @@ import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './ty
 import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, readyToOpen, inHandItem, PLACEMENT_CHOICES } from './engine';
 import { NewHere } from './NewHere';
-import { ActionBar, DOCKED_BAR_PX } from './ActionBar';
+import { ActionBar } from './ActionBar';
 import { AssignDevs, MEMBER_DRAG } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
 import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
@@ -347,8 +347,10 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {/* In Plan this scrolls under a bench pinned to the foot, so it reserves the bench's height.
           In Build the bench is the content, so the pane shrinks to what is in it - otherwise the
           studio is pushed to the bottom of an empty screen. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 pr-0.5"
-        style={{ paddingBottom: DOCKED_BAR_PX + 12 }}>
+      {/* Room at the foot for the floating action bar - but only where the bar is actually over
+          this pane. Beside the park it floats over the park, and the space it was given here was
+          64px of nothing under the message centre and the bench. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 pb-16 pr-0.5 xl:pb-0">
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : (
@@ -496,20 +498,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                       <p>You have run a Sprint now, so it means something: things finish sooner when fewer are in flight. It is Lean thinking rather than part of Scrum, it is the Developers&rsquo; own agreement, and you can change or switch it off in board settings.</p>
                     </NewHere>
                   ) : undefined}>
-                  {/* Where the next thing lands, and what it costs to put it there. The frames put
-                      this in the column rather than in a tooltip: a WIP limit you only meet when it
-                      refuses you is a rule you learn by being told off. */}
-                  {doing.length < (activeWipLimit(state) || Infinity) && (
-                    <div className="rounded-lg border border-dashed border-primary/60 bg-primary/5 p-2">
-                      <p className="text-[12px] font-semibold text-foreground">Drop here to start it</p>
-                      <p className="text-[11px] text-muted-foreground">Who takes it? {state.team.developers.map((d) => d.name).join(' · ')}</p>
-                      {!!activeWipLimit(state) && (
-                        <p className="text-[11px] text-muted-foreground">
-                          WIP limit {activeWipLimit(state)}: room for {Math.max(0, activeWipLimit(state) - doing.length)} more.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  {/* Nothing stands in for the empty room in this column: the heading already
+                      carries the WIP limit, and the column takes a card wherever you drop it. */}
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (

@@ -39,7 +39,7 @@ describe('an event on the screen', () => {
 });
 
 describe('what the Review has to say', () => {
-  it('sits beside the Increment rather than under it', () => {
+  it('sits beside the Increment rather than under it, on every step of the agenda', () => {
     // The picture and everything said about it used to be one column, so the honest caption for the
     // picture - what is built and still shut - was off the bottom of the screen.
     const state = { ...at('review'), sprintForecast: 8 } as ZooGameState;
@@ -54,5 +54,9 @@ describe('what the Review has to say', () => {
     expect(read.className, 'the column does not scroll inside the event').toMatch(/overflow-y-auto/);
     const columns = read.parentElement!;
     expect(columns.className, 'the Increment and the reading are not side by side').toMatch(/lg:grid-cols/);
+    // The picture is the left half on all three steps: what was Done, what the visitors made of it,
+    // and what we do about it are all about the same Increment.
+    expect(columns.firstElementChild!.textContent,
+      'the Increment is not the other half of the screen').toMatch(/The Increment/);
   });
 });
