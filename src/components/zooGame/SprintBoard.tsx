@@ -6,10 +6,8 @@ import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, readyToOpen, inHandItem, PLACEMENT_CHOICES } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_PX } from './ActionBar';
-import { BurndownChip } from './Burndown';
 import { AssignDevs, MEMBER_DRAG } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
-import { ExplainButton } from './Explain';
 import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
 import { PbiCard } from './PbiCard';
 import { Workspace } from './ui/Workspace';
@@ -25,9 +23,8 @@ import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Boxes, MessageCircleQuestion, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, SlidersHorizontal, MapPin, ChevronUp, ChevronDown, ListChecks, X } from 'lucide-react';
-import { EYEBROW, FOCUS, SURFACE, TONE } from './ui/tokens';
+import { Boxes, MessageCircleQuestion, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, MapPin, ChevronUp, ChevronDown, ListChecks, X } from 'lucide-react';
+import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -111,78 +108,6 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
   );
 }
 
-/** The board's two set-once settings, tucked behind a gear so they don't sit in prime space:
- *  when the Daily Scrum is held, and whether days run on a timer (learn mode pauses the clock). */
-function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetLearnMode, onSetWipLimit, onCancelSprint }: { dailyScrumAt: 'start' | 'end'; learnMode: boolean; wipLimit: number; onSetScrumAt: (at: 'start' | 'end') => void; onSetLearnMode: (on: boolean) => void; onSetWipLimit?: (n: number) => void; onCancelSprint?: () => void }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" title="Board settings" aria-label="Board settings"
-          className={cn(FOCUS, SURFACE.inset, 'p-1.5 text-muted-foreground hover:text-foreground')}>
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-60">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Board settings</div>
-        <div className="space-y-2 text-xs">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground" title="When the Developers hold their Daily Scrum - at the start of a day, planning the day ahead, or at its end">Daily Scrum</span>
-            <button type="button" onClick={() => onSetScrumAt(dailyScrumAt === 'start' ? 'end' : 'start')}
-              className={cn(FOCUS, "rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40")}>
-              {dailyScrumAt === 'start' ? 'Day start' : 'Day end'}
-            </button>
-          </div>
-          <div className="-mt-1 text-[11px] leading-snug text-muted-foreground/80">
-            {dailyScrumAt === 'start'
-              ? 'Held first thing, so the Developers plan the day ahead. Ending a day takes you into the next day\u2019s Scrum.'
-              : 'Held as the day closes, looking back on it.'}
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground" title="How many items the Developers will have under way at once">Work in progress limit</span>
-            {onSetWipLimit ? (
-              <div className="flex items-center gap-1">
-                {[0, 1, 2, 3, 4].map((n) => (
-                  <button key={n} type="button" onClick={() => onSetWipLimit(n)}
-                    className={cn(FOCUS, 'rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors',
-                      wipLimit === n ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
-                    {n === 0 ? 'Off' : n}
-                  </button>
-                ))}
-              </div>
-            ) : <span className="text-[11px] font-medium">{wipLimit || 'Off'}</span>}
-          </div>
-          <div className="-mt-1 text-[11px] leading-snug text-muted-foreground/80">
-            {wipLimit > 0
-              ? `The Developers start no more than ${wipLimit} at once, and swarm to finish rather than starting more. Fewer things in flight means things actually finish.`
-              : 'No limit: anything can be started at any time. Watch how much ends the Sprint unfinished.'}
-            {' '}A WIP limit is Lean thinking, not part of Scrum - it is the Developers' own agreement.
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground">Days</span>
-            <button type="button" onClick={() => onSetLearnMode(!learnMode)}
-              title={learnMode ? 'Switch to timed days (Sprint pressure)' : 'Switch to learn mode (pause the clock)'}
-              className={cn(FOCUS, "rounded-full border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/40")}>
-              {learnMode ? 'Learn mode (paused)' : 'Timed'}
-            </button>
-          </div>
-          {onCancelSprint && (
-            // Rare, and deliberately out of the way: it is not an exit from a Sprint that is going
-            // badly, it is for a Sprint Goal that has stopped being worth pursuing.
-            <div className="border-t border-border pt-2">
-              <button type="button"
-                onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-estimated. A new Sprint starts straight away.')) onCancelSprint(); }}
-                className={cn(FOCUS, "text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline")}>
-                Cancel the Sprint
-              </button>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
-            </div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 /** The Sprint board: To Do / Doing / Done, played over a run of timed days. Each day
  *  you take a committed item into the studio (Doing), build it to the Definition of
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
@@ -210,7 +135,7 @@ function CardSteps({ item }: { item: BacklogItem }) {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onReorderSprint,  onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -409,37 +334,10 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col gap-3">
-      {/* The board's question, then the board's controls - two rows, in that order, always.
-
-          They were one row that split left and right and wrapped when the pane narrowed, so the
-          Plan/Build switch was top-right in Plan and top-left in Build: the same control in two
-          places depending on which state you were in, which is exactly the thing you then have to
-          hunt for. Its own row, left-aligned, whatever the width. */}
-      {/* In Build every one of these belongs to the other state: the question is about what to
-          take on, the chips are about the Backlog, and the Sprint Goal is on the strip. What is in
-          your hands gets the screen. */}
-      <div className="flex flex-col gap-1.5">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {/* The shell's header already says which Sprint and which day, and the dock says what
-                this is - so on the canvas the board leads with its question and nothing else. */}
-            <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
-          </div>
-        </div>
-        <div data-part="board-controls" className="flex flex-wrap items-center gap-1.5">
-          {!dayStarting && revealed(state, 'burndown') && (
-            <span className="flex items-center gap-1">
-              <BurndownChip state={state} />
-              {fresh && <NewHere title="A burndown">
-                <p>How much of the forecast is left, day by day. It needed a Sprint behind it to be worth anything.</p>
-                <p>It is a common practice, not part of Scrum - and it is for the Developers to see their own progress, not a report to anyone.</p>
-              </NewHere>}
-            </span>
-          )}
-          <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit} onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
-        </div>
-      </div>
-
+      {/* The board starts at the top of its pane. The help button, the burndown and the settings
+          used to sit here in two rows of their own, above the columns: a band of empty space
+          between the tabs and the work. They are the game's tools rather than the board's, so they
+          ride on the strip beside Learn, and the play space is the play space. */}
       {/* Everything but the day bar scrolls in here, inside the half, so the half itself never grows
           past the window and the bench stays pinned to its foot. The bench covers the last stretch
           of it, which the padding at the end gives back: a card at the bottom of To Do can always be
@@ -587,7 +485,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     );
                   })}
                 </BoardColumn>
-                <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Every drag is a decision. It is recorded, with who did it, for the Retrospective.</p>
                 </div>
                 <div {...dropProps('doing')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('doing'))}>
                 <BoardColumn title="Doing" count={doing.length} limit={activeWipLimit(state) || undefined} hint="Nothing in progress"
@@ -700,7 +597,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     </div>
                   ))}
                 </BoardColumn>
-                <p className="px-1 pt-1 text-[10px] leading-snug text-muted-foreground">Dropping here runs the Done check. Not Done and the card comes back, with reasons.</p>
                 </div>
               </div>
             </div>
@@ -723,9 +619,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
           fixed slice - a fixed slice left white space under the panel on a tall screen and squeezed
           the board on a short one. */}
       {!dayStarting && (
-        <div className={cn('grid min-h-0 shrink-0 gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]' : '')}
-          style={{ maxHeight: '45%' }}>
-          <Asks className="min-h-0 max-h-full self-start" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
+        <div className={cn('grid min-h-0 flex-1 gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]' : '')}>
+          <Asks className="min-h-0" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
             onAddProposal={onAddProposal} onSplitEpic={onSplitEpic} onDeclineProposal={onDeclineProposal} />
           {edit && onBench2 && (
             <div className="relative min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
