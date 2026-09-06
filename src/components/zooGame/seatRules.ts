@@ -65,6 +65,13 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   DROP_FROM_SPRINT:  { who: 'developer', because: 'The Sprint Backlog is the Developers\' plan. Dropping work to protect the Goal is their call.' },
   ASSIGN_DEV:        { who: 'developer', because: 'A self-managing team decides who does what. Nobody assigns work to a Developer.' },
   SPEND_DAY:         { who: 'developer', because: 'Build time is spent by the people doing the building.' },
+
+  // ---- The Scrum Master ----
+  // "The Scrum Master is accountable for... causing the removal of impediments to the Scrum Team's
+  // progress." What to do about what surfaced is theirs; whether the Developers clear their own
+  // block is still the Developers' business, which is why "leave it to them" is one of the answers
+  // rather than the absence of one.
+  ANSWER_IMPEDIMENT: { who: 'scrum_master', because: 'Causing the removal of impediments is the Scrum Master\u2019s accountability.' },
   SET_WIP_LIMIT:     { who: 'developer', because: 'How much the Developers take on at once is theirs to manage.' },
 };
 

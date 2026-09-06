@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { ZooGameState, BacklogItem, PbiDraft } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, presetFor } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, readyHorizon, revealed, activeWipLimit, whyNothingMoves, readyToOpen, betLine, inHandItem, PLACEMENT_CHOICES } from './engine';
 import { NewHere } from './NewHere';
@@ -64,6 +64,8 @@ interface SprintBoardProps {
   onPlaceOnPark: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
+  /** What the Scrum Master does about what surfaced at the Daily Scrum. */
+  onAnswerImpediment?: (how: ImpedimentAnswer) => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
   /** Hold the refinement the Scrum Team planned into this Sprint at topic three. */
@@ -298,7 +300,7 @@ function BoardRail({ doing, todo, done, held, onPick }: {
   );
 }
 
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, teachCard, onMarkTaught }: SprintBoardProps) {
+export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onFinishItem, onStartItem, onCancelSprint, onReorderSprint, onSetLearnMode, onSetWipLimit, onSetScrumAt, onPull, onDropFromSprint, mode = 'plan', onAnswerPlacement, onSplitEpic, onAssignDev, onRenameMember, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, teachCard, onMarkTaught }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
@@ -928,7 +930,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {state.dayStage === 'dailyScrum' && (
         <div data-part="daily-scrum" className="absolute inset-0 z-40 overflow-y-auto bg-background/70 px-2 py-3 backdrop-blur-sm">
           <div className="mx-auto max-w-3xl rounded-xl border border-border bg-background p-3 shadow-xl">
-            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} />
+            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} />
           </div>
         </div>
       )}
