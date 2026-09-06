@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { ZooShell } from './ZooShell';
+import { BoardTools } from './BoardTools';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 
@@ -70,11 +71,23 @@ describe('the Sprint Backlog screen', () => {
     expect(body.className, 'the column itself does not scroll').toContain('overflow-y-auto');
   });
 
-  it('keeps what is left of the controls in one cluster', () => {
-    const { container } = board();
+  it('keeps the game’s tools on the strip, and off the play space', () => {
+    // They were two rows above the columns: a help button on one, the burndown and the gear on the
+    // other, with a band of empty space under them. "Maximise the play space" - so they ride on the
+    // strip beside Learn, where the other things you reach for are.
+    expect(controls(board().container),
+      'the tools are back on the board, above the work').toBeFalsy();
+
+    const { container } = render(
+      <MemoryRouter>
+        <ZooShell state={state()} tools={<BoardTools state={state()} onSetScrumAt={noop} onSetLearnMode={noop} />}>
+          <div>the board</div>
+        </ZooShell>
+      </MemoryRouter>,
+    );
     const row = controls(container);
-    expect(row, 'the board controls are not a cluster at all').toBeTruthy();
-    expect(/justify-between/.test(row.parentElement!.className),
-      'the toolbar splits left and right, so the controls move when it wraps').toBe(false);
+    expect(row, 'the tools are nowhere at all').toBeTruthy();
+    expect(row.closest('.zoo-band'), 'the tools are not on the strip').toBeTruthy();
+    expect(row.querySelector('[aria-label="Board settings"]'), 'the settings did not come with them').toBeTruthy();
   });
 });

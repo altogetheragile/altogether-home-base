@@ -8,7 +8,10 @@ import { TONE } from './ui/tokens';
  *  committed) with "N pts left", and - once the Sprint is under way - whether the team is on
  *  track or behind the ideal burn for today. A miniature line chart is unreadable at this size,
  *  so the full burndown lives in the Daily Scrum; this is just the pulse. */
-export function BurndownChip({ state, className }: { state: ZooGameState; className?: string }) {
+export function BurndownChip({ state, className, onDark }: { state: ZooGameState; className?: string;
+  /** On the game's strip, which is a dark band: the chip's own light surface would be a white pill
+   *  in one theme and invisible text in the other. */
+  onDark?: boolean }) {
   const committed = state.burndown[0] ?? state.sprintForecast;
   const remaining = sprintProgress(state).remaining;
   const done = Math.max(0, committed - remaining);
@@ -24,14 +27,16 @@ export function BurndownChip({ state, className }: { state: ZooGameState; classN
     + '. Full burndown at the Daily Scrum.';
   return (
     <span title={title}
-      className={cn('flex items-center gap-1.5 rounded-full border bg-card px-2 py-0.5 text-[11px] font-medium',
-        behind ? 'border-amber-300 text-amber-700 dark:border-amber-700/60 dark:text-amber-300' : 'border-border text-muted-foreground', className)}>
-      <span className="h-1.5 w-12 overflow-hidden rounded-full bg-muted" aria-hidden>
+      className={cn('flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium',
+        onDark ? 'border-white/40 bg-white/10 text-white/80'
+          : behind ? 'border-amber-300 bg-card text-amber-700 dark:border-amber-700/60 dark:text-amber-300'
+            : 'border-border bg-card text-muted-foreground', className)}>
+      <span className={cn('h-1.5 w-12 overflow-hidden rounded-full', onDark ? 'bg-white/25' : 'bg-muted')} aria-hidden>
         <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: behind ? '#f59e0b' : '#e6842a' }} />
       </span>
-      <span className="tabular-nums text-foreground">{remaining}</span> pts left
-      {behind && <span className={TONE.attention.text}>· behind</span>}
-      {onTrack && <span className={TONE.done.text}>· on track</span>}
+      <span className={cn('tabular-nums', onDark ? 'text-white' : 'text-foreground')}>{remaining}</span> pts left
+      {behind && <span className={onDark ? 'text-amber-300' : TONE.attention.text}>· behind</span>}
+      {onTrack && <span className={onDark ? 'text-emerald-300' : TONE.done.text}>· on track</span>}
     </span>
   );
 }
