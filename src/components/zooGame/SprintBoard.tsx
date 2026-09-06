@@ -7,7 +7,7 @@ import { enclosureReady, enclosureOf, availableItems, notReady, revealed, active
 import { NewHere } from './NewHere';
 import { ActionBar, DOCKED_BAR_PX } from './ActionBar';
 import { BurndownChip } from './Burndown';
-import { ScrumTeamStrip, AssignDevs } from './ScrumTeam';
+import { AssignDevs, TeamRow, MEMBER_DRAG } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
 import { ExplainButton } from './Explain';
 import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
@@ -339,6 +339,21 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       <span>{refusedMove.why}</span>
     </div>
   ) : null);
+  /** A person dropped on a card takes that work. The card is draggable itself - that is how work
+   *  moves between columns - so the payload is prefixed and anything else falls through to the
+   *  column's own handler. */
+  const takeProps = (itemId: string) => ({
+    onDragOver: (e: DragEvent) => {
+      if (e.dataTransfer?.types?.includes('text/plain')) e.preventDefault();
+    },
+    onDrop: (e: DragEvent) => {
+      const raw = e.dataTransfer?.getData('text/plain') ?? '';
+      if (!raw.startsWith(MEMBER_DRAG)) return;      // a card being moved: let the column have it
+      e.preventDefault();
+      e.stopPropagation();
+      onAssignDev(itemId, raw.slice(MEMBER_DRAG.length));
+    },
+  });
   const dragProps = (id: string, from: string) => ({
     draggable: true,
     onDragStart: (e: DragEvent) => { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', id); } catch { /* some browsers */ } setDrag({ id, from }); },
@@ -411,8 +426,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
             {/* The shell's header already says which Sprint and which day, and the dock says what
                 this is - so on the canvas the board leads with its question and nothing else. */}
             {/* The strip says which Sprint, which day and whether the Goal is safe; the tab says
-                which artifact this is. A heading here was the third thing saying where you are. */}
-            <ScrumTeamStrip team={state.team} onRename={onRenameMember} compact />
+                which artifact this is. A heading here was the third thing saying where you are.
+                What belongs here is who is in the team, because they are what you move about. */}
+            <TeamRow team={state.team} onRename={onRenameMember} onWho={(why) => toast(why)} />
             <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
           </div>
         </div>
@@ -547,7 +563,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
                       : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
-                      <div key={it.id} {...dragProps(it.id, 'todo')} className="cursor-grab active:cursor-grabbing">
+                      <div key={it.id} {...dragProps(it.id, 'todo')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
                       {cameBack(it.id)}
                       <PbiCard item={it} state="forecast" density="row"
                         badges={<Chip>{it.zone}</Chip>}
@@ -595,7 +611,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   {doing.map((it) => {
                     const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
                     return (
-                      <div key={it.id} {...dragProps(it.id, 'doing')} className="cursor-grab active:cursor-grabbing">
+                      <div key={it.id} {...dragProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
                       {cameBack(it.id)}
                       <PbiCard item={it} state="doing" density="row"
                         badges={<>
