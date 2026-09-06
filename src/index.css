@@ -332,6 +332,24 @@
   --zoo-chip: 180 100% 24%;       /* #007a7a */
 }
 
+/* A new thing said catches the eye for a moment and then stops asking. Notes used to arrive in
+   silence - the strip simply changed, and a learner watching the board never knew the team had
+   spoken. Two seconds of movement, and nothing after it. */
+@keyframes zooNoteFlash {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  20% { transform: scale(1.9); opacity: 0.85; }
+  60% { transform: scale(1); opacity: 1; }
+}
+.zoo-note-flash { animation: zooNoteFlash 0.7s ease-in-out 2; }
+@keyframes zooNoteFresh {
+  0%, 100% { background: transparent; }
+  30% { background: hsl(var(--primary) / 0.14); }
+}
+.zoo-note-fresh { animation: zooNoteFresh 0.9s ease-in-out 2; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .zoo-note-flash, .zoo-note-fresh { animation: none; }
+}
+
 /* The strip: which Sprint, which day, how long is left, and what the Sprint is for.
    One dark band, so the artifacts below it are the only white things on screen. */
 .zoo-band {

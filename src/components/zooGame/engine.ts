@@ -1184,6 +1184,15 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
   };
 
   let out = started;
+  // What Done meant when this Sprint started, or that nobody had said. The Retrospective asks the
+  // question either way, and this is the answer it reads back.
+  out = note(out, { kind: 'dod',
+    what: state.dodAgreed
+      ? `Done means the ${state.definitionOfDone.length} things the Scrum Team agreed.`
+      : state.definitionOfDone.length
+        ? `Nobody agreed a Definition of Done. The ${state.definitionOfDone.length} that were there stood.`
+        : 'No Definition of Done. Done means whatever anybody says it means.',
+    cost: state.dodAgreed ? undefined : 'nothing was agreed, so nothing was inspected' });
   out = note(out, { kind: 'forecast', by: state.forecastBy,
     what: `${whoIs(state.forecastBy)} chose the Sprint Backlog: ${committed.size} item${committed.size === 1 ? '' : 's'}, ${committedPts} points against a forecast of ${sprintCapacity(state).points}.` });
   if (turnedAway.length) {
@@ -2030,6 +2039,11 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
     text: 'How will you choose which of your visitors\u2019 signals to act on?' },
   // The Guide's first two inspection targets are individuals and interactions - ask about them
   // before process, or a Retrospective quietly becomes a delivery post-mortem.
+  // The question the course is built around: play a Sprint without agreeing what Done means, and
+  // this is what the Retrospective has to ask. It only appears when it is true.
+  { id: 'what-was-done', when: 'When no Definition of Done was agreed',
+    applies: (s) => !s.dodAgreed,
+    text: 'What did Done mean this Sprint, and who decided it?' },
   { id: 'together', when: 'Always offered', text: 'How well did you work together this Sprint - who needed help, and did they get it?' },
   { id: 'went-well', when: 'Always offered', text: 'What went well this Sprint that you want to keep doing?' },
   { id: 'biggest-difference', when: 'Always offered', text: 'What would make the biggest difference to how the team works next Sprint?' },
@@ -2039,9 +2053,15 @@ export const RETRO_QUESTIONS: RetroQuestion[] = [
 export function retroQuestions(state: ZooGameState): string[] {
   // What happened this Sprint first, then the standing questions - three in all, so the team has
   // something to talk about rather than a form to fill in.
+  //
+  // "How well did you work together" is always one of them, whatever else happened. The Guide's
+  // first two inspection targets are individuals and interactions, and a Sprint with three things
+  // to answer for used to push that question off the list - which turns a Retrospective into a
+  // delivery post-mortem, quietly.
+  const together = RETRO_QUESTIONS.find((q) => q.id === 'together')!;
   const fromThisSprint = RETRO_QUESTIONS.filter((q) => q.applies?.(state));
-  const general = RETRO_QUESTIONS.filter((q) => !q.applies);
-  return [...fromThisSprint, ...general].slice(0, 3).map((q) => q.text);
+  const general = RETRO_QUESTIONS.filter((q) => !q.applies && q.id !== 'together');
+  return [...fromThisSprint, ...general].slice(0, 2).concat(together).map((q) => q.text);
 }
 
 // ============= The coach: one gentle nudge at a time =============

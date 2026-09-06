@@ -9,11 +9,23 @@ export type GameNote = {
   /** Who is talking, not how urgent it is - the refusals are the teaching, not warnings. */
   tone?: 'rule' | 'team' | 'coach';
   body: ReactNode;
+  /** The plain words, for the one line the dock shows. Without it a note whose body is anything
+   *  richer than a string reads "read it", which tells nobody anything. */
+  text?: string;
   onDismiss?: () => void;
   dismissLabel?: string;
 };
 
-export type NotesCtx = { notes: GameNote[]; mount: () => void; unmount: () => void };
+export type NotesCtx = {
+  notes: GameNote[];
+  mount: () => void;
+  unmount: () => void;
+  /** Somebody is reading what the game said. In a solo game the day's clock stops while they are:
+   *  the Sprint's time is for building, and charging a learner for reading the thing the game
+   *  chose to tell them is the game punishing its own teaching. In a shared game it keeps running -
+   *  a timebox the whole team is in is not one person's to pause. */
+  onReading?: (reading: boolean) => void;
+};
 
 export const NotesContext = createContext<NotesCtx>({ notes: [], mount: () => {}, unmount: () => {} });
 

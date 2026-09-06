@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
-import { DOCK_PILL, DOCK_POSITION, NotesContext, type GameNote, type NotesCtx } from './notesDock';
+import { DOCK_PILL, DOCK_POSITION, NotesContext, useGameNotes, type GameNote, type NotesCtx } from './notesDock';
 
 // Everything the game says to you, in the same pill as the button that moves you on.
 //
@@ -21,13 +21,13 @@ import { DOCK_PILL, DOCK_POSITION, NotesContext, type GameNote, type NotesCtx } 
  *  When a screen has a primary action - almost all of them do - the notes ride in its pill. When one
  *  does not, this puts the same pill in the same corner with just the notes in it, so a note never
  *  moves depending on which screen you happen to be on. */
-export function GameNotesProvider({ notes, children }: { notes: GameNote[]; children: ReactNode }) {
+export function GameNotesProvider({ notes, onReading, children }: { notes: GameNote[]; onReading?: (reading: boolean) => void; children: ReactNode }) {
   const [bars, setBars] = useState(0);
   // Stable, deliberately: an action bar registers in an effect keyed on these, and a pair of
   // functions rebuilt on every render would tear the bar down and put it back up forever.
   const mount = useCallback(() => setBars((n) => n + 1), []);
   const unmount = useCallback(() => setBars((n) => n - 1), []);
-  const value = useMemo<NotesCtx>(() => ({ notes, mount, unmount }), [notes, mount, unmount]);
+  const value = useMemo<NotesCtx>(() => ({ notes, mount, unmount, onReading }), [notes, mount, unmount, onReading]);
   return (
     <NotesContext.Provider value={value}>
       {children}
@@ -48,20 +48,37 @@ export function GameNotesProvider({ notes, children }: { notes: GameNote[]; chil
  *  is several paragraphs - opens upwards over the corner it came from, and closes again. */
 export function NoteStrip({ notes }: { notes: GameNote[] }) {
   const [open, setOpen] = useState(false);
+  const { onReading } = useGameNotes();
+  // A new thing said should catch the eye for a moment. Notes used to arrive in silence: the strip
+  // simply changed, and a learner reading the board never knew the team had spoken.
+  // Which note the flash belongs to, rather than a flag set from inside an effect: deriving it
+  // keeps the render pure, and the timer only ever turns the flash OFF.
+  const newestId = notes[0]?.id;
+  const [flashed, setFlashed] = useState<string | undefined>(undefined);
+  const fresh = !!newestId && flashed !== newestId;
+  useEffect(() => {
+    if (!newestId || flashed === newestId) return;
+    const t = setTimeout(() => setFlashed(newestId), 1400);
+    return () => clearTimeout(t);
+  }, [newestId, flashed]);
+  // Reading is not building. While the stack is open the day's clock stops in a solo game.
+  useEffect(() => { onReading?.(open); return () => onReading?.(false); }, [open, onReading]);
   if (!notes.length) return null;
   const newest = notes[0];
   const rest = notes.length - 1;
   const dot = newest.tone === 'rule' ? 'bg-amber-500' : newest.tone === 'team' ? 'bg-primary' : 'bg-muted-foreground';
+  // What it actually says, wherever the game gave us words for it. "read it" was what the strip
+  // showed for anything whose body was more than a string, which is most of them.
+  const line = newest.text ?? (typeof newest.body === 'string' ? newest.body : 'read it');
   return (
     <div className="relative flex min-w-0 items-center gap-2">
-      <span aria-hidden className={cn('h-2 w-2 shrink-0 rounded-full', dot)} />
-      <button type="button" onClick={() => setOpen((o) => !o)}
-        title={typeof newest.body === 'string' ? newest.body : newest.title}
-        className={cn(FOCUS, 'flex min-w-0 items-center gap-1.5 rounded-md text-left text-xs')}>
+      <span aria-hidden className={cn('h-2 w-2 shrink-0 rounded-full transition-transform', dot,
+        fresh && 'zoo-note-flash')} />
+      <button type="button" onClick={() => setOpen((o) => !o)} title={line}
+        className={cn(FOCUS, 'flex min-w-0 items-center gap-1.5 rounded-md text-left text-xs',
+          fresh && 'zoo-note-fresh')}>
         <span className="shrink-0 font-semibold uppercase tracking-wide text-muted-foreground">{newest.title}</span>
-        <span className="min-w-0 max-w-[42ch] truncate text-foreground">
-          {typeof newest.body === 'string' ? newest.body : 'read it'}
-        </span>
+        <span className="min-w-0 max-w-[42ch] truncate text-foreground">{line}</span>
         <span className="shrink-0 text-[11px] font-medium text-muted-foreground underline">
           {open ? 'close' : rest > 0 ? `and ${rest} more` : 'open'}
         </span>

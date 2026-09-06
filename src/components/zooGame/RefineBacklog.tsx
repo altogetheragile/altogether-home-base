@@ -7,7 +7,7 @@ import { SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductBacklogSidebar } from './Board';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW, TONE, type Tone } from './ui/tokens';
+import { EYEBROW, FOCUS, TONE, type Tone } from './ui/tokens';
 import { useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
@@ -186,9 +186,14 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
         )}
   
-        {/* Nothing can be Done against a bar nobody has read. The Definition of Done is the Increment's
-            commitment and it belongs to the whole Scrum Team, so it is agreed here - before the first
-            Sprint - rather than discovered halfway through one. */}
+        {/* The Definition of Done is the Increment's commitment, and this is where a team would
+            agree one. It is not a gate.
+            
+            It used to be: you could not reach Sprint Planning until you had agreed one, which took
+            the best teaching moment of the first Sprint and threw it away. A team that starts
+            without one finds out at the Review what Done meant - nothing - and the Retrospective
+            asks the question with the evidence in front of them. Reported as "there is no learning
+            opportunity here". */}
         {first && onSetDod && (
           <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
             onToggle={() => setDodOpen((o) => !o)}
@@ -204,11 +209,20 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
                   something through.
                 </p>
                 <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
-                {!state.dodAgreed && onAgreeDod && (
+                {!state.dodAgreed && onAgreeDod && (<>
                   <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodOpen(false); }}>
                     <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done
                   </Button>
-                )}
+                  {/* The other way out, said as plainly as the first. Plenty of teams start without
+                      one; what they learn is what it costs, and that is a Sprint's worth of
+                      teaching this screen used to prevent. */}
+                  {onSetDod && (
+                    <button type="button" onClick={() => { onSetDod([]); setDodOpen(false); }}
+                      className={cn(FOCUS, 'w-full rounded-md border border-dashed border-border px-2 py-1.5 text-[11px] text-muted-foreground hover:text-foreground')}>
+                      Start without one - and find out at the Review what Done meant
+                    </button>
+                  )}
+                </>)}
               </div>
             )}
           </Step>
@@ -217,8 +231,12 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
         </div>
       </div>
       <ActionBar hint={!canPlan ? 'Estimate at least one item so it is Ready to plan'
-        : first && !state.dodAgreed ? 'Agree the Definition of Done before the first Sprint' : undefined}>
-        <Button disabled={!canPlan || (first && !state.dodAgreed)} onClick={onPlan}>Go to Sprint Planning &rarr;</Button>
+        : first && !state.dodAgreed
+          ? state.definitionOfDone.length
+            ? 'Nobody has agreed the Definition of Done. You can start anyway.'
+            : 'No Definition of Done. Done will mean whatever anybody says it means.'
+          : undefined}>
+        <Button disabled={!canPlan} onClick={onPlan}>Go to Sprint Planning &rarr;</Button>
       </ActionBar>
     </div>
   );
