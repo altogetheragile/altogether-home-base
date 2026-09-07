@@ -306,7 +306,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
               where you are actually doing the work, they are the work. */}
           <div className={cn('rounded-lg border p-2', focus ? 'border-border bg-card' : 'border-emerald-400/40 bg-emerald-500/[0.05]')}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <div className={cn(EYEBROW, focus ? 'text-muted-foreground' : 'text-emerald-700 dark:text-emerald-300')}>What Done looks like</div>
+              <div className={cn(EYEBROW, focus ? 'text-muted-foreground' : 'text-emerald-700 dark:text-emerald-300')}>What this needs to be</div>
               {/* Inspect and adapt. These criteria are about the thing that was built, and until now
                   they were being judged from the drawing of it - the Increment was a toggle above the
                   park that you had to notice. Nothing to inspect until it has been built once. */}

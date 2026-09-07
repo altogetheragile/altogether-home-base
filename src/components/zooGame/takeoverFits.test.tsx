@@ -40,10 +40,11 @@ describe('an event on the screen', () => {
   });
 });
 
-describe('every event, on half a screen of park', () => {
-  it('gives Planning and the Retrospective the same stage as the Review', () => {
-    // "Do the same for the Retrospective and Planning screens." One layout for all three: the zoo
-    // as it stands on the left, what the event is asking beside it.
+describe('where the park is, and is not', () => {
+  it('is off Sprint Planning and off the Retrospective', () => {
+    // A panel earns its width by having the next click in it. The park has the next click during
+    // Build and at the Review; on Planning and the Retrospective it is decoration, and it halves
+    // the width of the work.
     for (const [phase, screen] of [
       ['planning', <SprintPlanning state={at('planning')} onPlan={() => {}} onSetForecast={() => {}}
         onEstimate={() => {}} onSetTasks={() => {}} onSetSprintGoal={() => {}} onRefine={() => {}}
@@ -51,10 +52,8 @@ describe('every event, on half a screen of park', () => {
       ['retro', <SprintRetro state={at('retro')} onNextSprint={() => {}} onSetDod={() => {}} onSetSprintDays={() => {}} />],
     ] as const) {
       const { container } = render(<MemoryRouter>{screen}</MemoryRouter>);
-      expect(container.querySelector('[data-part="event-park"]'), `${phase} has no park on it`).toBeTruthy();
-      const read = container.querySelector('[data-part="event-read"]') as HTMLElement;
-      expect(read, `${phase} is one column`).toBeTruthy();
-      expect(read.className, `${phase} does not scroll inside the event`).toMatch(/overflow-y-auto/);
+      expect(container.querySelector('[data-part="event-park"]'),
+        `${phase} still gives half its width to a picture nobody clicks`).toBeNull();
     }
   });
 });

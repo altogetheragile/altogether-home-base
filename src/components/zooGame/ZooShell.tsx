@@ -2,40 +2,29 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
 import { DoneGate } from './DoneGate';
-import { goalPulse } from './engine';
 import { DayClock } from './DayClock';
-import { TeamRow } from './ScrumTeam';
+import { SeatBand } from './SeatBand';
+import { eventPill, goalLine } from './header';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { SeatBadge } from './SeatBadge';
 import { GameNotesProvider } from './GameNotes';
 import type { GameNote } from './notesDock';
 import type { SeatName } from './useZooSessions';
 import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge } from 'lucide-react';
 import { FOCUS, SURFACE } from './ui/tokens';
 
-const PHASE_LABEL: Record<string, string> = { refine: 'Refinement', planning: 'Planning', sprint: 'Sprint', review: 'Review', retro: 'Retrospective' };
 /** The work tab's label per phase - what you are actually doing there. */
-/** Which Scrum accountabilities you are wearing in each phase - a solo game plays all
- *  three, so naming the "hat" keeps who-does-what visible (shown as a tooltip to save space). */
-const ROLE_HINT: Record<string, string> = {
-  refine: 'Hats: Product Owner (orders the Backlog) + Developers (estimate)',
-  planning: 'Hats: the whole Scrum Team - PO proposes value, Developers forecast & plan',
-  sprint: 'Hats: Developers (do the work) - the Scrum Master keeps the way clear',
-  review: 'Hats: the Scrum Team + your visitors (the stakeholders) inspect the Increment',
-  retro: 'Hats: the Scrum Team inspects how it works and adapts',
-};
 
 
 
 
 /** The game's own controls - save, resume - out of the way of the Scrum. */
-function GameMenu({ onSave, onOpenSaves, onMeasures, links }: { onSave?: () => void; onOpenSaves?: () => void; onMeasures?: () => void; links?: ReactNode }) {
-  if (!onSave && !onOpenSaves && !links && !onMeasures) return null;
+function GameMenu({ onSave, onOpenSaves, onMeasures, links, tools }: { onSave?: () => void; onOpenSaves?: () => void; onMeasures?: () => void; links?: ReactNode; tools?: ReactNode }) {
+  if (!onSave && !onOpenSaves && !links && !onMeasures && !tools) return null;
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -44,8 +33,9 @@ function GameMenu({ onSave, onOpenSaves, onMeasures, links }: { onSave?: () => v
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-48">
+      <PopoverContent align="end" className="w-56">
         <div className="space-y-0.5">
+          {tools}
           {/* The four key value measures. They are reference during a Sprint - they have their
               answers at the Review - so they live behind a menu rather than on the band. */}
           {onMeasures && (
@@ -163,7 +153,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused, onRenameMember, onWho, tools, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -250,7 +240,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Sprint: before one there is nothing to be at risk, and after it the Review has the answer.
   // Where the Learn drawer has been sent from outside it - the value measures, from the game menu.
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
-  const pulse = state.phase === 'sprint' ? goalPulse(state) : null;
+  const pill = eventPill(state);
+  const goal = goalLine(state);
 
   const notes: GameNote[] = [];
   if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, text: refused, onDismiss: onDismissRefused });
@@ -278,13 +269,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             So: where you are, small. The clock, big, with a bar that empties. Whether the Goal is
             safe, in one line, with the Goal itself under it in small type. Then one button: Learn.
             Everything that is words went behind it. */}
-        <div className="zoo-band -mx-2 mb-1.5 flex items-center gap-3 px-2 py-1.5 sm:-mx-3 sm:px-3">
+        <div className="zoo-band -mx-2 mb-1.5 flex items-center gap-3 px-2 py-2 sm:-mx-3 sm:px-3">
           {/* The mark is the way back to the site: it says whose game this is and does the wordmark's
               job in a fifth of the room. */}
           <div className="flex shrink-0 items-center gap-1.5">
             {links}
-            {/* Back, wherever going back is honest. Where it is not, the control says why - a Sprint
-                that has started cannot be un-started, and that is the lesson, not an oversight. */}
             {back && (
               'blocked' in back
                 ? (
@@ -298,34 +287,31 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                   </button>
                 )
             )}
-            {/* Whose hat you are wearing, where somebody else is wearing the others. In a solo game
-                you are all three, and a chip saying so on every screen is noise. */}
-            {seat && <SeatBadge seat={seat} phase={state.phase} observer={observer} covering={covering} />}
-            <span title={ROLE_HINT[state.phase]} className="text-xs font-medium opacity-90">
-              {state.phase === 'refine'
-                ? 'Before Sprint 1'
-                : <>Sprint {state.sprintNumber}{state.phase === 'sprint'
-                  ? <> &middot; Day {state.dayNumber} of {state.sprintDays}</>
-                  : <> &middot; <span className="font-bold uppercase tracking-wide">{PHASE_LABEL[state.phase] ?? ''}</span></>}</>}
+            {/* Where you are, in the words the event uses for itself - and orange while an event is
+                running, because an event is a moment and a working day is not. It replaces the seat
+                chip, the phase label and the day counter, which said three parts of one thing. */}
+            <span data-part="event-pill"
+              className={cn('rounded-full px-3 py-1 text-base font-bold leading-tight',
+                pill.event ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-white')}>
+              {pill.text}
             </span>
           </div>
+
+          {/* The clock, dead centre and the biggest thing on the strip. */}
+          <div className="flex flex-1 justify-center"><DayClock state={state} onPause={onSetClockPaused} /></div>
 
           {/* Is the Sprint Goal safe. The answer in bold, from the Sprint's own arithmetic; the Goal
               itself in small type under it, opening in full when you ask for it. */}
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" data-part="goal-line" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
-                className={cn(FOCUS, 'flex min-w-0 flex-1 flex-col items-start rounded-md px-1 py-0.5 text-left hover:bg-white/10')}>
-                {state.phase === 'sprint' && pulse ? (
-                  <span className={cn('truncate text-sm font-bold leading-tight', pulse.level === 'risk' && 'text-amber-300')}>{pulse.line}</span>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] opacity-70">
-                    <Target className="h-3 w-3" /> Sprint Goal
-                  </span>
+                className={cn(FOCUS, 'hidden min-w-0 max-w-[26rem] flex-col items-start rounded-md px-1 py-0.5 text-left hover:bg-white/10 lg:flex')}>
+                <span className={cn('truncate text-sm font-bold leading-tight', goal.risk && 'text-amber-300')}>{goal.line}</span>
+                {/* The Goal itself under the verdict - and nothing where there is no Goal, rather
+                    than the same sentence twice in two weights. */}
+                {state.sprintGoal.trim() && (
+                  <span className="w-full truncate text-[11px] opacity-80">{state.sprintGoal.trim()}</span>
                 )}
-                <span className={cn('w-full truncate text-[11px]', state.sprintGoal.trim() ? 'opacity-80' : 'opacity-60')}>
-                  {state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
-                </span>
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[min(92vw,32rem)]">
@@ -359,10 +345,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                 <span className="md:hidden">{poRefining ? '\u2026' : 'Refine'}</span>
               </button>
             )}
-            {/* What the screen under this needs to hand you: the burndown, the help, the settings.
-                They were rows of their own above the board; here they are beside Learn, with the
-                other things you reach for rather than in front of the work. */}
-            {tools}
             {/* One button for everything the game can explain. It replaced Artifacts, Scrum, the four
                 dials and the help icons - each of those is a section in it now. */}
             <LearnDrawer state={state} notes={notes} teaching={state.teaching ?? true} onSetTeaching={onSetTeaching} onReading={onReading}
@@ -371,7 +353,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {/* Polishing the teaching happens while playing, so the editor lives here rather than
                 in an admin screen. Admins only - it renders nothing for everyone else. */}
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
-            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} onMeasures={() => setLearnAt('value')} links={menuLinks} />
+            {/* The settings that were icons on the strip live in here now: they are set once, and a
+                gear beside the clock was a control competing with the thing it sits next to. */}
+            <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} onMeasures={() => setLearnAt('value')} links={menuLinks} tools={tools} />
           </div>
         </div>
 
@@ -387,23 +371,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
               Increment. A learner who never connects the two is playing a building game. */}
           <Tab active={tab === 'increment'} onClick={() => setTab('increment')} icon={Trees} label="Increment" badge={open ? String(open) : undefined} />
-          {/* The Scrum Team, on the row with the artifacts they work on - which is where the sketch
-              puts them. In a row of their own they cost a whole line and pushed the board down. */}
-          {state.phase === 'sprint' && onRenameMember && (
-            <div className="mb-1 ml-3 min-w-0 flex-1 overflow-x-auto">
-              <TeamRow team={state.team} onRename={onRenameMember} onWho={onWho} />
-            </div>
-          )}
-          {/* The day, drawn like a clock rather than said like a label - and a hand you can put on
-              it. It rides on the tab row so it is the same size and the same place on every tab. */}
-          {state.phase === 'sprint' && (
-            <div className="ml-auto mb-1"><DayClock state={state} onPause={onSetClockPaused} /></div>
-          )}
         </div>
       </header>
 
-      {/* What your accountability holds on this screen is on the seat badge, where you can ask for
-          it. It was a band across the screen on every screen, saying the same thing all Sprint. */}
+      {/* The band: who does what now, and what each of the five is doing. The accountabilities were
+          invisible - a row of name chips that said nothing about what any of them were for. */}
+      <SeatBand state={state} seat={seat} onWho={onWho} />
 
       {/* Body: one artifact at a time, filling the width. Each pane stays mounted and is toggled
           with CSS, so the day clock, a half-finished design and the park's own scroll all survive

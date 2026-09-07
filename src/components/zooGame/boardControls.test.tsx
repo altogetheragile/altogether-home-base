@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { ZooShell } from './ZooShell';
@@ -71,7 +71,7 @@ describe('the Sprint Backlog screen', () => {
     expect(body.className, 'the column itself does not scroll').toContain('overflow-y-auto');
   });
 
-  it('keeps the game’s tools on the strip, and off the play space', () => {
+  it('keeps the game’s tools out of the play space, and off the strip', () => {
     // They were two rows above the columns: a help button on one, the burndown and the gear on the
     // other, with a band of empty space under them. "Maximise the play space" - so they ride on the
     // strip beside Learn, where the other things you reach for are.
@@ -85,9 +85,13 @@ describe('the Sprint Backlog screen', () => {
         </ZooShell>
       </MemoryRouter>,
     );
-    const row = controls(container);
+    // ...and off the strip too. The header carries where you are, the clock, the goal and Learn:
+    // a gear beside the clock is a control competing with the thing it sits next to. The settings
+    // are set once, so they live in the game menu.
+    expect(controls(container), 'the tools are back on the strip, beside the clock').toBeFalsy();
+    fireEvent.click(screen.getByRole('button', { name: 'Game menu' }));
+    const row = controls(document.body);
     expect(row, 'the tools are nowhere at all').toBeTruthy();
-    expect(row.closest('.zoo-band'), 'the tools are not on the strip').toBeTruthy();
     expect(row.querySelector('[aria-label="Board settings"]'), 'the settings did not come with them').toBeTruthy();
   });
 });

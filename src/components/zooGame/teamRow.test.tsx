@@ -44,19 +44,18 @@ const payload = (data: string) => {
 };
 
 describe('the team along the top', () => {
-  it('is on the tab row, with the artifacts and the clock - not above the board', () => {
-    // Asked for at the top of the screen, beside the tabs. In a row of its own above the board it
-    // cost a whole line and pushed the work down, which is not where it was asked to be.
+  it('is a band under the tabs, saying what each of them is doing', () => {
+    // The accountabilities were invisible: a row of name chips that said who was on the team and
+    // nothing about what any of them were for. The band says it continuously.
     const { container } = render(
       <MemoryRouter><ZooShell state={state()} onRenameMember={noop}><div>the screen</div></ZooShell></MemoryRouter>,
     );
-    const row = container.querySelector('[data-part="team-row"]')!;
+    const row = container.querySelector('[data-part="seat-band"]')!;
     expect(row, 'the team is not on the screen at all').toBeTruthy();
     expect(row.textContent).toMatch(/PO/);
     expect(row.textContent).toMatch(/SM/);
     for (const dev of state().team.developers) expect(row.textContent).toContain(dev.name);
-    expect(row.closest('[data-part="tab-row"]'), 'the team is not on the tab row').toBeTruthy();
-    expect(board().container.querySelector('[data-part="team-row"]'),
+    expect(board().container.querySelector('[data-part="seat-band"]'),
       'the team is back above the board, pushing the work down').toBeNull();
   });
 

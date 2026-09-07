@@ -40,10 +40,10 @@ describe('the strip', () => {
     const clock = container.querySelector('[data-part="day-clock"]');
     expect(clock, 'no clock on the screen at all').toBeTruthy();
     expect(clock!.textContent).toMatch(/1:28/);
-    expect(clock!.textContent).toMatch(/left of\s*today/);
-    expect(clock!.innerHTML, 'the clock is chip-sized again').toMatch(/text-2xl/);
+    expect(clock!.textContent).toMatch(/left today/);
+    expect(clock!.innerHTML, 'the clock is chip-sized again').toMatch(/text-\[2\.75rem\]/);
     expect(container.querySelector('.zoo-band [data-part="day-clock"]'),
-      'the clock is back in the strip, competing with where you are').toBeNull();
+      'the clock is off the strip, where the eye does not go').toBeTruthy();
   });
 
   it('says whether the Sprint Goal is safe, above the Goal itself', () => {
