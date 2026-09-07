@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ZOO_AREAS } from './config';
 import type { ZooBrief } from './types';
 import { ExplainButton } from './Explain';
+import { mayTake } from './seatRules';
+import type { SeatName } from './useZooSessions';
 import { ActionBar } from './ActionBar';
 import { StepTrack } from './StepTrack';
 import { Button } from '@/components/ui/button';
@@ -46,7 +48,17 @@ function Choice({ on, onClick, children }: { on: boolean; onClick: () => void; c
 }
 
 /** The three questions, and the Product Backlog they produce. */
-export function BacklogWizard({ productGoal, onBuild }: { productGoal: string; onBuild: (brief: ZooBrief) => void }) {
+export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }: {
+  productGoal: string;
+  onBuild: (brief: ZooBrief) => void;
+  /** Which accountability is looking. Writing the Product Backlog is the Product Owner's, so any
+   *  other seat is watching it being written rather than doing it. */
+  seat?: SeatName | null;
+  emptySeats?: SeatName[];
+}) {
+  // Playing alone there are no seats at all - you are the whole Scrum Team, and the gate belongs
+  // to shared games. It only has something to say when somebody is holding a seat.
+  const mine = seat ? mayTake('WRITE_BACKLOG', { seat, emptySeats }) : { allowed: true, because: '' };
   const [step, setStep] = useState<Step>('areas');
   const [zones, setZones] = useState<string[]>(ZOO_AREAS.map((a) => a.zone));
   const [audience, setAudience] = useState<ZooBrief['audience']>('families');
@@ -79,6 +91,17 @@ export function BacklogWizard({ productGoal, onBuild }: { productGoal: string; o
           <p className="text-sm text-muted-foreground">{current.lead}</p>
         </div>
       </header>
+
+      {/* Whose this is, where it is not yours. A screen that offers work your seat cannot take,
+          and refuses the press when you take it, is a screen you are stuck on - reported from a
+          live session joined as a Developer. */}
+      {!mine.allowed && (
+        <p data-part="not-yours" className="rounded-lg border border-primary/40 bg-primary/[0.06] px-3 py-2 text-xs">
+          <span className={cn(EYEBROW, 'mr-1.5 text-primary')}>The Product Owner&rsquo;s</span>
+          <span>{mine.because} You are watching them answer it - the three answers are theirs, and the
+            Backlog appears here when they write it.</span>
+        </p>
+      )}
 
       {/* What all of this is in service of. */}
       <p className="rounded-lg border border-primary/30 bg-primary/[0.04] px-3 py-2 text-xs">
@@ -127,7 +150,7 @@ export function BacklogWizard({ productGoal, onBuild }: { productGoal: string; o
             <span className="hidden text-[11px] text-muted-foreground sm:inline">
               Writes {zones.length} area{zones.length === 1 ? '' : 's'} and the park&rsquo;s own grounds
             </span>
-            <Button disabled={!canGo} onClick={() => onBuild({ zones, audience, firstZone })}>
+            <Button disabled={!canGo || !mine.allowed} onClick={() => onBuild({ zones, audience, firstZone })}>
               <Sparkles className="mr-1 h-4 w-4" /> Write the Product Backlog
             </Button>
           </div>

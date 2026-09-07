@@ -71,15 +71,22 @@ describe('the Build state', () => {
     expect(next!.className, 'the next step is not the orange box').toMatch(/border-primary/);
   });
 
-  it('folds the controls to one line until a part is touched', () => {
+  it('has the studio open, under the step it builds', () => {
+    // Reported from a live solo game: "How do I actually build anything? Where is the studio to add
+    // things?" - from someone with the item in hand and the next step on the screen. The controls
+    // were folded to a grey line at the foot of the bench, which read as there being no way to
+    // build at all. They are open, and above the criteria rather than under them.
     const { container } = board('build');
+    const studio = container.querySelector('[data-part="studio"]');
+    expect(studio, 'the way to build is folded away again').toBeTruthy();
+    expect(studio!.className, 'the studio is below what it builds').toMatch(/order-first/);
+    expect(container.querySelector('[data-part="controls-line"]'), 'it is folded as well as open').toBeNull();
+
+    // ...and you can fold it away once you know where it is.
+    fireEvent.click(screen.getByRole('button', { name: 'hide' }));
     const line = container.querySelector('[data-part="controls-line"]');
-    expect(line, 'the controls are open beside the work again').toBeTruthy();
+    expect(line, 'hiding the studio left no way back to it').toBeTruthy();
     expect(line!.textContent).toMatch(/Controls: size · shape · ground · fence · water · planting/);
-    // Ask for them and they open.
-    fireEvent.click(line as HTMLElement);
-    expect(container.querySelector('[data-part="controls-line"]')).toBeNull();
-    expect(screen.getAllByText(/How it is made/).length).toBeGreaterThan(0);
   });
 
   it('opens them by itself when you touch a part of the thing on the park', () => {
@@ -117,9 +124,10 @@ describe('the Build state', () => {
     expect(container.textContent, 'nothing offers to draw the route').toMatch(/Draw its route/);
   });
 
-  it('names the controls this item actually has', () => {
+  it('names the controls this item actually has, on the line that brings them back', () => {
     // "ground · fence · water · planting" on a pathway is a label for a different item.
     const { container } = board('build');
+    fireEvent.click(screen.getByRole('button', { name: 'hide' }));
     expect(container.querySelector('[data-part="controls-line"]')!.textContent).toMatch(/ground · fence · water/);
   });
 
@@ -148,8 +156,10 @@ describe('the Build state', () => {
     expect(container.textContent).toMatch(/Acceptance criteria/i);
   });
 
-  it('folds the controls on every screen now there is only one', () => {
+  it('is the same bench whichever way you came to it', () => {
+    // There is one Sprint Backlog screen, so there is one bench on it: the studio open on the work
+    // in hand, wherever the item was picked up from.
     const { container } = board('plan');
-    expect(container.querySelector('[data-part="controls-line"]'), 'the studio is open beside the board again').toBeTruthy();
+    expect(container.querySelector('[data-part="studio"]'), 'the bench has no studio on it').toBeTruthy();
   });
 });

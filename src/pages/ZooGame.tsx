@@ -322,7 +322,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
           onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
         // No shell: there is nothing to put in a header yet - no Sprint, no Backlog, no park.
-        return <div className="h-full overflow-y-auto px-4 py-5"><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} /></div>;
+        return <div className="h-full overflow-y-auto px-4 py-5"><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} seat={seat} emptySeats={covering} /></div>;
       case 'refine':
         return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onSetSprintDays={setSprintDays} onSetDod={setDod} onAgreeDod={agreeDod} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onPlan={() => setPhase('planning')} teachCard={cardFor('refine')} onMarkTaught={markTaught} /></ZooShell>;
       case 'planning':

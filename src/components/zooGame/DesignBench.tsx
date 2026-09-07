@@ -147,9 +147,15 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   const held = itemId ? state.backlog.find((i) => i.id === itemId) : undefined;
   const wentBack = held?.status === 'backlog' ? held : undefined;
   const item = wentBack ? undefined : held;
-  // Touching a part of the thing out on the park opens its controls in here - that link is the
-  // whole reason a row of coloured squares is comprehensible at all - so a touch counts as asking.
-  const [controlsOpen, setControlsOpen] = useState(false);
+  // Open, and first. Folding the controls to a grey line at the foot of the bench read as tidy and
+  // played as "there is no way to build anything": reported from a live solo game - "How do I
+  // actually build anything? Where is the studio to add things?" - by someone who had the item in
+  // hand, the next step on the screen, and the only tool for it below the fold. You can still fold
+  // them away once you know where they are.
+  //
+  // Touching a part of the thing out on the park opens them too - that link is the whole reason a
+  // row of coloured squares is comprehensible at all - so a touch counts as asking.
+  const [controlsOpen, setControlsOpen] = useState(true);
   // ...and the fold never hides the only way to make progress. A pathway is drawn with the pen, and
   // the pen lives in these controls: folded away, the park said "pick up the pen on the design
   // bench" and there was no bench on the screen to pick it up from. Reported from a live game.
@@ -244,9 +250,16 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
               second thing shouting at you while the next step is trying to say one sentence. */}
           {/* Not rendered at all where the person looking cannot build: hidden is for a fold you can
               open, and this is not theirs to open. */}
-          {canBuild && (
-          <div data-part="studio" className={cn('rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2', focus && 'order-last', focus && !showControls && 'hidden')}>
-            <div className={cn(EYEBROW, 'mb-1.5 text-sky-700 dark:text-sky-300')}>How it is made</div>
+          {canBuild && showControls && (
+          <div data-part="studio" className={cn('rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2', focus && 'order-first')}>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <span className={cn(EYEBROW, 'text-sky-700 dark:text-sky-300')}>How it is made &middot; the studio</span>
+              {/* Foldable, once you know where it is - and only where a fold line can bring it back. */}
+              {focus && !part && !needsPen && (
+                <button type="button" onClick={() => setControlsOpen(false)}
+                  className={cn(FOCUS, 'text-[11px] text-muted-foreground underline hover:text-foreground')}>hide</button>
+              )}
+            </div>
             {/* The same controls that used to float over the park, docked. Identical component, so
                 there is one place a control is defined and one place it can go wrong. */}
             <ItemToolbar docked
