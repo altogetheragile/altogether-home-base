@@ -108,3 +108,29 @@ describe('the band', () => {
     expect(line.doing, 'the band says "available" while they are building something').toMatch(/^building /);
   });
 });
+
+describe('the band in a shared game', () => {
+  it('outlines the seat you hold, and says which empty ones fall to you', () => {
+    // The seat chip used to say both, and it went with the old strip. In a shared game they still
+    // have to be said: a covered seat is work you did not think was yours.
+    const { container } = render(
+      <MemoryRouter>
+        <ZooShell state={sprint()} seat="product_owner" covering={['scrum_master']}><div /></ZooShell>
+      </MemoryRouter>,
+    );
+    const seats = [...container.querySelectorAll('[data-part="seat"]')];
+    const mine = seats.find((s) => /you$/i.test((s.textContent ?? '').split('\n')[0].trim()) || /you/.test(s.textContent ?? ''))!;
+    expect(mine.textContent, 'nothing says which seat is yours').toMatch(/Priya|you/i);
+    expect(container.textContent, 'nothing says the empty seat’s work falls to you').toMatch(/covering/i);
+  });
+
+  it('says an observer is watching, and outlines nothing', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ZooShell state={sprint()} seat="developer" observer><div /></ZooShell>
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('[data-part="seat-band"]')!.textContent).toMatch(/watching/i);
+    expect(container.textContent, 'a watcher was given a seat of their own').not.toMatch(/\bcovering\b/i);
+  });
+});
