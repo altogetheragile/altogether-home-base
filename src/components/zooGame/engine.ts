@@ -711,7 +711,13 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   // may make it - the Sprint Backlog belongs to them - which is why the accountability is named
   // even when one person is playing all three.
   return note(moved, { kind: 'moved', by: by ?? 'developer',
-    what: `${whoIs(by ?? 'developer')} took ${item.name} into Doing (${item.estimate} points).` });
+    what: `${whoIs(by ?? 'developer')} took ${item.name} into Doing (${item.estimate} points).`,
+    // Free play allows it and names it. A Product Owner may work as a Developer - the Guide says so
+    // - but while they are on the tools, nobody is doing the Product Owner's job, and the questions
+    // pile up on an empty seat. The Retrospective reads this back with the rest.
+    cost: by === 'product_owner'
+      ? 'The Product Owner took work off the board. While they are building, nobody is ordering the Backlog or answering the Developers.'
+      : undefined });
 }
 
 /** Notice something the Scrum Team did, without having an opinion about it.
@@ -2481,6 +2487,58 @@ export function goalPulse(state: ZooGameState): {
     level: 'risk',
     line: `Goal at risk · ${named.name} ${unstarted ? 'not started' : 'unfinished'} · ${essentialsLine}`,
   };
+}
+
+/** The habits this Sprint showed, counted off the decision log.
+ *
+ *  Not a score, and not a telling-off: each one is something that happened, what it cost, and the
+ *  Scrum answer to it. The game allows all of them - that is what free play means - and the
+ *  Retrospective is where a team is supposed to look at them.
+ */
+export function antiPatterns(state: ZooGameState, sprint = state.sprintNumber): {
+  id: string; title: string; count: number; what: string; instead: string;
+}[] {
+  const log = decisionsIn(state, sprint);
+  const out: { id: string; title: string; count: number; what: string; instead: string }[] = [];
+
+  const guessed = log.filter((d) => d.kind === 'question' && d.by === 'developer').length;
+  if (guessed) {
+    out.push({
+      id: 'absent-po', title: 'Nobody answered', count: guessed,
+      what: `${guessed} question${guessed === 1 ? '' : 's'} went unanswered, so the Developers chose for themselves.`,
+      instead: 'A Product Owner in the room answers in seconds. One who is not is answered for, and the answer is a guess.',
+    });
+  }
+
+  const decidedHow = log.filter((d) => d.kind === 'question' && d.by === 'product_owner' && /chose /.test(d.what)).length;
+  if (decidedHow) {
+    out.push({
+      id: 'po-decides-how', title: 'How it gets built was decided for them', count: decidedHow,
+      what: `The Product Owner answered ${decidedHow} question${decidedHow === 1 ? '' : 's'} about how the work is done.`,
+      instead: 'What and why are the Product Owner\u2019s. How is the Developers\u2019 - "your call" is the answer that keeps it there.',
+    });
+  }
+
+  const onTheTools = log.filter((d) => d.kind === 'moved' && d.by === 'product_owner').length;
+  if (onTheTools) {
+    out.push({
+      id: 'po-on-the-tools', title: 'The Product Owner was on the tools', count: onTheTools,
+      what: `${onTheTools} time${onTheTools === 1 ? '' : 's'} the Product Owner took work off the board.`,
+      instead: 'They may work as a Developer. While they do, nobody is ordering the Backlog or answering the questions.',
+    });
+  }
+
+  const asked = log.filter((d) => d.kind === 'question').length;
+  const built = state.backlog.filter((it) => it.sprintNumber === sprint && it.design).length;
+  if (!asked && built > 1) {
+    out.push({
+      id: 'never-asked', title: 'Nobody asked anything', count: built,
+      what: `${built} items were built and no question was put to the Product Owner all Sprint.`,
+      instead: 'Acceptance criteria are a conversation. A team that never asks is a team guessing quietly.',
+    });
+  }
+
+  return out;
 }
 
 // ============= The artifacts, as they actually stand =============

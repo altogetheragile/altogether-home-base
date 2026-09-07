@@ -17,7 +17,7 @@ note it points at; read that one first. The mock-ups themselves are not in the r
 | 6 | The question channel: cards addressed to seats, "waiting on", the clock, the guess. | **done** |
 | 7 | The Daily Scrum at the board with "hand it back". | **done** |
 | 8 | Compact refinement. | **done** |
-| 9 | Free-play naming of the Product Owner anti-patterns. | to do |
+| 9 | Free-play naming of the Product Owner anti-patterns. | **done** |
 
 Two label corrections run through all of them: the item's criteria are headed "What this needs to
 be" (done), and "Approved by the PO" leaves the Definition of Done for "acceptance criteria

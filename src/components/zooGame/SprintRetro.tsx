@@ -4,13 +4,13 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
-import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom } from './engine';
+import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Zap, ClipboardList, MessageCircleQuestion } from 'lucide-react';
-import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE, EYEBROW } from './ui/tokens';
 
 type Step = 'inspect' | 'adapt';
 const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
@@ -62,6 +62,8 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
     return out;
   })();
   const current = STEPS.find((s) => s.key === step)!;
+  // What the Sprint showed about how this team works, counted off its own decision log.
+  const teamHabits = antiPatterns(state);
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-3">
@@ -196,6 +198,25 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
 
       </>)}
       </div>
+
+      {step === 'inspect' && teamHabits.length > 0 && (
+        <section data-part="habits" className="rounded-lg border-2 border-amber-400/60 bg-amber-500/[0.05] px-3 py-2.5">
+          <div className={cn(EYEBROW, 'mb-1 text-amber-700 dark:text-amber-300')}>Habits this Sprint showed</div>
+          <ul className="space-y-2">
+            {teamHabits.map((h) => (
+              <li key={h.id}>
+                <p className="text-sm font-semibold">{h.title}</p>
+                <p className="text-xs">{h.what}</p>
+                <p className="text-[11px] text-muted-foreground">{h.instead}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            The game allowed every one of these. Whether any of them is a problem is the conversation,
+            and the conversation is the event.
+          </p>
+        </section>
+      )}
 
       <ActionBar left={step === 'adapt' ? <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button> : undefined}
         hint={step === 'adapt' && !selected ? 'Pick one improvement to carry forward' : undefined}>
