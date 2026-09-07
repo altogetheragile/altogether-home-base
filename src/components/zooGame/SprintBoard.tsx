@@ -398,7 +398,10 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
       {/* Room at the foot for the floating action bar - but only where the bar is actually over
           this pane. Beside the park it floats over the park, and the space it was given here was
           64px of nothing under the message centre and the bench. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 pb-16 pr-0.5 xl:pb-0">
+      <div className={cn('flex min-h-0 flex-1 gap-3 pb-16 pr-0.5 xl:pb-0',
+        state.dayStage === 'dailyScrum' ? 'flex-row' : 'flex-col')}>
+      <div className={cn('flex min-h-0 flex-col gap-3',
+        state.dayStage === 'dailyScrum' ? 'flex-[2]' : 'flex-1')}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
       ) : onBench2 && edit ? (
@@ -539,6 +542,18 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
                       </div>
                     );
                   })}
+                  {state.dayStage === 'dailyScrum' && onDropFromSprint && (
+                    <div data-part="hand-it-back"
+                      onDragOver={(e) => { if (drag) e.preventDefault(); }}
+                      onDrop={(e) => { e.preventDefault(); if (drag) { onDropFromSprint(drag.id); setDrag(null); setDropCol(null); } }}
+                      className="mt-1 rounded-lg border-2 border-dashed border-amber-400/70 bg-amber-500/[0.06] px-2.5 py-2 text-[11px]">
+                      <span className="font-semibold text-amber-700 dark:text-amber-300">Hand it back</span>
+                      <span className="block text-muted-foreground">
+                        Drop something here to return it to the Product Backlog. The Product Owner is told, and the points
+                        come back out of the forecast.
+                      </span>
+                    </div>
+                  )}
                 </BoardColumn>
                 </div>
                 <div {...dropProps('doing')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('doing'))}>
@@ -707,19 +722,17 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
         </div>
       )}
 
-      {/* The Daily Scrum is an event, and every other event in this game runs as a takeover over the
-          artifact it is about: Planning and the Retrospective over the Sprint Backlog, the Review
-          over the Increment. This one replaced the board instead, so a short conversation about the
-          board looked like a different page - and the board it is about was nowhere in sight.
 
-          It fills the pane over the dimmed board, and hands it back when the decision is made. */}
+      {/* The Daily Scrum is held in front of the board, at a third of the width, and the board stays
+          live: the Developers adapt the Sprint Backlog by dragging while they talk - reorder it,
+          swap who is on what, or hand something back. An event that hides the artifact it is about
+          teaches that the event is paperwork. */}
       {state.dayStage === 'dailyScrum' && (
-        <div data-part="daily-scrum" className="absolute inset-0 z-40 overflow-y-auto bg-background/70 px-2 py-3 backdrop-blur-sm">
-          <div className="mx-auto max-w-3xl rounded-xl border border-border bg-background p-3 shadow-xl">
-            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} />
-          </div>
+        <div data-part="daily-scrum" className="min-h-0 w-[22rem] shrink-0 overflow-y-auto rounded-xl border-2 border-primary bg-background p-3 xl:w-[26rem]">
+          <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} />
         </div>
       )}
+      </div>
 
       {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
           Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads

@@ -15,7 +15,7 @@ note it points at; read that one first. The mock-ups themselves are not in the r
 | 4 | The rail as the one action channel; Learn takes messages and the log. | **done** |
 | 5 | Meet the Scrum Team; the pull by name at topic 2. | **done** |
 | 6 | The question channel: cards addressed to seats, "waiting on", the clock, the guess. | **done** |
-| 7 | The Daily Scrum at the board with "hand it back". | to do |
+| 7 | The Daily Scrum at the board with "hand it back". | **done** |
 | 8 | Compact refinement. | to do |
 | 9 | Free-play naming of the Product Owner anti-patterns. | to do |
 
