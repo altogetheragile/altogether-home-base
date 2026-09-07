@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { initialZooState } from './config';
@@ -75,22 +75,19 @@ describe('the Build state', () => {
     expect(next!.className, 'the next step is not the orange box').toMatch(/border-primary/);
   });
 
-  it('has the studio open, under the step it builds', () => {
-    // Reported from a live solo game: "How do I actually build anything? Where is the studio to add
-    // things?" - from someone with the item in hand and the next step on the screen. The controls
-    // were folded to a grey line at the foot of the bench, which read as there being no way to
-    // build at all. They are open, and above the criteria rather than under them.
+  it('leaves the building to the palette, and keeps the rest one line away', () => {
+    // The six tools are on the park now, along its foot, which is where you are looking while you
+    // build. What is left in the bench is the rest - colours, ground, shape - and it says so rather
+    // than hiding: "How do I actually build anything?" was asked once and must not be asked twice.
     const { container } = board('build');
-    const studio = container.querySelector('[data-part="studio"]');
-    expect(studio, 'the way to build is folded away again').toBeTruthy();
-    expect(studio!.className, 'the studio is below what it builds').toMatch(/order-first/);
-    expect(container.querySelector('[data-part="controls-line"]'), 'it is folded as well as open').toBeNull();
-
-    // ...and you can fold it away once you know where it is.
-    fireEvent.click(screen.getByRole('button', { name: 'hide' }));
     const line = container.querySelector('[data-part="controls-line"]');
-    expect(line, 'hiding the studio left no way back to it').toBeTruthy();
-    expect(line!.textContent).toMatch(/Controls: size · shape · ground · fence · water · planting/);
+    expect(line, 'the bench is carrying the tools the park already has').toBeTruthy();
+    expect(line!.textContent).toMatch(/More controls: colours · ground · shape/);
+
+    fireEvent.click(line as HTMLElement);
+    const studio = container.querySelector('[data-part="studio"]');
+    expect(studio, 'asking for the rest of the controls opened nothing').toBeTruthy();
+    expect(studio!.className, 'the rest of the controls are below the criteria').toMatch(/order-first/);
   });
 
   it('opens them by itself when you touch a part of the thing on the park', () => {
@@ -128,13 +125,6 @@ describe('the Build state', () => {
     expect(container.textContent, 'nothing offers to draw the route').toMatch(/Draw its route/);
   });
 
-  it('names the controls this item actually has, on the line that brings them back', () => {
-    // "ground · fence · water · planting" on a pathway is a label for a different item.
-    const { container } = board('build');
-    fireEvent.click(screen.getByRole('button', { name: 'hide' }));
-    expect(container.querySelector('[data-part="controls-line"]')!.textContent).toMatch(/ground · fence · water/);
-  });
-
   it('does not offer a Product Owner the Developers’ bench', () => {
     // Reported from a live game: sitting as the Product Owner, the Build state put a design studio
     // and a plan step in front of them - work the seat gate then refused. A screen that invites
@@ -161,9 +151,8 @@ describe('the Build state', () => {
   });
 
   it('is the same bench whichever way you came to it', () => {
-    // There is one Sprint Backlog screen, so there is one bench on it: the studio open on the work
-    // in hand, wherever the item was picked up from.
+    // There is one Sprint Backlog screen, so there is one bench on it, on the work in hand.
     const { container } = board('plan');
-    expect(container.querySelector('[data-part="studio"]'), 'the bench has no studio on it').toBeTruthy();
+    expect(container.querySelector('[data-part="next-step"]'), 'the bench has no work on it').toBeTruthy();
   });
 });

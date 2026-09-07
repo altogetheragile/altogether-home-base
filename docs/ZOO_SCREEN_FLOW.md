@@ -10,7 +10,8 @@ note it points at; read that one first. The mock-ups themselves are not in the r
 |---|---|---|
 | 1 | The header: strip, tabs, band, the two-clock rule. Remove what it replaces. | **done** |
 | 2 | Board state and park state; simple cards; the card dialog. | **done** |
-| 3 | The palette, ghost verdicts, docked inspector; the park checks criteria. | to do |
+| 3a | The palette on the park's foot; the inspector as the live checklist. | **done** |
+| 3b | Ghost placement with a verdict, and drawing a habitat's boundary on the grid. | to do |
 | 4 | The rail as the one action channel; Learn takes messages and the log. | to do |
 | 5 | Meet the Scrum Team; the pull by name at topic 2. | to do |
 | 6 | The question channel: cards addressed to seats, "waiting on", the clock, the guess. | to do |

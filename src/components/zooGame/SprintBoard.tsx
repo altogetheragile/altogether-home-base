@@ -406,7 +406,7 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
             bench={bench} onPick={(id) => onBuilding(id)} />
           <div className="relative min-h-0 min-w-0 flex-1 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
             <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
-              drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild}
+              drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild} hasPalette
               onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} nextUp={todo[0]} />
           </div>
         </div>
