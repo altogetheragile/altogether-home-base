@@ -6,6 +6,7 @@ import { DayClock } from './DayClock';
 import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
 import { inHandItem } from './engine';
+import { ParkPalette } from './ParkPalette';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -223,7 +224,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Two states of the Sprint Backlog tab, decided by what the learner is doing rather than by a
   // toggle. Nothing in hand: the board at full width, no park. Something in hand: the park takes
   // the width and the board becomes a column of tokens beside it.
-  const parkState = onSprint && state.dayStage !== 'dailyScrum' && !!inHandItem(state, building ?? null);
+  const inHand = onSprint && state.dayStage !== 'dailyScrum' ? inHandItem(state, building ?? null) : null;
+  const parkState = !!inHand;
   /** The item the Done gate is about: whatever is in hand, once there is something to judge. */
   const gateItem = state.phase === 'sprint' && building
     ? state.backlog.find((it) => it.id === building && (it.status === 'committed' || it.status === 'done'))
@@ -418,8 +420,17 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               : onSprint ? 'max-w-none' : 'max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && parkState && (
-              <div className="min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-card p-2 pb-16">
-                <ParkView state={state} large focus onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+              <div className="flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
+                <div className="min-h-0 flex-1 overflow-y-auto"><ParkView state={state} large focus onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+                </div>
+{/* Six tools along the foot of the park: a palette, not a menu. Every tool the build
+                    has is on the surface, with a word under it, and there is no second level. */}
+                {inHand && edit && (
+                  <ParkPalette className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state} item={inHand}
+                    design={inHand.design ?? inHand.draftDesign}
+                    drawing={drawing} onDrawing={onDrawing}
+                    onDesign={edit.onDesign} onSetEnclosure={edit.onSetEnclosure} />
+                )}
               </div>
             )}
           </div>

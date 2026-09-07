@@ -109,7 +109,7 @@ function BenchName({ name, onRename }: { name: string; onRename: (name: string) 
   );
 }
 
-export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, onSendBack, nextUp, drawing, onDrawing, onRemoveRun, focus = false, canBuild = true }: {
+export function DesignBench({ state, itemId, following, edit, part, onPart, onToggleTask, onConfirmAc, onSendBack, nextUp, drawing, onDrawing, onRemoveRun, focus = false, canBuild = true, hasPalette = false }: {
   state: ZooGameState;
   /** The item being built - the same selection the park highlights. */
   itemId?: string | null;
@@ -139,6 +139,9 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
    *  the gate would refuse it anyway, and a screen that invites what the rules then refuse teaches
    *  the opposite of the accountability it is trying to teach. Reported from a live game. */
   canBuild?: boolean;
+  /** The park is carrying the palette, so the six tools are already on the screen. What is left in
+   *  here is the rest - colours, ground, shape - and it folds until it is asked for. */
+  hasPalette?: boolean;
 }) {
   // The bench holds what is being built. It used to hold whatever was last selected, which is not
   // the same thing: an item that runs out of Sprint goes back to the Product Backlog, and the bench
@@ -155,7 +158,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   //
   // Touching a part of the thing out on the park opens them too - that link is the whole reason a
   // row of coloured squares is comprehensible at all - so a touch counts as asking.
-  const [controlsOpen, setControlsOpen] = useState(true);
+  const [controlsOpen, setControlsOpen] = useState(!hasPalette);
   // ...and the fold never hides the only way to make progress. A pathway is drawn with the pen, and
   // the pen lives in these controls: folded away, the park said "pick up the pen on the design
   // bench" and there was no bench on the screen to pick it up from. Reported from a live game.
@@ -253,7 +256,9 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
           {canBuild && showControls && (
           <div data-part="studio" className={cn('rounded-lg border border-sky-400/40 bg-sky-500/[0.05] p-2', focus && 'order-first')}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <span className={cn(EYEBROW, 'text-sky-700 dark:text-sky-300')}>How it is made &middot; the studio</span>
+              <span className={cn(EYEBROW, 'text-sky-700 dark:text-sky-300')}>
+                {hasPalette ? 'The rest of the controls' : 'How it is made \u00b7 the studio'}
+              </span>
               {/* Foldable, once you know where it is - and only where a fold line can bring it back. */}
               {focus && !part && !needsPen && (
                 <button type="button" onClick={() => setControlsOpen(false)}
@@ -326,7 +331,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
             <button type="button" onClick={() => setControlsOpen(true)} data-part="controls-line"
               className={cn(FOCUS, 'order-last flex w-full items-center gap-1.5 rounded-md border border-border px-2 py-1.5 text-left text-[11px] text-muted-foreground hover:text-foreground')}>
               <Hammer className="h-3.5 w-3.5 shrink-0" />
-              Controls: {CONTROL_WORDS[item.category] ?? 'size \u00b7 shape \u00b7 colours'}
+              {hasPalette ? 'More controls: colours \u00b7 ground \u00b7 shape' : `Controls: ${CONTROL_WORDS[item.category] ?? 'size \u00b7 shape \u00b7 colours'}`}
               <span className="ml-auto shrink-0 underline">open</span>
             </button>
           )}
