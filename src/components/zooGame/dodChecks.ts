@@ -52,7 +52,7 @@ export function checkDodLine(state: ZooGameState, item: BacklogItem, line: strin
 
   // The Product Owner's sign-off. Derived from the criteria rather than clicked, so this reads the
   // same fact the card does.
-  if (/sign ?off|approved by the (po|product owner)/.test(s)) {
+  if (/sign ?off|approved by the (po|product owner)/.test(s) && !/acceptance criteri/.test(s)) {
     const task = (item.tasks ?? []).find((t) => isSignOffTask(t.label));
     if (!task) return { kind: 'na', evidence: 'no sign-off on this one' };
     return { kind: 'fact', met: task.done, evidence: task.done ? 'signed off' : 'waiting on the Product Owner' };

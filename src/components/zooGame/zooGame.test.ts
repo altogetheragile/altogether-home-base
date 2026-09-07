@@ -1149,11 +1149,13 @@ describe('zoo game: a day that has run out of room', () => {
 describe('zoo game: the Definition of Done is the completion gate, not a happiness dial', () => {
   const NICE = ['lion', 'tiger', 'kiosk', 'penguins', 'reef', 'wc'];
 
-  it('the default DoD is the four-step workflow (build, review, PO sign-off, place it ready)', () => {
+  it('the default DoD is three lines, and none of them belongs to one accountability', () => {
+    // "Approved by the PO" as a line of its own made the Definition of Done look like the Product
+    // Owner's, when it is the product's and the whole Scrum Team's. Accepting the criteria IS the
+    // approval, and the criteria belong to the item.
     expect(initialZooState(1).definitionOfDone).toEqual([
-      'Meets its acceptance criteria',
+      'Meets its acceptance criteria, confirmed by the Product Owner',
       'Peer-reviewed by another Developer',
-      'Approved by the PO',
       'Placed on the park, ready to open',
     ]);
   });
@@ -2284,8 +2286,8 @@ describe('zoo game: nothing is Done without the Product Owner', () => {
 
     expect(lion(s).design, 'the build never finished, so this proves nothing').toBeTruthy();
     expect(lion(s).status, 'the Developers finished it and it called itself Done').toBe('committed');
-    expect(s.definitionOfDone.some((d) => /approved by the po/i.test(d)),
-      'this test leans on the DoD saying the Product Owner approves it').toBe(true);
+    expect(s.definitionOfDone.some((d) => /confirmed by the product owner/i.test(d)),
+      'this test leans on the DoD saying the Product Owner confirms the criteria').toBe(true);
 
     s = accept(s, 'lion');
     expect(lion(s).status, 'accepted, and still not Done').toBe('done');
