@@ -2,6 +2,7 @@ import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
+import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
 import { whereItStands } from './parkModel';
 
@@ -340,6 +341,16 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
                  : 'We hold the Daily Scrum. The event is how the team knows where it is.' };
     }
     return null;
+  }
+
+  // Before there is a Product Backlog at all. Writing one is the Product Owner's - which is the
+  // whole point of making the Scrum Team write it rather than handing them one - so a team whose
+  // Product Owner seat is played by the game would sit on the three questions for ever. Reported
+  // from a live session joined as a Developer: the screen offered a button that was refused, and
+  // there was no other way on.
+  if (state.phase === 'brief') {
+    return { action: { type: 'WRITE_BACKLOG', brief: DEFAULT_BRIEF },
+             says: `Here is what I want us to build: ${DEFAULT_BRIEF.zones.length} areas for families, and we open ${DEFAULT_BRIEF.firstZone} first.` };
   }
 
   // Product Owner. They proposed it, so they are in - but it is still the team's to agree.
