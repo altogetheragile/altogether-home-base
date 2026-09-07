@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
-import { asksNow, readyToOpen, whoIs, PLACEMENT_CHOICES } from './engine';
+import { asksNow, openQuestions, readyToOpen, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -27,10 +27,12 @@ type RailAction = {
   answers: { label: string; act: () => void; primary?: boolean }[];
 };
 
-export function ActionRail({ state, seat, onAnswerPlacement, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
+export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   onAnswerPlacement?: (id: string, choice: string) => void;
+  /** Answer a question addressed to an accountability. */
+  onAnswerQuestion?: (id: string, choice: string) => void;
   onOpen?: (id: string) => void;
   onAddProposal?: (draft: PbiDraft) => void;
   onSplitEpic?: (id: string, memberIds: string[]) => void;
@@ -40,6 +42,21 @@ export function ActionRail({ state, seat, onAnswerPlacement, onOpen, onAddPropos
   const [at, setAt] = useState(0);
   const asks = asksNow(state);
   const actions: RailAction[] = [];
+
+  // A question put to an accountability, with the clock running on it. The Developers are standing
+  // still while it is open; past the threshold they answer it themselves and the guess is logged.
+  for (const q of openQuestions(state)) {
+    if (!onAnswerQuestion) break;
+    const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
+    actions.push({
+      id: q.id, actor: whoIs(q.of),
+      text: `${q.from}: ${q.text}  ·  waiting ${waited}s of ${QUESTION_PATIENCE}`,
+      answers: q.choices.map((c) => ({
+        label: c.label, primary: c.key === 'theirs',
+        act: () => onAnswerQuestion(q.id, c.key),
+      })),
+    });
+  }
 
   // Where a thing goes is a product decision, and the Developers are standing still while it is
   // unanswered. They get on with it if nobody answers, and that costs you the say.

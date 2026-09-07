@@ -129,7 +129,7 @@ export interface SprintBet {
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back';
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back' | 'question';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -331,6 +331,23 @@ export interface ZooConnector {
 /** One member of the Scrum Team. A `seat` a real person could take in a future multiplayer
  *  mode - kept as a first-class entity with a stable id, not just a label. */
 export interface ScrumTeamMember { id: string; name: string }
+
+/** One question, addressed to one accountability. */
+export interface GameQuestion {
+  id: string;
+  /** Whose call it is. */
+  of: 'product_owner' | 'scrum_master' | 'developer';
+  /** Who is waiting on the answer, by name. */
+  from: string;
+  itemId?: string;
+  text: string;
+  /** The answers on offer. One of them is usually "your call", and choosing it is the lesson. */
+  choices: { key: string; label: string; note?: string }[];
+  /** The day-second it was asked at, so the game can say how long anybody waited. */
+  askedAt: number;
+  /** Which day it was asked on, so a question cannot outlive the day it belongs to. */
+  day: number;
+}
 /** The one Scrum Team: a single Product Owner (accountable for value), a single Scrum Master
  *  (a true leader who serves the team, causes impediments to be removed, coaches
  *  self-management) and the Developers (who build the Increment). Ten or fewer, no sub-teams. */
@@ -375,6 +392,12 @@ export interface ZooGameState {
    *  `askedAt` is the day clock when they asked, so the wait is measured in the game's own time
    *  rather than in anybody's browser. */
   pendingPlacement?: { itemId: string; askedAt: number } | null;
+  /** Questions put to an accountability and not yet answered. A question is a card addressed to a
+   *  seat: it sits on that seat's rail, shows as "waiting on them" on the item everywhere else, and
+   *  carries a clock. Answered, it goes to the log with who asked, who answered and how long it
+   *  took. Unanswered past the threshold, the Developers answer it themselves and the guess is
+   *  logged - which is the honest cost of an absent Product Owner. */
+  questions?: GameQuestion[];
 
   /** Which topic of Sprint Planning the Scrum Team is on. In state rather than in the component
    *  because Sprint Planning is one event that a team attends together: a topic each player was
@@ -623,6 +646,7 @@ export type ZooAction =
   | { type: 'RENAME_ITEM'; id: string; name: string }
   | { type: 'OPEN_ITEM'; id: string; by?: string }
   | { type: 'SEND_BACK'; id: string; by?: string }
+  | { type: 'ANSWER_QUESTION'; id: string; choice: string; by?: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
