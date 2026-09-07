@@ -19,9 +19,10 @@ note it points at; read that one first. The mock-ups themselves are not in the r
 | 8 | Compact refinement. | **done** |
 | 9 | Free-play naming of the Product Owner anti-patterns. | **done** |
 
-Two label corrections run through all of them: the item's criteria are headed "What this needs to
-be" (done), and "Approved by the PO" leaves the Definition of Done for "acceptance criteria
-confirmed" on the item (to do).
+Both label corrections are done: the item's criteria are headed "What this needs to be", and
+"Approved by the PO" has left the Definition of Done - the first line now reads "Meets its
+acceptance criteria, confirmed by the Product Owner", so the bar belongs to the product and the
+criteria belong to the item.
 
 One deliberate difference from the manifest: the park stays on all three steps of the Sprint Review,
 not only the first. It comes off Sprint Planning and the Retrospective, which is what the note asks.

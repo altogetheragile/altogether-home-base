@@ -83,9 +83,11 @@ export const DEFAULT_DOR: string[] = [
 // to be different states. A DoD that claims an item is open before anybody opened it also quietly
 // removes the decision this game exists to teach.
 export const DEFAULT_DOD: string[] = [
-  'Meets its acceptance criteria',
+  // One line, not two. "Approved by the PO" as a separate line made the Definition of Done look
+  // like the Product Owner's, when it is the product's and the whole Scrum Team's. Accepting the
+  // criteria IS the approval, and the criteria belong to the item.
+  'Meets its acceptance criteria, confirmed by the Product Owner',
   'Peer-reviewed by another Developer',
-  'Approved by the PO',
   'Placed on the park, ready to open',
 ];
 
