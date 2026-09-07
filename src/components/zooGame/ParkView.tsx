@@ -144,6 +144,9 @@ interface ParkViewProps {
   large?: boolean;
   /** On the big Park tab, called when a feature is dragged to a new position. */
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+  /** Something is being placed from the palette: it follows the cursor with a verdict on it. */
+  placing?: { id: string; w: number; h: number } | null;
+  onPlace?: (id: string, pos: { x: number; y: number }) => void;
   /** On the big Park tab, called when the promenade surface is changed. */
   onSetPathStyle?: (key: string) => void;
   /** On the big Park tab, manual connectors: add a new one, edit its ends/bends/style, or delete.
@@ -191,7 +194,7 @@ interface ParkViewProps {
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, compact = false, large = false, focus = false, increment = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, placing, onPlace, compact = false, large = false, focus = false, increment = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -470,7 +473,7 @@ export function ParkView({ state, compact = false, large = false, focus = false,
               )}
               <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
                 <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly}
-                  onPlaceItem={onPlaceItem} selected={building} onSelect={onOpenBuild}
+                  onPlaceItem={onPlaceItem} placing={placing} onPlace={onPlace} selected={building} onSelect={onOpenBuild}
                   tool={effectiveTool} newConn={newConn}
                   building={edit ? building : null} onPart={edit ? onPart : undefined}
                   onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onNest={onNest} onUnnest={onUnnest}

@@ -40,7 +40,7 @@ function toolsFor(item: BacklogItem): Record<ToolKey, boolean> {
   };
 }
 
-export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign, onSetEnclosure, className }: {
+export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign, onSetEnclosure, placing, onPlacing, className }: {
   state: ZooGameState;
   item: BacklogItem;
   design?: ItemDesign;
@@ -48,12 +48,17 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
   onDrawing?: (on: boolean) => void;
   onDesign: (id: string, design: ItemDesign) => void;
   onSetEnclosure?: (id: string, size: 'small' | 'medium' | 'large') => void;
+  /** Whether the thing in hand is following the cursor, waiting to be put down. */
+  placing?: boolean;
+  onPlacing?: (on: boolean) => void;
   className?: string;
 }) {
   const [open, setOpen] = useState<ToolKey | null>(null);
   const can = toolsFor(item);
   const d = design ?? item.design ?? item.draftDesign ?? presetFor(item);
-  const hint = TOOLS.find((t) => t.key === (open ?? (drawing ? 'path' : null)))?.gesture;
+  const hint = placing
+    ? 'drop it where it can go - green is room, red is not'
+    : TOOLS.find((t) => t.key === (open ?? (drawing ? 'path' : null)))?.gesture;
 
   const why = (key: ToolKey) => {
     switch (key) {
@@ -70,6 +75,9 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
     // Water is one press: there is nothing to choose, so choosing is not asked for.
     if (key === 'water') { onDesign(item.id, { ...d, water: addWaterTo(d) }); setOpen(null); return; }
     if (key === 'path') { onDrawing?.(!drawing); setOpen(null); return; }
+    // A habitat that is not standing anywhere yet is placed before it is sized: pick the tool up and
+    // the footprint follows the cursor, green where it can go and red where it cannot.
+    if (key === 'habitat' && onPlacing && !item.pos) { onPlacing(!placing); setOpen(null); return; }
     setOpen((cur) => (cur === key ? null : key));
   };
 
@@ -77,7 +85,7 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
     <div data-part="park-palette" className={cn('flex flex-wrap items-center gap-1.5', className)}>
       {TOOLS.map((t) => {
         const allowed = can[t.key];
-        const on = open === t.key || (t.key === 'path' && !!drawing);
+        const on = open === t.key || (t.key === 'path' && !!drawing) || (t.key === 'habitat' && !!placing);
         const Icon = t.icon;
         const button = (
           <button type="button" key={t.key} data-tool={t.key} disabled={!allowed}
@@ -91,7 +99,8 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
             <span className="text-[10px] font-semibold leading-none">{t.label}</span>
           </button>
         );
-        if (!allowed || t.key === 'water' || t.key === 'path') return button;
+        if (!allowed || t.key === 'water' || t.key === 'path'
+          || (t.key === 'habitat' && onPlacing && !item.pos)) return button;
         return (
           <Popover key={t.key} open={open === t.key} onOpenChange={(o) => setOpen(o ? t.key : null)}>
             <PopoverTrigger asChild>{button}</PopoverTrigger>

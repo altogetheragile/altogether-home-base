@@ -147,7 +147,7 @@ function along(route: Pt[], t: number): Pt {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
 }
 
-export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, selected, onSelect,
+export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, placing, onPlace, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
   onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
   selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false }: {
@@ -158,6 +158,10 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   turn?: number;
   /** Move something. Given, this view stops being a picture and becomes somewhere you build. */
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
+  /** Something is being placed from the palette: its footprint follows the cursor with a verdict on
+   *  it, and a press puts it down where the verdict is green. */
+  placing?: { id: string; w: number; h: number } | null;
+  onPlace?: (id: string, pos: { x: number; y: number }) => void;
   selected?: string | null;
   onSelect?: (id: string | null) => void;
   /** 'connect' lays a run of path: press where it starts, drag to where it goes, let go.
@@ -209,6 +213,23 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
   const laying = tool === 'connect' && !!onAddConnector;
+  // Placing something with the palette: the footprint follows the cursor as a translucent copy,
+  // green where it can go and red where it cannot, with the reason in a word. No dialog - you can
+  // see the answer before you commit to the question.
+  const [ghost, setGhost] = useState<{ x: number; y: number; ok: boolean; why?: string } | null>(null);
+  const verdictAt = (w: { x: number; y: number }) => {
+    if (!placing) return null;
+    const box = { w: placing.w, h: placing.h };
+    const at = insidePark(box, w);
+    const off = Math.abs(at.x - w.x) > 1 || Math.abs(at.y - w.y) > 1;
+    const over = scene.movable.find((m) => m.id !== placing.id
+      && Math.abs(at.x - m.x) < (m.w + box.w) / 2 && Math.abs(at.y - m.y) < (m.h + box.h) / 2);
+    return {
+      x: at.x, y: at.y,
+      ok: !off && !over,
+      why: off ? 'off the park' : over ? `on top of ${over.name ?? 'something'}` : undefined,
+    };
+  };
   // The run being laid, while the pointer is down. Local, because it is not a run until it is let
   // go of - a half-drawn path is a gesture, not a decision.
   const [run, setRun] = useState<{ a: ConnectorEnd; b: { x: number; y: number } } | null>(null);
@@ -454,7 +475,15 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
       <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
-        onPointerDown={editable || laying ? onPointerDown : undefined}
+        onPointerMove={placing ? (e) => { const w = worldAt(e); setGhost(w ? verdictAt(w) : null); } : undefined}
+        onPointerLeave={placing ? () => setGhost(null) : undefined}
+        onPointerDown={placing
+          ? (e) => {
+            const w = worldAt(e);
+            const v = w ? verdictAt(w) : null;
+            if (v?.ok && onPlace) { onPlace(placing.id, { x: v.x, y: v.y }); setGhost(null); }
+          }
+          : editable || laying ? onPointerDown : undefined}
         // Clipped. A prop is drawn ABOVE the point it stands on, so a tall tree at the back of the
         // park reaches past the top of the scene - and with the picture uncropped it was painted
         // over the page instead: a tree in the corner of the screen, cars and people off the park.
@@ -464,6 +493,27 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
           // A pen when there is one, a hand when there is not.
           cursor: laying ? 'crosshair' : editable ? 'grab' : undefined }}>
         {scene.nodes}
+        {/* The ghost: a translucent copy of what is being placed, with the park's verdict on it. */}
+        {placing && ghost && (() => {
+          const hw = placing.w / 2, hh = placing.h / 2;
+          const corners = [
+            scene.at(ghost.x - hw, ghost.y - hh), scene.at(ghost.x + hw, ghost.y - hh),
+            scene.at(ghost.x + hw, ghost.y + hh), scene.at(ghost.x - hw, ghost.y + hh),
+          ];
+          const middle = scene.at(ghost.x, ghost.y);
+          return (
+            <g data-part="ghost" pointerEvents="none">
+              <polygon points={corners.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+                fill={ghost.ok ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)'}
+                stroke={ghost.ok ? '#059669' : '#dc2626'} strokeWidth={2} />
+              {!ghost.ok && ghost.why && (
+                <text x={middle.x} y={middle.y - 10} textAnchor="middle" fontSize={13} fontWeight={700} fill="#dc2626">
+                  {ghost.why}
+                </text>
+              )}
+            </g>
+          );
+        })()}
         {/* The run as it is being laid. Drawn over the scene rather than in it, because it is not
             part of the zoo until the pointer is let go. */}
         {run && (() => {
