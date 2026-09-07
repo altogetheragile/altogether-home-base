@@ -4,7 +4,6 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
-import { EventStage } from './EventStage';
 import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
@@ -78,8 +77,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
         </div>
       </header>
 
-      <EventStage state={state} at={step} title="The zoo as it stands"
-        note="What the Sprint you are looking back on left behind.">
+      {/* No park. It has the next click during Build and at the Review, and nowhere else - here
+          it is decoration, and it halves the width of the work. */}
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
 
       {/* What the team actually did, before anybody discusses how it went.
           
@@ -93,7 +93,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           right-hand column is what it came to. Two columns because they are read together: a
           decision means little without its outcome, and an outcome without its decisions is luck. */}
       {step === 'inspect' && did.length > 0 && (
-        <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] 2xl:items-start">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
           <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
             <div className="flex items-center gap-1.5 text-sm font-semibold">
               <ClipboardList className="h-4 w-4" /> Decision log <span className="font-normal text-muted-foreground">· this Sprint</span>
@@ -195,7 +195,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       )}
 
       </>)}
-      </EventStage>
+      </div>
 
       <ActionBar left={step === 'adapt' ? <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button> : undefined}
         hint={step === 'adapt' && !selected ? 'Pick one improvement to carry forward' : undefined}>

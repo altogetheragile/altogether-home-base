@@ -14,7 +14,6 @@ import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { REFINE_POINT_OPTIONS } from './config';
 import { ActionBar } from './ActionBar';
-import { EventStage } from './EventStage';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -202,12 +201,11 @@ function TheBet({ state, onSetBet }: { state: ZooGameState; onSetBet: (bet: { wh
  *  them is moving through one event rather than arriving somewhere new. */
 function PlanColumns({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
-    <div className="grid gap-4 2xl:grid-cols-2 2xl:items-start">
-      {/* Stacked - which is what half a screen means - the thing you are being asked to do goes
-          first, and the Backlog you are reading it against under it. Side by side, the Backlog is
-          back on the left, where it is read from. */}
-      <section className="min-w-0 space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3 2xl:order-2">{right}</section>
-      <section className="min-w-0 space-y-1.5 2xl:order-1">{left}</section>
+    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      {/* The Backlog on the left, where it is read from; what you are being asked to do on the
+          right. Stacked on a narrow screen, the doing goes first. */}
+      <section className="min-w-0 space-y-2 rounded-xl border-2 border-border bg-muted/20 p-3 lg:order-2">{right}</section>
+      <section className="min-w-0 space-y-1.5 lg:order-1">{left}</section>
     </div>
   );
 }
@@ -338,8 +336,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         </div>
       </header>
 
-      <EventStage state={state} at={step} title="The zoo as it stands"
-        note="What this Sprint is being planned against - the Increment so far.">
+      {/* No park. It has the next click during Build and at the Review, and nowhere else - here
+          it is decoration, and it halves the width of the work. */}
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
       {/* ---- WHY ---- */}
       {step === 'why' && (
         <PlanColumns
@@ -624,7 +623,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         </div>
         );
       })()}
-      </EventStage>
+      </div>
 
       {/* One primary action, always in the same place. */}
       <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>
