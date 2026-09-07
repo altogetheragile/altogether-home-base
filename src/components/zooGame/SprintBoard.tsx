@@ -3,13 +3,13 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, readyToOpen, inHandItem, PLACEMENT_CHOICES } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, inHandItem, PLACEMENT_CHOICES, isSignOffTask } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
-import { AssignDevs, MEMBER_DRAG } from './ScrumTeam';
+import { MEMBER_DRAG } from './ScrumTeam';
 import { DailyScrum } from './DailyScrum';
-import { BoardColumn, CardDetail, SplitEpicPanel } from './Board';
-import { PbiCard } from './PbiCard';
+import { BoardColumn, CategoryIcon, SplitEpicPanel } from './Board';
+import { CardDialog } from './CardDialog';
 import { Workspace } from './ui/Workspace';
 import { Chip } from './ui/Chip';
 import { PickCard } from './PickCard';
@@ -23,12 +23,11 @@ import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Boxes, MessageCircleQuestion, FilePlus, Palette, Check, AlertTriangle, Pencil, CopyPlus, Sunrise, ArrowRight, MapPin, ChevronUp, ChevronDown, ListChecks, X } from 'lucide-react';
+import { Boxes, MessageCircleQuestion, FilePlus, Check, AlertTriangle, Sunrise, ListChecks, X } from 'lucide-react';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
   state: ZooGameState;
-  onAddAnother: (id: string) => void;
   onEstimate: (id: string, points: number) => void;
   onToggleTask: (id: string, taskId: string) => void;
   /** Accepting a criterion, on the card the criterion belongs to. */
@@ -55,9 +54,6 @@ interface SprintBoardProps {
   onAssignDev: (itemId: string, devId: string) => void;
   onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
-  /** Put a built item on the park to place & size it (for items with placement acceptance criteria)
-   *  before releasing it to visitors. */
-  onPlaceOnPark: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
   /** What the Scrum Master does about what surfaced at the Daily Scrum. */
@@ -110,35 +106,104 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
   );
 }
 
+/** A card on the board: name, points, who is on it, and a dot for each step of its plan.
+ *
+ *  It used to carry the plan, the criteria, the reasons, and two buttons. Four of those in a column
+ *  is a wall, and you cannot watch work move through a wall. Everything else is one click away in
+ *  the card dialog, which is the only place an item's detail lives now. */
+function BoardCard({ item, state, tone, note, onOpen }: {
+  item: BacklogItem;
+  state: ZooGameState;
+  tone?: 'doing' | 'done' | 'live';
+  /** One quiet line where the game owes a reason - why this cannot start yet, mostly. */
+  note?: string;
+  onOpen: () => void;
+}) {
+  const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
+  const devs = state.team.developers.filter((d) => (item.assignedDevs ?? []).includes(d.id));
+  return (
+    <button type="button" onClick={onOpen} data-part="board-card"
+      title={`${item.name} - open it`}
+      className={cn(FOCUS, 'w-full rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors hover:border-primary/70',
+        tone === 'doing' ? 'border-primary/70'
+          : tone === 'done' ? 'border-emerald-500/60'
+            : tone === 'live' ? 'border-emerald-600/70 bg-emerald-500/[0.06]' : 'border-border')}>
+      <div className="flex items-start gap-2">
+        <CategoryIcon item={item} className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{item.name}</span>
+        <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{item.estimate}</span>
+      </div>
+      <div className="mt-1.5 flex items-center gap-2">
+        {/* A dot per step, filled as the Developers work through them. It is the whole of the plan
+            that belongs on a board: how far along, not what the steps say. */}
+        <span className="flex items-center gap-1">
+          {steps.map((t) => (
+            <span key={t.id} className={cn('h-2 w-2 rounded-full', t.done ? 'bg-emerald-500' : 'bg-muted-foreground/25')} />
+          ))}
+        </span>
+        {devs.length > 0 && (
+          <span className="ml-auto flex items-center -space-x-1.5">
+            {devs.map((d) => (
+              <span key={d.id} title={d.name}
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-card bg-sky-600 text-[9px] font-bold text-white">
+                {d.name.slice(0, 1).toUpperCase()}
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+      {note && <p className={cn(TONE.attention.text, 'mt-1 text-[11px] leading-snug')}>{note}</p>}
+    </button>
+  );
+}
+
+/** The board, when the park has taken the width: one token per item down the left edge, in the
+ *  order work moves through the columns. A glyph, a name, its points and its steps - enough to see
+ *  what else is in the Sprint and to reach for it, and not enough to compete with the park. */
+function TokenRail({ items, bench, onPick }: {
+  items: { item: BacklogItem; where: 'todo' | 'doing' | 'done' }[];
+  bench: string | null;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <div data-part="token-rail" className="flex min-h-0 w-[5.5rem] shrink-0 flex-col gap-1.5 overflow-y-auto pr-0.5">
+      {items.map(({ item, where }) => {
+        const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
+        return (
+          <button key={item.id} type="button" onClick={() => onPick(item.id)}
+            title={`${item.name} · ${item.estimate} pts`}
+            className={cn(FOCUS, 'shrink-0 rounded-lg border-2 bg-card px-1.5 py-1.5 text-left transition-colors hover:border-primary/70',
+              bench === item.id ? 'border-primary bg-primary/[0.06]'
+                : where === 'done' ? 'border-emerald-500/50' : 'border-border')}>
+            <CategoryIcon item={item} className="h-4 w-4 text-muted-foreground" />
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="min-w-0 flex-1 truncate text-[10px] font-semibold leading-tight">{item.name}</span>
+              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">{item.estimate}</span>
+            </div>
+            <span className="mt-1 flex items-center gap-0.5">
+              {steps.map((t) => (
+                <span key={t.id} className={cn('h-1.5 w-1.5 rounded-full', t.done ? 'bg-emerald-500' : 'bg-muted-foreground/25')} />
+              ))}
+            </span>
+          </button>
+        );
+      })}
+      {!items.length && <p className="px-1 text-[10px] text-muted-foreground">Nothing else in this Sprint.</p>}
+    </div>
+  );
+}
+
 /** The Sprint board: To Do / Doing / Done, played over a run of timed days. Each day
  *  you take a committed item into the studio (Doing), build it to the Definition of
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-/** The Developers' steps, on the card, always.
- *
- *  The frames draw a card as its name, its size and what it takes to finish it - so "what is left
- *  on this one" is answered by looking at the board rather than by opening the card. Four lines is
- *  the most a column can carry without becoming a document; the rest is on the bench. */
-function CardSteps({ item }: { item: BacklogItem }) {
-  const steps = (item.tasks ?? []).filter((t) => t.label.trim());
-  if (!steps.length) return null;
-  return (
-    <ul className="mt-1 space-y-0.5 pl-6">
-      {steps.slice(0, 4).map((t) => (
-        <li key={t.id} className="flex items-center gap-1.5 text-[11px]">
-          <span className={cn('h-2.5 w-2.5 shrink-0 rounded-full border',
-            t.done ? 'border-emerald-500 bg-emerald-500' : 'border-border bg-muted')} />
-          <span className={cn('truncate', t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
-        </li>
-      ))}
-      {steps.length > 4 && <li className="pl-4 text-[10px] text-muted-foreground">and {steps.length - 4} more</li>}
-    </ul>
-  );
-}
-
-export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onConfirmAc, onSendBack, onFinishItem, onStartItem, onReorderSprint,  onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onPlaceOnPark, onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, }: SprintBoardProps) {
+export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onSendBack, onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, }: SprintBoardProps) {
   const setDesigning = onBuilding;
+  // Which item's dialog is open. Detail lives there now: the board carries four things per card.
+  const [cardId, setCardId] = useState<string | null>(null);
+  // ...and which item has just been pulled into Doing and is waiting for somebody to take it.
+  const [pulling, setPulling] = useState<string | null>(null);
   // Open by default now that it sits at the top of the rail: the work flows Product Backlog to
   // Sprint Backlog to park, and a source you cannot see is not a source anyone reasons about. The
   // caveat that pulling more in is a negotiation, not a default, is written on it.
@@ -199,11 +264,6 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
   // A built item goes live only once the Product Owner has signed it off, and they only sign off
   // when every acceptance criterion is met - which for the placement ones means after it is on the
-  // park. You can't accept placement before you have placed it.
-  const deployReady = (id: string) => {
-    const it = deploy.find((x) => x.id === id);
-    return !!it && readyToOpen(it);
-  };
   // Everything the Definition of Done asks of this item: it is built, the Developers' plan is
   // ticked, and the Product Owner's criteria are accepted. The sign-off task follows the criteria
   // rather than being ticked by hand, so it is not part of the gate.
@@ -245,6 +305,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       if (atWipLimit) { refuse(id, `Work in progress is limited to ${activeWipLimit(state)}. Finish something in Doing before starting this.`); return; }
       setRefusedMove(null);
       onStartItem(id);
+      // Who takes it is the Developers' own call, asked on the drop rather than assumed. Nobody
+      // assigns work here: the question is which of them is picking this up, and more than one may.
+      setPulling(id);
     } else if (o === 'finish') {
       const it = doing.find((x) => x.id === id);
       if (!it) return;
@@ -309,30 +372,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
   // confusing. Behind the Daily Scrum the bench stands down - the event is what you are in.
   const onBench2 = !!inHand && state.dayStage !== 'dailyScrum';
   const following = !building && !!beingBuilt;
-
-  // A card that is Done but not yet open. It was built on the park, so it is already standing where
-  // it will stand: what is left is confirming where that is, and opening it. "Deploy complete" was
-  // the language of a column that no longer exists - this is releasing it to visitors.
-  const deployActions = (it: BacklogItem) => {
-    const acsDone = it.acceptance.every((_, i) => !!it.acConfirmed?.[i]);
-    const ready = deployReady(it.id);
-    const why = !it.placed ? 'Place it on the park first'
-      : !acsDone ? 'Tick off its acceptance criteria on the card - the Product Owner signs off once every one is met'
-      : !ready ? 'Waiting on the Product Owner\u2019s sign-off' : undefined;
-    return <>
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onPlaceOnPark(it.id)}><MapPin className="mr-1 h-3.5 w-3.5" /> Show me on the park</Button>
-      <Button size="sm" className="h-7 px-2 text-xs" disabled={!ready} title={why} onClick={() => onOpen(it.id)}><Check className="mr-1 h-3.5 w-3.5" /> Open it to visitors</Button>
-      <Button size="sm" variant="ghost" className="h-7 px-1.5" title="Edit" onClick={() => setDesigning(it.id)}><Pencil className="h-3.5 w-3.5" /></Button>
-      {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
-    </>;
-  };
-  // Done column: deployed, live to visitors.
-  const doneActions = (it: BacklogItem) => (
-    <>
-      <span className={cn(TONE.done.text, "flex items-center gap-1 text-[11px] font-medium")}><Check className="h-3.5 w-3.5" /> Live to visitors</span>
-      {it.category === 'exhibit' && <Button size="sm" variant="ghost" className="h-7 px-1.5" title={`Add another ${it.name.replace(/ \d+$/, '')} PBI`} onClick={() => onAddAnother(it.id)}><CopyPlus className="h-3.5 w-3.5" /></Button>}
-    </>
-  );
+  // The item just pulled into Doing, waiting for the Developers to say who is on it.
+  const pulled = pulling ? state.backlog.find((it) => it.id === pulling) ?? null : null;
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col gap-3">
@@ -353,6 +394,22 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       <div className="flex min-h-0 flex-1 flex-col gap-3 pb-16 pr-0.5 xl:pb-0">
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
+      ) : onBench2 && edit ? (
+        /* Park state. Something is in hand, so the park has the width and the board is a column of
+           tokens down the left edge - what else is in the Sprint, and a way back to it. The
+           inspector beside it is the item: its steps, what it needs to be, and the studio. */
+        <div className="flex min-h-0 flex-1 gap-2">
+          <TokenRail
+            items={[...doing.map((it) => ({ item: it, where: 'doing' as const })),
+              ...todo.map((it) => ({ item: it, where: 'todo' as const })),
+              ...deploy.map((it) => ({ item: it, where: 'done' as const }))]}
+            bench={bench} onPick={(id) => onBuilding(id)} />
+          <div className="relative min-h-0 min-w-0 flex-1 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
+            <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
+              drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild}
+              onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} nextUp={todo[0]} />
+          </div>
+        </div>
       ) : (
         <>
           {state.carriedImpediment && (
@@ -459,7 +516,7 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                       </div>
                     </div>
                   )}
-                  {todo.map((it, i) => {
+                  {todo.map((it) => {
                     // You build the habitat before its animals: an animal can't start until
                     // its enclosure is built.
                     const needsEnc = !enclosureReady(state, it);
@@ -470,21 +527,8 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     return (
                       <div key={it.id} {...dragProps(it.id, 'todo')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
                       {cameBack(it.id)}
-                      <PbiCard item={it} state="forecast" density="row"
-                        badges={<Chip>{it.zone}</Chip>}
-                        lead={onReorderSprint && todo.length > 1 && (
-                          // The order to pick things up in is the Developers' plan, so they can change it.
-                          <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Re-order what to pick up next">
-                            <button type="button" title="Move up" aria-label={`Move ${it.name} up the Sprint Backlog`} disabled={i === 0}
-                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'up'); }} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3 w-3" /></button>
-                            <button type="button" title="Move down" aria-label={`Move ${it.name} down the Sprint Backlog`} disabled={i === todo.length - 1}
-                              onClick={(e) => { e.stopPropagation(); onReorderSprint(it.id, 'down'); }} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3 w-3" /></button>
-                          </div>
-                        )}
-                        note={needsEnc ? `Needs ${encName} built first` : undefined}
-                        trailing={<Button size="sm" variant="ghost" className="h-7 shrink-0 px-2 text-xs" disabled={blocked} title={why ?? 'Or drag the card into Doing'}
-                          onClick={(e) => { e.stopPropagation(); onStartItem(it.id); setDesigning(it.id); }}><ArrowRight className="mr-1 h-3.5 w-3.5" /> Start</Button>}
-                        detail={<CardSteps item={it} />} />
+                      <BoardCard item={it} state={state} note={needsEnc ? `Needs ${encName} built first` : blocked ? why : undefined}
+                        onOpen={() => setCardId(it.id)} />
                       </div>
                     );
                   })}
@@ -500,44 +544,39 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   ) : undefined}>
                   {/* Nothing stands in for the empty room in this column: the heading already
                       carries the WIP limit, and the column takes a card wherever you drop it. */}
-                  {doing.map((it) => {
-                    const left = (it.tasks ?? []).filter((t) => t.label.trim() && !t.done).length;
-                    return (
-                      <div key={it.id} {...dragProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
-                      {cameBack(it.id)}
-                      <PbiCard item={it} state="doing" density="row"
-                        badges={<>
-                          <Chip>{it.zone}</Chip>
-                          {it.design
-                            ? <Chip tone="coach">built{left ? ` · ${left} left` : ''}</Chip>
-                            : <Chip tone="attention">in progress</Chip>}
-                        </>}
-                        // Two states, never both: while there is building left to do, the way to the
-                        // park; once the plan and the criteria are ticked, the move to Done. Dragging
-                        // the card there does the same thing.
-                        note={readyForDone(it) ? undefined : whyNotDone(it)}
-                        trailing={readyForDone(it)
-                          ? <Button size="sm" className={cn(TONE.done.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-emerald-700")}
-                            onClick={(e) => { e.stopPropagation(); onFinishItem(it.id); }}
-                            title="Built, accepted and open to visitors">Move to Done</Button>
-                          // Built once and not Done is the NORMAL case, not a failure: you build it,
-                          // inspect it against its criteria, adapt the design and build it again. It
-                          // is the same Backlog item throughout - iterating on your own unfinished
-                          // work is finishing it, not new work, and it never needs a new PBI.
-                          : <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" title={whyNotDone(it)}
-                            onClick={(e) => { e.stopPropagation(); setDesigning(it.id); }}><Palette className="mr-1 h-3.5 w-3.5" /> {it.design ? 'Build again' : 'Build'}</Button>}
-                        detail={<>
-                          {/* Collapsed by default so the card stays one line - tap "Plan · AC" to see
-                              and tick the detail. The real building happens on the park. */}
-                          <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} />
-                          <div className="mt-1.5 flex items-center gap-1.5">
-                            <span className="text-[11px] text-muted-foreground">Working it:</span>
-                            <AssignDevs team={state.team} assigned={it.assignedDevs ?? []} onToggle={(devId) => onAssignDev(it.id, devId)} />
-                          </div>
-                        </>} />
+                    {/* Who takes it, asked on the drop. Nobody is given work: this is which of the
+                      Developers is picking it up, and more than one may - that is swarming. */}
+                    {pulled && (
+                      <div data-part="who-takes-it" className="mt-1 rounded-lg border-2 border-primary bg-primary/[0.06] px-2.5 py-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {state.team.developers.map((d) => {
+                          const on = (pulled.assignedDevs ?? []).includes(d.id);
+                          return (
+                            <button key={d.id} type="button" onClick={() => onAssignDev(pulled.id, d.id)}
+                              className={cn(FOCUS, 'rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors',
+                                on ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted/60')}>
+                              {d.name}
+                            </button>
+                          );
+                        })}
+                        <button type="button" onClick={() => { setPulling(null); setDesigning(pulled.id); }}
+                          className={cn(FOCUS, 'ml-auto text-[11px] font-semibold text-primary underline underline-offset-2')}>
+                          start building
+                        </button>
                       </div>
-                    );
-                  })}
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        pick who takes it &middot; more than one is swarming
+                      </p>
+                      </div>
+                    )}
+                  {doing.map((it) => (
+                    <div key={it.id} {...dragProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
+                      {cameBack(it.id)}
+                      <BoardCard item={it} state={state} tone="doing"
+                        note={readyForDone(it) ? 'Ready for Done - drag it there' : whyNotDone(it)}
+                        onOpen={() => setCardId(it.id)} />
+                    </div>
+                  ))}
                 </BoardColumn>
                 </div>
                 <div {...dropProps('done')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('done'))}>
@@ -553,22 +592,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                     // screen instead of from the thing you had just delivered.
                     <div key={it.id} data-done-card={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
                     {cameBack(it.id)}
-                    <PbiCard item={it} state="built" density="row"
-                      // Built in an earlier Sprint and still not released: say so, so a finished
-                      // Increment waiting on deployment does not read as this Sprint's work.
-                      badges={<>
-                        <Chip>{it.zone}</Chip>
-                        <Chip tone="attention">not open yet</Chip>
-                        {it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber && (
-                          <Chip tone="coach" title={`Built in Sprint ${it.sprintNumber} and Done - it is waiting to be released, not work forecast for this Sprint`}>
-                            built in Sprint {it.sprintNumber}
-                          </Chip>
-                        )}
-                      </>}
-                      detail={<>
-                        <CardDetail item={it} state={state} interactive showAcceptance onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} />
-                        <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">{deployActions(it)}</div>
-                      </>} />
+                    <BoardCard item={it} state={state} tone="done"
+                      note={it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber
+                        ? `Built in Sprint ${it.sprintNumber} and still shut`
+                        : 'Done, and not open to visitors yet'}
+                      onOpen={() => setCardId(it.id)} />
+
                     </div>
                   ))}
                   {refineDone && (
@@ -581,11 +610,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
                   {done.map((it) => (
                     // data-done-card lets the delivery celebration burst confetti from this card.
                     <div key={it.id} data-done-card={it.id}>
-                      <PbiCard item={it} state="live" density="row" badges={<Chip>{it.zone}</Chip>}
-                        detail={<>
-                          <CardDetail item={it} state={state} showAcceptance onToggleTask={onToggleTask} />
-                          <div className="mt-1.5 flex items-center justify-end gap-1.5">{doneActions(it)}</div>
-                        </>} />
+                      <BoardCard item={it} state={state} tone="live" note="Live to visitors"
+                        onOpen={() => setCardId(it.id)} />
+
                     </div>
                   ))}
                 </BoardColumn>
@@ -610,18 +637,9 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
       {/* The board and what is being asked share the height between them rather than one taking a
           fixed slice - a fixed slice left white space under the panel on a tall screen and squeezed
           the board on a short one. */}
-      {!dayStarting && (
-        <div className={cn('grid min-h-0 flex-1 gap-3', onBench2 && edit ? 'xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]' : '')}>
-          <Asks className="min-h-0" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
-            onAddProposal={onAddProposal} onSplitEpic={onSplitEpic} onDeclineProposal={onDeclineProposal} />
-          {edit && onBench2 && (
-            <div className="relative min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
-              <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
-                drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild}
-                onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} nextUp={todo[0]} />
-            </div>
-          )}
-        </div>
+      {!dayStarting && !onBench2 && (
+        <Asks className="min-h-0 max-h-[38%] shrink-0" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
+          onAddProposal={onAddProposal} onSplitEpic={onSplitEpic} onDeclineProposal={onDeclineProposal} />
       )}
       </div>
 
@@ -725,7 +743,12 @@ export function SprintBoard({ state, onAddAnother, onEstimate, onToggleTask, onC
         </ActionBar>
       )}
 
-
+      {/* An item's detail, in the one place it lives. */}
+      <CardDialog state={state} item={cardId ? state.backlog.find((it) => it.id === cardId) ?? null : null}
+        onClose={() => setCardId(null)}
+        onStart={(id) => { onStartItem(id); setPulling(id); }}
+        onBuilding={(id) => setDesigning(id)}
+        onOpen={onOpen} />
     </div>
   );
 }

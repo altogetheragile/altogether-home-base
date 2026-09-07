@@ -21,9 +21,9 @@ const state = (over: Partial<ZooGameState> = {}): ZooGameState =>
 const board = () => render(
   <MemoryRouter>
     <SprintBoard state={state()}
-      onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
+      onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
       onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
-      onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
+      onAssignDev={noop} onRenameMember={noop} onOpen={noop} onEndDay={noop}
       onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop} />
   </MemoryRouter>,
 );

@@ -9,7 +9,7 @@ note it points at; read that one first. The mock-ups themselves are not in the r
 | # | Slice | State |
 |---|---|---|
 | 1 | The header: strip, tabs, band, the two-clock rule. Remove what it replaces. | **done** |
-| 2 | Board state and park state with the slide; simple cards; the card dialog. | to do |
+| 2 | Board state and park state; simple cards; the card dialog. | **done** |
 | 3 | The palette, ghost verdicts, docked inspector; the park checks criteria. | to do |
 | 4 | The rail as the one action channel; Learn takes messages and the log. | to do |
 | 5 | Meet the Scrum Team; the pull by name at topic 2. | to do |
