@@ -15,6 +15,7 @@ import { BacklogWizard } from '@/components/zooGame/BacklogWizard';
 import { SprintPlanning } from '@/components/zooGame/SprintPlanning';
 import { BoardTools } from '@/components/zooGame/BoardTools';
 import { ActionRail } from '@/components/zooGame/ActionRail';
+import { MeetTheTeam } from '@/components/zooGame/MeetTheTeam';
 import { SprintBoard } from '@/components/zooGame/SprintBoard';
 import { SprintReview } from '@/components/zooGame/SprintReview';
 import { SprintRetro } from '@/components/zooGame/SprintRetro';
@@ -60,6 +61,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // Bumped on each delivery (Deploy Complete) to fire a confetti burst - a celebration of the
   // shippable increment reaching visitors.
   const [celebrate, setCelebrate] = useState(0);
+  const [metTeam, setMetTeam] = useState(false);
   const [onePager, setOnePager] = useState(true); // shown once per visit, before the intro
   const [onePagerSeen, setOnePagerSeen] = useState(false); // ...and re-openable from the intro
 
@@ -311,12 +313,17 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
           onBack={(state.teaching ?? true) ? () => { setOnePagerSeen(true); setOnePager(true); } : undefined}
           onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
+        // The Scrum Team, before the Backlog they will work on. Held here rather than in the game
+        // state: it is an introduction, not a decision, so there is nothing to save or replay.
+        if (!metTeam) {
+          return <ZooShell state={state} {...shellProps}><MeetTheTeam state={state} seat={seat} onNext={() => setMetTeam(true)} /></ZooShell>;
+        }
         // No shell: there is nothing to put in a header yet - no Sprint, no Backlog, no park.
         return <div className="h-full overflow-y-auto px-4 py-5"><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} seat={seat} emptySeats={covering} /></div>;
       case 'refine':
         return <ZooShell state={state} {...shellProps}><RefineBacklog state={state} onSetSprintDays={setSprintDays} onSetDod={setDod} onAgreeDod={agreeDod} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi} onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories} onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi} onPlan={() => setPhase('planning')} teachCard={cardFor('refine')} onMarkTaught={markTaught} /></ZooShell>;
       case 'planning':
-        return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onSetForecast={setForecast} mustAgree={mustAgree} mySeat={seat} onAgreeSprintGoal={agreeSprintGoal} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} onSetTopic={setPlanningTopic} onSetBet={setSprintBet} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onSetForecast={setForecast} onAssignDev={assignDev} mustAgree={mustAgree} mySeat={seat} onAgreeSprintGoal={agreeSprintGoal} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} onSetTopic={setPlanningTopic} onSetBet={setSprintBet} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
       case 'sprint':
         return <ZooShell state={state} {...shellProps} tools={<BoardTools state={state} teachCard={cardFor('sprint')} onMarkTaught={markTaught}
           onSetScrumAt={setDailyScrumAt} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onCancelSprint={cancelSprint} />}><SprintBoard state={state} onEstimate={estimate} onToggleTask={toggleTask} onConfirmAc={confirmAc} onSendBack={sendBack} onFinishItem={edit.onFinishBuild} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onDropFromSprint={dropFromSprint} onAnswerPlacement={answerPlacement} onOpen={deployComplete} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onAnswerImpediment={answerImpediment} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} onPart={setPartFocus} drawing={drawing} onDrawing={setDrawing} onRemoveRun={deleteConnector} onAddPbi={createPbi} onSetUserStories={setUserStories} onAddProposal={handleProposal} onDeclineProposal={declineProposal} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={selectOnPark} seat={seat} canBuild={!seat || seat === 'developer' || (covering ?? []).includes('developer')} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
@@ -327,7 +334,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:
-        return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onSetForecast={setForecast} mustAgree={mustAgree} mySeat={seat} onAgreeSprintGoal={agreeSprintGoal} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} onSetTopic={setPlanningTopic} onSetBet={setSprintBet} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onSetForecast={setForecast} onAssignDev={assignDev} mustAgree={mustAgree} mySeat={seat} onAgreeSprintGoal={agreeSprintGoal} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} onSetTopic={setPlanningTopic} onSetBet={setSprintBet} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
     }
   };
 

@@ -197,7 +197,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // exist yet are different things.
   const sprintBacklog = state.phase !== 'intro' && state.phase !== 'brief' && state.phase !== 'refine';
   /** Where each screen lives. The events are takeovers OVER their tab, not tabs of their own. */
-  const home: ArtifactTab = state.phase === 'refine' ? 'backlog'
+  const home: ArtifactTab = state.phase === 'refine' || state.phase === 'brief' || state.phase === 'intro' ? 'backlog'
     : state.phase === 'review' ? 'increment' : 'sprint';
   const setTab = onSetTab ?? setLocalTab;
   // An artifact that does not exist yet cannot be the one you are looking at, whoever asked for it.
