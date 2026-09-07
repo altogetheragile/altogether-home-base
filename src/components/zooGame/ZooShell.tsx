@@ -7,6 +7,7 @@ import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
 import { inHandItem } from './engine';
 import { ParkPalette } from './ParkPalette';
+import { footprintFor } from './design';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -249,6 +250,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Sprint: before one there is nothing to be at risk, and after it the Review has the answer.
   // Where the Learn drawer has been sent from outside it - the value measures, from the game menu.
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
+  // What is following the cursor, waiting to be put down on the park.
+  const [placingId, setPlacingId] = useState<string | null>(null);
   const pill = eventPill(state);
   const goal = goalLine(state);
 
@@ -423,7 +426,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && parkState && (
               <div className="flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
-                <div className="min-h-0 flex-1 overflow-y-auto"><ParkView state={state} large focus onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+                <div className="min-h-0 flex-1 overflow-y-auto"><ParkView state={state} large focus
+                  placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
+                  onPlace={(id, pos) => { onPlaceItem?.(id, pos); setPlacingId(null); }}
+                  onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
                 </div>
 {/* Six tools along the foot of the park: a palette, not a menu. Every tool the build
                     has is on the surface, with a word under it, and there is no second level. */}
@@ -431,6 +437,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                   <ParkPalette className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state} item={inHand}
                     design={inHand.design ?? inHand.draftDesign}
                     drawing={drawing} onDrawing={onDrawing}
+                    placing={placingId === inHand.id} onPlacing={(on) => setPlacingId(on ? inHand.id : null)}
                     onDesign={edit.onDesign} onSetEnclosure={edit.onSetEnclosure} />
                 )}
               </div>
