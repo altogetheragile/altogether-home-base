@@ -7,7 +7,7 @@ import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
 import { inHandItem } from './engine';
 import { ParkPalette } from './ParkPalette';
-import { footprintFor } from './design';
+import { footprintFor, ENCLOSURE_SIZE } from './design';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -252,6 +252,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
   // What is following the cursor, waiting to be put down on the park.
   const [placingId, setPlacingId] = useState<string | null>(null);
+  /** The size the park builds that is closest to what was drawn. */
+  const nearestEnclosure = (box: { w: number; h: number }): 'small' | 'medium' | 'large' =>
+    (['small', 'medium', 'large'] as const)
+      .map((k) => ({ k, d: Math.abs(ENCLOSURE_SIZE[k].w - box.w) + Math.abs(ENCLOSURE_SIZE[k].h - box.h) }))
+      .sort((a, b) => a.d - b.d)[0].k;
   const pill = eventPill(state);
   const goal = goalLine(state);
 
@@ -428,7 +433,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               <div className="flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
                 <div className="min-h-0 flex-1 overflow-y-auto"><ParkView state={state} large focus
                   placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
-                  onPlace={(id, pos) => { onPlaceItem?.(id, pos); setPlacingId(null); }}
+                  onPlace={(id, pos, box) => {
+                    onPlaceItem?.(id, pos);
+                    // What you drew is answered with the nearest footprint the park builds. Three
+                    // sizes is the catalogue; drawing is how you say which one you meant.
+                    if (box && edit?.onSetEnclosure) edit.onSetEnclosure(id, nearestEnclosure(box));
+                    setPlacingId(null);
+                  }}
                   onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
                 </div>
 {/* Six tools along the foot of the park: a palette, not a menu. Every tool the build

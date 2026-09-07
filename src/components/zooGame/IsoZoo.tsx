@@ -161,7 +161,8 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   /** Something is being placed from the palette: its footprint follows the cursor with a verdict on
    *  it, and a press puts it down where the verdict is green. */
   placing?: { id: string; w: number; h: number } | null;
-  onPlace?: (id: string, pos: { x: number; y: number }) => void;
+  /** Where it lands, and the footprint drawn for it where one was drawn. */
+  onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }) => void;
   selected?: string | null;
   onSelect?: (id: string | null) => void;
   /** 'connect' lays a run of path: press where it starts, drag to where it goes, let go.
@@ -217,6 +218,10 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   // green where it can go and red where it cannot, with the reason in a word. No dialog - you can
   // see the answer before you commit to the question.
   const [ghost, setGhost] = useState<{ x: number; y: number; ok: boolean; why?: string } | null>(null);
+  // Drawing the boundary: a habitat is a rectangle you drag on the grid, and the fence follows the
+  // drag. The park builds three footprints, so what you draw is answered with the nearest of them -
+  // said out loud on the ghost rather than silently rounded.
+  const [drawn, setDrawn] = useState<{ a: { x: number; y: number }; b: { x: number; y: number } } | null>(null);
   const verdictAt = (w: { x: number; y: number }) => {
     if (!placing) return null;
     const box = { w: placing.w, h: placing.h };
@@ -475,13 +480,35 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
       <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
-        onPointerMove={placing ? (e) => { const w = worldAt(e); setGhost(w ? verdictAt(w) : null); } : undefined}
-        onPointerLeave={placing ? () => setGhost(null) : undefined}
+        onPointerMove={placing ? (e) => {
+          const w = worldAt(e);
+          if (!w) return;
+          if (drawn) { setDrawn({ ...drawn, b: w }); setGhost(verdictAt(w)); return; }
+          setGhost(verdictAt(w));
+        } : undefined}
+        onPointerLeave={placing ? () => { setGhost(null); setDrawn(null); } : undefined}
         onPointerDown={placing
           ? (e) => {
             const w = worldAt(e);
-            const v = w ? verdictAt(w) : null;
-            if (v?.ok && onPlace) { onPlace(placing.id, { x: v.x, y: v.y }); setGhost(null); }
+            if (!w) return;
+            e.preventDefault();
+            setDrawn({ a: w, b: w });
+            const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) setDrawn((d) => (d ? { ...d, b: p } : d)); };
+            const up = (ev: PointerEvent) => {
+              window.removeEventListener('pointermove', move);
+              window.removeEventListener('pointerup', up);
+              const p = worldAt(ev) ?? w;
+              const box = { w: Math.abs(p.x - w.x), h: Math.abs(p.y - w.y) };
+              const at = { x: (w.x + p.x) / 2, y: (w.y + p.y) / 2 };
+              setDrawn(null);
+              // A press with no drag is placing it where it stands; a drag is drawing its footprint.
+              const drew = box.w > 20 && box.h > 14;
+              const v = verdictAt(drew ? at : p);
+              if (v?.ok && onPlace) onPlace(placing.id, { x: v.x, y: v.y }, drew ? box : undefined);
+              setGhost(null);
+            };
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', up);
           }
           : editable || laying ? onPointerDown : undefined}
         // Clipped. A prop is drawn ABOVE the point it stands on, so a tall tree at the back of the
@@ -495,12 +522,18 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
         {scene.nodes}
         {/* The ghost: a translucent copy of what is being placed, with the park's verdict on it. */}
         {placing && ghost && (() => {
-          const hw = placing.w / 2, hh = placing.h / 2;
+          const box = drawn
+            ? { w: Math.abs(drawn.b.x - drawn.a.x), h: Math.abs(drawn.b.y - drawn.a.y) }
+            : { w: placing.w, h: placing.h };
+          const centre = drawn
+            ? { x: (drawn.a.x + drawn.b.x) / 2, y: (drawn.a.y + drawn.b.y) / 2 }
+            : { x: ghost.x, y: ghost.y };
+          const hw = Math.max(12, box.w) / 2, hh = Math.max(9, box.h) / 2;
           const corners = [
-            scene.at(ghost.x - hw, ghost.y - hh), scene.at(ghost.x + hw, ghost.y - hh),
-            scene.at(ghost.x + hw, ghost.y + hh), scene.at(ghost.x - hw, ghost.y + hh),
+            scene.at(centre.x - hw, centre.y - hh), scene.at(centre.x + hw, centre.y - hh),
+            scene.at(centre.x + hw, centre.y + hh), scene.at(centre.x - hw, centre.y + hh),
           ];
-          const middle = scene.at(ghost.x, ghost.y);
+          const middle = scene.at(centre.x, centre.y);
           return (
             <g data-part="ghost" pointerEvents="none">
               <polygon points={corners.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}

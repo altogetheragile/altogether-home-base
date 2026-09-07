@@ -146,7 +146,7 @@ interface ParkViewProps {
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   /** Something is being placed from the palette: it follows the cursor with a verdict on it. */
   placing?: { id: string; w: number; h: number } | null;
-  onPlace?: (id: string, pos: { x: number; y: number }) => void;
+  onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }) => void;
   /** On the big Park tab, called when the promenade surface is changed. */
   onSetPathStyle?: (key: string) => void;
   /** On the big Park tab, manual connectors: add a new one, edit its ends/bends/style, or delete.
