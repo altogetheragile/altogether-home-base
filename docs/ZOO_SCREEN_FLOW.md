@@ -13,7 +13,7 @@ note it points at; read that one first. The mock-ups themselves are not in the r
 | 3a | The palette on the park's foot; the inspector as the live checklist. | **done** |
 | 3b | Ghost placement with a verdict, and drawing a habitat's boundary on the grid. | to do |
 | 4 | The rail as the one action channel; Learn takes messages and the log. | **done** |
-| 5 | Meet the Scrum Team; the pull by name at topic 2. | to do |
+| 5 | Meet the Scrum Team; the pull by name at topic 2. | **done** |
 | 6 | The question channel: cards addressed to seats, "waiting on", the clock, the guess. | to do |
 | 7 | The Daily Scrum at the board with "hand it back". | to do |
 | 8 | Compact refinement. | to do |
