@@ -1,4 +1,4 @@
-import type { GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
+import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
@@ -81,8 +81,89 @@ export function tickDay(state: ZooGameState): ZooGameState {
   // A second of the day is a second of the work owed. The day and the work run down together, so
   // the clock you are watching is the truth about how much is left to build in.
   const owed = Math.max(0, (state.owedSeconds ?? 0) - 1);
-  return left <= 0 ? endDay({ ...state, daySecondsLeft: 0, owedSeconds: owed })
-    : { ...state, daySecondsLeft: left, owedSeconds: owed };
+  if (left <= 0) return endDay({ ...state, daySecondsLeft: 0, owedSeconds: owed });
+  // A question has a clock on it: it is asked while the work is being done, and answered or guessed
+  // before the day is out. Both happen here, so they happen the same way in every browser.
+  return askIfDue(guessUnanswered({ ...state, daySecondsLeft: left, owedSeconds: owed }));
+}
+
+// ============= The question channel =============
+//
+// A question is a card addressed to an accountability. It has a clock on it, because the cost of not
+// answering is the thing being taught: the Developers are standing still while it is open, and past
+// a threshold they answer it themselves and get on. The guess is logged with everything else, so
+// the Retrospective can read back what an absent Product Owner cost.
+
+/** How long the Developers wait before answering it themselves, in day seconds. */
+export const QUESTION_PATIENCE = 25;
+
+/** Every question still waiting on somebody. */
+export const openQuestions = (state: ZooGameState): GameQuestion[] => state.questions ?? [];
+
+/** Is anybody waiting on an answer about this item? Shown on the card, for everybody. */
+export const waitingOn = (state: ZooGameState, itemId: string): GameQuestion | null =>
+  (state.questions ?? []).find((q) => q.itemId === itemId) ?? null;
+
+/** The Developers ask the Product Owner how it should be built - which is the one question the
+ *  Product Owner should not answer. "Timber or stone?" is how, and how is the Developers' own. The
+ *  right reply is "your call"; the wrong ones are named in the log, without a telling-off. */
+export function askIfDue(state: ZooGameState): ZooGameState {
+  if (state.phase !== 'sprint' || state.dayStage !== 'building') return state;
+  if ((state.questions ?? []).length) return state;
+  const item = state.backlog.find((it) => it.sprintNumber === state.sprintNumber
+    && it.status === 'committed' && it.started && it.category === 'enclosure' && !it.design);
+  if (!item) return state;
+  // Once per item per Sprint: a question already asked and answered is not asked again.
+  if ((state.decisions ?? []).some((d) => d.kind === 'question' && d.what.includes(item.name))) return state;
+  const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
+  return {
+    ...state,
+    questions: [{
+      id: `fence-${item.id}`, of: 'product_owner', from: asker?.name ?? 'The Developers', itemId: item.id,
+      text: `Timber or stone for ${item.name}'s fence?`,
+      choices: [
+        { key: 'timber', label: 'Timber' },
+        { key: 'stone', label: 'Stone' },
+        { key: 'theirs', label: 'Your call', note: 'How it gets built is the Developers\u2019.' },
+      ],
+      askedAt: state.daySecondsLeft, day: state.dayNumber,
+    }],
+  };
+}
+
+/** Answer one, and record who asked, who answered and how long they waited. */
+export function answerQuestion(state: ZooGameState, id: string, choice: string, by?: string): ZooGameState {
+  const q = (state.questions ?? []).find((x) => x.id === id);
+  if (!q) return state;
+  const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
+  const picked = q.choices.find((c) => c.key === choice);
+  const rest = (state.questions ?? []).filter((x) => x.id !== id);
+  const theirs = choice === 'theirs' || choice === 'them';
+  // The item is named in the log, because a question asked once is not asked again and the log is
+  // where the game remembers that.
+  const about = q.itemId ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work';
+  return note({ ...state, questions: rest }, {
+    kind: 'question', by: by ?? q.of,
+    what: theirs
+      ? `${q.from} asked how to build ${about}; the Product Owner left it to the Developers.`
+      : `${q.from} asked how to build ${about}; the Product Owner chose ${picked?.label ?? choice}.`,
+    cost: theirs
+      ? `Answered in ${waited}s. How it gets built is the Developers\u2019 - this is the answer that keeps it there.`
+      : `Answered in ${waited}s. How it gets built is the Developers\u2019, and this was decided for them.`,
+  });
+}
+
+/** Nobody answered in time, so the Developers answer it themselves and get on. The guess is
+ *  recorded: an absent Product Owner is not free, and this is where the bill lands. */
+export function guessUnanswered(state: ZooGameState): ZooGameState {
+  const q = (state.questions ?? [])[0];
+  if (!q) return state;
+  if (q.askedAt - state.daySecondsLeft < QUESTION_PATIENCE) return state;
+  return note({ ...state, questions: (state.questions ?? []).filter((x) => x.id !== q.id) }, {
+    kind: 'question', by: 'developer',
+    what: `${q.from} asked about ${q.itemId ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work'} and nobody answered, so the Developers chose for themselves.`,
+    cost: `Waited ${QUESTION_PATIENCE}s. A question nobody answers is answered anyway - by whoever is holding the work.`,
+  });
 }
 
 /** Put a hand on the clock, or take it off. The Sprint's time is real, and stopping it is a

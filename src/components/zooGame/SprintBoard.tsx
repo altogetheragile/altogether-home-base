@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, inHandItem, PLACEMENT_CHOICES, isSignOffTask } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, inHandItem, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -22,7 +22,7 @@ import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Boxes, MessageCircleQuestion, FilePlus, Check, AlertTriangle, Sunrise, ListChecks, X } from 'lucide-react';
+import { Boxes, MessageCircleQuestion, FilePlus, Check, AlertTriangle, Sunrise, ListChecks, X, Clock } from 'lucide-react';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
@@ -110,12 +110,14 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  It used to carry the plan, the criteria, the reasons, and two buttons. Four of those in a column
  *  is a wall, and you cannot watch work move through a wall. Everything else is one click away in
  *  the card dialog, which is the only place an item's detail lives now. */
-function BoardCard({ item, state, tone, note, onOpen }: {
+function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   item: BacklogItem;
   state: ZooGameState;
   tone?: 'doing' | 'done' | 'live';
   /** One quiet line where the game owes a reason - why this cannot start yet, mostly. */
   note?: string;
+  /** Whose answer this card is waiting on, where one is outstanding. */
+  waiting?: string | null;
   onOpen: () => void;
 }) {
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
@@ -151,6 +153,12 @@ function BoardCard({ item, state, tone, note, onOpen }: {
           </span>
         )}
       </div>
+      {/* Somebody is waiting on an answer about this card, and everybody can see who. */}
+      {waiting && (
+        <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-primary">
+          <Clock className="h-3 w-3" /> waiting on {waiting}
+        </p>
+      )}
       {note && <p className={cn(TONE.attention.text, 'mt-1 text-[11px] leading-snug')}>{note}</p>}
     </button>
   );
@@ -571,7 +579,7 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
                   {doing.map((it) => (
                     <div key={it.id} {...dragProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
                       {cameBack(it.id)}
-                      <BoardCard item={it} state={state} tone="doing"
+                      <BoardCard item={it} state={state} tone="doing" waiting={waitingOn(state, it.id) ? whoIs(waitingOn(state, it.id)!.of).replace(/^The /, '') : null}
                         note={readyForDone(it) ? 'Ready for Done - drag it there' : whyNotDone(it)}
                         onOpen={() => setCardId(it.id)} />
                     </div>
