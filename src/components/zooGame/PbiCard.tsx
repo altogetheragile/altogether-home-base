@@ -53,7 +53,9 @@ export function PbiCard({
   state?: PbiState;
   /** `row` for lists, `card` for board columns. The difference is how much breathing room it gets,
    *  never how the item itself is drawn. */
-  density?: 'row' | 'card';
+  /** `line` is one 44px row - icon, name, type, ready, points - for a list you want to read 23 of
+   *  at once. `row` gives the name its own line; `card` is the roomiest, for board columns. */
+  density?: 'line' | 'row' | 'card';
   /** Before the icon: re-order handles, a star, an expand toggle. */
   lead?: ReactNode;
   /** Hard right: the action this card offers here. */
@@ -71,19 +73,34 @@ export function PbiCard({
   const Icon = ICONS[iconKey(item)];
   const s = STATE_STYLE[state];
   const card = density === 'card';
+  const line = density === 'line';
   return (
     <div
       role={onClick ? 'button' : undefined}
       aria-label={onClick ? label : undefined}
       onClick={onClick}
       className={cn(RADIUS.panel, 'border text-sm transition-colors', s.shell,
-        card ? 'p-2' : 'px-2 py-1.5', onClick && 'cursor-pointer', className)}>
+        card ? 'p-2' : line ? 'px-2 py-1.5' : 'px-2 py-1.5', onClick && 'cursor-pointer', className)}>
       {/* A board column is a third of half a screen. Everything on one line meant the name wrapped
           to two and pushed the chips onto a third, so four cards no longer fitted a column that
           holds four; sharing the line with the button left the name a stub - "Big Cats...".
           So: the NAME gets a line of its own, the width of the whole card, and the chips and the
           action share the one below it. Two tidy lines, and the name is legible in both. */}
-      {card ? (
+      {line ? (
+        // One row, everything on it. Twenty-three items on a screen beats four items and a scroll:
+        // the Product Owner's order is the thing being read, and you cannot read an order a page
+        // at a time.
+        <div className="flex h-[1.75rem] items-center gap-1.5">
+          {lead}
+          <Icon className={cn('h-4 w-4 shrink-0', s.icon)} />
+          <span title={item.name} className="min-w-0 flex-1 truncate font-medium leading-tight">{item.name}</span>
+          {badges}
+          {state === 'live' && <Chip tone="done" icon={<Check className="h-2.5 w-2.5" />}>Live</Chip>}
+          <Points item={item} />
+          {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
+          {trailing}
+        </div>
+      ) : card ? (
         <div className="flex items-start gap-2">
           {lead}
           <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', s.icon)} />
