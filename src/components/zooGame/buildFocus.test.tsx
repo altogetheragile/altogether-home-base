@@ -43,9 +43,9 @@ const board = (_unused: 'plan' | 'build', over: Partial<ZooGameState> = {}, part
     ...render(
       <MemoryRouter>
         <SprintBoard state={s} building={held.id} edit={edit} part={part}
-          onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
+          onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
           onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
-          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
+          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onEndDay={noop}
           onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop} />
       </MemoryRouter>,
     ),
@@ -53,13 +53,17 @@ const board = (_unused: 'plan' | 'build', over: Partial<ZooGameState> = {}, part
 };
 
 describe('the Build state', () => {
-  it('keeps the board and the thing in your hands on one screen', () => {
-    // Plan and Build were two states with a switch between them, and the switch was reported as
-    // confusing: the board and the item you are building are the same work.
+  it('turns the board into a rail of tokens, and keeps everything reachable', () => {
+    // Two states of the Sprint Backlog tab, decided by what you are doing rather than by a toggle.
+    // With something in hand the park takes the width, so the board becomes one token per item down
+    // the left edge: what else is in the Sprint, and a way back to any of it.
     const { container } = board('build');
-    expect(container.textContent, 'the board went away while something was in hand').toMatch(/To Do/);
-    expect(container.textContent).toMatch(/Doing/);
+    const rail = container.querySelector('[data-part="token-rail"]');
+    expect(rail, 'the board is still three columns wide while the park needs the room').toBeTruthy();
     expect(container.querySelector('[data-part="next-step"]'), 'the item in hand went away').toBeTruthy();
+    expect(rail!.textContent, 'the rail lost the rest of the Sprint').toMatch(/Lion|Paths|Planting/);
+    expect(container.querySelectorAll('[data-part="board-card"]').length,
+      'the full board is still drawn behind the park').toBe(0);
   });
 
   it('makes the next step the one thing being asked', () => {
@@ -113,9 +117,9 @@ describe('the Build state', () => {
     const { container } = render(
       <MemoryRouter>
         <SprintBoard state={held} building={path.id} edit={edit}
-          onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
+          onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
           onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
-          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
+          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onEndDay={noop}
           onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop}
           onDrawing={noop} />
       </MemoryRouter>,
@@ -140,9 +144,9 @@ describe('the Build state', () => {
     const { container } = render(
       <MemoryRouter>
         <SprintBoard state={s} building={held.id} edit={edit} canBuild={false}
-          onAddAnother={noop} onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
+          onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
           onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
-          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onPlaceOnPark={noop} onEndDay={noop}
+          onAssignDev={noop} onRenameMember={noop} onOpen={noop} onEndDay={noop}
           onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop} />
       </MemoryRouter>,
     );

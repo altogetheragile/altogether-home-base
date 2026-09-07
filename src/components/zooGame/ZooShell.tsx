@@ -5,6 +5,7 @@ import { DoneGate } from './DoneGate';
 import { DayClock } from './DayClock';
 import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
+import { inHandItem } from './engine';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -219,6 +220,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // the park lets go of whatever was selected rather than floating a toolbar over it.
   const onPark = state.phase !== 'sprint' || dayStage === 'building';
   const selected = onPark ? building : null;
+  // Two states of the Sprint Backlog tab, decided by what the learner is doing rather than by a
+  // toggle. Nothing in hand: the board at full width, no park. Something in hand: the park takes
+  // the width and the board becomes a column of tokens beside it.
+  const parkState = onSprint && state.dayStage !== 'dailyScrum' && !!inHandItem(state, building ?? null);
   /** The item the Done gate is about: whatever is in hand, once there is something to judge. */
   const gateItem = state.phase === 'sprint' && building
     ? state.backlog.find((it) => it.id === building && (it.status === 'committed' || it.status === 'done'))
@@ -409,9 +414,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               the park stays where it is. Reported from a live game - a full To Do column pushed the
               messages and the studio off the bottom of it. */}
           <div className={cn('mx-auto flex h-full min-h-0 flex-col gap-3',
-            onSprint ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,44%)] xl:items-stretch' : 'max-w-[1600px] pb-24')}>
+            onSprint && parkState ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] xl:items-stretch'
+              : onSprint ? 'max-w-none' : 'max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
-            {onSprint && (
+            {onSprint && parkState && (
               <div className="min-h-0 min-w-0 overflow-y-auto rounded-lg border-2 border-border bg-card p-2 pb-16">
                 <ParkView state={state} large focus onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
               </div>
