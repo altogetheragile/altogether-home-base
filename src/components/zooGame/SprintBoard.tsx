@@ -17,7 +17,6 @@ import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
 import { DesignBench } from './DesignBench';
-import { Asks } from './Asks';
 import type { EditApi } from './ParkView';
 import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
@@ -198,7 +197,7 @@ function TokenRail({ items, bench, onPick }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onSendBack, onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories, onAddProposal, onDeclineProposal, canBuild = true, seat = null, }: SprintBoardProps) {
+export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onSendBack, onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories,   canBuild = true,  }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -637,10 +636,7 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
       {/* The board and what is being asked share the height between them rather than one taking a
           fixed slice - a fixed slice left white space under the panel on a tall screen and squeezed
           the board on a short one. */}
-      {!dayStarting && !onBench2 && (
-        <Asks className="min-h-0 max-h-[38%] shrink-0" state={state} seat={seat} notes={[]} onOpenItem={onBuilding}
-          onAddProposal={onAddProposal} onSplitEpic={onSplitEpic} onDeclineProposal={onDeclineProposal} />
-      )}
+
       </div>
 
 

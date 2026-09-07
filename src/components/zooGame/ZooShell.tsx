@@ -155,7 +155,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools, rail, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -165,6 +165,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   links?: ReactNode;
   /** ...and what belongs in the game menu rather than the strip: signing in, and who is signed in. */
   menuLinks?: ReactNode;
+  /** One line at the foot of the Sprint Backlog tab: the only place the game asks for an answer. */
+  rail?: ReactNode;
   /** What this screen hangs on the strip beside Learn - for a Sprint, the burndown, the help and
    *  the board settings. */
   tools?: ReactNode;
@@ -407,7 +409,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
 
         {/* The Sprint Backlog: the board, and the studio when something is in hand. Full width,
             because this is the artifact the Sprint is worked through. */}
-        <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'sprint' && 'hidden')}>
+        <div className={cn('flex h-full min-h-0 flex-col overflow-hidden px-2 py-3 sm:px-3', tab !== 'sprint' && 'hidden')}>
           {/* The work on the left, the park on the right, for the whole Sprint. There is only ever one
               park in the game, so while it is here the Increment tab does without it rather than
               drawing a second one: two isometric scenes rebuilding every second is a slow game. */}
@@ -415,9 +417,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               screen: the board scrolls in its columns, what is being asked scrolls in its panel, and
               the park stays where it is. Reported from a live game - a full To Do column pushed the
               messages and the studio off the bottom of it. */}
-          <div className={cn('mx-auto flex h-full min-h-0 flex-col gap-3',
+          <div className={cn('flex min-h-0 w-full flex-1 flex-col gap-3',
             onSprint && parkState ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] xl:items-stretch'
-              : onSprint ? 'max-w-none' : 'max-w-[1600px] pb-24')}>
+              : onSprint ? 'max-w-none' : 'mx-auto max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && parkState && (
               <div className="flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
@@ -434,6 +436,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               </div>
             )}
           </div>
+          {/* The rail: what the game is asking of somebody, one at a time, answered or waiting. */}
+          {onSprint && !takeover && rail}
         </div>
 
         {/* The Increment: the park, all the time, at the width it deserves. */}
