@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { DailyScrum } from './DailyScrum';
@@ -31,25 +31,44 @@ const scrum = (over: Partial<ZooGameState> = {}): ZooGameState => {
   } as ZooGameState;
 };
 
-const board = (state: ZooGameState) => render(
+const board = (state: ZooGameState, props: Record<string, unknown> = {}) => render(
   <MemoryRouter>
     <SprintBoard state={state}
       onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop}
       onStartItem={noop} onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop}
       onAssignDev={noop} onRenameMember={noop} onOpen={noop} onEndDay={noop}
       onHoldDailyScrum={noop} onSkipDailyScrum={noop} onStartDay={noop} onBuilding={noop}
-      onDropFromSprint={noop} />
+      onDropFromSprint={noop} {...props} />
   </MemoryRouter>,
 );
 
 describe('the Daily Scrum as an event', () => {
-  it('runs over the board rather than instead of it', () => {
+  it('is held in front of the board, and the board stays live', () => {
+    // An event that hides the artifact it is about teaches that the event is paperwork. The
+    // Developers adapt the Sprint Backlog while they talk - reorder it, swap who is on what, hand
+    // something back - so the board is beside the conversation, not behind it.
     const { container } = board(scrum());
     const event = container.querySelector('[data-part="daily-scrum"]');
-    expect(event, 'the Daily Scrum is not a takeover').toBeTruthy();
-    expect(event!.className, 'nothing dims the board behind it').toMatch(/backdrop-blur|bg-background\/70/);
-    // ...and the board it is about is still there, underneath.
+    expect(event, 'the Daily Scrum is not on the screen').toBeTruthy();
+    expect(event!.className, 'the event is covering the board again').not.toMatch(/absolute|backdrop-blur/);
     expect(container.textContent, 'the board vanished for the length of the event').toMatch(/To Do|Doing/);
+    expect(container.querySelector('[data-part="hand-it-back"]'),
+      'there is no way to hand work back during the event').toBeTruthy();
+  });
+
+  it('hands work back to the Product Backlog when it is dropped there', () => {
+    const onDropFromSprint = vi.fn();
+    const s = scrum();
+    const item = s.backlog.find((it) => it.status === 'committed' && !it.started)!;
+    const { container } = board(s, { onDropFromSprint });
+    const card = [...container.querySelectorAll('[draggable="true"]')]
+      .find((el) => (el.textContent ?? '').trim().startsWith(item.name))!;
+    const dt = { types: ['text/plain'], getData: () => item.id, setData: () => {}, effectAllowed: '' };
+    fireEvent.dragStart(card, { dataTransfer: dt });
+    const back = container.querySelector('[data-part="hand-it-back"]')!;
+    fireEvent.dragOver(back, { dataTransfer: dt });
+    fireEvent.drop(back, { dataTransfer: dt });
+    expect(onDropFromSprint, 'dropping work on "hand it back" did nothing').toHaveBeenCalledWith(item.id);
   });
 
   it('offers no way round itself', () => {
