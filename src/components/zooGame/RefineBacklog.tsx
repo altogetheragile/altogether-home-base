@@ -131,7 +131,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Ready to start the first Sprint?' : 'What is ready for the Sprints ahead?'}</h2>
           <ExplainButton cards={['refinement', 'product-backlog', 'pbi']} phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
-        <p className="text-sm text-muted-foreground">{first ? 'A Sprint\u2019s worth ready at the top is enough to begin. The rest of the Backlog gets built out through the Sprints, where refinement is real work and costs the time you can see.' : 'Split what is too big, size what is not sized, and order it by value.'}</p>
+        <p className="text-sm text-muted-foreground">{first ? 'A Sprint\u2019s worth ready at the top is enough to begin.' : 'Split what is too big, size what is not sized, and order it by value.'}</p>
       </header>
 
       {/* This screen asks for two things in order, and nothing said so. Numbering them is the whole
@@ -150,7 +150,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
             columns then ended at different heights, and the agreements on the right needed the page
             scrolled while the list on the left did not. Reported from playing it. */}
         <div className="pr-1">
-        <ProductBacklogSidebar state={state} mode="refine" focus={focus} onFocus={setFocus} onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+        <ProductBacklogSidebar state={state} mode="refine" compact focus={focus} onFocus={setFocus} onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
           onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
   
@@ -198,16 +198,13 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
             onToggle={() => setDodOpen((o) => !o)}
             right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              {!dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>}
+              {!dodOpen && (state.dodAgreed
+                ? <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>
+                : <strong className={cn(TONE.attention.text)}>nobody has agreed it yet</strong>)}
               <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
             </span>}>
             {dodOpen && (
               <div className="mt-1.5 space-y-2">
-                <p className="text-[11px] text-muted-foreground">
-                  The bar every item clears before it is Done, and the same bar for every item. It is the whole Scrum
-                  Team&rsquo;s, and you can raise it at a Retrospective as the team gets better - but not lower it to get
-                  something through.
-                </p>
                 <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
                 {!state.dodAgreed && onAgreeDod && (<>
                   <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodOpen(false); }}>

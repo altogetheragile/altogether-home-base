@@ -371,6 +371,8 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
 }
 
 interface SidebarProps {
+  /** One 44px row per item, so a Backlog of twenty-three reads on one screen. */
+  compact?: boolean;
   state: ZooGameState;
   mode: 'plan' | 'sprint' | 'refine' | 'view';
   onAddPbi: (draft: PbiDraft) => void;
@@ -402,7 +404,7 @@ interface SidebarProps {
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
@@ -483,7 +485,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
         {/* Red, amber, green down the left edge: an epic nobody has split is red, an item waiting to
             be sized is amber, an item that meets the Definition of Ready is green. One glance tells
             you what is left to do, which is the question this screen is asking. */}
-        <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'}
+        <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'} density={compact ? 'line' : 'row'}
           // Where there is a bench beside the list, the card IS the way onto it: picking an item up
           // should not mean finding a chevron the width of a thumbnail.
           onClick={onFocus ? () => onFocus(it.id) : undefined}
@@ -595,6 +597,9 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
           </div>
         )}
       </div>
+      {/* The explanation is in Learn. What belongs on this screen is the order itself: a paragraph
+          over a list you are meant to read is a paragraph you read instead of the list. */}
+      {!compact && (
       <p className="text-[11px] text-muted-foreground">
         {mode === 'view'
           ? 'Ordered by the Product Owner, most valuable first. This is what a Sprint Goal is built from - read it, then select the work in topic two.'
@@ -604,6 +609,7 @@ export function ProductBacklogSidebar({ state, mode, onWidth, onAddPbi, onRefine
             ? 'Ordered by you (the PO). The Developers select the ready ones they forecast they can finish, and those become the Sprint Backlog.'
             : 'Pull a Ready item in by agreement, if it will not put the Sprint Goal at risk. Refining here is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints.'}
       </p>
+      )}
 
       {/* Each of these is its own conversation, so each takes over rather than being squeezed into
           the top of a list that scrolls inside a fixed height. */}
