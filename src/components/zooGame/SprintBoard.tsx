@@ -16,7 +16,6 @@ import { PickCard } from './PickCard';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
-import { DesignBench } from './DesignBench';
 import type { EditApi } from './ParkView';
 import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
@@ -205,7 +204,7 @@ function TokenRail({ items, bench, onPick }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onSendBack, onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit, part, onPart, drawing, onDrawing, onRemoveRun, onAddPbi, onSetUserStories,   canBuild = true,  }: SprintBoardProps) {
+export function SprintBoard({ state,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit,      onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -378,7 +377,6 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
   // and the park are the same work, and the switch that used to hide two of them was reported as
   // confusing. Behind the Daily Scrum the bench stands down - the event is what you are in.
   const onBench2 = !!inHand && state.dayStage !== 'dailyScrum';
-  const following = !building && !!beingBuilt;
   // The item just pulled into Doing, waiting for the Developers to say who is on it.
   const pulled = pulling ? state.backlog.find((it) => it.id === pulling) ?? null : null;
 
@@ -414,11 +412,8 @@ export function SprintBoard({ state,  onEstimate, onToggleTask, onConfirmAc, onS
               ...todo.map((it) => ({ item: it, where: 'todo' as const })),
               ...deploy.map((it) => ({ item: it, where: 'done' as const }))]}
             bench={bench} onPick={(id) => onBuilding(id)} />
-          <div className="relative min-h-0 min-w-0 flex-1 overflow-y-auto rounded-lg border-2 border-border bg-background px-2 pb-2 pt-2">
-            <DesignBench state={state} itemId={bench} following={following} edit={edit} part={part} onPart={onPart}
-              drawing={drawing} onDrawing={onDrawing} onRemoveRun={onRemoveRun} focus canBuild={canBuild} hasPalette
-              onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} nextUp={todo[0]} />
-          </div>
+          {/* Nothing else. The item's detail is in the takeover over the park - two copies of the
+              same item on one screen is what made this screen feel squashed. */}
         </div>
       ) : (
         <>
