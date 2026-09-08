@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, presetFor } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, inHandItem, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -30,6 +30,8 @@ interface SprintBoardProps {
   onToggleTask: (id: string, taskId: string) => void;
   /** Accepting a criterion, on the card the criterion belongs to. */
   onConfirmAc: (id: string, index: number, value: boolean) => void;
+  /** The message centre, rendered under the board: the game's one action channel. */
+  rail?: ReactNode;
   /** Not accepting what was built. The Product Owner's call, so the board only offers it. */
   onSendBack?: (id: string) => void;
   /** Move it to Done: built, standing where it stands, and open to visitors. */
@@ -163,48 +165,12 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   );
 }
 
-/** The board, when the park has taken the width: one token per item down the left edge, in the
- *  order work moves through the columns. A glyph, a name, its points and its steps - enough to see
- *  what else is in the Sprint and to reach for it, and not enough to compete with the park. */
-function TokenRail({ items, bench, onPick }: {
-  items: { item: BacklogItem; where: 'todo' | 'doing' | 'done' }[];
-  bench: string | null;
-  onPick: (id: string) => void;
-}) {
-  return (
-    <div data-part="token-rail" className="flex min-h-0 w-[5.5rem] shrink-0 flex-col gap-1.5 overflow-y-auto pr-0.5">
-      {items.map(({ item, where }) => {
-        const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
-        return (
-          <button key={item.id} type="button" onClick={() => onPick(item.id)}
-            title={`${item.name} · ${item.estimate} pts`}
-            className={cn(FOCUS, 'shrink-0 rounded-lg border-2 bg-card px-1.5 py-1.5 text-left transition-colors hover:border-primary/70',
-              bench === item.id ? 'border-primary bg-primary/[0.06]'
-                : where === 'done' ? 'border-emerald-500/50' : 'border-border')}>
-            <CategoryIcon item={item} className="h-4 w-4 text-muted-foreground" />
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="min-w-0 flex-1 truncate text-[10px] font-semibold leading-tight">{item.name}</span>
-              <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">{item.estimate}</span>
-            </div>
-            <span className="mt-1 flex items-center gap-0.5">
-              {steps.map((t) => (
-                <span key={t.id} className={cn('h-1.5 w-1.5 rounded-full', t.done ? 'bg-emerald-500' : 'bg-muted-foreground/25')} />
-              ))}
-            </span>
-          </button>
-        );
-      })}
-      {!items.length && <p className="px-1 text-[10px] text-muted-foreground">Nothing else in this Sprint.</p>}
-    </div>
-  );
-}
-
 /** The Sprint board: To Do / Doing / Done, played over a run of timed days. Each day
  *  you take a committed item into the studio (Doing), build it to the Definition of
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, building, edit,      onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -364,19 +330,6 @@ export function SprintBoard({ state,  onEstimate,    onFinishItem, onStartItem, 
   const asked = state.pendingPlacement
     ? state.backlog.find((it) => it.id === state.pendingPlacement!.itemId) ?? null : null;
   const dayStarting = state.dayStage === 'dayStart';
-  // Something actually on the bench: it takes the room it needs then, and steps back when it is idle.
-  // What the bench is showing. Yours if you have picked something up; otherwise whatever the
-  // Developers have in Doing, because a bench that says "nothing on the bench" while the team is
-  // visibly building something is a window with the curtains shut. Seats played by the game do
-  // not select anything, so with nobody in the Developer seats the studio sat empty all Sprint.
-  const beingBuilt = state.backlog.find((it) => it.status === 'committed' && it.started
-    && it.sprintNumber === state.sprintNumber);
-  const bench = building ?? beingBuilt?.id ?? null;
-  const inHand = inHandItem(state, building);
-  // Whatever is in hand shows under the board. One screen: the board, the thing you are building
-  // and the park are the same work, and the switch that used to hide two of them was reported as
-  // confusing. Behind the Daily Scrum the bench stands down - the event is what you are in.
-  const onBench2 = !!inHand && state.dayStage !== 'dailyScrum';
   // The item just pulled into Doing, waiting for the Developers to say who is on it.
   const pulled = pulling ? state.backlog.find((it) => it.id === pulling) ?? null : null;
 
@@ -402,19 +355,6 @@ export function SprintBoard({ state,  onEstimate,    onFinishItem, onStartItem, 
         state.dayStage === 'dailyScrum' ? 'flex-[2]' : 'flex-1')}>
       {dayStarting ? (
         <DayStart state={state} onStart={onStartDay} />
-      ) : onBench2 && edit ? (
-        /* Park state. Something is in hand, so the park has the width and the board is a column of
-           tokens down the left edge - what else is in the Sprint, and a way back to it. The
-           inspector beside it is the item: its steps, what it needs to be, and the studio. */
-        <div className="flex min-h-0 flex-1 gap-2">
-          <TokenRail
-            items={[...doing.map((it) => ({ item: it, where: 'doing' as const })),
-              ...todo.map((it) => ({ item: it, where: 'todo' as const })),
-              ...deploy.map((it) => ({ item: it, where: 'done' as const }))]}
-            bench={bench} onPick={(id) => onBuilding(id)} />
-          {/* Nothing else. The item's detail is in the takeover over the park - two copies of the
-              same item on one screen is what made this screen feel squashed. */}
-        </div>
       ) : (
         <>
           {state.carriedImpediment && (
@@ -754,6 +694,10 @@ export function SprintBoard({ state,  onEstimate,    onFinishItem, onStartItem, 
           </Button>
         </ActionBar>
       )}
+
+      {/* The message centre, under the work it is about: what is being asked of somebody, and what
+          has just happened. One channel, and an action here is answered or it waits. */}
+      {!dayStarting && state.dayStage !== 'dailyScrum' && rail}
 
       {/* An item's detail, in the one place it lives. */}
       <CardDialog state={state} item={cardId ? state.backlog.find((it) => it.id === cardId) ?? null : null}

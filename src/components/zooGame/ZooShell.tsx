@@ -9,6 +9,7 @@ import { inHandItem } from './engine';
 import { ParkPalette } from './ParkPalette';
 import { BuildTakeover } from './BuildTakeover';
 import { footprintFor } from './design';
+import { ParkPlan } from './ParkPlan';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -157,7 +158,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools, rail, onPutIn, canBuild = true, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools,  onPutIn, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -167,8 +168,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   links?: ReactNode;
   /** ...and what belongs in the game menu rather than the strip: signing in, and who is signed in. */
   menuLinks?: ReactNode;
-  /** One line at the foot of the Sprint Backlog tab: the only place the game asks for an answer. */
-  rail?: ReactNode;
   /** What this screen hangs on the strip beside Learn - for a Sprint, the burndown, the help and
    *  the board settings. */
   tools?: ReactNode;
@@ -222,16 +221,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // the Sprint Backlog, the Review to the Increment. You can go anywhere from there; this only says
   // where each part of the game starts, so nobody arrives at a screen behind the wrong tab.
   useEffect(() => { setTab(home); }, [state.phase, home, setTab]);
-  const dayStage = state.dayStage;
-  // Building happens during the build stage. At the Daily Scrum the event is what you are in, so
-  // the park lets go of whatever was selected rather than floating a toolbar over it.
-  const onPark = state.phase !== 'sprint' || dayStage === 'building';
-  const selected = onPark ? building : null;
   // Two states of the Sprint Backlog tab, decided by what the learner is doing rather than by a
   // toggle. Nothing in hand: the board at full width, no park. Something in hand: the park takes
   // the width and the board becomes a column of tokens beside it.
   const inHand = onSprint && state.dayStage !== 'dailyScrum' ? inHandItem(state, building ?? null) : null;
-  const parkState = !!inHand;
   /** The item the Done gate is about: whatever is in hand, once there is something to judge. */
   const gateItem = state.phase === 'sprint' && building
     ? state.backlog.find((it) => it.id === building && (it.status === 'committed' || it.status === 'done'))
@@ -430,17 +423,24 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               the park stays where it is. Reported from a live game - a full To Do column pushed the
               messages and the studio off the bottom of it. */}
           <div className={cn('flex min-h-0 w-full flex-1 flex-col gap-3',
-            onSprint && parkState ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[7rem_minmax(0,1fr)] xl:items-stretch'
-              : onSprint ? 'max-w-none' : 'mx-auto max-w-[1600px] pb-24')}>
+            onSprint ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-stretch'
+              : 'mx-auto max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
-            {onSprint && parkState && (
+            {onSprint && (
               <div className="relative flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
-                {/* Placement, and nothing else: the object itself is built in the takeover. */}
-                <div className="min-h-0 flex-1 overflow-y-auto"><ParkView state={state} large focus
-                  placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
-                  onPlace={(id, pos) => { onPlaceItem?.(id, pos); setPlacingId(null); }}
-                  onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+                {/* Placement, and nothing else: the object itself is built in the takeover.
+                    Straight down, because a metre is a metre wherever it is on the screen and a
+                    thing is where you drop it. The isometric view is the zoo as a visitor meets it,
+                    and it lives on the Increment tab where nobody is trying to build in it. */}
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <ParkPlan state={state} height={620} selected={building ?? null} onSelect={onOpenBuild}
+                    onPlaceItem={onPlaceItem} onSetSize={onSetSize}
+                    placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
+                    onPlace={(id, pos) => { onPlaceItem?.(id, pos); setPlacingId(null); }}
+                    tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
+                    onAddConnector={onAddConnector} onSetTool={(t) => onDrawing?.(t === 'path')} />
                 </div>
+
                 {/* Everything about the object is built in the takeover; the park keeps placement.
                     It sits over the park with the strip and the rail still visible, because the day
                     is still running and somebody may still be waiting on you. */}
@@ -457,21 +457,21 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                   <ParkPalette className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state} item={inHand}
                     design={inHand.design ?? inHand.draftDesign}
                     drawing={drawing} onDrawing={onDrawing}
-                    placing={placingId === inHand.id} onPlacing={(on) => setPlacingId(on ? inHand.id : null)}
-                    onDesign={edit.onDesign} onSetEnclosure={edit.onSetEnclosure} />
+                    placing={placingId === inHand.id} onDesign={edit.onDesign} />
                 )}
               </div>
             )}
           </div>
-          {/* The rail: what the game is asking of somebody, one at a time, answered or waiting. */}
-          {onSprint && !takeover && rail}
         </div>
 
         {/* The Increment: the park, all the time, at the width it deserves. */}
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', (tab !== 'increment' || onSprint) && 'hidden')}>
           <div className={cn('flex min-h-0 gap-3', gateItem ? 'flex-col xl:flex-row' : '')}>
             <div className="min-w-0 flex-1">
-            <ParkView state={state} large focus increment onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
+            {/* A picture, not a drawing board. The Increment is the zoo as a visitor meets it, so
+                nothing here edits anything: what it offers is walking round it and looking closer.
+                Building happens from above, on the Sprint Backlog tab. */}
+            <ParkView state={state} large focus increment />
             </div>
             {/* The Done gate stands beside the thing it is judging. This is where the item was
                 placed and where the park's evidence comes from, so it is where the question
