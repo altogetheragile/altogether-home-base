@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, presetFor } from './design';
+import { groupSize, hasRoomToRoam, presetFor, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance } from './design';
 import { settleStatus } from './engine';
 import { whereItStands } from './parkModel';
 
@@ -90,9 +90,61 @@ export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict | n
     return { met: false, evidence: `draw a run up to the ${target.name}` };
 }
 
+/** Where a criterion can be answered: the ones about where a thing stands can only be answered once
+ *  it is standing, and the rest are about the object and are answered while it is built. */
+export const checkedAt = (label: string): 'object' | 'park' => (isDeployAcceptance(label) ? 'park' : 'object');
+
 /** The park's answer to one criterion, or null when it is a matter of judgement. */
 export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
   const design = item.design ?? item.draftDesign ?? presetFor(item);
+
+  // ---- Answered about the object itself, while it is being built ----
+  //
+  // These used to be judgement calls the learner ticked. They are facts about the thing in front of
+  // them: whether it is closed, whether the animals fit, whether it is a home rather than a shed.
+  // The park answers them, with its working shown, and the learner gets on with the fourth.
+
+  if (label === 'Can I see a fence with no way out of it?') {
+    // A habitat is fenced by construction, so this is a fact the park states rather than a hurdle:
+    // what it earns is the shape being named, which is the thing the learner chose.
+    const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
+    return { met: true, evidence: `Closed${shape ? `, ${shape.label.toLowerCase()}` : ''}` };
+  }
+
+  if (label === 'Can an animal move about in here?') {
+    const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
+    const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
+    // Against the animals that will actually live here, where the Backlog says which they are.
+    const living = state.backlog.filter((it) => it.enclosureId === item.id);
+    const group = living.map((it) => (it.design ?? it.draftDesign)?.group).find(Boolean);
+    if (!living.length) return { met: true, evidence: `${tiles}, room for a pair` };
+    // Said in the size a habitat comes in rather than in the arithmetic behind it: "a lion family
+    // needs a large one" is a sentence; "needs 3.85" is a number nobody can act on.
+    const fits = hasRoomToRoam(group ?? DEFAULT_GROUP, item.enclosureSize ?? 'medium');
+    const smallest = (['small', 'medium', 'large'] as const)
+      .find((k) => hasRoomToRoam(group ?? DEFAULT_GROUP, k)) ?? 'large';
+    const who = living[0].name.toLowerCase();
+    return fits
+      ? { met: true, evidence: `${tiles}, room for the ${who}` }
+      : { met: false, evidence: `${tiles}, the ${who} needs a ${smallest} one` };
+  }
+
+  if (label === 'Can I tell an animal lives here, not a shed?') {
+    // Ground under their feet, something growing or to shelter behind, and water. A hatched box with
+    // none of those is a pen, and the criterion exists to be failable by one - which it was not
+    // while the learner ticked it themselves.
+    const water = enclosureWater(design).length > 0;
+    const growing = enclosureFlora(design).length > 0;
+    const ground = !!design.colors?.ground;
+    const shelter = enclosureFlora(design).some((f) => /rock|shelter|hedge/i.test(f.type));
+    const has = [ground && 'ground', shelter ? 'shelter' : growing && 'planting', water && 'water']
+      .filter(Boolean) as string[];
+    const missing = [!ground && 'ground', !growing && 'shelter or planting', !water && 'water']
+      .filter(Boolean) as string[];
+    return missing.length
+      ? { met: false, evidence: `no ${missing.join(' or ')} yet` }
+      : { met: true, evidence: `${has.join(', ')} in` };
+  }
 
   if (label === 'Can I see a group rather than one animal on its own?') {
     const n = groupSize(design.group);

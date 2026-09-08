@@ -7,7 +7,8 @@ import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
 import { inHandItem } from './engine';
 import { ParkPalette } from './ParkPalette';
-import { footprintFor, ENCLOSURE_SIZE } from './design';
+import { BuildTakeover } from './BuildTakeover';
+import { footprintFor } from './design';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -156,7 +157,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools, rail, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools, rail, onPutIn, canBuild = true, building, onOpenBuild, edit, onPart, drawRoute, drawing, onDrawing, onStartHere, onPlaceItem, onSetPathStyle, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onImprove, onSetSpot, onSetMemberSpot, onSetSize, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -171,6 +172,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   /** What this screen hangs on the strip beside Learn - for a Sprint, the burndown, the help and
    *  the board settings. */
   tools?: ReactNode;
+  /** An animal goes into the habitat chosen for it in the takeover. */
+  onPutIn?: (id: string, enclosureId: string) => void;
   /** A hand on the clock, or off it. */
   onSetClockPaused?: (paused: boolean) => void;
   /** The Scrum Team rides on the tab row: renaming a member, and what to say when somebody who
@@ -252,11 +255,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
   // What is following the cursor, waiting to be put down on the park.
   const [placingId, setPlacingId] = useState<string | null>(null);
-  /** The size the park builds that is closest to what was drawn. */
-  const nearestEnclosure = (box: { w: number; h: number }): 'small' | 'medium' | 'large' =>
-    (['small', 'medium', 'large'] as const)
-      .map((k) => ({ k, d: Math.abs(ENCLOSURE_SIZE[k].w - box.w) + Math.abs(ENCLOSURE_SIZE[k].h - box.h) }))
-      .sort((a, b) => a.d - b.d)[0].k;
+  // The takeover opens when a card is picked up and closes when it is placed or kept as a draft.
+  // Held as "which item has been put down" rather than a flag an effect has to keep in step: pick up
+  // something else and it opens again, without a render that corrects itself.
+  const [drafted, setDrafted] = useState<string | null>(null);
+  const takeoverOpen = !!inHand && drafted !== inHand.id;
+  const setTakeoverOpen = (open: boolean) => setDrafted(open ? null : inHand?.id ?? null);
   const pill = eventPill(state);
   const goal = goalLine(state);
 
@@ -426,25 +430,30 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               the park stays where it is. Reported from a live game - a full To Do column pushed the
               messages and the studio off the bottom of it. */}
           <div className={cn('flex min-h-0 w-full flex-1 flex-col gap-3',
-            onSprint && parkState ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,27rem)_minmax(0,1fr)] xl:items-stretch'
+            onSprint && parkState ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[7rem_minmax(0,1fr)] xl:items-stretch'
               : onSprint ? 'max-w-none' : 'mx-auto max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && parkState && (
-              <div className="flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
+              <div className="relative flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
+                {/* Placement, and nothing else: the object itself is built in the takeover. */}
                 <div className="min-h-0 flex-1 overflow-y-auto"><ParkView state={state} large focus
                   placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
-                  onPlace={(id, pos, box) => {
-                    onPlaceItem?.(id, pos);
-                    // What you drew is answered with the nearest footprint the park builds. Three
-                    // sizes is the catalogue; drawing is how you say which one you meant.
-                    if (box && edit?.onSetEnclosure) edit.onSetEnclosure(id, nearestEnclosure(box));
-                    setPlacingId(null);
-                  }}
+                  onPlace={(id, pos) => { onPlaceItem?.(id, pos); setPlacingId(null); }}
                   onPart={onPart} drawRoute={drawRoute} drawing={drawing} onDrawing={onDrawing} building={selected} onOpenBuild={onOpenBuild} edit={onPark ? edit : undefined} onStartHere={onStartHere} onPlaceItem={onPlaceItem} onSetPathStyle={onSetPathStyle} onAddConnector={onAddConnector} onUpdateConnector={onUpdateConnector} onDeleteConnector={onDeleteConnector} deployMode={deployMode} deployStyle={deployStyle} deployAcs={deployAcs} onFinishDeploy={onFinishDeploy} onImprove={onImprove} onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy} onNest={onNest} onUnnest={onUnnest} />
                 </div>
-{/* Six tools along the foot of the park: a palette, not a menu. Every tool the build
-                    has is on the surface, with a word under it, and there is no second level. */}
-                {inHand && edit && (
+                {/* Everything about the object is built in the takeover; the park keeps placement.
+                    It sits over the park with the strip and the rail still visible, because the day
+                    is still running and somebody may still be waiting on you. */}
+                {inHand && edit && takeoverOpen && (
+                  <div className="absolute inset-2 z-30 sm:inset-4">
+                    <BuildTakeover className="h-full" state={state} item={inHand} edit={edit} canBuild={canBuild}
+                      onPlace={(id) => { setTakeoverOpen(false); setPlacingId(id); }}
+                      onPutIn={(id, encId) => { onPutIn?.(id, encId); setTakeoverOpen(false); }}
+                      onClose={() => setTakeoverOpen(false)} />
+                  </div>
+                )}
+                {/* Two tools on the park - the only two things with no object of their own. */}
+                {inHand && edit && !takeoverOpen && (
                   <ParkPalette className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state} item={inHand}
                     design={inHand.design ?? inHand.draftDesign}
                     drawing={drawing} onDrawing={onDrawing}

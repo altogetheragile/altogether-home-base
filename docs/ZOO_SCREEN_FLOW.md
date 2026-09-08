@@ -4,6 +4,11 @@ The manifest below came with the mock-up set of 7 September. `docs/ZOO_BUILD_SEA
 note it points at; read that one first. The mock-ups themselves are not in the repo - they are in
 `~/Desktop/zoo-screen-flow-2026-09-07`.
 
+The 8 September note, `docs/ZOO_TAKEOVER_BUILD.md`, supersedes the build parts of this one: every
+object is built in a takeover over the park, and the park keeps placement and orientation. The
+animal takeover chooses the habitat it lives in - agreed with Al on 8 September, in place of the
+note's "the Lion card opens the enclosure's takeover", so a Lion stays an item you build.
+
 ## Build order, and where we are
 
 | # | Slice | State |
