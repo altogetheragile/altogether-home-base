@@ -62,7 +62,10 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
           state.learnMode ? 'bg-muted text-muted-foreground' : low ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-primary/10 text-primary')}>
           <Users className="h-3.5 w-3.5" /> Daily Scrum
           <span className="opacity-60">&middot;</span>
-          {state.learnMode ? 'timebox paused' : <>15 min timebox <span className="opacity-60">&middot;</span> <span className="tabular-nums">0:{String(left).padStart(2, '0')}</span> left</>}
+          {/* The timebox in the game's own seconds. It used to read "15 min timebox &middot; 0:03
+              left" - two different units in one sentence, which is why the clock read as broken. The
+              real fifteen minutes is a teaching point, and it is made in the text below. */}
+          {state.learnMode ? 'timebox paused' : <>timebox <span className="opacity-60">&middot;</span> <span className="tabular-nums">0:{String(left).padStart(2, '0')}</span> left</>}
         </span>
         {!state.learnMode && (
           <span className="h-1.5 w-32 overflow-hidden rounded-full bg-muted" aria-hidden>
@@ -78,7 +81,8 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
             screen with a button that skips it. */}
         <p className="text-sm text-muted-foreground">
           Are we on track for the Sprint Goal? Inspect progress and adapt the plan for today. The Scrum Guide has this
-          every day of a Sprint; here you can carry on regardless, and the cost of that is shown.
+          every day of a Sprint, timeboxed to 15 minutes; here it runs in the game&rsquo;s own seconds,
+          you can carry on regardless, and the cost of that is shown.
         </p>
       </div>
 

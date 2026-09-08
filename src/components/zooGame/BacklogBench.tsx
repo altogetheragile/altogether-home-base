@@ -72,7 +72,9 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
   onClose?: () => void;
   className?: string;
 }) {
-  const [doing, setDoing] = useState<'size' | 'split' | 'word' | null>(null);
+  // An unsized item opens with its cards out. The takeover is here to view it, size it and commit -
+  // pressing "Size it" first was a screen in the way of the only thing the screen is for.
+  const [doing, setDoing] = useState<'size' | 'split' | 'word' | null>(item?.unsized && item.category !== 'epic' ? 'size' : null);
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
   if (!item) {
@@ -165,7 +167,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
 
       {doing === 'size' && (
         <div className="rounded-lg border border-border p-2">
-          <PlanningPoker item={item} state={state} seed={state.gameSeed}
+          <PlanningPoker item={item} state={state} seed={state.gameSeed} talk={false}
             onCommit={(pts) => { onEstimate(item.id, pts); setDoing(null); }} />
         </div>
       )}

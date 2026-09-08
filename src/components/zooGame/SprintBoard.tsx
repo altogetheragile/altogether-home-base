@@ -7,6 +7,7 @@ import { enclosureReady, enclosureOf, availableItems, notReady, revealed, active
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { DailyScrum } from './DailyScrum';
 import { BoardColumn, CategoryIcon, SplitEpicPanel } from './Board';
 import { CardDialog } from './CardDialog';
@@ -54,6 +55,9 @@ interface SprintBoardProps {
   onAssignDev: (itemId: string, devId: string) => void;
   onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
+  /** Ask the Product Owner to look at built work. Offered on the card as well as on the park:
+   *  "how does Priya approve the last AC?" is not a question the pill was answering. */
+  onAskToCheck?: (id: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
   /** What the Scrum Master does about what surfaced at the Daily Scrum. */
@@ -170,7 +174,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -477,7 +481,11 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                       </div>
                     );
                   })}
-                  {state.dayStage === 'dailyScrum' && onDropFromSprint && (
+                  {/* Available through the day, not only during the Daily Scrum. The event is a
+                      takeover now, so a drop target behind it could not be reached - and handing
+                      work back is a negotiation with the Product Owner, which Scrum does not
+                      restrict to one fifteen-minute window anyway. */}
+                  {onDropFromSprint && (
                     <div data-part="hand-it-back"
                       onDragOver={(e) => { if (drag) e.preventDefault(); }}
                       onDrop={(e) => { e.preventDefault(); if (drag) { onDropFromSprint(drag.id); setDrag(null); setDropCol(null); } }}
@@ -658,16 +666,24 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       )}
 
 
-      {/* The Daily Scrum is held in front of the board, at a third of the width, and the board stays
-          live: the Developers adapt the Sprint Backlog by dragging while they talk - reorder it,
-          swap who is on what, or hand something back. An event that hides the artifact it is about
-          teaches that the event is paperwork. */}
-      {state.dayStage === 'dailyScrum' && (
-        <div data-part="daily-scrum" className="min-h-0 w-[22rem] shrink-0 overflow-y-auto rounded-xl border-2 border-primary bg-background p-3 xl:w-[26rem]">
-          <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} />
-        </div>
-      )}
       </div>
+
+      {/* The Daily Scrum takes the screen, like every other event. It was a column beside the board
+          so the Developers could drag the Sprint Backlog while they talked - a good idea that ran
+          out of room when the park took half the screen: three columns at ninety pixels each is not
+          a live artifact, it is a sliver. The board is right behind it, and the event ends on its
+          own buttons. */}
+      <Dialog open={state.dayStage === 'dailyScrum'}>
+        {/* No close button: the event ends by adapting the plan or carrying on regardless, and a
+            cross that silently did nothing would be worse than no cross at all. */}
+        <DialogContent data-part="daily-scrum"
+          className="max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-primary p-4 [&>button]:hidden">
+          <DialogTitle className="sr-only">Daily Scrum</DialogTitle>
+          <div>
+            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
           Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads
@@ -704,6 +720,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
         onClose={() => setCardId(null)}
         onStart={(id) => { onStartItem(id); setPulling(id); }}
         onBuilding={(id) => setDesigning(id)}
+        onAskToCheck={onAskToCheck}
         onOpen={onOpen} />
     </div>
   );
