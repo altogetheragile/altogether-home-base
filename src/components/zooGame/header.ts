@@ -77,13 +77,17 @@ export function goalLine(state: ZooGameState): { line: string; risk: boolean } {
 
 /** One sentence on who does what now. The band's job is to make the accountabilities visible
  *  without a lecture, and a sentence does it where five badges do not. */
-export function whoDoesWhatNow(state: ZooGameState): string {
+export function whoDoesWhatNow(state: ZooGameState, seat?: string | null): string {
   // The band's badges say the accountability, so a name carrying it too says it twice.
   const po = state.team.productOwner.name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '');
   switch (state.phase) {
     case 'intro':
     case 'brief':
-      return 'Five seats, three accountabilities. Pick yours.';
+      // Playing alone there is no seat to pick: you hold all three, and the game names which one
+      // you are in at the moment you act.
+      return seat
+        ? 'Five seats, three accountabilities. Yours is outlined.'
+        : 'Five seats, three accountabilities. Playing alone you hold all three.';
     case 'refine':
       return `${po} orders the Backlog. The Developers size it.`;
     case 'planning':

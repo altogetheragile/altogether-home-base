@@ -36,7 +36,7 @@ export function SeatBand({ state, seat, covering, observer, onWho, className }: 
   className?: string;
 }) {
   const lines = seatLines(state);
-  const sentence = whoDoesWhatNow(state);
+  const sentence = whoDoesWhatNow(state, observer ? null : seat ?? null);
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
 
