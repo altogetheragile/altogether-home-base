@@ -35,6 +35,16 @@ describe('meeting the Scrum Team', () => {
     expect(container.textContent, 'capacity is a number with no story').toMatch(/points/);
   });
 
+  it('offers no seat to pick when there is nobody to pick against', () => {
+    // "Should I be able to pick a seat in single player mode?" - no. Playing alone you hold all
+    // three accountabilities, and five identical buttons that do nothing is an offer the game
+    // cannot keep.
+    const { container } = render(<MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} /></MemoryRouter>);
+    const cards = [...container.querySelectorAll('[data-part="seat-card"]')];
+    expect(cards.some((c) => c.querySelector('button')), 'a seat could be picked in solo play').toBe(false);
+    expect(container.textContent).toMatch(/you hold all three/i);
+  });
+
   it('marks every seat yours when you play alone, and only yours when you do not', () => {
     const solo = render(<MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} /></MemoryRouter>);
     expect(solo.container.querySelectorAll('[data-part="seat-card"].border-primary').length,

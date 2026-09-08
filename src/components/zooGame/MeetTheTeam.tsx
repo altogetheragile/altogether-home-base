@@ -75,7 +75,11 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
       <header>
         <div className={cn(EYEBROW, 'text-primary')}>Before there is a Backlog</div>
         <h2 className="text-3xl font-bold leading-tight tracking-tight">Meet the Scrum Team</h2>
-        <p className="text-sm text-muted-foreground">Five seats, three accountabilities, no manager. Pick yours.</p>
+        <p className="text-sm text-muted-foreground">
+          {seat
+            ? 'Five seats, three accountabilities, no manager. Yours is outlined.'
+            : 'Five seats, three accountabilities, no manager. Playing alone you hold all three - the game says which one you are in as you act.'}
+        </p>
       </header>
 
       <div data-part="seats" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -99,9 +103,11 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
               </div>
               <p className="mt-2 flex-1 text-xs leading-snug">{s.does}</p>
               <p className="mt-2 text-[11px] italic text-muted-foreground">{s.character}</p>
+              {/* Not a button. Playing alone there is nothing to pick - you hold all three - and five
+                  identical buttons that do nothing is an offer the game cannot keep. */}
               <p className={cn('mt-2 rounded-lg px-2 py-1.5 text-center text-xs font-semibold',
-                yours ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground')}>
-                {yours ? 'You play this seat' : 'Played by the game'}
+                yours ? 'bg-primary/10 text-primary' : 'border border-border text-muted-foreground')}>
+                {!seat ? `Yours \u00b7 ${s.role}` : yours ? 'Your seat' : 'Played by the game'}
               </p>
             </section>
           );
@@ -116,7 +122,9 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
           Change the Sprint length, or lose a Developer, and the number moves. Nobody assigns work: the Developers pull it.
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          In a shared session the seats fill as people join, and the game plays the rest in character.
+          {seat
+            ? 'The seats fill as people join, and the game plays the rest in character.'
+            : 'Playing alone you are all three accountabilities. In a shared session you take one seat, the others are taken by people as they join, and the game plays the rest in character.'}
         </p>
       </section>
 
