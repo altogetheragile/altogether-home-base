@@ -1135,7 +1135,7 @@ describe('zoo game: a day that has run out of room', () => {
     // The Developers stop when the day cannot pay for the next piece of work, and the board used
     // to go silent for twenty seconds with no way to tell that from the game having stopped.
     let s = initialZooState(7);
-    s = { ...s, phase: 'sprint', dayStage: 'building', daySecondsLeft: 90,
+    s = { ...s, phase: 'sprint', dayStage: 'building', daySecondsLeft: DAY_SECONDS,
       backlog: s.backlog.map((it) => (it.id === 'lion-enc'
         ? { ...it, status: 'committed' as const, estimate: 5, unsized: false } : it)) };
     expect(nothingFitsToday(s), 'a fresh day with work waiting is not a spent one').toBe(false);
@@ -2166,7 +2166,7 @@ describe('zoo game: a board that will not move says which kind of stuck it is', 
     // and a Sprint Backlog nobody can start. The reported game was the second and the board said
     // the first, which sends a player looking at the clock for a problem that is in the Backlog.
     let s = planSprint(withEnclosuresBuilt(initialZooState(1)), ['lion']);
-    s = { ...s, dayStage: 'building', daySecondsLeft: 90 };
+    s = { ...s, dayStage: 'building', daySecondsLeft: DAY_SECONDS };
     // The Lion is in the Sprint and its habitat is not: nothing here can start, whatever the time.
     expect(whyNothingMoves(s), 'a Sprint that cannot start anything was called a spent day').toBe('blocked');
 

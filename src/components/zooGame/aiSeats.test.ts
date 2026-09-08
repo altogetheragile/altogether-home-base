@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState } from './config';
+import { initialZooState, DAY_SECONDS } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
 import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity, dayCanAfford, enclosureReady } from './engine';
@@ -350,7 +350,7 @@ describe('a seat nobody is sitting in', () => {
     // both wrong and the wrong lesson.
     let s = at({ phase: 'sprint', dayStage: 'building' });
     const item = s.backlog.find((it) => it.category === 'enclosure')!;
-    s = { ...s, daySecondsLeft: 90, backlog: s.backlog.map((it) => (it.id === item.id
+    s = { ...s, daySecondsLeft: DAY_SECONDS, backlog: s.backlog.map((it) => (it.id === item.id
       ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, started: true, unsized: false, estimate: 3 } : it)) };
 
     const move = aiTurn(s, 'developer')!;
@@ -379,7 +379,7 @@ describe('a seat nobody is sitting in', () => {
     expect(move?.action.type, 'they built an item the day could not pay for').not.toBe('BUILD_ITEM');
 
     // ...and a whole day can.
-    const fresh = { ...started, daySecondsLeft: 90 };
+    const fresh = { ...started, daySecondsLeft: DAY_SECONDS };
     const ok = aiTurn(fresh, 'developer');
     expect(ok?.action.type).toBe('BUILD_ITEM');
     expect(ok?.weight, 'the build carried no cost, so nothing would be charged for it').toBe(take[0].estimate);

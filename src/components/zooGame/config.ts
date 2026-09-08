@@ -22,19 +22,29 @@ export const SPRINT_DAYS = 3;
 /** Sprint-length choices: fewer days = faster feedback but more event overhead per unit
  *  of build time; more days = more build time but slower feedback. */
 export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
-/** Seconds of build time in a full day (before any Daily Scrum / impediment cost). */
-export const DAY_SECONDS = 90;
+/** Seconds of build time in a full day (before any Daily Scrum / impediment cost).
+ *
+ *  Ninety was too few. Reported from playing it: the time disappears too quickly - and it did,
+ *  because a day was priced for a machine. A person opens the card, reads the criteria, picks a
+ *  footprint, lays the ground and the water, places the thing on the park: a minute, easily, and
+ *  none of it is dithering. Three items in ninety seconds is not a Sprint anybody can play, and a
+ *  learner who never finishes anything learns nothing about finishing.
+ *
+ *  Everything else in the economy is derived from this - `secondsPerPoint`, the forecast, what a
+ *  seat played by the game is charged - so the trade-offs keep their shape at any length. Only the
+ *  refinement costs below are absolute, and they move with it. */
+export const DAY_SECONDS = 180;
 
 /** Refining the Backlog DURING a Sprint takes time from building (ongoing refinement is
  *  real work with a cost). Each action spends this many seconds of the current day. In the
  *  Refinement/Planning phases it is free - that is the dedicated time to refine. */
-export const REFINE_COSTS = { estimate: 8, split: 12, addPbi: 6, refinePbi: 5 } as const;
+export const REFINE_COSTS = { estimate: 16, split: 24, addPbi: 12, refinePbi: 10 } as const;
 /** Holding the refinement you planned into the Sprint costs this much of the day it is held on.
  *  The Guide does not budget refinement; the game does, because a team that never feels the
  *  trade-off learns that refinement is free. It used to be docked from every day whether or not
  *  anyone did it, which taught that the cost is a tax rather than work you actually do.
  *  Multiplied by the points the Scrum Team set aside for it. */
-export const PLANNED_REFINE_SECONDS = 10;
+export const PLANNED_REFINE_SECONDS = 20;
 /** A team that holds its Daily Scrum every day catches a blocker the morning it appears, so one
  *  that does get carried costs them less than it costs a team that was not looking. The event
  *  itself still costs its timebox - it always does, and rewarding a team by making their own event
