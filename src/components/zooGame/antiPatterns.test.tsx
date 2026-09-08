@@ -60,8 +60,15 @@ describe('what the Sprint showed', () => {
     expect(tools.instead, 'the game told them off instead of saying what it costs').toMatch(/They may work as a Developer/);
   });
 
+  it('names a Sprint run with nobody having agreed what Done means', () => {
+    const habit = antiPatterns(sprint()).find((h) => h.id === 'no-dod')!;
+    expect(habit, 'the Sprint ran with no Definition of Done and the Retrospective said nothing').toBeTruthy();
+    expect(habit.instead).toMatch(/One bar for every item/);
+  });
+
   it('says nothing where there is nothing to say', () => {
-    expect(antiPatterns(sprint()), 'a quiet Sprint was given a list of faults').toEqual([]);
+    const quiet = { ...sprint(), dodAgreed: true } as ZooGameState;
+    expect(antiPatterns(quiet), 'a quiet Sprint was given a list of faults').toEqual([]);
   });
 });
 

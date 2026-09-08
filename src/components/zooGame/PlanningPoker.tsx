@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { BacklogItem, ZooGameState } from './types';
-import { pokerHand, estimateSuggestion, refinementTalk } from './engine';
+import { pokerHand, handSpread, estimateSuggestion, refinementTalk } from './engine';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { FOCUS, TONE } from './ui/tokens';
@@ -19,10 +19,11 @@ interface PlanningPokerProps {
  *  forecast is the most common value (ties rounding up). The Product Owner commits a
  *  size - a shared forecast from size and complexity, not a promise. */
 export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProps) {
-  const hand = useMemo(() => pokerHand(item, seed), [item, seed]);
+  const hand = useMemo(() => pokerHand(item, seed, state.dodAgreed), [item, seed, state.dodAgreed]);
   const suggestion = useMemo(() => estimateSuggestion(hand), [hand]);
   const [pick, setPick] = useState(suggestion);
   const talk = useMemo(() => refinementTalk(state, item), [state, item]);
+  const spread = useMemo(() => handSpread(hand), [hand]);
 
   return (
     <div className="space-y-2">
@@ -51,6 +52,17 @@ export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProp
         <p className={cn(TONE.attention.text, "mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px]")}>
           Carried over unfinished, and already cut to the <b>{item.estimate} pts left</b> of it - the Developers size the work remaining every day, which is what the burndown is drawn from, so nobody has to size it twice. Change it if you disagree. The build progress is kept, and velocity counts it once, in the Sprint it is finished.
         </p>
+      )}
+
+      {/* Four people costing four different pieces of work. Without an agreed Definition of Done
+          nobody knows what finished means, so one of them is sizing a fence and another is sizing a
+          fence that has been reviewed, placed and released. The spread is the evidence. */}
+      {!state.dodAgreed && spread >= 3 && (
+        <div data-part="no-dod-spread" className={cn(TONE.attention.text, 'mb-3 rounded-md border border-amber-400/60 bg-amber-500/10 px-2.5 py-2 text-[11px]')}>
+          <span className="font-semibold">The cards are {Math.round(spread)}&times; apart.</span>{' '}
+          Nobody has agreed a Definition of Done, so &ldquo;finished&rdquo; means something different to each of them -
+          one is costing the build, another the build reviewed, placed and open. Agree one and the same item settles.
+        </div>
       )}
 
       <div className="mb-3 flex items-center gap-2">

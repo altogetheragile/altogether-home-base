@@ -191,11 +191,21 @@ const snapFib = (n: number): number => FIB.reduce((a, b) => (Math.abs(b - n) < M
 /** Deterministic planning-poker hand for an item: several estimators reveal a
  *  Fibonacci card clustered around the item's true size, so the spread is real but
  *  reproducible. */
-export function pokerHand(item: BacklogItem, seed: number): number[] {
+export function pokerHand(item: BacklogItem, seed: number, dodAgreed = true): number[] {
   const rng = makeRng(hashStr('poker:' + item.id, seed));
   const base = item.trueSize ?? item.estimate ?? 5;
-  return Array.from({ length: 4 }, () => snapFib(base * (1 + (rng.next() - 0.5) * 0.7)));
+  // Without an agreed Definition of Done there is no shared idea of finished, so the Developers are
+  // not sizing the same piece of work: one of them is costing a fence, another a fence that has
+  // been reviewed, placed and released. The cards come out miles apart, and they should - the
+  // spread is the evidence. Agree a Definition of Done and the same item settles.
+  const spread = dodAgreed ? 0.7 : 2.6;
+  return Array.from({ length: 4 }, () => snapFib(Math.max(1, base * (1 + (rng.next() - 0.5) * spread))));
 }
+
+/** How far apart the cards are, as a multiple: 1 is agreement, 8 is four people costing four
+ *  different pieces of work. */
+export const handSpread = (hand: number[]): number =>
+  Math.max(...hand) / Math.max(1, Math.min(...hand));
 
 /** The team's suggested estimate from a hand: the most common card, ties rounding up
  *  (the honest forecast, not an average). */
@@ -2525,6 +2535,17 @@ export function antiPatterns(state: ZooGameState, sprint = state.sprintNumber): 
       id: 'po-on-the-tools', title: 'The Product Owner was on the tools', count: onTheTools,
       what: `${onTheTools} time${onTheTools === 1 ? '' : 's'} the Product Owner took work off the board.`,
       instead: 'They may work as a Developer. While they do, nobody is ordering the Backlog or answering the questions.',
+    });
+  }
+
+  // A Sprint run with nobody having agreed what Done means. The estimates were miles apart at
+  // Planning, and the Review is where the bill for it arrives.
+  if (!state.dodAgreed) {
+    const built = state.backlog.filter((it) => it.sprintNumber === sprint && it.design).length;
+    out.push({
+      id: 'no-dod', title: 'Nobody agreed what Done means', count: built,
+      what: 'The Sprint ran with no agreed Definition of Done, so each item was finished to whatever standard whoever built it had in mind.',
+      instead: 'One bar for every item, agreed by the whole Scrum Team. Without it the estimates are guesses at different pieces of work.',
     });
   }
 
