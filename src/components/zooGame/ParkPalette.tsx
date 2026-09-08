@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
-import { addFloraTo, addWaterTo, presetFor, PLANTING_TYPES, HABITAT_FEATURE_TYPES, type ItemDesign } from './design';
+import { addFloraTo, presetFor, PLANTING_TYPES, HABITAT_FEATURE_TYPES, type ItemDesign } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
-import { Waypoints, Fence, PawPrint, Store, Sprout, Droplets, type LucideIcon } from 'lucide-react';
+import { Waypoints, Sprout, type LucideIcon } from 'lucide-react';
 
 // The palette: six tools along the foot of the park.
 //
@@ -15,42 +15,31 @@ import { Waypoints, Fence, PawPrint, Store, Sprout, Droplets, type LucideIcon } 
 // A tool that has nothing to do with what is in your hands is dimmed and says why, rather than
 // being hidden: seeing that a habitat has no route to draw is how you learn what a pathway is.
 
-type ToolKey = 'path' | 'habitat' | 'animal' | 'facility' | 'planting' | 'water';
+// Two tools, because two things have no object of their own: a path is a run between points, and
+// loose planting is scenery nobody wrote a Backlog item for. A habitat, an animal and a facility are
+// cards, and they are built in their takeover - so they are not tools.
+type ToolKey = 'path' | 'planting';
 
 const TOOLS: { key: ToolKey; label: string; icon: LucideIcon; gesture: string }[] = [
-  { key: 'path', label: 'Path', icon: Waypoints, gesture: 'draw its route on the park' },
-  { key: 'habitat', label: 'Habitat', icon: Fence, gesture: 'pick its footprint' },
-  { key: 'animal', label: 'Animal', icon: PawPrint, gesture: 'how many, and which coat' },
-  { key: 'facility', label: 'Facility', icon: Store, gesture: 'what kind of building' },
+  { key: 'path', label: 'Path', icon: Waypoints, gesture: 'click where it starts, then where it ends' },
   { key: 'planting', label: 'Planting', icon: Sprout, gesture: 'place trees, bushes and rocks' },
-  { key: 'water', label: 'Water', icon: Droplets, gesture: 'a pool inside the habitat' },
 ];
 
 /** Which tools this item can be built with. A pathway has a route; a habitat has a footprint, water
  *  and planting; an animal has a group and a coat. The rest are somebody else's work. */
 function toolsFor(item: BacklogItem): Record<ToolKey, boolean> {
-  const c = item.category;
-  return {
-    path: c === 'path',
-    habitat: c === 'enclosure',
-    animal: c === 'exhibit',
-    facility: c === 'amenity',
-    planting: c === 'enclosure' || c === 'flora' || c === 'amenity',
-    water: c === 'enclosure' || c === 'flora',
-  };
+  return { path: item.category === 'path', planting: item.category === 'flora' };
 }
 
-export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign, onSetEnclosure, placing, onPlacing, className }: {
+export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign, placing, className }: {
   state: ZooGameState;
   item: BacklogItem;
   design?: ItemDesign;
   drawing?: boolean;
   onDrawing?: (on: boolean) => void;
   onDesign: (id: string, design: ItemDesign) => void;
-  onSetEnclosure?: (id: string, size: 'small' | 'medium' | 'large') => void;
   /** Whether the thing in hand is following the cursor, waiting to be put down. */
   placing?: boolean;
-  onPlacing?: (on: boolean) => void;
   className?: string;
 }) {
   const [open, setOpen] = useState<ToolKey | null>(null);
@@ -60,24 +49,12 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
     ? 'drop it where it can go - green is room, red is not'
     : TOOLS.find((t) => t.key === (open ?? (drawing ? 'path' : null)))?.gesture;
 
-  const why = (key: ToolKey) => {
-    switch (key) {
-      case 'path': return `${item.name} has no route to draw - that is a pathway's work.`;
-      case 'habitat': return `${item.name} is not a habitat, so it has no footprint to set.`;
-      case 'animal': return `${item.name} is not an animal. Animals are stocked into a habitat that is built.`;
-      case 'facility': return `${item.name} is not a building.`;
-      case 'planting': return `Nothing is planted on ${item.name}.`;
-      default: return `${item.name} takes no water.`;
-    }
-  };
+  const why = (key: ToolKey) => (key === 'path'
+    ? `${item.name} has no route to draw - that is a pathway's work. It is built on the card, not on the park.`
+    : `${item.name} is not planting. It is built on its card, and placed here.`);
 
   const press = (key: ToolKey) => {
-    // Water is one press: there is nothing to choose, so choosing is not asked for.
-    if (key === 'water') { onDesign(item.id, { ...d, water: addWaterTo(d) }); setOpen(null); return; }
     if (key === 'path') { onDrawing?.(!drawing); setOpen(null); return; }
-    // A habitat that is not standing anywhere yet is placed before it is sized: pick the tool up and
-    // the footprint follows the cursor, green where it can go and red where it cannot.
-    if (key === 'habitat' && onPlacing && !item.pos) { onPlacing(!placing); setOpen(null); return; }
     setOpen((cur) => (cur === key ? null : key));
   };
 
@@ -85,7 +62,7 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
     <div data-part="park-palette" className={cn('flex flex-wrap items-center gap-1.5', className)}>
       {TOOLS.map((t) => {
         const allowed = can[t.key];
-        const on = open === t.key || (t.key === 'path' && !!drawing) || (t.key === 'habitat' && !!placing);
+        const on = open === t.key || (t.key === 'path' && !!drawing);
         const Icon = t.icon;
         const button = (
           <button type="button" key={t.key} data-tool={t.key} disabled={!allowed}
@@ -99,53 +76,11 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
             <span className="text-[10px] font-semibold leading-none">{t.label}</span>
           </button>
         );
-        if (!allowed || t.key === 'water' || t.key === 'path'
-          || (t.key === 'habitat' && onPlacing && !item.pos)) return button;
+        if (!allowed || t.key === 'path') return button;
         return (
           <Popover key={t.key} open={open === t.key} onOpenChange={(o) => setOpen(o ? t.key : null)}>
             <PopoverTrigger asChild>{button}</PopoverTrigger>
             <PopoverContent side="top" align="start" className="w-auto max-w-[22rem] p-2">
-              {t.key === 'habitat' && onSetEnclosure && (
-                <div className="flex items-center gap-1.5">
-                  {(['small', 'medium', 'large'] as const).map((size) => (
-                    <button key={size} type="button" onClick={() => onSetEnclosure(item.id, size)}
-                      className={cn(FOCUS, 'rounded-md border px-2 py-1 text-xs font-medium capitalize',
-                        (item.enclosureSize ?? 'medium') === size ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted/60')}>
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {t.key === 'animal' && (
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {([
-                      { label: 'One', group: { males: 1, females: 0, juveniles: 0, cubs: 0 } },
-                      { label: 'A pair', group: { males: 1, females: 1, juveniles: 0, cubs: 0 } },
-                      { label: 'A family', group: { males: 1, females: 1, juveniles: 1, cubs: 2 } },
-                    ] as const).map((g) => (
-                      <button key={g.label} type="button" onClick={() => onDesign(item.id, { ...d, group: { ...g.group } })}
-                        className={cn(FOCUS, 'rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-muted/60')}>
-                        {g.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    A group rather than one animal on its own is one of the criteria - the park checks it.
-                  </p>
-                </div>
-              )}
-              {t.key === 'facility' && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {['shop', 'kiosk', 'cafe', 'toilets'].map((kind) => (
-                    <button key={kind} type="button" onClick={() => onDesign(item.id, { ...d, parts: { ...d.parts, type: kind } })}
-                      className={cn(FOCUS, 'rounded-md border px-2 py-1 text-xs font-medium capitalize',
-                        d.parts.type === kind ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted/60')}>
-                      {kind}
-                    </button>
-                  ))}
-                </div>
-              )}
               {t.key === 'planting' && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {[...PLANTING_TYPES, ...HABITAT_FEATURE_TYPES].map((kind) => (
