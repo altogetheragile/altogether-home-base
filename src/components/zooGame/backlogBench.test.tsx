@@ -103,3 +103,15 @@ describe('what refining during a Sprint costs', () => {
     expect(estimateItem(before, item.id, 5).daySecondsLeft).toBe(before.daySecondsLeft);
   });
 });
+
+describe('when the act is finished', () => {
+  it('closes and puts you back at the list', () => {
+    // "Close it on commit and go back to the list." A screen whose job is done is a screen too many.
+    tab(at('sprint'));
+    fireEvent.click(screen.getAllByRole('button', { name: /^Refine Lion Enclosure$/ })[0]);
+    expect(bench(), 'the item did not open').toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Size it/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Commit \d+ pts/ }));
+    expect(bench(), 'committing a size left the takeover sitting there').toBeNull();
+  });
+});
