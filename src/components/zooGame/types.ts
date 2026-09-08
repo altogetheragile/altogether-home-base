@@ -647,6 +647,7 @@ export type ZooAction =
   | { type: 'OPEN_ITEM'; id: string; by?: string }
   | { type: 'SEND_BACK'; id: string; by?: string }
   | { type: 'ANSWER_QUESTION'; id: string; choice: string; by?: string }
+  | { type: 'ASK_TO_CHECK'; id: string; by?: string }
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }

@@ -43,6 +43,7 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   // A question is addressed to a seat, and answering it is that seat's - but the gate cannot know
   // which seat from the action type alone, so it stays open and the rail only offers it to the
   // accountability it is addressed to.
+  ASK_TO_CHECK:      { who: 'developer', because: 'The Developers say when the work is ready to be looked at.' },
   ANSWER_QUESTION:   { who: 'anyone', because: 'A question is answered by the accountability it is addressed to.' },
   SEND_BACK:         { who: 'product_owner', because: 'Whether the work meets what was asked for is the Product Owner’s call - they are accountable for the value of what the Developers deliver.' },
   // "A Sprint could be cancelled if the Sprint Goal becomes obsolete. Only the Product Owner

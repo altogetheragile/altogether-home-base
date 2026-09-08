@@ -2,6 +2,7 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace } from './parkModel';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
+import { checkCriterion } from './parkChecks';
 import { groupMembers } from './design';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +28,7 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
 };
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize,
-  placing, onPlace, tool = 'none', pathStyle, onAddConnector, onSetTool, className }: {
+  placing, onPlace, tool = 'none', pathStyle, onAddConnector, onSetTool, onAskToCheck, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -46,6 +47,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   pathStyle?: { thickness: number; color: string };
   onAddConnector?: (c: ZooConnector) => void;
   onSetTool?: (tool: 'none' | 'path') => void;
+  /** Ask the Product Owner to look at something that meets all of its criteria. */
+  onAskToCheck?: (id: string) => void;
   className?: string;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -207,8 +210,31 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 });
               })}
               <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={13} fontWeight={700} fill="#20351f">
-                {b.item.name}
+                {b.item.name}{b.underWay ? ' · built, not Done' : ''}
               </text>
+              {/* One pill per object that is built and not Done: how far off it is, and the one
+                  thing that would finish it. Green when there is nothing left to say. */}
+              {b.underWay && (() => {
+                const criteria = b.item.acceptance.filter(Boolean);
+                const verdicts = criteria.map((c) => ({ c, v: checkCriterion(state, b.item, c) }));
+                const met = verdicts.filter((x) => x.v?.met).length;
+                const next = verdicts.find((x) => !x.v?.met);
+                const ready = met === criteria.length && criteria.length > 0;
+                const text = ready
+                  ? `${met} of ${criteria.length} · ready for ${state.team.productOwner.name.replace(/\s*\(PO\)$/i, '')}`
+                  : `${met} of ${criteria.length} · ${next?.v?.evidence ?? 'still being built'}`;
+                return (
+                  <g data-part="built-pill" data-ready={ready ? 'yes' : 'no'}
+                    onPointerDown={(e) => { e.stopPropagation(); if (ready) onAskToCheck?.(b.item.id); else onSelect?.(b.item.id); }}
+                    style={{ cursor: 'pointer' }}>
+                    <rect x={b.at.x - Math.max(90, text.length * 3.4)} y={y + b.size.h + 6}
+                      width={Math.max(180, text.length * 6.8)} height={24} rx={12}
+                      fill={ready ? '#dcfce7' : '#fff7ed'} stroke={ready ? '#16a34a' : '#f59e0b'} strokeWidth={2} />
+                    <text x={b.at.x} y={y + b.size.h + 22} textAnchor="middle" fontSize={12} fontWeight={600}
+                      fill={ready ? '#166534' : '#9a3412'}>{text}</text>
+                  </g>
+                );
+              })()}
               {/* A corner to drag, where the footprint is yours to change. */}
               {on && onSetSize && b.item.category === 'enclosure' && (
                 <rect data-part="size-grip" x={x + b.size.w - 9} y={y + b.size.h - 9} width={18} height={18} rx={4}
