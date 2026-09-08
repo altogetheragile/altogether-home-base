@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL } from './engine';
+import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, suggestTasks } from './engine';
 
 
 import { TaskEditor, SplitEpicPanel } from './Board';
@@ -597,8 +597,18 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
                   Plan <span className="text-muted-foreground">·</span> {planFor.name}
                   <span className="font-normal text-muted-foreground"> · {planFor.estimate} pts · {itemKind(planFor)} · {planFor.zone}</span>
                 </h3>
-                {/* The step editor carries its own "suggest" - two buttons that do the same thing,
-                    a hand's width apart, is one too many. */}
+                {/* The step editor carries its own "suggest" for the item in front of you. This one
+                    is for the rest: five items with no steps is five presses otherwise, and topic
+                    three is a conversation about all of them. */}
+                {unplanned > 0 && onSetTasks && (
+                  <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs"
+                    title="Suggest a breakdown for every item that has no steps yet. They are yours to change."
+                    onClick={() => chosen.forEach((it) => {
+                      if (!(it.tasks ?? []).some((t) => t.label.trim())) onSetTasks(it.id, suggestTasks(it));
+                    })}>
+                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all {unplanned}
+                  </Button>
+                )}
               </div>
 
               {/* Read-only here: the criteria were agreed when the item was refined, and Planning is

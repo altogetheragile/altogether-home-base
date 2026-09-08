@@ -144,7 +144,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     // and they say the number rather than just applying it.
     const item = topUnsized(state);
     if (item && (state.phase === 'refine' || state.phase === 'planning')) {
-      const points = settle(pokerHand(item, state.gameSeed));
+      const points = settle(pokerHand(item, state.gameSeed, state.dodAgreed));
       return { action: { type: 'ESTIMATE_ITEM', id: item.id, points },
                says: `We sized ${item.name} at ${points}.` };
     }
