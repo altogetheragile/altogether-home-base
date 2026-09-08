@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
-import { EYEBROW, FOCUS, TONE } from './ui/tokens';
+import { EYEBROW, FOCUS, WIZARD } from './ui/tokens';
 
 // ============= Sprint Planning =============
 //
@@ -324,17 +324,20 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-3">
       {/* Where you are, what you are being asked, and where the words are. Nothing else. */}
-      <header className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} caption="The three topics of Sprint Planning" />
-          <ExplainButton cards={TOPIC_CARDS[step]} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
-        </div>
-        <div>
+      {/* One row, not three stacked blocks. The question and where you are in the event are the
+          same piece of information, and stacking them cost a third of the screen before any work
+          appeared on it. */}
+      <header className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
           {/* Named as the Guide names it. Sprint Planning has three topics, and saying which one you
               are on is the difference between three screens and one event with three parts. */}
           <div className={cn(EYEBROW, 'text-primary')}>{current.topic} of Sprint Planning</div>
-          <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
+          <h2 className="text-2xl font-bold leading-tight tracking-tight">{current.question}</h2>
           <p className="text-sm text-muted-foreground">{current.lead}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} caption="The three topics of Sprint Planning" />
+          <ExplainButton cards={TOPIC_CARDS[step]} phase="planning" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
       </header>
 
@@ -367,7 +370,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
               </div>
               {/* The wizards are the game offering to do a piece of work for you, so they read as an
                   offer: filled, not a tinted ghost of the primary action. */}
-              <Button size="sm" className={cn(TONE.teach.solid, TONE.teach.solid, TONE.teach.solid, "h-8 gap-1 px-3 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 dark: dark:hover:")}
+              <Button size="sm" className={cn(WIZARD, 'h-8 gap-1 px-3 text-xs font-semibold')}
                 onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
                 title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
@@ -529,8 +532,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
         const nextUnplanned = chosen.find((it) => it.id !== planFor?.id && !(it.tasks ?? []).some((t) => t.label.trim()));
         const steps = (it: typeof chosen[number]) => (it.tasks ?? []).filter((t) => t.label.trim());
         return (
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:items-start">
-          <div className="space-y-2">
+        <div className="grid h-full min-h-0 grid-rows-1 gap-3 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <div className="min-h-0 space-y-2 overflow-y-auto pr-1">
             <div>
               <h3 className="text-sm font-semibold">
                 Sprint Backlog <span className="font-normal text-muted-foreground">· {chosen.length} item{chosen.length === 1 ? '' : 's'} · {chosen.reduce((n, it) => n + it.estimate, 0)} pts</span>
@@ -591,7 +594,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
 
           {/* The plan for the one you picked. */}
           {planFor ? (
-            <section className="min-w-0 space-y-2 rounded-lg border-2 border-primary/40 p-3">
+            <section className="flex min-h-0 min-w-0 flex-col gap-2 overflow-y-auto rounded-lg border-2 border-primary/40 p-3">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="text-sm font-semibold">
                   Plan <span className="text-muted-foreground">·</span> {planFor.name}
@@ -601,7 +604,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
                     is for the rest: five items with no steps is five presses otherwise, and topic
                     three is a conversation about all of them. */}
                 {unplanned > 0 && onSetTasks && (
-                  <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs"
+                  <Button size="sm" className={cn(WIZARD, 'h-7 shrink-0 px-2 text-xs')}
                     title="Suggest a breakdown for every item that has no steps yet. They are yours to change."
                     onClick={() => chosen.forEach((it) => {
                       if (!(it.tasks ?? []).some((t) => t.label.trim())) onSetTasks(it.id, suggestTasks(it));
@@ -611,6 +614,11 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
                 )}
               </div>
 
+              {/* Side by side, because they are read together: what it has to be on the left, the
+                  steps that get it there on the right. Stacked, the criteria pushed the steps below
+                  the fold and the page scrolled with half its width empty. */}
+              <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
+              <div className="min-h-0 space-y-2 overflow-y-auto">
               {/* Read-only here: the criteria were agreed when the item was refined, and Planning is
                   not where the Product Owner rewrites them. They are shown because the steps have to
                   add up to them. */}
@@ -635,8 +643,12 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
                 const shape = <ShapeChooser item={planFor} enclosures={habitats} onPlan={(patch) => onPlanShape?.(planFor.id, patch)} />;
                 return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
               })()}
+              </div>
 
-              <TaskEditor item={planFor} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} />
+              <div className="min-h-0 overflow-y-auto pr-1">
+                <TaskEditor item={planFor} onSetTasks={onSetTasks} onToggleGoalCritical={stars ? onToggleGoalCritical : undefined} />
+              </div>
+              </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
                 <span className="text-[11px] text-muted-foreground">

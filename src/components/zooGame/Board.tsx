@@ -14,7 +14,7 @@ import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
-import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TONE, WIZARD } from './ui/tokens';
 
 /** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
  *  Backlog can be scanned by shape as well as by name. See itemIcons.ts for the mapping. */
@@ -112,7 +112,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
               <Star className={cn('h-3.5 w-3.5', item.goalCritical && 'fill-amber-400')} /> Goal
             </button>
           )}
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => set(suggestTasks(item))}>
+          <Button size="sm" className={cn(WIZARD, 'h-7 px-2 text-xs')} onClick={() => set(suggestTasks(item))}>
             <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest tasks
           </Button>
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}

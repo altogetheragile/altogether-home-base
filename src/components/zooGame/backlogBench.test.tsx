@@ -25,8 +25,8 @@ const tab = (state: ZooGameState, props: Partial<Parameters<typeof BacklogTab>[0
   </MemoryRouter>,
 );
 
-/** The bench card, by the thing only it says. */
-const bench = () => screen.getByText(/The conversation|The refinement bench/i).closest('section')!;
+/** The item takeover, which is where an item opens. */
+const bench = () => document.querySelector('[data-part="item-takeover"]') as HTMLElement;
 
 describe('the Product Backlog tab as a bench', () => {
   it('carries the commitment of the Product Backlog', () => {
@@ -36,10 +36,11 @@ describe('the Product Backlog tab as a bench', () => {
     expect(container.textContent).toContain('Open a zoo that visitors love and come back to.');
   });
 
-  it('opens an item on the bench when you pick it', () => {
-    // Picking an item used to do nothing whatsoever.
+  it('opens an item over the screen when you pick it', () => {
+    // Picking an item used to do nothing whatsoever, and then it opened a column at the far end of
+    // the page, which is a change nobody sees. It takes the screen now, like every other detail view.
     tab(at('sprint'));
-    expect(bench().textContent, 'the bench was already full before anything was picked').toMatch(/Pick an item on the left/i);
+    expect(bench(), 'an item was open before anything was picked').toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: /^Refine Lion Enclosure$/ })[0]);
     const open = bench();
     expect(open.textContent).toContain('Lion Enclosure');

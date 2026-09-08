@@ -11,7 +11,7 @@ import { EYEBROW, FOCUS, TONE, type Tone } from './ui/tokens';
 import { useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
-import { ItemBench } from './BacklogBench';
+import { ItemTakeover } from './BacklogBench';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
  *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
@@ -159,10 +159,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
         {/* The card on the right has two faces. The agreements before the first Sprint, and the
             item you picked - the same bench the Product Backlog tab uses for the rest of the game.
             Picking an item used to do nothing at all, which made the list a list. */}
-        {benchItem && (
-          <ItemBench state={state} item={benchItem} onEstimate={onEstimate} onRefinePbi={onRefinePbi}
-            onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} onClose={() => setFocus(null)} />
-        )}
+        {/* The item opens over the screen, not beside it. Picking one used to change something at
+            the far end of the page, which is a change nobody notices. */}
         {first && onSetSprintDays && (
           <Step n={1} title="First, agree how long a Sprint is" done={state.sprintDaysAgreed} onToggle={() => setLengthOpen((o) => !o)}
             right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
@@ -227,6 +225,11 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   
         </div>
       </div>
+      {benchItem && (
+        <ItemTakeover state={state} item={benchItem} onEstimate={onEstimate} onRefinePbi={onRefinePbi}
+          onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} onClose={() => setFocus(null)} />
+      )}
+
       <ActionBar hint={!canPlan ? 'Estimate at least one item so it is Ready to plan'
         : first && !state.dodAgreed
           ? state.definitionOfDone.length

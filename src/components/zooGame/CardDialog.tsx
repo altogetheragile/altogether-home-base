@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
-import { isChecked } from './parkChecks';
+import { isChecked, answerable } from './parkChecks';
 import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit } from './engine';
 import { EYEBROW } from './ui/tokens';
 import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle } from 'lucide-react';
@@ -60,6 +60,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }
   if (!item) return null;
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
   const criteria = item.acceptance.filter(Boolean);
+  const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
   const devs = state.team.developers.filter((d) => (item.assignedDevs ?? []).includes(d.id));
   // The park only speaks about a thing that has been built. Before that its verdicts are about the
   // preset the item would start from, and a criterion ticked green on work nobody has begun is a
@@ -115,11 +116,16 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }
               {criteria.map((c, i) => {
                 const Glyph = glyphFor(c);
                 const ok = met(c, i);
+                // A criterion the park cannot answer says so. Without that, a line that never went
+                // green looked like work still to do, and the item looked stuck when it was
+                // finished and waiting for somebody to look at it.
+                const theirs = !ok && !answerable(c);
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Glyph className={cn('mt-0.5 h-4 w-4 shrink-0', ok ? 'text-emerald-600' : 'text-muted-foreground')} />
                     <span className={cn(ok && 'text-muted-foreground line-through decoration-emerald-500/40')}>{c}</span>
                     {ok && <Check className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />}
+                    {theirs && <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">{po} judges this</span>}
                   </li>
                 );
               })}

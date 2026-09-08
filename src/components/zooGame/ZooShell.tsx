@@ -446,9 +446,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
 
                 {/* Everything about the object is built in the takeover; the park keeps placement.
                     It sits over the park with the strip and the rail still visible, because the day
-                    is still running and somebody may still be waiting on you. */}
+                    is still running and somebody may still be waiting on you. It stops short of the
+                    bottom: the day's dock is fixed down there, and it sat on top of "Place on the
+                    park" - the one button the takeover exists for. */}
                 {inHand && edit && takeoverOpen && (
-                  <div className="absolute inset-2 z-30 sm:inset-4">
+                  <div className="absolute inset-2 bottom-[4.75rem] z-30 sm:inset-4 sm:bottom-[4.75rem]">
                     <BuildTakeover className="h-full" state={state} item={inHand} edit={edit} canBuild={canBuild}
                       onPlace={(id) => { setTakeoverOpen(false); setPlacingId(id); }}
                       onPutIn={(id, encId) => { onPutIn?.(id, encId); setTakeoverOpen(false); }}

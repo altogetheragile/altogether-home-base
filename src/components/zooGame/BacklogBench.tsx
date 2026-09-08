@@ -8,6 +8,7 @@ import { PbiEditor } from './PbiEditor';
 import { CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 import { Target, Scissors, HelpCircle, Pencil, Clock, MessageCircleQuestion, Check, AlertCircle, X } from 'lucide-react';
@@ -41,6 +42,25 @@ function Cost({ state, seconds }: { state: ZooGameState; seconds: number }) {
  *  and what they would trade, the Developers on what it would take. The three acts follow, each
  *  opening in the card rather than over the screen: the bench is the place, so nothing has to
  *  take over to use it. */
+/** The bench as a takeover, which is how every other detail view in the game opens.
+ *
+ *  It used to be a column beside the list, and picking an item quietly changed something at the
+ *  other end of the screen: "it is not obvious when I select a PBI that the details are shown on the
+ *  right." A takeover is obvious, it is the same gesture as the card dialog and the build takeover,
+ *  and it gives the item the width to be worked on. */
+export function ItemTakeover({ item, onClose, ...rest }: Parameters<typeof ItemBench>[0] & { onClose: () => void }) {
+  return (
+    <Dialog open={!!item} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent data-part="item-takeover" className="max-w-[min(96vw,1000px)] p-0">
+        <DialogTitle className="sr-only">{item?.name ?? 'Product Backlog item'}</DialogTitle>
+        {/* No close button of its own: the takeover has one, and two Xs an inch apart is one too
+            many. The right padding keeps the points clear of it. */}
+        <ItemBench {...rest} item={item} className="max-h-[80vh] overflow-y-auto rounded-xl pr-10" />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, onSetUseStories, onClose, className }: {
   state: ZooGameState;
   item: BacklogItem | null;
@@ -60,7 +80,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
       <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2', className)}>
         <div className={cn(EYEBROW, 'text-primary')}>The refinement bench</div>
         <p className="text-sm text-muted-foreground">
-          Pick an item on the left and it opens here: what it is for, what the Developers say it would
+          Pick an item and it opens here: what it is for, what the Developers say it would
           take, and the three things refinement does - size it, split it, and agree what Done looks like.
         </p>
         <p className="text-[11px] text-muted-foreground/80">
@@ -104,7 +124,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
         <div className={cn(EYEBROW, 'flex items-center gap-1.5 text-primary')}>
           <MessageCircleQuestion className="h-3.5 w-3.5" /> The conversation
         </div>
-        <p className="text-xs"><span className="font-semibold">{talk.po.name}</span> <span className="text-muted-foreground">(PO)</span>: {talk.po.line}</p>
+        <p className="text-xs"><span className="font-semibold">{talk.po.name.replace(/\s*\(PO\)$/i, '')}</span> <span className="text-muted-foreground">(PO)</span>: {talk.po.line}</p>
         {talk.devs.map((d, i) => (
           <p key={i} className="text-xs"><span className="font-semibold">{d.name}</span>: {d.line}</p>
         ))}
@@ -224,11 +244,10 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
         </div>
       )}
 
-      {/* The list and the bench, the way Refinement frames it: the artifact on the left, the card
-          that acts on it on the right. The bench sticks: it is the thing you are working in, and a
-          list of nineteen items is taller than the window, so an unsticky bench scrolls away from
-          you as soon as you reach for anything on the left. */}
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-start">
+      {/* The list has the width to itself, and picking an item opens it over the screen. It used to
+          be a column beside the list, and selecting on the left quietly changed something on the
+          right - a change at the far end of the page is a change nobody sees. */}
+      <div>
         <div className="min-w-0">
           <ProductBacklogSidebar state={state} mode={inSprint ? 'sprint' : 'refine'}
             focus={focus} onFocus={setFocus}
@@ -236,9 +255,11 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
             onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore}
             onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
-        <ItemBench className="min-w-0 lg:sticky lg:top-0 lg:max-h-[calc(100vh-17rem)] lg:overflow-y-auto lg:pb-16" state={state} item={item} onEstimate={onEstimate}
-          onRefinePbi={onRefinePbi} onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} />
       </div>
+      {item && (
+        <ItemTakeover state={state} item={item} onEstimate={onEstimate} onClose={() => setFocus(null)}
+          onRefinePbi={onRefinePbi} onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} />
+      )}
       {/* Capacity, so ordering the list is a decision with a size beside it rather than a preference. */}
       <p className="text-[11px] text-muted-foreground">
         The Developers finish about {sprintCapacity(state).points} points a Sprint. Everything above that line in this

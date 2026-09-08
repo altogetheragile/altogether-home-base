@@ -94,6 +94,25 @@ export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict | n
  *  it is standing, and the rest are about the object and are answered while it is built. */
 export const checkedAt = (label: string): 'object' | 'park' => (isDeployAcceptance(label) ? 'park' : 'object');
 
+/** Every criterion the park has an answer for, whether or not it can answer it yet.
+ *
+ *  Not the same question as "does it have a verdict right now": a criterion about a path reaching a
+ *  zone has no answer until the thing is standing somewhere, and reading that silence as "somebody
+ *  else's judgement" would offer half-built work for sign-off. The rest are judgements, and they are
+ *  the reason acceptance is a conversation - the park is never going to tick "can I walk right round
+ *  it?" for anybody. */
+const PARK_ANSWERS = [
+  'Can I see a fence with no way out of it?',
+  'Can an animal move about in here?',
+  'Can I tell an animal lives here, not a shed?',
+  'Can I see a group rather than one animal on its own?',
+  'Can I fit them in the habitat with room to spare?',
+  'Can I find them in their habitat?',
+  'Can I get to this zone without crossing the grass?',
+];
+
+export const answerable = (label: string): boolean => PARK_ANSWERS.includes(label);
+
 /** The park's answer to one criterion, or null when it is a matter of judgement. */
 export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
   const design = item.design ?? item.draftDesign ?? presetFor(item);
