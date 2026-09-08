@@ -55,13 +55,13 @@ export function ItemTakeover({ item, onClose, ...rest }: Parameters<typeof ItemB
         <DialogTitle className="sr-only">{item?.name ?? 'Product Backlog item'}</DialogTitle>
         {/* No close button of its own: the takeover has one, and two Xs an inch apart is one too
             many. The right padding keeps the points clear of it. */}
-        <ItemBench {...rest} item={item} className="max-h-[80vh] overflow-y-auto rounded-xl pr-10" />
+        <ItemBench {...rest} item={item} onDone={onClose} className="max-h-[80vh] overflow-y-auto rounded-xl pr-10" />
       </DialogContent>
     </Dialog>
   );
 }
 
-export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, onSetUseStories, onClose, className }: {
+export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, onSetUseStories, onClose, onDone, className }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onEstimate: (id: string, points: number) => void;
@@ -70,6 +70,9 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
   onSetUseStories: (on: boolean) => void;
   /** Put the bench away, where the card it shares has something else to show. */
   onClose?: () => void;
+  /** The act is finished - a size committed, an epic split - so the takeover goes and you are back
+   *  at the list you picked from. Sitting on a screen whose job is done is a screen too many. */
+  onDone?: () => void;
   className?: string;
 }) {
   // An unsized item opens with its cards out. The takeover is here to view it, size it and commit -
@@ -172,7 +175,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
       {doing === 'size' && (
         <div className="rounded-lg border border-border p-2">
           <PlanningPoker item={item} state={state} seed={state.gameSeed} talk={false}
-            onCommit={(pts) => { onEstimate(item.id, pts); setDoing(null); }} />
+            onCommit={(pts) => { onEstimate(item.id, pts); setDoing(null); onDone?.(); }} />
         </div>
       )}
       {doing === 'split' && (
