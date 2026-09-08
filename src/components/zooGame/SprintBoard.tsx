@@ -174,7 +174,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -721,6 +721,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
         onStart={(id) => { onStartItem(id); setPulling(id); }}
         onBuilding={(id) => setDesigning(id)}
         onAskToCheck={onAskToCheck}
+        onToggleTask={onToggleTask}
         onOpen={onOpen} />
     </div>
   );

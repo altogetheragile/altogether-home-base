@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import type { EditApi } from './ParkView';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,8 @@ import { EYEBROW, FOCUS } from './ui/tokens';
 import { answerable, checkCriterion, checkedAt } from './parkChecks';
 import { presetFor, addWaterTo, addFloraTo, enclosureWater, enclosureFlora,
   ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
-  groupSize, hasRoomToRoam } from './design';
+  groupSize, hasRoomToRoam, designSatisfiesTask } from './design';
+import { isSignOffTask } from './engine';
 import { Check, Circle, X } from 'lucide-react';
 
 // Everything about an object is built here, and nothing else is.
@@ -37,7 +39,11 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
   onClose: () => void;
   className?: string;
 }) {
-  const design = item.design ?? item.draftDesign ?? presetFor(item);
+  // Whatever is in front of the person building it. The draft is the newer of the two while the
+  // work is still going on - and the older one may have been written by a seat played by the game -
+  // so it wins until the item is accepted, after which the accepted design is the truth.
+  const settled = item.status === 'done' || item.status === 'open';
+  const design = (settled ? item.design : (item.draftDesign ?? item.design)) ?? presetFor(item);
   const criteria = item.acceptance.filter(Boolean);
   const met = criteria.filter((c) => checkCriterion(state, item, c)?.met).length;
   const isHabitat = item.category === 'enclosure';
@@ -46,6 +52,18 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
   const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
 
   const set = (d: Partial<typeof design>) => edit.onDesign(item.id, { ...design, ...d });
+
+  // The plan ticks itself off as the work is done, so it is not a second set of boxes for what you
+  // just did. It used to live on the old floating toolbar, and went with it - which left every item
+  // with a plan nothing could ever finish, and Done needs the plan finished: "I still cannot move
+  // this PBI to Done - all the ACs are met." Peer review stays manual and the Product Owner's
+  // sign-off is never ticked here.
+  useEffect(() => {
+    for (const t of item.tasks ?? []) {
+      if (!t.label.trim() || isSignOffTask(t.label)) continue;
+      if (!t.done && designSatisfiesTask(item, design, t.label)) edit.onToggleTask(item.id, t.id);
+    }
+  }, [design, item, edit]);
 
   /** Every habitat this animal could live in, and whether it would work. */
   const habitats = state.backlog.filter((it) => it.category === 'enclosure').map((h) => {
@@ -163,7 +181,11 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                 ))}
               </Row>
               <Row label="Inside">
-                <Chip onClick={() => edit.onAddPlant(item.id, HABITAT_FEATURE_TYPES[0])}>+ Shelter</Chip>
+                {/* Into the habitat's own design, like the water and the planting beside it. It used
+                    to drop a copy on the park instead, so a shelter you had plainly added was
+                    invisible to "can I tell an animal lives here, not a shed?" - a criterion nobody
+                    could satisfy however much they built. */}
+                <Chip onClick={() => set({ flora: addFloraTo(design, HABITAT_FEATURE_TYPES[0]) })}>+ Shelter</Chip>
                 <Chip onClick={() => set({ water: addWaterTo(design) })}>+ Water</Chip>
                 {PLANTING_TYPES.slice(0, 2).map((t) => (
                   <Chip key={t} onClick={() => set({ flora: addFloraTo(design, t) })}>+ {t}</Chip>

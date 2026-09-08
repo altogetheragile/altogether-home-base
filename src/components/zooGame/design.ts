@@ -1059,7 +1059,10 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
   if (item.category === 'path') return !!p.thickness && !!c.path; // width + colour chosen
   if (item.category === 'enclosure') {
     if (/footprint|size/.test(s)) return !!item.enclosureSize;
-    if (/fence/.test(s)) return !!c.fence;
+    // Fenced by construction, which is what the park says about the criterion too ("Closed"). It
+    // used to wait for a fence COLOUR, and the colour control is gone - so the step could never be
+    // ticked, and Done needs every step: "I still cannot move this PBI to Done."
+    if (/fence/.test(s)) return true;
     // Three things are promised by this step, so three things are what it takes. Checking the
     // ground colour alone let a bare box tick "Lay the ground, shelter and water" with no
     // shelter and no water anywhere in it.

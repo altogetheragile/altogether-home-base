@@ -1,11 +1,11 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
 import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit } from './engine';
-import { EYEBROW } from './ui/tokens';
+import { EYEBROW, FOCUS } from './ui/tokens';
 import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle } from 'lucide-react';
 
 // One item, in the one place its detail lives.
@@ -46,7 +46,7 @@ function whyNotStart(state: ZooGameState, item: BacklogItem): string | null {
   return null;
 }
 
-export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, onAskToCheck }: {
+export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, onAskToCheck, onToggleTask }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onClose: () => void;
@@ -60,6 +60,10 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
    *  complete the enclosure - how does Priya approve the last AC?" The only route was a pill on the
    *  park, which is not where anybody looks when they are reading the card. */
   onAskToCheck?: (id: string) => void;
+  /** Tick a step of the plan. The plan ticks itself off as the work is done, but it is the
+   *  Developers' own plan and they can say a step is finished - a plan nobody can finish is a plan
+   *  that can hold finished work out of Done for ever. */
+  onToggleTask?: (id: string, taskId: string) => void;
 }) {
   if (!item) return null;
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
@@ -89,6 +93,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent data-part="card-dialog" className="max-w-[min(96vw,1000px)] p-0">
+        <DialogTitle className="sr-only">{item.name}</DialogTitle>
         <div className="border-b border-border px-5 py-4">
           <div className="flex items-center gap-3">
             <CategoryIcon item={item} className="h-6 w-6 shrink-0 text-muted-foreground" />
@@ -107,15 +112,26 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
               Steps <span className={cn(EYEBROW, 'font-normal text-muted-foreground')}>the Developers&rsquo; plan</span>
             </h3>
             <ol className="mt-2 space-y-2">
-              {steps.map((t, i) => (
-                <li key={t.id} className="flex items-start gap-2 text-sm">
-                  <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
-                    t.done ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground')}>
-                    {t.done ? <Check className="h-3 w-3" /> : i + 1}
-                  </span>
-                  <span className={cn(t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
-                </li>
-              ))}
+              {steps.map((t, i) => {
+                const tick = doing && onToggleTask ? () => onToggleTask(item.id, t.id) : undefined;
+                const body = (
+                  <>
+                    <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                      t.done ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground')}>
+                      {t.done ? <Check className="h-3 w-3" /> : i + 1}
+                    </span>
+                    <span className={cn(t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
+                  </>
+                );
+                return (
+                  <li key={t.id} className="text-sm">
+                    {tick
+                      ? <button type="button" onClick={tick} title={t.done ? 'Not finished after all' : 'Mark this step finished'}
+                          className={cn(FOCUS, 'flex w-full items-start gap-2 rounded-md p-0.5 text-left hover:bg-muted/60')}>{body}</button>
+                      : <span className="flex items-start gap-2">{body}</span>}
+                  </li>
+                );
+              })}
               {!steps.length && <li className="text-sm text-muted-foreground">No plan yet. The Developers write one at Planning, or as they go.</li>}
             </ol>
           </section>

@@ -115,7 +115,11 @@ export const answerable = (label: string): boolean => PARK_ANSWERS.includes(labe
 
 /** The park's answer to one criterion, or null when it is a matter of judgement. */
 export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
-  const design = item.design ?? item.draftDesign ?? presetFor(item);
+  // Whatever is in front of the person building it. The draft is the newer of the two while the
+  // work is still going on - and the older one may have been written by a seat played by the game -
+  // so it wins until the item is accepted, after which the accepted design is the truth.
+  const settled = item.status === 'done' || item.status === 'open';
+  const design = (settled ? item.design : (item.draftDesign ?? item.design)) ?? presetFor(item);
 
   // ---- Answered about the object itself, while it is being built ----
   //
