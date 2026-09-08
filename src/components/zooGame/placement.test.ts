@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState } from './config';
+import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
 import { aiTurn } from './aiSeats';
 import { mayTake } from './seatRules';
@@ -20,7 +20,7 @@ function midSprint(): { s: ZooGameState; habitat: string } {
   for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
   const habitat = s.backlog.find((it) => it.category === 'enclosure')!.id;
   s = planSprint({ ...s, phase: 'planning' }, [habitat]);
-  return { s: { ...s, dayStage: 'building', daySecondsLeft: 90 }, habitat };
+  return { s: { ...s, dayStage: 'building', daySecondsLeft: DAY_SECONDS }, habitat };
 }
 
 describe('the Developers asking where something goes', () => {
@@ -77,7 +77,7 @@ describe('the Developers asking where something goes', () => {
     let base = splitEpic(initialZooState(1), 'bigcats', ['tiger', 'leopard', 'kiosk']);
     for (const it of base.backlog.filter((x) => x.unsized)) base = reducer(base, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
     const path = base.backlog.find((it) => it.category === 'path')!;
-    const pathOnly = { ...planSprint({ ...base, phase: 'planning' }, [path.id]), dayStage: 'building' as const, daySecondsLeft: 90 };
+    const pathOnly = { ...planSprint({ ...base, phase: 'planning' }, [path.id]), dayStage: 'building' as const, daySecondsLeft: DAY_SECONDS };
     expect(pathOnly.backlog.filter((it) => it.status === 'committed').map((it) => it.category),
       'this test needs a Sprint of nothing but the path').toEqual(['path']);
     expect(aiTurn(pathOnly, 'developer')?.action.type, 'they asked where to put a pathway').not.toBe('ASK_PLACEMENT');
