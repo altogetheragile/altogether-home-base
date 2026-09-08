@@ -74,7 +74,8 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
 }) {
   // An unsized item opens with its cards out. The takeover is here to view it, size it and commit -
   // pressing "Size it" first was a screen in the way of the only thing the screen is for.
-  const [doing, setDoing] = useState<'size' | 'split' | 'word' | null>(item?.unsized && item.category !== 'epic' ? 'size' : null);
+  const [doing, setDoing] = useState<'size' | 'split' | 'word' | null>(
+    !item ? null : item.category === 'epic' ? 'split' : item.unsized ? 'size' : null);
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
   if (!item) {
@@ -147,22 +148,25 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
         )}
       </div>
 
-      {/* The three acts, each with what it costs the day. */}
+      {/* The acts, each with what it costs the day - and never the one already open: an item that
+          opens with its cards out does not also need a button offering to deal them. */}
       <div className="flex flex-wrap gap-1.5">
-        {item.category === 'epic' ? (
+        {doing === 'size' || doing === 'split' ? null : item.category === 'epic' ? (
           <Button size="sm" className={cn(TONE.reflect.solid, 'h-7 px-2 text-xs text-white hover:bg-rose-700')}
-            onClick={() => setDoing(doing === 'split' ? null : 'split')}>
+            onClick={() => setDoing('split')}>
             <Scissors className="mr-1 h-3.5 w-3.5" /> Split it up<Cost state={state} seconds={REFINE_COSTS.split} />
           </Button>
         ) : (
           <Button size="sm" variant={item.unsized ? 'default' : 'outline'} className="h-7 px-2 text-xs"
-            onClick={() => setDoing(doing === 'size' ? null : 'size')}>
+            onClick={() => setDoing('size')}>
             <HelpCircle className="mr-1 h-3.5 w-3.5" /> {item.unsized ? 'Size it' : 'Size it again'}<Cost state={state} seconds={REFINE_COSTS.estimate} />
           </Button>
         )}
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDoing(doing === 'word' ? null : 'word')}>
-          <Pencil className="mr-1 h-3.5 w-3.5" /> Word it, and its criteria<Cost state={state} seconds={REFINE_COSTS.refinePbi} />
-        </Button>
+        {doing !== 'word' && (
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setDoing('word')}>
+            <Pencil className="mr-1 h-3.5 w-3.5" /> Word it, and its criteria<Cost state={state} seconds={REFINE_COSTS.refinePbi} />
+          </Button>
+        )}
       </div>
 
       {doing === 'size' && (

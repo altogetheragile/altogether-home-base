@@ -405,6 +405,10 @@ interface SidebarProps {
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
 export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
+  // Where the list has an item takeover beside it, every row action opens THAT - the takeover
+  // already carries the conversation, the criteria, the cards and the commit. These panels are the
+  // fallback for the places that have no takeover to open, and having both was the fault reported:
+  // three screens to size one item, each one saying the same things again.
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [estimating, setEstimating] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
@@ -457,9 +461,9 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.
-        <Button size="sm" className={cn(TONE.reflect.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-rose-700")} onClick={() => setSplitting(it)}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
+        <Button size="sm" className={cn(TONE.reflect.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-rose-700")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
-        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => setEstimating(it.id)}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => (onFocus ? onFocus(it.id) : setEstimating(it.id))}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
       ) : mode === 'refine' ? null
       : mode === 'plan' ? (
         // Sizing is refinement, not planning, so an item that is not ready for another reason has
