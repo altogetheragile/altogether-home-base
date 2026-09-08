@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
-import { isChecked, answerable } from './parkChecks';
+import { answerable, checkCriterion } from './parkChecks';
 import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit } from './engine';
 import { EYEBROW } from './ui/tokens';
 import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle } from 'lucide-react';
@@ -46,7 +46,7 @@ function whyNotStart(state: ZooGameState, item: BacklogItem): string | null {
   return null;
 }
 
-export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }: {
+export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, onAskToCheck }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onClose: () => void;
@@ -56,6 +56,10 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }
   onBuilding?: (id: string) => void;
   /** Release Done work to visitors. */
   onOpen?: (id: string) => void;
+  /** Ask the Product Owner to look at work that is built. Reported from playing it: "I still cannot
+   *  complete the enclosure - how does Priya approve the last AC?" The only route was a pill on the
+   *  park, which is not where anybody looks when they are reading the card. */
+  onAskToCheck?: (id: string) => void;
 }) {
   if (!item) return null;
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
@@ -65,7 +69,11 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }
   // The park only speaks about a thing that has been built. Before that its verdicts are about the
   // preset the item would start from, and a criterion ticked green on work nobody has begun is a
   // lie the whole game rests on not telling.
-  const met = (label: string, i: number) => !!item.acConfirmed?.[i] || (!!item.design && isChecked(state, item, label));
+  // ...and green means the park said YES. It used to mean the park had an OPINION - `isChecked` is
+  // "does the park answer this one", not "is it met" - so a habitat with no water wore a tick for a
+  // criterion it was failing.
+  const met = (label: string, i: number) =>
+    !!item.acConfirmed?.[i] || (!!item.design && !!checkCriterion(state, item, label)?.met);
 
   const todo = item.status === 'committed' && !item.started;
   // ...and why it cannot start, where it cannot: an animal waits for its habitat, and the WIP limit
@@ -73,6 +81,10 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }
   const blocked = todo ? whyNotStart(state, item) : null;
   const doing = item.status === 'committed' && item.started;
   const canOpen = item.status === 'done' && readyToOpen(item);
+  // Built, with every fact the park checks answered, and nothing left but somebody's judgement.
+  const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
+  const canAsk = doing && !!item.design && criteria.length > 0
+    && criteria.every((c, i) => !answerable(c) || met(c, i));
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -143,7 +155,14 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen }
             </span>
           )}
           {doing && onBuilding && (
-            <Button onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up &rarr;</Button>
+            <span className="flex flex-wrap items-center gap-2.5">
+              <Button variant={canAsk ? 'outline' : 'default'} onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up &rarr;</Button>
+              {canAsk && onAskToCheck && (asked
+                ? <span className="text-xs text-muted-foreground">Waiting on {po} to look at it.</span>
+                : <Button data-part="ask-to-check" onClick={() => { onAskToCheck(item.id); onClose(); }}>
+                    Ask {po} to check it
+                  </Button>)}
+            </span>
           )}
           {canOpen && onOpen && (
             <Button onClick={() => { onOpen(item.id); onClose(); }}>Open it to visitors</Button>

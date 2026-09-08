@@ -13,12 +13,15 @@ interface PlanningPokerProps {
   state: ZooGameState;
   seed: number;
   onCommit: (points: number) => void;
+  /** Whether to carry the refinement conversation. Off where the screen already shows it: the same
+   *  three lines twice, one above the other, is the panel arguing with itself. */
+  talk?: boolean;
 }
 
 /** Estimate a Backlog item by planning poker: the Developers each reveal a card, and the
  *  forecast is the most common value (ties rounding up). The Product Owner commits a
  *  size - a shared forecast from size and complexity, not a promise. */
-export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProps) {
+export function PlanningPoker({ item, state, seed, onCommit, talk: withTalk = true }: PlanningPokerProps) {
   const hand = useMemo(() => pokerHand(item, seed, state.dodAgreed), [item, seed, state.dodAgreed]);
   const suggestion = useMemo(() => estimateSuggestion(hand), [hand]);
   const [pick, setPick] = useState(suggestion);
@@ -30,22 +33,24 @@ export function PlanningPoker({ item, state, seed, onCommit }: PlanningPokerProp
       {/* Product Backlog refinement is a conversation. The Scrum Guide: "The Developers who will be
           doing the work are responsible for the sizing. The Product Owner may influence the
           Developers by helping them understand and select trade-offs." */}
-      <div className="mb-3 space-y-1.5">
-        <div className="rounded-md border border-amber-300/60 bg-amber-50/60 px-2.5 py-1.5 text-[11px] dark:border-amber-800/40 dark:bg-amber-950/20">
-          <span className={cn(TONE.attention.text, "font-semibold")}>{talk.po.name}</span>
-          <span className={cn(TONE.attention.text, "ml-1")}>{talk.po.line}</span>
-        </div>
-        {talk.devs.map((d, i) => (
-          <div key={i} className="rounded-md border border-border bg-card px-2.5 py-1.5 text-[11px]">
-            <span className="font-semibold">{d.name}</span>
-            <span className="ml-1 text-muted-foreground">{d.line}</span>
+      {withTalk && (
+        <div className="mb-3 space-y-1.5">
+          <div className="rounded-md border border-amber-300/60 bg-amber-50/60 px-2.5 py-1.5 text-[11px] dark:border-amber-800/40 dark:bg-amber-950/20">
+            <span className={cn(TONE.attention.text, 'font-semibold')}>{talk.po.name.replace(/\s*\(PO\)$/i, '')}</span>
+            <span className={cn(TONE.attention.text, 'ml-1')}>{talk.po.line}</span>
           </div>
-        ))}
-      </div>
-      <p className="mb-3 text-[11px] text-muted-foreground">
-        The Developers size it, because they will do the work; the Product Owner helps them understand the
-        trade-offs. Each shows a card and the size is the most common value, ties rounding up. Size and
-        complexity, not time - and a forecast, not a promise. (Planning poker is a common practice, not part of Scrum.)
+          {talk.devs.map((d, i) => (
+            <div key={i} className="rounded-md border border-border bg-card px-2.5 py-1.5 text-[11px]">
+              <span className="font-semibold">{d.name}</span>
+              <span className="ml-1 text-muted-foreground">{d.line}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* One line. The rest of it - why poker, why it is a forecast - is in Learn, where somebody
+          who wants it can read it without it sitting between them and the cards every time. */}
+      <p className="mb-2 text-[11px] text-muted-foreground">
+        The Developers size it; the Product Owner helps with the trade-offs. Size and complexity, not time.
       </p>
 
       {item.carriedOver && (

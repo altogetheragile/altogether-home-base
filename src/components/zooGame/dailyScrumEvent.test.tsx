@@ -7,11 +7,13 @@ import { todaysDecision } from './engine';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 
-// The Daily Scrum is an event, and every event in this game runs over the artifact it is about.
+// The Daily Scrum is an event, and every event in this game takes the screen.
 //
-// This one replaced the board instead: a short conversation about the Sprint Backlog, on a screen
-// with no Sprint Backlog on it, with the decision that is the whole point of the event eight hundred
-// pixels down. And nothing said whose event it is.
+// It was tried the other way: a column beside the board, so the Developers could drag the Sprint
+// Backlog while they talked. That ran out of room when the park took half the screen - three board
+// columns at ninety pixels each is a sliver, not a live artifact - and it stopped reading as an
+// event at all. So it takes the screen, the board is behind it, and handing work back is available
+// through the day rather than only inside the timebox.
 
 const noop = () => {};
 
@@ -43,17 +45,14 @@ const board = (state: ZooGameState, props: Record<string, unknown> = {}) => rend
 );
 
 describe('the Daily Scrum as an event', () => {
-  it('is held in front of the board, and the board stays live', () => {
-    // An event that hides the artifact it is about teaches that the event is paperwork. The
-    // Developers adapt the Sprint Backlog while they talk - reorder it, swap who is on what, hand
-    // something back - so the board is beside the conversation, not behind it.
+  it('takes the screen, with the board still there behind it', () => {
     const { container } = board(scrum());
-    const event = container.querySelector('[data-part="daily-scrum"]');
+    const event = document.querySelector('[data-part="daily-scrum"]');
     expect(event, 'the Daily Scrum is not on the screen').toBeTruthy();
-    expect(event!.className, 'the event is covering the board again').not.toMatch(/absolute|backdrop-blur/);
-    expect(container.textContent, 'the board vanished for the length of the event').toMatch(/To Do|Doing/);
+    expect(event!.getAttribute('role'), 'the event is a panel beside the board again').toBe('dialog');
+    expect(container.textContent, 'the board was thrown away for the length of the event').toMatch(/To Do|Doing/);
     expect(container.querySelector('[data-part="hand-it-back"]'),
-      'there is no way to hand work back during the event').toBeTruthy();
+      'there is no way to hand work back').toBeTruthy();
   });
 
   it('hands work back to the Product Backlog when it is dropped there', () => {
