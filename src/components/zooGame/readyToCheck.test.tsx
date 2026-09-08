@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ParkPlan } from './ParkPlan';
 import { CardDialog } from './CardDialog';
+import { askToCheck, answerQuestion, toggleItemTask, isSignOffTask } from './engine';
+import { aiTurn } from './aiSeats';
 import { checkCriterion } from './parkChecks';
 import { initialZooState } from './config';
 import { presetFor, addWaterTo, addFloraTo } from './design';
@@ -103,5 +105,50 @@ describe('asking from the card, not only from the park', () => {
     render(<CardDialog state={s} item={bare} onClose={() => {}} onBuilding={() => {}} onAskToCheck={() => {}} />);
     expect(document.querySelector('[data-part="ask-to-check"]'),
       'half-built work was offered for sign-off').toBeNull();
+  });
+});
+
+describe('the whole way to Done', () => {
+  it('gets there once the plan is finished and the Product Owner accepts', () => {
+    // The plan is part of it: Done needs every step of the Developers' own plan finished as well as
+    // the criteria met. That was reachable only from a build surface that no longer exists, so a
+    // habitat with four green criteria sat in Doing for ever.
+    const { s, item } = built();
+    let game = s;
+    for (const t of item.tasks ?? []) {
+      if (!t.label.trim() || isSignOffTask(t.label)) continue;
+      game = toggleItemTask(game, item.id, t.id);
+    }
+    game = askToCheck(game, item.id);
+    game = answerQuestion(game, `check-${item.id}`, 'accept');
+    const now = game.backlog.find((it) => it.id === item.id)!;
+    expect(now.status, 'accepted work with every step finished still could not reach Done').toBe('done');
+  });
+
+  it('lets the Developers tick a step from the card', () => {
+    const onToggleTask = vi.fn();
+    const { s, item } = built();
+    const planned = { ...item, tasks: [{ id: 't1', label: 'Set the footprint size', done: false }] } as BacklogItem;
+    render(<CardDialog state={s} item={planned} onClose={() => {}} onBuilding={() => {}} onToggleTask={onToggleTask} />);
+    const step = screen.getByRole('button', { name: /Set the footprint size/i });
+    fireEvent.click(step);
+    expect(onToggleTask, 'a step could not be ticked anywhere').toHaveBeenCalledWith(item.id, 't1');
+  });
+});
+
+describe('a seat played by the game', () => {
+  it('does not build something a person has in their hands', () => {
+    // It used to build any started item with no committed design - including the one open in the
+    // build takeover. Its design was stored as the item's, the takeover read that instead of the
+    // draft, and every further click vanished: the work was being undone as fast as it was done.
+    const { s, item } = built();
+    const mine = {
+      ...s,
+      backlog: s.backlog.map((it) => (it.id === item.id
+        ? { ...it, design: undefined, draftDesign: item.design } : it)),
+    } as ZooGameState;
+    const move = aiTurn(mine, 'developer');
+    expect(move?.action.type === 'BUILD_ITEM' && move.action.id === item.id,
+      'a seat played by the game built over somebody’s draft').toBe(false);
   });
 });

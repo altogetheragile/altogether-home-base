@@ -45,7 +45,12 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
 
   // A question put to an accountability, with the clock running on it. The Developers are standing
   // still while it is open; past the threshold they answer it themselves and the guess is logged.
-  for (const q of openQuestions(state)) {
+  // Work waiting to be accepted comes first. A finished Increment sitting behind "rounded or
+  // square?" is the Developers standing still on a question about a corner, and the acceptance is
+  // the one answer that lets something reach Done.
+  const queue = [...openQuestions(state)].sort((a, z) =>
+    Number(z.id.startsWith('check-')) - Number(a.id.startsWith('check-')));
+  for (const q of queue) {
     if (!onAnswerQuestion) break;
     const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
     actions.push({

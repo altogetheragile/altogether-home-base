@@ -210,7 +210,13 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       // "is the design incomplete", which quietly skipped a path: its preset already meets
       // its own criteria, so it looked finished, was never built, never had a design stored,
       // and could never leave Doing. Nothing about it was the route.
-      const building = state.backlog.find((it) => it.status === 'committed' && it.started && !it.design);
+      // ...but never something a person has in their hands. A draft design is somebody shaping the
+      // thing right now, and a seat played by the game used to build it out from under them: the
+      // game's design was stored as the item's, the takeover then read that instead of the draft,
+      // and every further click vanished. Reported as "I still cannot move this PBI to Done" - the
+      // work was being undone as fast as it was done.
+      const building = state.backlog.find((it) => it.status === 'committed' && it.started
+        && !it.design && !it.draftDesign);
       if (building) {
         // Only what today can still afford. Building regardless and charging afterwards let
         // a day with five seconds left absorb an eight-point item, so a Sprint delivered
