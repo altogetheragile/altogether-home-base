@@ -4,7 +4,7 @@ import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {
   dropFromSprint,
-  planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
+  planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady,
   agreeSprintGoal, setForecast, spendDay, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused,
 } from './engine';
 import { applyParkChecks } from './parkChecks';
@@ -192,6 +192,8 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return sendItemBack(state, action.id, action.by);
     case 'ANSWER_QUESTION':
       return answerQuestion(state, action.id, action.choice, action.by);
+    case 'ASK_TO_CHECK':
+      return askToCheck(state, action.id, action.by);
     case 'SET_SPRINT_BET':
       return setSprintBet(state, action.bet);
     case 'ASK_PLACEMENT':

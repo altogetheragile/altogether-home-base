@@ -38,7 +38,7 @@ describe('what the Sprint showed', () => {
 
   it('counts the times how was decided for the Developers', () => {
     const asked = askIfDue(sprint());
-    const habits = antiPatterns(answerQuestion(asked, (asked.questions ?? [])[0].id, 'timber'));
+    const habits = antiPatterns(answerQuestion(asked, (asked.questions ?? [])[0].id, 'rounded'));
     const how = habits.find((h) => h.id === 'po-decides-how')!;
     expect(how, 'the Product Owner decided how and nothing noticed').toBeTruthy();
     expect(how.instead).toMatch(/your call/i);
@@ -75,7 +75,7 @@ describe('what the Sprint showed', () => {
 describe('the Retrospective reads them back', () => {
   it('puts the habits under the log they came from', () => {
     const asked = askIfDue(sprint());
-    const answered = answerQuestion(asked, (asked.questions ?? [])[0].id, 'stone');
+    const answered = answerQuestion(asked, (asked.questions ?? [])[0].id, 'square');
     const retro = { ...answered, phase: 'retro' } as ZooGameState;
     const { container } = render(
       <MemoryRouter>

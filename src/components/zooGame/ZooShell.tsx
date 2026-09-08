@@ -158,7 +158,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools,  onPutIn, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -171,6 +171,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   /** What this screen hangs on the strip beside Learn - for a Sprint, the burndown, the help and
    *  the board settings. */
   tools?: ReactNode;
+  /** The Developers say when something is ready for the Product Owner to look at. */
+  onAskToCheck?: (id: string) => void;
   /** An animal goes into the habitat chosen for it in the takeover. */
   onPutIn?: (id: string, enclosureId: string) => void;
   /** A hand on the clock, or off it. */
@@ -438,7 +440,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
                     onPlace={(id, pos) => { onPlaceItem?.(id, pos); setPlacingId(null); }}
                     tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
-                    onAddConnector={onAddConnector} onSetTool={(t) => onDrawing?.(t === 'path')} />
+                    onAddConnector={onAddConnector} onSetTool={(t) => onDrawing?.(t === 'path')}
+                    onAskToCheck={onAskToCheck} />
                 </div>
 
                 {/* Everything about the object is built in the takeover; the park keeps placement.

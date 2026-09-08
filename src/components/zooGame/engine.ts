@@ -120,11 +120,37 @@ export function askIfDue(state: ZooGameState): ZooGameState {
     ...state,
     questions: [{
       id: `fence-${item.id}`, of: 'product_owner', from: asker?.name ?? 'The Developers', itemId: item.id,
-      text: `Timber or stone for ${item.name}'s fence?`,
+      // About something the game actually has - the shape of the footprint - because a question
+      // about a property that does not exist teaches the lesson dishonestly. The lesson is the
+      // same: this is a how, and how is the Developers'.
+      text: `Rounded or square for ${item.name}?`,
       choices: [
-        { key: 'timber', label: 'Timber' },
-        { key: 'stone', label: 'Stone' },
+        { key: 'rounded', label: 'Rounded' },
+        { key: 'square', label: 'Square' },
         { key: 'theirs', label: 'Your call', note: 'How it gets built is the Developers\u2019.' },
+      ],
+      askedAt: state.daySecondsLeft, day: state.dayNumber,
+    }],
+  };
+}
+
+/** The Developers ask the Product Owner to come and look at something that meets all of its
+ *  criteria. It is a question like any other: it goes on their rail, it carries a clock, and the
+ *  item says who it is waiting on until it is answered. Accepting it is the sign-off; sending it
+ *  back is the other answer, and both are recorded. */
+export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || (state.questions ?? []).some((q) => q.id === `check-${id}`)) return state;
+  const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
+  return {
+    ...state,
+    questions: [...(state.questions ?? []), {
+      id: `check-${id}`, of: 'product_owner', from: by === 'developer' || !by ? asker?.name ?? 'The Developers' : whoIs(by),
+      itemId: id,
+      text: `${item.name} meets all of its criteria. Is it what you asked for?`,
+      choices: [
+        { key: 'accept', label: 'Accept it' },
+        { key: 'back', label: 'Send it back' },
       ],
       askedAt: state.daySecondsLeft, day: state.dayNumber,
     }],
@@ -135,6 +161,26 @@ export function askIfDue(state: ZooGameState): ZooGameState {
 export function answerQuestion(state: ZooGameState, id: string, choice: string, by?: string): ZooGameState {
   const q = (state.questions ?? []).find((x) => x.id === id);
   if (!q) return state;
+
+  // A question the Product Owner answers by doing something. Accepting is the sign-off - every
+  // criterion confirmed, which is what the sign-off has always followed - and the other answer is
+  // the one that sends the work back with its reasons.
+  if (q.id.startsWith('check-') && q.itemId) {
+    const rest = (state.questions ?? []).filter((x) => x.id !== id);
+    const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
+    const item = state.backlog.find((it) => it.id === q.itemId);
+    if (choice === 'accept' && item) {
+      const accepted = {
+        ...state, questions: rest,
+        backlog: state.backlog.map((it) => (it.id === q.itemId
+          ? settleStatus({ ...it, acConfirmed: it.acceptance.map(() => true) }) : it)),
+      };
+      return note(accepted, { kind: 'question', by: by ?? 'product_owner',
+        what: `The Product Owner accepted ${item.name}.`,
+        cost: `${q.from} waited ${waited}s to be looked at.` });
+    }
+    return sendItemBack({ ...state, questions: rest }, q.itemId, by ?? 'product_owner');
+  }
   const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
   const picked = q.choices.find((c) => c.key === choice);
   const rest = (state.questions ?? []).filter((x) => x.id !== id);

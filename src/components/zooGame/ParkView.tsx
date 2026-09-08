@@ -12,7 +12,7 @@ import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zoneSlices, zooIsOpen } from './engine';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, RotateCw, Lock, TrafficCone, Eye } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // ============= The Park View =============
@@ -214,7 +214,9 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   // One drawing of the park: the zoo itself, as a visitor would see it. There used to be a second -
   // a blueprint, drawn from overhead - and everything you could do to the park you could only do
   // there. It is gone, and everything it could do is done here.
-  const [turn, setTurn] = useState(0); // quarter-turns of the park
+  // The park is drawn one way round. Turning it was a control that changed nothing you could see:
+  // every object is a rectangle, and a rectangle looks the same from the other three corners.
+  const turn = 0;
   // On at the Review, off while you are building: the Review inspects the Increment, and the rest
   // of the time you want to see the site you are standing work on.
   const [ownIncrementOnly, setIncrementOnly] = useState(false);
@@ -340,14 +342,6 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                 </label>
               )}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
-              {/* Walk round it. A quarter at a time, because every prop is drawn from one angle. */}
-              {(
-                <button type="button" onClick={() => setTurn((t) => (t + 1) % 4)}
-                  title="Turn the park a quarter, to see behind something"
-                  className={cn(FOCUS, 'flex h-6 items-center gap-1 rounded-md border border-border px-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground')}>
-                  <RotateCw className="h-3.5 w-3.5" /> Turn
-                </button>
-              )}
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}

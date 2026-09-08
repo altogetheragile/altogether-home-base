@@ -97,6 +97,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     open: (id: string) => send({ type: 'OPEN_ITEM', id }),
     sendBack: (id: string) => send({ type: 'SEND_BACK', id }),
     answerQuestion: (id: string, choice: string) => send({ type: 'ANSWER_QUESTION', id, choice }),
+    askToCheck: (id: string) => send({ type: 'ASK_TO_CHECK', id }),
     closeDay: () => send({ type: 'END_DAY' }),
     tickDay: () => send({ type: 'TICK_DAY' }),
     tickScrum: () => send({ type: 'TICK_SCRUM' }),

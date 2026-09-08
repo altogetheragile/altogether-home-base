@@ -59,7 +59,7 @@ const FLUSH_MS = 250;
 // seat that made it. Playing alone there is no seat, and the engine names the accountability the
 // move belongs to instead: only the Developers change the Sprint Backlog.
 const ACTOR_MATTERS = new Set(['SET_FORECAST', 'PLAN_SPRINT', 'PULL_ITEM', 'RUN_DAILY_SCRUM',
-  'SKIP_DAILY_SCRUM', 'SET_WIP_LIMIT', 'SET_DOD', 'START_ITEM', 'OPEN_ITEM', 'SEND_BACK', 'ANSWER_QUESTION']);
+  'SKIP_DAILY_SCRUM', 'SET_WIP_LIMIT', 'SET_DOD', 'START_ITEM', 'OPEN_ITEM', 'SEND_BACK', 'ANSWER_QUESTION', 'ASK_TO_CHECK']);
 const stamped = (action: ZooAction, seat: SeatName | null | undefined): ZooAction =>
   (seat && ACTOR_MATTERS.has(action.type) ? { ...action, by: seat } as ZooAction : action);
 
