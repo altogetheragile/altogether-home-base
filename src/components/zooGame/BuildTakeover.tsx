@@ -3,7 +3,7 @@ import type { EditApi } from './ParkView';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { checkCriterion, checkedAt } from './parkChecks';
+import { answerable, checkCriterion, checkedAt } from './parkChecks';
 import { presetFor, addWaterTo, addFloraTo, enclosureWater, enclosureFlora,
   ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
   groupSize, hasRoomToRoam } from './design';
@@ -221,7 +221,7 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium leading-snug">{c}</span>
                       <span className="block text-[11px] text-muted-foreground">
-                        {v?.evidence ?? (where === 'park' ? 'Checked when it stands on the park' : 'The Product Owner judges this one')}
+                        {v?.evidence ?? (answerable(c) ? 'Checked when it stands on the park' : `${state.team.productOwner.name.replace(/\s*\(PO\)$/i, '')} judges this one`)}
                       </span>
                     </span>
                     <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold',
@@ -232,8 +232,17 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                 );
               })}
             </ul>
+            {/* What the park can answer, and what it never will. Saying "once all 4 are green"
+                was a promise the game could not keep: one of the four is a judgement, and a learner
+                waiting for it to tick itself has nothing left to try. */}
             <p className="mt-2 text-[11px] text-muted-foreground">
-              {state.team.productOwner.name} signs off once all {criteria.length} are green.
+              {(() => {
+                const facts = criteria.filter(answerable);
+                const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
+                return facts.length === criteria.length
+                  ? `${po} signs off once all ${criteria.length} are green.`
+                  : `The park checks ${facts.length}. ${po} judges the rest, and signs off when you ask.`;
+              })()}
             </p>
           </div>
 

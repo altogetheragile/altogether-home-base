@@ -6,7 +6,7 @@ import { SPECIES_SHAPES } from './design';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, Wand2 } from 'lucide-react';
-import { FOCUS, SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE, WIZARD } from './ui/tokens';
 
 interface PbiEditorProps {
   zones: string[];
@@ -122,7 +122,7 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
             <input type="checkbox" checked={storyMode} onChange={(e) => toggleStory(e.target.checked)} />
             Write as a user story
           </label>
-          {storyMode && <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={autoSuggest}><Wand2 className="mr-1 h-3.5 w-3.5" /> Auto-suggest</Button>}
+          {storyMode && <Button size="sm" className={cn(WIZARD, 'h-6 px-2 text-xs')} onClick={autoSuggest}><Wand2 className="mr-1 h-3.5 w-3.5" /> Auto-suggest</Button>}
         </div>
         {storyMode && (
           <div className="space-y-1.5 text-sm">

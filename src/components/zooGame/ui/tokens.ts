@@ -11,6 +11,14 @@
 
 /** What a colour MEANS. Never reach for a raw Tailwind colour in a zoo-game component - if the
  *  meaning you want is not here, it is probably not a meaning the game has. */
+/** Every wizard button, in one colour.
+ *
+ *  A wizard is the game offering to write a first draft for you: suggest the tasks, word the Goal,
+ *  propose the criteria. They had drifted into four different treatments - ghost here, outline
+ *  there, violet on one screen - so the same offer looked like a different kind of button on every
+ *  screen. One tone, everywhere, and it reads as an offer rather than the action you came for. */
+export const WIZARD = 'bg-violet-600 text-white shadow-sm hover:bg-violet-700 dark:bg-violet-500 dark:text-white dark:hover:bg-violet-400';
+
 export const TONE = {
   /** The thing to do next: primary actions, the current step. */
   action: {

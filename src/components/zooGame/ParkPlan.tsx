@@ -2,7 +2,7 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace } from './parkModel';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
-import { checkCriterion } from './parkChecks';
+import { answerable, checkCriterion } from './parkChecks';
 import { groupMembers } from './design';
 import { cn } from '@/lib/utils';
 
@@ -217,12 +217,19 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               {b.underWay && (() => {
                 const criteria = b.item.acceptance.filter(Boolean);
                 const verdicts = criteria.map((c) => ({ c, v: checkCriterion(state, b.item, c) }));
-                const met = verdicts.filter((x) => x.v?.met).length;
-                const next = verdicts.find((x) => !x.v?.met);
-                const ready = met === criteria.length && criteria.length > 0;
+                // Ready means every criterion the park can answer is answered. The rest are
+                // judgement - "can I walk right round it?" is somebody's eyes, not a measurement -
+                // and waiting for the park to tick those was a dead end: they never went green, so
+                // a finished habitat could never be offered for acceptance at all.
+                const facts = verdicts.filter((x) => answerable(x.c));
+                const met = facts.filter((x) => x.v?.met).length;
+                const next = facts.find((x) => !x.v?.met);
+                const ready = criteria.length > 0 && facts.every((x) => x.v?.met);
+                const judged = criteria.length - facts.length;
+                const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
                 const text = ready
-                  ? `${met} of ${criteria.length} · ready for ${state.team.productOwner.name.replace(/\s*\(PO\)$/i, '')}`
-                  : `${met} of ${criteria.length} · ${next?.v?.evidence ?? 'still being built'}`;
+                  ? `${met} of ${facts.length} checked · ${judged ? `${po} judges the rest` : `ready for ${po}`}`
+                  : `${met} of ${facts.length} checked · ${next?.v?.evidence ?? 'still being built'}`;
                 return (
                   <g data-part="built-pill" data-ready={ready ? 'yes' : 'no'}
                     onPointerDown={(e) => { e.stopPropagation(); if (ready) onAskToCheck?.(b.item.id); else onSelect?.(b.item.id); }}

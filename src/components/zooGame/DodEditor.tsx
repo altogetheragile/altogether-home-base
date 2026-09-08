@@ -4,7 +4,7 @@ import { dodKind } from './dodChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, X, ClipboardCheck, Sparkles } from 'lucide-react';
-import { FOCUS, PADDING, SURFACE } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, WIZARD } from './ui/tokens';
 
 interface DodEditorProps {
   dod: string[];
@@ -29,7 +29,7 @@ export function DodEditor({ dod, onSave }: DodEditorProps) {
     <div className={cn(SURFACE.card, PADDING.roomy, 'space-y-3')}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-sm font-semibold"><ClipboardCheck className="h-4 w-4" /> Definition of Done</div>
-        <Button variant={showCoach ? 'default' : 'outline'} size="sm" className="h-7 px-2 text-xs" onClick={() => setShowCoach((s) => !s)}>
+        <Button size="sm" className={cn(WIZARD, 'h-7 px-2 text-xs')} onClick={() => setShowCoach((s) => !s)}>
           <Sparkles className="mr-1 h-3.5 w-3.5" /> Suggest criteria
         </Button>
       </div>

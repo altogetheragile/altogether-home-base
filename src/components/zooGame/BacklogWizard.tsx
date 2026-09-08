@@ -8,7 +8,7 @@ import { ActionBar } from './ActionBar';
 import { StepTrack } from './StepTrack';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW, FOCUS } from './ui/tokens';
+import { EYEBROW, FOCUS, WIZARD } from './ui/tokens';
 import { Check, ArrowRight, Sparkles, Users, Camera, Armchair } from 'lucide-react';
 
 // ============= Where a Product Backlog comes from =============
@@ -150,7 +150,7 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
             <span className="hidden text-[11px] text-muted-foreground sm:inline">
               Writes {zones.length} area{zones.length === 1 ? '' : 's'} and the park&rsquo;s own grounds
             </span>
-            <Button disabled={!canGo || !mine.allowed} onClick={() => onBuild({ zones, audience, firstZone })}>
+            <Button className={WIZARD} disabled={!canGo || !mine.allowed} onClick={() => onBuild({ zones, audience, firstZone })}>
               <Sparkles className="mr-1 h-4 w-4" /> Write the Product Backlog
             </Button>
           </div>
