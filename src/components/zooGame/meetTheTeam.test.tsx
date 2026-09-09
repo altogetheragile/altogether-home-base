@@ -84,23 +84,18 @@ describe('the pull at topic two', () => {
     ) };
   };
 
-  it('asks which Developer pulled each item', () => {
-    const onAssignDev = vi.fn();
-    const { container, take, s } = planning({}, { onAssignDev });
-    const who = container.querySelector('[data-part="who-pulled"]')!;
-    expect(who, 'the forecast says nothing about who pulled anything').toBeTruthy();
-    for (const d of s.team.developers) expect(who.textContent).toContain(d.name);
-    fireEvent.click([...who.querySelectorAll('button')].find((b) => b.textContent === s.team.developers[0].name)!);
-    expect(onAssignDev, 'nobody could put their name on the work').toHaveBeenCalledWith(take[0].id, s.team.developers[0].id);
-  });
-
-  it('does not let the Product Owner pull for them', () => {
-    // "The Developers select; you can make the case." The Product Owner is in the room and has the
-    // argument - what they do not have is the pull.
-    const { container } = planning({}, { onAssignDev: () => {}, mySeat: 'product_owner' });
-    const who = container.querySelector('[data-part="who-pulled"]')!;
-    const buttons = [...who.querySelectorAll('button')] as HTMLButtonElement[];
-    expect(buttons.every((b) => b.disabled), 'a Product Owner could pull work for the Developers').toBe(true);
-    expect(buttons[0].title).toMatch(/make the case/i);
+  it('says nothing about who will do what', () => {
+    // Asked while playing it: "what are you suggesting with 'pulled by Ben'?" Nothing good. Work is
+    // pulled during the Sprint by whoever picks it up, and the board asks who is taking it at the
+    // moment it moves into Doing. A row of names against every forecast item at Planning says the
+    // work was handed out before anybody started, which is the habit that the Sprint Backlog
+    // belonging to the Developers exists to break.
+    const { container, s } = planning();
+    expect(container.querySelector('[data-part="who-pulled"]'),
+      'the forecast is handing work out before the Sprint has started').toBeNull();
+    const forecast = container.textContent ?? '';
+    for (const d of s.team.developers) {
+      expect(forecast.split('Sprint Backlog')[1] ?? '', `${d.name} is named against the forecast`).not.toContain(`pulled by`);
+    }
   });
 });

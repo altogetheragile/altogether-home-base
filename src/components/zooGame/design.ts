@@ -1069,7 +1069,10 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
     if (/how many|ages|stock|group/.test(s)) return !!design.group && groupSize(design.group) > 0;
     // Not decided is not the same as fits - it would otherwise tick itself before you had chosen.
     if (/fit the habitat|room/.test(s)) return !!design.group && hasRoomToRoam(design.group, item.enclosureSize);
-    if (/coat/.test(s)) return !!design.parts.coat;
+    // The coat is a colour on the animal. It was looked for in `parts`, where the old studio kept a
+    // named coat option that no control writes any more - so "choose the coat" could be chosen and
+    // never tick, and Done waits for the plan.
+    if (/coat/.test(s)) return !!design.parts.coat || !!design.colors?.coat;
     return false;
   }
   const s = label.toLowerCase();
