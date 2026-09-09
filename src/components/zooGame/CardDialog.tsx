@@ -148,12 +148,21 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
                 // green looked like work still to do, and the item looked stuck when it was
                 // finished and waiting for somebody to look at it.
                 const theirs = !ok && !answerable(c);
+                const verdict = ok ? null : checkCriterion(state, item, c);
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Glyph className={cn('mt-0.5 h-4 w-4 shrink-0', ok ? 'text-emerald-600' : 'text-muted-foreground')} />
-                    <span className={cn(ok && 'text-muted-foreground line-through decoration-emerald-500/40')}>{c}</span>
-                    {ok && <Check className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />}
-                    {theirs && <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">{po} judges this</span>}
+                    <span className="min-w-0 flex-1">
+                      <span className={cn('block', ok && 'text-muted-foreground line-through decoration-emerald-500/40')}>{c}</span>
+                      {/* What the park saw. Without it an unmet criterion is a closed door: "can I
+                          get to this zone without crossing the grass?" with nothing to say a path
+                          has to be drawn, and no way to tell that from a criterion that is stuck. */}
+                      {!ok && verdict?.evidence && (
+                        <span className="block text-[11px] text-muted-foreground">{verdict.evidence}</span>
+                      )}
+                    </span>
+                    {ok && <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />}
+                    {theirs && <span className="shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">{po} judges this</span>}
                   </li>
                 );
               })}
