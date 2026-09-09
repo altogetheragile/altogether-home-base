@@ -4,7 +4,7 @@ import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscape
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
-import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, workingDesign as working, parkType as landType } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
@@ -1555,10 +1555,23 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   /** The way to one exhibit: up from the lot, onto the promenade, then along whatever the player
    *  has actually laid - the same path network the guests in the plan view used to walk, which is
    *  where this routing comes from. Water is a wall with one door in it, and the door is a bridge. */
-  const nav = buildNav({ paths: walks.map(([a, z]) => [a, z]), water, crossings: dry });
+  // A habitat is something you walk AROUND. Reported from playing it: "visitors in the lion
+  // enclosure is not a good idea." They were walking to the middle of the pen, because that is
+  // where the exhibit is - so the fence has to be solid to the routing, and what they walk to has
+  // to be the apron outside it.
+  const pens = standing.filter((st) => st.item.category === 'enclosure').map((st) => {
+    const c = posOf(st.item);
+    return { x0: c.x - st.size.w / 2, y0: c.y - st.size.h / 2, x1: c.x + st.size.w / 2, y1: c.y + st.size.h / 2 };
+  }).filter((r) => Number.isFinite(r.x0));
+  const insidePen = (p: Pt) => pens.some((r) => p.x > r.x0 && p.x < r.x1 && p.y > r.y0 && p.y < r.y1);
+  const nav = buildNav({ paths: walks.map(([a, z]) => [a, z]), water, crossings: dry, solid: pens });
   const routeTo = (target: Pt): Pt[] => [arrival, entry, ...(routeAcross(nav, entry, target) ?? [target])];
   // Somewhere worth walking to: the habitats, or the middle of the park if none are open yet.
-  const draws = encs.length ? encs.map((e) => posOf(e)) : [{ x: CANVAS_W / 2, y: promY - 120 }];
+  // Where somebody stands to look at a habitat: on the walkway outside it, on the side they arrive
+  // from. Not the middle of the pen, which is where the lions are.
+  const draws = encs.length
+    ? encs.map((e) => viewingSpot(posOf(e), groundSize(e)))
+    : [{ x: CANVAS_W / 2, y: promY - 120 }];
   const routes = draws.map(routeTo);
 
   /** A visitor prop drawn about the ORIGIN rather than at a place on the park, so a `<g>` can carry
@@ -1597,6 +1610,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     const spot = { x: at.x + (jitter(i + 3, 5) - 0.5) * 16, y: at.y + (jitter(i + 4, 11) - 0.5) * 14 };
     if (spot.x < 14 || spot.x > CANVAS_W - 14 || spot.y < 14 || spot.y > worldH - 14) continue;
     if (wet(spot)) continue;
+    if (insidePen(spot)) continue;      // nobody is in with the lions
 
     // The route in the picture, and how long it takes to walk it.
     const screen = route.map((q2) => P(q2.x, q2.y));
