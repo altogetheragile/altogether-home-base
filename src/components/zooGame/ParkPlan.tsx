@@ -28,7 +28,7 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
 };
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, onSetMemberSpot, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -41,6 +41,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** Turn a thing a quarter. Both drawings and the visitors' routing already read `rot`; nothing
    *  had offered it since the object editor's Turn control was cut. */
   onTurn?: (id: string, rot: number) => void;
+  /** Move one animal of a family about inside its habitat. */
+  onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
   /** Something is being put down for the first time: it follows the cursor with a verdict on it. */
   placing?: { id: string; w: number; h: number } | null;
   onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }) => void;
@@ -115,6 +117,25 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       const v = verdict(b.item.id, b.size, { x: p.x - grabX, y: p.y - grabY });
       if (v.ok) onPlaceItem(b.item.id, { x: v.x, y: v.y });
     };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  /** Drag one animal about inside its habitat. Held in the habitat's own coordinates, so it means
+   *  the same thing here, in the isometric view and wherever the park is drawn next. */
+  const moveAnimal = (e: ReactPointerEvent, id: string, member: number, pen: { x: number; y: number; w: number; h: number }) => {
+    if (!onSetMemberSpot) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const move = (ev: PointerEvent) => {
+      const p = worldAt(ev);
+      if (!p) return;
+      onSetMemberSpot(id, member, {
+        x: Math.max(0.08, Math.min(0.92, (p.x - pen.x) / pen.w)),
+        y: Math.max(0.1, Math.min(0.9, (p.y - pen.y) / pen.h)),
+      });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
@@ -229,9 +250,19 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 const members = Math.max(1, groupMembers(a.design?.group).length);
                 return Array.from({ length: Math.min(members, 6) }, (_, k) => {
                   const cols = Math.ceil(Math.sqrt(Math.min(members, 6)));
-                  const gx = x + b.size.w * ((k % cols) + 1) / (cols + 1);
-                  const gy = y + b.size.h * (Math.floor(k / cols) + 1) / (Math.ceil(Math.min(members, 6) / cols) + 1);
-                  return <circle key={`${a.id}-${i}-${k}`} cx={gx} cy={gy} r={9} fill="#c8761f" stroke="#7a4712" strokeWidth={2} />;
+                  // Where somebody put this one, or the tidy grid it starts on. A pride is not a
+                  // blob: the lioness by the water and the cubs under the tree is a thing you
+                  // arrange, and it was drawn on a grid that ignored the arranging entirely.
+                  const own = a.spots?.[k];
+                  const gx = own ? x + b.size.w * own.x : x + b.size.w * ((k % cols) + 1) / (cols + 1);
+                  const gy = own ? y + b.size.h * own.y
+                    : y + b.size.h * (Math.floor(k / cols) + 1) / (Math.ceil(Math.min(members, 6) / cols) + 1);
+                  return (
+                    <circle key={`${a.id}-${i}-${k}`} data-animal={`${a.id}-${k}`} cx={gx} cy={gy} r={9}
+                      fill={a.design?.colors?.coat ?? '#c8761f'} stroke="#7a4712" strokeWidth={2}
+                      style={{ cursor: onSetMemberSpot ? 'grab' : 'default' }}
+                      onPointerDown={onSetMemberSpot ? (e) => moveAnimal(e, a.id, k, { x, y, w: b.size.w, h: b.size.h }) : undefined} />
+                  );
                 });
               })}
               <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={13} fontWeight={700} fill="#20351f">

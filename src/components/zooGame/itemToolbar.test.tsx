@@ -181,7 +181,9 @@ describe('a control has to be a decision', () => {
     // because it is not a decision anybody makes. Water is water, and every control that is not a
     // decision is one more thing to click before the PBI can be finished. The bank of a pond and
     // the stone of a fountain stay, because those are choices.
-    expect(floraColors('river')).toEqual([]);
+    // ...and a river's bank is a decision, which is the one it has. Water is still water.
+    expect(floraColors('river').map((c) => c.label)).toEqual(['Bank']);
+    expect(floraColors('river').some((c) => /water/i.test(c.label)), 'somebody was asked what colour water is').toBe(false);
     expect(floraColors('pond').map((c) => c.label)).toEqual(['Bank']);
     expect(floraColors('fountain').map((c) => c.label)).toEqual(['Stone']);
   });

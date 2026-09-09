@@ -158,7 +158,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -328,8 +328,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" data-part="goal-line" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
-                className={cn(FOCUS, 'hidden min-w-0 max-w-[26rem] flex-col items-start rounded-md px-1 py-0.5 text-left hover:bg-white/10 lg:flex')}>
-                <span className={cn('truncate text-sm font-bold leading-tight', goal.risk && 'text-amber-300')}>{goal.line}</span>
+                className={cn(FOCUS, 'hidden min-w-0 max-w-[26rem] shrink flex-col items-start overflow-hidden rounded-md px-1 py-0.5 text-left hover:bg-white/10 lg:flex')}>
+                {/* One line, cut off where it runs out of room. The Goal is longer than the verdict
+                    it replaced at Planning, and it was running underneath the Learn button. */}
+                <span className={cn('w-full truncate text-sm font-bold leading-tight', goal.risk && 'text-amber-300')}>{goal.line}</span>
                 {/* The Goal itself under the verdict - and nothing where there is no Goal, rather
                     than the same sentence twice in two weights. */}
                 {state.sprintGoal.trim() && !goal.isGoal && (
@@ -443,7 +445,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     and it lives on the Increment tab where nobody is trying to build in it. */}
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   <ParkPlan state={state} height={620} selected={building ?? null} onSelect={onOpenBuild}
-                    onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn}
+                    onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn} onSetMemberSpot={onSetMemberSpot}
                     placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
                     onPlace={(id, pos) => { onCommitBuild?.(id); onPlaceItem?.(id, pos); setPlacingId(null); }}
                     tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}

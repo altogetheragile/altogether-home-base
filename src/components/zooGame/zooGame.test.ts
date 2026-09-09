@@ -1312,10 +1312,10 @@ describe('zoo game: the toolbox', () => {
     expect(sized.backlog.find((i) => i.id === 'lion')!.size).toEqual({ w: 400, h: 40 });
     // The studio names a feature's colours for what they are - a river has water, not "foliage" or
     // a trunk - and shows only the colours it uses.
-    // A river has no colour control at all: water is water, and a control that is not a decision is
-    // just another thing to click before the PBI can be finished. What a river IS is how far it
-    // reaches, so its one build step is sizing it on the park.
-    expect(floraColors('river')).toEqual([]);
+    // Water is water: nobody is asked what colour it is, because a control that is not a decision
+    // is just another thing to click. The bank is a decision, and it is the one a river has - it
+    // used to have none at all, which made a river the only thing in the park you could not change.
+    expect(floraColors('river').map((c) => c.label)).toEqual(['Bank']);
     expect(floraColors('carpark').map((c) => c.label)).toEqual(['Tarmac', 'Markings']);
     expect(floraColors('tree').map((c) => c.label)).toEqual(['Foliage']);
 
@@ -1335,9 +1335,10 @@ describe('zoo game: the toolbox', () => {
     // then size on the park.
     // suggestTasks only reads category + template, both of which a toolbox draft carries.
     const riverPlan = suggestTasks(toolboxDraft(items.find((i) => i.name === 'River')!) as never).map((t) => t.label);
-    // Named for the work a river actually needs, not for a plant's. Colouring it is not on the list
-    // because water is water; what makes it a river rather than a puddle is how far it reaches.
-    expect(riverPlan).toEqual(['Size it on the park', "Get the PO's sign-off"]);
+    // Named for the work a river actually needs, not for a plant's: how far it reaches, and what
+    // its bank is made of. Nobody is asked what colour water is, so that is not on the list - and
+    // the plan comes from the same list the controls do, so a control and a step cannot disagree.
+    expect(riverPlan).toEqual(['Size it on the park', 'Colour the bank', "Get the PO's sign-off"]);
     expect(riverPlan.some((l) => /plant|foliage/i.test(l))).toBe(false);
     // And a signpost is asked about its sign and its post, not about foliage - it fell through to
     // the planting branch for months because it is filed as flora.

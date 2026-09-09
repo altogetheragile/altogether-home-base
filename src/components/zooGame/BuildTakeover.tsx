@@ -15,6 +15,8 @@ import { Check, Circle, X } from 'lucide-react';
 const SCENERY_TYPES: string[] = [...new Set([...LANDSCAPE_TYPES.filter((t) => t !== 'carpark' && t !== 'entrance'), ...PLANTING_TYPES])];
 /** Enough colours to make a choice, and not so many that it is a paint program. */
 const SCENERY_COLOURS = ['#43a047', '#7a5230', '#8fa3b0', '#c8a06a', '#7cc0e8', '#e0679a', '#6b7280'];
+/** A building's palette: walls, roof and sign. */
+const BUILDING_COLOURS = ['#e6ddcf', '#cfd8e3', '#a4623a', '#3f6f4f', '#c8761f', '#6b7280', '#f2e6c9'];
 
 // Everything about an object is built here, and nothing else is.
 //
@@ -183,7 +185,13 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                 ));
               })()}
               {isBuilding && (
-                <rect x={110} y={70} width={100} height={80} rx={4} fill={design.colors?.wall ?? '#cfd8e3'} stroke="#6b7c93" strokeWidth={4} />
+                <g>
+                  <rect x={110} y={80} width={100} height={70} rx={4} fill={design.colors?.walls ?? design.colors?.wall ?? '#e6ddcf'} stroke="#6b7c93" strokeWidth={3} />
+                  <polygon points="102,80 218,80 160,48" fill={design.colors?.roof ?? '#a4623a'} />
+                  {design.parts.sign === 'on' && (
+                    <rect x={132} y={96} width={56} height={16} rx={3} fill={design.colors?.sign ?? '#3f6f4f'} />
+                  )}
+                </g>
               )}
               {/* Scenery, in the colours you chose. A blank preview is what made a bridge look like
                   a thing with nothing to it. */}
@@ -299,6 +307,22 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                     <button key={c} type="button" aria-label={`${slot.label} ${c}`}
                       onClick={() => set({ colors: { ...design.colors, [slot.key]: c } })}
                       className={cn(FOCUS, 'h-6 w-6 rounded-md border-2', design.colors?.[slot.key] === c ? 'border-primary' : 'border-border')}
+                      style={{ background: c }} />
+                  ))}
+                </Row>
+              ))}
+              <p className="text-[11px] text-muted-foreground">Its size is yours to set on the park: drag a corner once it is standing.</p>
+            </>)}
+
+            {isBuilding && (<>
+              {/* A building's own colours. It could say what kind of thing it was and nothing else,
+                  so every shop, cafe and kiosk in the park came out the same grey. */}
+              {([['walls', 'Walls'], ['roof', 'Roof'], ['sign', 'Sign']] as const).map(([key, label]) => (
+                <Row key={key} label={label}>
+                  {BUILDING_COLOURS.map((c) => (
+                    <button key={c} type="button" aria-label={`${label} ${c}`}
+                      onClick={() => set({ colors: { ...design.colors, [key]: c } })}
+                      className={cn(FOCUS, 'h-6 w-6 rounded-md border-2', design.colors?.[key] === c ? 'border-primary' : 'border-border')}
                       style={{ background: c }} />
                   ))}
                 </Row>
