@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
-import { addFloraTo, PLANTING_TYPES, HABITAT_FEATURE_TYPES, type ItemDesign, currentDesign } from './design';
+import { addFloraTo, PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, type ItemDesign, currentDesign } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { FOCUS } from './ui/tokens';
+import { EYEBROW, FOCUS } from './ui/tokens';
 import { Waypoints, Sprout, type LucideIcon } from 'lucide-react';
 
 // The palette: six tools along the foot of the park.
@@ -54,7 +54,10 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
     : `${item.name} is not planting. It is built on its card, and placed here.`);
 
   const press = (key: ToolKey) => {
-    if (key === 'path') { onDrawing?.(!drawing); setOpen(null); return; }
+    // The pen goes down as soon as you press Path - drawing is what the tool is for - and the width
+    // and surface sit under it. Reported from playing it: "I cannot specify width and colour", and
+    // the plan asks for both ("Set its width and colour"), so there was a step nothing could tick.
+    if (key === 'path') onDrawing?.(!drawing);
     setOpen((cur) => (cur === key ? null : key));
   };
 
@@ -76,11 +79,41 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
             <span className="text-[10px] font-semibold leading-none">{t.label}</span>
           </button>
         );
-        if (!allowed || t.key === 'path') return button;
+        if (!allowed) return button;
         return (
           <Popover key={t.key} open={open === t.key} onOpenChange={(o) => setOpen(o ? t.key : null)}>
             <PopoverTrigger asChild>{button}</PopoverTrigger>
             <PopoverContent side="top" align="start" className="w-auto max-w-[22rem] p-2">
+              {t.key === 'path' && (
+                <div className="space-y-2">
+                  <div>
+                    <div className={cn(EYEBROW, 'text-muted-foreground')}>Width</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {PATH_WIDTHS.map((w) => (
+                        <button key={w.key} type="button"
+                          onClick={() => onDesign(item.id, { ...d, parts: { ...d.parts, thickness: w.key } })}
+                          className={cn(FOCUS, 'flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium transition-colors',
+                            d.parts.thickness === w.key ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted/60')}>
+                          <span className="rounded-full bg-foreground/70" style={{ width: 18, height: Math.max(2, w.px / 2) }} />
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className={cn(EYEBROW, 'text-muted-foreground')}>Surface</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {PATH_SURFACES.map((c) => (
+                        <button key={c.hex} type="button" aria-label={`Surface ${c.label}`} title={c.label}
+                          onClick={() => onDesign(item.id, { ...d, colors: { ...d.colors, path: c.hex } })}
+                          className={cn(FOCUS, 'h-6 w-6 rounded-md border-2', d.colors.path === c.hex ? 'border-primary' : 'border-border')}
+                          style={{ background: c.hex }} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Then click where the run starts and where it ends.</p>
+                </div>
+              )}
               {t.key === 'planting' && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   {[...PLANTING_TYPES, ...HABITAT_FEATURE_TYPES].map((kind) => (

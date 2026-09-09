@@ -82,6 +82,36 @@ export interface Standing {
  *  so changing it moves somebody's zoo. Habitats, then animals with nowhere to live, then whatever
  *  sits loose on the grounds, then the building sites.
  */
+/** How far a walkway stands off a habitat's fence, and how wide it is.
+ *
+ *  Every habitat gets one, without anybody drawing it: a pen you cannot walk round is not an
+ *  exhibit, it is an object in a field. Reported from playing it - "paths do not connect the
+ *  enclosures; can an enclosure have a path around it by default?" The drawn pathways are the runs
+ *  BETWEEN things, which is what a pathway item is for; this is the apron that makes each habitat
+ *  something a visitor can stand at, and it is what the drawn runs join onto.
+ */
+export const APRON_GAP = 10;
+export const APRON_WIDTH = 16;
+
+/** The loop of ground round one thing standing on the park, as a closed polyline. Shared, so the
+ *  plan, the isometric and the visitors' routing all walk the same ring. */
+export function apronRing(at: { x: number; y: number }, size: { w: number; h: number }): { x: number; y: number }[] {
+  const hx = size.w / 2 + APRON_GAP + APRON_WIDTH / 2;
+  const hy = size.h / 2 + APRON_GAP + APRON_WIDTH / 2;
+  return [
+    { x: at.x - hx, y: at.y - hy }, { x: at.x + hx, y: at.y - hy },
+    { x: at.x + hx, y: at.y + hy }, { x: at.x - hx, y: at.y + hy },
+    { x: at.x - hx, y: at.y - hy },
+  ];
+}
+
+/** Every apron on the park right now: one per habitat that is standing, built or under way. */
+export function aprons(standing: Standing[], at: (s: Standing) => { x: number; y: number }): { id: string; ring: { x: number; y: number }[] }[] {
+  return standing
+    .filter((s) => s.item.category === 'enclosure')
+    .map((s) => ({ id: s.item.id, ring: apronRing(at(s), s.size) }));
+}
+
 export function standingOnPark(state: ZooGameState): Standing[] {
   const open = state.backlog.filter(standsOnPark);
   const builtEnc = open.filter((it) => it.category === 'enclosure');
