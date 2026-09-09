@@ -297,7 +297,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     const it = state.backlog.find((x) => x.id === id);
     if (it?.status === 'committed' && !it.design) build(id, it.draftDesign ?? presetFor(it));
   };
-  const shellProps = { backlogTab, onReading, onCommitBuild: commitBuild, onPutIn: (id: string, enclosureId: string) => {
+  const shellProps = { backlogTab, onReading, onCommitBuild: commitBuild, onTurn: setItemRot, onPutIn: (id: string, enclosureId: string) => {
     // Moving in is the moment an animal exists, the way dropping a habitat on the park is for
     // a habitat: whatever is in the draft becomes its design. Without it the Product Owner had
     // nothing built to accept - "how do I fulfil the last AC?" - and the card sat in Doing.
