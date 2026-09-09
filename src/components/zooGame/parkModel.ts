@@ -56,8 +56,12 @@ export const groundSize = (item: BacklogItem): { w: number; h: number } => {
  *  fence next door, and reads as broken rather than as angled. So boxes turn by quarters, which is
  *  also the turn anybody actually wants - a shop facing the path instead of away from it. */
 export const quarterOf = (item: BacklogItem): number =>
-  (item.category === 'flora' && isLandscapeType(parkType(item))) ? 0
-    : ((Math.round((item.rot ?? 0) / 90) % 4) + 4) % 4;
+  // Landscape features turn too. They were pinned at zero - the rule was written when `rot` could
+  // be any angle and a river on the diagonal read as broken - but a quarter is not an angle, it is
+  // the difference between a river running across the park and one running up it, and between a
+  // bridge that crosses that river and one that lies along it. Reported from playing it: "I can't
+  // turn it (or the river)."
+  ((Math.round((item.rot ?? 0) / 90) % 4) + 4) % 4;
 
 /** One thing standing on the park, and what is standing in it. */
 export interface Standing {

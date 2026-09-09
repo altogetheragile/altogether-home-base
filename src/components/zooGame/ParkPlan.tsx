@@ -27,6 +27,19 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
   default: { fill: '#cfe0c2', stroke: '#7f9a72' },
 };
 
+/** What colour a thing is drawn in. Scenery is not one colour: a river is water, a bridge is a
+ *  deck, rocks are stone. Drawn as one flat green they all read as "some planting", which is why a
+ *  river on the plan looked like a lawn and a bridge over it looked like nothing at all. */
+function fillFor(item: { category: string; template?: string; design?: { parts?: Record<string, string> }; draftDesign?: { parts?: Record<string, string> } }) {
+  if (item.category !== 'flora') return FILL[item.category] ?? FILL.default;
+  const kind = item.draftDesign?.parts?.type ?? item.design?.parts?.type ?? item.template ?? 'tree';
+  if (kind === 'river' || kind === 'pond') return { fill: '#7cc0e8', stroke: '#4a90b8' };
+  if (kind === 'bridge') return { fill: '#c8965a', stroke: '#7a5230' };
+  if (kind === 'rocks') return { fill: '#9aa1a8', stroke: '#6f757b' };
+  if (kind === 'fountain') return { fill: '#bcd9e8', stroke: '#7a8f9b' };
+  return FILL.flora;
+}
+
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
   placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, onSetMemberSpot, className }: {
   state: ZooGameState;
@@ -79,6 +92,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // cannot move the bridge, it thinks it is a river".
     .sort((a, z) => (z.size.w * z.size.h) - (a.size.w * a.size.h));
 
+  /** Whether a thing is water somebody could put a bridge across. */
+  const overWater = (it: { category: string; template?: string; design?: { parts?: Record<string, string> }; draftDesign?: { parts?: Record<string, string> } }) => {
+    const kind = it.draftDesign?.parts?.type ?? it.design?.parts?.type ?? it.template;
+    return it.category === 'flora' && (kind === 'river' || kind === 'pond');
+  };
+
   /** Pointer to park coordinates. The plan is drawn at 1:1 in its own viewBox, so this is only the
    *  scale between the box on the screen and the box in the park. */
   const worldAt = (e: { clientX: number; clientY: number }) => {
@@ -91,28 +110,39 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const verdict = (id: string, box: { w: number; h: number }, w: { x: number; y: number }) => {
     const at = insidePark(box, w);
     const off = Math.abs(at.x - w.x) > 1 || Math.abs(at.y - w.y) > 1;
-    const over = boxes.find((b) => b.item.id !== id
+    // Water is the exception, and it is the whole point of a bridge: a bridge over a river has to
+    // overlap it or it is not a bridge. Reported from playing it - "I can't place it over the
+    // river". Everything else keeps its ground to itself.
+    const over = boxes.find((b) => b.item.id !== id && !overWater(b.item)
       && Math.abs(at.x - b.at.x) < (b.size.w + box.w) / 2 && Math.abs(at.y - b.at.y) < (b.size.h + box.h) / 2);
     return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !over, why: off ? 'off the park' : over ? `on top of ${over.item.name}` : undefined };
   };
 
   /** Drag something that is already standing: it follows the pointer and lands where you let go. */
   const dragFrom = (e: ReactPointerEvent, b: typeof boxes[number]) => {
-    if (!onPlaceItem) return;
     e.preventDefault();
     e.stopPropagation();
     const start = worldAt(e);
     if (!start) return;
     const grabX = start.x - b.at.x, grabY = start.y - b.at.y;
+    const from = { x: e.clientX, y: e.clientY };
+    let moved = false;
     const move = (ev: PointerEvent) => {
+      if (!moved && Math.hypot(ev.clientX - from.x, ev.clientY - from.y) > 5) moved = true;
+      if (!moved || !onPlaceItem) return;
       const p = worldAt(ev);
       if (p) setGhost(verdict(b.item.id, b.size, { x: p.x - grabX, y: p.y - grabY }));
     };
     const up = (ev: PointerEvent) => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      const p = worldAt(ev);
       setGhost(null);
+      // A press that did not move is a press: it picks the thing up and opens it, the way its card
+      // does. Opening on the way DOWN swallowed every drag - the editor came up over the park
+      // halfway through moving something.
+      if (!moved) { onSelect?.(b.item.id); return; }
+      if (!onPlaceItem) return;
+      const p = worldAt(ev);
       if (!p) return;
       const v = verdict(b.item.id, b.size, { x: p.x - grabX, y: p.y - grabY });
       if (v.ok) onPlaceItem(b.item.id, { x: v.x, y: v.y });
@@ -165,7 +195,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
 
   return (
     <div className={cn('w-full', className)}>
-      <svg ref={svgRef} data-part="park-plan" viewBox={`0 0 ${CANVAS_W} ${PLAY_H}`} role="img"
+      {/* No selecting. Dragging across the park was painting the browser's own selection highlight
+          over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
+          there. Reported from playing it: "blue squares appear as trails." */}
+      <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={`0 0 ${CANVAS_W} ${PLAY_H}`} role="img"
         aria-label={`The zoo from above: ${boxes.length} things standing on it`}
         style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height, touchAction: 'none',
           cursor: tool === 'path' ? 'crosshair' : placing ? 'copy' : 'default' }}
@@ -234,12 +267,15 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
 
         {/* Everything standing on the park, straight down, nothing behind anything else. */}
         {boxes.map((b) => {
-          const c = FILL[b.item.category] ?? FILL.default;
+          const c = fillFor(b.item);
           const on = selected === b.item.id;
           const x = b.at.x - b.size.w / 2, y = b.at.y - b.size.h / 2;
           return (
             <g key={b.item.id} data-plan-item={b.item.id}
-              onPointerDown={(e) => { onSelect?.(b.item.id); dragFrom(e, b); }}
+              // While something is being put down, the things already standing keep out of the way:
+              // the click that places a bridge over a river used to select the river first and open
+              // it instead of the thing you had just placed.
+              onPointerDown={placing ? undefined : (e) => dragFrom(e, b)}
               style={{ cursor: onPlaceItem ? 'grab' : 'pointer' }}>
               <rect x={x} y={y} width={b.size.w} height={b.size.h} rx={6}
                 fill={c.fill} fillOpacity={b.underWay ? 0.45 : 1}

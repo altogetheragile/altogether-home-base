@@ -1987,7 +1987,13 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
       cost: 'nothing today. It clears in a day or two, and nobody here solved it' };
   })();
 
-  const logged = note(state, { kind: 'daily-scrum', by,
+  // Two lines, because two things happened: the event was held, and this is what it decided. Only
+  // the decision was recorded, so a Sprint where every Daily Scrum was held with something on the
+  // table read afterwards as a Sprint with no Daily Scrums in it at all.
+  const held = note(state, { kind: 'daily-scrum', by,
+    what: `Day ${state.dayNumber}: the Daily Scrum was held${by && by !== 'developer' ? `, by ${whoIs(by).replace(/^The /, 'the ')}` : ''}.`,
+    cost: `the timebox costs about ${Math.round((1 - DAILY_SCRUM_MULT) * 100)}% of the day` });
+  const logged = note(held, { kind: 'daily-scrum', by,
     what: `Day ${state.dayNumber}: ${outcome.what}`, cost: outcome.cost });
   const base: ZooGameState = { ...logged,
     pendingImpediment: null,

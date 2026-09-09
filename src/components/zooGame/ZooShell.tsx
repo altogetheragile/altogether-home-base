@@ -444,7 +444,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     thing is where you drop it. The isometric view is the zoo as a visitor meets it,
                     and it lives on the Increment tab where nobody is trying to build in it. */}
                 <div className="min-h-0 flex-1 overflow-y-auto">
-                  <ParkPlan state={state} height={620} selected={building ?? null} onSelect={onOpenBuild}
+                  <ParkPlan state={state} height={620} selected={building ?? null}
+                    // Picking a thing up on the park opens it, the way picking its card up does.
+                    // Reported from playing it: "when I click the bridge it does not automatically
+                    // open - I have to click the card." Once something had been kept as a draft or
+                    // placed, the takeover stayed shut however often you pressed the thing itself.
+                    onSelect={(id) => { setDrafted(null); onOpenBuild?.(id); }}
                     onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn} onSetMemberSpot={onSetMemberSpot}
                     placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
                     onPlace={(id, pos) => { onCommitBuild?.(id); onPlaceItem?.(id, pos); setPlacingId(null); }}
