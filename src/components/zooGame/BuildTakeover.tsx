@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
 import type { EditApi } from './ParkView';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,37 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
   const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
 
   const set = (d: Partial<typeof design>) => edit.onDesign(item.id, { ...design, ...d });
+
+  /** Move a pool or a piece of planting to where you want it inside the fence.
+   *
+   *  Asked while playing it: "what happened to being able to place water and flora inside an
+   *  enclosure?" It went with the old studio. Everything landed where the code put it, which is
+   *  fine for the first one and useless for the fourth. Held in the habitat's own coordinates
+   *  (0 to 1 across the pen), so it means the same thing in both drawings. */
+  const dragPiece = (e: ReactPointerEvent, kind: 'water' | 'flora', index: number, box: { x: number; y: number; w: number; h: number }) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const svg = (e.target as SVGElement).ownerSVGElement;
+    if (!svg) return;
+    const move = (ev: PointerEvent) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * 320;
+      const py = ((ev.clientY - r.top) / r.height) * 220;
+      const fx = Math.max(0.06, Math.min(0.94, (px - box.x) / box.w));
+      const fy = Math.max(0.08, Math.min(0.92, (py - box.y) / box.h));
+      if (kind === 'flora') {
+        const flora = enclosureFlora(design).map((f, i) => (i === index ? { ...f, x: fx, y: fy } : f));
+        edit.onDesign(item.id, { ...design, flora });
+      } else {
+        const water = enclosureWater(design).map((wf, i) => (i === index
+          ? { ...wf, x: Math.max(0, Math.min(1 - wf.w, fx - wf.w / 2)), y: Math.max(0, Math.min(1 - wf.h, fy - wf.h / 2)) } : wf));
+        edit.onDesign(item.id, { ...design, water });
+      }
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
 
   // The plan ticks itself off as the work is done, so it is not a second set of boxes for what you
   // just did. It used to live on the old floating toolbar, and went with it - which left every item
@@ -116,13 +147,19 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                     <rect x={x} y={y} width={w} height={h} rx={design.parts.shape === 'rounded' ? 14 : 4}
                       fill={design.colors?.ground ?? '#c8a06a'} stroke={design.colors?.fence ?? '#8a6a3b'} strokeWidth={6} />
                     {enclosureWater(design).map((wf, i) => (
-                      <ellipse key={i} cx={x + w * (wf.x + wf.w / 2)} cy={y + h * (wf.y + wf.h / 2)}
+                      <ellipse key={`w${i}`} data-piece={`water-${i}`} style={{ cursor: canBuild ? 'grab' : 'default' }}
+                        onPointerDown={canBuild ? (e) => dragPiece(e, 'water', i, { x, y, w, h }) : undefined}
+                        cx={x + w * (wf.x + wf.w / 2)} cy={y + h * (wf.y + wf.h / 2)}
                         rx={(w * wf.w) / 2} ry={(h * wf.h) / 2} fill="#7cc0e8" />
                     ))}
                     {enclosureFlora(design).map((f, i) => (
-                      /rock|shelter/i.test(f.type)
-                        ? <rect key={i} x={x + w * f.x - 14} y={y + h * f.y - 10} width={28} height={20} rx={3} fill="#8a5a2b" />
-                        : <circle key={i} cx={x + w * f.x} cy={y + h * f.y} r={9} fill="#3f8f43" />
+                      <g key={`f${i}`} data-piece={`flora-${i}`} style={{ cursor: canBuild ? 'grab' : 'default' }}
+                        onPointerDown={canBuild ? (e) => dragPiece(e, 'flora', i, { x, y, w, h }) : undefined}>
+                        {/rock|shelter/i.test(f.type)
+                          ? <rect x={x + w * f.x - 14} y={y + h * f.y - 10} width={28} height={20} rx={3}
+                              fill={f.foliage ?? '#8a5a2b'} />
+                          : <circle cx={x + w * f.x} cy={y + h * f.y} r={9} fill={f.foliage ?? '#3f8f43'} />}
+                      </g>
                     ))}
                     <text x={x + w / 2} y={y - 8} textAnchor="middle" fontSize={11} fontWeight={700} fill="#2f4f2f">
                       {Math.round(size.w / 22)} &times; {Math.round(size.h / 22)} tiles
@@ -175,13 +212,12 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                 ))}
               </Row>
               <Row label="Inside">
-                {/* Into the habitat's own design, like the water and the planting beside it. It used
-                    to drop a copy on the park instead, so a shelter you had plainly added was
-                    invisible to "can I tell an animal lives here, not a shed?" - a criterion nobody
-                    could satisfy however much they built. */}
-                <Chip onClick={() => set({ flora: addFloraTo(design, HABITAT_FEATURE_TYPES[0]) })}>+ Shelter</Chip>
+                {/* Everything that can go in a habitat, named for what it is. "Shelter" was the only
+                    word offered for rocks, and half the planting was not offered at all - asked
+                    while playing it: "what happened to rocks?" They were there, under another name.
+                    Each one lands in the pen and can be dragged where you want it. */}
                 <Chip onClick={() => set({ water: addWaterTo(design) })}>+ Water</Chip>
-                {PLANTING_TYPES.slice(0, 2).map((t) => (
+                {[...HABITAT_FEATURE_TYPES, ...PLANTING_TYPES].map((t) => (
                   <Chip key={t} onClick={() => set({ flora: addFloraTo(design, t) })}>+ {t}</Chip>
                 ))}
               </Row>
