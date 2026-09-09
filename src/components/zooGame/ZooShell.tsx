@@ -257,7 +257,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Held as "which item has been put down" rather than a flag an effect has to keep in step: pick up
   // something else and it opens again, without a render that corrects itself.
   const [drafted, setDrafted] = useState<string | null>(null);
-  const takeoverOpen = !!inHand && drafted !== inHand.id;
+  // A path is not built in a takeover - it is drawn on the park, point to point, with the Path tool.
+  // Opening the object editor on one gave a blank preview, no controls, and hid the only tool that
+  // could do the work behind it: everything a dead end is made of.
+  const drawnOnPark = inHand?.category === 'path';
+  const takeoverOpen = !!inHand && !drawnOnPark && drafted !== inHand.id;
   const setTakeoverOpen = (open: boolean) => setDrafted(open ? null : inHand?.id ?? null);
   const pill = eventPill(state);
   const goal = goalLine(state);
