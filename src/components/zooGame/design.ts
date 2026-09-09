@@ -865,8 +865,11 @@ export function applyPiece(design: ItemDesign, piece: FloraPiece): ItemDesign {
  *  that asked for it too, and nothing is left demanding something the studio cannot do. */
 export function floraColors(type?: string): { key: string; label: string }[] {
   switch (type) {
-    // Landscape: drawn as geometry, so both colours land.
-    case 'river': return [];
+    // Landscape: drawn as geometry, so both colours land. Water is not one of them - water is
+    // water, and a control that is not a decision is one more thing to click. The bank IS a
+    // decision, and a river had not even got that: it was the one thing in the park with no
+    // colour at all.
+    case 'river': return [{ key: 'trunk', label: 'Bank' }];
     case 'rocks': return [{ key: 'foliage', label: 'Rock' }];
     case 'hedge': return [{ key: 'foliage', label: 'Leaves' }];
     case 'pond': return [{ key: 'trunk', label: 'Bank' }];
