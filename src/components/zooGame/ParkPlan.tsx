@@ -27,7 +27,7 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
   default: { fill: '#cfe0c2', stroke: '#7f9a72' },
 };
 
-export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize,
+export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
   placing, onPlace, tool = 'none', pathStyle, onAddConnector, onSetTool, onAskToCheck, className }: {
   state: ZooGameState;
   height?: number;
@@ -38,6 +38,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   /** Dragging a corner to change a habitat's footprint. */
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
+  /** Turn a thing a quarter. Both drawings and the visitors' routing already read `rot`; nothing
+   *  had offered it since the object editor's Turn control was cut. */
+  onTurn?: (id: string, rot: number) => void;
   /** Something is being put down for the first time: it follows the cursor with a verdict on it. */
   placing?: { id: string; w: number; h: number } | null;
   onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }) => void;
@@ -253,6 +256,21 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   </g>
                 );
               })()}
+              {/* A quarter turn, where the way a thing faces matters: a kiosk facing the path
+                  instead of away from it, a habitat that fits better lying the other way. Here
+                  rather than in the takeover, because which way it faces is placement, and
+                  placement is the park's. */}
+              {on && onTurn && b.item.category !== 'path' && (
+                <g data-part="turn-grip" style={{ cursor: 'pointer' }}
+                  onPointerDown={(e) => { e.stopPropagation(); onTurn(b.item.id, ((b.item.rot ?? 0) + 90) % 360); }}>
+                  <title>Turn it a quarter</title>
+                  <circle cx={x + b.size.w - 9} cy={y + 9} r={11} fill="#fff" stroke="#e6842a" strokeWidth={3} />
+                  <path d="M -5 -1 A 5 5 0 1 1 -1 5" fill="none" stroke="#e6842a" strokeWidth={2.4}
+                    strokeLinecap="round" transform={`translate(${x + b.size.w - 9} ${y + 9})`} />
+                  <path d={`M ${x + b.size.w - 14} ${y + 5} l 0 -5 l 5 0`} fill="none" stroke="#e6842a" strokeWidth={2.4} strokeLinecap="round" />
+                </g>
+              )}
+
               {/* A corner to drag, where the footprint is yours to change. */}
               {on && onSetSize && b.item.category === 'enclosure' && (
                 <rect data-part="size-grip" x={x + b.size.w - 9} y={y + b.size.h - 9} width={18} height={18} rx={4}
