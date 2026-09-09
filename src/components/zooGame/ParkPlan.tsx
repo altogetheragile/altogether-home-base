@@ -70,7 +70,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     underWay: s.underWay,
     size: s.size,
     at: restingPlace(s.item, s.size, auto),
-  }));
+  }))
+    // Biggest first, so what sits ON something is drawn on top of it and can be picked up. A river
+    // runs the width of the park and a bridge stands on the river: drawn in Backlog order the river
+    // covered the bridge, so every press near it selected the river. Reported from playing it - "I
+    // cannot move the bridge, it thinks it is a river".
+    .sort((a, z) => (z.size.w * z.size.h) - (a.size.w * a.size.h));
 
   /** Pointer to park coordinates. The plan is drawn at 1:1 in its own viewBox, so this is only the
    *  scale between the box on the screen and the box in the park. */
@@ -278,7 +283,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               )}
 
               {/* A corner to drag, where the footprint is yours to change. */}
-              {on && onSetSize && b.item.category === 'enclosure' && (
+              {/* Scenery is sized here too - a river as wide as you want it, a bridge as long as
+                  it needs to be - which is what the takeover promises when it says its size is set
+                  on the park. */}
+              {on && onSetSize && (b.item.category === 'enclosure' || b.item.category === 'flora') && (
                 <rect data-part="size-grip" x={x + b.size.w - 9} y={y + b.size.h - 9} width={18} height={18} rx={4}
                   fill="#fff" stroke="#e6842a" strokeWidth={3}
                   style={{ cursor: 'nwse-resize' }}

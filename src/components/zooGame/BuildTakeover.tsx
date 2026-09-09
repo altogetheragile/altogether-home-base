@@ -5,9 +5,16 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { answerable, checkCriterion, checkedAt } from './parkChecks';
-import { addWaterTo, addFloraTo, enclosureWater, enclosureFlora, ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES, groupSize, hasRoomToRoam, designSatisfiesTask, currentDesign } from './design';
+import { addWaterTo, addFloraTo, enclosureWater, enclosureFlora, ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES, groupSize, hasRoomToRoam, designSatisfiesTask, currentDesign, floraColors, floraDefaultColors, LANDSCAPE_TYPES } from './design';
 import { isSignOffTask } from './engine';
 import { Check, Circle, X } from 'lucide-react';
+
+/** What a piece of scenery can be. The landscape features and the planting in one list, because
+ *  from a Backlog item's point of view they are the same thing: something that stands in the park
+ *  and is not a habitat, an animal or a building. */
+const SCENERY_TYPES: string[] = [...new Set([...LANDSCAPE_TYPES.filter((t) => t !== 'carpark' && t !== 'entrance'), ...PLANTING_TYPES])];
+/** Enough colours to make a choice, and not so many that it is a paint program. */
+const SCENERY_COLOURS = ['#43a047', '#7a5230', '#8fa3b0', '#c8a06a', '#7cc0e8', '#e0679a', '#6b7280'];
 
 // Everything about an object is built here, and nothing else is.
 //
@@ -43,6 +50,7 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
   const isHabitat = item.category === 'enclosure';
   const isAnimal = item.category === 'exhibit';
   const isBuilding = item.category === 'amenity';
+  const isScenery = item.category === 'flora';
   const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
 
   const set = (d: Partial<typeof design>) => edit.onDesign(item.id, { ...design, ...d });
@@ -177,6 +185,36 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
               {isBuilding && (
                 <rect x={110} y={70} width={100} height={80} rx={4} fill={design.colors?.wall ?? '#cfd8e3'} stroke="#6b7c93" strokeWidth={4} />
               )}
+              {/* Scenery, in the colours you chose. A blank preview is what made a bridge look like
+                  a thing with nothing to it. */}
+              {isScenery && (() => {
+                const kind = design.parts.type ?? item.template ?? 'tree';
+                const a = design.colors?.foliage ?? '#43a047';
+                const bcol = design.colors?.trunk ?? '#7a5230';
+                if (kind === 'river' || kind === 'bridge') {
+                  return (
+                    <g>
+                      <rect x={20} y={95} width={280} height={30} fill={kind === 'river' ? (a === '#43a047' ? '#7cc0e8' : a) : '#7cc0e8'} />
+                      {kind === 'bridge' && (<>
+                        <rect x={120} y={80} width={80} height={60} rx={4} fill={a} />
+                        <rect x={120} y={78} width={80} height={6} fill={bcol} />
+                        <rect x={120} y={136} width={80} height={6} fill={bcol} />
+                      </>)}
+                    </g>
+                  );
+                }
+                if (kind === 'fountain' || kind === 'pond') {
+                  return (<g>
+                    <ellipse cx={160} cy={110} rx={60} ry={38} fill="#7cc0e8" stroke={bcol} strokeWidth={6} />
+                    {kind === 'fountain' && <circle cx={160} cy={110} r={12} fill={bcol} />}
+                  </g>);
+                }
+                if (kind === 'rocks') return <g><rect x={130} y={90} width={60} height={40} rx={8} fill={a} /></g>;
+                return (<g>
+                  <rect x={155} y={110} width={10} height={40} fill={bcol} />
+                  <circle cx={160} cy={100} r={34} fill={a} />
+                </g>);
+              })()}
             </svg>
           </div>
 
@@ -242,6 +280,30 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                     style={{ background: c }} />
                 ))}
               </Row>
+            </>)}
+
+            {/* Scenery - a river, a bridge, a fountain, a stand of trees. It had no controls at all:
+                the takeover opened on a blank preview and a Place button, so "the bridge is not
+                configurable" was exactly right. What kind of thing it is, and the colours that kind
+                has. Its size is set on the park, by dragging its edge, where you can see it. */}
+            {isScenery && (<>
+              <Row label="What kind">
+                {SCENERY_TYPES.map((t) => (
+                  <Chip key={t} on={(design.parts.type ?? item.template) === t}
+                    onClick={() => set({ parts: { ...design.parts, type: t, piece: t }, colors: { ...design.colors, ...floraDefaultColors(t) } })}>{t}</Chip>
+                ))}
+              </Row>
+              {floraColors(design.parts.type ?? item.template).map((slot) => (
+                <Row key={slot.key} label={slot.label}>
+                  {SCENERY_COLOURS.map((c) => (
+                    <button key={c} type="button" aria-label={`${slot.label} ${c}`}
+                      onClick={() => set({ colors: { ...design.colors, [slot.key]: c } })}
+                      className={cn(FOCUS, 'h-6 w-6 rounded-md border-2', design.colors?.[slot.key] === c ? 'border-primary' : 'border-border')}
+                      style={{ background: c }} />
+                  ))}
+                </Row>
+              ))}
+              <p className="text-[11px] text-muted-foreground">Its size is yours to set on the park: drag a corner once it is standing.</p>
             </>)}
 
             {isBuilding && (

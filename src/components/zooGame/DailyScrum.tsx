@@ -187,9 +187,20 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
               </button>
             ))}
           </div>
-          <div>
-            <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
-            <span className="ml-2 text-[11px] text-muted-foreground">the event does not happen, and it grows overnight</span>
+          {/* Holding the event is its own act, and it was missing: with something on the table the
+              only ways out were to answer it or to skip the event altogether. Reported from playing
+              it - "there is no option to perform a Daily Scrum on the takeover". The Developers can
+              hold their Daily Scrum and leave the thing where it is; working around it is an
+              answer, and so is deciding not to decide today. */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+            <div className="flex flex-col gap-1">
+              <Button onClick={() => { onAnswer?.('around'); onHold(); }}>Hold the Daily Scrum &rarr;</Button>
+              <span className="text-[11px] text-muted-foreground">the event happens; what surfaced is worked around and is still there tomorrow</span>
+            </div>
+            <div>
+              <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
+              <span className="ml-2 text-[11px] text-muted-foreground">the event does not happen, and it grows overnight</span>
+            </div>
           </div>
         </>
       ) : (
