@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState, useRef, useLayoutEffect } from 'react';
 import type { ZooGameState, BacklogItem, ZooConnector } from './types';
 /** The isometric view of the park - and, since the blueprint was retired, the only one. Lazily
  *  imported: it carries the isometric artwork, which is more than half of what the game weighs,
@@ -205,6 +205,20 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   const [tool, setTool] = useState<'none' | 'connect' | null>(null);
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1); // 1 = the park fits the width it is given
+  // Zooming keeps the middle of what you are looking at where it is. The park grows from its
+  // top-left corner, so zooming in used to walk the view off it: at 300% you were looking at empty
+  // grass and the zoo was somewhere up and to the left. Whatever is in the middle of the box stays
+  // in the middle of the box, which is what zooming means everywhere else.
+  const scrollBox = useRef<HTMLDivElement>(null);
+  const zoomWas = useRef(1);
+  useLayoutEffect(() => {
+    const box = scrollBox.current;
+    const factor = zoom / zoomWas.current;
+    zoomWas.current = zoom;
+    if (!box || factor === 1) return;
+    box.scrollLeft = (box.scrollLeft + box.clientWidth / 2) * factor - box.clientWidth / 2;
+    box.scrollTop = (box.scrollTop + box.clientHeight / 2) * factor - box.clientHeight / 2;
+  }, [zoom]);
   // Plan to build in, Increment to inspect. The same zoo either way - this switches how it is
   // drawn, not what it is.
   //
@@ -456,7 +470,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
           <Suspense fallback={<div className="h-[440px] animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
             {/* Zoomed in, the drawing grows past its window and the window is scrolled - the same
                 as walking up to it. At 100% it fits, and there is nothing to scroll. */}
-            <div className="relative overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
+            <div ref={scrollBox} className="relative overflow-auto rounded-lg" style={{ maxHeight: 560 }}>
               {/* What is standing here, counted apart: what has been delivered, what is still a
                   promise, and who is walking round it. One line, on the park. */}
               {focus && (
