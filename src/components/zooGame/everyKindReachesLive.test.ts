@@ -71,10 +71,14 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
     const home = s.backlog.find((it) => it.category === 'enclosure' && (it.status === 'open' || it.status === 'done'))!;
     s = planItemShape(s, id, { enclosureId: home.id });
   }
-  s = buildItem(s, id, design);
-  s = placeOnPark(s, id);
   if (item().category === 'path') {
+    // A path is not put down, it is drawn - and drawing the run is what commits it, the way placing
+    // commits a habitat. Nothing else is done to it here, deliberately: if a path needed a private
+    // extra step, this test would be the place that hid it.
     s = addConnector(s, { id: `run-${id}`, itemId: id, a: { x: 400, y: 600 }, b: { x: 400, y: 300 }, bends: [], thickness: 9, color: '#c9a86a' });
+  } else {
+    s = buildItem(s, id, design);
+    s = placeOnPark(s, id);
   }
 
   // 4. The plan ticks itself off as the work is done - every step the design satisfies.

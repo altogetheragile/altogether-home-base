@@ -2,7 +2,7 @@ import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, Ba
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
-import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE } from './design';
+import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -1021,7 +1021,24 @@ export function clearZooPaths(state: ZooGameState): ZooGameState {
 
 /** Add a manual connector (drawn on the Park). */
 export function addConnector(state: ZooGameState, connector: ZooConnector): ZooGameState {
-  return { ...state, connectors: [...(state.connectors ?? []), connector] };
+  const next = { ...state, connectors: [...(state.connectors ?? []), connector] };
+  // Laying the run is the moment a path exists. Everything else is committed by being put down -
+  // a habitat when it is placed, an animal when it moves in - and a path is never put down, it is
+  // drawn. Without this its design stayed a draft, so there was nothing built for the Product Owner
+  // to accept, no ask on the card, and no way to finish it. The steps its design satisfies tick
+  // themselves here too, because the takeover that used to do that never opens for a path.
+  if (!connector.itemId) return next;
+  return {
+    ...next,
+    backlog: next.backlog.map((it) => {
+      if (it.id !== connector.itemId || it.status !== 'committed') return it;
+      const design = it.design ?? it.draftDesign ?? presetFor(it);
+      const tasks = (it.tasks ?? []).map((t) => (
+        !t.done && t.label.trim() && !isSignOffTask(t.label) && designSatisfiesTask(it, design, t.label)
+          ? { ...t, done: true } : t));
+      return settleStatus({ ...it, started: true, design, draftDesign: undefined, tasks });
+    }),
+  };
 }
 
 /** Update a connector's ends, bends, thickness or colour. */
