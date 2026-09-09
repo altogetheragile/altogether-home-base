@@ -332,7 +332,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                 <span className={cn('truncate text-sm font-bold leading-tight', goal.risk && 'text-amber-300')}>{goal.line}</span>
                 {/* The Goal itself under the verdict - and nothing where there is no Goal, rather
                     than the same sentence twice in two weights. */}
-                {state.sprintGoal.trim() && (
+                {state.sprintGoal.trim() && !goal.isGoal && (
                   <span className="w-full truncate text-[11px] opacity-80">{state.sprintGoal.trim()}</span>
                 )}
               </button>

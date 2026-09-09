@@ -4,6 +4,7 @@ import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapac
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
+import { CANVAS_W, PLAY_H } from './parkLayout';
 import { whereItStands } from './parkModel';
 
 // A seat nobody is sitting in, played by the game.
@@ -96,8 +97,23 @@ function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null
   const here = state.backlog.map((i) => ({ item: i, at: i.zone === item.zone ? (i.pos ?? whereItStands(state, i)) : null }))
     .filter((x): x is { item: BacklogItem; at: { x: number; y: number } } => !!x.at);
   const target = here.find((x) => x.item.category === 'enclosure') ?? here.find((x) => x.item.category === 'amenity') ?? here[0];
-  if (!target) return null;
   const design = item.design ?? presetFor(item);
+  if (!target) {
+    // Nothing in this zone to walk to yet, which is the ordinary case for the paths through the
+    // grounds: they are built before the things they lead to. A path still gets laid - where people
+    // will walk - rather than the Developers standing about waiting for something to point at.
+    // Up the middle from the way in. A path has no resting place of its own - it is a run, not a
+    // box - so there is nothing to ask the park for, and this is where a first path goes.
+    const own = item.pos ?? { x: CANVAS_W / 2, y: PLAY_H - 80 };
+    return {
+      id: `run-${item.id}`, itemId: item.id,
+      a: { x: Math.round(own.x), y: Math.round(own.y) },
+      b: { x: Math.round(own.x), y: Math.round(Math.max(80, own.y - 300)) },
+      bends: [],
+      thickness: Number(design.parts.thickness ?? 14) || 14,
+      color: design.colors.path ?? '#b9a888',
+    };
+  }
   return {
     id: `run-${item.id}`,
     itemId: item.id,

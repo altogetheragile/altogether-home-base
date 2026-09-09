@@ -970,8 +970,15 @@ export function presetFor(item: BacklogItem): ItemDesign {
   // A habitat starts as bare ground: water is something you choose to add, not something every
   // enclosure is born with. (Designs saved before this still honour the old `water: 'on'` flag.)
   if (item.category === 'enclosure') return { parts: {}, colors: {} };
-  if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: {} };
-  if (item.category === 'amenity') return { parts: { type: item.template ?? buildingTypeFor(item.name, item.services), sign: 'on' }, colors: {} };
+  // In its own colours from the start. An empty palette meant "Colour the foliage" could never tick
+  // - nothing writes a foliage colour any more - and Done waits for the plan. Same story as the
+  // fence and the coat: the control went and the step was left waiting for it.
+  if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: floraDefaultColors(item.template ?? 'tree') };
+  if (item.category === 'amenity') {
+    const kind = item.template ?? buildingTypeFor(item.name, item.services);
+    // ...and a building comes with walls, a roof and a sign it can actually be seen to have.
+    return { parts: { type: kind, sign: 'on' }, colors: { walls: '#e6ddcf', roof: '#a4623a', sign: '#3f6f4f' } };
+  }
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: speciesColors(item) };
 }
 export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);

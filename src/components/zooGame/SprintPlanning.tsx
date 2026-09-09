@@ -333,6 +333,15 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           <div className={cn(EYEBROW, 'text-primary')}>{current.topic} of Sprint Planning</div>
           <h2 className="text-2xl font-bold leading-tight tracking-tight">{current.question}</h2>
           <p className="text-sm text-muted-foreground">{current.lead}</p>
+          {/* The Goal, on the screens whose whole job is to serve it. Asked while playing it:
+              "where is the Sprint Goal?" It was agreed at topic one and then only in the strip,
+              truncated, above a line about progress there is none of yet. */}
+          {step !== 'why' && state.sprintGoal.trim() && (
+            <p data-part="goal-here" className="mt-1 flex flex-wrap items-baseline gap-x-2 rounded-lg border border-primary/30 bg-primary/[0.05] px-3 py-1.5">
+              <span className={cn(EYEBROW, 'text-primary')}>Sprint Goal</span>
+              <span className="min-w-0 text-sm font-medium">{state.sprintGoal.trim()}</span>
+            </p>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <StepTrack steps={STEPS} current={step} done={done} onGo={goTo} caption="The three topics of Sprint Planning" />
