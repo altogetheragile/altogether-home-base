@@ -12,7 +12,7 @@ import { animalArtFor, coatFilter } from './art/animalArt';
 import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
-  roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, fenceRun as fenceRunOf, jitter, COS, type Pt,
+  roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, jitter, COS, type Pt,
 } from './art/iso';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
 
@@ -88,14 +88,6 @@ function foliageFilter(hex?: string): string | undefined {
  *  Sampled coarsely on purpose: the fence is built of panels along each segment, and a segment too
  *  short to hold one is a gap in the fence.
  */
-/** Does every side of this outline run true across the park? Only then can it wear the fence
- *  panels, which are drawn for those two directions and no other. */
-function runsAll(outline: { x: number; y: number }[]): boolean {
-  return outline.every((from, i) => {
-    const to = outline[(i + 1) % outline.length];
-    return Math.abs(to.x - from.x) < 0.5 || Math.abs(to.y - from.y) < 0.5;
-  });
-}
 
 function outlineOf(shape: string, w: number, h: number): [number, number][] {
   if (shape === 'circle') {
@@ -711,7 +703,6 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   const depth = (wx: number, wy: number): number => { const t = T(wx, wy); return depthOf(t.x, t.y); };
   const boxFaces = (x0: number, y0: number, x1: number, y1: number, h: number, k: number) => boxFacesOf(...Tbox(x0, y0, x1, y1), h, k);
   /** Fencing runs the way the park is turned, and a panel drawn up-slope becomes one drawn down. */
-  const fenceRun = (from: Pt, to: Pt, k: number, up: boolean) => fenceRunOf(T(from.x, from.y), T(to.x, to.y), k, q % 2 ? !up : up);
   /** Everything is drawn inset by the scene's margin, but `boxFaces` and `roofFaces` hand back raw
    *  projected points. Anything built from those has to be shifted, or it is drawn off the edge of
    *  the picture - which is silent, because a polygon at the wrong coordinates is still a polygon. */
@@ -1038,40 +1029,45 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     //
     // So a habitat whose sides all run true gets its pickets, and any other shape gets a low wall
     // built the same way the bridge deck is: one drawing per habitat, never half of each.
-    const square = runsAll(outline);
-    if (square) {
-      const runs: [Pt, Pt, boolean][] = outline.map((from, i) => {
-        const to = outline[(i + 1) % outline.length];
-        return [from, to, Math.abs(to.y - from.y) > Math.abs(to.x - from.x)];
-      });
-      runs.forEach(([from, to, up], ri) => {
-        for (const [pi, pl] of fenceRun(from, to, u, up).entries()) {
-          const pr = prop(pl.name)!;
-          nodes.push(null); // keep the key space stable
-          push(pl.z, (
-            <svg key={`f-${e.id}-${ri}-${pi}`} x={pl.x + ox} y={pl.y + oy} width={pl.w} height={pl.h} viewBox={pr.viewBox} overflow="visible"
-              data-item={e.id} data-part="fence"
-              dangerouslySetInnerHTML={{ __html: tint(pr.body, fence, pr.tint ?? 3) }} />
-          ));
-        }
-      });
-    } else {
-      const wallH = Math.max(3, u * 13);
-      const up = (q: Pt, k: number): Pt => ({ x: q.x, y: q.y - k });
-      outline.forEach((from, i) => {
-        const to = outline[(i + 1) % outline.length];
-        const a = P(from.x, from.y), b = P(to.x, to.y);
-        // Each side is its own piece, sorted with everything else, so the near ones stand in front.
-        push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
-          <g key={`w-${e.id}-${i}`} data-item={e.id} data-part="fence">
-            <polygon points={[a, b, up(b, wallH), up(a, wallH)].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
-              fill={shade(fence, -18)} />
-            <line x1={up(a, wallH).x} y1={up(a, wallH).y} x2={up(b, wallH).x} y2={up(b, wallH).y}
-              stroke={fence} strokeWidth={Math.max(1, u * 2)} strokeLinecap="round" />
-          </g>
-        ));
-      });
-    }
+    // The fence a lion is actually kept behind.
+    //
+    // It was a picket: panels off the artwork sheet, knee-high, the sort of thing round a cottage
+    // garden. Reported from playing it: "the fence around the lion enclosure is not really
+    // appropriate - can it be a higher wire fence or similar?" So it is drawn rather than stamped:
+    // posts, a top rail and mesh between them, tall enough to read as an enclosure from across the
+    // park. Every side is its own piece, sorted with everything else, so the near ones stand in
+    // front of what is inside.
+    const fenceH = Math.max(6, u * 22);
+    const lift = (q: Pt, k: number): Pt => ({ x: q.x, y: q.y - k });
+    outline.forEach((from, i) => {
+      const to = outline[(i + 1) % outline.length];
+      const a = P(from.x, from.y), b = P(to.x, to.y);
+      const topA = lift(a, fenceH), topB = lift(b, fenceH);
+      const wire = Math.max(0.5, u * 0.7);
+      // The mesh: uprights every so often across the run, thin and pale, so you see the animals
+      // through it. Capped, because a habitat the width of the park does not need three hundred.
+      const span = Math.hypot(b.x - a.x, b.y - a.y);
+      const wires = Math.max(2, Math.min(28, Math.round(span / Math.max(6, u * 7))));
+      const mesh: React.ReactNode[] = [];
+      for (let k = 1; k < wires; k += 1) {
+        const t = k / wires;
+        const g = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        mesh.push(<line key={`m${k}`} x1={g.x} y1={g.y} x2={g.x} y2={g.y - fenceH} stroke={fence} strokeWidth={wire} opacity={0.5} />);
+      }
+      push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
+        <g key={`fence-${e.id}-${i}`} data-item={e.id} data-part="fence">
+          {/* What you see through - a wash, not a wall. */}
+          <polygon points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+            fill={fence} fillOpacity={0.14} />
+          {mesh}
+          {/* Posts at the corners of every run, and a rail along the top and the middle. */}
+          <line x1={a.x} y1={a.y} x2={topA.x} y2={topA.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1.2, u * 1.8)} strokeLinecap="round" />
+          <line x1={b.x} y1={b.y} x2={topB.x} y2={topB.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1.2, u * 1.8)} strokeLinecap="round" />
+          <line x1={topA.x} y1={topA.y} x2={topB.x} y2={topB.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1, u * 1.4)} strokeLinecap="round" />
+          <line x1={a.x} y1={a.y - fenceH * 0.55} x2={b.x} y2={b.y - fenceH * 0.55} stroke={fence} strokeWidth={wire} opacity={0.6} />
+        </g>
+      ));
+    });
 
     // A band round the edge that answers for the fence.
     //

@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
@@ -278,6 +278,16 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
           return { action: { type: 'ASSIGN_DEV', itemId: needsEyes.id, devId: free.id },
                    says: `Took a look over ${needsEyes.name} with the second pair of eyes our Definition of Done asks for.` };
         }
+      }
+
+      // ...and move to Done what is ready. After the second pair of eyes, not before: the
+      // Definition of Done asks for a review, and a team that moves the card first has reviewed
+      // nothing. Done is the Developers' word - the card no longer walks into the column when the
+      // Product Owner accepts it - so where the seats are played by the game, this is them saying it.
+      const toMove = state.backlog.find((it) => it.sprintNumber === state.sprintNumber && readyToMove(it));
+      if (toMove) {
+        return { action: { type: 'FINISH_ITEM', id: toMove.id },
+                 says: `${toMove.name} meets the Definition of Done. Moving it to Done.` };
       }
 
       // A pathway is only finished when a run of it actually reaches the zone. The park

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { answerable, checkCriterion, checkedAt } from './parkChecks';
-import { addWaterTo, addFloraTo, enclosureWater, enclosureFlora, ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES, groupSize, hasRoomToRoam, designSatisfiesTask, currentDesign, floraColors, floraDefaultColors, LANDSCAPE_TYPES } from './design';
+import { enclosureWater, enclosureFlora, ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES, groupSize, hasRoomToRoam, designSatisfiesTask, currentDesign, floraColors, floraDefaultColors, LANDSCAPE_TYPES } from './design';
 import { isSignOffTask } from './engine';
 import { Check, Circle, X } from 'lucide-react';
 
@@ -262,9 +262,9 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
                     word offered for rocks, and half the planting was not offered at all - asked
                     while playing it: "what happened to rocks?" They were there, under another name.
                     Each one lands in the pen and can be dragged where you want it. */}
-                <Chip onClick={() => set({ water: addWaterTo(design) })}>+ Water</Chip>
+                <Chip onClick={() => edit.onAddInside?.(item.id, 'water')}>+ Water</Chip>
                 {[...HABITAT_FEATURE_TYPES, ...PLANTING_TYPES].map((t) => (
-                  <Chip key={t} onClick={() => set({ flora: addFloraTo(design, t) })}>+ {t}</Chip>
+                  <Chip key={t} onClick={() => edit.onAddInside?.(item.id, t)}>+ {t}</Chip>
                 ))}
               </Row>
             </>)}

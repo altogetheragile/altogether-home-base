@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, currentDesign } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -252,6 +252,9 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
   // tooltip nobody sees on a tablet.
   const whyNotDone = (it: BacklogItem) => {
+    // ...and when there is nothing left, the card says so and waits to be moved. Done is the
+    // Developers' word: the card no longer walks into the column when the Product Owner accepts.
+    if (readyToMove(it)) return 'Ready · move it to Done';
     if (!isDesignDone(it, currentDesign(it))) return 'Next: build it on the park';
     const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;

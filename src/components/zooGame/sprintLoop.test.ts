@@ -61,11 +61,12 @@ describe('a Sprint, played through to the Review', () => {
       // on the day clock and this test does not run.
       if (s.pendingPlacement) po({ type: 'ANSWER_PLACEMENT', id: s.pendingPlacement.itemId, choice: 'middle' });
       settle();
-      // The Product Owner accepts what the Developers have built, which is what makes it Done -
-      // the card waits in Doing until they do - and then releases it. Placement criteria are
-      // answered by the park itself, so a tick alone will not do.
+      // The Product Owner accepts what the Developers have built, the Developers move it to Done -
+      // their word, not a thing that happens to the work - and then the Product Owner releases it.
+      // Placement criteria are answered by the park itself, so a tick alone will not do.
       for (const it of s.backlog.filter((x) => x.status === 'committed' && x.started && x.design)) {
         (it.acceptance ?? []).forEach((_, i) => { s = reducer(s, { type: 'CONFIRM_AC', id: it.id, index: i, value: true }); });
+        s = reducer(s, { type: 'FINISH_ITEM', id: it.id, by: 'developer' });
         if (s.backlog.find((x) => x.id === it.id)!.status === 'done') po({ type: 'OPEN_ITEM', id: it.id });
       }
       s = reducer(s, { type: 'END_DAY' });

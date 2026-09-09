@@ -83,6 +83,8 @@ export interface EditApi {
   /** Planting is a set, and the set is chosen in the studio rather than by clicking a plus on a
    *  forty-pixel tree. Adding, changing and removing what an item plants. */
   onAddPlant: (id: string, piece?: string) => void;
+  /** Put another thing inside a habitat. In the reducer, so pressing it twice puts two in. */
+  onAddInside?: (id: string, kind: string) => void;
   onSetPlantPiece: (id: string, index: number, piece: string) => void;
   onRemovePlant: (id: string, index: number) => void;
 }

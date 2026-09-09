@@ -603,6 +603,8 @@ export type ZooAction =
   | { type: 'MOVE_SPRINT_ITEM'; id: string; dir: 'up' | 'down' }
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
+  | { type: 'ADD_INSIDE'; id: string; kind: string }
+  | { type: 'FINISH_ITEM'; id: string; by?: string }
   | { type: 'CANCEL_SPRINT' }
   | { type: 'SET_WIP_LIMIT'; limit: number; by?: string }
   | { type: 'SET_TEACHING'; on: boolean }
