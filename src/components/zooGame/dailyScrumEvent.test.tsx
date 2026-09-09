@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { DailyScrum } from './DailyScrum';
@@ -140,5 +140,24 @@ describe('what the decision may claim', () => {
     const known = todaysDecision(marked)!;
     expect(known.essentialsKnown).toBe(true);
     expect(known.ifKept).toMatch(/Goal is at risk/);
+  });
+});
+
+describe('holding the event when something has surfaced', () => {
+  it('offers the Daily Scrum itself, not only answers to the impediment', () => {
+    // Reported from playing it: "there is no option to perform a Daily Scrum on the takeover."
+    // With something on the table the only ways out were to answer it or to skip the event
+    // altogether - and deciding not to decide today is a decision the Developers get to make.
+    const onHold = vi.fn();
+    const onAnswer = vi.fn();
+    const s = scrum({
+      pendingImpediment: { id: 'imp', kind: 'block', title: 'The sign supplier changed the design',
+        detail: 'The new sign does not match the zone.', itemId: undefined } as never,
+    });
+    render(<MemoryRouter><DailyScrum state={s} onHold={onHold} onSkip={() => {}} onDrop={() => {}} onAnswer={onAnswer} /></MemoryRouter>);
+    const hold = screen.getByRole('button', { name: /Hold the Daily Scrum/i });
+    fireEvent.click(hold);
+    expect(onHold, 'the event could not be held').toHaveBeenCalled();
+    expect(onAnswer, 'what surfaced was left unrecorded').toHaveBeenCalledWith('around');
   });
 });
