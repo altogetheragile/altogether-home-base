@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ParkPlan } from './ParkPlan';
 import { CardDialog } from './CardDialog';
-import { askToCheck, answerQuestion, toggleItemTask, isSignOffTask } from './engine';
+import { askToCheck, answerQuestion, toggleItemTask, isSignOffTask, finishItem, readyToMove } from './engine';
 import { aiTurn } from './aiSeats';
 import { checkCriterion } from './parkChecks';
 import { initialZooState } from './config';
@@ -124,8 +124,13 @@ describe('the whole way to Done', () => {
     }
     game = askToCheck(game, item.id);
     game = answerQuestion(game, `check-${item.id}`, 'accept');
+    // Accepted, and ready - but not Done until the Developers say so. Done is their word, and the
+    // card no longer walks into the column by itself.
+    expect(readyToMove(game.backlog.find((it) => it.id === item.id)!),
+      'accepted work with every step finished was not even ready to move').toBe(true);
+    game = finishItem(game, item.id, 'developer');
     const now = game.backlog.find((it) => it.id === item.id)!;
-    expect(now.status, 'accepted work with every step finished still could not reach Done').toBe('done');
+    expect(now.status, 'the Developers moved it and it did not go to Done').toBe('done');
   });
 
   it('lets the Developers tick a step from the card', () => {

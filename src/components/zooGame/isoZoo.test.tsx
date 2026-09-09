@@ -363,12 +363,13 @@ describe('the isometric projection', () => {
     const fills = [...svg.querySelectorAll('polygon')].map((p) => p.getAttribute('fill'));
     expect(fills, 'the chosen ground was not laid').toContain(GROUND);
     expect(fills, 'the water was not added').toContain(WATER);
-    // The fence is artwork tinted to the chosen colour, so the markup holds shades of it rather than
-    // the colour itself. Changing the choice must change the fence: that is the whole claim.
+    // The fence is drawn - posts, a top rail and mesh between them - in the colour it was chosen
+    // in. Changing the choice must change the fence: that is the whole claim.
     const other = { ...state, backlog: state.backlog.map((i) => ({ ...i,
       draftDesign: { ...i.draftDesign!, colors: { ...i.draftDesign!.colors, fence: '#8b3a2e' } } })) } as ZooGameState;
     const repainted = render(<IsoZoo state={other} height={460} />).container.querySelector('svg[role="img"]')!;
-    const fenceOf = (el: Element) => [...el.querySelectorAll('svg')].map((s) => s.innerHTML).join('');
+    const fenceOf = (el: Element) => [...el.querySelectorAll('[data-part="fence"]')].map((f) => f.innerHTML).join('');
+    expect(fenceOf(svg), 'the habitat has no fence at all').not.toBe('');
     expect(fenceOf(repainted), 'the chosen fence was not put up').not.toBe(fenceOf(svg));
   });
 

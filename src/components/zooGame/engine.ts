@@ -2,7 +2,7 @@ import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, Ba
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
-import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask } from './design';
+import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -677,17 +677,54 @@ export function syncSignOff(item: BacklogItem): BacklogItem {
  *  Doing, and ticking a task moved it to Done with the approval outstanding. */
 export function settleStatus(item: BacklogItem): BacklogItem {
   const synced = syncSignOff(item);
-  if (synced.status === 'committed' && synced.design && readyForDone(synced)) {
-    return { ...synced, status: 'done' as const };
-  }
+  // Done is the Developers' word, so nothing here says it for them. The card used to jump into Done
+  // the moment the Product Owner accepted it - reported from playing it: "we still want to manually
+  // move cards to Done" - which taught that Done is something that happens TO the work rather than
+  // something the team declares about it. What is ready says so on the card; moving it is theirs.
   if (synced.status === 'done' && !readyForDone(synced)) {
     return { ...synced, status: 'committed' as const };
   }
   return synced;
 }
 
+/** Whether this card is waiting for the Developers to move it to Done: everything the agreement
+ *  asks for is in, and nobody has said so yet. */
+export const readyToMove = (item: BacklogItem): boolean =>
+  item.status === 'committed' && !!item.started && !!item.design && readyForDone(item);
+
+/** The Developers move a card to Done. The one place a card becomes Done, so it cannot happen by
+ *  accident somewhere else - and it is refused, with the reason, where the work is not ready. */
+export function finishItem(state: ZooGameState, id: string, by?: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item || !readyToMove(item)) return state;
+  return note({
+    ...state,
+    backlog: state.backlog.map((it) => (it.id === id ? { ...it, status: 'done' as const } : it)),
+  }, { kind: 'moved', by, what: `${item.name} was moved to Done.`,
+    cost: 'the Developers said it meets the Definition of Done' });
+}
+
 /** Save an item's in-progress design while it is still being built in the studio, so partial work
  *  survives the studio closing or the Sprint ending. Does not change status - it stays in Doing. */
+/** Put another thing inside a habitat: a tree, a rock, a pool.
+ *
+ *  In the reducer rather than in the takeover, because the takeover writes a WHOLE design computed
+ *  from the last render - press "+ Tree" twice quickly and the second press overwrites the first.
+ *  Reported from playing it: "I can only add one tree at a time." Here the current design is read
+ *  at the moment the action lands, so pressing it ten times puts ten trees in. */
+export function addInside(state: ZooGameState, id: string, kind: 'water' | string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => {
+    if (it.id !== id) return it;
+    const design = currentDesign(it);
+    const next = kind === 'water'
+      ? { ...design, water: addWaterTo(design) }
+      : { ...design, flora: addFloraTo(design, kind) };
+    return it.status === 'done' || it.status === 'open'
+      ? { ...it, design: next }
+      : { ...it, draftDesign: next };
+  }) };
+}
+
 export function setDraftDesign(state: ZooGameState, id: string, design: ItemDesign): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id && it.status === 'committed' ? { ...it, draftDesign: design } : it)) };
 }

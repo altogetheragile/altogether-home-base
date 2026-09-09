@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
-  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal,
-  setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress,
-  endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves } from './engine';
+  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove,
+} from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -41,12 +40,13 @@ function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIG
 }
 
 /** Place it on the park and accept it - every criterion, which is what a player has to do before the
- *  Product Owner's sign-off ticks and the card may be moved to Done. */
+ *  Product Owner's sign-off ticks. Then the Developers move it: Done is their word, and a card no
+ *  longer walks into the column by itself when the Product Owner accepts it. */
 function accept(state: ZooGameState, id: string): ZooGameState {
   let s = placeOnPark(state, id);
   const it = s.backlog.find((x) => x.id === id);
   (it?.acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, id, i, true); });
-  return s;
+  return finishItem(s, id, 'developer');
 }
 
 /** Commit ids, build them all to Done, and open (release) them - along with the paths into any zone
@@ -2227,7 +2227,7 @@ describe('zoo game: where work stands while it is being built', () => {
 });
 
 describe('zoo game: the last criterion, whoever answers it', () => {
-  it('moves the card when the PARK answers the last one, not just when a person does', () => {
+  it('makes the card ready when the PARK answers the last one, not just when a person does', () => {
     // Found by playing: a pathway with every criterion green, its plan ticked and the sign-off
     // on it sat in Doing for the rest of the Sprint. The park answers "can I get to this zone
     // without crossing the grass?" itself, and answering it re-derived the sign-off without
@@ -2246,11 +2246,14 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     expect(path().status, 'the park has not answered its criterion yet').toBe('committed');
 
     // Run the path to the zone. The park sees it, ticks its own criterion - and that is the last
-    // one, so the card is finished.
+    // one, so the card is ready for the Developers to move. Moving it is theirs: Done is a word
+    // somebody says, not something the park does to the work while nobody is looking.
     const home = s.backlog.find((i) => i.id === 'lion-enc')!;
     s = applyParkChecks(addConnector(s, { id: 'run-1', itemId: 'bigcats-paths', bends: [], thickness: 14, color: '#b9a888',
       a: { x: 200, y: 500 }, b: { x: home.pos?.x ?? 200, y: home.pos?.y ?? 200, featureId: 'lion-enc' } }));
-    expect(path().status, 'the park answered the last criterion and the card stayed in Doing').toBe('done');
+    expect(readyToMove(path()), 'the park answered the last criterion and the card was still not ready').toBe(true);
+    s = finishItem(s, 'bigcats-paths', 'developer');
+    expect(path().status, 'the Developers moved it and it did not go to Done').toBe('done');
   });
 
   it('lets Done work go live without anybody pressing "show me on the park"', () => {
@@ -2302,6 +2305,7 @@ describe('zoo game: nothing is Done without the Product Owner', () => {
     s = planSprint(s, ['lion']);
     s = accept(buildItem(startItem(s, 'lion'), 'lion', FULL_DESIGN), 'lion');
     for (const t of lion(s).tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'lion', t.id);
+    s = finishItem(s, 'lion', 'developer');
     expect(lion(s).status).toBe('done');
 
     s = confirmAcceptance(s, 'lion', 0, false);
@@ -3047,9 +3051,11 @@ describe('zoo game: a thing you have built stays where you built it', () => {
     for (const t of s.backlog.find((x) => x.id === 'leopard-enc')!.tasks ?? []) {
       if (!t.done) s = toggleItemTask(s, 'leopard-enc', t.id);
     }
-    // Accepted where it stands, which is the route that never goes near placeOnPark.
+    // Accepted where it stands, which is the route that never goes near placeOnPark - and then
+    // moved to Done by the Developers, because that is the only way a card gets there.
     (s.backlog.find((x) => x.id === 'leopard-enc')!.acceptance ?? [])
       .forEach((_, i) => { s = confirmAcceptance(s, 'leopard-enc', i, true); });
+    s = finishItem(s, 'leopard-enc', 'developer');
     const built = s.backlog.find((x) => x.id === 'leopard-enc')!;
     expect(built.status).toBe('done');
     expect(built.placed).toBeFalsy();      // nothing on this path ever set it

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import {
   suggestTasks, startItem, buildItem, placeOnPark, addConnector, planItemShape,
-  askToCheck, answerQuestion, toggleItemTask, isSignOffTask, openItem, setDraftDesign,
+  askToCheck, answerQuestion, toggleItemTask, isSignOffTask, openItem, setDraftDesign, finishItem, readyToMove,
 } from './engine';
 import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, HABITAT_FEATURE_TYPES } from './design';
 import type { ZooGameState, BacklogItem } from './types';
@@ -92,9 +92,14 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
   // 5. The Developers ask, the Product Owner accepts. That is the sign-off.
   s = askToCheck(s, id, 'developer');
   s = answerQuestion(s, `check-${id}`, 'accept', 'product_owner');
-  expect(item().status, `${item().name}: accepted work did not reach Done`).toBe('done');
+  expect(readyToMove(item()), `${item().name}: accepted work is not ready to be moved`).toBe(true);
 
-  // 6. ...and it opens to visitors.
+  // 6. ...and the Developers move it. Done is their word: the card does not walk into the column
+  //    by itself when the Product Owner accepts it.
+  s = finishItem(s, id, 'developer');
+  expect(item().status, `${item().name}: it could not be moved to Done`).toBe('done');
+
+  // 7. ...and it opens to visitors.
   s = openItem(s, id, 'product_owner');
   expect(item().status, `${item().name}: Done work could not be opened`).toBe('open');
   return s;
