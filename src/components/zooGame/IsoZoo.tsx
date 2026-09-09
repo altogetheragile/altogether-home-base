@@ -4,7 +4,7 @@ import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscape
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
-import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, workingDesign as working, parkType as landType } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, workingDesign as working, parkType as landType } from './parkModel';
 import { themeFor } from './zoneTheme';
 import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
@@ -872,6 +872,31 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     nodes.push(<polygon key={`path-${c.id}`} data-conn={c.id}
       points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill={c.color || '#ddc79a'} />);
     walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
+  }
+
+  // ---- the apron round each habitat ------------------------------------------------------
+  //
+  // Every habitat has a walkway round it whether anybody drew one or not: a pen you cannot walk
+  // round is an object in a field, not an exhibit. Reported from playing it - the drawn pathways
+  // only ever connected two points, so nothing went round anything. Drawn as four bands of ground
+  // rather than an outline, because in this view a path is a surface people stand on.
+  for (const st of standing) {
+    if (st.item.category !== 'enclosure') continue;
+    const at = posOf(st.item);
+    if (!Number.isFinite(at.x)) continue;
+    const hx = st.size.w / 2 + APRON_GAP, hy = st.size.h / 2 + APRON_GAP;
+    const ox = hx + APRON_WIDTH, oy = hy + APRON_WIDTH;
+    const band = (x0: number, y0: number, x1: number, y1: number, key: string) => {
+      nodes.push(<polygon key={`apron-${st.item.id}-${key}`} data-apron={st.item.id}
+        points={ground(at.x + x0, at.y + y0, at.x + x1, at.y + y1)} fill="#d8bf8f" />);
+    };
+    band(-ox, -oy, ox, -hy, 'n');
+    band(-ox, hy, ox, oy, 's');
+    band(-ox, -hy, -hx, hy, 'w');
+    band(hx, -hy, ox, hy, 'e');
+    // ...and the visitors may walk it, which is the point of it.
+    const ring = apronRing(at, st.size);
+    for (let i = 0; i < ring.length - 1; i += 1) walks.push([ring[i], ring[i + 1]]);
   }
 
   /** The hoardings round work that is under way.

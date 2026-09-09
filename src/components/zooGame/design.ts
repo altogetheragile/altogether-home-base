@@ -543,6 +543,14 @@ export const PATH_WIDTHS: { key: string; label: string; px: number }[] = [
   { key: 'medium', label: 'Medium', px: 9 },
   { key: 'thick', label: 'Thick', px: 14 },
 ];
+/** What a path can be surfaced in. Three, named, because "#c9a86a" is not a decision anybody makes
+ *  and a colour picker is not a choice between two kinds of path. */
+export const PATH_SURFACES: { hex: string; label: string }[] = [
+  { hex: '#c9a86a', label: 'Gravel' },
+  { hex: '#b9b3ab', label: 'Paving' },
+  { hex: '#8a7f74', label: 'Boardwalk' },
+];
+
 export const pathWidthPx = (thickness?: string): number => PATH_WIDTHS.find((w) => w.key === thickness)?.px ?? 9;
 
 /** Acceptance criteria that fit a piece of scenery/landscape from its type (a river reads as water,

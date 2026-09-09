@@ -1,6 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
-import { standingOnPark, parkPositions, restingPlace } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH } from './parkModel';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { answerable, checkCriterion } from './parkChecks';
 import { groupMembers } from './design';
@@ -179,6 +179,17 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             <line key={`h${i}`} x1={0} y1={(i + 1) * 40} x2={CANVAS_W} y2={(i + 1) * 40} />
           ))}
         </g>
+
+        {/* The apron round each habitat, which every habitat has whether anybody drew it or not:
+            a pen you cannot walk round is an object in a field, not an exhibit. The pathway items
+            are the runs BETWEEN things, and they join onto these. */}
+        {boxes.filter((b) => b.item.category === 'enclosure').map((b) => {
+          const ring = apronRing(b.at, b.size);
+          return (
+            <polyline key={`apron-${b.item.id}`} data-part="apron" points={ring.map((p) => `${p.x},${p.y}`).join(' ')}
+              fill="none" stroke="#c9a86a" strokeWidth={APRON_WIDTH} strokeLinejoin="round" opacity={0.9} />
+          );
+        })}
 
         {/* Paths, drawn as the runs they are. */}
         {(state.connectors ?? []).map((c) => (
