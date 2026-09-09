@@ -44,6 +44,14 @@ const board = (state: ZooGameState, props: Record<string, unknown> = {}) => rend
   </MemoryRouter>,
 );
 
+/** Carry a card onto a column: press, move, let go. The board takes pointer events, not HTML5
+ *  drag - that needs a mouse and is dead on a touch screen. */
+const carry = (card: Element, onto: Element) => {
+  fireEvent.pointerDown(card, { button: 0, clientX: 10, clientY: 10 });
+  fireEvent.pointerMove(onto, { clientX: 200, clientY: 60 });
+  fireEvent.pointerUp(onto, { clientX: 200, clientY: 60 });
+};
+
 describe('the Daily Scrum as an event', () => {
   it('takes the screen, with the board still there behind it', () => {
     const { container } = board(scrum());
@@ -60,13 +68,10 @@ describe('the Daily Scrum as an event', () => {
     const s = scrum();
     const item = s.backlog.find((it) => it.status === 'committed' && !it.started)!;
     const { container } = board(s, { onDropFromSprint });
-    const card = [...container.querySelectorAll('[draggable="true"]')]
-      .find((el) => (el.textContent ?? '').trim().startsWith(item.name))!;
-    const dt = { types: ['text/plain'], getData: () => item.id, setData: () => {}, effectAllowed: '' };
-    fireEvent.dragStart(card, { dataTransfer: dt });
-    const back = container.querySelector('[data-part="hand-it-back"]')!;
-    fireEvent.dragOver(back, { dataTransfer: dt });
-    fireEvent.drop(back, { dataTransfer: dt });
+    const card = [...container.querySelectorAll('[data-part="board-card"]')]
+      .map((el) => el.closest('.cursor-grab'))
+      .find((el) => (el?.textContent ?? '').trim().startsWith(item.name))!;
+    carry(card, container.querySelector('[data-part="hand-it-back"]')!);
     expect(onDropFromSprint, 'dropping work on "hand it back" did nothing').toHaveBeenCalledWith(item.id);
   });
 

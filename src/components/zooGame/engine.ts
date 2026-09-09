@@ -515,6 +515,34 @@ export const allTasksDone = (item: BacklogItem): boolean => (item.tasks ?? []).f
 /** The plan step where the Product Owner accepts the work. */
 export const isSignOffTask = (label: string): boolean => /sign[- ]?off/i.test(label);
 
+/** Whether the Definition of Done asks for the Product Owner's word before something is Done.
+ *
+ *  Asked of the DoD rather than assumed, because the DoD is the team's own agreement and this is
+ *  the sharpest thing in it: take the line out and nobody has to accept anything - the facts the
+ *  park checks are the whole of Done, the judgement criteria go unanswered, and the game lets it
+ *  happen and shows the cost. Put it back and the sign-off comes back with it. */
+export const dodWantsSignOff = (state: ZooGameState): boolean =>
+  (state.definitionOfDone ?? []).some((line) => /acceptance criteri|sign[- ]?off|product owner|approv/i.test(line));
+
+/** The sign-off step lives on the plan, so it appears and disappears with the Definition of Done
+ *  line that asks for it. Applied to work that has not been accepted yet: what is already Done was
+ *  Done under the agreement in force at the time, and rewriting history is not inspect and adapt. */
+export function syncSignOffTasks(state: ZooGameState): ZooGameState {
+  const wanted = dodWantsSignOff(state);
+  let changed = false;
+  const backlog = state.backlog.map((it) => {
+    if (it.status === 'done' || it.status === 'open') return it;
+    const tasks = it.tasks ?? [];
+    if (!tasks.length) return it;
+    const has = tasks.some((t) => isSignOffTask(t.label));
+    if (has === wanted) return it;
+    changed = true;
+    if (!wanted) return settleStatus({ ...it, tasks: tasks.filter((t) => !isSignOffTask(t.label)) });
+    return settleStatus({ ...it, tasks: [...tasks, { id: `${it.id}-signoff`, label: "Get the PO's sign-off", done: false }] });
+  });
+  return changed ? { ...state, backlog } : state;
+}
+
 /** The plan minus the sign-off: the Developers' own work, which is what takes an item out of Doing.
  *  The sign-off is not theirs to tick and comes later, once the item is on the park. */
 /** Whether what is left of today can pay for building this item.
@@ -1753,8 +1781,10 @@ export function setDefinitionOfDone(state: ZooGameState, dod: string[], by?: str
   const next = dod.map((d) => d.trim()).filter((d) => d.length > 0);
   const before = state.definitionOfDone;
   if (next.length === before.length && next.every((d, i) => d === before[i])) return state;
-  return note({ ...state, definitionOfDone: next }, { kind: 'dod', by,
-    what: `The Definition of Done changed: ${before.length} criteria became ${next.length}.` });
+  // The agreement decides what Done takes, so the plans follow it: drop the line about the Product
+  // Owner's acceptance and the sign-off step goes with it, on every item still in flight.
+  return syncSignOffTasks(note({ ...state, definitionOfDone: next }, { kind: 'dod', by,
+    what: `The Definition of Done changed: ${before.length} criteria became ${next.length}.` }));
 }
 
 // ============= Timed days and the Daily Scrum =============

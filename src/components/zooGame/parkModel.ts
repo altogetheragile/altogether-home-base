@@ -1,6 +1,6 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './engine';
-import { ENCLOSURE_SIZE, footprintFor, presetFor, isLandscapeType, type ItemDesign } from './design';
+import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
 import { autoLayout, insidePark, CANVAS_W, PAD } from './parkLayout';
 
 // ============= One park, described once =============
@@ -29,7 +29,7 @@ import { autoLayout, insidePark, CANVAS_W, PAD } from './parkLayout';
  *  only the finished design shows you none of your own choices until you press Done - which is the
  *  opposite of building in place. There is no preview; the thing itself is what you look at. */
 export const workingDesign = (item: BacklogItem): ItemDesign =>
-  item.design ?? item.draftDesign ?? presetFor(item);
+  currentDesign(item);
 
 /** What kind of thing it is, as far as drawing is concerned - a lion, a kiosk, a river. */
 export const parkType = (item: BacklogItem): string | undefined =>

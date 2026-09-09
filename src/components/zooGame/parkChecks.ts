@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, presetFor, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance } from './design';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign } from './design';
 import { settleStatus } from './engine';
 import { whereItStands } from './parkModel';
 
@@ -115,11 +115,7 @@ export const answerable = (label: string): boolean => PARK_ANSWERS.includes(labe
 
 /** The park's answer to one criterion, or null when it is a matter of judgement. */
 export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
-  // Whatever is in front of the person building it. The draft is the newer of the two while the
-  // work is still going on - and the older one may have been written by a seat played by the game -
-  // so it wins until the item is accepted, after which the accepted design is the truth.
-  const settled = item.status === 'done' || item.status === 'open';
-  const design = (settled ? item.design : (item.draftDesign ?? item.design)) ?? presetFor(item);
+  const design = currentDesign(item);
 
   // ---- Answered about the object itself, while it is being built ----
   //
@@ -139,7 +135,7 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
     // Against the animals that will actually live here, where the Backlog says which they are.
     const living = state.backlog.filter((it) => it.enclosureId === item.id);
-    const group = living.map((it) => (it.design ?? it.draftDesign)?.group).find(Boolean);
+    const group = living.map((it) => currentDesign(it).group).find(Boolean);
     if (!living.length) return { met: true, evidence: `${tiles}, room for a pair` };
     // Said in the size a habitat comes in rather than in the arithmetic behind it: "a lion family
     // needs a large one" is a sentence; "needs 3.85" is a number nobody can act on.

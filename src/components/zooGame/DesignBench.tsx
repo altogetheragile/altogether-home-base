@@ -4,7 +4,7 @@ import type { EditApi } from './ParkView';
 import { themeFor } from './zoneTheme';
 import { ItemToolbar } from './ItemToolbar';
 import { CardDetail, CategoryIcon } from './Board';
-import { presetFor } from './design';
+import { currentDesign } from './design';
 import { Chip } from './ui/Chip';
 import { ExplainButton } from './Explain';
 import { cn } from '@/lib/utils';
@@ -341,7 +341,7 @@ export function DesignBench({ state, itemId, following, edit, part, onPart, onTo
   );
 }
 
-const working = (it: BacklogItem) => it.design ?? it.draftDesign ?? presetFor(it);
+const working = (it: BacklogItem) => currentDesign(it);
 
 /** A habitat with no colours chosen yet is drawn in its zone's, so the swatches must show those. */
 function zoneColors(state: ZooGameState, item: BacklogItem): Record<string, string> {
