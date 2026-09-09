@@ -36,9 +36,13 @@ const board = (state: ZooGameState, props: Record<string, unknown> = {}) => rend
 );
 
 /** A drag payload the way the browser carries one. */
-const payload = (data: string) => {
-  const store: Record<string, string> = { 'text/plain': data };
-  return { types: ['text/plain'], getData: (k: string) => store[k] ?? '', setData: () => {}, effectAllowed: '' };
+
+/** Carry a card onto a column: press, move, let go. The board takes pointer events, not HTML5
+ *  drag - that needs a mouse and is dead on a touch screen. */
+const carry = (card: Element, onto: Element) => {
+  fireEvent.pointerDown(card, { button: 0, clientX: 10, clientY: 10 });
+  fireEvent.pointerMove(onto, { clientX: 200, clientY: 60 });
+  fireEvent.pointerUp(onto, { clientX: 200, clientY: 60 });
 };
 
 describe('a card on the board', () => {
@@ -105,13 +109,10 @@ describe('the two states of the tab', () => {
     const s = base();
     const item = s.backlog.find((it) => it.status === 'committed' && it.category === 'enclosure')!;
     const { container } = board(s, { onStartItem });
-    const card = [...container.querySelectorAll('[draggable="true"]')]
-      .find((el) => (el.textContent ?? '').trim().startsWith(item.name))!;
-    fireEvent.dragStart(card, { dataTransfer: payload(item.id) });
-    const doing = [...container.querySelectorAll('h3')].find((h) => /^Doing/.test(h.textContent ?? ''))!
-      .closest('div')!.parentElement!.parentElement!;
-    fireEvent.dragOver(doing, { dataTransfer: payload(item.id) });
-    fireEvent.drop(doing, { dataTransfer: payload(item.id) });
+    const card = [...container.querySelectorAll('[data-part="board-card"]')]
+      .map((el) => el.closest('.cursor-grab'))
+      .find((el) => (el?.textContent ?? '').trim().startsWith(item.name))!;
+    carry(card, container.querySelector('[data-column="doing"]')!);
 
     expect(onStartItem, 'dropping a card on Doing did not start it').toHaveBeenCalledWith(item.id);
     const who = container.querySelector('[data-part="who-takes-it"]');

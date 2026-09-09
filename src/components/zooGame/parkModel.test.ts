@@ -62,8 +62,15 @@ describe('what is standing on the park', () => {
     const draft = item({ id: 'e', status: 'committed', started: true,
       draftDesign: { parts: {}, colors: { ground: '#123456' } } });
     expect(workingDesign(draft).colors.ground).toBe('#123456');
-    // a finished design wins over the draft it came from
-    expect(workingDesign({ ...draft, design: { parts: {}, colors: { ground: '#abcdef' } } }).colors.ground).toBe('#abcdef');
+    // While the work is going on the draft is the truth, whatever was committed before it.
+    // Committing a build clears the draft, so the two only ever coexist when somebody has gone
+    // back and changed something - and then the change is what you want to see. Reading these two
+    // fields differently in different places is what made the card flip between Doing and Done.
+    expect(workingDesign({ ...draft, design: { parts: {}, colors: { ground: '#abcdef' } } }).colors.ground).toBe('#123456');
+    // ...and the answer does not depend on the item's status: it cannot, or the checks decide the
+    // status and the status decides what the checks read, which is how the card ended up flipping
+    // between Doing and Done about once a second.
+    expect(workingDesign({ ...draft, status: 'done', design: { parts: {}, colors: { ground: '#abcdef' } } }).colors.ground).toBe('#123456');
     // and something never designed still has the shape it starts as, rather than nothing
     expect(workingDesign(item({ id: 'p', category: 'exhibit', template: 'lion' }))).toBeTruthy();
   });

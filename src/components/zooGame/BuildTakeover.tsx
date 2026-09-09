@@ -5,9 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { answerable, checkCriterion, checkedAt } from './parkChecks';
-import { presetFor, addWaterTo, addFloraTo, enclosureWater, enclosureFlora,
-  ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES,
-  groupSize, hasRoomToRoam, designSatisfiesTask } from './design';
+import { addWaterTo, addFloraTo, enclosureWater, enclosureFlora, ENCLOSURE_SIZE, ENCLOSURE_SHAPES, PLANTING_TYPES, HABITAT_FEATURE_TYPES, BUILDING_TYPES, groupSize, hasRoomToRoam, designSatisfiesTask, currentDesign } from './design';
 import { isSignOffTask } from './engine';
 import { Check, Circle, X } from 'lucide-react';
 
@@ -39,11 +37,7 @@ export function BuildTakeover({ state, item, edit, canBuild = true, onPlace, onP
   onClose: () => void;
   className?: string;
 }) {
-  // Whatever is in front of the person building it. The draft is the newer of the two while the
-  // work is still going on - and the older one may have been written by a seat played by the game -
-  // so it wins until the item is accepted, after which the accepted design is the truth.
-  const settled = item.status === 'done' || item.status === 'open';
-  const design = (settled ? item.design : (item.draftDesign ?? item.design)) ?? presetFor(item);
+  const design = currentDesign(item);
   const criteria = item.acceptance.filter(Boolean);
   const met = criteria.filter((c) => checkCriterion(state, item, c)?.met).length;
   const isHabitat = item.category === 'enclosure';

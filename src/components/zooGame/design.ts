@@ -1045,6 +1045,24 @@ export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => 
  *  plan off automatically as you build, instead of making you check boxes for work you just
  *  did. Matched loosely by keyword against the generated task labels; a custom/unmatched task
  *  returns false and stays a manual tick. */
+/** The design to read for an item, wherever it is read.
+ *
+ *  There are two: `design`, what has been committed as built, and `draftDesign`, what somebody is
+ *  shaping right now. Different parts of the game used to pick differently - the park checks read
+ *  the draft, the Definition of Done read the design, the park drew a third thing - and the card
+ *  then flipped between Doing and Done on every tick, each view undoing the other's answer. One
+ *  rule: the draft is the truth while there is one, because committing a build clears it - so a
+ *  draft that still exists is somebody's newer work.
+ *
+ *  It must not depend on the item's STATUS. A first attempt at this read the draft while the item
+ *  was in Doing and the committed design once it was Done, which closed a loop: the checks decided
+ *  the status, the status decided which design the checks read, and a card whose two designs
+ *  disagreed flipped between Doing and Done about once a second, for ever.
+ */
+export function currentDesign(item: { design?: ItemDesign; draftDesign?: ItemDesign; category?: string; template?: string; name?: string }): ItemDesign {
+  return (item.draftDesign ?? item.design ?? presetFor(item as never));
+}
+
 export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label: string): boolean {
   if (item.category === 'exhibit') {
     const s = label.toLowerCase();

@@ -63,21 +63,23 @@ describe('the team along the top', () => {
     const onAssignDev = vi.fn();
     const { container } = board(onAssignDev);
     const dev = state().team.developers[0];
-    const card = [...container.querySelectorAll('[draggable="true"]')]
-      .find((el) => /Lion Enclosure/.test(el.textContent ?? ''))!;
+    const card = [...container.querySelectorAll('[data-part="board-card"]')]
+      .map((el) => el.closest('.cursor-grab'))
+      .find((el) => /Lion Enclosure/.test(el?.textContent ?? ''))!;
     fireEvent.drop(card, { dataTransfer: payload(MEMBER_DRAG + dev.id) });
     expect(onAssignDev, 'dropping a Developer on the work did nothing').toHaveBeenCalledWith(
       expect.stringContaining('lion'), dev.id,
     );
   });
 
-  it('leaves a card being moved to the column that handles it', () => {
-    // The card is draggable itself - that is how work moves between columns - so anything that is
-    // not a person has to fall through rather than being swallowed here.
+  it('leaves anything that is not a person alone', () => {
+    // A person dropped on a card is somebody taking the work. Cards themselves are carried with the
+    // pointer rather than dragged, so anything arriving here that is not a person is not ours.
     const onAssignDev = vi.fn();
     const { container } = board(onAssignDev);
-    const card = [...container.querySelectorAll('[draggable="true"]')]
-      .find((el) => /Lion Enclosure/.test(el.textContent ?? ''))!;
+    const card = [...container.querySelectorAll('[data-part="board-card"]')]
+      .map((el) => el.closest('.cursor-grab'))
+      .find((el) => /Lion Enclosure/.test(el?.textContent ?? ''))!;
     fireEvent.drop(card, { dataTransfer: payload('lion-enc') });
     expect(onAssignDev, 'a card being moved was read as somebody taking it').not.toHaveBeenCalled();
   });

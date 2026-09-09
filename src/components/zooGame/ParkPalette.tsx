@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState, BacklogItem } from './types';
-import { addFloraTo, presetFor, PLANTING_TYPES, HABITAT_FEATURE_TYPES, type ItemDesign } from './design';
+import { addFloraTo, PLANTING_TYPES, HABITAT_FEATURE_TYPES, type ItemDesign, currentDesign } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -44,7 +44,7 @@ export function ParkPalette({ state, item, design, drawing, onDrawing, onDesign,
 }) {
   const [open, setOpen] = useState<ToolKey | null>(null);
   const can = toolsFor(item);
-  const d = design ?? item.design ?? item.draftDesign ?? presetFor(item);
+  const d = design ?? currentDesign(item);
   const hint = placing
     ? 'drop it where it can go - green is room, red is not'
     : TOOLS.find((t) => t.key === (open ?? (drawing ? 'path' : null)))?.gesture;

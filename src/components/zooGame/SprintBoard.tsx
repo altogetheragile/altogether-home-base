@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
-import { isDesignDone, presetFor } from './design';
+import { isDesignDone, currentDesign } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
@@ -244,7 +244,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   // ticked, and the Product Owner's criteria are accepted. The sign-off task follows the criteria
   // rather than being ticked by hand, so it is not part of the gate.
   const readyForDone = (it: BacklogItem) =>
-    isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))
+    isDesignDone(it, currentDesign(it))
     && (it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i])
     // The whole plan, sign-off included. It ticks itself once every criterion is accepted, so this
     // is not an extra hoop - it is the reason the card cannot reach Done without the Product Owner.
@@ -252,7 +252,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
   // tooltip nobody sees on a tablet.
   const whyNotDone = (it: BacklogItem) => {
-    if (!isDesignDone(it, it.draftDesign ?? it.design ?? presetFor(it))) return 'Next: build it on the park';
+    if (!isDesignDone(it, currentDesign(it))) return 'Next: build it on the park';
     const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
     const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);
@@ -269,9 +269,20 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
    *  the time you have read it. */
   const [refusedMove, setRefusedMove] = useState<{ id: string; why: string } | null>(null);
   const refuse = (id: string, why: string) => setRefusedMove({ id, why });
-  const handleDrop = (to: string) => {
-    if (!drag) return;
-    const { id, from } = drag;
+  const handleDrop = (to: string) => { if (drag) moveCard(drag.id, drag.from, to); };
+  /** Move one card from one column to another, with the reasons it may not.
+   *
+   *  Takes what it needs rather than reading the drag off state: a pointer drag ends in a handler
+   *  that closed over the render it started in, where the drag had not begun yet, so reading state
+   *  here meant every carried card silently went nowhere. */
+  const moveCard = (id: string, from: string, to: string) => {
+    // Handing work back is a column like any other, so the same gesture does it.
+    if (to === 'backlog') {
+      setDrag(null); setDropCol(null);
+      if (from === 'deploy') { refuse(id, 'Work that is Done does not go back to the Product Backlog. It is built, accepted and waiting to open.'); return; }
+      onDropFromSprint?.(id);
+      return;
+    }
     const o = dropOutcome(from, to);
     setDrag(null); setDropCol(null);
     if (o === 'start') {
@@ -318,11 +329,56 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       onAssignDev(itemId, raw.slice(MEMBER_DRAG.length));
     },
   });
-  const dragProps = (id: string, from: string) => ({
-    draggable: true,
-    onDragStart: (e: DragEvent) => { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', id); } catch { /* some browsers */ } setDrag({ id, from }); },
-    onDragEnd: () => { setDrag(null); setDropCol(null); },
+  /** Pick a card up and carry it. HTML5 drag-and-drop was doing this, and it is the wrong tool:
+   *  it needs a mouse, it is dead on a touch screen, and reported from playing it, cards would not
+   *  move at all. Pointer events work everywhere - trackpad, mouse, finger - so the card follows
+   *  your hand and lands where you let go. Below the threshold it is still a click, which opens the
+   *  card, so nothing was taken away to add this. */
+  const [carry, setCarry] = useState<{ id: string; from: string; x: number; y: number; live: boolean } | null>(null);
+  const carrying = useRef<{ id: string; from: string; x0: number; y0: number; live: boolean } | null>(null);
+  /** Which column the pointer is over. What is painted under the cursor, or - where there is no
+   *  layout to ask, as in a test - whatever the event was aimed at. */
+  const columnAt = (ev: PointerEvent): string | null => {
+    const under = document.elementFromPoint?.(ev.clientX, ev.clientY) ?? null;
+    const el = under ?? (ev.target as Element | null);
+    const col = el?.closest?.('[data-column]');
+    return col ? col.getAttribute('data-column') : null;
+  };
+  const carryProps = (id: string, from: string) => ({
+    onPointerDown: (e: ReactPointerEvent) => {
+      if (e.button !== 0) return;
+      // The gesture is held in a ref as well as in state: the handlers below close over the render
+      // that started the drag, where the state is still empty, so reading it there moves nothing.
+      // State is for what you can see; the ref is what the drop acts on.
+      const hand = { id, from, x0: e.clientX, y0: e.clientY, live: false };
+      carrying.current = hand;
+      setCarry({ id, from, x: e.clientX, y: e.clientY, live: false });
+      const move = (ev: PointerEvent) => {
+        if (!carrying.current) return;
+        if (!hand.live && Math.hypot(ev.clientX - hand.x0, ev.clientY - hand.y0) > 6) {
+          hand.live = true;
+          setDrag({ id, from });
+        }
+        setCarry({ id, from, x: ev.clientX, y: ev.clientY, live: hand.live });
+        if (hand.live) setDropCol(columnAt(ev));
+      };
+      const up = (ev: PointerEvent) => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        carrying.current = null;
+        setCarry(null);
+        if (!hand.live) { setDrag(null); setDropCol(null); return; }
+        const to = columnAt(ev);
+        if (to && to !== from) moveCard(id, from, to); else { setDrag(null); setDropCol(null); }
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    },
   });
+
+  /** What you are carrying, drawn under the cursor so the move is a thing you can see. */
+  const carried = carry?.live ? state.backlog.find((it) => it.id === carry.id) : null;
+
   const dropProps = (to: string) => ({
     onDragOver: (e: DragEvent) => { if (drag && drag.from !== to) { e.preventDefault(); if (dropCol !== to) setDropCol(to); } },
     onDragLeave: () => setDropCol((c) => (c === to ? null : c)),
@@ -436,7 +492,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                   explicit row the cells took their content's height and the region clipped them,
                   so a card lower down the column could not be reached at all. */}
               <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-lg border-2 border-border p-2 md:grid-cols-3">
-                <div {...dropProps('todo')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('todo'))}>
+                <div data-column="todo" {...dropProps('todo')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('todo'))}>
                 <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
                   {refineTodo && (
                     // Refinement the Scrum Team put in the plan, sitting on the board like the work
@@ -474,7 +530,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                     const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
                       : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
-                      <div key={it.id} {...dragProps(it.id, 'todo')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
+                      <div key={it.id} {...carryProps(it.id, 'todo')} {...takeProps(it.id)} className="cursor-grab touch-none active:cursor-grabbing">
                       {cameBack(it.id)}
                       <BoardCard item={it} state={state} note={needsEnc ? `Needs ${encName} built first` : blocked ? why : undefined}
                         onOpen={() => setCardId(it.id)} />
@@ -486,7 +542,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                       work back is a negotiation with the Product Owner, which Scrum does not
                       restrict to one fifteen-minute window anyway. */}
                   {onDropFromSprint && (
-                    <div data-part="hand-it-back"
+                    <div data-part="hand-it-back" data-column="backlog"
                       onDragOver={(e) => { if (drag) e.preventDefault(); }}
                       onDrop={(e) => { e.preventDefault(); if (drag) { onDropFromSprint(drag.id); setDrag(null); setDropCol(null); } }}
                       className="mt-1 rounded-lg border-2 border-dashed border-amber-400/70 bg-amber-500/[0.06] px-2.5 py-2 text-[11px]">
@@ -499,7 +555,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                   )}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('doing')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('doing'))}>
+                <div data-column="doing" {...dropProps('doing')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('doing'))}>
                 <BoardColumn title="Doing" count={doing.length} limit={activeWipLimit(state) || undefined} hint="Nothing in progress"
                   note={fresh && revealed(state, 'wip') ? (
                     <NewHere title="A work-in-progress limit">
@@ -535,7 +591,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                       </div>
                     )}
                   {doing.map((it) => (
-                    <div key={it.id} {...dragProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab active:cursor-grabbing">
+                    <div key={it.id} {...carryProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab touch-none active:cursor-grabbing">
                       {cameBack(it.id)}
                       <BoardCard item={it} state={state} tone="doing" waiting={waitingOn(state, it.id) ? whoIs(waitingOn(state, it.id)!.of).replace(/^The /, '') : null}
                         note={readyForDone(it) ? 'Ready for Done - drag it there' : whyNotDone(it)}
@@ -544,7 +600,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                   ))}
                 </BoardColumn>
                 </div>
-                <div {...dropProps('done')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('done'))}>
+                <div data-column="done" {...dropProps('done')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('done'))}>
                 <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
@@ -555,7 +611,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                     // from the card, and a card built-but-not-yet-open is the one you press "Open it
                     // to visitors" on - so without this the confetti came from the middle of the
                     // screen instead of from the thing you had just delivered.
-                    <div key={it.id} data-done-card={it.id} {...dragProps(it.id, 'deploy')} className="cursor-grab active:cursor-grabbing">
+                    <div key={it.id} data-done-card={it.id} {...carryProps(it.id, 'deploy')} className="cursor-grab touch-none active:cursor-grabbing">
                     {cameBack(it.id)}
                     <BoardCard item={it} state={state} tone="done"
                       note={it.sprintNumber !== null && it.sprintNumber !== state.sprintNumber
@@ -673,6 +729,16 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           out of room when the park took half the screen: three columns at ninety pixels each is not
           a live artifact, it is a sliver. The board is right behind it, and the event ends on its
           own buttons. */}
+      {/* The card in your hand. Without it a drag is a card that stays where it was until it
+          suddenly does not, which reads as nothing having happened. */}
+      {carried && carry && (
+        <div data-part="carried-card" aria-hidden
+          className="pointer-events-none fixed z-50 w-56 rotate-2 opacity-90 drop-shadow-xl"
+          style={{ left: carry.x - 100, top: carry.y - 24 }}>
+          <BoardCard item={carried} state={state} onOpen={() => {}} />
+        </div>
+      )}
+
       <Dialog open={state.dayStage === 'dailyScrum'}>
         {/* No close button: the event ends by adapting the plan or carrying on regardless, and a
             cross that silently did nothing would be worse than no cross at all. */}

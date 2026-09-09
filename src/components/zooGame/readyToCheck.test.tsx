@@ -30,6 +30,9 @@ const built = (): { s: ZooGameState; item: BacklogItem } => {
   const item = {
     ...h, status: 'committed' as const, sprintNumber: 1, started: true, design,
     pos: { x: 300, y: 300 }, assignedDevs: [base.team.developers[0].id],
+    // The sign-off step, which the shipped Definition of Done asks for. Its presence is what says
+    // anybody has to accept this at all - take the line out of the agreement and it goes.
+    tasks: [{ id: 't-signoff', label: "Get the PO's sign-off", done: false }],
   } as BacklogItem;
   return {
     s: {
@@ -128,7 +131,7 @@ describe('the whole way to Done', () => {
   it('lets the Developers tick a step from the card', () => {
     const onToggleTask = vi.fn();
     const { s, item } = built();
-    const planned = { ...item, tasks: [{ id: 't1', label: 'Set the footprint size', done: false }] } as BacklogItem;
+    const planned = { ...item, tasks: [{ id: 't1', label: 'Set the footprint size', done: false }, ...(item.tasks ?? [])] } as BacklogItem;
     render(<CardDialog state={s} item={planned} onClose={() => {}} onBuilding={() => {}} onToggleTask={onToggleTask} />);
     const step = screen.getByRole('button', { name: /Set the footprint size/i });
     fireEvent.click(step);

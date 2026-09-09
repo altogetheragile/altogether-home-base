@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { designCriteria, presetFor } from './design';
+import { designCriteria, currentDesign } from './design';
 import { isSignOffTask } from './engine';
 import { pathReaches, inHabitat } from './parkChecks';
 
@@ -40,7 +40,7 @@ const devs = (item: BacklogItem) => (item.assignedDevs ?? []).length;
  *  rather than claiming to have checked something it has not. */
 export function checkDodLine(state: ZooGameState, item: BacklogItem, line: string): DodAnswer | null {
   const s = norm(line);
-  const design = item.design ?? item.draftDesign ?? presetFor(item);
+  const design = currentDesign(item);
 
   // The item's own acceptance criteria, which the DoD nearly always points at.
   if (/acceptance criteri/.test(s)) {

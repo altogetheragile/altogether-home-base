@@ -87,7 +87,11 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   const canOpen = item.status === 'done' && readyToOpen(item);
   // Built, with every fact the park checks answered, and nothing left but somebody's judgement.
   const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
-  const canAsk = doing && !!item.design && criteria.length > 0
+  // ...and only where the Definition of Done asks for the Product Owner's word. Take that line out
+  // of the agreement and there is nothing to ask for: the facts the park checks are the whole of
+  // Done. The button is the agreement, not a fixture.
+  const wantsSignOff = (item.tasks ?? []).some((t) => isSignOffTask(t.label));
+  const canAsk = doing && wantsSignOff && !!item.design && criteria.length > 0
     && criteria.every((c, i) => !answerable(c) || met(c, i));
 
   return (
