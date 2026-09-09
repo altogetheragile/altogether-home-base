@@ -105,6 +105,14 @@ export function apronRing(at: { x: number; y: number }, size: { w: number; h: nu
   ];
 }
 
+/** Where somebody stands to look at a habitat: on the walkway outside it, on the side they come
+ *  from. Not the middle of the pen - reported from playing it, "visitors in the lion enclosure is
+ *  not a good idea", and they were walking to the exhibit's own position, which is inside the
+ *  fence. Shared, so the routing and the drawing agree about where a visitor can be. */
+export function viewingSpot(at: { x: number; y: number }, size: { w: number; h: number }): { x: number; y: number } {
+  return { x: at.x, y: at.y + size.h / 2 + APRON_GAP + APRON_WIDTH / 2 };
+}
+
 /** Every apron on the park right now: one per habitat that is standing, built or under way. */
 export function aprons(standing: Standing[], at: (s: Standing) => { x: number; y: number }): { id: string; ring: { x: number; y: number }[] }[] {
   return standing
