@@ -35,7 +35,6 @@ interface SprintPlanningProps {
   onPlan: (ids: string[], refinementPoints?: number) => void;
   onSetForecast: (ids: string[]) => void;
   /** Which Developer pulled an item. The pull is theirs, so it carries their name. */
-  onAssignDev?: (id: string, devId: string) => void;
   /** The accountabilities that must agree the Sprint Goal before Planning moves on. Empty
    *  when playing alone, where you are all three. */
   mustAgree?: string[];
@@ -251,7 +250,7 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
   // Where the Scrum Team is in the event, not where this browser is. Sprint Planning has three
   // topics in an order, and a topic each player was privately on meant the seats played by the
   // game could not tell which one the team was in.
@@ -491,27 +490,11 @@ export function SprintPlanning({ state, onPlan, onSetForecast, onAssignDev, must
                 {chosen.map((it) => (
                   <div key={it.id}>
                     <PickCard item={it} chosen why={null} arriving={arrived.has(it.id)} onPick={() => toggle(it.id)} />
-                    {/* Who pulled it. The Developers select one at a time, in their own names, and
-                        the card carries the name from here to the board. Nobody is assigned. */}
-                    {onAssignDev && (
-                      <div data-part="who-pulled" className="mt-0.5 flex flex-wrap items-center gap-1 pl-2">
-                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">pulled by</span>
-                        {state.team.developers.map((d) => {
-                          const on = (it.assignedDevs ?? []).includes(d.id);
-                          return (
-                            <button key={d.id} type="button" onClick={() => onAssignDev(it.id, d.id)}
-                              title={mySeat === 'product_owner'
-                                ? 'The Developers select. You can make the case.'
-                                : `${d.name} pulls ${it.name}`}
-                              disabled={mySeat === 'product_owner'}
-                              className={cn(FOCUS, 'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold transition-colors disabled:opacity-40',
-                                on ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted/60')}>
-                              {d.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {/* No names here. Work is pulled during the Sprint, by whoever picks it up,
+                        and the board asks who is taking it at the moment it moves into Doing. A row
+                        of names against every forecast item at Planning says the opposite: that the
+                        work was handed out before anybody started, which is the habit the Sprint
+                        Backlog belonging to the Developers exists to break. */}
                   </div>
                 ))}
               </div>
