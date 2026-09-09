@@ -28,7 +28,7 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
 };
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, onAddConnector, onSetTool, onAskToCheck, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -48,6 +48,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
    *  ends, and it runs between them. Nothing else on the park needs a tool. */
   tool?: 'none' | 'path';
   pathStyle?: { thickness: number; color: string };
+  /** The pathway item the run being drawn belongs to. */
+  runFor?: string;
   onAddConnector?: (c: ZooConnector) => void;
   onSetTool?: (tool: 'none' | 'path') => void;
   /** Ask the Product Owner to look at something that meets all of its criteria. */
@@ -162,6 +164,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             if (!runFrom) { setRunFrom(w); setRunTo(w); return; }
             onAddConnector?.({
               id: `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`,
+              // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
+              // you were building never counted the run you had just drawn for it, so it could not
+              // be built, accepted or finished - "I added the main paths and cannot move it to Done".
+              itemId: runFor,
               a: { x: runFrom.x, y: runFrom.y }, b: { x: w.x, y: w.y }, bends: [],
               thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
             });

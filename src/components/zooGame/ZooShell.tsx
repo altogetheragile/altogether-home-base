@@ -447,6 +447,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
                     onPlace={(id, pos) => { onCommitBuild?.(id); onPlaceItem?.(id, pos); setPlacingId(null); }}
                     tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
+                    runFor={inHand?.category === 'path' ? inHand.id : undefined}
                     onAddConnector={onAddConnector} onSetTool={(t) => onDrawing?.(t === 'path')}
                     onAskToCheck={onAskToCheck} />
                 </div>
