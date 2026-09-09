@@ -21,7 +21,7 @@ export function DayClock({ state, onPause }: {
   state: ZooGameState;
   onPause?: (paused: boolean) => void;
 }) {
-  const { big, small } = clocks(state);
+  const { big, small, note } = clocks(state);
   const held = !!state.clockPaused || state.learnMode;
   const pct = big ? Math.max(0, Math.min(100, (big.seconds / Math.max(1, big.total)) * 100)) : 0;
   const low = !!big && pct <= 25;
@@ -46,7 +46,7 @@ export function DayClock({ state, onPause }: {
             {!big ? '—' : state.learnMode ? '--:--' : clockText(big.seconds)}
           </span>
           <span className="shrink-0 text-[11px] leading-tight text-white/70">
-            {!big ? 'no Sprint yet'
+            {!big ? (note ?? 'no Sprint yet')
               : state.learnMode ? <>learn mode<br />end days yourself</>
                 : state.clockPaused ? <>held<br />nothing is running</>
                   : big.label}

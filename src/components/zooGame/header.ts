@@ -42,10 +42,20 @@ export function eventPill(state: ZooGameState): { text: string; event: boolean }
 export function clocks(state: ZooGameState): {
   big: { seconds: number; total: number; label: string } | null;
   small?: string;
+  /** What to say where there is no clock to run. */
+  note?: string;
 } {
   if (state.phase !== 'sprint') {
-    // Before a Sprint there is no day to count, and a zero would be a lie. A dash is the honest state.
-    return { big: null };
+    // Before a Sprint there is no day to count, and a zero would be a lie. A dash is the honest
+    // state - but it is not "no Sprint yet" at Sprint Planning: the Guide is explicit that Sprint
+    // Planning initiates the Sprint, so the Sprint has begun and its first day has not started.
+    if (state.phase === 'planning') {
+      return { big: null, note: `Sprint ${state.sprintNumber} · planning`, small: 'the Sprint has begun · day 1 starts when you do' };
+    }
+    if (state.phase === 'review' || state.phase === 'retro') {
+      return { big: null, note: `Sprint ${state.sprintNumber} · ${state.phase === 'review' ? 'review' : 'retrospective'}` };
+    }
+    return { big: null, note: 'no Sprint yet' };
   }
   const day = { seconds: state.daySecondsLeft, total: dayTotalSeconds(state.dayTimeMult ?? 1), label: 'left today' };
   if (state.dayStage === 'dailyScrum') {
@@ -64,13 +74,16 @@ export const clockText = (seconds: number): string => {
 };
 
 /** Whether the Sprint Goal is safe, for the strip. Before a Sprint there is nothing to be at risk. */
-export function goalLine(state: ZooGameState): { line: string; risk: boolean } {
+export function goalLine(state: ZooGameState): { line: string; risk: boolean; isGoal?: boolean } {
   if (state.phase === 'intro' || state.phase === 'brief' || state.phase === 'refine') {
     return { line: `No Sprint yet`, risk: false };
   }
   // No Goal at all is not "goal safe": a Sprint without one has nothing to be safe. Say it plainly
   // wherever it happens, which is Planning before it is agreed and any Sprint started without one.
   if (!state.sprintGoal.trim()) return { line: 'No Sprint Goal yet', risk: false };
+  // At Planning the Goal is the headline. Nothing has been built, so a progress line has nothing to
+  // say - and the Goal is the thing every choice on that screen is meant to serve.
+  if (state.phase === 'planning') return { line: state.sprintGoal.trim(), risk: false, isGoal: true };
   const pulse = goalPulse(state);
   return { line: pulse.line, risk: pulse.level === 'risk' };
 }

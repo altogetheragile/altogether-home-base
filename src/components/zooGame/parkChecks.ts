@@ -83,10 +83,17 @@ export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict | n
     // cannot tick it and move on - which makes "no" without a way forward a dead end rather than a
     // criterion. Name the thing to run a path to.
     const target = here.find((i) => i.category === 'enclosure') ?? here.find((i) => at(i));
-    // Nothing standing in this zone at all. "Can I get to it without crossing the grass?" is not
-    // a measurement about an empty field - there is nothing there to reach and nothing to fail -
-    // so it goes back to being a judgement, like every other criterion the park cannot answer.
-    if (!target) return null;
+    if (!target) {
+      // Nothing else standing in this zone yet - which is the ordinary case for the paths through
+      // the grounds, built before anything they lead to. Reported from playing it: "I added the
+      // main paths and cannot move it to Done." It waited for something to reach, in a zone that
+      // was empty by design, so it could never go green and could never be offered for acceptance.
+      // A run laid where people will walk is the zone becoming reachable, and that is the fact.
+      const mine = (state.connectors ?? []).some((c) => c.itemId === item.id);
+      return mine
+        ? { met: true, evidence: `the first run through the ${item.zone}` }
+        : { met: false, evidence: 'draw a run where people should walk' };
+    }
     return { met: false, evidence: `draw a run up to the ${target.name}` };
 }
 
