@@ -146,9 +146,12 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     if (!living.length) return { met: true, evidence: `${tiles}, room for a pair` };
     // Said in the size a habitat comes in rather than in the arithmetic behind it: "a lion family
     // needs a large one" is a sentence; "needs 3.85" is a number nobody can act on.
-    const fits = hasRoomToRoam(group ?? DEFAULT_GROUP, item.enclosureSize ?? 'medium');
+    // Measured for the animal that actually lives here: a shoal of reef fish and a pride of lions
+    // do not take the same room, and the pen cannot answer for both with one number.
+    const species = living[0] ? (living[0].template ?? living[0].id) : undefined;
+    const fits = hasRoomToRoam(group ?? DEFAULT_GROUP, item.enclosureSize ?? 'medium', species);
     const smallest = (['small', 'medium', 'large'] as const)
-      .find((k) => hasRoomToRoam(group ?? DEFAULT_GROUP, k)) ?? 'large';
+      .find((k) => hasRoomToRoam(group ?? DEFAULT_GROUP, k, species)) ?? 'large';
     const who = living[0].name.toLowerCase();
     return fits
       ? { met: true, evidence: `${tiles}, room for the ${who}` }
@@ -187,10 +190,11 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     const n = groupSize(design.group);
     if (!design.group) return { met: false, evidence: 'not stocked yet' };
     const named = (k?: string) => (k === 'large' ? 'a large' : k === 'small' ? 'a small' : 'a medium');
-    if (hasRoomToRoam(design.group, size)) return { met: true, evidence: `${n} in ${named(size)} habitat` };
+    const species = item.template ?? item.id;
+    if (hasRoomToRoam(design.group, size, species)) return { met: true, evidence: `${n} in ${named(size)} habitat` };
     // ...and what would fix it, in the words of the thing you would change: a bigger pen, or fewer
     // animals. A criterion that only says no is a door with no handle.
-    const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k));
+    const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k, species));
     return {
       met: false,
       evidence: roomy

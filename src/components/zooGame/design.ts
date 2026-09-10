@@ -755,16 +755,49 @@ export function groupMembers(g?: AnimalGroup): { kind: Kind; scale: number }[] {
  *  full-grown adult, which is the whole reason ages are worth choosing. */
 export const ROOM: Record<'small' | 'medium' | 'large', number> = { small: 2, medium: 4, large: 7 };
 
-/** What the group costs in room, in adult-equivalents. */
-export const roomNeeded = (g?: AnimalGroup): number => {
+/** How much room ONE adult of this species needs, against a big cat's.
+ *
+ *  A medium habitat holds four adults, which is right for lions and absurd for a reef: "I need to be
+ *  able to add more than 2 fish to a tank." A tank of four fish is not a reef, it is a goldfish bowl.
+ *  A reef fish takes about a twelfth of the room a lion does, so a medium tank holds a shoal of
+ *  fifty and a small one still holds a proper group. The number is the teaching: how many you can
+ *  keep depends on what they are, not only on how big the pen is. */
+export const ROOM_EACH: Record<string, number> = {
+  reef: 0.08, jellyfish: 0.06, ray: 0.5, turtle: 0.4, shark: 1.2,
+  penguins: 0.3, otter: 0.4, flamingo: 0.3, meerkat: 0.2, parrot: 0.15, owl: 0.25,
+};
+const roomEach = (species?: string) => ROOM_EACH[(species ?? '').toLowerCase()] ?? 1;
+
+/** What the group costs in room, in big-cat-equivalents. */
+export const roomNeeded = (g?: AnimalGroup, species?: string): number => {
   const grp = asGroup(g);
-  return grp.males + grp.females * 0.9 + grp.juveniles * 0.6 + grp.cubs * 0.35;
+  return (grp.males + grp.females * 0.9 + grp.juveniles * 0.6 + grp.cubs * 0.35) * roomEach(species);
 };
 
 /** Whether they have room to roam in a habitat of this size - a criterion the park can answer for
  *  itself, which is the point of asking it as a question. */
-export const hasRoomToRoam = (g: AnimalGroup | undefined, size: 'small' | 'medium' | 'large' | undefined): boolean =>
-  roomNeeded(g) <= ROOM[size ?? 'medium'];
+export const hasRoomToRoam = (g: AnimalGroup | undefined, size: 'small' | 'medium' | 'large' | undefined, species?: string): boolean =>
+  roomNeeded(g, species) <= ROOM[size ?? 'medium'];
+
+/** How many of this animal you would keep together, in the words its own keeper would use.
+ *
+ *  A lion lives alone, in a pair, or in a family. A reef does none of those things: it shoals. The
+ *  three chips were a mammal's social life offered to everything that lives in the zoo. */
+export function groupChoices(item: { template?: string; id?: string } | undefined): { label: string; group: AnimalGroup }[] {
+  const species = (item?.template ?? item?.id ?? '').toLowerCase();
+  if (AQUATIC.includes(species)) {
+    return [
+      { label: 'A few', group: { males: 3, females: 3, juveniles: 0, cubs: 0 } },
+      { label: 'A shoal', group: { males: 8, females: 8, juveniles: 4, cubs: 0 } },
+      { label: 'A big shoal', group: { males: 16, females: 16, juveniles: 8, cubs: 0 } },
+    ];
+  }
+  return [
+    { label: 'One', group: { males: 1, females: 0, juveniles: 0, cubs: 0 } },
+    { label: 'A pair', group: { males: 1, females: 1, juveniles: 0, cubs: 0 } },
+    { label: 'A family', group: { males: 1, females: 2, juveniles: 1, cubs: 2 } },
+  ];
+}
 
 /** Coats a species can come in. The rare one is a real Product Owner decision: more appeal, and the
  *  Backlog item costs the same either way. */
@@ -1051,7 +1084,7 @@ export function designCriteria(item: BacklogItem, design: ItemDesign, homeSize?:
     // default of one animal, which is a criterion that cannot be failed - the thing this whole
     // rewrite was for.
     // ...and measured against the pen they live in. See `homeSizeOf`.
-    { label: 'They fit the habitat with room to roam', pass: !!design.group && hasRoomToRoam(design.group, homeSize ?? item.enclosureSize) },
+    { label: 'They fit the habitat with room to roam', pass: !!design.group && hasRoomToRoam(design.group, homeSize ?? item.enclosureSize, item.template ?? item.id) },
   ];
   // A path is designed as a width and a colour in the studio; the route itself is drawn on the
   // park when you deploy it.
@@ -1141,7 +1174,7 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
     // Not decided is not the same as fits - it would otherwise tick itself before you had chosen.
     // Measured against the habitat they live in, not a copy of its size kept on the animal: a pair
     // ticked and a family never did, however big you made the pen.
-    if (/fit the habitat|room/.test(s)) return !!design.group && hasRoomToRoam(design.group, homeSize ?? item.enclosureSize);
+    if (/fit the habitat|room/.test(s)) return !!design.group && hasRoomToRoam(design.group, homeSize ?? item.enclosureSize, item.template ?? item.id);
     // The coat is a colour on the animal. It was looked for in `parts`, where the old studio kept a
     // named coat option that no control writes any more - so "choose the coat" could be chosen and
     // never tick, and Done waits for the plan.
