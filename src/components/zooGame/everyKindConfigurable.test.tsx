@@ -36,6 +36,34 @@ const swatches = (container: HTMLElement) => [...container.querySelectorAll('but
   .map((b) => b.getAttribute('aria-label') ?? '')
   .filter((l) => /#([0-9a-f]{6})/i.test(l));
 
+// Nothing gets built with no controls at all.
+//
+// The lion had exactly one: "Turn". The strip knew about habitats, scenery, buildings and paths,
+// and nobody had written the branch for an animal - so the one thing in the zoo a visitor comes to
+// see could not be given a coat or a family. This sweeps every kind, so a category with no branch
+// fails here rather than in somebody's hands.
+describe('every kind of thing has controls', () => {
+  const wanted: Record<string, RegExp> = {
+    enclosure: /Footprint/,
+    exhibit: /How many/,
+    flora: /Size|Kind|Bank|Deck/,
+    amenity: /Type/,
+    path: /Width/,
+  };
+  for (const [category, expected] of Object.entries(wanted)) {
+    it(`a ${category} can be worked on`, () => {
+      const s = game();
+      const item = of(s, category);
+      expect(item, `there is no ${category} in the starting Backlog to try`).toBeTruthy();
+      const { container } = open(s, item);
+      const text = container.textContent ?? '';
+      expect(text, `a ${category} has nothing but its name`).toMatch(expected);
+      // A strip with one lonely group is the shape the lion was in: worth failing on.
+      expect(container.querySelectorAll('button').length, `a ${category} offers almost nothing`).toBeGreaterThan(2);
+    });
+  }
+});
+
 describe('what you can change about each kind of thing', () => {
   it('a habitat: its footprint, its shape, its ground, its fence and the way inside', () => {
     const s = game();
@@ -61,6 +89,17 @@ describe('what you can change about each kind of thing', () => {
   });
 
 
+
+  it('an animal: how many of them, the coat they wear, and where they live', () => {
+    const s = game();
+    const { container } = open(s, of(s, 'exhibit'));
+    expect(container.textContent).toMatch(/How many/);
+    expect(swatches(container).some((l) => /^Coat /.test(l)), 'an animal has no coat colour').toBe(true);
+    expect(container.textContent, 'an animal cannot be moved to another habitat').toMatch(/Lives in/);
+    // An animal has no ground of its own: it lives inside a habitat, so it is not turned or moved
+    // about the park like a kiosk.
+    expect(container.textContent, 'an animal was offered the park controls of a building').not.toMatch(/On the park/);
+  });
 
   it('a facility: its walls, roof and sign', () => {
     const s = game();
