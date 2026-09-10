@@ -3,7 +3,7 @@ import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH } from './parkModel';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { answerable, checkCriterion } from './parkChecks';
-import { groupMembers } from './design';
+import { groupMembers, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { cn } from '@/lib/utils';
 
 // The park, seen from above, for building on.
@@ -41,7 +41,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, onSetMemberSpot, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, onSetMemberSpot, onMoveInside, inside, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -54,11 +54,16 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** Turn a thing a quarter. Both drawings and the visitors' routing already read `rot`; nothing
    *  had offered it since the object editor's Turn control was cut. */
   onTurn?: (id: string, rot: number) => void;
+  /** Zoom to one habitat, to work on what is inside it. The same renderer and the same coordinates,
+   *  closer in - not a window over the park. */
+  inside?: string | null;
   /** Move one animal of a family about inside its habitat. */
   onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
+  /** Move a pool or a plant about inside a habitat. */
+  onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void;
   /** Something is being put down for the first time: it follows the cursor with a verdict on it. */
   placing?: { id: string; w: number; h: number } | null;
-  onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }) => void;
+  onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }, into?: string) => void;
   /** The park's own tool. A path is drawn point to point: click where it starts, click where it
    *  ends, and it runs between them. Nothing else on the park needs a tool. */
   tool?: 'none' | 'path';
@@ -98,12 +103,24 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     return it.category === 'flora' && (kind === 'river' || kind === 'pond');
   };
 
-  /** Pointer to park coordinates. The plan is drawn at 1:1 in its own viewBox, so this is only the
-   *  scale between the box on the screen and the box in the park. */
+  // What the picture covers: the whole park, or one habitat when you are working inside it. The
+  // same renderer and the same coordinates, closer in - not a window over the park.
+  const insideBox = inside ? boxes.find((b) => b.item.id === inside) : undefined;
+  const box = insideBox
+    ? { x: insideBox.at.x - insideBox.size.w * 0.8, y: insideBox.at.y - insideBox.size.h * 0.8,
+        w: insideBox.size.w * 1.6, h: insideBox.size.h * 1.6 }
+    : { x: 0, y: 0, w: CANVAS_W, h: PLAY_H };
+  const view = `${box.x} ${box.y} ${box.w} ${box.h}`;
+  // Zoomed in, a label written in park units comes out enormous. Everything that is chrome rather
+  // than park - names, pills, grips - is scaled by how much the picture is magnified, so it stays
+  // the size it looks on the whole park.
+  const k = box.w / CANVAS_W;
+
+  /** Pointer to park coordinates, whatever the picture is covering. */
   const worldAt = (e: { clientX: number; clientY: number }) => {
     const r = svgRef.current?.getBoundingClientRect();
     if (!r || !r.width) return null;
-    return { x: ((e.clientX - r.left) / r.width) * CANVAS_W, y: ((e.clientY - r.top) / r.height) * PLAY_H };
+    return { x: box.x + ((e.clientX - r.left) / r.width) * box.w, y: box.y + ((e.clientY - r.top) / r.height) * box.h };
   };
 
   /** Can this go here, and if not, why not. The same question the ghost answers on the isometric. */
@@ -147,6 +164,24 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       const v = verdict(b.item.id, b.size, { x: p.x - grabX, y: p.y - grabY });
       if (v.ok) onPlaceItem(b.item.id, { x: v.x, y: v.y });
     };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  /** Drag a pool or a plant about inside its habitat, in the habitat's own coordinates. */
+  const movePiece = (e: ReactPointerEvent, b: typeof boxes[number], kind: 'water' | 'flora', index: number) => {
+    if (!onMoveInside) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const move = (ev: PointerEvent) => {
+      const p = worldAt(ev);
+      if (!p) return;
+      onMoveInside(b.item.id, kind, index, {
+        x: Math.max(0.05, Math.min(0.95, (p.x - (b.at.x - b.size.w / 2)) / b.size.w)),
+        y: Math.max(0.06, Math.min(0.94, (p.y - (b.at.y - b.size.h / 2)) / b.size.h)),
+      });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
@@ -198,7 +233,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       {/* No selecting. Dragging across the park was painting the browser's own selection highlight
           over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
           there. Reported from playing it: "blue squares appear as trails." */}
-      <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={`0 0 ${CANVAS_W} ${PLAY_H}`} role="img"
+      <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view} role="img"
         aria-label={`The zoo from above: ${boxes.length} things standing on it`}
         style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height, touchAction: 'none',
           cursor: tool === 'path' ? 'crosshair' : placing ? 'copy' : 'default' }}
@@ -213,6 +248,14 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           const w = worldAt(e);
           if (!w) return;
           if (placing) {
+            // An animal goes IN somewhere: dropped on a habitat that is standing, it moves in.
+            const item = state.backlog.find((it) => it.id === placing.id);
+            if (item?.category === 'exhibit') {
+              const home = boxes.find((b) => b.item.category === 'enclosure'
+                && Math.abs(w.x - b.at.x) < b.size.w / 2 && Math.abs(w.y - b.at.y) < b.size.h / 2);
+              if (home && onPlace) { onPlace(placing.id, { x: w.x, y: w.y }, undefined, home.item.id); setGhost(null); }
+              return;
+            }
             const v = verdict(placing.id, placing, w);
             if (v.ok && onPlace) { onPlace(placing.id, { x: v.x, y: v.y }); setGhost(null); }
             return;
@@ -281,6 +324,34 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 fill={c.fill} fillOpacity={b.underWay ? 0.45 : 1}
                 stroke={on ? '#e6842a' : c.stroke} strokeWidth={on ? 4 : 2}
                 strokeDasharray={b.underWay ? '8 6' : undefined} />
+              {/* What is inside the fence: the pool, the rocks, the planting. Drawn here because
+                  this is where a habitat is built now - there is no window over the park with a
+                  picture of the pen in it - and each piece can be taken hold of and moved. */}
+              {b.item.category === 'enclosure' && (() => {
+                const d = currentDesign(b.item);
+                return (
+                  <>
+                    {enclosureWater(d).map((wf, i) => (
+                      <ellipse key={`w-${b.item.id}-${i}`} data-piece={`water-${i}`} data-of={b.item.id}
+                        cx={x + b.size.w * (wf.x + wf.w / 2)} cy={y + b.size.h * (wf.y + wf.h / 2)}
+                        rx={(b.size.w * wf.w) / 2} ry={(b.size.h * wf.h) / 2} fill="#7cc0e8"
+                        style={{ cursor: onMoveInside ? 'grab' : 'default' }}
+                        onPointerDown={onMoveInside ? (e) => movePiece(e, b, 'water', i) : undefined} />
+                    ))}
+                    {enclosureFlora(d).map((f, i) => (
+                      <g key={`f-${b.item.id}-${i}`} data-piece={`flora-${i}`} data-of={b.item.id}
+                        style={{ cursor: onMoveInside ? 'grab' : 'default' }}
+                        onPointerDown={onMoveInside ? (e) => movePiece(e, b, 'flora', i) : undefined}>
+                        {/rock|shelter/i.test(f.type)
+                          ? <rect x={x + b.size.w * f.x - 12} y={y + b.size.h * f.y - 9} width={24} height={18} rx={4}
+                              fill={f.foliage ?? '#8a5a2b'} />
+                          : <circle cx={x + b.size.w * f.x} cy={y + b.size.h * f.y} r={10} fill={f.foliage ?? '#3f8f43'} />}
+                      </g>
+                    ))}
+                  </>
+                );
+              })()}
+
               {/* The animals inside their fence, big enough to see and to take hold of. */}
               {b.animals.map((a, i) => {
                 const members = Math.max(1, groupMembers(a.design?.group).length);
@@ -301,12 +372,16 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   );
                 });
               })}
-              <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={13} fontWeight={700} fill="#20351f">
-                {b.item.name}{b.underWay ? ' · built, not Done' : ''}
-              </text>
+              {/* The name, and only out on the whole park: inside a habitat the picture IS the
+                  habitat, and the inspector's pill already says which. */}
+              {!inside && (
+                <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={13 * k} fontWeight={700} fill="#20351f">
+                  {b.item.name}{b.underWay ? ' · built, not Done' : ''}
+                </text>
+              )}
               {/* One pill per object that is built and not Done: how far off it is, and the one
                   thing that would finish it. Green when there is nothing left to say. */}
-              {b.underWay && (() => {
+              {b.underWay && !inside && (() => {
                 const criteria = b.item.acceptance.filter(Boolean);
                 const verdicts = criteria.map((c) => ({ c, v: checkCriterion(state, b.item, c) }));
                 // Ready means every criterion the park can answer is answered. The rest are
@@ -342,10 +417,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 <g data-part="turn-grip" style={{ cursor: 'pointer' }}
                   onPointerDown={(e) => { e.stopPropagation(); onTurn(b.item.id, ((b.item.rot ?? 0) + 90) % 360); }}>
                   <title>Turn it a quarter</title>
-                  <circle cx={x + b.size.w - 9} cy={y + 9} r={11} fill="#fff" stroke="#e6842a" strokeWidth={3} />
+                  <circle cx={x + b.size.w - 9 * k} cy={y + 9 * k} r={11 * k} fill="#fff" stroke="#e6842a" strokeWidth={3 * k} />
                   <path d="M -5 -1 A 5 5 0 1 1 -1 5" fill="none" stroke="#e6842a" strokeWidth={2.4}
-                    strokeLinecap="round" transform={`translate(${x + b.size.w - 9} ${y + 9})`} />
-                  <path d={`M ${x + b.size.w - 14} ${y + 5} l 0 -5 l 5 0`} fill="none" stroke="#e6842a" strokeWidth={2.4} strokeLinecap="round" />
+                    strokeLinecap="round" transform={`translate(${x + b.size.w - 9 * k} ${y + 9 * k}) scale(${k})`} />
                 </g>
               )}
 
@@ -354,8 +428,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   it needs to be - which is what the takeover promises when it says its size is set
                   on the park. */}
               {on && onSetSize && (b.item.category === 'enclosure' || b.item.category === 'flora') && (
-                <rect data-part="size-grip" x={x + b.size.w - 9} y={y + b.size.h - 9} width={18} height={18} rx={4}
-                  fill="#fff" stroke="#e6842a" strokeWidth={3}
+                <rect data-part="size-grip" x={x + b.size.w - 9 * k} y={y + b.size.h - 9 * k} width={18 * k} height={18 * k} rx={4 * k}
+                  fill="#fff" stroke="#e6842a" strokeWidth={3 * k}
                   style={{ cursor: 'nwse-resize' }}
                   onPointerDown={(e) => sizeFrom(e, b)} />
               )}

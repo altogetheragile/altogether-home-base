@@ -2,7 +2,7 @@ import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, Ba
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
-import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign } from './design';
+import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -722,6 +722,23 @@ export function addInside(state: ZooGameState, id: string, kind: 'water' | strin
     return it.status === 'done' || it.status === 'open'
       ? { ...it, design: next }
       : { ...it, draftDesign: next };
+  }) };
+}
+
+/** Move one thing inside a habitat - a pool, a rock, a tree - to where you want it.
+ *
+ *  Held in the habitat's own coordinates (0 to 1 across the pen), so it means the same thing in the
+ *  plan, in the isometric view and in the routing. In the reducer for the same reason as adding:
+ *  a drag is a stream of little moves, and each one has to start from where the last one left it. */
+export function moveInside(state: ZooGameState, id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => {
+    if (it.id !== id) return it;
+    const design = currentDesign(it);
+    const next = kind === 'water'
+      ? { ...design, water: enclosureWater(design).map((w, i) => (i === index
+          ? { ...w, x: Math.max(0, Math.min(1 - w.w, spot.x - w.w / 2)), y: Math.max(0, Math.min(1 - w.h, spot.y - w.h / 2)) } : w)) }
+      : { ...design, flora: enclosureFlora(design).map((f, i) => (i === index ? { ...f, x: spot.x, y: spot.y } : f)) };
+    return it.status === 'done' || it.status === 'open' ? { ...it, design: next } : { ...it, draftDesign: next };
   }) };
 }
 
