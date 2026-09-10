@@ -90,7 +90,11 @@ export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = '
       <div className="mt-2 border-t border-border pt-2">
         {accepted ? (
           <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
-            {po} accepted it &middot; move it to Done
+            {/* ...and once it is in Done, it says that instead of asking for a move that has been
+                made. Every line here has to be true of the card as it is now. */}
+            {item.status === 'committed'
+              ? <>{po} accepted it &middot; move it to Done</>
+              : <>Done &middot; {item.status === 'open' ? 'open to visitors' : 'not open to visitors yet'}</>}
           </p>
         ) : asked ? (
           <p className="text-[11px] text-muted-foreground">Waiting on {po} to look at it.</p>

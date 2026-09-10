@@ -990,7 +990,21 @@ export const emptyDesign = (item: BacklogItem): ItemDesign => presetFor(item);
 
 const coloured = (d: ItemDesign) => Object.values(d.colors).filter(Boolean).length;
 
-export function designCriteria(item: BacklogItem, design: ItemDesign): { label: string; pass: boolean }[] {
+/** How big the habitat an item lives in is.
+ *
+ *  An animal has no size of its own: it is as roomy as the pen it stands in. It kept a copy, and the
+ *  copy went stale the moment the pen was resized - so enlarging the habitat, which is the obvious
+ *  fix for a crowded family and the one the game suggests, changed nothing at all. Reported from
+ *  playing it three times: "a pair can reach Done but a family cannot."
+ *
+ *  Everything that asks whether they fit asks this first, so there is one answer rather than one per
+ *  reader. */
+export const homeSizeOf = (item: BacklogItem, all: readonly BacklogItem[] = []): 'small' | 'medium' | 'large' | undefined =>
+  (item.category === 'exhibit'
+    ? all.find((i) => i.id === item.enclosureId)?.enclosureSize ?? item.enclosureSize
+    : item.enclosureSize);
+
+export function designCriteria(item: BacklogItem, design: ItemDesign, homeSize?: 'small' | 'medium' | 'large'): { label: string; pass: boolean }[] {
   // An exhibit is stocked rather than built: how many animals, and whether the habitat can hold
   // them. The second one is the only place in the game where one Backlog item's design is measured
   // against another's, which is what makes an animal and its habitat a pair rather than two jobs.
@@ -999,7 +1013,8 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
     // Not decided is not the same as fits: an undecided exhibit would otherwise pass this on the
     // default of one animal, which is a criterion that cannot be failed - the thing this whole
     // rewrite was for.
-    { label: 'They fit the habitat with room to roam', pass: !!design.group && hasRoomToRoam(design.group, item.enclosureSize) },
+    // ...and measured against the pen they live in. See `homeSizeOf`.
+    { label: 'They fit the habitat with room to roam', pass: !!design.group && hasRoomToRoam(design.group, homeSize ?? item.enclosureSize) },
   ];
   // A path is designed as a width and a colour in the studio; the route itself is drawn on the
   // park when you deploy it.
@@ -1057,7 +1072,8 @@ export function designCriteria(item: BacklogItem, design: ItemDesign): { label: 
   return [];
 }
 
-export const isDesignDone = (item: BacklogItem, design: ItemDesign): boolean => designCriteria(item, design).every((x) => x.pass);
+export const isDesignDone = (item: BacklogItem, design: ItemDesign, homeSize?: 'small' | 'medium' | 'large'): boolean =>
+  designCriteria(item, design, homeSize).every((x) => x.pass);
 
 /** Whether the actual design work for a plan task has been done - so the studio can tick the
  *  plan off automatically as you build, instead of making you check boxes for work you just

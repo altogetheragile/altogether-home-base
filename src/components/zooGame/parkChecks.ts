@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask } from './design';
-import { settleStatus, isSignOffTask } from './engine';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf } from './design';
+import { settleStatus, isSignOffTask, commitWhenBuilt } from './engine';
 import { whereItStands } from './parkModel';
 
 // ============= The criteria the park can answer for itself =============
@@ -180,8 +180,7 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
   if (label === 'Can I fit them in the habitat with room to spare?') {
     // The size of the habitat they actually live in, not a field on the animal. It read the
     // animal's own copy, so making the pen bigger - the obvious fix - changed nothing at all.
-    const home = state.backlog.find((i) => i.id === item.enclosureId);
-    const size = home?.enclosureSize ?? item.enclosureSize;
+    const size = homeSizeOf(item, state.backlog);
     const n = groupSize(design.group);
     if (!design.group) return { met: false, evidence: 'not stocked yet' };
     const named = (k?: string) => (k === 'large' ? 'a large' : k === 'small' ? 'a small' : 'a medium');
@@ -236,8 +235,7 @@ function applyPlanChecks(state: ZooGameState): ZooGameState {
     const tasks = item.tasks ?? [];
     if (!tasks.length) return item;
     const design = currentDesign(item);
-    const homeSize = item.category === 'exhibit'
-      ? state.backlog.find((i) => i.id === item.enclosureId)?.enclosureSize : undefined;
+    const homeSize = homeSizeOf(item, state.backlog);
     let touched = false;
     const next = tasks.map((t) => {
       if (t.done || !t.label.trim() || isSignOffTask(t.label)) return t;
@@ -247,7 +245,10 @@ function applyPlanChecks(state: ZooGameState): ZooGameState {
     });
     if (!touched) return item;
     changed = true;
-    return settleStatus({ ...item, tasks: next });
+    // ...and a plan with nothing left in it is the Developers saying it is built, whether they
+    // ticked the last step or the park did. Without this the draft was never committed, so the card
+    // read "Next: finish the plan" over a finished plan and would not move.
+    return settleStatus(commitWhenBuilt({ ...item, tasks: next }));
   });
   return changed ? { ...state, backlog } : state;
 }
