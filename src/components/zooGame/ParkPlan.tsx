@@ -1,6 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
-import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
@@ -48,7 +48,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetTool, onAskToCheck, onSetMemberSpot, onMoveInside, inside, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, inside, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -78,6 +78,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** The pathway item the run being drawn belongs to. */
   runFor?: string;
   onAddConnector?: (c: ZooConnector) => void;
+  /** The pen is put away from the strip that took it out, not by the park - laying a path is
+   *  laying several runs, and a tool that puts itself away after each one is a tool you press
+   *  between every line. */
   onSetTool?: (tool: 'none' | 'path') => void;
   /** Ask the Product Owner to look at something that meets all of its criteria. */
   onAskToCheck?: (id: string) => void;
@@ -298,7 +301,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               a: { x: runFrom.x, y: runFrom.y }, b: { x: w.x, y: w.y }, bends: [],
               thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
             });
-            setRunFrom(null); setRunTo(null); onSetTool?.('none');
+            // The pen stays down. Laying a path is laying SEVERAL runs - round a habitat, along
+            // the front, up to the kiosk - and putting the tool away after every one meant pressing
+            // "Draw a run" between each of them. Reported from playing it: "drawing paths is clunky.
+            // Can the draw tool stay active so multiple paths can be drawn at once?" It stops when
+            // you say so, on the same chip that started it.
+            setRunFrom(null); setRunTo(null);
             return;
           }
           onSelect?.(null);
@@ -350,9 +358,51 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               onPointerDown={placing ? undefined : (e) => dragFrom(e, b)}
               style={{ cursor: onPlaceItem ? 'grab' : 'pointer' }}>
               <rect x={x} y={y} width={b.size.w} height={b.size.h} rx={6}
-                fill={c.fill} fillOpacity={b.underWay ? 0.45 : 1}
+                fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill) : c.fill}
+                fillOpacity={b.underWay ? 0.45 : 1}
                 stroke={on ? '#e6842a' : c.stroke} strokeWidth={on ? 4 : 2}
                 strokeDasharray={b.underWay ? '8 6' : undefined} />
+              {/* A building, in the colours somebody is choosing for it.
+                  It was a flat blue-grey box, the same one for a cafe and a lavatory block, so every
+                  colour you picked landed somewhere you could not see until the Increment tab.
+                  Reported from playing it: "when creating a building we do not see the colours being
+                  applied". From straight above a building IS its roof, with the walls showing at the
+                  edge - so that is what this draws, with the door and the sign board on the front. */}
+              {b.item.category === 'amenity' && (() => {
+                const d = currentDesign(b.item);
+                const walls = d.colors?.walls ?? '#e6ddcf';
+                const sign = d.colors?.sign;
+                const door = d.colors?.door ?? '#7a5230';
+                // Which wall is the front. The same walk round the corners the isometric view does,
+                // from the same `quarterOf`, so the two drawings cannot disagree about where the
+                // door is - and turning it on the plan shows you which way it will face.
+                const side = ((quarterOf(b.item) % 4) + 4) % 4;
+                const corner = [{ x, y: y + b.size.h }, { x: x + b.size.w, y: y + b.size.h },
+                  { x: x + b.size.w, y }, { x, y }];
+                const a = corner[side], z = corner[(side + 1) % 4];
+                const at = (t: number) => ({ x: a.x + (z.x - a.x) * t, y: a.y + (z.y - a.y) * t });
+                // Inward, so the door and the board sit ON the building rather than beside it.
+                const inx = (z.y - a.y) === 0 ? 0 : (a.x === x ? 1 : -1);
+                const iny = (z.x - a.x) === 0 ? 0 : (a.y === y ? 1 : -1);
+                const d0 = at(0.38), d1 = at(0.62);
+                const s0 = at(0.18), s1 = at(0.82);
+                return (
+                  <>
+                    {/* The walls, seen as the band round the roof. */}
+                    <rect x={x + 3} y={y + 3} width={Math.max(0, b.size.w - 6)} height={Math.max(0, b.size.h - 6)}
+                      rx={4} fill="none" stroke={walls} strokeWidth={5} strokeOpacity={b.underWay ? 0.5 : 0.95} />
+                    {/* The name board over the front, where there is one. */}
+                    {sign && d.parts?.sign !== 'off' && (
+                      <line x1={s0.x + inx * 4} y1={s0.y + iny * 4} x2={s1.x + inx * 4} y2={s1.y + iny * 4}
+                        stroke={sign} strokeWidth={4} strokeLinecap="round" />
+                    )}
+                    {/* The way in. "When turning it would be useful to know where the front door is
+                        so we can point at a path." */}
+                    <line data-part="front-door" x1={d0.x} y1={d0.y} x2={d1.x} y2={d1.y}
+                      stroke={door} strokeWidth={6} strokeLinecap="round" />
+                  </>
+                );
+              })()}
               {/* What is inside the fence: the pool, the rocks, the planting. Drawn here because
                   this is where a habitat is built now - there is no window over the park with a
                   picture of the pen in it - and each piece can be taken hold of and moved. */}

@@ -1,10 +1,13 @@
+import { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
-  hasRoomToRoam, homeSizeOf,
+  hasRoomToRoam, homeSizeOf, SWATCHES,
   type ItemDesign,
 } from './design';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 
@@ -23,7 +26,14 @@ import { EYEBROW, FOCUS } from './ui/tokens';
 // an object that came from a Product Backlog item - the card already said.
 
 const SCENERY_COLOURS = ['#43a047', '#7a5230', '#8fa3b0', '#c8a06a', '#7cc0e8', '#e0679a', '#6b7280'];
-const BUILDING_COLOURS = ['#e6ddcf', '#cfd8e3', '#a4623a', '#3f6f4f', '#c8761f', '#6b7280', '#f2e6c9'];
+const BUILDING_COLOURS = ['#e6ddcf', '#cfd8e3', '#a4623a', '#3f6f4f', '#c8761f', '#6b7280'];
+/** Everything, behind the "+". The strip shows the handful you reach for first; this is the rest,
+ *  the same palette the bench used to open from every colour well. */
+const ALL_COLOURS = [...new Set([
+  ...BUILDING_COLOURS, ...SWATCHES,
+  '#f2e6c9', '#b23a48', '#7a5230', '#2f4f4f', '#d9b382', '#9aa1a8',
+  '#1f4e79', '#7b8f3a', '#c9a227', '#8e6bbf', '#e8e2d5', '#3a3a3a',
+])];
 const GROUND_COLOURS = ['#c8a06a', '#e0a642', '#a8cf8f', '#6b7280', '#e8e2d5'];
 const FENCE_COLOURS = ['#8a6a3b', '#6b7280', '#3f6f4f', '#8fa3b0'];
 /** What an animal's coat can be. */
@@ -59,6 +69,39 @@ function Swatch({ hex, on, onClick, label }: { hex: string; on: boolean; onClick
   );
 }
 
+/** The rest of the colours.
+ *
+ *  The strip is one row under the park, so it can hold about half a dozen swatches per part before
+ *  it stops being a row. The bench it replaced opened a full palette from each colour well, and
+ *  losing that was losing choices rather than tidying them: "we used to be able to select more
+ *  colours for buildings". So the row keeps the handful worth reaching for first, and the rest are
+ *  one press away - which is where they were before. */
+function MoreColours({ label, current, options, onPick }: {
+  label: string; current?: string; options: string[]; onPick: (hex: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" aria-label={`More ${label.toLowerCase()} colours`} title={`More ${label.toLowerCase()} colours`}
+          className={cn(FOCUS, 'flex h-6 w-6 items-center justify-center rounded-md border-2 border-dashed border-border text-muted-foreground hover:text-foreground')}>
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-2">
+        <div className="grid grid-cols-6 gap-1.5">
+          {options.map((c) => (
+            <button key={c} type="button" aria-label={`${label} ${c}`} title={c}
+              onClick={() => { onPick(c); setOpen(false); }}
+              className={cn(FOCUS, 'h-7 w-7 rounded-md border-2', current === c ? 'border-primary' : 'border-border')}
+              style={{ background: c }} />
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export interface ParkOptionsApi {
   onDesign: (id: string, design: ItemDesign) => void;
   onAddInside?: (id: string, kind: string) => void;
@@ -68,6 +111,10 @@ export interface ParkOptionsApi {
   onUnplace?: (id: string) => void;
   /** Look inside a habitat - the park zooms to it. */
   onInside?: (id: string | null) => void;
+  /** Take a run of path back up. The bench that used to list an item's runs went with the takeover,
+   *  and nothing replaced it: "we used to have joints on paths too and the ability to delete them."
+   *  A run laid in the wrong place could not be picked up at all. */
+  onRemoveRun?: (connectorId: string) => void;
   /** Set a footprint outright. Dragging a corner does anything in between. */
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
   /** Move an animal into a habitat - which is what "where it lives" means for an animal. */
@@ -240,12 +287,16 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
           ))}
         </Group>
       )}
-      {!inside && isBuilding && ([['walls', 'Walls'], ['roof', 'Roof'], ['sign', 'Sign']] as const).map(([key, label]) => (
+      {/* Walls, roof, the board over the front - and the door, which is the part you aim at a path.
+          It was not offered at all out here, though the drawing has always had one. */}
+      {!inside && isBuilding && ([['walls', 'Walls'], ['roof', 'Roof'], ['door', 'Door'], ['sign', 'Sign']] as const).map(([key, label]) => (
         <Group key={key} label={label}>
           {BUILDING_COLOURS.map((c) => (
             <Swatch key={c} hex={c} label={label} on={design.colors?.[key] === c}
               onClick={() => set({ colors: { ...design.colors, [key]: c } })} />
           ))}
+          <MoreColours label={label} current={design.colors?.[key]} options={ALL_COLOURS}
+            onPick={(c) => set({ colors: { ...design.colors, [key]: c } })} />
         </Group>
       ))}
 
@@ -263,6 +314,32 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 onClick={() => set({ parts: { ...design.parts, thickness: w.key } })}>{w.label}</Chip>
             ))}
           </Group>
+          {/* The runs this pathway is made of, and the way to take one back up. */}
+          {(() => {
+            const runs = (state.connectors ?? []).filter((c) => c.itemId === subject.id);
+            if (!runs.length) return null;
+            const named = (end: { featureId?: string }) => (end.featureId
+              ? state.backlog.find((x) => x.id === end.featureId)?.name : null);
+            return (
+              <Group label={`${runs.length} run${runs.length === 1 ? '' : 's'}`}>
+                {runs.map((c, i) => {
+                  const from = named(c.a), to = named(c.b);
+                  const where = from && to ? `${from} to ${to}` : from ? `from ${from}` : to ? `to ${to}` : 'across the grass';
+                  return api.onRemoveRun ? (
+                    <button key={c.id} type="button" data-part="remove-run"
+                      onClick={() => api.onRemoveRun?.(c.id)}
+                      title={`Take run ${i + 1} back up - ${where}`}
+                      aria-label={`Take run ${i + 1} back up, ${where}`}
+                      className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-muted-foreground hover:border-destructive/60 hover:text-destructive')}>
+                      <span className="h-1.5 w-4 rounded-full" style={{ background: c.color }} aria-hidden />
+                      {i + 1}
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  ) : null;
+                })}
+              </Group>
+            );
+          })()}
           <Group label="Surface">
             {PATH_SURFACES.map((c) => (
               <Swatch key={c.hex} hex={c.hex} label={c.label} on={design.colors?.path === c.hex}
