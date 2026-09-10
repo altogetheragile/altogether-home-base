@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
 import { FlyThrough } from './FlyThrough';
+import { TurnControl } from './TurnControl';
 
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 
@@ -29,6 +30,9 @@ export function EventStage({ state, title, note, at, walk, children }: {
   children: ReactNode;
 }) {
   const [picture, setPicture] = useState(470);
+  // Which side the room is looking from. The Review is where somebody is presenting the zoo to
+  // stakeholders, and "can we see behind the enclosure?" is a question a room asks out loud.
+  const [turn, setTurn] = useState(0);
   const read = useRef<HTMLDivElement>(null);
   useEffect(() => { if (read.current) read.current.scrollTop = 0; }, [at]);
   const frame = useCallback((el: HTMLDivElement | null) => {
@@ -41,19 +45,24 @@ export function EventStage({ state, title, note, at, walk, children }: {
   return (
     <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:overflow-hidden">
       <section ref={frame} data-part="event-park" className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-[#8cc063]/25">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-2">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</span>
-          {note && <span className="text-[11px] text-muted-foreground">{note}</span>}
+          <span className="flex items-center gap-2">
+            {note && <span className="text-[11px] text-muted-foreground">{note}</span>}
+            {/* In the strip above the picture rather than over it: the walk's own controls have the
+                corners, and a room watching a presentation does not need two things in one corner. */}
+            <TurnControl turn={turn} onTurn={setTurn} />
+          </span>
         </div>
         <Suspense fallback={<div className="mx-3 mb-2 flex-1 animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
           {/* At the Review, "here is what we built" is the event. So the park walks the room round
               it, and the same walk is offered on the Increment tab - one component, one walk. */}
           {walk ? (
             <FlyThrough state={state} className="px-3 pb-2">
-              {(camera) => <IsoZoo state={state} height={picture} camera={camera} />}
+              {(camera) => <IsoZoo state={state} height={picture} turn={turn} camera={camera} />}
             </FlyThrough>
           ) : (
-            <IsoZoo state={state} height={picture} className="px-3 pb-2" />
+            <IsoZoo state={state} height={picture} turn={turn} className="px-3 pb-2" />
           )}
         </Suspense>
       </section>
