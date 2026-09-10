@@ -884,6 +884,43 @@ export function floraColors(type?: string): { key: string; label: string }[] {
   }
 }
 /** Quick colour suggestions offered next to each picker (still fully editable). */
+/** Animals that live in water rather than beside it.
+ *
+ *  A reef is not kept in a paddock with a pond in the corner: it is kept in a TANK - glass on every
+ *  side, water to the top, and the visitors look through it. Reported from playing it: "the reef is
+ *  a fish tank, it needs to look like a tank or an aquarium."
+ *
+ *  So a habitat can be a tank, and it is a tank when the Developers say so or when everything living
+ *  in it swims. One rule, read by both drawings and by the checks, so a habitat cannot be a paddock
+ *  in the plan and an aquarium in the Increment. */
+export const AQUATIC = ['reef', 'shark', 'ray', 'turtle', 'jellyfish'];
+
+/** Whether this habitat is a tank: chosen, or implied by what lives in it. */
+export function isTank(design: ItemDesign | undefined, living: { template?: string; id?: string }[] = []): boolean {
+  if (design?.parts?.ground === 'water') return true;
+  if (design?.parts?.ground === 'land') return false;
+  return living.length > 0 && living.every((a) => AQUATIC.includes((a.template ?? a.id ?? '').toLowerCase()));
+}
+
+/** The water a tank is filled with, or the pool colour where somebody chose one. */
+export const tankWater = (design?: ItemDesign) => design?.colors?.water ?? '#2f8fc0';
+
+/** What this animal's colour is CALLED. A fish has no coat, and a control labelled "Coat" over a
+ *  row of browns is the wrong control offered in the wrong words: "they do not have a coat so the
+ *  control for cats doesn't work". Said once, here, so the strip, the plan and the Developers' step
+ *  all use the same word for the same choice. */
+export const coatWord = (item: { template?: string; id?: string } | undefined): string =>
+  (AQUATIC.includes((item?.template ?? item?.id ?? '').toLowerCase()) ? 'Colour' : 'Coat');
+
+/** The colours worth offering for this animal. Browns and creams are a mammal's; a reef is orange
+ *  and yellow and blue, and offering it a lion's palette is offering it nothing. */
+export const COATS_BY_KIND: Record<string, string[]> = {
+  fur: ['#c8761f', '#e0c9a6', '#5b4636', '#2a2622', '#f0efe9'],
+  fish: ['#e2803c', '#f4c430', '#4a90d9', '#3fb3a6', '#e0679a', '#f2f0ea', '#7b4fa8'],
+};
+export const coatChoices = (item: { template?: string; id?: string } | undefined): string[] =>
+  (AQUATIC.includes((item?.template ?? item?.id ?? '').toLowerCase()) ? COATS_BY_KIND.fish : COATS_BY_KIND.fur);
+
 export const SWATCHES = ['#c8873b', '#e6842a', '#e3c66b', '#8a5a2b', '#2a2622', '#f0efe9', '#43a047', '#ef6f53', '#f4c430', '#4a90d9'];
 
 // ---- Presets: a recognisable starting shape per species (uncoloured) ----
@@ -1108,7 +1145,8 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
     // The coat is a colour on the animal. It was looked for in `parts`, where the old studio kept a
     // named coat option that no control writes any more - so "choose the coat" could be chosen and
     // never tick, and Done waits for the plan.
-    if (/coat/.test(s)) return !!design.parts.coat || !!design.colors?.coat;
+    // "Choose the coat" for a lion, "choose the colour" for a reef - one choice, two words for it.
+    if (/coat|colour/.test(s)) return !!design.parts.coat || !!design.colors?.coat;
     return false;
   }
   const s = label.toLowerCase();

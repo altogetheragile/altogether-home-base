@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf } from './design';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank } from './design';
 import { settleStatus, isSignOffTask, commitWhenBuilt } from './engine';
 import { whereItStands } from './parkModel';
 
@@ -159,9 +159,12 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     // Ground under their feet, something growing or to shelter behind, and water. A hatched box with
     // none of those is a pen, and the criterion exists to be failable by one - which it was not
     // while the learner ticked it themselves.
-    const water = enclosureWater(design).length > 0;
+    // A tank IS water: asking it for a pond in the corner is asking a fish to build a pond.
+    const living = state.backlog.filter((it) => it.enclosureId === item.id);
+    const tank = isTank(design, living);
+    const water = tank || enclosureWater(design).length > 0;
     const growing = enclosureFlora(design).length > 0;
-    const ground = !!design.colors?.ground;
+    const ground = tank ? !!(design.colors?.water ?? true) : !!design.colors?.ground;
     const shelter = enclosureFlora(design).some((f) => /rock|shelter|hedge/i.test(f.type));
     const has = [ground && 'ground', shelter ? 'shelter' : growing && 'planting', water && 'water']
       .filter(Boolean) as string[];
