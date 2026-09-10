@@ -48,12 +48,12 @@ describe('every action a player can send', () => {
         .map((f) => readFileSync(`src/pages/${f}`, 'utf8')),
     ];
     const unsent = keys.filter((k) => !screens.some((t) => new RegExp(`\\b${k}\\b`).test(t)));
-    // Two are known and named rather than quietly allowed: `addCopy`/`setCopyPiece` put another
-    // plant beside a planting item, which the options strip does not offer yet, and `reorderSprint`
-    // is the Developers arranging their own Sprint Backlog - a control the board declared and never
-    // rendered. Both are decisions to take, not dead code to delete, so they are listed here where
-    // the next person will see them rather than left to be rediscovered.
-    expect(unsent.filter((k) => !['addCopy', 'setCopyPiece', 'reorderSprint'].includes(k)),
+    // One is known and named rather than quietly allowed: `addCopy`/`setCopyPiece` put another
+    // plant beside a planting item, which the options strip does not offer yet. It is a decision to
+    // take, not dead code to delete, so it is listed here where the next person will see it rather
+    // than left to be rediscovered. (`reorderSprint` was on this list until the board grew the
+    // control it had been declaring for months.)
+    expect(unsent.filter((k) => !['addCopy', 'setCopyPiece'].includes(k)),
       'the game offers this action and no screen ever sends it').toEqual([]);
   });
 });

@@ -22,7 +22,7 @@ import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, X, Clock } from 'lucide-react';
+import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
@@ -34,6 +34,9 @@ interface SprintBoardProps {
   /** Move it to Done: built, standing where it stands, and open to visitors. */
   onFinishItem: (id: string) => void;
   onStartItem: (id: string) => void;
+  /** The Developers ordering what they pick up next. The Sprint Backlog is their plan, and this is
+   *  the part of it that changes most often. */
+  onReorderSprint?: (id: string, dir: 'up' | 'down') => void;
   onPull: (id: string) => void;
   /** Take work back out of the Sprint Backlog: the Developers protecting the Sprint Goal. */
   onDropFromSprint?: (id: string) => void;
@@ -154,7 +157,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -498,7 +501,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                       </div>
                     </div>
                   )}
-                  {todo.map((it) => {
+                  {todo.map((it, i) => {
                     // You build the habitat before its animals: an animal can't start until
                     // its enclosure is built.
                     const needsEnc = !enclosureReady(state, it);
@@ -511,6 +514,35 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                       {cameBack(it.id)}
                       <BoardCard item={it} state={state} note={needsEnc ? `Needs ${encName} built first` : blocked ? why : undefined}
                         onOpen={() => setCardId(it.id)} />
+                      {/* What to pick up next, in the Developers' own order.
+                          The Sprint Backlog is the Developers' plan, and the order of what is not
+                          started yet is the part they change most often - "the fence before the
+                          animals" is a Daily Scrum conversation. The board has taken this callback
+                          since the day it was written and never rendered anything that calls it, so
+                          the order could not be changed at all.
+                          Under the card, not beside it: a column of arrows down the side took the
+                          width the item's name needs, and a Sprint Backlog reading "Lion Enclos..."
+                          is a board nobody can read across a room. And outside the card rather than
+                          in it, because the card is a button and a button inside a button is a thing
+                          browsers are left to guess about. */}
+                      {onReorderSprint && todo.length > 1 && (
+                        <div className="mt-0.5 flex justify-end gap-0.5">
+                          <button type="button" data-part="sprint-up" disabled={i === 0}
+                            onClick={() => onReorderSprint(it.id, 'up')}
+                            aria-label={`Take ${it.name} up the Sprint Backlog`}
+                            title="Pick this up sooner"
+                            className={cn(FOCUS, 'flex h-7 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button type="button" data-part="sprint-down" disabled={i === todo.length - 1}
+                            onClick={() => onReorderSprint(it.id, 'down')}
+                            aria-label={`Take ${it.name} down the Sprint Backlog`}
+                            title="Pick this up later"
+                            className={cn(FOCUS, 'flex h-7 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
                       </div>
                     );
                   })}

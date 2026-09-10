@@ -88,3 +88,27 @@ describe('a bar', () => {
     }
   });
 });
+
+describe('the Developers’ own order', () => {
+  it('can be changed, on the work not yet started', () => {
+    // The Sprint Backlog is the Developers' plan, and the order of what they have not picked up is
+    // the part of it that changes most often - "the fence before the animals" is a Daily Scrum
+    // conversation. The board took this callback since the day it was written and never rendered
+    // anything that calls it, so the order could not be changed at all.
+    const onReorderSprint = vi.fn();
+    const container = board({ onReorderSprint });
+    const down = container.querySelector('[data-part="sprint-down"]') as HTMLButtonElement | null;
+    expect(down, 'nothing on the board changes what to pick up next').toBeTruthy();
+    expect(down!.getAttribute('aria-label'), 'the control does not say what it moves').toMatch(/down the Sprint Backlog/);
+    fireEvent.click(down!);
+    expect(onReorderSprint, 'pressing it said nothing to the game').toHaveBeenCalledWith(expect.any(String), 'down');
+  });
+
+  it('does not offer to move the first one up, or the last one down', () => {
+    const container = board({ onReorderSprint: () => {} });
+    const ups = [...container.querySelectorAll('[data-part="sprint-up"]')] as HTMLButtonElement[];
+    const downs = [...container.querySelectorAll('[data-part="sprint-down"]')] as HTMLButtonElement[];
+    expect(ups[0].disabled, 'the top item could be moved above itself').toBe(true);
+    expect(downs[downs.length - 1].disabled, 'the bottom item could be moved below itself').toBe(true);
+  });
+});
