@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CardDetail } from './Board';
-import { sendItemBack, asksNow, buildItem } from './engine';
+import { sendItemBack, asksNow, buildItem, askToCheck } from './engine';
 import { mayTake } from './seatRules';
 import { reducer } from './useZooGame';
 import { initialZooState } from './config';
@@ -110,10 +110,23 @@ describe('the way it is said no to', () => {
     return { item, onSendBack };
   };
 
-  it('offers it on built work that does not meet its criteria', () => {
+  it('offers it on built work that does not meet its criteria - and asks before it does it', () => {
+    // It used to refuse the work on one press, in the same small type as the acceptance ticks and
+    // a thumb-width from them, with what it costs in a tooltip nobody sees on a tablet.
     const { item, onSendBack } = card(built());
     fireEvent.click(screen.getByRole('button', { name: /Send it back/ }));
-    expect(onSendBack, 'the button said nothing to the game').toHaveBeenCalledWith(item.id);
+    expect(onSendBack, 'one press refused the work').not.toHaveBeenCalled();
+    expect(screen.getByText(/costs Sprint time/i), 'nothing said what sending it back does').toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Yes, send it back/ }));
+    expect(onSendBack, 'the second press said nothing to the game').toHaveBeenCalledWith(item.id);
+  });
+
+  it('can be changed your mind about', () => {
+    const { onSendBack } = card(built());
+    fireEvent.click(screen.getByRole('button', { name: /Send it back/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Keep looking at it/ }));
+    expect(onSendBack, 'backing out still refused the work').not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Send it back/ }), 'the way to refuse it was gone').toBeTruthy();
   });
 
   it('does not offer it once every criterion is ticked', () => {
@@ -152,5 +165,32 @@ describe('the moment there is something to judge', () => {
     expect(now.status, 'it went to Done with the criteria unticked').toBe('committed');
     expect(asksNow(after).some((a) => a.kind === 'accept' && a.of === 'product_owner'),
       'built work was not put in front of the Product Owner').toBe(true);
+  });
+});
+
+describe('the two answers on the Developers’ question', () => {
+  it('say what the destructive one does, on the question rather than in a tooltip', () => {
+    // "Accept it" and "Send it back" sit a thumb-width apart and one of them undoes a piece of
+    // finished work. What it costs was in a `title`, which does not exist on a tablet.
+    const asked = askToCheck(built(), theItem(built()).id, 'developer');
+    const q = (asked.questions ?? []).find((x) => x.id.startsWith('check-'))!;
+    const back = q.choices.find((c) => c.key === 'back')!;
+    expect(back.note, 'refusing the work says nothing about what it costs').toMatch(/costs Sprint time/i);
+    expect(q.choices.find((c) => c.key === 'accept')?.note,
+      'accepting was given a consequence it does not have').toBeFalsy();
+  });
+
+  it('is offered at the Review too, where the Increment is inspected', () => {
+    const onSendBack = vi.fn();
+    const s = built();
+    const item = theItem(s);
+    render(
+      <MemoryRouter>
+        <CardDetail item={item} state={s} interactive showAcceptance bare
+          onToggleTask={() => {}} onConfirmAc={() => {}} onSendBack={onSendBack} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('button', { name: /Send it back/ }),
+      'the Product Owner could accept at the Review and never refuse').toBeTruthy();
   });
 });

@@ -45,6 +45,11 @@ interface SprintReviewProps {
    *  belongs to a Sprint which has ended would be a dead end. */
   onConfirmAc?: (id: string, index: number, value: boolean) => void;
   onToggleTask?: (id: string, taskId: string) => void;
+  /** ...and the other answer. Inspecting the Increment is where a Product Owner is most likely to
+   *  decide that something built is not what they asked for, and until now the Review could accept
+   *  work and never refuse it - the only refusal in the game was the one on the Developers' own
+   *  question during the Sprint. */
+  onSendBack?: (id: string) => void;
   /** The Sprint Review teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -56,7 +61,7 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, teachCard, onMarkTaught }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, teachCard, onMarkTaught }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const slices = zoneSlices(state);
@@ -172,7 +177,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
                     note={waiting ? 'Not open yet: its acceptance criteria are below, and the sign-off follows them.' : undefined}
                     detail={waiting && onToggleTask ? (
                       <CardDetail item={it} state={state} showAcceptance interactive defaultOpen
-                        onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} />
+                        onToggleTask={onToggleTask} onConfirmAc={onConfirmAc} onSendBack={onSendBack} />
                     ) : undefined}
                     trailing={onOpen && (
                       <Button size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={waiting}
