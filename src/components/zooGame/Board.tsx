@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
 import { availableItems, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
+import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
 import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
@@ -25,7 +26,14 @@ export function CategoryIcon({ item, className }: { item: BacklogItem; className
 
 /** Refine an epic: tick the members to split out into their own PBIs (each animal becomes
  *  an enclosure + the animal that depends on it; each facility becomes an amenity). */
-export function SplitEpicPanel({ epic, onSplit }: { epic: BacklogItem; onSplit: (memberIds: string[]) => void }) {
+export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
+  epic: BacklogItem;
+  onSplit: (memberIds: string[]) => void;
+  /** What splitting costs the day, where it costs anything. Refining during a Sprint takes time
+   *  from building; at Planning and Refinement it is free, because that is the time to refine.
+   *  Said before the press rather than noticed afterwards on the clock. */
+  costSeconds?: number;
+}) {
   const members = epic.epicMembers ?? [];
   const [picked, setPicked] = useState<Set<string>>(() => new Set(members.map((m) => m.id)));
   const toggle = (id: string) => setPicked((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -48,7 +56,12 @@ export function SplitEpicPanel({ epic, onSplit }: { epic: BacklogItem; onSplit: 
           </li>
         ))}
       </ul>
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {!!costSeconds && (
+          <span className="text-[11px] text-amber-700 dark:text-amber-300">
+            Refining mid-Sprint costs {costSeconds}s of today&rsquo;s build time.
+          </span>
+        )}
         <Button size="sm" disabled={count === 0} onClick={() => onSplit(members.filter((m) => picked.has(m.id)).map((m) => m.id))}>Create {count} Product Backlog item{count === 1 ? '' : 's'}</Button>
       </div>
     </div>
@@ -632,7 +645,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
         <Workspace wide title={`Split ${splitting.name}`}
           subtitle="Too big to finish in a Sprint, so break it into pieces you could actually build."
           onClose={() => setSplitting(null)}>
-          <SplitEpicPanel epic={splitting}
+          <SplitEpicPanel epic={splitting} costSeconds={REFINE_COSTS.split}
             onSplit={(ids) => { onSplitEpic?.(splitting.id, ids); setSplitting(null); }} />
         </Workspace>
       )}

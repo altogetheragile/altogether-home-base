@@ -32,12 +32,16 @@ export function ZooSavedGamesDialog({ open, onOpenChange, onResume }: ZooSavedGa
   const handleResume = async (id: string) => {
     setBusyId(id);
     try {
-      const state = await loadGame(id);
+      const { state, note } = await loadGame(id);
       const name = saves.find((s) => s.id === id)?.name ?? 'Saved game';
       onResume(id, state, name);
       onOpenChange(false);
-    } catch {
-      toast.error('Could not load that game. Please try again.');
+      // A save this build could read, but not the one it would write. Said once, not hidden.
+      if (note) toast.warning(note);
+    } catch (err) {
+      // The reason, where there is one: "saved by a newer version" is something a player can act
+      // on, and "please try again" is not.
+      toast.error(err instanceof Error && err.message ? err.message : 'Could not load that game. Please try again.');
     } finally {
       setBusyId(null);
     }
