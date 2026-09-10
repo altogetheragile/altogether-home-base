@@ -6,9 +6,10 @@ import { DayClock } from './DayClock';
 import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
 import { inHandItem } from './engine';
-import { ParkPalette } from './ParkPalette';
-import { BuildTakeover } from './BuildTakeover';
+import { ParkOptions } from './ParkOptions';
+import { ParkInspector } from './ParkInspector';
 import { footprintFor } from './design';
+import { CANVAS_W, PLAY_H } from './parkLayout';
 import { ParkPlan } from './ParkPlan';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
@@ -158,7 +159,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onMoveInside, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector,          onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
   onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
@@ -190,7 +191,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   /** Dropping a thing on the park is the moment it exists: the draft becomes the item's design.
    *  Until this ran, a habitat somebody had plainly built had nothing anybody could accept. */
   onCommitBuild?: (id: string) => void;
-  backlogTab?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onTurn?: (id: string, rot: number) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
+  backlogTab?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onTurn?: (id: string, rot: number) => void; onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemoveCopy?: (id: string, index: number) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
   // The navigation is the three artifacts. A learner who can name the tabs can name the artifacts,
   // which is most of what this game is for - so Product Backlog, Sprint Backlog and Increment are
   // the whole of it, and there is no tab called Build or Sprint. Building is the Sprint Backlog in
@@ -252,17 +253,29 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Where the Learn drawer has been sent from outside it - the value measures, from the game menu.
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
   // What is following the cursor, waiting to be put down on the park.
-  const [placingId, setPlacingId] = useState<string | null>(null);
-  // The takeover opens when a card is picked up and closes when it is placed or kept as a draft.
-  // Held as "which item has been put down" rather than a flag an effect has to keep in step: pick up
-  // something else and it opens again, without a render that corrects itself.
-  const [drafted, setDrafted] = useState<string | null>(null);
-  // A path is not built in a takeover - it is drawn on the park, point to point, with the Path tool.
-  // Opening the object editor on one gave a blank preview, no controls, and hid the only tool that
-  // could do the work behind it: everything a dead end is made of.
-  const drawnOnPark = inHand?.category === 'path';
-  const takeoverOpen = !!inHand && !drawnOnPark && drafted !== inHand.id;
-  const setTakeoverOpen = (open: boolean) => setDrafted(open ? null : inHand?.id ?? null);
+  /** Something already standing that you have picked up again to put down somewhere else. */
+  const [moving, setMoving] = useState<string | null>(null);
+  // Which habitat the park is zoomed into, so its inside can be worked on at a size you can see.
+  // "Back to the park" zooms out. This replaces the takeover: there is no window over the park any
+  // more, and nothing is built anywhere else.
+  const [inside, setInside] = useState<string | null>(null);
+  const insideItem = inside ? state.backlog.find((it) => it.id === inside) ?? null : null;
+
+  // Pick a card and the thing is in your hands: it follows the cursor until you put it down. There
+  // is no dialog to open and no button to press first - "the object appears as a ghost under the
+  // cursor, drop it, it is now built, not Done". A path is drawn rather than dropped, and anything
+  // already standing is only picked up again by choosing Move.
+  // Derived, not stored: something is in your hands when it has been picked up and is not standing
+  // anywhere yet, or when you have said Move. Keeping it in state meant an effect that corrected
+  // itself after every render.
+  const placingId = moving ?? (inHand && edit && inHand.category !== 'path' && !inHand.pos ? inHand.id : null);
+  /** Which corner to dock the inspector in: the one furthest from the thing you are working on, so
+   *  what it is telling you about is never underneath it. */
+  const farthestCorner = (it: { pos?: { x: number; y: number } }): 'tl' | 'tr' | 'bl' | 'br' => {
+    const at = it.pos ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
+    return `${at.y > PLAY_H / 2 ? 't' : 'b'}${at.x > CANVAS_W / 2 ? 'l' : 'r'}` as 'tl' | 'tr' | 'bl' | 'br';
+  };
+
   const pill = eventPill(state);
   const goal = goalLine(state);
 
@@ -443,41 +456,53 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     Straight down, because a metre is a metre wherever it is on the screen and a
                     thing is where you drop it. The isometric view is the zoo as a visitor meets it,
                     and it lives on the Increment tab where nobody is trying to build in it. */}
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <ParkPlan state={state} height={620} selected={building ?? null}
+                <div className="relative min-h-0 flex-1 overflow-y-auto">
+                  {/* What it has to be, docked on the park rather than in a window over it. Inside a
+                      habitat it collapses to a pill, because in there the whole picture is the pen. */}
+                  {inHand && (inHand.acceptance ?? []).length > 0 && (
+                    <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem}
+                      corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck} />
+                  )}
+                  <ParkPlan state={state} height={620} selected={building ?? null} inside={inside}
                     // Picking a thing up on the park opens it, the way picking its card up does.
                     // Reported from playing it: "when I click the bridge it does not automatically
                     // open - I have to click the card." Once something had been kept as a draft or
                     // placed, the takeover stayed shut however often you pressed the thing itself.
-                    onSelect={(id) => { setDrafted(null); onOpenBuild?.(id); }}
-                    onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn} onSetMemberSpot={onSetMemberSpot}
+                    onSelect={(id) => onOpenBuild?.(id)}
+                    onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn} onSetMemberSpot={onSetMemberSpot} onMoveInside={onMoveInside}
                     placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
-                    onPlace={(id, pos) => { onCommitBuild?.(id); onPlaceItem?.(id, pos); setPlacingId(null); }}
+                    onPlace={(id, pos, _drawn, into) => {
+                      // An animal dropped inside a habitat moves in; everything else stands where
+                      // it was dropped. Both are the same gesture - carry it and let go.
+                      if (into) { onPutIn?.(id, into); setMoving(null); return; }
+                      onCommitBuild?.(id); onPlaceItem?.(id, pos); setMoving(null);
+                    }}
                     tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
                     runFor={inHand?.category === 'path' ? inHand.id : undefined}
                     onAddConnector={onAddConnector} onSetTool={(t) => onDrawing?.(t === 'path')}
                     onAskToCheck={onAskToCheck} />
                 </div>
 
-                {/* Everything about the object is built in the takeover; the park keeps placement.
-                    It sits over the park with the strip and the rail still visible, because the day
-                    is still running and somebody may still be waiting on you. It stops short of the
-                    bottom: the day's dock is fixed down there, and it sat on top of "Place on the
-                    park" - the one button the takeover exists for. */}
-                {inHand && edit && takeoverOpen && (
-                  <div className="absolute inset-2 bottom-[4.75rem] z-30 sm:inset-4 sm:bottom-[4.75rem]">
-                    <BuildTakeover className="h-full" state={state} item={inHand} edit={edit} canBuild={canBuild}
-                      onPlace={(id) => { setTakeoverOpen(false); setPlacingId(id); }}
-                      onPutIn={(id, encId) => { onPutIn?.(id, encId); setTakeoverOpen(false); }}
-                      onClose={() => setTakeoverOpen(false)} />
-                  </div>
-                )}
-                {/* Two tools on the park - the only two things with no object of their own. */}
-                {inHand && edit && !takeoverOpen && (
-                  <ParkPalette className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state} item={inHand}
-                    design={inHand.design ?? inHand.draftDesign}
+                {/* Everything is built on the park. One strip under it says what the selected thing
+                    has, whether it was put down a moment ago or a Sprint ago - building something
+                    and changing it later are the same act, so they are the same controls. */}
+                {/* How a thing gets made is the Developers'. A Product Owner watching sees the park
+                    and what the work has to be, and no controls. */}
+                {/* Clear of the day's dock, which is fixed bottom right: the strip's last group was
+                    running underneath it and could not be pressed. */}
+                {edit && canBuild && (
+                  <ParkOptions className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state}
+                    item={inHand ?? null} inside={insideItem ?? null}
                     drawing={drawing} onDrawing={onDrawing}
-                    placing={placingId === inHand.id} onDesign={edit.onDesign} />
+                    api={{
+                      onDesign: edit.onDesign,
+                      onAddInside: edit.onAddInside,
+                      onSetEnclosure: edit.onSetEnclosure,
+                      onTurn,
+                      onUnplace: (id) => setMoving(id),
+                      onSetSize,
+                      onInside: (id) => setInside(id),
+                    }} />
                 )}
               </div>
             )}

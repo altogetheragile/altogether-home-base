@@ -92,6 +92,8 @@ export function zooActions(send: (action: ZooAction) => void) {
     removeCopy: (id: string, index: number) => send({ type: 'REMOVE_COPY', id, index }),
     setItemRot: (id: string, rot: number) => send({ type: 'SET_ROT', id, rot }),
     addInside: (id: string, kind: string) => send({ type: 'ADD_INSIDE', id, kind }),
+    moveInside: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) =>
+      send({ type: 'MOVE_INSIDE', id, kind, index, spot }),
     finishItem: (id: string) => send({ type: 'FINISH_ITEM', id }),
     nestItem: (id: string, enclosureId: string, spot: { x: number; y: number }) => send({ type: 'NEST_ITEM', id, enclosureId, spot }),
     unnestItem: (id: string) => send({ type: 'UNNEST_ITEM', id }),

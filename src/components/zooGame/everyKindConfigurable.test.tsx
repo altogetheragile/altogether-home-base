@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { BuildTakeover } from './BuildTakeover';
+import { ParkOptions } from './ParkOptions';
 import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
 import { presetFor, addFloraTo, addWaterTo, HABITAT_FEATURE_TYPES } from './design';
@@ -19,19 +19,17 @@ import type { ZooGameState, BacklogItem } from './types';
 // be coloured, sized and arranged in the way that kind of thing is.
 
 const noop = () => {};
-const edit = {
-  onDesign: noop, onRename: noop, onSetEnclosure: noop, onToggleTask: noop, onConfirmAc: noop,
-  onFinishBuild: noop, onRelease: noop, onInspect: noop, copySources: () => [], onAddPlant: noop,
-  onSetPlantPiece: noop, onRemovePlant: noop,
-} as unknown as Parameters<typeof BuildTakeover>[0]['edit'];
+const api = { onDesign: noop, onSetEnclosure: noop, onAddInside: noop, onTurn: noop, onUnplace: noop, onInside: noop };
 
 const game = (): ZooGameState => ({
   ...initialZooState(3), phase: 'sprint', dayStage: 'building', sprintNumber: 1,
 } as ZooGameState);
 const of = (s: ZooGameState, category: string): BacklogItem =>
   s.backlog.find((it) => it.category === category)!;
+/** The options strip, which is where everything is built now: one row under the park, offering
+ *  only what the selected object has. */
 const open = (state: ZooGameState, item: BacklogItem, props: Record<string, unknown> = {}) => render(
-  <MemoryRouter><BuildTakeover state={state} item={item} edit={edit} onClose={noop} {...props} /></MemoryRouter>,
+  <MemoryRouter><ParkOptions state={state} item={item} api={api} {...props} /></MemoryRouter>,
 );
 /** Every colour swatch the takeover offers, by what it is a colour OF. */
 const swatches = (container: HTMLElement) => [...container.querySelectorAll('button[aria-label]')]
@@ -39,43 +37,47 @@ const swatches = (container: HTMLElement) => [...container.querySelectorAll('but
   .filter((l) => /#([0-9a-f]{6})/i.test(l));
 
 describe('what you can change about each kind of thing', () => {
-  it('a habitat: its footprint, its shape, its ground and what is inside it', () => {
+  it('a habitat: its footprint, its shape, its ground, its fence and the way inside', () => {
     const s = game();
     const { container } = open(s, of(s, 'enclosure'));
     expect(container.textContent).toMatch(/Footprint/);
     expect(container.textContent).toMatch(/Shape/);
     expect(swatches(container).some((l) => /^Ground /.test(l)), 'a habitat has no ground colour').toBe(true);
-    // ...and everything that goes in it, named for what it is.
-    // Written lowercase and capitalised by the stylesheet, so ask the way a reader would.
+    expect(swatches(container).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
+    expect(container.textContent, 'there is no way in').toMatch(/Look inside/);
+  });
+
+  it('inside a habitat: everything that goes in it, named for what it is', () => {
+    // The park zooms to the pen rather than opening a window over it, and the strip becomes what
+    // goes IN: the same row, the same act, closer in. Written lowercase and capitalised by the
+    // stylesheet, so ask the way a reader would.
+    const s = game();
+    const habitat = of(s, 'enclosure');
+    const { container } = open(s, habitat, { inside: habitat });
     for (const kind of ['water', 'rocks', 'tree', 'bush', 'flowers', 'hedge']) {
       expect((container.textContent ?? '').toLowerCase(), `${kind} cannot be put in a habitat`).toContain(`+ ${kind}`);
     }
+    expect(container.textContent, 'there is no way back out to the park').toMatch(/Back to the park/);
   });
 
-  it('an animal: how many, and the coat they wear', () => {
-    const s = game();
-    const { container } = open(s, of(s, 'exhibit'), { onPutIn: noop });
-    expect(container.textContent).toMatch(/How many/);
-    expect(swatches(container).some((l) => /^Coat /.test(l)), 'an animal has no coat colour').toBe(true);
-  });
 
-  it('a facility: what kind of building, and its walls, roof and sign', () => {
+
+  it('a facility: its walls, roof and sign', () => {
     const s = game();
     const { container } = open(s, of(s, 'amenity'));
-    expect(container.textContent).toMatch(/What kind/);
     for (const part of ['Walls', 'Roof', 'Sign']) {
       expect(swatches(container).some((l) => l.startsWith(`${part} `)), `a building has no ${part.toLowerCase()} colour`).toBe(true);
     }
-    expect(container.textContent, 'nothing says where its size is set').toMatch(/drag a corner/);
+    expect(container.textContent, 'a building cannot be turned or moved').toMatch(/Turn|Move/);
   });
 
-  it('scenery: what kind of feature, and the colours that kind has', () => {
+  it('scenery: the colours that kind of thing has', () => {
+    // No "what kind" for something that came from a card: the card already said what it is.
     const s = game();
     const { container } = open(s, of(s, 'flora'));
-    expect(container.textContent).toMatch(/What kind/);
-    expect((container.textContent ?? '').toLowerCase()).toMatch(/river|bridge|fountain/);
+    expect(container.textContent, 'a card-driven object was asked what kind of thing it is').not.toMatch(/What kind/);
     expect(swatches(container).length, 'a piece of scenery has no colours').toBeGreaterThan(0);
-    expect(container.textContent).toMatch(/drag a corner/);
+    expect(container.textContent, 'scenery cannot be turned or moved').toMatch(/Turn|Move/);
   });
 });
 
@@ -89,9 +91,11 @@ describe('arranging things where you want them', () => {
     return { s, item: { ...h, draftDesign: design } as BacklogItem };
   };
 
-  it('the water and the planting inside a habitat can be taken hold of', () => {
+  it('the water and the planting inside a habitat can be taken hold of, on the park', () => {
     const { s, item } = habitat();
-    const { container } = open(s, item);
+    const standing = { ...s, backlog: s.backlog.map((it) => (it.id === item.id
+      ? { ...item, pos: { x: 300, y: 300 }, started: true, status: 'committed' as const } : it)) } as ZooGameState;
+    const { container } = render(<ParkPlan state={standing} onMoveInside={() => {}} />);
     expect(container.querySelector('[data-piece="water-0"]'), 'the pool cannot be moved').toBeTruthy();
     expect(container.querySelector('[data-piece="flora-0"]'), 'the rocks cannot be moved').toBeTruthy();
   });

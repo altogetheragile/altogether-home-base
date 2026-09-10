@@ -604,6 +604,7 @@ export type ZooAction =
   | { type: 'MOVE_FORECAST_ITEM'; id: string; dir: 'up' | 'down'; picked: string[] }
   | { type: 'SET_ROT'; id: string; rot: number }
   | { type: 'ADD_INSIDE'; id: string; kind: string }
+  | { type: 'MOVE_INSIDE'; id: string; kind: 'water' | 'flora'; index: number; spot: { x: number; y: number } }
   | { type: 'FINISH_ITEM'; id: string; by?: string }
   | { type: 'CANCEL_SPRINT' }
   | { type: 'SET_WIP_LIMIT'; limit: number; by?: string }
