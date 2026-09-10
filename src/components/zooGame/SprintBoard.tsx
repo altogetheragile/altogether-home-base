@@ -22,7 +22,7 @@ import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Boxes, MessageCircleQuestion, FilePlus, Check, AlertTriangle, Sunrise, ListChecks, X, Clock } from 'lucide-react';
+import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, X, Clock } from 'lucide-react';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
@@ -197,7 +197,6 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     // even though it was built earlier. Without this it would drop off the board on deployment.
     || (it.status === 'open' && it.openedIn === state.sprintNumber),
   );
-  const cut = Math.round((1 - state.dayTimeMult) * 100);
 
   // Columns follow the item's real state: To Do (not started) -> Doing (started: being
   // built in the studio and its tasks ticked off) -> Done (built AND every task ticked,
@@ -420,21 +419,9 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
         <DayStart state={state} onStart={onStartDay} />
       ) : (
         <>
-          {state.carriedImpediment && (
-            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700/60 dark:bg-amber-950/30">
-              <div className="flex items-start gap-2.5">
-                <AlertTriangle className={cn(TONE.attention.text, "mt-0.5 h-5 w-5 shrink-0")} />
-                <div>
-                  <div className={cn(TONE.attention.text, "text-sm font-semibold")}>Yesterday's blocker landed on you: {state.carriedImpediment.title}</div>
-                  <div className={cn(TONE.attention.text, "text-sm")}>{state.carriedImpediment.detail} <span className="font-semibold">Today's build time is cut by ~{cut}%</span> while you deal with it.</div>
-                  {state.carriedImpediment.tip && (
-                    <div className={cn(TONE.attention.text, "mt-1 text-xs italic")}>Tip: {state.carriedImpediment.tip}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
+          {/* Yesterday's blocker is a message about today, so it is in the message centre with
+              every other message - and it can be put away once it has been read. It was a banner
+              across the top of the board that nothing could close. */}
           {/* The board: Product Backlog (left) + To Do / Doing / Done columns. */}
           {/* The Product Backlog is there to pull from mid-Sprint, but the board is the thing you are
               working on - so it tucks away and gives the columns the whole width when you don't need it. */}

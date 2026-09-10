@@ -273,7 +273,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
    *  what it is telling you about is never underneath it. */
   const farthestCorner = (it: { pos?: { x: number; y: number } }): 'tl' | 'tr' | 'bl' | 'br' => {
     const at = it.pos ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
-    return `${at.y > PLAY_H / 2 ? 't' : 'b'}${at.x > CANVAS_W / 2 ? 'l' : 'r'}` as 'tl' | 'tr' | 'bl' | 'br';
+    const corner = `${at.y > PLAY_H / 2 ? 't' : 'b'}${at.x > CANVAS_W / 2 ? 'l' : 'r'}` as 'tl' | 'tr' | 'bl' | 'br';
+    // ...never bottom right, whatever is selected: the day's dock floats there, and two things in
+    // one corner means one of them cannot be read or pressed.
+    return corner === 'br' ? 'bl' : corner;
   };
 
   const pill = eventPill(state);
@@ -456,6 +459,24 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     Straight down, because a metre is a metre wherever it is on the screen and a
                     thing is where you drop it. The isometric view is the zoo as a visitor meets it,
                     and it lives on the Increment tab where nobody is trying to build in it. */}
+                {/* Above the park, not under it. The day's dock floats over the bottom right corner
+                    and covered whichever group ended up there - "the main navigation button
+                    obscures the build menus". Nothing floats over the top. */}
+                {edit && canBuild && (
+                  <ParkOptions className="mb-2 shrink-0 border-b border-border pb-2" state={state}
+                    item={inHand ?? null} inside={insideItem ?? null}
+                    drawing={drawing} onDrawing={onDrawing}
+                    api={{
+                      onDesign: edit.onDesign,
+                      onAddInside: edit.onAddInside,
+                      onSetEnclosure: edit.onSetEnclosure,
+                      onTurn,
+                      onUnplace: (id) => setMoving(id),
+                      onSetSize,
+                      onPutIn,
+                      onInside: (id) => setInside(id),
+                    }} />
+                )}
                 <div className="relative min-h-0 flex-1 overflow-y-auto">
                   {/* What it has to be, docked on the park rather than in a window over it. Inside a
                       habitat it collapses to a pill, because in there the whole picture is the pen. */}
@@ -488,23 +509,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     and changing it later are the same act, so they are the same controls. */}
                 {/* How a thing gets made is the Developers'. A Product Owner watching sees the park
                     and what the work has to be, and no controls. */}
-                {/* Clear of the day's dock, which is fixed bottom right: the strip's last group was
-                    running underneath it and could not be pressed. */}
-                {edit && canBuild && (
-                  <ParkOptions className="mt-2 shrink-0 border-t border-border pt-2 pr-[15rem]" state={state}
-                    item={inHand ?? null} inside={insideItem ?? null}
-                    drawing={drawing} onDrawing={onDrawing}
-                    api={{
-                      onDesign: edit.onDesign,
-                      onAddInside: edit.onAddInside,
-                      onSetEnclosure: edit.onSetEnclosure,
-                      onTurn,
-                      onUnplace: (id) => setMoving(id),
-                      onSetSize,
-                      onPutIn,
-                      onInside: (id) => setInside(id),
-                    }} />
-                )}
               </div>
             )}
           </div>
