@@ -91,7 +91,11 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   // of the agreement and there is nothing to ask for: the facts the park checks are the whole of
   // Done. The button is the agreement, not a fixture.
   const wantsSignOff = (item.tasks ?? []).some((t) => isSignOffTask(t.label));
-  const canAsk = doing && wantsSignOff && !!item.design && criteria.length > 0
+  // ...and not once she has already accepted it. Asking a question that has been answered is what
+  // "I get multiple ask Priya to check" was: the same offer in the dialog, on the card and on the
+  // park, none of them noticing the sign-off had come in.
+  const signedOff = (item.tasks ?? []).some((t) => isSignOffTask(t.label) && t.done);
+  const canAsk = doing && wantsSignOff && !signedOff && !!item.design && criteria.length > 0
     && criteria.every((c, i) => !answerable(c) || met(c, i));
 
   return (

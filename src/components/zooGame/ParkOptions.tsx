@@ -2,6 +2,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
+  hasRoomToRoam, homeSizeOf,
   type ItemDesign,
 } from './design';
 import { cn } from '@/lib/utils';
@@ -199,6 +200,22 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 onClick={() => set({ group: { ...group } })}>{label}</Chip>
             ))}
           </Group>
+          {/* What choosing a family costs, said where the choice is made. It used to be said nowhere
+              at all out here: picking a family quietly failed a criterion two panels away, and the
+              only visible change was the "Ask Priya" button disappearing. This is the one place in
+              the game where one Backlog item's design is measured against another's, and it is the
+              reason stocking is a decision rather than a setting. */}
+          {(() => {
+            const home = homeSizeOf(subject, state.backlog);
+            if (!design.group || hasRoomToRoam(design.group, home)) return null;
+            const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k));
+            return (
+              <p data-part="crowded" className="max-w-[13rem] text-[11px] leading-snug text-amber-700 dark:text-amber-300">
+                {groupSize(design.group)} in a {home ?? 'medium'} habitat &middot;{' '}
+                {roomy ? `they need a ${roomy} one` : 'too many for any habitat'}
+              </p>
+            );
+          })()}
           <Group label="Coat">
             {COAT_COLOURS.map((c) => (
               <Swatch key={c} hex={c} label="Coat" on={design.colors?.coat === c}

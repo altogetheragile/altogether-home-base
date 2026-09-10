@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
-import { isDesignDone, currentDesign } from './design';
+import { isDesignDone, currentDesign, homeSizeOf } from './design';
 import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
@@ -237,28 +237,29 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     return 'studio';
   };
   const canStart = (id: string) => { const it = todo.find((x) => x.id === id); return !!it && enclosureReady(state, it) && !atWipLimit; };
-  // A built item goes live only once the Product Owner has signed it off, and they only sign off
-  // when every acceptance criterion is met - which for the placement ones means after it is on the
-  // Everything the Definition of Done asks of this item: it is built, the Developers' plan is
-  // ticked, and the Product Owner's criteria are accepted. The sign-off task follows the criteria
-  // rather than being ticked by hand, so it is not part of the gate.
-  const readyForDone = (it: BacklogItem) =>
-    isDesignDone(it, currentDesign(it))
-    && (it.acceptance ?? []).every((_, i) => !!it.acConfirmed?.[i])
-    // The whole plan, sign-off included. It ticks itself once every criterion is accepted, so this
-    // is not an extra hoop - it is the reason the card cannot reach Done without the Product Owner.
-    && (it.tasks ?? []).filter((t) => t.label.trim()).every((t) => t.done);
+  // Whether this card may be moved to Done. `readyToMove` and nothing else.
+  //
+  // The board used to keep a second rule of its own here, and the two disagreed: the card read
+  // "Ready · move it to Done" from the engine's rule while the column refused the drop on the
+  // board's - and the refusal was suppressed on a card that says it is ready, so the drop simply
+  // did nothing and said nothing. Reported from playing it: "I'm still sticking at move Lion to
+  // Done." One rule, and the words on the card come out of the same function as the gate.
+  const readyForDone = (it: BacklogItem) => readyToMove(it);
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
   // tooltip nobody sees on a tablet.
   const whyNotDone = (it: BacklogItem) => {
     // ...and when there is nothing left, the card says so and waits to be moved. Done is the
     // Developers' word: the card no longer walks into the column when the Product Owner accepts.
     if (readyToMove(it)) return 'Ready · move it to Done';
-    if (!isDesignDone(it, currentDesign(it))) return 'Next: build it on the park';
+    if (!isDesignDone(it, currentDesign(it), homeSizeOf(it, state.backlog))) return 'Next: build it on the park';
     const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
     const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);
-    return task ? `Next: ${task.label.toLowerCase()}` : 'Next: finish the plan';
+    if (task) return `Next: ${task.label.toLowerCase()}`;
+    // A plan with nothing left in it said "Next: finish the plan", which is a door with no handle -
+    // and it was the only thing on screen while the real blocker was that nothing had been committed
+    // as built. If we ever get here again, say the true one.
+    return it.design ? 'Next: waiting on Priya' : 'Next: build it on the park';
   };
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
@@ -394,8 +395,12 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   const asked = state.pendingPlacement
     ? state.backlog.find((it) => it.id === state.pendingPlacement!.itemId) ?? null : null;
   const dayStarting = state.dayStage === 'dayStart';
-  // The item just pulled into Doing, waiting for the Developers to say who is on it.
-  const pulled = pulling ? state.backlog.find((it) => it.id === pulling) ?? null : null;
+  // The item just pulled into Doing, waiting for the Developers to say who is on it - and only while
+  // it is still in Doing. It used to be whatever was last pulled, so "who is taking this?" sat in an
+  // empty column under the words "Nothing in progress", asking about work already Done.
+  const pulled = pulling
+    ? state.backlog.find((it) => it.id === pulling && it.status !== 'done' && it.status !== 'open') ?? null
+    : null;
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col gap-3">
@@ -586,8 +591,18 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                     <div key={it.id} {...carryProps(it.id, 'doing')} {...takeProps(it.id)} className="cursor-grab touch-none active:cursor-grabbing">
                       {cameBack(it.id)}
                       <BoardCard item={it} state={state} tone="doing" waiting={waitingOn(state, it.id) ? whoIs(waitingOn(state, it.id)!.of).replace(/^The /, '') : null}
-                        note={readyForDone(it) ? 'Ready for Done - drag it there' : whyNotDone(it)}
+                        note={whyNotDone(it)}
                         onOpen={() => setCardId(it.id)} />
+                      {/* A card that says "move it to Done" and can only be dragged there is asking
+                          for a gesture on a tablet that does not always land, and when it does not
+                          land it says nothing. So the words are a button: the same move, sayable. */}
+                      {readyForDone(it) && (
+                        <Button size="sm" data-part="move-to-done"
+                          className={cn(FOCUS, 'mt-1 h-7 w-full px-2 text-xs')}
+                          onClick={() => { setRefusedMove(null); onFinishItem(it.id); }}>
+                          Move it to Done <Check className="ml-1 h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </BoardColumn>

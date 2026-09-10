@@ -618,6 +618,25 @@ export function readyForDone(item: BacklogItem): boolean {
   return signOff ? signOff.done : true;
 }
 
+/** The Developers finishing their plan is the moment the work is built: what they have been drawing
+ *  becomes what they built, and the draft is committed as the design.
+ *
+ *  This lived inside `toggleItemTask`, which was true while every step was ticked by hand. The plan
+ *  ticks itself off the park now, so an item could have every step done and no committed design at
+ *  all - and `readyToMove` asks for one. That is a card sitting in Doing saying "Next: finish the
+ *  plan" with nothing left in the plan to finish. Reported from playing it: "I'm still sticking at
+ *  move Lion to Done."
+ *
+ *  So it is one function, called wherever a step is ticked, by hand or by the park. */
+export function commitWhenBuilt(item: BacklogItem): BacklogItem {
+  if (item.design || item.status !== 'committed' || !buildTasksDone(item)) return item;
+  const design = item.draftDesign ?? presetFor(item);
+  return {
+    ...item, started: true, design, draftDesign: undefined,
+    appeal: item.category === 'exhibit' ? appealFromDesign(item, design) : item.appeal,
+  };
+}
+
 /** Whether this item can go live: accepted, and the approval that follows from it.
  *
  *  It used to also require `placed` - the flag set by pressing "show me on the park". That flag
@@ -784,14 +803,11 @@ export function toggleItemTask(state: ZooGameState, id: string, taskId: string):
     // criteria, so a click on it does nothing.
     if ((it.tasks ?? []).some((t) => t.id === taskId && isSignOffTask(t.label))) return it;
     const ticked = syncSignOff({ ...it, tasks: (it.tasks ?? []).map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) });
-    // The last step of the plan is the Developers saying "it is built". Until now nothing said it:
-    // an item was only ever marked built at the moment it moved to Done, which took the build and
-    // the Product Owner's acceptance in one gesture - so playing alone there was no moment where
-    // something stood built and unaccepted, and nothing for a Product Owner to judge or refuse.
-    const next = !ticked.design && ticked.status === 'committed' && buildTasksDone(ticked)
-      ? { ...ticked, design: ticked.draftDesign ?? presetFor(ticked), started: true }
-      : ticked;
-    return settleStatus(next);
+    // The last step of the plan is the Developers saying "it is built". Until this, an item was only
+    // ever marked built at the moment it moved to Done, which took the build and the Product Owner's
+    // acceptance in one gesture - so playing alone there was no moment where something stood built
+    // and unaccepted, and nothing for a Product Owner to judge or refuse.
+    return settleStatus(commitWhenBuilt(ticked));
   });
   return { ...state, backlog };
 }
