@@ -25,6 +25,10 @@ type RailAction = {
   actor: string;
   text: string;
   answers: { label: string; act: () => void; primary?: boolean }[];
+  /** What one of these answers costs, said on the row rather than in a tooltip nobody sees on a
+   *  tablet. "Accept it" and "Send it back" are a thumb-width apart and one of them undoes finished
+   *  work. */
+  note?: string;
 };
 
 export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
@@ -60,9 +64,12 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
       id: q.id, actor: whoIs(q.of),
       text: `${q.from}: ${q.text}  ·  waiting ${waited}s of ${QUESTION_PATIENCE}`,
       answers: q.choices.map((c) => ({
-        label: c.label, primary: c.key === 'theirs',
+        // Accepting is the answer that moves the work on, so it is the one that looks like the
+        // action. The refusal is a real choice and not a mistake to make quickly.
+        label: c.label, primary: c.key === 'theirs' || c.key === 'accept',
         act: () => onAnswerQuestion(q.id, c.key),
       })),
+      note: q.choices.map((c) => (c.note ? `${c.label}: ${c.note}` : '')).filter(Boolean).join(' '),
     });
   }
 
@@ -141,7 +148,12 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
         action ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground')}>
         {action ? action.actor.replace(/^The /, '') : 'Developers'}
       </span>
-      <span className="min-w-0 flex-1 text-sm">{action ? action.text : quiet}</span>
+      <span className="min-w-0 flex-1 text-sm">
+        {action ? action.text : quiet}
+        {action?.note && (
+          <span className="block text-[11px] leading-snug text-amber-700 dark:text-amber-300">{action.note}</span>
+        )}
+      </span>
       {action?.answers.map((a) => (
         <button key={a.label} type="button" onClick={a.act}
           className={cn(FOCUS, 'shrink-0 rounded-md border px-2 py-1 text-xs font-semibold transition-colors',

@@ -150,7 +150,11 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
       text: `${item.name} meets all of its criteria. Is it what you asked for?`,
       choices: [
         { key: 'accept', label: 'Accept it' },
-        { key: 'back', label: 'Send it back' },
+        // What saying no does, on the question itself rather than in a tooltip: the two answers sit
+        // side by side, one of them undoes a piece of finished work, and a Product Owner pressing it
+        // should know that before rather than after.
+        { key: 'back', label: 'Send it back',
+          note: 'It goes back to Doing with their build kept as a draft. They finish it and ask again, and that costs Sprint time.' },
       ],
       askedAt: state.daySecondsLeft, day: state.dayNumber,
     }],

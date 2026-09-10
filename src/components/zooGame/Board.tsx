@@ -264,6 +264,8 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
   const tasks = (item.tasks ?? []).filter((t) => t.label.trim());
   const criteria = showAcceptance ? item.acceptance.filter(Boolean) : [];
   const [ownOpen, setOpen] = useState(defaultOpen);
+  // Refusing work is a decision, so it is asked and then answered rather than done on one press.
+  const [refusing, setRefusing] = useState(false);
   const open = bare || ownOpen;
   if (tasks.length === 0 && criteria.length === 0) return null;
   const done = tasks.filter((t) => t.done).length;
@@ -351,15 +353,48 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                   );
                 })}
               </ul>
-              {/* Saying no. It appears only on work that has been built and does not meet all of
-                  its criteria: a Product Owner cannot refuse work that meets what was asked for,
-                  and there is nothing to refuse before anything is built. */}
+              {/* Saying no.
+                  It appears only on work that has been built and does not meet all of its criteria:
+                  a Product Owner cannot refuse work that meets what was asked for, and there is
+                  nothing to refuse before anything is built.
+
+                  Below the criteria and behind a line, not tucked under the last tick. It used to
+                  sit flush against the acceptance list in the same small type - the destructive
+                  thing a thumb-width from the thing you meant to press - with what it costs in a
+                  `title` nobody sees on a tablet. Refusing work is a Product Owner's call and a real
+                  one; it should take a moment, and say what it does. */}
               {interactive && onSendBack && item.design && !acAll && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); onSendBack(item.id); }}
-                  title={`Send it back to the Developers. ${criteria.length - acMet} of its criteria are not met, and those are the reason. Finishing it again costs Sprint time.`}
-                  className={cn(FOCUS, 'mt-1.5 flex items-center gap-1 rounded-md border border-amber-400/70 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 hover:bg-amber-500/10 dark:text-amber-300')}>
-                  <Undo2 className="h-3 w-3" /> Send it back &middot; {criteria.length - acMet} not met
-                </button>
+                <div data-part="send-back" className="mt-2 border-t border-border pt-2">
+                  {refusing ? (
+                    <div className="space-y-1.5 rounded-md border border-amber-400/70 bg-amber-500/[0.06] p-2">
+                      <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-200">
+                        Send {item.name} back to the Developers?
+                      </p>
+                      <p className="text-[11px] leading-snug text-amber-700 dark:text-amber-300">
+                        {criteria.length - acMet} of its criteria {criteria.length - acMet === 1 ? 'is' : 'are'} not met.
+                        It goes back to Doing with what they built kept as a draft, and they finish it
+                        and ask again - which costs Sprint time.
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <button type="button" data-part="send-back-yes"
+                          onClick={(e) => { e.stopPropagation(); setRefusing(false); onSendBack(item.id); }}
+                          className={cn(FOCUS, 'rounded-md border border-amber-500 bg-amber-500/15 px-2 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-500/25 dark:text-amber-200')}>
+                          Yes, send it back
+                        </button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setRefusing(false); }}
+                          className={cn(FOCUS, 'text-[11px] font-medium text-muted-foreground hover:text-foreground')}>
+                          Keep looking at it
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" data-part="send-back-ask"
+                      onClick={(e) => { e.stopPropagation(); setRefusing(true); }}
+                      className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-amber-400/70 px-2 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-500/10 dark:text-amber-300')}>
+                      <Undo2 className="h-3 w-3" /> Send it back &middot; {criteria.length - acMet} not met
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
