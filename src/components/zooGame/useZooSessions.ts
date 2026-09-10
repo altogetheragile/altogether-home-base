@@ -216,17 +216,30 @@ export function useZooSessions(sessionId: string | null) {
    *  there is: observers act on nothing. */
   const setRole = useCallback(async (role: 'player' | 'observer') => {
     if (!me) return;
-    // The database refuses a role change from anybody but the host, and this wrote it, ignored the
-    // refusal and refreshed - so pressing "watch" did nothing at all, silently, for ever. Say what
-    // happened. Whether a participant should be allowed to sit out on their own is a decision about
-    // the trigger, not about this call.
+    // The database refuses a role change from anybody the trigger does not allow, and this used to
+    // write it, ignore the refusal and refresh - so pressing "watch" did nothing at all, silently,
+    // for ever. The role change goes first and everything else waits on it succeeding, so a refusal
+    // leaves the player exactly where they were, still in their seat.
     const { error: e } = await supabase.from('zoo_session_participants').update({ role }).eq('id', me.id);
     if (e) {
       setError('Only the host can change who is watching and who is playing.');
       return;
     }
+    // Watching means holding nothing, and it has to mean leaving the seat in the same act.
+    //
+    // It did not, and that stalled the table: an observer is refused every action by the seat rules,
+    // so a Product Owner who switched to watching held the one seat nobody could act from - and the
+    // lobby hid Leave from an observer, so there was no way back out of it either. Standing up hands
+    // the seat to AI, which is what keeps the Sprint moving while somebody sits and watches it.
+    if (role === 'observer') {
+      const mine = seats.filter((s) => s.participant_id === me.id);
+      for (const s of mine) {
+        await supabase.from('zoo_game_seats')
+          .update({ participant_id: null, claimed_at: null, is_ai: true }).eq('id', s.id);
+      }
+    }
     if (sessionId) await refresh(sessionId);
-  }, [me, sessionId, refresh]);
+  }, [me, seats, sessionId, refresh]);
 
   return {
     session, participants, seats, gameId, me, busy, error,

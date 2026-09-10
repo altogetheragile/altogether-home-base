@@ -24,8 +24,13 @@ const SEAT_WHY: Record<SeatName, string> = {
   developer: 'Accountable for creating a usable Increment each Sprint.',
 };
 
-function SeatCard({ seat, holder, mine, canAct, onClaim, onLeave, onAi }: {
+export function SeatCard({ seat, holder, mine, canAct, canLeave, onClaim, onLeave, onAi }: {
   seat: Seat; holder: Participant | null; mine: boolean; canAct: boolean;
+  /** Leaving your own seat is always yours, watching or not. Watching hid every control on the
+   *  card, this one included, so somebody who switched to watching while seated was stuck holding
+   *  the seat the table was waiting on. Standing up gives the seat away now, so this is the way out
+   *  of a session that predates that. */
+  canLeave?: boolean;
   onClaim: () => void; onLeave: () => void; onAi: (on: boolean) => void;
 }) {
   const taken = !!holder || seat.is_ai;
@@ -42,14 +47,14 @@ function SeatCard({ seat, holder, mine, canAct, onClaim, onLeave, onAi }: {
         <span className="truncate text-xs text-muted-foreground">
           {holder ? holder.display_name : seat.is_ai ? 'played by AI' : 'empty'}
         </span>
-        {canAct && (mine
+        {(canAct || canLeave) && (mine
           ? <Button size="sm" variant="ghost" onClick={onLeave}>Leave</Button>
-          : !taken
+          : !taken && canAct
             ? <div className="flex gap-1">
                 <Button size="sm" onClick={onClaim}>Sit here</Button>
                 <Button size="sm" variant="ghost" onClick={() => onAi(true)} title="Let AI play this accountability">AI</Button>
               </div>
-            : seat.is_ai
+            : seat.is_ai && canAct
               ? <div className="flex gap-1">
                   <Button size="sm" onClick={onClaim}>Take it</Button>
                   <Button size="sm" variant="ghost" onClick={() => onAi(false)}>Clear</Button>
@@ -145,7 +150,7 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
               {(['product_owner', 'scrum_master', 'developer'] as SeatName[]).flatMap((k) =>
                 byKind(k).map((seat) => (
                   <SeatCard key={seat.id} seat={seat} holder={holderOf(seat)}
-                    mine={seat.participant_id === s.me?.id} canAct={!observing}
+                    mine={seat.participant_id === s.me?.id} canAct={!observing} canLeave={!!s.me && seat.participant_id === s.me.id}
                     onClaim={() => void s.claimSeat(seat.id)}
                     onLeave={() => void s.leaveSeat(seat.id)}
                     onAi={(on) => void s.fillWithAi(seat.id, on)} />
@@ -158,10 +163,12 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
               <Eye className="h-3.5 w-3.5" />
               {observing
                 ? 'Watching. You hold no seat and act on nothing, which is how a trainer joins a team they are coaching.'
-                : 'Playing. Switch to watching to coach without taking a seat.'}
+                : seated
+                  ? 'Playing. Watching gives your seat to AI, so the team can carry on without you.'
+                  : 'Playing. Switch to watching to coach without taking a seat.'}
             </div>
             <Button size="sm" variant="ghost" onClick={() => void s.setRole(observing ? 'player' : 'observer')}>
-              {observing ? 'Take a seat instead' : 'Watch instead'}
+              {observing ? 'Take a seat instead' : seated ? 'Watch instead - AI takes my seat' : 'Watch instead'}
             </Button>
           </div>
 
