@@ -6,7 +6,7 @@ import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
 import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit } from './engine';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle } from 'lucide-react';
+import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
 
 // One item, in the one place its detail lives.
 //
@@ -46,7 +46,7 @@ function whyNotStart(state: ZooGameState, item: BacklogItem): string | null {
   return null;
 }
 
-export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, onAskToCheck, onToggleTask }: {
+export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, onAskToCheck, onHandBack, onToggleTask }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onClose: () => void;
@@ -60,6 +60,10 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
    *  complete the enclosure - how does Priya approve the last AC?" The only route was a pill on the
    *  park, which is not where anybody looks when they are reading the card. */
   onAskToCheck?: (id: string) => void;
+  /** Handing work back to the Product Backlog. The board does it by carrying the card onto the
+   *  hand-back strip, which is a pointer gesture and the only way there was: a keyboard could start
+   *  work and finish it and never give it back. */
+  onHandBack?: (id: string) => void;
   /** Tick a step of the plan. The plan ticks itself off as the work is done, but it is the
    *  Developers' own plan and they can say a step is finished - a plan nobody can finish is a plan
    *  that can hold finished work out of Done for ever. */
@@ -199,6 +203,16 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
           )}
           {canOpen && onOpen && (
             <Button onClick={() => { onOpen(item.id); onClose(); }}>Open it to visitors</Button>
+          )}
+          {/* The same move as carrying the card onto the hand-back strip, for anybody not using a
+              pointer. The Product Owner is told either way, and the points come back out of the
+              forecast either way - it is the gesture that differs, not the decision. */}
+          {(todo || doing) && onHandBack && (
+            <Button size="sm" variant="ghost" data-part="hand-back"
+              className={cn(FOCUS, 'h-7 px-2 text-xs text-muted-foreground hover:text-foreground')}
+              onClick={() => { onHandBack(item.id); onClose(); }}>
+              <Undo2 className="mr-1 h-3.5 w-3.5" /> Hand it back to the Product Backlog
+            </Button>
           )}
           {!todo && !doing && !canOpen && <span className="text-xs text-muted-foreground">Nothing to do here yet.</span>}
           {/* One line about the Definition of Done, and no more: it is the product's bar, the same

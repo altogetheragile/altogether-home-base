@@ -177,9 +177,13 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           Current WIP limit: <strong>{state.wipLimit}</strong>{state.scrumDiscipline ? ' · blockers are caught early' : ''}{state.refineHabit ? ' · refinement time is set aside' : ''}.
         </p>
       </div>
-      <div className="space-y-2">
+      {/* Pick ONE. It is a choice among alternatives, so it says so: a screen reader announcing
+          five separate buttons cannot tell you that choosing this one un-chooses that one, and the
+          selected state was carried by a background colour alone. */}
+      <div className="space-y-2" role="radiogroup" aria-label="Pick one improvement for the next Sprint">
         {improvements.map((imp) => (
-          <button key={imp.text} type="button" onClick={() => setSelected(imp.text)}
+          <button key={imp.text} type="button" role="radio" aria-checked={selected === imp.text}
+            onClick={() => setSelected(imp.text)}
             className={cn(FOCUS, 'w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
               selected === imp.text ? 'border-primary bg-primary/10 font-medium' : 'border-border bg-card hover:border-primary hover:bg-primary/5')}>
             {imp.text}

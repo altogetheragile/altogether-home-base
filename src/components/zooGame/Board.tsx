@@ -552,9 +552,16 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
           lead={<>
             {onReorder && (
               <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
-                <button type="button" title="Move up" disabled={idx === 0} onClick={() => onReorder(it.id, 'up')} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3 w-3" /></button>
+                {/* Ordering the Product Backlog is the Product Owner's central act, and it was a
+                    12px chevron - under a fingertip on the tablet this is taught on. The glyph is
+                    the same size; what it sits in is a target you can hit. */}
+                <button type="button" title="Move up" aria-label={`Move ${it.name} up the Product Backlog`}
+                  disabled={idx === 0} onClick={() => onReorder(it.id, 'up')}
+                  className={cn(FOCUS, "flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:opacity-30")}><ChevronUp className="h-3.5 w-3.5" /></button>
                 <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
-                <button type="button" title="Move down" disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')} className={cn(FOCUS, "disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3 w-3" /></button>
+                <button type="button" title="Move down" aria-label={`Move ${it.name} down the Product Backlog`}
+                  disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')}
+                  className={cn(FOCUS, "flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:opacity-30")}><ChevronDown className="h-3.5 w-3.5" /></button>
               </div>
             )}
             <button type="button" onClick={() => toggleItem(it.id)} title={isOpen ? 'Collapse' : 'Expand'} aria-expanded={isOpen}
