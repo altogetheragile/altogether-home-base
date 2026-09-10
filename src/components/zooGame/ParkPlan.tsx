@@ -1,10 +1,17 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH } from './parkModel';
-import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y } from './parkLayout';
+
 import { answerable, checkCriterion } from './parkChecks';
 import { groupMembers, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { cn } from '@/lib/utils';
+
+/** How much of the car park to show at the foot of the plan. Not ground you build on - it is there
+ *  so the front of the park reads as the front of the park, and so a run drawn to meet the way in
+ *  lands where the isometric view will draw it. */
+const APRON_H = 60;
+
 
 // The park, seen from above, for building on.
 //
@@ -109,7 +116,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const box = insideBox
     ? { x: insideBox.at.x - insideBox.size.w * 0.8, y: insideBox.at.y - insideBox.size.h * 0.8,
         w: insideBox.size.w * 1.6, h: insideBox.size.h * 1.6 }
-    : { x: 0, y: 0, w: CANVAS_W, h: PLAY_H };
+    : { x: 0, y: 0, w: CANVAS_W, h: PLAY_H + APRON_H };
   const view = `${box.x} ${box.y} ${box.w} ${box.h}`;
   // Zoomed in, a label written in park units comes out enormous. Everything that is chrome rather
   // than park - names, pills, grips - is scaled by how much the picture is magnified, so it stays
@@ -119,8 +126,17 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** Pointer to park coordinates, whatever the picture is covering. */
   const worldAt = (e: { clientX: number; clientY: number }) => {
     const r = svgRef.current?.getBoundingClientRect();
-    if (!r || !r.width) return null;
-    return { x: box.x + ((e.clientX - r.left) / r.width) * box.w, y: box.y + ((e.clientY - r.top) / r.height) * box.h };
+    if (!r || !r.width || !r.height) return null;
+    // The picture is FITTED to the room it is given, so it may be letterboxed inside its own box -
+    // and a pointer read as though the viewBox filled the element lands somewhere else entirely.
+    // One scale, both axes, and the bars split evenly: the same arithmetic the browser just did.
+    const scale = Math.min(r.width / box.w, r.height / box.h);
+    const padX = (r.width - box.w * scale) / 2;
+    const padY = (r.height - box.h * scale) / 2;
+    return {
+      x: box.x + (e.clientX - r.left - padX) / scale,
+      y: box.y + (e.clientY - r.top - padY) / scale,
+    };
   };
 
   /** Can this go here, and if not, why not. The same question the ghost answers on the isometric. */
@@ -229,13 +245,18 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   };
 
   return (
-    <div className={cn('w-full', className)}>
+    <div className={cn('h-full w-full', className)}>
       {/* No selecting. Dragging across the park was painting the browser's own selection highlight
           over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
           there. Reported from playing it: "blue squares appear as trails." */}
       <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view} role="img"
         aria-label={`The zoo from above: ${boxes.length} things standing on it`}
-        style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height, touchAction: 'none',
+        // Fitted to the room it is given rather than sized off its width, so the whole picture - the
+        // promenade and the way in included - is always above the day's dock in the corner. Sized by
+        // width, the park grew taller than its pane and the last band of it sat under the button:
+        // "the navigation button obscures the park and cannot draw a path properly".
+        preserveAspectRatio="xMidYMid meet"
+        style={{ display: 'block', width: '100%', height: '100%', maxHeight: height, touchAction: 'none',
           cursor: tool === 'path' ? 'crosshair' : placing ? 'copy' : 'default' }}
         onPointerMove={(e) => {
           const w = worldAt(e);
@@ -263,6 +284,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           if (tool === 'path') {
             // Two clicks, and the run is drawn between them. A drag on an isometric grid is where
             // path drawing went wrong; two points is a thing you can aim at.
+            //
+            // A run stops at the front of the park: the tarmac beyond it is the car park, which is
+            // where visitors arrive, not somewhere the Developers lay paths.
+            w.y = Math.min(w.y, FRONT_Y);
             if (!runFrom) { setRunFrom(w); setRunTo(w); return; }
             onAddConnector?.({
               id: `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`,
@@ -279,14 +304,18 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           onSelect?.(null);
         }}>
         {/* The ground, the promenade along the front, and a grid you can judge a footprint against. */}
+        {/* Grass, then the promenade along the front, then the car park BEYOND the park's edge -
+            the same three bands, in the same places, as the isometric view draws them. The car park
+            used to be painted over the bottom 90 of the play area here, so a run drawn onto what
+            looked like tarmac was, in the model, still out on the grass. */}
         <rect x={0} y={0} width={CANVAS_W} height={PLAY_H} fill="#8cc063" />
-        <rect x={0} y={PLAY_H - 90} width={CANVAS_W} height={90} fill="#9aa0a6" />
-        <rect x={0} y={PLAY_H - 100} width={CANVAS_W} height={12} fill="#d9c9a3" />
+        <rect x={0} y={PROMENADE_Y} width={CANVAS_W} height={PROMENADE_H} fill="#e7d6a8" />
+        <rect x={0} y={PLAY_H} width={CANVAS_W} height={APRON_H} fill="#9aa0a6" />
         <g opacity={0.16} stroke="#2f4f2f" strokeWidth={1}>
           {Array.from({ length: Math.floor(CANVAS_W / 40) }, (_, i) => (
             <line key={`v${i}`} x1={(i + 1) * 40} y1={0} x2={(i + 1) * 40} y2={PLAY_H} />
           ))}
-          {Array.from({ length: Math.floor(PLAY_H / 40) }, (_, i) => (
+          {Array.from({ length: Math.floor(PROMENADE_Y / 40) }, (_, i) => (
             <line key={`h${i}`} x1={0} y1={(i + 1) * 40} x2={CANVAS_W} y2={(i + 1) * 40} />
           ))}
         </g>
@@ -304,7 +333,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
 
         {/* Paths, drawn as the runs they are. */}
         {(state.connectors ?? []).map((c) => (
-          <line key={c.id} x1={c.a.x} y1={c.a.y} x2={c.b.x} y2={c.b.y}
+          <line key={c.id} data-conn={c.id} x1={c.a.x} y1={c.a.y} x2={c.b.x} y2={c.b.y}
             stroke={c.color ?? '#c9a86a'} strokeWidth={Math.max(6, c.thickness ?? 14)} strokeLinecap="round" />
         ))}
 

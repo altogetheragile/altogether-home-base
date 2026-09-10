@@ -91,3 +91,25 @@ describe('the way to visitors', () => {
       'work went live without ever being Done').toBe('committed');
   });
 });
+
+describe('a plan with no work behind it', () => {
+  it('ticks nothing, however complete the preset it was born with', () => {
+    // Reported from playing it: "tasks are ticked off as complete before I pull the card to Doing."
+    // A preset carries a width and a colour, and `currentDesign` falls back to it so that something
+    // can always be drawn - so "set its width and colour" was true from the moment the card was
+    // picked up, and the park ticked it off before anybody had touched the work.
+    const s = sprint();
+    const kinds = ['path', 'enclosure', 'amenity', 'flora', 'exhibit'];
+    for (const kind of kinds) {
+      const item = s.backlog.find((it) => it.category === kind && !it.unsized);
+      if (!item) continue;
+      const g = startItem({ ...s, backlog: s.backlog.map((it) => (it.id === item.id
+        ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState, item.id, 'developer');
+      const after = applyParkChecks(g).backlog.find((it) => it.id === item.id)!;
+      const ticked = (after.tasks ?? []).filter((t) => t.done).map((t) => t.label);
+      expect(ticked, `${item.name}: the park ticked ${ticked.join(', ')} off a plan nobody had started`)
+        .toEqual([]);
+      expect(after.design, `${item.name} counted as built before anybody built it`).toBeFalsy();
+    }
+  });
+});

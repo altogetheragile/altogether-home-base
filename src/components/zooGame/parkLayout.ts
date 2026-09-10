@@ -21,6 +21,19 @@ export const PLAY_H = 700;
 // into the corner has to answer no, with nothing they can do about it - the layout put it there.
 // Wide enough for the path a person would take, so the criterion is answerable either way.
 export const PAD = 56;
+// The front of the park: a promenade along it, and then the car park beyond the park's own edge.
+//
+// One definition, because there were three. The plan painted the car park INSIDE the play area, over
+// the bottom 90 of it; the isometric view put the promenade in the last 40 and the tarmac beyond
+// PLAY_H entirely; and the routing walked a line at PLAY_H - 50. So a run drawn to the tarmac on the
+// plan stopped in the middle of the grass in the isometric view - reported from playing it: "the
+// drawn path on the build park view extends to the car park, the path on the isometric view falls
+// short of it". Two drawings of one park have to agree about where the park ends.
+export const PROMENADE_H = 40;
+/** The top edge of the promenade. Below this is the way in, not ground you build on. */
+export const PROMENADE_Y = PLAY_H - PROMENADE_H;
+/** Where a visitor walks along the front, and where a run meeting the front should end. */
+export const FRONT_Y = PLAY_H - PROMENADE_H / 2;
 export const GAP = 18;
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));

@@ -234,7 +234,15 @@ function applyPlanChecks(state: ZooGameState): ZooGameState {
     if (item.status !== 'committed' || !item.started) return item;
     const tasks = item.tasks ?? [];
     if (!tasks.length) return item;
-    const design = currentDesign(item);
+    // Against what has actually been done, and never against the preset the item was born with.
+    //
+    // `currentDesign` falls back to the preset so that something can always be drawn, and a preset
+    // carries a width and a colour - so "set its width and colour" was true from the moment the card
+    // was picked up, and the park ticked it off before anybody had touched it. Reported from playing
+    // it: "tasks are ticked off as complete before I pull the card to Doing." A plan that ticks
+    // itself for work nobody did is worse than a plan that never ticks.
+    const design = item.draftDesign ?? item.design;
+    if (!design) return item;
     const homeSize = homeSizeOf(item, state.backlog);
     let touched = false;
     const next = tasks.map((t) => {

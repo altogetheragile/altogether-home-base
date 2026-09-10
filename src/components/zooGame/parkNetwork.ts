@@ -2,7 +2,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
 import { buildNav, routeAcross, type NavInput, type Pt, type Rect } from './parkNav';
-import { CANVAS_W, PLAY_H } from './parkLayout';
+import { CANVAS_W, FRONT_Y } from './parkLayout';
 
 // ============= Where a visitor can go =============
 //
@@ -16,7 +16,7 @@ import { CANVAS_W, PLAY_H } from './parkLayout';
 // there is a bridge over it. What they walk around rather than through: the habitats.
 
 /** Where a visitor comes in, at the front of the park. */
-export const ENTRANCE: Pt = { x: CANVAS_W / 2, y: PLAY_H - 40 };
+export const ENTRANCE: Pt = { x: CANVAS_W / 2, y: FRONT_Y };
 
 const boxOf = (state: ZooGameState) => {
   const standing = standingOnPark(state);
@@ -38,8 +38,9 @@ export function parkNetwork(state: ZooGameState): NavInput {
   const solid: Rect[] = [];
 
   // The promenade along the front, and the way in from the car park.
-  paths.push([{ x: 20, y: PLAY_H - 50 }, { x: CANVAS_W - 20, y: PLAY_H - 50 }]);
-  paths.push([ENTRANCE, { x: ENTRANCE.x, y: PLAY_H - 90 }]);
+  // Along the middle of the promenade - the same band the plan paints and the isometric view walks.
+  paths.push([{ x: 20, y: FRONT_Y }, { x: CANVAS_W - 20, y: FRONT_Y }]);
+  paths.push([ENTRANCE, { x: ENTRANCE.x, y: FRONT_Y - 50 }]);
 
   // The runs the Developers laid.
   for (const c of state.connectors ?? []) {
