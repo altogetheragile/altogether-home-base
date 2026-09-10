@@ -35,6 +35,10 @@ export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = '
   // judgement is what the asking is for.
   const facts = criteria.filter(answerable);
   const ready = criteria.length > 0 && facts.every((c) => met(c, criteria.indexOf(c)));
+  const missing = facts.find((c) => !met(c, criteria.indexOf(c)));
+  const outstanding = missing
+    ? { text: missing, why: checkCriterion(state, item, missing)?.evidence ?? 'not yet' }
+    : null;
 
   const place = {
     tl: 'left-2 top-2', tr: 'right-2 top-2', bl: 'left-2 bottom-2', br: 'right-2 bottom-2',
@@ -87,7 +91,12 @@ export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = '
             onClick={() => onAskToCheck(item.id)}>Ask {po} to check</Button>
         ) : (
           <p className={cn(EYEBROW, 'font-normal normal-case tracking-normal text-[11px] text-muted-foreground')}>
-            {po} judges the rest and signs off when you ask.
+            {/* Where the ask went. Choosing a family of lions takes "can I fit them in with room to
+                spare" back off, and the button goes with it - which reads as the game losing the
+                option rather than as the work not being finished. So it says which fact is out. */}
+            {outstanding
+              ? <>Not ready to ask: <span className="font-medium text-foreground">{outstanding.text}</span> &middot; {outstanding.why}</>
+              : <>{po} judges the rest and signs off when you ask.</>}
           </p>
         )}
       </div>

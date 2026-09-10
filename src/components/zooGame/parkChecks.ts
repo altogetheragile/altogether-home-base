@@ -178,12 +178,22 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
   }
 
   if (label === 'Can I fit them in the habitat with room to spare?') {
-    const size = item.enclosureSize;
+    // The size of the habitat they actually live in, not a field on the animal. It read the
+    // animal's own copy, so making the pen bigger - the obvious fix - changed nothing at all.
+    const home = state.backlog.find((i) => i.id === item.enclosureId);
+    const size = home?.enclosureSize ?? item.enclosureSize;
     const n = groupSize(design.group);
     if (!design.group) return { met: false, evidence: 'not stocked yet' };
+    const named = (k?: string) => (k === 'large' ? 'a large' : k === 'small' ? 'a small' : 'a medium');
+    if (hasRoomToRoam(design.group, size)) return { met: true, evidence: `${n} in ${named(size)} habitat` };
+    // ...and what would fix it, in the words of the thing you would change: a bigger pen, or fewer
+    // animals. A criterion that only says no is a door with no handle.
+    const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k));
     return {
-      met: hasRoomToRoam(design.group, size),
-      evidence: `${n} in ${size === 'large' ? 'a large' : size === 'small' ? 'a small' : 'a medium'} habitat`,
+      met: false,
+      evidence: roomy
+        ? `${n} in ${named(size)} habitat - they need ${named(roomy)} one`
+        : `${n} is too many for any habitat - fewer of them`,
     };
   }
 

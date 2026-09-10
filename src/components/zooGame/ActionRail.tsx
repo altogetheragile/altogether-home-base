@@ -40,6 +40,9 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
   className?: string;
 }) {
   const [at, setAt] = useState(0);
+  /** Which carried blocker has been read. It stays out of the way once you have seen it, and the
+   *  cost it carries stays whether you have read it or not. */
+  const [seen, setSeen] = useState<string | null>(null);
   const asks = asksNow(state);
   const actions: RailAction[] = [];
 
@@ -60,6 +63,19 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
         label: c.label, primary: c.key === 'theirs',
         act: () => onAnswerQuestion(q.id, c.key),
       })),
+    });
+  }
+
+  // Yesterday's blocker, landing on today. It is not a decision - that was taken at the Daily
+  // Scrum - so it carries one answer: you have read it. Reported from playing it: "I should be able
+  // to close this. Should it be in the bottom left message centre anyway?" It should, and now is.
+  const carried = state.carriedImpediment;
+  if (carried && seen !== carried.id) {
+    const cut = Math.round((1 - (state.dayTimeMult ?? 1)) * 100);
+    actions.push({
+      id: `carried-${carried.id}`, actor: 'Developers',
+      text: `Yesterday's blocker landed on you: ${carried.title}. ${carried.detail}${cut > 0 ? ` Today's build time is cut by about ${cut}%.` : ''}`,
+      answers: [{ label: 'Got it', act: () => setSeen(carried.id) }],
     });
   }
 

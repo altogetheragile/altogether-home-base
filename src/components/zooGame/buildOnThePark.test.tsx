@@ -79,12 +79,24 @@ describe('what the park can already answer about a habitat', () => {
 });
 
 describe('the inspector on the park', () => {
-  it('says who judges the rest until the facts are in', () => {
+  it('does not offer the ask while a fact is outstanding, and says which', () => {
     const s = game();
     const { container } = inspector(s, itemOf(s, 'enclosure'));
-    expect(container.textContent).toMatch(/judges the rest and signs off when you ask/);
     expect(screen.queryByRole('button', { name: /Ask Priya to check/ }),
       'work with facts outstanding was offered for acceptance').toBeNull();
+    expect(container.textContent, 'nothing says what is holding it up').toMatch(/Not ready to ask/);
+  });
+
+  it('says who judges the rest once every fact is in', () => {
+    const s = game();
+    const h = itemOf(s, 'enclosure');
+    const p = presetFor(h);
+    const built = { ...h, design: { ...p, colors: { ...p.colors, ground: '#c8a06a' },
+      flora: addFloraTo({ ...p, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...p, water: [] }) },
+      pos: { x: 300, y: 300 } } as BacklogItem;
+    const standing = { ...s, backlog: s.backlog.map((it) => (it.id === h.id ? built : it)) } as ZooGameState;
+    const { container } = inspector(standing, built, { onAskToCheck: () => {} });
+    expect(container.textContent, 'the facts are in and it still will not ask').toMatch(/Ask Priya to check/);
   });
 
   it('collapses to a pill inside a habitat, so it does not cover the pen', () => {
@@ -121,5 +133,28 @@ describe('an animal', () => {
     expect(onPlace, 'an animal dropped on a habitat did not move in').toHaveBeenCalledWith(
       lion.id, expect.anything(), undefined, h.id,
     );
+  });
+});
+
+describe('when the ask disappears', () => {
+  it('says which fact took it away', () => {
+    // Reported from playing it: "if I choose a family of lions I lose the Priya check option. If I
+    // change it to a pair the option reappears." The game was right - six lions do not fit in a
+    // medium pen - but the button vanishing says nothing, so it reads as the game losing the
+    // option rather than as the work not being finished.
+    const s = game();
+    const h = itemOf(s, 'enclosure');
+    const lion = s.backlog.find((it) => it.category === 'exhibit' && it.enclosureId === h.id)!;
+    const family = {
+      ...lion,
+      design: { ...presetFor(lion), group: { males: 2, females: 3, juveniles: 1, cubs: 2 } },
+    } as BacklogItem;
+    const crowded = {
+      ...s,
+      backlog: s.backlog.map((it) => (it.id === h.id ? { ...it, enclosureSize: 'small' as const } : it)),
+    } as ZooGameState;
+    const { container } = inspector(crowded, family);
+    expect(container.textContent, 'nothing says why it cannot be asked for yet').toMatch(/Not ready to ask/);
+    expect(container.textContent, 'nothing says what would fix it').toMatch(/they need a (small|medium|large) one/);
   });
 });
