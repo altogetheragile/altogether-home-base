@@ -31,6 +31,10 @@ export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = '
   const done = criteria.filter((c, i) => met(c, i)).length;
   const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
   const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
+  // Already accepted: asking again is asking a question that has been answered. Reported from
+  // playing it - "I get multiple ask Priya to check".
+  const accepted = criteria.length > 0 && criteria.every((_, i) => !!item.acConfirmed?.[i])
+    && (item.tasks ?? []).some((t) => /sign[- ]?off/i.test(t.label) && t.done);
   // Ready to ask means every criterion the park can answer is answered. The rest are judgement, and
   // judgement is what the asking is for.
   const facts = criteria.filter(answerable);
@@ -84,7 +88,11 @@ export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = '
         {!criteria.length && <li className="text-[12px] text-muted-foreground">Nothing written yet. Criteria are the Product Owner&rsquo;s.</li>}
       </ul>
       <div className="mt-2 border-t border-border pt-2">
-        {asked ? (
+        {accepted ? (
+          <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+            {po} accepted it &middot; move it to Done
+          </p>
+        ) : asked ? (
           <p className="text-[11px] text-muted-foreground">Waiting on {po} to look at it.</p>
         ) : ready && onAskToCheck ? (
           <Button size="sm" data-part="ask-to-check" className={cn(FOCUS, 'h-7 w-full px-2 text-xs')}

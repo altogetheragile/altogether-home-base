@@ -1688,6 +1688,11 @@ export function openItem(state: ZooGameState, id: string, by?: string): ZooGameS
   // Nothing goes live before the Product Owner has signed it off, and they cannot sign it off until
   // every acceptance criterion is met - the placement ones included.
   if (item && (item.tasks ?? []).some((t) => isSignOffTask(t.label) && !t.done)) return state;
+  // ...and nothing goes live that has not been through Done. Reported from playing it: "I cannot
+  // move it to Done but I can open it - that's not right." It was not: opening checked the sign-off
+  // and never the column, so work could go to visitors round the outside of the one thing the whole
+  // board is about.
+  if (item && item.status !== 'done') return state;
   if (item?.enhancesId) {
     // Delivering an improvement: apply its design (and enclosure size) back to the target it
     // improves, keeping the target's place. The improvement itself is marked delivered - it counts
