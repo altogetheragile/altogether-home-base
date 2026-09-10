@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Users, Bot, Eye, Check, Copy, Play, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useZooSessions, type Seat, type Participant, type SeatName } from './useZooSessions';
+import { hereCount, seatIsAway, unmannedSeats } from './seatPresence';
 import { PADDING, SURFACE, TEXT, FOCUS } from './ui/tokens';
 
 // The table before the game starts: who is here, and who is sitting where.
@@ -24,8 +25,14 @@ const SEAT_WHY: Record<SeatName, string> = {
   developer: 'Accountable for creating a usable Increment each Sprint.',
 };
 
-export function SeatCard({ seat, holder, mine, canAct, canLeave, onClaim, onLeave, onAi }: {
+export function SeatCard({ seat, holder, away, mine, canAct, canLeave, canCover, onClaim, onLeave, onAi }: {
   seat: Seat; holder: Participant | null; mine: boolean; canAct: boolean;
+  /** Held by somebody who is not at the table right now. Their seat, still - and in the meantime
+   *  the team is waiting on an empty chair, which used to be invisible. */
+  away?: boolean;
+  /** Whether this player may hand an away seat to AI. The host's call: somebody has to be able to,
+   *  or a closed laptop stops the Sprint until its owner comes back. */
+  canCover?: boolean;
   /** Leaving your own seat is always yours, watching or not. Watching hid every control on the
    *  card, this one included, so somebody who switched to watching while seated was stuck holding
    *  the seat the table was waiting on. Standing up gives the seat away now, so this is the way out
@@ -36,17 +43,27 @@ export function SeatCard({ seat, holder, mine, canAct, canLeave, onClaim, onLeav
   const taken = !!holder || seat.is_ai;
   return (
     <div className={cn(SURFACE.card, PADDING.default, 'flex flex-col gap-2',
-      mine && 'border-primary ring-1 ring-primary/30')}>
+      mine && 'border-primary ring-1 ring-primary/30',
+      away && 'border-amber-400/70 bg-amber-500/[0.04]')}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold">{SEAT_LABEL[seat.seat]}</span>
         {seat.is_ai && <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"><Bot className="h-3 w-3" /> AI</span>}
+        {away && <span data-part="seat-away" className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">away</span>}
         {mine && <span className="flex items-center gap-1 text-[11px] font-medium text-primary"><Check className="h-3 w-3" /> you</span>}
       </div>
       <p className="text-[11px] leading-snug text-muted-foreground">{SEAT_WHY[seat.seat]}</p>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1">
         <span className="truncate text-xs text-muted-foreground">
-          {holder ? holder.display_name : seat.is_ai ? 'played by AI' : 'empty'}
+          {holder
+            ? away ? `${holder.display_name} - not here` : holder.display_name
+            : seat.is_ai ? 'played by AI' : 'empty'}
         </span>
+        {away && canCover && !mine && (
+          <Button size="sm" variant="outline" data-part="cover-away" onClick={() => onAi(true)}
+            title="Hand this seat to AI until they are back. They can take it again when they return.">
+            Cover with AI
+          </Button>
+        )}
         {(canAct || canLeave) && (mine
           ? <Button size="sm" variant="ghost" onClick={onLeave}>Leave</Button>
           : !taken && canAct
@@ -118,14 +135,22 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
   const byKind = (k: SeatName) => s.seats.filter((x) => x.seat === k).sort((a, b) => a.seat_no - b.seat_no);
   // Seats with nobody and no AI: the state that quietly switched the gate off, and which
   // games created before that was fixed still carry.
-  const emptyCount = s.seats.filter((x) => !x.participant_id && !x.is_ai).length;
+  const emptyCount = unmannedSeats(s.seats, s.participants, s.present).length;
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className={TEXT.screen}>{s.session.name}</h1>
-          <p className="text-sm text-muted-foreground">{s.participants.length} here · {s.session.status}</p>
+          {/* Who is actually at the table, not who has ever joined it. The count used to include
+              somebody who joined on Tuesday and has not opened it since, which is the number a host
+              uses to decide whether to start. */}
+          <p className="text-sm text-muted-foreground">
+            {hereCount(s.participants, s.present)} here
+            {s.participants.length > hereCount(s.participants, s.present)
+              && <span className="text-muted-foreground/70"> of {s.participants.length}</span>}
+            {' '}&middot; {s.session.status}
+          </p>
         </div>
         <button type="button" title="Read this out, or send it"
           onClick={() => { void navigator.clipboard?.writeText(s.session!.join_code); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
@@ -150,6 +175,7 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
               {(['product_owner', 'scrum_master', 'developer'] as SeatName[]).flatMap((k) =>
                 byKind(k).map((seat) => (
                   <SeatCard key={seat.id} seat={seat} holder={holderOf(seat)}
+                    away={seatIsAway(seat, s.participants, s.present)} canCover={s.isHost}
                     mine={seat.participant_id === s.me?.id} canAct={!observing} canLeave={!!s.me && seat.participant_id === s.me.id}
                     onClaim={() => void s.claimSeat(seat.id)}
                     onLeave={() => void s.leaveSeat(seat.id)}
