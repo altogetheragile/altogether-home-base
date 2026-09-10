@@ -11,6 +11,7 @@ import { ParkInspector } from './ParkInspector';
 import { footprintFor } from './design';
 import { CANVAS_W, PLAY_H } from './parkLayout';
 import { ParkPlan } from './ParkPlan';
+import { DOCKED_BAR_H } from './ActionBar';
 import { CopyEditor } from './CopyEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -477,11 +478,17 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onInside: (id) => setInside(id),
                     }} />
                 )}
-                <div className="relative min-h-0 flex-1 overflow-y-auto">
+                {/* Room at the foot for the day's dock, so the park stops above it rather than
+                    running underneath. It is fixed to the bottom right of the window and the park is
+                    the right-hand pane, so it lay over the one corner you draw a run into: "the
+                    navigation button obscures the park and cannot draw a path properly". The same
+                    measure every other pane leaves for it. */}
+                <div className="relative min-h-0 flex-1 overflow-hidden"
+                  style={{ paddingBottom: DOCKED_BAR_H }}>
                   {/* What it has to be, docked on the park rather than in a window over it. Inside a
                       habitat it collapses to a pill, because in there the whole picture is the pen. */}
                   {inHand && (inHand.acceptance ?? []).length > 0 && (
-                    <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem}
+                    <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem} quiet={drawing}
                       corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck} />
                   )}
                   <ParkPlan state={state} height={620} selected={building ?? null} inside={inside}

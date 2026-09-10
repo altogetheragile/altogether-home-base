@@ -3,7 +3,7 @@ import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './ty
 import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
-import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y } from './parkLayout';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { FACILITY } from './facilities';
 import { themeFor } from './zoneTheme';
@@ -809,7 +809,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   const EDGE = 13;
   const grass = '#8cc063';
   const tarmac = '#9a9ea3';
-  const promY = PLAY_H - 40;
+  // The same front the plan paints and the routing walks - one definition, in parkLayout.
+  const promY = PROMENADE_Y;
   const cFL = P(0, worldH), cFR = P(CANVAS_W, worldH), cR = P(CANVAS_W, 0);
   nodes.push(
     <polygon key="edge-l" points={`${P(0, worldH).x},${P(0, worldH).y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cFL.x},${cFL.y + EDGE}`} fill={shade(tarmac, -40)} />,

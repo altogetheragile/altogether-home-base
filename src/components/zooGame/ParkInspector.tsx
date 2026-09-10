@@ -16,11 +16,15 @@ import { Check, Circle } from 'lucide-react';
 // are working on - and inside a habitat it collapses to a single pill, because in there the whole
 // screen is the enclosure.
 
-export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = 'tr', className }: {
+export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, corner = 'tr', className }: {
   state: ZooGameState;
   item: BacklogItem;
   /** Inside a habitat: one pill, so the enclosure is not covered by its own criteria. */
   collapsed?: boolean;
+  /** While a run is being drawn, the panel stops taking the pointer and thins out: it sits over a
+   *  corner of the park, and a click meant for the ground under it landed on the panel instead -
+   *  "cannot draw a path properly". Still readable, just not in the way. */
+  quiet?: boolean;
   onAskToCheck?: (id: string) => void;
   corner?: 'tl' | 'tr' | 'bl' | 'br';
   className?: string;
@@ -59,7 +63,8 @@ export function ParkInspector({ state, item, collapsed, onAskToCheck, corner = '
 
   return (
     <div data-part="park-inspector"
-      className={cn('absolute z-20 w-[min(20rem,45%)] rounded-lg border border-border bg-background/95 p-2.5 shadow-md backdrop-blur-sm', place, className)}>
+      className={cn('absolute z-20 w-[min(20rem,45%)] rounded-lg border border-border bg-background/95 p-2.5 shadow-md backdrop-blur-sm transition-opacity',
+        quiet && 'pointer-events-none opacity-45', place, className)}>
       <h3 className="text-sm font-bold">
         Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span>
       </h3>
