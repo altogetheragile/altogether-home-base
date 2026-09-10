@@ -114,9 +114,19 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
               <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Resume a saved game
             </button>
           ) : <span />}
-          <Button size="lg" className="rounded-full px-6" onClick={() => { onSetGoal(goal); onStart(); }}>
-            Start building &rarr;
-          </Button>
+          {/* The Product Goal is the commitment of the Product Backlog, and every Sprint aims at
+              it. Starting with none is not a state the game should let a Product Owner into - it
+              arrives written, so this only ever catches somebody who cleared it. */}
+          <span className="flex items-center gap-2">
+            {!goal.trim() && (
+              <span className="hidden text-[11px] text-muted-foreground sm:block">Write a Product Goal first.</span>
+            )}
+            <Button size="lg" className="rounded-full px-6" disabled={!goal.trim()}
+              title={goal.trim() ? undefined : 'Write a Product Goal first - every Sprint aims at it.'}
+              onClick={() => { onSetGoal(goal); onStart(); }}>
+              Start building &rarr;
+            </Button>
+          </span>
         </div>
       </div>
     </div>

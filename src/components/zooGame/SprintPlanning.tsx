@@ -540,24 +540,36 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 const mine = steps(it);
                 const on = planFor?.id === it.id;
                 return (
-                  <button key={it.id} type="button" onClick={() => setOpenPlan(it.id)}
-                    className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors',
+                  /* Two controls, side by side, rather than one inside the other. The star was a
+                     span with an onClick nested in this row button: a mouse could hit it and
+                     nothing else could - no keyboard, no announcement, and a button inside a button
+                     is not a thing a browser has to make sense of. Marking an item essential to the
+                     Sprint Goal is a Developers' decision; it cannot be mouse-only. */
+                  <div key={it.id}
+                    className={cn('flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 transition-colors',
                       on ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/50',
                       planned.has(it.id) && 'zoo-arriving')}>
                     {stars && (
-                      <span onClick={(e) => { e.stopPropagation(); onToggleGoalCritical?.(it.id); }}
-                        title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'}>
-                        <Star className={cn('h-4 w-4 shrink-0', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40')} />
-                      </span>
+                      <button type="button" data-part="goal-critical"
+                        onClick={() => onToggleGoalCritical?.(it.id)}
+                        aria-pressed={!!it.goalCritical}
+                        aria-label={`${it.name}: ${it.goalCritical ? 'essential to the Sprint Goal' : 'not essential to the Sprint Goal'}`}
+                        title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'}
+                        className={cn(FOCUS, 'flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-muted')}>
+                        <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40')} />
+                      </button>
                     )}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{it.name}</span>
-                      <span className={cn('block text-[11px]', mine.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}>
-                        {mine.length ? `${mine.length} step${mine.length === 1 ? '' : 's'} · planned` : 'no steps yet'}
+                    <button type="button" onClick={() => setOpenPlan(it.id)}
+                      className={cn(FOCUS, 'flex min-w-0 flex-1 items-center gap-2 rounded-md text-left')}>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{it.name}</span>
+                        <span className={cn('block text-[11px]', mine.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}>
+                          {mine.length ? `${mine.length} step${mine.length === 1 ? '' : 's'} · planned` : 'no steps yet'}
+                        </span>
                       </span>
-                    </span>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{it.estimate}</span>
-                  </button>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{it.estimate}</span>
+                    </button>
+                  </div>
                 );
               })}
             </div>
