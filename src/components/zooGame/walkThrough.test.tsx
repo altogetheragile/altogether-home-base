@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, fireEvent, act, waitFor } from '@testing-library/react';
 import { FlyThrough } from './FlyThrough';
 import { IsoZoo } from './IsoZoo';
+import { EventStage } from './EventStage';
 import { walkStops, canWalk, HOLD_MS, TRAVEL_MS } from './walkThrough';
 import { initialZooState } from './config';
 import { zoneSlices } from './engine';
@@ -176,5 +177,26 @@ describe('walking closer', () => {
     });
     expect(svg().getAttribute('style') ?? '', 'the camera went back to stretching a bitmap')
       .not.toMatch(/scale\(/);
+  });
+});
+
+describe('the event picture', () => {
+  it('can be walked round as well as walked through', async () => {
+    // The Review is where somebody presents the zoo to a room, and "can we see behind the
+    // enclosure?" is a question a room asks out loud.
+    const { container } = render(
+      <EventStage state={afterASprint()} walk title="The Increment">{null}</EventStage>,
+    );
+    const turn = container.querySelector('[data-part="turn-park"]') as HTMLButtonElement | null;
+    expect(turn, 'the Review’s picture cannot be turned').toBeTruthy();
+    expect(turn!.textContent).toMatch(/Front/);
+    fireEvent.click(turn!);
+    expect(turn!.textContent, 'pressing it turned nothing').toMatch(/Left/);
+    // ...and the walk is still offered beside it: two controls, one picture. The picture is loaded
+    // when it is needed, so the walk arrives with it.
+    await waitFor(() => {
+      expect(container.querySelector('[data-part="walk-start"]'),
+        'turning the park took the walk away').toBeTruthy();
+    });
   });
 });

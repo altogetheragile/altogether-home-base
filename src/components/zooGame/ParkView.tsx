@@ -12,8 +12,9 @@ import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zoneSlices, zooIsOpen } from './engine';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye, RotateCw } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FlyThrough } from './FlyThrough';
+import { TurnControl } from './TurnControl';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // ============= The Park View =============
@@ -364,13 +365,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
               )}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
               {/* Walk round it. Beside the zoom, because they are the same question asked twice. */}
-              <button type="button" data-part="turn-park" onClick={() => setTurn((t) => (t + 1) % 4)}
-                title="Walk round the park - a quarter turn each press"
-                aria-label={`Turn the park a quarter - now looking from ${['the front', 'the left', 'behind', 'the right'][turn]}`}
-                className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-border px-1.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground')}>
-                <RotateCw className="h-3.5 w-3.5" />
-                {['Front', 'Left', 'Behind', 'Right'][turn]}
-              </button>
+              <TurnControl turn={turn} onTurn={setTurn} />
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
