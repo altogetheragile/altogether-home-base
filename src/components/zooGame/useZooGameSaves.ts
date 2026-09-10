@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Json } from '@/integrations/supabase/types';
 import type { ZooGameState } from './types';
+import { readSave, stampSave } from './zooSaves';
 
 // The Build A Zoo "save and resume" store. The whole game is one serialisable object
 // (ZooGameState), kept as jsonb; phase/sprint are denormalised for the list. RLS scopes
@@ -44,7 +45,8 @@ export function useZooGameSaves() {
   const saveGame = useMutation({
     mutationFn: async ({ id, name, state }: { id?: string | null; name: string; state: ZooGameState }): Promise<string> => {
       if (!user) throw new Error('Sign in to save games');
-      const payload = { name, state: state as unknown as Json, ...summarise(state) };
+      // Stamped with the build that wrote it, so the resume can tell whether it can be trusted.
+      const payload = { name, state: stampSave(state) as unknown as Json, ...summarise(state) };
       if (id) {
         const { error } = await supabase.from('zoo_game_saves').update(payload).eq('id', id);
         if (error) throw error;
@@ -69,11 +71,16 @@ export function useZooGameSaves() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: key }),
   });
 
-  /** Load one save's full game state. */
-  const loadGame = async (id: string): Promise<ZooGameState> => {
+  /** Load one save's full game state - refusing, out loud, one this build cannot read.
+   *
+   *  It used to be a blind cast. A blob written by a different shape of the game came back typed as
+   *  though it were this one, and the game carried on with whatever was actually in it. */
+  const loadGame = async (id: string): Promise<{ state: ZooGameState; note?: string }> => {
     const { data, error } = await supabase.from('zoo_game_saves').select('state').eq('id', id).single();
     if (error) throw error;
-    return data.state as unknown as ZooGameState;
+    const read = readSave(data.state);
+    if (!read.ok) throw new Error(read.why);
+    return { state: read.state, note: read.note };
   };
 
   return {

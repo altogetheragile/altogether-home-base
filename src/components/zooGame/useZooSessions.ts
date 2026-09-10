@@ -178,28 +178,53 @@ export function useZooSessions(sessionId: string | null) {
     } finally { setBusy(false); }
   }, [me, gameId, sessionId, refresh]);
 
+  /** Leave your own seat. Yours, and only yours: this took any seat id at all, and the policy
+   *  behind it lets any player at the table write any seat in the game - so one player could stand
+   *  another one up mid-Sprint. The policy is the real fix and needs a migration; this is the half
+   *  that can be true today, and it is where the intent belongs anyway. */
   const leaveSeat = useCallback(async (seatId: string) => {
+    const seat = seats.find((s) => s.id === seatId);
+    if (seat && seat.participant_id && seat.participant_id !== me?.id) {
+      setError('That is somebody else’s seat. Only they can leave it.');
+      return;
+    }
     setBusy(true);
     try {
       await supabase.from('zoo_game_seats').update({ participant_id: null, claimed_at: null }).eq('id', seatId);
       if (sessionId) await refresh(sessionId);
     } finally { setBusy(false); }
-  }, [sessionId, refresh]);
+  }, [me, seats, sessionId, refresh]);
 
-  /** Hand an empty seat to AI, so a pair can still field a whole Scrum Team. */
+  /** Hand an EMPTY seat to AI, so a pair can still field a whole Scrum Team.
+   *
+   *  It used to null the seat's participant on the way, which is a polite way of describing evicting
+   *  whoever was sitting in it - from a control offered to everybody at the table. */
   const fillWithAi = useCallback(async (seatId: string, on: boolean) => {
+    const seat = seats.find((s) => s.id === seatId);
+    if (on && seat?.participant_id && seat.participant_id !== me?.id) {
+      setError('Somebody is in that seat. They can leave it, and then it can be covered.');
+      return;
+    }
     setBusy(true);
     try {
       await supabase.from('zoo_game_seats').update({ is_ai: on, participant_id: null }).eq('id', seatId);
       if (sessionId) await refresh(sessionId);
     } finally { setBusy(false); }
-  }, [sessionId, refresh]);
+  }, [me, seats, sessionId, refresh]);
 
   /** Watch without a seat. A trainer coaching several tables, and the only kind of watcher
    *  there is: observers act on nothing. */
   const setRole = useCallback(async (role: 'player' | 'observer') => {
     if (!me) return;
-    await supabase.from('zoo_session_participants').update({ role }).eq('id', me.id);
+    // The database refuses a role change from anybody but the host, and this wrote it, ignored the
+    // refusal and refreshed - so pressing "watch" did nothing at all, silently, for ever. Say what
+    // happened. Whether a participant should be allowed to sit out on their own is a decision about
+    // the trigger, not about this call.
+    const { error: e } = await supabase.from('zoo_session_participants').update({ role }).eq('id', me.id);
+    if (e) {
+      setError('Only the host can change who is watching and who is playing.');
+      return;
+    }
     if (sessionId) await refresh(sessionId);
   }, [me, sessionId, refresh]);
 

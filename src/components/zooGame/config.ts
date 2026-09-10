@@ -1,5 +1,6 @@
 import type { BacklogItem, ZooGameState, EpicMember, ZooBrief } from './types';
 import type { ZooItem } from './simulation/types';
+import { SAVE_VERSION } from './zooSaves';
 import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
 import { amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance } from './design';
@@ -351,6 +352,8 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     signalAge: {},
     improvements: [],
     gameSeed,
+    // What shape this game is, for anything that saves it and reads it back.
+    version: SAVE_VERSION,
     sprintDays: SPRINT_DAYS,
     dayNumber: 1,
     dayStage: 'building',

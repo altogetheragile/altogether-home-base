@@ -452,6 +452,9 @@ export interface ZooGameState {
   improvements: string[];
   /** Per-game seed: drives taste jitter and attendance drift (anti-scripting). */
   gameSeed: number;
+  /** Which build's shape this is. Written on every save, read on every resume - see `zooSaves.ts`.
+   *  Optional because a game in play does not need one, and saves taken before it existed have none. */
+  version?: number;
   // ---- Timed days and the Daily Scrum (within a Sprint) ----
   /** How many days this Sprint runs. */
   sprintDays: number;

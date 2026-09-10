@@ -9,6 +9,7 @@ import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
 import { suggestTasks, startItem, buildItem } from './engine';
 import { presetFor } from './design';
+import { readSave, stampSave, SAVE_VERSION } from './zooSaves';
 import type { ZooGameState } from './types';
 
 // The correctness items from the consolidated review, held as rules.
@@ -111,5 +112,44 @@ describe('a second passing', () => {
       'the clock ticked and the whole park was read again').toBe(0);
     expect(done(reducer(unticked, { type: 'SET_POS', id: h.id, pos: { x: 300, y: 300 } })),
       'a real action stopped reading the park').toBeGreaterThan(0);
+  });
+});
+
+describe('a save', () => {
+  it('says which build wrote it, and is refused when this build cannot read it', () => {
+    const state = initialZooState(3);
+    expect(stampSave(state).version, 'a save went out with no version on it').toBe(SAVE_VERSION);
+
+    const newer = readSave({ ...state, version: SAVE_VERSION + 1 });
+    expect(newer.ok, 'a save from a newer game was read as though it were this one').toBe(false);
+    if (!newer.ok) expect(newer.why).toMatch(/newer version/i);
+
+    const notOurs = readSave({ hello: 'world' });
+    expect(notOurs.ok, 'something that is not a saved game loaded as one').toBe(false);
+
+    // Saved before the game recorded a version: readable, and said so rather than silently.
+    const old = readSave({ ...state, version: undefined });
+    expect(old.ok).toBe(true);
+    if (old.ok) {
+      expect(old.note, 'an older save came in with nothing said about it').toBeTruthy();
+      expect(old.state.version, 'it was not brought up to this build').toBe(SAVE_VERSION);
+    }
+  });
+});
+
+describe('starting over', () => {
+  it('takes two presses, and says what goes', () => {
+    // The only action in the game with nothing behind it. Everything else that cannot be undone is
+    // meant to cost something - a confirm on End Day would teach that the day did not matter.
+    render(
+      <ZooFinal state={{ ...initialZooState(3), phase: 'final', sprintNumber: 3 } as ZooGameState}
+        onReset={() => {}} />,
+    );
+    // The action bar is portalled to the body - it is pinned to the window, not to this screen.
+    const at = (part: string) => document.body.querySelector(`[data-part="${part}"]`);
+    expect(at('confirm-reset'), 'it started over on one press').toBeNull();
+    fireEvent.click(at('start-over')!);
+    expect(at('confirm-reset'), 'there is no second step').toBeTruthy();
+    expect(document.body.textContent, 'nothing said what starting over costs').toMatch(/no way back/i);
   });
 });

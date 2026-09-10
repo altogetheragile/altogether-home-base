@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ZooGameState } from './types';
 import { openZoo, productGoalProgress } from './engine';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
   const progress = Math.round(productGoalProgress(state) * 100);
   const met = progress >= 80;
   const sprints = `${state.sprintNumber} Sprint${state.sprintNumber === 1 ? '' : 's'}`;
+  const [starting, setStarting] = useState(false);
 
   return (
     <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center">
@@ -51,7 +53,21 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
           ? 'The visitors kept telling you what they valued - and you built a zoo around it.'
           : 'The visitors were still telling you what they valued. A Product Goal is abandoned as deliberately as it is met - and the next one starts from what this taught you.'}
       </p>
-      <ActionBar><Button onClick={onReset}>Build another zoo &rarr;</Button></ActionBar>
+      {/* The one action in the game with nothing behind it: this zoo, its Sprints and its decision
+          log are gone, and there is no screen to come back to. Two steps, the same guard the Product
+          Backlog uses to delete an item - not a browser confirm, which is a different game's
+          furniture. Everything else that cannot be undone is meant to cost something: taking a day
+          back would teach that the day did not matter. */}
+      <ActionBar hint={starting ? 'This zoo, its Sprints and its decision log go. There is no way back to it.' : undefined}>
+        {starting ? (
+          <>
+            <Button variant="outline" onClick={() => setStarting(false)}>Keep this one</Button>
+            <Button variant="destructive" data-part="confirm-reset" onClick={onReset}>Yes, start over</Button>
+          </>
+        ) : (
+          <Button data-part="start-over" onClick={() => setStarting(true)}>Build another zoo &rarr;</Button>
+        )}
+      </ActionBar>
     </div>
   );
 }
