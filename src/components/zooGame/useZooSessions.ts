@@ -216,27 +216,32 @@ export function useZooSessions(sessionId: string | null) {
    *  there is: observers act on nothing. */
   const setRole = useCallback(async (role: 'player' | 'observer') => {
     if (!me) return;
-    // The database refuses a role change from anybody the trigger does not allow, and this used to
-    // write it, ignore the refusal and refresh - so pressing "watch" did nothing at all, silently,
-    // for ever. The role change goes first and everything else waits on it succeeding, so a refusal
-    // leaves the player exactly where they were, still in their seat.
+    // Standing up comes FIRST, and the order is the whole of this.
+    //
+    // The seat policy asks whether you are a PLAYER in this session. Change the role first and you
+    // are an observer by the time the seat write goes out - so the policy refuses it, and the act
+    // meant to release the seat is the one thing that locks you into it. It said "Watching" and left
+    // al sitting in the Product Owner seat. Found by driving it in a browser, not by reading it: the
+    // two halves are correct on their own and only wrong in that order.
+    if (role === 'observer') {
+      for (const s of seats.filter((x) => x.participant_id === me.id)) {
+        const { error: se } = await supabase.from('zoo_game_seats')
+          .update({ participant_id: null, claimed_at: null, is_ai: true }).eq('id', s.id);
+        if (se) {
+          setError('Could not give up your seat, so you are still playing.');
+          return;
+        }
+      }
+    }
     const { error: e } = await supabase.from('zoo_session_participants').update({ role }).eq('id', me.id);
     if (e) {
-      setError('Only the host can change who is watching and who is playing.');
+      // The seat is already covered by AI at this point, which is recoverable and worth saying: a
+      // player who is told "no" should know what did happen as well as what did not.
+      setError(role === 'observer'
+        ? 'Your seat is covered by AI, but only the host can move you to watching. Take a seat again if you want it back.'
+        : 'Only the host can change who is watching and who is playing.');
+      if (sessionId) await refresh(sessionId);
       return;
-    }
-    // Watching means holding nothing, and it has to mean leaving the seat in the same act.
-    //
-    // It did not, and that stalled the table: an observer is refused every action by the seat rules,
-    // so a Product Owner who switched to watching held the one seat nobody could act from - and the
-    // lobby hid Leave from an observer, so there was no way back out of it either. Standing up hands
-    // the seat to AI, which is what keeps the Sprint moving while somebody sits and watches it.
-    if (role === 'observer') {
-      const mine = seats.filter((s) => s.participant_id === me.id);
-      for (const s of mine) {
-        await supabase.from('zoo_game_seats')
-          .update({ participant_id: null, claimed_at: null, is_ai: true }).eq('id', s.id);
-      }
     }
     if (sessionId) await refresh(sessionId);
   }, [me, seats, sessionId, refresh]);
