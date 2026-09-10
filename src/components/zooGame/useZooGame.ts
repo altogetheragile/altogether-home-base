@@ -23,8 +23,14 @@ import { applyParkChecks } from './parkChecks';
  *  That re-application is only sound because this is pure - no clock, no randomness that
  *  is not seeded, no I/O. */
 export function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
-  return applyParkChecks(step(state, action));
+  return CLOCK_ONLY.has(action.type) ? step(state, action) : applyParkChecks(step(state, action));
 }
+
+/** Actions that cannot change a fact about the park, so the park is not re-read for them.
+ *
+ *  The clock ticks once a second for the whole of every day, and the park check walks every item,
+ *  every criterion and every run of path. A second passing does not move a fence. */
+const CLOCK_ONLY = new Set<ZooAction['type']>(['TICK_DAY', 'TICK_SCRUM', 'SET_CLOCK_PAUSED']);
 
 function step(state: ZooGameState, action: ZooAction): ZooGameState {
   switch (action.type) {

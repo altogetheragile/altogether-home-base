@@ -94,8 +94,12 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
           worked it - each line attributed, and carrying its cost where the game knows one. The
           right-hand column is what it came to. Two columns because they are read together: a
           decision means little without its outcome, and an outcome without its decisions is luck. */}
-      {step === 'inspect' && did.length > 0 && (
+      {step === 'inspect' && (
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+          {/* The log, where there is one. A Sprint the team never logged a decision in is still a
+              Sprint worth inspecting - and it used to take the numbers down with it, so the team
+              that most needed to see "delivered 3 of 21" was the one shown nothing at all. */}
+          {did.length > 0 ? (
           <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
             <div className="flex items-center gap-1.5 text-sm font-semibold">
               <ClipboardList className="h-4 w-4" /> Decision log <span className="font-normal text-muted-foreground">· this Sprint</span>
@@ -117,6 +121,17 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
               <p className="text-[11px] text-muted-foreground/80">{habits.join(' ')}</p>
             )}
           </section>
+          ) : (
+            <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-1')}>
+              <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <ClipboardList className="h-4 w-4" /> Decision log <span className="font-normal text-muted-foreground">· this Sprint</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Nothing was logged this Sprint. The numbers beside this are still the Sprint - inspect
+                those, and what the team did with the days.
+              </p>
+            </section>
+          )}
 
           {/* What it cost, and what it earned. The numbers the team is inspecting, in one place, so
               the conversation is about the Sprint rather than about where to find the figures. */}
