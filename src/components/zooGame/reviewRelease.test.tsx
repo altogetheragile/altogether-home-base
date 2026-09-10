@@ -67,7 +67,7 @@ describe('the Review, when Done work was never released', () => {
     expect(shut.length, 'the Developers finished nothing, so there is nothing to be shut about').toBeGreaterThan(0);
 
     render(<SprintReview state={s} onTakeSignal={() => {}} onContinue={() => {}} onOpen={() => {}}
-      onConfirmAc={() => {}} onToggleTask={() => {}} />);
+      onToggleTask={() => {}} />);
 
     expect(screen.getByText(/Built, and nobody can see it/i),
       'the Review said nothing about work that is finished and shut').toBeTruthy();
@@ -86,7 +86,7 @@ describe('the Review, when Done work was never released', () => {
     const built = s.backlog.filter((it) => it.status === 'committed' && it.started && it.design);
     if (!built.length) return;   // the seats accepted everything themselves; nothing to say
     render(<SprintReview state={s} onTakeSignal={() => {}} onContinue={() => {}} onOpen={() => {}}
-      onConfirmAc={() => {}} onToggleTask={() => {}} />);
+      onToggleTask={() => {}} />);
     expect(screen.getByText(/waiting on you to accept/i),
       'the Review said nothing about work waiting on the Product Owner').toBeTruthy();
     for (const it of built) {

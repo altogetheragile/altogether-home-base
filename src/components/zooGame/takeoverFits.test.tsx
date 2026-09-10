@@ -66,7 +66,7 @@ describe('what the Review has to say', () => {
     const { container } = render(
       <MemoryRouter>
         <SprintReview state={state} onContinue={() => {}} onOpen={() => {}}
-          onConfirmAc={() => {}} onToggleTask={() => {}} onTakeSignal={() => {}} />
+          onToggleTask={() => {}} onTakeSignal={() => {}} />
       </MemoryRouter>,
     );
     const read = container.querySelector('[data-part="event-read"]') as HTMLElement;

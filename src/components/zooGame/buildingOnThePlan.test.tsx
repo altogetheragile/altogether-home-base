@@ -92,7 +92,7 @@ describe('laying a path', () => {
     const s = park(shop());
     const { container } = render(
       <ParkPlan state={s} tool="path" runFor="paths"
-        onAddConnector={(c) => laid.push(c)} onSetTool={() => { throw new Error('the pen was put away'); }} />,
+        onAddConnector={(c) => laid.push(c)} />,
     );
     const svg = container.querySelector('[data-part="park-plan"]')!;
     // jsdom lays nothing out, and the park maps a pointer through its own box.

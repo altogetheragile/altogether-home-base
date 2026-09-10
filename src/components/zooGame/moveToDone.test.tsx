@@ -63,9 +63,9 @@ const lionOf = (s: ZooGameState) => s.backlog.find((it) => it.category === 'exhi
 const board = (state: ZooGameState, props: Record<string, unknown> = {}) => render(
   <MemoryRouter>
     <SprintBoard state={state}
-      onEstimate={noop} onToggleTask={noop} onConfirmAc={noop} onFinishItem={noop} onStartItem={noop}
-      onSetLearnMode={noop} onSetScrumAt={noop} onPull={noop} onSplitEpic={noop} onAssignDev={noop}
-      onRenameMember={noop} onOpen={noop} onEndDay={noop} onHoldDailyScrum={noop} onSkipDailyScrum={noop}
+      onEstimate={noop} onToggleTask={noop} onFinishItem={noop} onStartItem={noop}
+      onPull={noop} onSplitEpic={noop} onAssignDev={noop}
+      onOpen={noop} onEndDay={noop} onHoldDailyScrum={noop} onSkipDailyScrum={noop}
       onStartDay={noop} onBuilding={noop} {...props} />
   </MemoryRouter>,
 );
