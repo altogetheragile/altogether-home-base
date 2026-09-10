@@ -501,6 +501,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onTurn,
                       onUnplace: (id) => setMoving(id),
                       onSetSize,
+                      onPutIn,
                       onInside: (id) => setInside(id),
                     }} />
                 )}

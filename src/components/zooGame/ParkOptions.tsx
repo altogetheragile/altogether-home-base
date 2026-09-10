@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
-  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES,
+  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
   type ItemDesign,
 } from './design';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,8 @@ const SCENERY_COLOURS = ['#43a047', '#7a5230', '#8fa3b0', '#c8a06a', '#7cc0e8', 
 const BUILDING_COLOURS = ['#e6ddcf', '#cfd8e3', '#a4623a', '#3f6f4f', '#c8761f', '#6b7280', '#f2e6c9'];
 const GROUND_COLOURS = ['#c8a06a', '#e0a642', '#a8cf8f', '#6b7280', '#e8e2d5'];
 const FENCE_COLOURS = ['#8a6a3b', '#6b7280', '#3f6f4f', '#8fa3b0'];
+/** What an animal's coat can be. */
+const COAT_COLOURS = ['#c8761f', '#e0c9a6', '#5b4636', '#2a2622', '#f0efe9'];
 /** The planting a habitat can hold, and the loose scenery a planting card can be. */
 const INSIDE_KINDS = ['water', ...HABITAT_FEATURE_TYPES, ...PLANTING_TYPES];
 
@@ -67,6 +69,8 @@ export interface ParkOptionsApi {
   onInside?: (id: string | null) => void;
   /** Set a footprint outright. Dragging a corner does anything in between. */
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
+  /** Move an animal into a habitat - which is what "where it lives" means for an animal. */
+  onPutIn?: (id: string, enclosureId: string) => void;
 }
 
 export function ParkOptions({ state, item, api, inside, drawing, onDrawing, className }: {
@@ -95,6 +99,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
   const isScenery = subject.category === 'flora';
   const isBuilding = subject.category === 'amenity';
   const isPath = subject.category === 'path';
+  const isAnimal = subject.category === 'exhibit';
   const placed = !!subject.pos;
 
   return (
@@ -183,6 +188,33 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         </>
       )}
 
+      {/* ---- an animal: how many of them there are, and what they look like ---- */}
+      {!inside && isAnimal && (
+        <>
+          <Group label="How many">
+            {([['One', { males: 1, females: 0, juveniles: 0, cubs: 0 }],
+               ['A pair', { males: 1, females: 1, juveniles: 0, cubs: 0 }],
+               ['A family', { males: 1, females: 2, juveniles: 1, cubs: 2 }]] as const).map(([label, group]) => (
+              <Chip key={label} on={groupSize(design.group) === groupSize(group)}
+                onClick={() => set({ group: { ...group } })}>{label}</Chip>
+            ))}
+          </Group>
+          <Group label="Coat">
+            {COAT_COLOURS.map((c) => (
+              <Swatch key={c} hex={c} label="Coat" on={design.colors?.coat === c}
+                onClick={() => set({ colors: { ...design.colors, coat: c } })} />
+            ))}
+          </Group>
+          {/* Where they live. An animal has no place of its own on the park - it lives inside a
+              habitat - so "move" for an animal means moving house. */}
+          <Group label="Lives in">
+            {state.backlog.filter((it) => it.category === 'enclosure' && (it.design || it.draftDesign)).map((h) => (
+              <Chip key={h.id} on={subject.enclosureId === h.id} onClick={() => api.onPutIn?.(subject.id, h.id)}>{h.name}</Chip>
+            ))}
+          </Group>
+        </>
+      )}
+
       {/* ---- a building: what sort of building it is, and its colours ---- */}
       {!inside && isBuilding && (
         <Group label="Type">
@@ -224,7 +256,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       )}
 
       {/* ---- what every object standing on the park can do ---- */}
-      {!inside && !isPath && (
+      {!inside && !isPath && !isAnimal && (
         <Group label="On the park">
           {api.onTurn && (
             <Chip onClick={() => api.onTurn?.(subject.id, ((subject.rot ?? 0) + 90) % 360)}
