@@ -310,7 +310,9 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     }
   };
   /** The note a refused card carries, under the card itself. */
-  const cameBack = (id: string) => (refusedMove?.id === id ? (
+  // ...and it goes as soon as the work is ready. A card reading "Ready · move it to Done" with a
+  // refusal above it saying the same words is the game arguing with itself.
+  const cameBack = (id: string) => (refusedMove?.id === id && !readyToMove(doing.find((x) => x.id === id) ?? todo.find((x) => x.id === id) ?? ({} as BacklogItem)) ? (
     <div role="status" className="mt-1 flex items-start gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1 text-[11px] text-destructive">
       <X className="mt-0.5 h-3 w-3 shrink-0" />
       <span>{refusedMove.why}</span>

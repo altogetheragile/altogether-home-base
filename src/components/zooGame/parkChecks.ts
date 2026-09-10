@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign } from './design';
-import { settleStatus } from './engine';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask } from './design';
+import { settleStatus, isSignOffTask } from './engine';
 import { whereItStands } from './parkModel';
 
 // ============= The criteria the park can answer for itself =============
@@ -221,6 +221,37 @@ export const isChecked = (state: ZooGameState, item: BacklogItem, label: string)
  *  comes off, and the card cannot go to Done - which is the behaviour you would want from a build
  *  that reruns its tests.
  */
+/** Tick the steps the work itself has finished.
+ *
+ *  Beside the criteria, in the reducer, because they are the same kind of thing: a fact about what
+ *  has been built. It used to live in the build takeover, and went when the takeover did - so the
+ *  criteria ticked themselves and the plan did not, which is exactly as confusing as it sounds:
+ *  "the game automatically checks off ACs but not tasks". The sign-off is never ticked here - that
+ *  is the Product Owner accepting the work - and a step can still be ticked by hand on the card,
+ *  because the plan is the Developers' own. */
+function applyPlanChecks(state: ZooGameState): ZooGameState {
+  let changed = false;
+  const backlog = state.backlog.map((item) => {
+    if (item.status !== 'committed' || !item.started) return item;
+    const tasks = item.tasks ?? [];
+    if (!tasks.length) return item;
+    const design = currentDesign(item);
+    const homeSize = item.category === 'exhibit'
+      ? state.backlog.find((i) => i.id === item.enclosureId)?.enclosureSize : undefined;
+    let touched = false;
+    const next = tasks.map((t) => {
+      if (t.done || !t.label.trim() || isSignOffTask(t.label)) return t;
+      if (!designSatisfiesTask(item, design, t.label, homeSize)) return t;
+      touched = true;
+      return { ...t, done: true };
+    });
+    if (!touched) return item;
+    changed = true;
+    return settleStatus({ ...item, tasks: next });
+  });
+  return changed ? { ...state, backlog } : state;
+}
+
 export function applyParkChecks(state: ZooGameState): ZooGameState {
   let changed = false;
   const backlog = state.backlog.map((item) => {
@@ -242,5 +273,7 @@ export function applyParkChecks(state: ZooGameState): ZooGameState {
     // for the rest of the Sprint with nothing left to do to it.
     return settleStatus({ ...item, acConfirmed: next });
   });
-  return changed ? { ...state, backlog } : state;
+  // ...and the plan, in the same pass, so a criterion and a step cannot disagree about the same
+  // piece of work.
+  return applyPlanChecks(changed ? { ...state, backlog } : state);
 }

@@ -1081,12 +1081,14 @@ export function currentDesign(item: { design?: ItemDesign; draftDesign?: ItemDes
   return (item.draftDesign ?? item.design ?? presetFor(item as never));
 }
 
-export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label: string): boolean {
+export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label: string, homeSize?: 'small' | 'medium' | 'large'): boolean {
   if (item.category === 'exhibit') {
     const s = label.toLowerCase();
     if (/how many|ages|stock|group/.test(s)) return !!design.group && groupSize(design.group) > 0;
     // Not decided is not the same as fits - it would otherwise tick itself before you had chosen.
-    if (/fit the habitat|room/.test(s)) return !!design.group && hasRoomToRoam(design.group, item.enclosureSize);
+    // Measured against the habitat they live in, not a copy of its size kept on the animal: a pair
+    // ticked and a family never did, however big you made the pen.
+    if (/fit the habitat|room/.test(s)) return !!design.group && hasRoomToRoam(design.group, homeSize ?? item.enclosureSize);
     // The coat is a colour on the animal. It was looked for in `parts`, where the old studio kept a
     // named coat option that no control writes any more - so "choose the coat" could be chosen and
     // never tick, and Done waits for the plan.
