@@ -5,6 +5,7 @@ import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H } from './parkLayout';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
+import { FACILITY } from './facilities';
 import { themeFor } from './zoneTheme';
 import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
@@ -37,14 +38,6 @@ import { VEHICLE_ART } from './art/vehicleArt.generated';
  *  `shape` is the part that matters and the part the player cannot change: it is how you tell a
  *  cafe from a gift shop across a park. The colours are only starting points - every one of them
  *  is a control in the studio. */
-const FACILITY: Record<string, { walls: string; roof: string; sign: string; height: number;
-  shape: 'awning' | 'hatch' | 'glazed' | 'stall' | 'plain' }> = {
-  cafe:    { walls: '#f4eee3', roof: '#b8563f', sign: '#e8b84b', height: 30, shape: 'awning' },
-  kiosk:   { walls: '#efe6d8', roof: '#3f8f6f', sign: '#e6a53a', height: 21, shape: 'hatch' },
-  shop:    { walls: '#f5f0e7', roof: '#4a6fa5', sign: '#e0653f', height: 30, shape: 'glazed' },
-  stall:   { walls: '#efe6d8', roof: '#c85a3c', sign: '#f2c14e', height: 17, shape: 'stall' },
-  toilets: { walls: '#e9e7e1', roof: '#8f9aa3', sign: '#4a6fa5', height: 25, shape: 'plain' },
-};
 
 const VISITOR_PROPS = ['visitor01', 'visitor02', 'visitor03', 'visitor04', 'visitor05', 'visitor06', 'visitor07', 'visitor09'];
 const CHILD_PROPS = ['child01', 'child02', 'child03'];
