@@ -12,7 +12,7 @@ import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { zoneSlices, zooIsOpen } from './engine';
-import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
+import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye, RotateCw } from 'lucide-react';
 import { FlyThrough } from './FlyThrough';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
@@ -233,7 +233,11 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   // there. It is gone, and everything it could do is done here.
   // The park is drawn one way round. Turning it was a control that changed nothing you could see:
   // every object is a rectangle, and a rectangle looks the same from the other three corners.
-  const turn = 0;
+  // Which way round the park is being looked at, in quarter-turns. It is one of the two things a
+  // picture of a zoo owes you - how close, and from which side - and something at the back of a
+  // habitat is simply not visible from the front. Quarter-turns only: every prop is drawn from one
+  // fixed angle, so at 37 degrees the trees, the cars and the animals would all face the wrong way.
+  const [turn, setTurn] = useState(0);
   // On at the Review, off while you are building: the Review inspects the Increment, and the rest
   // of the time you want to see the site you are standing work on.
   const [ownIncrementOnly, setIncrementOnly] = useState(false);
@@ -359,6 +363,14 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                 </label>
               )}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
+              {/* Walk round it. Beside the zoom, because they are the same question asked twice. */}
+              <button type="button" data-part="turn-park" onClick={() => setTurn((t) => (t + 1) % 4)}
+                title="Walk round the park - a quarter turn each press"
+                aria-label={`Turn the park a quarter - now looking from ${['the front', 'the left', 'behind', 'the right'][turn]}`}
+                className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-border px-1.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground')}>
+                <RotateCw className="h-3.5 w-3.5" />
+                {['Front', 'Left', 'Behind', 'Right'][turn]}
+              </button>
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}

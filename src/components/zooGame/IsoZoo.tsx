@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
 import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
 import { standsOnPark } from './engine';
@@ -239,8 +239,9 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   const worldAt = (e: { clientX: number; clientY: number }) => {
     const r = svgRef.current?.getBoundingClientRect();
     if (!r || !r.width) return null;
-    const k = scene.w / r.width;
-    const p = unproject((e.clientX - r.left) * k - scene.ox, (e.clientY - r.top) * k - scene.oy, scene.u);
+    // ...through the window the picture is currently showing, which is not always the whole scene.
+    const k = view.w / r.width;
+    const p = unproject(view.x + (e.clientX - r.left) * k - scene.ox, view.y + (e.clientY - r.top) * k - scene.oy, scene.u);
     return scene.unturn(p.x, p.y);
   };
 
@@ -454,23 +455,58 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
 
   const [dropping, setDropping] = useState(false);
 
-  // Walking up to something.
+  // Walking up to something: the camera is a WINDOW on the drawing, not a magnifying glass over it.
   //
-  // The camera is one transform over the drawing, so there is nothing here that could show a
-  // different zoo from the one that is drawn: everything the picture knows how to draw, the walk
-  // walks past. Scaled about the top-left and then slid so the point being looked at lands in the
-  // middle - the arithmetic is that, and no more.
-  const eye = camera ? scene.at(camera.x, camera.y) : null;
-  const lens = eye ? {
-    x: (eye.x / scene.w) * 100,
-    y: (eye.y / scene.h) * 100,
-    z: Math.max(1, camera!.zoom),
-  } : null;
-  const still = typeof window !== 'undefined'
-    && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  // It was a CSS transform, and a scaled-up picture of a picture is what that gets you: the browser
+  // draws the scene at the size it is laid out, then stretches the result, and everything you walked
+  // up to arrived soft. Reported from playing it: "the zoomed image is out of focus." Moving the
+  // viewBox instead re-draws the scene at the size it is being looked at, so walking closer makes
+  // things sharper, the way walking closer does.
+  //
+  // It is still one camera over one drawing - everything the picture knows how to draw, the walk
+  // walks past - and now the fences are lines again rather than a photograph of lines.
+  const framed = (c: { x: number; y: number; zoom: number }) => {
+    const eye = scene.at(c.x, c.y);
+    const z = Math.max(1, c.zoom);
+    const w = scene.w / z, h = scene.h / z;
+    // Held inside the picture, so a thing near the edge is walked up to rather than walked past.
+    return {
+      x: Math.max(0, Math.min(scene.w - w, eye.x - w / 2)),
+      y: Math.max(0, Math.min(scene.h - h, eye.y - h / 2)),
+      w, h,
+    };
+  };
+  const whole = { x: 0, y: 0, w: scene.w, h: scene.h };
+  const [view, setView] = useState(whole);
+  const viewNow = useRef(whole);
+  // Only the numbers, so the walk is not restarted by every render the game's clock causes.
+  const aim = camera ? `${camera.x.toFixed(1)},${camera.y.toFixed(1)},${camera.zoom}` : '';
+  useEffect(() => {
+    const to = camera ? framed(camera) : { x: 0, y: 0, w: scene.w, h: scene.h };
+    const from = viewNow.current;
+    const land = (box: typeof to) => { viewNow.current = box; setView(box); };
+    const still = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (still || (from.w === to.w && from.x === to.x && from.y === to.y)) { land(to); return; }
+    let raf = 0;
+    let t0 = 0;
+    const step = (now: number) => {
+      if (!t0) t0 = now;
+      const k = Math.min(1, (now - t0) / TRAVEL_MS);
+      // Ease in and out: a camera that starts and stops abruptly reads as a cut, not a walk.
+      const e = k < 0.5 ? 2 * k * k : 1 - ((-2 * k + 2) ** 2) / 2;
+      land({
+        x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e,
+        w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e,
+      });
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aim, scene]);
 
   return (
-    <div className={cn(className, camera && 'overflow-hidden', dropping && 'rounded-lg ring-4 ring-primary/40')}
+    <div className={cn(className, dropping && 'rounded-lg ring-4 ring-primary/40')}
       onDragOver={onStartHere ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDropping(true); } : undefined}
       onDragLeave={onStartHere ? () => setDropping(false) : undefined}
       onDrop={onStartHere ? (e) => {
@@ -485,8 +521,9 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       } : undefined}>
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
-      <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
-        data-camera={lens ? `${lens.x.toFixed(1)},${lens.y.toFixed(1)},${lens.z}` : undefined}
+      <svg ref={svgRef} viewBox={`${view.x.toFixed(1)} ${view.y.toFixed(1)} ${view.w.toFixed(1)} ${view.h.toFixed(1)}`}
+        role="img" aria-label={scene.label}
+        data-camera={camera ? aim : undefined}
         onPointerMove={placing ? (e) => {
           const w = worldAt(e);
           if (!w) return;
@@ -524,13 +561,6 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
         // The scene keeps headroom for the tallest thing in it, and then holds its edges.
         style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height,
           touchAction: editable || laying ? 'none' : undefined,
-          // Walking up to something: scaled about the top-left, then slid so the point being looked
-          // at lands in the middle of the frame.
-          ...(lens ? {
-            transformOrigin: '0 0',
-            transform: `scale(${lens.z}) translate(${(50 / lens.z - lens.x).toFixed(3)}%, ${(50 / lens.z - lens.y).toFixed(3)}%)`,
-            transition: still ? undefined : `transform ${TRAVEL_MS}ms ease-in-out`,
-          } : null),
           // A pen when there is one, a hand when there is not.
           cursor: laying ? 'crosshair' : editable ? 'grab' : undefined }}>
         {scene.nodes}

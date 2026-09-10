@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { ParkView } from './ParkView';
 import { initialZooState } from './config';
 import type { BacklogItem, ZooGameState } from './types';
 import { IsoZoo } from './IsoZoo';
@@ -140,5 +142,20 @@ describe('turning what is standing there', () => {
     ] } as ZooGameState;
     expect(turnGrip(park, 'enc'), 'a habitat cannot be turned').toBe(true);
     expect(turnGrip(park, 'shop'), 'a building cannot be turned').toBe(true);
+  });
+});
+
+describe('walking round the park', () => {
+  it('is offered on the Increment, and says which side you are looking from', () => {
+    // "Can we add rotate to the increment view?" - a picture of a zoo owes you two things, how close
+    // and from which side, and something at the back of a habitat is not visible from the front.
+    const { container } = render(<MemoryRouter><ParkView state={busyPark()} large focus increment /></MemoryRouter>);
+    const turn = container.querySelector('[data-part="turn-park"]') as HTMLButtonElement | null;
+    expect(turn, 'the Increment cannot be walked round').toBeTruthy();
+    expect(turn!.textContent).toMatch(/Front/);
+    fireEvent.click(turn!);
+    expect(turn!.textContent, 'pressing it turned nothing').toMatch(/Left/);
+    fireEvent.click(turn!); fireEvent.click(turn!); fireEvent.click(turn!);
+    expect(turn!.textContent, 'four quarters is not the way it started').toMatch(/Front/);
   });
 });

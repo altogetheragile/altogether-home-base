@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, fireEvent, act } from '@testing-library/react';
+import { render, fireEvent, act, waitFor } from '@testing-library/react';
 import { FlyThrough } from './FlyThrough';
+import { IsoZoo } from './IsoZoo';
 import { walkStops, canWalk, HOLD_MS, TRAVEL_MS } from './walkThrough';
 import { initialZooState } from './config';
 import { zoneSlices } from './engine';
@@ -149,5 +150,31 @@ describe('walking it', () => {
     fireEvent.click(container.querySelector('[data-part="walk-stop"]')!);
     expect(container.querySelector('[data-part="walk-caption"]')).toBeNull();
     expect(container.querySelector('[data-part="picture"]')!.getAttribute('data-camera')).toBe('');
+  });
+});
+
+describe('walking closer', () => {
+  it('moves the window on the drawing, so what you walk up to is drawn at the size you see it', async () => {
+    // Reported from playing it: "the zoomed image is out of focus." The camera was a CSS transform,
+    // and a scaled-up picture of a picture is what that gets you - the browser draws the scene at
+    // the size it is laid out and then stretches the result. The viewBox moves instead, so the
+    // scene is re-drawn at the size it is being looked at.
+    const s = afterASprint();
+    const { container, rerender } = render(<IsoZoo state={s} />);
+    const svg = () => container.querySelector('svg')!;
+    const boxOf = () => (svg().getAttribute('viewBox') ?? '').split(' ').map(Number);
+    const whole = boxOf();
+    expect(whole[2], 'the picture has no size at all').toBeGreaterThan(0);
+    expect(svg().getAttribute('style') ?? '', 'the camera is still stretching a bitmap')
+      .not.toMatch(/scale\(/);
+
+    const stop = walkStops(s)[1];
+    rerender(<IsoZoo state={s} camera={{ ...stop.at, zoom: stop.zoom }} />);
+    await waitFor(() => {
+      expect(boxOf()[2], 'walking closer did not narrow what the picture shows')
+        .toBeLessThan(whole[2]);
+    });
+    expect(svg().getAttribute('style') ?? '', 'the camera went back to stretching a bitmap')
+      .not.toMatch(/scale\(/);
   });
 });
