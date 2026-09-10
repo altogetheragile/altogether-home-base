@@ -104,7 +104,7 @@ describe('the way it is said no to', () => {
     render(
       <MemoryRouter>
         <CardDetail item={item} state={state} interactive showAcceptance bare
-          onToggleTask={() => {}} onConfirmAc={() => {}} onSendBack={onSendBack} />
+          onToggleTask={() => {}} onSendBack={onSendBack} />
       </MemoryRouter>,
     );
     return { item, onSendBack };
@@ -187,7 +187,7 @@ describe('the two answers on the Developers’ question', () => {
     render(
       <MemoryRouter>
         <CardDetail item={item} state={s} interactive showAcceptance bare
-          onToggleTask={() => {}} onConfirmAc={() => {}} onSendBack={onSendBack} />
+          onToggleTask={() => {}} onSendBack={onSendBack} />
       </MemoryRouter>,
     );
     expect(screen.getByRole('button', { name: /Send it back/ }),

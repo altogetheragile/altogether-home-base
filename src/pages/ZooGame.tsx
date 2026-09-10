@@ -3,9 +3,7 @@ import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
-import { standingOnPark, parkPositions, restingPlace, groundSize } from '@/components/zooGame/parkModel';
-import { copyOffset, inHandItem } from '@/components/zooGame/engine';
-import { insidePark } from '@/components/zooGame/parkLayout';
+import { inHandItem } from '@/components/zooGame/engine';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
 import { useZooProductOwner } from '@/components/zooGame/useZooProductOwner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,7 +41,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void }) {
-  const { state, start, setPhase, setGoal, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, addCopy, setCopyPiece, moveCopy, removeCopy, nestItem, unnestItem, renameItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
+  const { state, start, setPhase, setGoal, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removeCopy, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -92,51 +90,21 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // Designing in place. The toolbar above the selected item on the park hands every change straight
   // back here, so the park is not showing a copy of the design - it IS the design. A build in
   // progress saves as a draft (it survives the day ending); an already-built item is edited outright.
+  // What the options strip on the park actually calls. It was ten members wide when the bench
+  // existed - rename, inspect, release, finish, the planting set, the copy-from list - and the
+  // bench went with the takeover. The wiring stayed behind: real functions, rebuilt on every
+  // render, read by nothing. Dead wiring is worse than none, because it reads as the way the game
+  // works: it is where I looked, twice this week, for a control that had not been reachable for a
+  // fortnight.
   const edit = {
-    onRename: renameItem,
     onDesign: (id: string, design: ItemDesign) => {
       const it = state.backlog.find((x) => x.id === id);
       if (it?.status === 'committed') saveDraftDesign(id, design); else editBuild(id, design);
     },
     onSetEnclosure: setEnclosureSize,
-    onToggleTask: toggleTask,
-    onConfirmAc: confirmAc,
-    // Moving a card to Done is the whole ending: it was built where it stands, so there is nothing
-    // to place, and Done means open. The Developers make that move when the plan and the criteria
-    // are ticked - it is not a button on the thing they are painting.
-    onFinishBuild: (id: string) => {
-      const it = state.backlog.find((x) => x.id === id);
-      if (it?.status !== 'committed') return;
-      build(id, it.draftDesign ?? presetFor(it));
-      placeOnPark(id);
-      deployComplete(id);
-      setBuildingId(null);
-    },
-    onRelease: (id: string) => { deployComplete(id); setBuildingId(null); },
-    // Inspect and adapt: pick the item out and turn the park to the Increment, so what is judged
-    // against the acceptance criteria is the thing that was built rather than the drawing of it.
-    onInspect: (id: string) => { setBuildingId(id); setParkTab('increment'); },
-    // Something of the same kind you have already built, to start from rather than begin again.
-    // Where the new plant goes. The studio has no park to point at, so it asks the one place that
-    // knows where a thing stands - the same answer both views draw from - and stands the plant
-    // beside it. From that moment it is its own tree at its own place: click Oak and get an oak,
-    // click Pine and get a pine, and moving one moves only that one.
-    onAddPlant: (id: string, piece?: string) => {
-      const item = state.backlog.find((i) => i.id === id);
-      if (!item) return;
-      const standing = standingOnPark(state);
-      const auto = parkPositions(standing);
-      const here = restingPlace(item, groundSize(item), auto);
-      const off = copyOffset((item.copies ?? []).length);
-      addCopy(id, insidePark({ w: 24, h: 24 }, { x: here.x + off.dx, y: here.y + off.dy }), piece);
-    },
     onAddInside: addInside,
-    onSetPlantPiece: setCopyPiece,
-    onRemovePlant: removeCopy,
-    copySources: (item: { id: string; category: string }) => state.backlog
-      .filter((x) => x.id !== item.id && x.category === item.category && x.design)
-      .map((x) => ({ id: x.id, name: x.name, design: x.design! })),
   };
+
   const clearDeploy = () => { setDeploying(null); setDeployId(null); setDeployStyle(null); };
   // "Place on the park" (items with placement acceptance): put it on the park to position, size and
   // confirm its criteria - it stays in Deploy until "Deploy complete".
@@ -339,7 +307,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onSetForecast={setForecast} mustAgree={mustAgree} mySeat={seat} onAgreeSprintGoal={agreeSprintGoal} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} onSetTopic={setPlanningTopic} onSetBet={setSprintBet} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
       case 'sprint':
         return <ZooShell state={state} {...shellProps} tools={<BoardTools state={state} teachCard={cardFor('sprint')} onMarkTaught={markTaught}
-          onSetScrumAt={setDailyScrumAt} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onCancelSprint={cancelSprint} />}><SprintBoard onAskToCheck={askToCheck} state={state} rail={<ActionRail className="mt-2 h-[26%] shrink-0 overflow-y-auto" state={state} seat={seat} onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete} onAddProposal={handleProposal} onSplitEpic={splitEpic} onDeclineProposal={declineProposal} />} onEstimate={estimate} onToggleTask={toggleTask} onConfirmAc={confirmAc} onSendBack={sendBack} onFinishItem={finishItem} onStartItem={startItem} onCancelSprint={cancelSprint} onReorderSprint={reorderSprint} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onSetScrumAt={setDailyScrumAt} onPull={pull} onDropFromSprint={dropFromSprint} onAnswerPlacement={answerPlacement} onOpen={deployComplete} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onAnswerImpediment={answerImpediment} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} onPart={setPartFocus} drawing={drawing} onDrawing={setDrawing} onRemoveRun={deleteConnector} onAddPbi={createPbi} onSetUserStories={setUserStories} onAddProposal={handleProposal} onDeclineProposal={declineProposal} onAssignDev={assignDev} onRenameMember={renameMember} onBuilding={selectOnPark} seat={seat} canBuild={!seat || seat === 'developer' || (covering ?? []).includes('developer')} teachCard={cardFor('sprint')} onMarkTaught={markTaught} /></ZooShell>;
+          onSetScrumAt={setDailyScrumAt} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onCancelSprint={cancelSprint} />}><SprintBoard onAskToCheck={askToCheck} state={state} rail={<ActionRail className="mt-2 h-[26%] shrink-0 overflow-y-auto" state={state} seat={seat} onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete} onSplitEpic={splitEpic} />} onEstimate={estimate} onToggleTask={toggleTask} onFinishItem={finishItem} onStartItem={startItem} onPull={pull} onDropFromSprint={dropFromSprint} onAnswerPlacement={answerPlacement} onOpen={deployComplete} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onAnswerImpediment={answerImpediment} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} drawing={drawing} onAddPbi={createPbi} onSetUserStories={setUserStories} onAssignDev={assignDev} onBuilding={selectOnPark} seat={seat} canBuild={!seat || seat === 'developer' || (covering ?? []).includes('developer')} teachCard={cardFor('sprint')} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onDeclineSignal={declineSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} onOpen={open} onConfirmAc={confirmAc} onToggleTask={toggleTask} onSendBack={sendBack} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':

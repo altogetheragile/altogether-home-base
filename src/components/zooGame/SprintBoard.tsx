@@ -29,23 +29,11 @@ interface SprintBoardProps {
   state: ZooGameState;
   onEstimate: (id: string, points: number) => void;
   onToggleTask: (id: string, taskId: string) => void;
-  /** Accepting a criterion, on the card the criterion belongs to. */
-  onConfirmAc: (id: string, index: number, value: boolean) => void;
   /** The message centre, rendered under the board: the game's one action channel. */
   rail?: ReactNode;
-  /** Not accepting what was built. The Product Owner's call, so the board only offers it. */
-  onSendBack?: (id: string) => void;
   /** Move it to Done: built, standing where it stands, and open to visitors. */
   onFinishItem: (id: string) => void;
   onStartItem: (id: string) => void;
-  /** The Product Owner cancelling the Sprint - only they can, and only if the Goal is obsolete. */
-  onCancelSprint?: () => void;
-  /** Re-order what to pick up next - the Developers arranging their own Sprint Backlog. */
-  onReorderSprint?: (id: string, dir: 'up' | 'down') => void;
-  onSetLearnMode: (on: boolean) => void;
-  /** The WIP limit is the Developers' own agreement, so they can change it or switch it off. */
-  onSetWipLimit?: (n: number) => void;
-  onSetScrumAt: (at: 'start' | 'end') => void;
   onPull: (id: string) => void;
   /** Take work back out of the Sprint Backlog: the Developers protecting the Sprint Goal. */
   onDropFromSprint?: (id: string) => void;
@@ -53,7 +41,6 @@ interface SprintBoardProps {
   onAnswerPlacement?: (id: string, choice: string) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
   onAssignDev: (itemId: string, devId: string) => void;
-  onRenameMember: (memberId: string, name: string) => void;
   onOpen: (id: string) => void;
   /** Ask the Product Owner to look at built work. Offered on the card as well as on the park:
    *  "how does Priya approve the last AC?" is not a question the pill was answering. */
@@ -74,16 +61,10 @@ interface SprintBoardProps {
    *  a toolbar over the thing it is about. */
   edit?: EditApi;
   part?: { id: string; key: string } | null;
-  onPart?: (p: { id: string; key: string } | null) => void;
   drawing?: boolean;
-  onDrawing?: (on: boolean) => void;
-  onRemoveRun?: (connectorId: string) => void;
   /** Write a new Product Backlog item while refining mid-Sprint. */
   onAddPbi?: (draft: PbiDraft) => void;
   onSetUserStories?: (on: boolean) => void;
-  /** The Product Owner's look-ahead: add what the forecast implies, or turn it down. */
-  onAddProposal?: (draft: PbiDraft) => void;
-  onDeclineProposal?: (proposalId: string) => void;
   /** Whether this player holds the Developers' work: a solo player holds all three, and a Product
    *  Owner sitting with real Developers holds none of it. The bench follows it. */
   canBuild?: boolean;
@@ -91,7 +72,6 @@ interface SprintBoardProps {
   seat?: SeatName | null;
   /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
   teachCard?: string | null;
-  onMarkTaught?: (id: string) => void;
 }
 
 /** The start of a new day, after the Daily Scrum: the team gathers before the build.
@@ -350,7 +330,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     return col ? col.getAttribute('data-column') : null;
   };
   const carryProps = (id: string, from: string) => ({
-    onPointerDown: (e: ReactPointerEvent) => {
+    onPointerDown(e: ReactPointerEvent) {
       if (e.button !== 0) return;
       // The gesture is held in a ref as well as in state: the handlers below close over the render
       // that started the drag, where the state is still empty, so reading it there moves nothing.

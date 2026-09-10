@@ -78,10 +78,6 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** The pathway item the run being drawn belongs to. */
   runFor?: string;
   onAddConnector?: (c: ZooConnector) => void;
-  /** The pen is put away from the strip that took it out, not by the park - laying a path is
-   *  laying several runs, and a tool that puts itself away after each one is a tool you press
-   *  between every line. */
-  onSetTool?: (tool: 'none' | 'path') => void;
   /** Ask the Product Owner to look at something that meets all of its criteria. */
   onAskToCheck?: (id: string) => void;
   className?: string;

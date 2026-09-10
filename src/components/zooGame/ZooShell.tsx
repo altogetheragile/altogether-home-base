@@ -161,8 +161,6 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
 export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onMoveInside, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector, onRemoveRun,         onSetSize,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
-  /** Plan or Build: two states of the Sprint Backlog, so the switch lives on its tab. */
-  onSetBuildMode?: (m: 'plan' | 'build') => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
   canBuild?: boolean;
   /** The way back to the site and who is signed in, handed in rather than reached for: the shell
@@ -179,9 +177,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   onPutIn?: (id: string, enclosureId: string) => void;
   /** A hand on the clock, or off it. */
   onSetClockPaused?: (paused: boolean) => void;
-  /** The Scrum Team rides on the tab row: renaming a member, and what to say when somebody who
-   *  cannot take the work is dragged onto it. */
-  onRenameMember?: (id: string, name: string) => void;
   onWho?: (why: string) => void;
   /** Somebody is reading what the game said, or has stopped. A solo game stops its clock while they
    *  are: the Sprint's time is for building, and charging a learner for reading what the game chose
@@ -508,7 +503,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     }}
                     tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
                     runFor={inHand?.category === 'path' ? inHand.id : undefined}
-                    onAddConnector={onAddConnector} onSetTool={(t) => onDrawing?.(t === 'path')}
+                    onAddConnector={onAddConnector}
                     onAskToCheck={onAskToCheck} />
                 </div>
 

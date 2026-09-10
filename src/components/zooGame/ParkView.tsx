@@ -1,11 +1,10 @@
 import { Suspense, lazy, useState, useRef, useLayoutEffect } from 'react';
-import type { ZooGameState, BacklogItem, ZooConnector } from './types';
+import type { ZooGameState, ZooConnector } from './types';
 /** The isometric view of the park - and, since the blueprint was retired, the only one. Lazily
  *  imported: it carries the isometric artwork, which is more than half of what the game weighs,
  *  and nobody needs it until they ask to look. */
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 import type { ItemDesign } from './design';
-import type { CopySource } from './ItemToolbar';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
 import { standingOnPark } from './parkModel';
@@ -63,32 +62,18 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
   );
 }
 
-/** Designing in place. The park owns the surface; the game owns what a change means, so the toolbar
- *  hands every edit straight back rather than keeping a copy of the design to reconcile later. */
+/** Changing a thing in place: the park owns the surface, the game owns what a change means, so
+ *  every edit goes straight back rather than being held as a copy to reconcile later.
+ *
+ *  This was ten members wide when the bench existed - rename, inspect, release, finish, the planting
+ *  set, the copy-from list. The bench went when building moved onto the park, and the wiring stayed:
+ *  real functions, built on every render, read by nothing. That is worse than nothing, because it
+ *  reads as the way the game works. What is left is what the options strip actually calls. */
 export interface EditApi {
   onDesign: (id: string, design: ItemDesign) => void;
-  /** Give it a name of its own. A zoo of "Enclosure 3"s is a zoo nobody has thought about, and
-   *  naming a thing is the cheapest way a team says what it is for. */
-  onRename: (id: string, name: string) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
-  onToggleTask: (id: string, taskId: string) => void;
-  onConfirmAc: (id: string, index: number, value: boolean) => void;
-  onFinishBuild: (id: string) => void;
-  onRelease: (id: string) => void;
-  /** Turn the park to the Increment, with this item picked out.
-   *
-   *  Inspect and adapt, made into a button. The Increment is the thing Scrum asks you to inspect,
-   *  and until now you could only reach it by noticing a toggle above the park - so the acceptance
-   *  criteria were being judged from the drawing rather than from the thing that was built. */
-  onInspect: (id: string) => void;
-  copySources: (item: BacklogItem) => CopySource[];
-  /** Planting is a set, and the set is chosen in the studio rather than by clicking a plus on a
-   *  forty-pixel tree. Adding, changing and removing what an item plants. */
-  onAddPlant: (id: string, piece?: string) => void;
   /** Put another thing inside a habitat. In the reducer, so pressing it twice puts two in. */
   onAddInside?: (id: string, kind: string) => void;
-  onSetPlantPiece: (id: string, index: number, piece: string) => void;
-  onRemovePlant: (id: string, index: number) => void;
 }
 
 // ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
