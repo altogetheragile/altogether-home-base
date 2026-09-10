@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
-import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey } from './design';
+import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y } from './parkLayout';
@@ -1054,8 +1054,12 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     // theme and ignored the design altogether, so picking a ground or a fence changed nothing here
     // and adding water added nothing. There is no preview: the thing itself is what you look at.
     const d = working(e);
-    const floor = d?.colors.ground ?? theme.plot;
-    const fence = d?.colors.fence ?? theme.plotBorder;
+    // A tank, or a paddock. A reef is not kept in a field with a pond in the corner: it is kept
+    // behind glass with water to the top, and the visitors look through it.
+    const living = state.backlog.filter((it) => it.enclosureId === e.id);
+    const tank = isTank(d, living);
+    const floor = tank ? shade(tankWater(d), -22) : (d?.colors.ground ?? theme.plot);
+    const fence = tank ? (d?.colors.fence ?? '#cfe6f2') : (d?.colors.fence ?? theme.plotBorder);
 
     // The habitat floor, laid flat, in the shape it was given.
     const outline = outlineOf(d?.parts.shape ?? 'rounded', size.w, size.h)
@@ -1109,10 +1113,14 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       }
       push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
         <g key={`fence-${e.id}-${i}`} data-item={e.id} data-part="fence">
-          {/* What you see through - a wash, not a wall. */}
+          {/* What you see through - a wash, not a wall. A tank's is glass: one pane, no mesh, with
+              the water behind it and a bright edge where the light catches the top. */}
           <polygon points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
-            fill={fence} fillOpacity={0.14} />
-          {mesh}
+            fill={tank ? tankWater(d) : fence} fillOpacity={tank ? 0.5 : 0.14} />
+          {tank
+            ? <polygon points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+                fill="#eaf6fb" fillOpacity={0.16} />
+            : mesh}
           {/* Posts at the corners of every run, and a rail along the top and the middle. */}
           <line x1={a.x} y1={a.y} x2={topA.x} y2={topA.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1.2, u * 1.8)} strokeLinecap="round" />
           <line x1={b.x} y1={b.y} x2={topB.x} y2={topB.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1.2, u * 1.8)} strokeLinecap="round" />
@@ -1121,6 +1129,25 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         </g>
       ));
     });
+
+    // Water to the top, drawn over everything in the tank.
+    //
+    // This is what makes it read as an aquarium rather than a glass-walled paddock: the surface sits
+    // near the top of the panes, and the fish are UNDER it. It goes in at the depth of the tank's
+    // front edge so it is sorted in front of what it covers - one sheet over the whole habitat
+    // rather than a pane at a time, because water has one surface however many sides it is held in.
+    if (tank) {
+      const surfaceH = fenceH * 0.82;
+      push(depth(c.x, y1), (
+        <g key={`tank-${e.id}`} data-item={e.id} data-part="water">
+          <polygon points={outline.map((q) => { const p = P(q.x, q.y); return `${(p.x).toFixed(1)},${(p.y - surfaceH).toFixed(1)}`; }).join(' ')}
+            fill={tankWater(d)} fillOpacity={0.42} />
+          {/* The light on it. A flat wash of blue is a lid; a paler edge is a surface. */}
+          <polygon points={outline.map((q) => { const p = P(q.x, q.y); return `${(p.x).toFixed(1)},${(p.y - surfaceH).toFixed(1)}`; }).join(' ')}
+            fill="none" stroke="#eaf6fb" strokeOpacity={0.55} strokeWidth={Math.max(1, u * 1.6)} />
+        </g>
+      ));
+    }
 
     // A band round the edge that answers for the fence.
     //

@@ -4,7 +4,7 @@ import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, qu
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
-import { groupMembers, currentDesign, enclosureWater, enclosureFlora } from './design';
+import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater } from './design';
 import { cn } from '@/lib/utils';
 
 /** How much of the car park to show at the foot of the plan. Not ground you build on - it is there
@@ -354,7 +354,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               onPointerDown={placing ? undefined : (e) => dragFrom(e, b)}
               style={{ cursor: onPlaceItem ? 'grab' : 'pointer' }}>
               <rect x={x} y={y} width={b.size.w} height={b.size.h} rx={6}
-                fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill) : c.fill}
+                fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill)
+                  : b.item.category === 'enclosure' && isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id))
+                    ? tankWater(currentDesign(b.item))
+                    : c.fill}
                 fillOpacity={b.underWay ? 0.45 : 1}
                 stroke={on ? '#e6842a' : c.stroke} strokeWidth={on ? 4 : 2}
                 strokeDasharray={b.underWay ? '8 6' : undefined} />

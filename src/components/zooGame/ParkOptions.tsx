@@ -4,7 +4,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
-  hasRoomToRoam, homeSizeOf, SWATCHES,
+  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, coatChoices, isTank,
   type ItemDesign,
 } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -37,7 +37,7 @@ const ALL_COLOURS = [...new Set([
 const GROUND_COLOURS = ['#c8a06a', '#e0a642', '#a8cf8f', '#6b7280', '#e8e2d5'];
 const FENCE_COLOURS = ['#8a6a3b', '#6b7280', '#3f6f4f', '#8fa3b0'];
 /** What an animal's coat can be. */
-const COAT_COLOURS = ['#c8761f', '#e0c9a6', '#5b4636', '#2a2622', '#f0efe9'];
+const WATER_COLOURS = ['#2f8fc0', '#1f6f9a', '#3fb3a6', '#7cc0e8', '#2a4f7a'];
 /** The planting a habitat can hold, and the loose scenery a planting card can be. */
 const INSIDE_KINDS = ['water', ...HABITAT_FEATURE_TYPES, ...PLANTING_TYPES];
 
@@ -185,12 +185,31 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 onClick={() => set({ parts: { ...design.parts, shape: sh.key } })}>{sh.label}</Chip>
             ))}
           </Group>
-          <Group label="Ground">
-            {GROUND_COLOURS.map((c) => (
-              <Swatch key={c} hex={c} label="Ground" on={design.colors?.ground === c}
-                onClick={() => set({ colors: { ...design.colors, ground: c } })} />
-            ))}
-          </Group>
+          {/* Land or water. A reef is not kept in a field with a pond in the corner: it is kept in a
+              tank, glass on every side and water to the top. Everything that swims gets one without
+              being asked; everything else can be given one. */}
+          {(() => {
+            const living = state.backlog.filter((it) => it.enclosureId === subject.id);
+            const tank = isTank(design, living);
+            return (
+              <>
+                <Group label="Holds">
+                  <Chip on={!tank} onClick={() => set({ parts: { ...design.parts, ground: 'land' } })}>Land</Chip>
+                  <Chip on={tank} onClick={() => set({ parts: { ...design.parts, ground: 'water' } })}>A tank</Chip>
+                </Group>
+                <Group label={tank ? 'Water' : 'Ground'}>
+                  {(tank ? WATER_COLOURS : GROUND_COLOURS).map((c) => (
+                    <Swatch key={c} hex={c} label={tank ? 'Water' : 'Ground'}
+                      on={(tank ? design.colors?.water : design.colors?.ground) === c}
+                      onClick={() => set({ colors: { ...design.colors, [tank ? 'water' : 'ground']: c } })} />
+                  ))}
+                  <MoreColours label={tank ? 'Water' : 'Ground'}
+                    current={tank ? design.colors?.water : design.colors?.ground} options={ALL_COLOURS}
+                    onPick={(c) => set({ colors: { ...design.colors, [tank ? 'water' : 'ground']: c } })} />
+                </Group>
+              </>
+            );
+          })()}
           <Group label="Fence">
             {FENCE_COLOURS.map((c) => (
               <Swatch key={c} hex={c} label="Fence" on={design.colors?.fence === c}
@@ -263,11 +282,15 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               </p>
             );
           })()}
-          <Group label="Coat">
-            {COAT_COLOURS.map((c) => (
-              <Swatch key={c} hex={c} label="Coat" on={design.colors?.coat === c}
+          {/* A fish has no coat. The word and the palette both come from the animal: a row of
+              browns labelled "Coat" is the wrong control in the wrong words for a reef. */}
+          <Group label={coatWord(subject)}>
+            {coatChoices(subject).map((c) => (
+              <Swatch key={c} hex={c} label={coatWord(subject)} on={design.colors?.coat === c}
                 onClick={() => set({ colors: { ...design.colors, coat: c } })} />
             ))}
+            <MoreColours label={coatWord(subject)} current={design.colors?.coat} options={ALL_COLOURS}
+              onPick={(c) => set({ colors: { ...design.colors, coat: c } })} />
           </Group>
           {/* Where they live. An animal has no place of its own on the park - it lives inside a
               habitat - so "move" for an animal means moving house. */}
