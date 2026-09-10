@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState } from './types';
+import { FlyThrough } from './FlyThrough';
 
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 
@@ -13,8 +14,11 @@ const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })
 // The picture is drawn at the height its column actually has. It used to be a fixed 470px, which
 // is either too big or too small on every screen except the one it was measured on.
 
-export function EventStage({ state, title, note, at, children }: {
+export function EventStage({ state, title, note, at, walk, children }: {
   state: ZooGameState;
+  /** Offer the walk round what this Sprint delivered. The Review asks for it; the events held
+   *  before a Sprint are looking at a zoo nothing has been delivered into yet. */
+  walk?: boolean;
   /** Which step of the event is being shown. Moving between topics starts the reading at the top of
    *  it: an event that opens halfway down its own first list has already lost the room. */
   at?: string;
@@ -42,7 +46,15 @@ export function EventStage({ state, title, note, at, children }: {
           {note && <span className="text-[11px] text-muted-foreground">{note}</span>}
         </div>
         <Suspense fallback={<div className="mx-3 mb-2 flex-1 animate-pulse rounded-md bg-black/5" aria-label="Drawing the zoo" />}>
-          <IsoZoo state={state} height={picture} className="px-3 pb-2" />
+          {/* At the Review, "here is what we built" is the event. So the park walks the room round
+              it, and the same walk is offered on the Increment tab - one component, one walk. */}
+          {walk ? (
+            <FlyThrough state={state} className="px-3 pb-2">
+              {(camera) => <IsoZoo state={state} height={picture} camera={camera} />}
+            </FlyThrough>
+          ) : (
+            <IsoZoo state={state} height={picture} className="px-3 pb-2" />
+          )}
         </Suspense>
       </section>
 
