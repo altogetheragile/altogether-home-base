@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { isTank, coatWord, coatChoices, AQUATIC } from './design';
+import { isTank, coatWord, coatChoices, AQUATIC, groupChoices, groupSize, hasRoomToRoam, roomNeeded } from './design';
 import { splitEpic } from './engine';
 import { initialZooState } from './config';
 import { IsoZoo } from './IsoZoo';
@@ -76,5 +76,41 @@ describe('the tank in the Increment', () => {
     const { container } = render(<IsoZoo state={s} />);
     const water = [...container.querySelectorAll('[data-part="water"]')];
     expect(water.length, 'the tank holds no water at all').toBeGreaterThan(0);
+  });
+});
+
+describe('how many fish', () => {
+  it('is asked in the words a keeper would use, not a mammal’s', () => {
+    // "I need to be able to add more than 2 fish to a tank." One / a pair / a family is a lion's
+    // social life, offered to everything that lives in the zoo.
+    expect(groupChoices(fish).map((c) => c.label)).toEqual(['A few', 'A shoal', 'A big shoal']);
+    expect(groupChoices(cat).map((c) => c.label)).toEqual(['One', 'A pair', 'A family']);
+    const biggest = groupChoices(fish)[2].group;
+    expect(groupSize(biggest), 'a "big shoal" was smaller than a pride of lions').toBeGreaterThan(20);
+  });
+
+  it('fits, because a fish does not take a lion’s room', () => {
+    // A medium habitat holds four adults, which is right for lions and absurd for a reef: four fish
+    // is a goldfish bowl, not a reef.
+    const shoal = groupChoices(fish)[1].group;
+    expect(hasRoomToRoam(shoal, 'medium', 'reef'), 'a shoal would not fit a medium tank').toBe(true);
+    expect(hasRoomToRoam(shoal, 'medium', 'lion'), 'twenty lions fitted a medium pen').toBe(false);
+    expect(roomNeeded(shoal, 'reef')).toBeLessThan(roomNeeded(shoal, 'lion'));
+  });
+
+  it('is drawn as the number it is', () => {
+    const base = initialZooState(1);
+    const home = {
+      id: 'tank', name: 'Reef Tank', zone: 'Waterside', category: 'enclosure', status: 'open',
+      started: true, enclosureSize: 'large', pos: { x: 400, y: 300 }, sprintNumber: 1, accessible: true,
+      acceptance: [], acConfirmed: [], tasks: [], estimate: 5, design: { parts: {}, colors: {} },
+    } as BacklogItem;
+    const shoal = groupChoices(fish)[1].group;
+    const reef = { ...home, id: 'reef', name: 'Reef', category: 'exhibit', template: 'reef',
+      enclosureId: 'tank', design: { parts: {}, colors: { coat: '#e2803c' }, group: shoal } } as BacklogItem;
+    const s = { ...base, backlog: [home, reef] } as ZooGameState;
+    const { container } = render(<IsoZoo state={s} />);
+    const drawn = container.querySelectorAll('[data-spot^="reef:"]').length;
+    expect(drawn, 'a shoal was drawn as a handful').toBeGreaterThan(6);
   });
 });

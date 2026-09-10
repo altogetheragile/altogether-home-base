@@ -433,15 +433,19 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               {/* The animals inside their fence, big enough to see and to take hold of. */}
               {b.animals.map((a, i) => {
                 const members = Math.max(1, groupMembers(a.design?.group).length);
-                return Array.from({ length: Math.min(members, 6) }, (_, k) => {
-                  const cols = Math.ceil(Math.sqrt(Math.min(members, 6)));
+                // Twelve, not six. A family is six at most, so this only ever bit a shoal - and a
+                // shoal of forty drawn as six dots is a picture that disagrees with the card beside
+                // it about how many there are.
+                const shown = Math.min(members, 12);
+                return Array.from({ length: shown }, (_, k) => {
+                  const cols = Math.ceil(Math.sqrt(shown));
                   // Where somebody put this one, or the tidy grid it starts on. A pride is not a
                   // blob: the lioness by the water and the cubs under the tree is a thing you
                   // arrange, and it was drawn on a grid that ignored the arranging entirely.
                   const own = a.spots?.[k];
                   const gx = own ? x + b.size.w * own.x : x + b.size.w * ((k % cols) + 1) / (cols + 1);
                   const gy = own ? y + b.size.h * own.y
-                    : y + b.size.h * (Math.floor(k / cols) + 1) / (Math.ceil(Math.min(members, 6) / cols) + 1);
+                    : y + b.size.h * (Math.floor(k / cols) + 1) / (Math.ceil(shown / cols) + 1);
                   return (
                     <circle key={`${a.id}-${i}-${k}`} data-animal={`${a.id}-${k}`} cx={gx} cy={gy} r={9}
                       fill={a.design?.colors?.coat ?? '#c8761f'} stroke="#7a4712" strokeWidth={2}

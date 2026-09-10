@@ -4,7 +4,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
-  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, coatChoices, isTank,
+  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, coatChoices, isTank, groupChoices,
   type ItemDesign,
 } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -258,10 +258,11 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       {/* ---- an animal: how many of them there are, and what they look like ---- */}
       {!inside && isAnimal && (
         <>
+          {/* How many, in the words this animal's keeper would use. A lion lives alone, in a pair
+              or in a family; a reef shoals. One / pair / family was a mammal's social life offered
+              to everything in the zoo - and a shoal of six was the most a tank could hold. */}
           <Group label="How many">
-            {([['One', { males: 1, females: 0, juveniles: 0, cubs: 0 }],
-               ['A pair', { males: 1, females: 1, juveniles: 0, cubs: 0 }],
-               ['A family', { males: 1, females: 2, juveniles: 1, cubs: 2 }]] as const).map(([label, group]) => (
+            {groupChoices(subject).map(({ label, group }) => (
               <Chip key={label} on={groupSize(design.group) === groupSize(group)}
                 onClick={() => set({ group: { ...group } })}>{label}</Chip>
             ))}
@@ -273,8 +274,9 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               reason stocking is a decision rather than a setting. */}
           {(() => {
             const home = homeSizeOf(subject, state.backlog);
-            if (!design.group || hasRoomToRoam(design.group, home)) return null;
-            const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k));
+            const species = subject.template ?? subject.id;
+            if (!design.group || hasRoomToRoam(design.group, home, species)) return null;
+            const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k, species));
             return (
               <p data-part="crowded" className="max-w-[13rem] text-[11px] leading-snug text-amber-700 dark:text-amber-300">
                 {groupSize(design.group)} in a {home ?? 'medium'} habitat &middot;{' '}
