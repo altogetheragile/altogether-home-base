@@ -98,8 +98,11 @@ function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => void; onJ
       </div>
 
       <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start a session</div>
-        <Input placeholder="What is this session called?" value={name} onChange={(e) => setName(e.target.value)} />
+        {/* A placeholder is not a label: it is gone the moment you type, and it is not announced as
+            the name of the field. The heading was doing a label's job without being one. */}
+        <label htmlFor="zoo-session-name" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start a session</label>
+        <Input id="zoo-session-name" placeholder="What is this session called?" value={name}
+          onChange={(e) => setName(e.target.value)} />
         <Button disabled={busy || !name.trim()} onClick={async () => { const id = await createSession(name.trim()); if (id) onCreated(id); }}>
           Open a session
         </Button>
@@ -107,8 +110,9 @@ function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => void; onJ
       </div>
 
       <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Join a session</div>
-        <Input placeholder="Six-letter code" value={code} maxLength={6}
+        <label htmlFor="zoo-join-code" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Join a session</label>
+        <Input id="zoo-join-code" placeholder="Six-letter code" value={code} maxLength={6}
+          autoComplete="off" spellCheck={false}
           onChange={(e) => setCode(e.target.value.toUpperCase())} className="font-mono tracking-[0.2em]" />
         <Button variant="outline" disabled={busy || code.trim().length < 4}
           onClick={async () => { const id = await joinByCode(code); if (id) onJoined(id); }}>

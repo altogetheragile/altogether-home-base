@@ -131,9 +131,14 @@ describe('improvements drawn from the log', () => {
     const state = after({ decisions: [{ sprint: 1, kind: 'unready', what: 'Something not ready went in.' }] } as Partial<ZooGameState>);
     render(<MemoryRouter><SprintRetro state={state} onNextSprint={noop} onSetDod={noop} /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /Next: what we will change/ }));
-    const ready = screen.getByRole('button', { name: /Definition of Ready/ });
+    // Pick ONE: the options are a radio group, because choosing one un-chooses the others and a
+    // row of buttons cannot say that.
+    const ready = screen.getByRole('radio', { name: /Definition of Ready/ });
     expect(within(ready).getByText(/Planning warns/)).toBeTruthy();
     expect(ready.textContent).toMatch(/not ready went into a Sprint/);
+    expect(ready.getAttribute('aria-checked'), 'nothing says whether this one is picked').toBe('false');
+    fireEvent.click(ready);
+    expect(ready.getAttribute('aria-checked'), 'picking one did not announce it').toBe('true');
   });
 });
 

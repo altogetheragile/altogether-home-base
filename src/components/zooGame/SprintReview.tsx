@@ -210,7 +210,12 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         {r ? (
           <>
             <div className="flex items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+              {/* A bar is a number drawn as a shape. Drawn as two divs it is a shape only, and the
+                  number is not there to be read at all. */}
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"
+                role="progressbar" aria-label="Progress toward the Product Goal"
+                aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}
+                aria-valuetext={`${progress}% of the way to the Product Goal`}>
                 <div className={cn('h-full rounded-full', progress >= 80 ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
               </div>
               <span className="font-mono text-xs tabular-nums text-muted-foreground">{progress}%</span>
@@ -355,7 +360,11 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
               {r.segments.map((s) => (
                 <div key={s.segmentId} className="grid grid-cols-[130px_1fr_36px] items-center gap-2">
                   <span className="text-sm">{SEG_LABEL[s.segmentId]}</span>
-                  <span className="h-2 overflow-hidden rounded-full bg-muted"><span className={cn('block h-full rounded-full', SEG_COLOR[s.segmentId])} style={{ width: `${s.happiness}%` }} /></span>
+                  <span className="h-2 overflow-hidden rounded-full bg-muted"
+                    role="progressbar" aria-label={`How ${SEG_LABEL[s.segmentId]} felt`}
+                    aria-valuenow={s.happiness} aria-valuemin={0} aria-valuemax={100}
+                    aria-valuetext={`${SEG_LABEL[s.segmentId]}: ${s.happiness} out of 100`}>
+                    <span className={cn('block h-full rounded-full', SEG_COLOR[s.segmentId])} style={{ width: `${s.happiness}%` }} /></span>
                   <span className="text-right font-mono text-xs text-muted-foreground">{s.happiness}</span>
                 </div>
               ))}

@@ -794,6 +794,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
         onStart={(id) => { onStartItem(id); setPulling(id); }}
         onBuilding={(id) => setDesigning(id)}
         onAskToCheck={onAskToCheck}
+        onHandBack={onDropFromSprint}
         onToggleTask={onToggleTask}
         onOpen={onOpen} />
     </div>
