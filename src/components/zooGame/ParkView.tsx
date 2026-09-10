@@ -13,6 +13,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { zoneSlices, zooIsOpen } from './engine';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
+import { FlyThrough } from './FlyThrough';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // ============= The Park View =============
@@ -481,8 +482,10 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   <span className="font-normal text-muted-foreground"> &middot; {total ? total.toLocaleString() : 'no'} visitors</span>
                 </div>
               )}
+              {/* The walk round the Increment, on the picture it walks. */}
+              <FlyThrough state={state}>{(camera) => (
               <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
-                <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly}
+                <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly} camera={camera}
                   onPlaceItem={onPlaceItem} placing={placing} onPlace={onPlace} selected={building} onSelect={onOpenBuild}
                   tool={effectiveTool} newConn={newConn}
                   building={edit ? building : null} onPart={edit ? onPart : undefined}
@@ -492,6 +495,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   onStartHere={onStartHere} onImprove={onImprove} improving={improving}
                   onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); }} />
               </div>
+              )}</FlyThrough>
             </div>
           </Suspense>
         </>

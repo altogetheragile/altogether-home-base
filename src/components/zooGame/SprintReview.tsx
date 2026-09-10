@@ -109,7 +109,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         </div>
       </header>
 
-      <EventStage state={state} at={step} title="The Increment &middot; everything delivered so far"
+      <EventStage state={state} at={step} walk title="The Increment &middot; everything delivered so far"
         note="Not this Sprint's work alone - the whole zoo, which is what an Increment is.">
       {step === 'done' && (<>
 

@@ -4,6 +4,7 @@ import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscape
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y } from './parkLayout';
+import { TRAVEL_MS } from './walkThrough';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { FACILITY } from './facilities';
 import { themeFor } from './zoneTheme';
@@ -135,12 +136,17 @@ function along(route: Pt[], t: number): Pt {
 export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, placing, onPlace, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
   onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
-  selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false }: {
+  selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false, camera = null }: {
   state: ZooGameState;
   height?: number;
   className?: string;
   /** Quarter-turns clockwise: 0, 1, 2 or 3. Walk round the park to see behind something. */
   turn?: number;
+  /** Where to look, in the park's own coordinates, and how far in. Given, the picture moves to put
+   *  that point in the middle - which is what walking up to something is. It is one transform over
+   *  the drawing rather than a second renderer, so what the camera shows can never be a different
+   *  zoo from the one that is drawn. */
+  camera?: { x: number; y: number; zoom: number } | null;
   /** Move something. Given, this view stops being a picture and becomes somewhere you build. */
   onPlaceItem?: (id: string, pos: { x: number; y: number }) => void;
   /** Something is being placed from the palette: its footprint follows the cursor with a verdict on
@@ -448,8 +454,23 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
 
   const [dropping, setDropping] = useState(false);
 
+  // Walking up to something.
+  //
+  // The camera is one transform over the drawing, so there is nothing here that could show a
+  // different zoo from the one that is drawn: everything the picture knows how to draw, the walk
+  // walks past. Scaled about the top-left and then slid so the point being looked at lands in the
+  // middle - the arithmetic is that, and no more.
+  const eye = camera ? scene.at(camera.x, camera.y) : null;
+  const lens = eye ? {
+    x: (eye.x / scene.w) * 100,
+    y: (eye.y / scene.h) * 100,
+    z: Math.max(1, camera!.zoom),
+  } : null;
+  const still = typeof window !== 'undefined'
+    && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
   return (
-    <div className={cn(className, dropping && 'rounded-lg ring-4 ring-primary/40')}
+    <div className={cn(className, camera && 'overflow-hidden', dropping && 'rounded-lg ring-4 ring-primary/40')}
       onDragOver={onStartHere ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDropping(true); } : undefined}
       onDragLeave={onStartHere ? () => setDropping(false) : undefined}
       onDrop={onStartHere ? (e) => {
@@ -465,6 +486,7 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
       {/* The scene keeps its own proportions and takes the width it is given: a park drawn to fit a
           fixed height sits letterboxed in the middle of a wide panel, half the size it could be. */}
       <svg ref={svgRef} viewBox={`0 0 ${scene.w} ${scene.h}`} role="img" aria-label={scene.label}
+        data-camera={lens ? `${lens.x.toFixed(1)},${lens.y.toFixed(1)},${lens.z}` : undefined}
         onPointerMove={placing ? (e) => {
           const w = worldAt(e);
           if (!w) return;
@@ -502,6 +524,13 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
         // The scene keeps headroom for the tallest thing in it, and then holds its edges.
         style={{ display: 'block', width: '100%', height: 'auto', maxHeight: height,
           touchAction: editable || laying ? 'none' : undefined,
+          // Walking up to something: scaled about the top-left, then slid so the point being looked
+          // at lands in the middle of the frame.
+          ...(lens ? {
+            transformOrigin: '0 0',
+            transform: `scale(${lens.z}) translate(${(50 / lens.z - lens.x).toFixed(3)}%, ${(50 / lens.z - lens.y).toFixed(3)}%)`,
+            transition: still ? undefined : `transform ${TRAVEL_MS}ms ease-in-out`,
+          } : null),
           // A pen when there is one, a hand when there is not.
           cursor: laying ? 'crosshair' : editable ? 'grab' : undefined }}>
         {scene.nodes}
