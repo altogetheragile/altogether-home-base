@@ -44,6 +44,9 @@ export function useZooSessions(sessionId: string | null) {
   const [gameId, setGameId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Who is connected to this session right now, by user id. A seat's HOLDER and its OCCUPANT are
+  // different things once somebody's laptop sleeps, and only this can tell them apart.
+  const [present, setPresent] = useState<string[]>([]);
 
   const refresh = useCallback(async (id: string) => {
     const [s, p, g] = await Promise.all([
@@ -68,13 +71,16 @@ export function useZooSessions(sessionId: string | null) {
   // Everything in the lobby moves for everyone: a seat taken on one screen has to appear on
   // the others, or two people claim the same one.
   useEffect(() => {
-    if (!sessionId) return;
-    const ch = supabase.channel(`zoo_lobby_${sessionId}`)
+    if (!sessionId || !user) return;
+    // The same channel carries presence: who is on it, keyed by user id, so "at the table" is a
+    // fact about a live connection rather than a row somebody wrote when they joined last Tuesday.
+    const ch = supabase.channel(`zoo_lobby_${sessionId}`, { config: { presence: { key: user.id } } })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'zoo_session_participants', filter: `session_id=eq.${sessionId}` }, () => void refresh(sessionId))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'zoo_game_seats' }, () => void refresh(sessionId))
-      .subscribe();
+      .on('presence', { event: 'sync' }, () => setPresent(Object.keys(ch.presenceState())))
+      .subscribe(async (status) => { if (status === 'SUBSCRIBED') await ch.track({ user: user.id }); });
     return () => { void supabase.removeChannel(ch); };
-  }, [sessionId, refresh]);
+  }, [sessionId, refresh, user]);
 
   /** Open a session and take the host's own seat at the table. */
   const createSession = useCallback(async (name: string): Promise<string | null> => {
@@ -201,8 +207,11 @@ export function useZooSessions(sessionId: string | null) {
    *  whoever was sitting in it - from a control offered to everybody at the table. */
   const fillWithAi = useCallback(async (seatId: string, on: boolean) => {
     const seat = seats.find((s) => s.id === seatId);
-    if (on && seat?.participant_id && seat.participant_id !== me?.id) {
-      setError('Somebody is in that seat. They can leave it, and then it can be covered.');
+    // ...and the host may cover a seat whose holder has gone: somebody has to be able to, or a
+    // closed laptop stops the table until that person comes back.
+    const hosting = !!user && session?.host_user_id === user.id;
+    if (on && seat?.participant_id && seat.participant_id !== me?.id && !hosting) {
+      setError('Somebody is in that seat. They can leave it, or the host can cover it.');
       return;
     }
     setBusy(true);
@@ -210,7 +219,7 @@ export function useZooSessions(sessionId: string | null) {
       await supabase.from('zoo_game_seats').update({ is_ai: on, participant_id: null }).eq('id', seatId);
       if (sessionId) await refresh(sessionId);
     } finally { setBusy(false); }
-  }, [me, seats, sessionId, refresh]);
+  }, [me, seats, session, user, sessionId, refresh]);
 
   /** Watch without a seat. A trainer coaching several tables, and the only kind of watcher
    *  there is: observers act on nothing. */
@@ -247,7 +256,7 @@ export function useZooSessions(sessionId: string | null) {
   }, [me, seats, sessionId, refresh]);
 
   return {
-    session, participants, seats, gameId, me, busy, error,
+    session, participants, seats, gameId, me, busy, error, present,
     isHost: !!user && session?.host_user_id === user.id,
     createSession, joinByCode, startGame, claimSeat, leaveSeat, fillWithAi, setRole, refresh,
   };

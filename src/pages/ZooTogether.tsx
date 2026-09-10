@@ -4,6 +4,7 @@ import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { ZooGameScreens } from './ZooGame';
 import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
+import { unmannedSeats } from '@/components/zooGame/seatPresence';
 import type { SeatContext } from '@/components/zooGame/seatRules';
 import { useAuth } from '@/contexts/AuthContext';
 import { TEXT } from '@/components/zooGame/ui/tokens';
@@ -28,7 +29,10 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   const ctx: SeatContext = {
     seat: mySeat?.seat ?? null,
     observer: lobby.me?.role === 'observer',
-    emptySeats: lobby.seats.filter((x) => !x.participant_id && !x.is_ai).map((x) => x.seat),
+    // Seats with nobody in them - which includes a seat whose holder has shut their laptop. It used
+    // to mean "no participant and no AI", so a held-but-absent seat read as staffed and its work
+    // fell to nobody: the Sprint waited on somebody who had gone home, and nothing said so.
+    emptySeats: unmannedSeats(lobby.seats, lobby.participants, lobby.present),
   };
   const session = useZooSession(gameId, ctx);
   useSharedClock(session);
