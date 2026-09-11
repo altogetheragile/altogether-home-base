@@ -59,6 +59,9 @@ describe('a site is not the Increment', () => {
   it('draws nothing different when there is nothing being built', () => {
     // The switch is about sites. With none, both answers are the same park.
     const settled = { ...park(), backlog: park().backlog.filter((it) => it.id !== SITE) } as ZooGameState;
-    expect(drawn(settled, true).innerHTML).toBe(drawn(settled, false).innerHTML);
+    // Every drawing owns its clip paths - two parks on one page must not share them - so the ids
+    // differ by design. It is the park that has to be the same park.
+    const same = (el: HTMLElement) => el.innerHTML.replace(/grass-[^"')]+/g, 'grass');
+    expect(same(drawn(settled, true))).toBe(same(drawn(settled, false)));
   });
 });

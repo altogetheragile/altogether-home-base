@@ -1,6 +1,8 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
+import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
+import { themeFor } from './zoneTheme';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
@@ -93,7 +95,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const [runTo, setRunTo] = useState<{ x: number; y: number } | null>(null);
 
   const standing = standingOnPark(state);
-  const auto = parkPositions(standing);
+  // The ground each area of the zoo owns. Everything that asks where a thing stands reads the
+  // same plots, so the plan, the Increment and the visitors cannot disagree about the layout.
+  const plots = zonePlots(state);
+  const order = plotOrder(state);
+  const auto = parkPositions(standing, plots);
   const boxes = standing.map((s) => ({
     item: s.item,
     animals: s.animals,
@@ -146,12 +152,19 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const verdict = (id: string, box: { w: number; h: number }, w: { x: number; y: number }) => {
     const at = insidePark(box, w);
     const off = Math.abs(at.x - w.x) > 1 || Math.abs(at.y - w.y) > 1;
+    // Everything belongs to an area of the zoo, and every area owns its ground. Refused rather than
+    // slid quietly into place: where the Savanna is is worth learning, and a thing that lands
+    // somewhere other than where you let go of it teaches nothing.
+    const zone = state.backlog.find((it) => it.id === id)?.zone;
+    const plot = plotFor(state, zone);
+    const strayed = !off && plot && !insidePlot(plot, box, at);
     // Water is the exception, and it is the whole point of a bridge: a bridge over a river has to
     // overlap it or it is not a bridge. Reported from playing it - "I can't place it over the
     // river". Everything else keeps its ground to itself.
     const over = boxes.find((b) => b.item.id !== id && !overWater(b.item)
       && Math.abs(at.x - b.at.x) < (b.size.w + box.w) / 2 && Math.abs(at.y - b.at.y) < (b.size.h + box.h) / 2);
-    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !over, why: off ? 'off the park' : over ? `on top of ${over.item.name}` : undefined };
+    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed && !over,
+      why: off ? 'off the park' : strayed ? `outside the ${zone} area` : over ? `on top of ${over.item.name}` : undefined };
   };
 
   /** Drag something that is already standing: it follows the pointer and lands where you let go. */
@@ -347,6 +360,24 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           ))}
         </g>
 
+        {/* The ground each area of the zoo owns, marked out from the day the brief was agreed.
+            An area nobody has opened yet is drawn as ground with a name on it - which is the rest
+            of the Product Backlog, to scale, in the place it is going to be. */}
+        {[...plots.values()].map((p) => {
+          const theme = themeFor(p.zone, order.indexOf(p.zone));
+          const open = boxes.some((b) => b.item.zone === p.zone);
+          const size = plotSize(p);
+          return (
+            <g key={p.zone} data-part="zone-plot" data-zone={p.zone} data-open={open ? 'yes' : 'no'}>
+              <rect x={p.x0} y={p.y0} width={size.w} height={size.h} rx={16}
+                fill={theme.plot} opacity={open ? 0.3 : 0.14}
+                stroke={theme.plotBorder} strokeWidth={2} strokeDasharray={open ? undefined : '11 9'} />
+              <text x={p.x0 + 14} y={p.y0 + 24} fontSize={15 * k} fontWeight={700} fill="#3f4a2f"
+                opacity={open ? 0.85 : 0.6}>{p.zone}</text>
+            </g>
+          );
+        })}
+
         {/* The apron round each habitat, which every habitat has whether anybody drew it or not:
             a pen you cannot walk round is an object in a field, not an exhibit. The pathway items
             are the runs BETWEEN things, and they join onto these. */}
@@ -377,6 +408,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               onPointerDown={placing ? undefined : (e) => dragFrom(e, b)}
               style={{ cursor: onPlaceItem ? 'grab' : 'pointer' }}>
               <rect x={x} y={y} width={b.size.w} height={b.size.h} rx={6}
+                // Landscape is cut to the land it lies on. A river is as long as the park is wide,
+                // and the park's edge wanders, so an uncut one hangs over the countryside at both
+                // ends - water with no bank.
+                clipPath={b.item.category === 'flora' ? 'url(#park-edge)' : undefined}
                 fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill)
                   : b.item.category === 'enclosure' && isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id), b.item)
                     ? tankWater(currentDesign(b.item))

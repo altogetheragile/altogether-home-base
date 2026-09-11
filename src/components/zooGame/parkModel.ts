@@ -2,6 +2,7 @@ import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './engine';
 import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
 import { autoLayout, insidePark, CANVAS_W, PAD } from './parkLayout';
+import { zonePlots, type Plot } from './parkZones';
 
 // ============= One park, described once =============
 //
@@ -159,13 +160,37 @@ export function standingOnPark(state: ZooGameState): Standing[] {
  *
  *  An item that has been dragged holds its spot. Everything else is laid out automatically, and both
  *  views have to lay it out the SAME way or the two drawings disagree about where the zoo is. */
-export function parkPositions(standing: Standing[]): Map<string, { x: number; y: number }> {
+/** @param plots the ground each area owns. Required, and not defaulted on purpose: every caller
+ *  builds its picture from this, and one of them quietly laying the park out a different way is how
+ *  a visitor ends up walking to where a habitat is not. */
+export function parkPositions(standing: Standing[], plots: Map<string, Plot>): Map<string, { x: number; y: number }> {
   // Only the ones nobody has placed are laid out. The ones that carry a position are where they
   // are, so they are passed in as ground already taken rather than packed as though they were
   // going to move - which is how something ended up standing on top of something else.
   const box = (s: Standing) => ({ id: s.item.id, w: s.size.w, h: s.size.h });
   const fixed = standing.filter((s) => s.item.pos).map((s) => ({ ...box(s), ...insidePark(s.size, s.item.pos!) }));
-  return autoLayout(standing.filter((s) => !s.item.pos).map(box), fixed);
+  const loose = standing.filter((s) => !s.item.pos);
+  if (!plots.size) return autoLayout(loose.map(box), fixed);
+
+  // Each area fills its own ground; the fabric between the areas - paths, water, signposts, the
+  // toilets - belongs to no area and fills what is left. Laid out area by area rather than all at
+  // once, so opening the Savanna cannot shove the Big Cats sideways.
+  const out = new Map<string, { x: number; y: number }>();
+  const busy = [...fixed];
+  for (const [zone, plot] of plots) {
+    const mine = loose.filter((s) => s.item.zone === zone);
+    if (!mine.length) continue;
+    const laid = autoLayout(mine.map(box), busy, { x0: plot.x0, y0: plot.y0, x1: plot.x1, y1: plot.y1 });
+    for (const s of mine) {
+      const at = laid.get(s.item.id);
+      if (!at) continue;
+      out.set(s.item.id, at);
+      busy.push({ ...box(s), ...at });
+    }
+  }
+  const rest = loose.filter((s) => !out.has(s.item.id));
+  for (const [id, at] of autoLayout(rest.map(box), busy)) out.set(id, at);
+  return out;
 }
 
 /** Where one thing stands, given how much ground it takes. */
@@ -239,5 +264,5 @@ export function whereItStands(state: ZooGameState, item: BacklogItem): { x: numb
   const standing = standingOnPark(state);
   const mine = standing.find((s) => s.item.id === item.id);
   if (!mine) return null;
-  return restingPlace(mine.item, mine.size, parkPositions(standing));
+  return restingPlace(mine.item, mine.size, parkPositions(standing, zonePlots(state)));
 }
