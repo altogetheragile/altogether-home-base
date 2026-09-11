@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { BacklogWizard } from './BacklogWizard';
 import { aiTurn } from './aiSeats';
@@ -54,10 +54,9 @@ describe('the screen, to a seat that is not the Product Owner', () => {
     expect(note.textContent).toMatch(/Product Owner/);
   });
 
-  /** The three questions, to the last one - which is where the writing happens. */
-  const toTheEnd = () => {
-    for (let i = 0; i < 2; i += 1) fireEvent.click(screen.getByRole('button', { name: /^Next/ }));
-  };
+  /** The three questions used to be three screens, walked with two presses of Next. They are one
+   *  page now, so there is nowhere to walk to: the write button is on it from the start. */
+  const toTheEnd = () => {};
 
   it('does not offer a button that will be refused', () => {
     wizard({ seat: 'developer' });
