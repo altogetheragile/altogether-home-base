@@ -58,7 +58,11 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   // moveable too - it can get in the way when placing an object". So it can be picked up by its
   // heading and dropped anywhere on the park, and once it has been moved the guess stops applying.
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
-  const [hidden, setHidden] = useState(false);
+  // Closed until it is asked for. Reported from playing it: "make the ACs closed by default - they
+  // are always in the way." What is left behind is not nothing: the pill carries the count, so how
+  // many criteria are met is still readable at a glance, and one press has the detail. Opened, it
+  // stays open - the player's choice outlasts the thing that was selected when they made it.
+  const [hidden, setHidden] = useState(true);
   const box = useRef<HTMLDivElement | null>(null);
   const carry = (e: ReactPointerEvent) => {
     const panel = box.current;

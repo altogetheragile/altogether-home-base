@@ -20,9 +20,16 @@ const game = (over: Partial<ZooGameState> = {}): ZooGameState =>
   ({ ...initialZooState(3), phase: 'sprint', dayStage: 'building', sprintNumber: 1, ...over }) as ZooGameState;
 const itemOf = (s: ZooGameState, category: string): BacklogItem =>
   s.backlog.find((it) => it.category === category)!;
-const inspector = (state: ZooGameState, item: BacklogItem, props: Record<string, unknown> = {}) => render(
-  <MemoryRouter><ParkInspector state={state} item={item} {...props} /></MemoryRouter>,
-);
+/** The criteria panel, open. It is closed until it is asked for - it was always in the way on the
+ *  park - so asking for it is part of rendering it here. */
+const inspector = (state: ZooGameState, item: BacklogItem, props: Record<string, unknown> = {}) => {
+  const out = render(
+    <MemoryRouter><ParkInspector state={state} item={item} {...props} /></MemoryRouter>,
+  );
+  const shut = out.container.querySelector('[data-part="park-inspector"][data-collapsed="yes"]');
+  if (shut) fireEvent.click(shut);
+  return out;
+};
 
 describe('where each criterion is answered', () => {
   it('splits them into the object and the park', () => {

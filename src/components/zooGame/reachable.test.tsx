@@ -102,6 +102,8 @@ describe('the acceptance criteria panel', () => {
         <ParkInspector state={s} item={item} onAskToCheck={noop} />
       </div></MemoryRouter>,
     );
+    // Closed until asked for, so this asks for it.
+    fireEvent.click(container.querySelector('[data-part="park-inspector"]')!);
     const panel = container.querySelector('[data-part="park-inspector"]') as HTMLElement;
     const grip = container.querySelector('[data-part="inspector-grip"]') as HTMLElement;
     expect(grip, 'there is nothing to pick the panel up by').toBeTruthy();
