@@ -70,3 +70,23 @@ describe('the Daily Scrum counts one day one way', () => {
     expect(figures.join(' '), 'day 2 of 3 should have two days left, today included').toMatch(/2/);
   });
 });
+
+describe('the Retrospective uses the room it is given', () => {
+  // Reported from playing it, on both steps: "I still have to page down on this page. It can all be
+  // better laid out, no?" It could: a column of short log lines ran off the bottom of a wide screen
+  // with an empty column beside it, and on the next step the Definition of Done took the page while
+  // the question the screen is actually asking - pick one improvement - went below the fold.
+  //
+  // What holds it is that the things beside the log are IN the same grid as the log rather than
+  // stacked under it, which is a thing a test can see and a screenshot cannot argue with.
+  it('puts the questions and the habits beside the log, not under it', () => {
+    const container = retro();
+    const log = container.querySelector('[data-part="habits"]')
+      ?? [...container.querySelectorAll('section')].find((el) => /Talk these through/.test(el.textContent ?? ''));
+    expect(log, 'the Retrospective has nothing beside the log').toBeTruthy();
+    const columns = log!.parentElement!;
+    expect(columns.className, 'the reading is stacked in one column again').toMatch(/lg:grid-cols/);
+    expect(columns.textContent, 'the log and the questions are in different places')
+      .toMatch(/Decision log|Nothing was logged/);
+  });
+});

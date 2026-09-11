@@ -152,24 +152,47 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
               </p>
             )}
           </section>
+
+          {/* The questions and the habits belong beside the log, not under it. Stacked full width
+              under a long list they were a second page of a screen that has room for one: the log
+              is a column of short lines, and there was an empty column next to it the whole time. */}
+          <section className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-primary"><MessageCircleQuestion className="h-4 w-4" /> Talk these through</div>
+            <ul className="space-y-1.5">
+              {questions.map((q, i) => (
+                <li key={i} className="flex gap-2 text-sm text-foreground"><span className="mt-0.5 shrink-0 text-primary/70">&bull;</span><span>{q}</span></li>
+              ))}
+            </ul>
+          </section>
+
+          {teamHabits.length > 0 && (
+            <section data-part="habits" className="rounded-lg border-2 border-amber-400/60 bg-amber-500/[0.05] px-3 py-2.5">
+              <div className={cn(EYEBROW, 'mb-1 text-amber-700 dark:text-amber-300')}>Habits this Sprint showed</div>
+              <ul className="space-y-2">
+                {teamHabits.map((h) => (
+                  <li key={h.id}>
+                    <p className="text-sm font-semibold">{h.title}</p>
+                    <p className="text-xs">{h.what}</p>
+                    <p className="text-[11px] text-muted-foreground">{h.instead}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                The game allowed every one of these. Whether any of them is a problem is the
+                conversation, and the conversation is the event.
+              </p>
+            </section>
+          )}
         </div>
       )}
 
-      {step === 'inspect' && (
-        <section className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <div className="flex items-center gap-1.5 text-sm font-semibold text-primary"><MessageCircleQuestion className="h-4 w-4" /> Talk these through</div>
-          <ul className="space-y-1.5">
-            {questions.map((q, i) => (
-              <li key={i} className="flex gap-2 text-sm text-foreground"><span className="mt-0.5 shrink-0 text-primary/70">&bull;</span><span>{q}</span></li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {step === 'adapt' && (<>
-      {/* The one thing this topic is for goes first. The agreements the team owns - the Definition
-          of Done, the Sprint's length - are under it: they are read here, but picking what changes
-          next Sprint is what the screen is asking for, and it was below the fold. */}
+      {/* The one thing this topic is for on the left; the agreements the team owns - the Definition
+          of Done, the Sprint's length - beside it. They are read here, but picking what changes next
+          Sprint is what the screen is ASKING for, and stacked in one column on a wide screen it was
+          the Definition of Done that took the page and the question that went below the fold. */}
+      {step === 'adapt' && (
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-start">
+      <div className="space-y-3">
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Pick one improvement</h3>
         <p className="text-[11px] text-muted-foreground">
@@ -202,8 +225,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
         </div>
       )}
 
-      {/* The Retrospective is where the team inspects and adapts the Definition of Done. It is a
-          long editor, so it scrolls inside itself rather than pushing the improvements off screen. */}
+      </div>
+
+      <div className="space-y-3">
       {/* Not a scroll box. The Definition of Done is the Increment's commitment and the whole point
           of inspecting it here is to read it; a list that scrolls inside a card on a page that also
           scrolls is a list nobody reads to the end of. */}
@@ -214,28 +238,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       {onSetSprintDays && (
         <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="retro" />
       )}
-
-      </>)}
       </div>
-
-      {step === 'inspect' && teamHabits.length > 0 && (
-        <section data-part="habits" className="rounded-lg border-2 border-amber-400/60 bg-amber-500/[0.05] px-3 py-2.5">
-          <div className={cn(EYEBROW, 'mb-1 text-amber-700 dark:text-amber-300')}>Habits this Sprint showed</div>
-          <ul className="space-y-2">
-            {teamHabits.map((h) => (
-              <li key={h.id}>
-                <p className="text-sm font-semibold">{h.title}</p>
-                <p className="text-xs">{h.what}</p>
-                <p className="text-[11px] text-muted-foreground">{h.instead}</p>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">
-            The game allowed every one of these. Whether any of them is a problem is the conversation,
-            and the conversation is the event.
-          </p>
-        </section>
+      </div>
       )}
+      </div>
 
       <ActionBar left={step === 'adapt' ? <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button> : undefined}
         hint={step === 'adapt' && !selected ? 'Pick one improvement to carry forward' : undefined}>

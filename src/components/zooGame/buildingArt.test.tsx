@@ -58,6 +58,7 @@ describe('a building looks like the kind of building it is', () => {
     }
   });
 
+  // A park per building type, twice over: slow on purpose, and given the room to be.
   it('puts up a sign, and takes it down again', () => {
     // The Sign control was read by neither view: you ticked it and nothing appeared anywhere. A
     // control that does nothing is worse than a missing one, and this one was in the Done gate.
@@ -67,7 +68,7 @@ describe('a building looks like the kind of building it is', () => {
       expect(up, `taking the sign off a ${type} changes nothing on the park`).not.toEqual(down);
       expect(up.length, `a ${type} loses more than its sign`).toBeGreaterThan(down.length);
     }
-  });
+  }, 20_000);
 
   // Slow on purpose, and given the room for it: this draws the whole park once per building type
   // per colour, so it is forty-odd full scenes - and a scene now has a treeline round it.
