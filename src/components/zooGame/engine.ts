@@ -6,6 +6,7 @@ import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, ex
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
+import { whatVisitorsCanReach } from './parkNetwork';
 import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
@@ -678,8 +679,7 @@ export function signOffReady(item: BacklogItem): boolean {
  *
  *  An improvement is not shown separately: it re-delivers the thing it improves.
  */
-export const standsOnPark = (item: BacklogItem): boolean =>
-  (item.status === 'open' || item.status === 'done') && !item.enhancesId;
+export { standsOnPark } from './onThePark';
 
 /** Keep the sign-off task in step with the acceptance criteria, wherever they were changed. It is
  *  derived, not ticked by hand: the Product Owner signs off when the criteria are met, and the
@@ -2163,7 +2163,14 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   state = { ...state, owedSeconds: 0 };
   // Enclosures are infrastructure, not something visitors score directly - exclude them
   // from the simulation (the animals inside them carry the appeal).
-  const openItems = state.backlog.filter((it) => it.status === 'open' && it.category !== 'enclosure').map(toZooItem);
+  // ...and only what a visitor could actually walk up to. A zoo is not paid for what it built: an
+  // exhibit across the river with no bridge over it is a thing six hundred people stand on the bank
+  // and look at. Scoring it anyway made the bridge a nicety, and the bridge is the one piece of
+  // enabling work the game has - no visitors of its own, and nothing across the water opens without
+  // it. The Review is where that has to bite, or the Product Owner never has a reason to order it
+  // above the penguins.
+  const { reached } = whatVisitorsCanReach(state);
+  const openItems = reached.filter((it) => it.category !== 'enclosure').map(toZooItem);
   // Visitor happiness comes from what the game actually models - the design quality of what
   // you delivered - not from the wording of the Definition of Done. The DoD's job is to be the
   // team's completion gate (the workflow every item follows to be Done), not a happiness dial.
@@ -2815,6 +2822,8 @@ export interface ZoneSlice {
   delivered: number;
   /** What it still needs, in the words the player would use. */
   missing: string[];
+  /** How much of what is delivered here nobody can walk up to. */
+  stranded: number;
 }
 
 /** Which zones are slices you could open, and what the unfinished ones are still missing.
@@ -2827,6 +2836,11 @@ export function zoneSlices(state: ZooGameState): ZoneSlice[] {
     && (it.category === 'exhibit' || (it.category === 'epic' && (it.epicMembers ?? []).some((m) => m.kind === 'exhibit'))));
   const zones = Array.from(new Set(state.backlog.map((it) => it.zone))).filter(holdsFauna);
   const live = state.backlog.filter((it) => it.status === 'open');
+  // Not "is there a path item" but "can anybody actually get there". Those came apart the day the
+  // river became terrain: a zone on the far bank can have its habitat, its animal and its own paths
+  // and still be a place six hundred people stand and look across at.
+  const { stranded } = whatVisitorsCanReach(state);
+  const cutOff = new Map(stranded.map((s) => [s.item.id, s.why]));
 
   return zones.map((zone) => {
     const here = live.filter((it) => it.zone === zone);
@@ -2834,10 +2848,15 @@ export function zoneSlices(state: ZooGameState): ZoneSlice[] {
     // Its OWN path. The park's main spine is the plate: it serves every zone and opens none of
     // them, which is the whole point - laying it is not the same as finishing anything.
     const wayIn = here.some((it) => it.category === 'path');
+    const stuck = here.filter((it) => cutOff.has(it.id));
+    const water = stuck.some((it) => cutOff.get(it.id) === 'water');
     const missing: string[] = [];
     if (!animal) missing.push('an animal to see');
     if (!wayIn) missing.push('a path to walk in on');
-    return { zone, open: animal && wayIn, delivered: here.length, missing };
+    // ...and said in the words that name the Product Backlog item that would fix it.
+    if (stuck.length && water) missing.push('a bridge over the water');
+    else if (stuck.length) missing.push('a path that joins up with the way in');
+    return { zone, open: animal && wayIn && !stuck.length, delivered: here.length, missing, stranded: stuck.length };
   });
 }
 

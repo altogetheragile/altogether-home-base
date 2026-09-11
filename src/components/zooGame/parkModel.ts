@@ -1,5 +1,5 @@
 import type { BacklogItem, ZooGameState } from './types';
-import { standsOnPark } from './engine';
+import { standsOnPark } from './onThePark';
 import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
 import { autoLayout, insidePark, CANVAS_W, PAD } from './parkLayout';
 import { zonePlots, type Plot } from './parkZones';
