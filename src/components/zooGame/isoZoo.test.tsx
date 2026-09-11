@@ -424,16 +424,26 @@ describe('the isometric projection', () => {
     // A quarter-turn is a coordinate swap, not a second projection. It must change how the park is
     // DRAWN and nothing about what is on it: the same things, the same number of them, the same
     // habitats with the same animals in them.
+    //
+    // What is on the park, not how many elements it took to draw it. Counting elements looked like
+    // the same question and is not: a turned park is drawn at a different scale, and a fence side
+    // that fits four panels at one scale fits three at another. That is the drawing doing its job,
+    // and it made this test fail about one run in ten.
     const state = zooWithEverything();
-    const counts = [0, 1, 2, 3].map((turn) => {
+    const drawn = (turn: number) => {
       const svg = render(<IsoZoo state={state} height={460} turn={turn} />).container.querySelector('svg[role="img"]')!;
-      return { props: svg.querySelectorAll('svg').length, polys: svg.querySelectorAll('polygon').length,
-               label: svg.getAttribute('aria-label') };
-    });
-    for (const c of counts) {
-      expect(c.props).toBe(counts[0].props);
-      expect(c.polys).toBe(counts[0].polys);
-      expect(c.label).toBe(counts[0].label);
+      return {
+        things: [...svg.querySelectorAll('[data-item], [data-facility], [data-plot], [data-land]')]
+          .map((el) => el.getAttribute('data-item') ?? el.getAttribute('data-facility')
+            ?? el.getAttribute('data-plot') ?? el.getAttribute('data-land')).sort().join(','),
+        label: svg.getAttribute('aria-label'),
+      };
+    };
+    const first = drawn(0);
+    for (const turn of [1, 2, 3]) {
+      const c = drawn(turn);
+      expect(c.things, `turned ${turn}, the park has different things on it`).toBe(first.things);
+      expect(c.label, `turned ${turn}, the park says it holds something else`).toBe(first.label);
     }
     // ...but it does not draw the same PICTURE, or the button would do nothing.
     const shapeAt = (turn: number) => render(<IsoZoo state={state} height={460} turn={turn} />)
