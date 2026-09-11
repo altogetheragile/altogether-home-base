@@ -35,6 +35,8 @@ export function SaveGameDialog({ open, onOpenChange, defaultName, isUpdate, savi
         <Input
           autoFocus
           value={name}
+          // Selected when it is reached for, so a proposed name can be typed straight over.
+          onFocus={(e) => e.target.select()}
           placeholder="e.g. Workshop demo"
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}

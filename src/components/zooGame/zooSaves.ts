@@ -29,6 +29,21 @@ export type SaveRead =
   | { ok: true; state: ZooGameState; note?: string }
   | { ok: false; why: string };
 
+/** A name to offer for a save, so that keeping a game is one press rather than a naming decision.
+ *
+ *  Proposed, not imposed: it goes into the field ready to be typed over. What it says is what tells
+ *  one game from another in a list - which zoo, and when - because the list already shows where each
+ *  one was left off, and repeating that in the name would waste the only line it has.
+ */
+export function proposeSaveName(state: Pick<ZooGameState, 'brief' | 'zones'>, now = new Date()): string {
+  const zone = state.brief?.firstZone ?? state.zones?.find((z) => z !== 'Grounds' && z !== 'Facilities');
+  // Written out rather than left to the platform's idea of a short month: Node says "Sept" where a
+  // browser says "Sep", and a name that depends on which machine saved it is not a name.
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const day = `${now.getDate()} ${MONTHS[now.getMonth()]}`;
+  return `${zone ? `${zone} zoo` : 'New zoo'} · ${day}`;
+}
+
 /** Whether this blob is a Build A Zoo game at all, and whether this build can read it. */
 export function readSave(raw: unknown): SaveRead {
   if (!raw || typeof raw !== 'object') {

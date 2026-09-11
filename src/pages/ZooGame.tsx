@@ -24,6 +24,7 @@ import { GameLinks } from '@/components/zooGame/GameLinks';
 import { ZooSavedGamesDialog } from '@/components/zooGame/ZooSavedGamesDialog';
 import { Celebration } from '@/components/zooGame/Celebration';
 import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
+import { proposeSaveName } from '@/components/zooGame/zooSaves';
 import type { ZooGameState, PbiDraft } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance, presetFor, type ItemDesign } from '@/components/zooGame/design';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
@@ -151,6 +152,11 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
 
   const requestSave = () => {
     if (!user) { toast.error('Sign in to save your zoo.'); return; }
+    // A game that already has a name does not need naming again: keeping it is one press. It is only
+    // the first save that asks, and even that arrives with a name already in the field. Reported
+    // from playing it: "I still have to add a manual name."
+    if (saveId && saveName) { void handleSave(saveName); return; }
+    setSaveName(proposeSaveName(state));
     setSaveOpen(true);
   };
   const handleSave = async (name: string) => {
