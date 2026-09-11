@@ -218,7 +218,7 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
   const [focus, setFocus] = useState<string | null>(null);
   const items = availableItems(state);
   const item = items.find((it) => it.id === focus) ?? null;
-  // The item can leave the Backlog under you - split, pulled into the Sprint, deleted - so the
+  // The item can leave the Product Backlog under you - split, pulled into the Sprint, deleted - so the
   // bench falls back to nothing rather than to a stale card.
   const inSprint = state.phase === 'sprint';
   const spent = state.refinePenalty ?? 0;
@@ -234,7 +234,7 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
           <Target className="h-3.5 w-3.5" /> Product Goal <span className="font-normal normal-case tracking-normal text-muted-foreground">commitment of the Product Backlog</span>
         </div>
         <p className={cn('text-sm leading-snug', state.productGoal.trim() ? 'font-semibold' : 'text-muted-foreground')}>
-          {state.productGoal.trim() || 'No Product Goal set yet - it is the long-term objective the Backlog is ordered towards.'}
+          {state.productGoal.trim() || 'No Product Goal set yet - it is the long-term objective the Product Backlog is ordered towards.'}
         </p>
       </div>
 

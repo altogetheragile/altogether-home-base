@@ -131,7 +131,7 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
   // reason the gate exists at all.
   //
   // Client-side is the right place for it. This is a teaching game, not a threat model: the
-  // point is that the interface tells you the Backlog is the Product Owner's, not that a
+  // point is that the interface tells you the Product Backlog is the Product Owner's, not that a
   // determined learner cannot get round it.
   const seatRef = useRef(seat);
   seatRef.current = seat;
@@ -241,7 +241,7 @@ const EVENT_BEAT_MS = 9000;
 /** Play the seats nobody is sitting in.
  *
  *  Only one browser does this - the same one that drives the clock - or every browser takes
- *  the same turn and the Backlog gets sized four times.
+ *  the same turn and the Product Backlog gets sized four times.
  *
  *  Each move goes through `sendAs` like anybody's, so it is written, shared, and refused by
  *  the gate if it does not belong to that accountability. An AI seat is a player, not a back

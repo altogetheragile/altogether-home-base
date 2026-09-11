@@ -272,7 +272,7 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
       )}
 
       <div className="flex justify-end">
-        <Button size="sm" disabled={!valid} onClick={save}>{editing ? 'Save' : 'Add to Backlog'}</Button>
+        <Button size="sm" disabled={!valid} onClick={save}>{editing ? 'Save' : 'Add to the Product Backlog'}</Button>
       </div>
     </div>
   );

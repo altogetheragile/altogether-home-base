@@ -31,7 +31,7 @@ describe('what your accountability holds, screen by screen', () => {
     // The two would drift silently otherwise: the copy would promise something the gate
     // does not protect, or protect something the copy never mentions.
     expect(ownedBy('product_owner')).toContain('REORDER_IN_ZONE');
-    expect(YOURS.product_owner.refine, 'the copy does not mention ordering the Backlog')
+    expect(YOURS.product_owner.refine, 'the copy does not mention ordering the Product Backlog')
       .toMatch(/order/i);
 
     expect(ownedBy('developer')).toContain('ESTIMATE_ITEM');

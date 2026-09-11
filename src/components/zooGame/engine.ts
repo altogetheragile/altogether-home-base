@@ -8,7 +8,7 @@ import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
-/** Refining the Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
+/** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
  *  Refinement and Planning phases are the dedicated time to refine), so this is a no-op
  *  unless a Sprint is in progress. */
@@ -26,10 +26,10 @@ const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number
   const log = charged.decisions ?? [];
   const last = log[log.length - 1];
   const mine = last && last.kind === 'refinement' && last.sprint === charged.sprintNumber
-    && last.what === `Day ${charged.dayNumber}: the Backlog was refined during the Sprint.`;
+    && last.what === `Day ${charged.dayNumber}: the Product Backlog was refined during the Sprint.`;
   const spent = (mine ? Number(/(\d+)s of build time/.exec(last.cost ?? '')?.[1] ?? 0) : 0) + seconds;
   const line = { sprint: charged.sprintNumber, kind: 'refinement' as const,
-    what: `Day ${charged.dayNumber}: the Backlog was refined during the Sprint.`,
+    what: `Day ${charged.dayNumber}: the Product Backlog was refined during the Sprint.`,
     cost: `${spent}s of build time, spent on the Sprints after this one` };
   return { ...charged, decisions: mine ? [...log.slice(0, -1), line] : [...log, line] };
 };
@@ -286,7 +286,7 @@ const DEFAULT_SIZE: Record<string, number> = { exhibit: 8, amenity: 5, flora: 3 
 
 /** Add a Product Backlog Item the Product Owner has written (name + acceptance
  *  criteria + kind + zone). It arrives UNSIZED - it must be estimated before it can
- *  be planned - so the PO can grow the Backlog before Sprint 1 or during a Sprint. */
+ *  be planned - so the PO can grow the Product Backlog before Sprint 1 or during a Sprint. */
 export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   const name = draft.name.trim();
   if (!name) return state;
@@ -315,7 +315,7 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
 }
 
 /** Refine an existing Backlog PBI (edit its name, zone and acceptance criteria).
- *  Only items still in the Backlog can be refined. */
+ *  Only items still in the Product Backlog can be refined. */
 export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): ZooGameState {
   const acceptance = draft.acceptance.map((a) => a.trim()).filter(Boolean);
   const zone = draft.zone.trim();
@@ -396,7 +396,7 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
   return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.split);
 }
 
-/** Move the given Backlog-status items to the front of the Backlog in the given order (the
+/** Move the given Backlog-status items to the front of the Product Backlog in the given order (the
  *  Product Owner re-prioritising by value). Items not listed keep their relative order. */
 function reorderByPriority(state: ZooGameState, ids: string[]): ZooGameState {
   const seen = new Set<string>();
@@ -431,11 +431,11 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
   }
   if (d.order?.length) s = reorderByPriority(s, d.order);
   // The PO does not set the Sprint Goal. It is crafted by the whole Scrum Team at Sprint Planning,
-  // from the work they select - so refining the Backlog never touches it, whenever it is asked for.
+  // from the work they select - so refining the Product Backlog never touches it, whenever it is asked for.
   return { ...s, refinePenalty: penaltyBefore };
 }
 
-/** Commit an estimate to a Backlog item (refinement): it becomes sized and can now
+/** Commit an estimate to a Product Backlog item (refinement): it becomes sized and can now
  *  be planned. */
 export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false, carriedOver: false } : it));
@@ -563,7 +563,7 @@ export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
   // Measured against the day this team actually gets, not the nominal one. A Daily Scrum costs
   // time, so every day after the first opens with about eighty seconds of a ninety second day -
   // and an eight point item costs ninety eight. Compared against the nominal day it needed
-  // eighty one seconds it could never have, so the biggest items in the Backlog could not be
+  // eighty one seconds it could never have, so the biggest items in the Product Backlog could not be
   // built at all: taken at the top of a day, then sat in Doing while the day ran out, every day.
   const total = dayTotalSeconds(state.dayTimeMult ?? 1);
   if (cost >= total) return state.daySecondsLeft >= total * 0.9;
@@ -874,7 +874,7 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
     // - but while they are on the tools, nobody is doing the Product Owner's job, and the questions
     // pile up on an empty seat. The Retrospective reads this back with the rest.
     cost: by === 'product_owner'
-      ? 'The Product Owner took work off the board. While they are building, nobody is ordering the Backlog or answering the Developers.'
+      ? 'The Product Owner took work off the board. While they are building, nobody is ordering the Product Backlog or answering the Developers.'
       : undefined });
 }
 
@@ -1049,13 +1049,13 @@ export function renameMember(state: ZooGameState, memberId: string, name: string
   return { ...state, team: { productOwner: rn(t.productOwner), scrumMaster: rn(t.scrumMaster), developers: t.developers.map(rn) } };
 }
 
-/** Delete a Backlog PBI outright (only ones not committed to a Sprint reach this from the UI). */
+/** Delete a Product Backlog PBI outright (only ones not committed to a Sprint reach this from the UI). */
 export function deletePbi(state: ZooGameState, id: string): ZooGameState {
   return { ...state, backlog: state.backlog.filter((it) => it.id !== id) };
 }
 
 /** Duplicate a PBI as a fresh Backlog item ("... (copy)"), placed right after the original.
- *  The copy is its own item (new id, no saved park position, back in the Backlog). */
+ *  The copy is its own item (new id, no saved park position, back in the Product Backlog). */
 export function duplicatePbi(state: ZooGameState, id: string): ZooGameState {
   const idx = state.backlog.findIndex((it) => it.id === id);
   if (idx < 0) return state;
@@ -1286,13 +1286,13 @@ function swapAmong(state: ZooGameState, id: string, dir: 'up' | 'down', peer: (i
 }
 
 /** Re-order the Product Backlog (the Product Owner's job): move an item up or down
- *  among the other still-in-Backlog items. */
+ *  among the other still-in-Product Backlog items. */
 export function moveItem(state: ZooGameState, id: string, dir: 'up' | 'down'): ZooGameState {
   return swapAmong(state, id, dir, (it) => it.status === 'backlog');
 }
 
 /** Re-order the Sprint forecast while it is still being put together in Sprint Planning. The items
- *  are still in the Backlog at this point - nothing is committed until the Sprint is started - so
+ *  are still in the Product Backlog at this point - nothing is committed until the Sprint is started - so
  *  the peers are whatever has been picked so far. */
 export function moveForecastItem(state: ZooGameState, id: string, dir: 'up' | 'down', picked: string[]): ZooGameState {
   return swapAmong(state, id, dir, (it) => picked.includes(it.id));
@@ -1336,7 +1336,7 @@ export function renameZone(state: ZooGameState, oldName: string, newName: string
   return { ...state, zones, backlog };
 }
 
-/** Move an item to just before another (drag-and-drop reorder of the Backlog). */
+/** Move an item to just before another (drag-and-drop reorder of the Product Backlog). */
 export function moveItemBefore(state: ZooGameState, id: string, beforeId: string): ZooGameState {
   if (id === beforeId) return state;
   const backlog = [...state.backlog];
@@ -1350,7 +1350,7 @@ export function moveItemBefore(state: ZooGameState, id: string, beforeId: string
 }
 
 /** Move a whole zone (a themed epic and all its PBIs) up or down relative to the other
- *  zones - the PO ordering the Backlog by theme. Regroups the Backlog by the new zone
+ *  zones - the PO ordering the Product Backlog by theme. Regroups the Product Backlog by the new zone
  *  order, keeping each item's order within its zone. */
 export function moveZone(state: ZooGameState, zone: string, dir: 'up' | 'down'): ZooGameState {
   const order: string[] = [];
@@ -1381,7 +1381,7 @@ export function reorderInZone(state: ZooGameState, id: string, dir: 'up' | 'down
 
 // ============= Planning =============
 
-/** Commit the chosen Backlog items into the current Sprint and open it for play.
+/** Commit the chosen Product Backlog items into the current Sprint and open it for play.
  *  The Sprint starts on day 1, ready to build. */
 /** Give a committed item a task plan if it has none, so every item goes through the
  *  Doing checklist and nothing can skip straight to Done. A plan written during
@@ -1411,7 +1411,7 @@ export function sprintCapacity(state: ZooGameState): { points: number; estimated
   };
 }
 
-/** How far ahead the Backlog is actually prepared, in Sprints' worth of Ready work. Refinement aims
+/** How far ahead the Product Backlog is actually prepared, in Sprints' worth of Ready work. Refinement aims
  *  to keep a couple of Sprints ready - enough that Planning has a real choice, not so much that the
  *  team has analysed work it may never build. */
 export function readyHorizon(state: ZooGameState): number {
@@ -1433,7 +1433,7 @@ export function setForecast(state: ZooGameState, ids: string[]): ZooGameState {
 }
 
 export function planSprint(state: ZooGameState, ids: string[], refinementPoints = 0): ZooGameState {
-  // Only Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
+  // Only Product Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
   // and with acceptance criteria. Anything else has to go back through Refinement first.
   const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && isReady(it)).map((it) => it.id));
   const backlog = state.backlog.map((it) =>
@@ -1483,15 +1483,15 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
   }
   if (refinementPoints > 0) {
     out = note(out, { kind: 'refinement',
-      what: `${refinementPoints} point${refinementPoints === 1 ? '' : 's'} of the Sprint set aside to refine the Backlog together.`,
+      what: `${refinementPoints} point${refinementPoints === 1 ? '' : 's'} of the Sprint set aside to refine the Product Backlog together.`,
       cost: `about ${PLANNED_REFINE_SECONDS * refinementPoints}s of a build day, spent on the Sprints after this one` });
   } else {
-    out = note(out, { kind: 'refinement', what: 'No time set aside this Sprint to refine the Backlog.' });
+    out = note(out, { kind: 'refinement', what: 'No time set aside this Sprint to refine the Product Backlog.' });
   }
   return out;
 }
 
-/** Write the Product Backlog from the brief. The game starts with none, because a Backlog that is
+/** Write the Product Backlog from the brief. The game starts with none, because a Product Backlog that is
  *  simply there teaches that a Product Backlog is a thing you are handed. This is the moment it
  *  comes into existence, and the answers decide what is in it and what order it is in. */
 export function writeBacklog(state: ZooGameState, brief: ZooBrief): ZooGameState {
@@ -1568,9 +1568,9 @@ export function sprintProgress(state: ZooGameState): { pointsCommitted: number; 
   };
 }
 
-/** Pull a Backlog item into the current Sprint mid-Sprint. Scope can grow by
+/** Pull a Product Backlog item into the current Sprint mid-Sprint. Scope can grow by
  *  agreement during the Sprint, as long as the Sprint's goal is not put at risk -
- *  so the Backlog stays visible and pullable while building. Must be estimated first. */
+ *  so the Product Backlog stays visible and pullable while building. Must be estimated first. */
 export function pullIntoSprint(state: ZooGameState, id: string, by?: string): ZooGameState {
   if (state.phase !== 'sprint') return state;
   const item = state.backlog.find((it) => it.id === id && it.status === 'backlog' && !it.unsized);
@@ -1765,7 +1765,7 @@ function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   return null;
 }
 
-/** Accept a signal: add the candidate item to the Backlog and clear the signal.
+/** Accept a signal: add the candidate item to the Product Backlog and clear the signal.
  *
  *  Recorded, because it is a Product Owner decision about value and the Retrospective reads the
  *  decisions back. What the visitors said is evidence; what you did about it is the choice. */
@@ -1776,8 +1776,8 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
   if (!item) return state;
   const taken = { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index) };
   return note(taken, { kind: 'signal', by: by ?? 'product_owner',
-    what: `Took what the visitors said into the Backlog: ${sig.suggestion}`,
-    cost: `${item.name} joins the Backlog unsized - the Developers size it` });
+    what: `Took what the visitors said into the Product Backlog: ${sig.suggestion}`,
+    cost: `${item.name} joins the Product Backlog unsized - the Developers size it` });
 }
 
 /** Turn a signal down. The other half of the same decision, and the half the game used to make for
@@ -1818,7 +1818,7 @@ export const isDraftedGoal = (goal: string): boolean => goal.trim().length >= GO
  *
  *  The order of the Product Backlog is the Product Owner's statement of value, so a suggested Goal
  *  has to start there. Reading the whole Backlog instead would name whatever there happens to be
- *  most of - which is how a Backlog headed by the Big Cats produced a Goal about the Grounds.
+ *  most of - which is how a Product Backlog headed by the Big Cats produced a Goal about the Grounds.
  */
 export function goalCandidates(state: ZooGameState): BacklogItem[] {
   const cap = sprintCapacity(state).points;
@@ -2263,7 +2263,7 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
   return {
     ...state,
     // Straight to Planning. Refinement is not a step between Sprints - there is no gap between
-    // Sprints - it is work the Developers do DURING one, preparing the Backlog for later ones.
+    // Sprints - it is work the Developers do DURING one, preparing the Product Backlog for later ones.
     phase: 'planning',
     // Nothing is owed to the Sprint that just ended.
     owedSeconds: 0,
@@ -2312,7 +2312,7 @@ export function improvementsFrom(state: ZooGameState): {
       effect: 'A blocker that does get carried costs about half what it costs now',
       when: skipped > 0,
       because: skipped > 0 ? `The Daily Scrum was skipped ${skipped} time${skipped === 1 ? '' : 's'}.` : undefined },
-    { key: 'refine', text: 'Set aside time each Sprint to refine the Backlog together',
+    { key: 'refine', text: 'Set aside time each Sprint to refine the Product Backlog together',
       effect: 'Sprint Planning opens with a point of the forecast already set aside for it',
       when: noRefine > 0,
       because: noRefine > 0 ? `${noRefine} Sprint${noRefine === 1 ? ' has' : 's have'} set aside no time to refine.` : undefined },
@@ -2341,11 +2341,11 @@ export function endGame(state: ZooGameState): ZooGameState {
 /** Exhibits and amenities currently open to visitors (the zoo as it stands). */
 export const openZoo = (state: ZooGameState): BacklogItem[] => state.backlog.filter((it) => it.status === 'open');
 
-/** Items still available to plan (in the Backlog, not yet committed or built). */
+/** Items still available to plan (in the Product Backlog, not yet committed or built). */
 export const availableItems = (state: ZooGameState): BacklogItem[] => state.backlog.filter((it) => it.status === 'backlog');
 
 /** Progress toward the Product Goal - "a zoo visitors love and come back to" - measured
- *  by the OUTCOME, not by how much of the Backlog is built. Visitor happiness (0..100)
+ *  by the OUTCOME, not by how much of the Product Backlog is built. Visitor happiness (0..100)
  *  is the "love", and because happy visitors return it also drives "come back", so it is
  *  the signal we track. Building more Backlog does not move this on its own; delivering
  *  things visitors love does. Zero until the first Review produces an outcome. */
@@ -2428,23 +2428,23 @@ export interface CoachNudge { id: string; where: string; phases: string[]; text:
 export const COACH_NUDGES: CoachNudge[] = [
   // The scenery starts ready, but the zoo's value is locked inside the epics - so the opening
   // nudge is about those, not about how many points happen to be sized.
-  { id: 'over-refined', where: 'Refinement, when the Backlog is refined too far ahead', phases: ['refine'],
+  { id: 'over-refined', where: 'Refinement, when the Product Backlog is refined too far ahead', phases: ['refine'],
     when: (c) => c.state.phase === 'refine' && c.horizon > 3,
     text: 'That is roughly {horizon} Sprints of work refined in detail. Analysing work you may never build is waste - what you learn from opening the first exhibits will change it. Build something first.' },
   { id: 'refine-first', where: 'Refinement, first Sprint, when the animals are still inside epics', phases: ['refine'],
     when: (c) => c.state.phase === 'refine' && c.state.sprintNumber === 1 && c.epicCount > 0 && c.exhibitsReady < 3,
-    text: 'The paths and benches are ready to build, and so is the first area - that is already a Sprint\u2019s worth. The other areas are still epics, and they can stay that way: you will split them when a Sprint needs them, which is how a Backlog actually gets built. Go and plan.' },
+    text: 'The paths and benches are ready to build, and so is the first area - that is already a Sprint\u2019s worth. The other areas are still epics, and they can stay that way: you will split them when a Sprint needs them, which is how a Product Backlog actually gets built. Go and plan.' },
   { id: 'refine-enough', where: 'Refinement, when there is enough ready work to start', phases: ['refine'],
     when: (c) => c.state.phase === 'refine' && c.horizon >= 1 && c.horizon <= 3,
-    text: 'You have about {horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Backlog better than more analysis now.' },
+    text: 'You have about {horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Product Backlog better than more analysis now.' },
   { id: 'refine-ahead', where: 'The Sprint board, when less than a Sprint of ready work is left', phases: ['sprint'],
     when: (c) => c.state.phase === 'sprint' && c.horizon < 1 && c.inSprintCount > 0,
-    text: 'Less than a Sprint of ready work is left. Get the whole Scrum Team round the Backlog while this Sprint runs - the PO brings the value, the Developers bring what it would take. It costs build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },
+    text: 'Less than a Sprint of ready work is left. Get the whole Scrum Team round the Product Backlog while this Sprint runs - the PO brings the value, the Developers bring what it would take. It costs build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },
   // Refinement is a Scrum Team activity, not a PO chore and not a separate meeting the Developers
   // are summoned to. Ask for it partway through the Sprint, once the build is under way.
   { id: 'refine-midsprint', where: 'The Sprint board, from day two', phases: ['sprint'],
     when: (c) => c.state.phase === 'sprint' && c.state.dayNumber > 1 && c.horizon <= 2 && c.inSprintCount > 0,
-    text: 'About {horizon} Sprints of work is ready. Take some time this Sprint to refine together - the whole Scrum Team, not the PO alone - so the Backlog stays a couple of Sprints ahead of you.' },
+    text: 'About {horizon} Sprints of work is ready. Take some time this Sprint to refine together - the whole Scrum Team, not the PO alone - so the Product Backlog stays a couple of Sprints ahead of you.' },
   { id: 'refine-late', where: 'Sprint Planning, when nothing is ready to forecast', phases: ['planning'],
     when: (c) => c.state.phase === 'planning' && c.readyCount === 0,
     text: 'Nothing is Ready to forecast. You can refine now, but this is late - refinement is meant to happen during the Sprint before, keeping a couple of Sprints ready ahead of you.' },
@@ -2611,7 +2611,7 @@ export function asksNow(state: ZooGameState): Ask[] {
   }
 
   // ...and whether there is anything to plan the next Sprint from. Refining is the whole Scrum
-  // Team's work, but what is in the Backlog and in what order is the Product Owner's.
+  // Team's work, but what is in the Product Backlog and in what order is the Product Owner's.
   if (readyHorizon(state) < 1) {
     out.push({ id: 'ready', of: 'product_owner', kind: 'ready',
       text: 'Less than a Sprint of ready work is left. The next Planning will have little to choose from.' });
@@ -2712,7 +2712,7 @@ export function antiPatterns(state: ZooGameState, sprint = state.sprintNumber): 
     out.push({
       id: 'po-on-the-tools', title: 'The Product Owner was on the tools', count: onTheTools,
       what: `${onTheTools} time${onTheTools === 1 ? '' : 's'} the Product Owner took work off the board.`,
-      instead: 'They may work as a Developer. While they do, nobody is ordering the Backlog or answering the questions.',
+      instead: 'They may work as a Developer. While they do, nobody is ordering the Product Backlog or answering the questions.',
     });
   }
 

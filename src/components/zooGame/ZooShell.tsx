@@ -368,9 +368,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           </Popover>
 
           <div className="flex shrink-0 items-center gap-1.5">
-            {/* Refinement belongs where refinement happens: shaping the Backlog before the first
+            {/* Refinement belongs where refinement happens: shaping the Product Backlog before the first
                 Sprint, and adapting it at the Review. Not in Sprint Planning, which forecasts from
-                the Backlog rather than changing it, and not mid-Sprint, where the Developers refine
+                the Product Backlog rather than changing it, and not mid-Sprint, where the Developers refine
                 on the board and it costs the day's build time. It stays in the strip because it is
                 work rather than words. */}
             {onPoRefine && (state.phase === 'refine' || state.phase === 'review') && (
@@ -419,7 +419,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           with CSS, so the day clock, a half-finished design and the park's own scroll all survive
           a look at another artifact. */}
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        {/* The Product Backlog. Before the first Sprint this is where the Backlog is written and
+        {/* The Product Backlog. Before the first Sprint this is where the Product Backlog is written and
             the three agreements are made; during a Sprint it is what you pull from, and pulling
             costs the Developers time. */}
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'backlog' && 'hidden')}>

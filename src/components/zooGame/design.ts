@@ -933,7 +933,7 @@ export const AQUATIC = ['reef', 'shark', 'ray', 'turtle', 'jellyfish'];
  *
  *  Three ways in, in the order they should win. The Developers' choice on the park beats everything.
  *  A habitat the Product Owner wrote as a tank - "Small Tank" from the toolbox - is one before any
- *  animal has moved in, which is the point of being able to put one on the Backlog. And a habitat
+ *  animal has moved in, which is the point of being able to put one on the Product Backlog. And a habitat
  *  full of fish is a tank whether or not anybody said so. */
 export function isTank(
   design: ItemDesign | undefined,
@@ -1038,7 +1038,7 @@ const SPECIES_COLORS: Record<string, Record<string, string>> = {
 const GENERIC_COLORS = { body: '#a6835a', head: '#8d6c46', ears: '#6f5334', tail: '#6f5334' };
 
 /** A coat shifts every colour the animal has. A pale morph is a real decision about value - the
- *  enthusiasts come a long way for one - and it costs a Backlog item the same as a common coat. */
+ *  enthusiasts come a long way for one - and it costs a Product Backlog item the same as a common coat. */
 export function coatColors(base: Record<string, string>, coat?: string): Record<string, string> {
   if (!coat || coat === 'common') return base;
   const by = coat === 'pale' ? 34 : -30;
@@ -1335,7 +1335,7 @@ export function appealFromDesign(item: BacklogItem, design: ItemDesign): Record<
   if (item.category !== 'exhibit' || !item.appeal) return item.appeal;
   const bright = (luminance(design.colors.body) + luminance(design.colors.markings ?? design.colors.body)) / 2;
   // A group is worth more than a specimen, and a rare coat is worth more than the common one. Both
-  // cost something - room, and the decision to spend a Backlog item on it - which is what makes
+  // cost something - room, and the decision to spend a Product Backlog item on it - which is what makes
   // them decisions rather than dials. Diminishing: the fourth lion adds less than the second.
   const size = groupSize(design.group);
   const crowd = clamp(Math.log2(1 + size) / 2, 0, 1);

@@ -62,7 +62,7 @@ describe('the ground an area owns', () => {
 
   it('does not move when another area is opened', () => {
     // The point of marking the ground out up front. Ground that reshuffled underneath a built zoo
-    // every time the Backlog grew a zone would be the opposite of safe to grow into.
+    // every time the Product Backlog grew a zone would be the opposite of safe to grow into.
     const before = zonePlots({ brief: { zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest'] } });
     const after = zonePlots({ brief: { zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest'] }, zones: ['Big Cats', 'Waterside', 'Savanna', 'Forest', 'Grounds', 'Facilities'] });
     expect(after.get('Big Cats')).toEqual(before.get('Big Cats'));

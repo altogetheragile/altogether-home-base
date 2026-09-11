@@ -6,7 +6,7 @@ import type { ZooGameState, PoDecisions } from './types';
 // compact view of the current game and returns the PO's refinement decisions, which the
 // reducer applies via PO_REFINE. Auth-gated + rate-limited server-side.
 
-/** The compact context the PO needs - just the Backlog it can refine, plus goals/signals. */
+/** The compact context the PO needs - just the Product Backlog it can refine, plus goals/signals. */
 function contextOf(state: ZooGameState) {
   const backlog = state.backlog
     .filter((it) => it.status === 'backlog')
@@ -33,7 +33,7 @@ export function useZooProductOwner() {
     try {
       const { data, error } = await supabase.functions.invoke('zoo-po-refine', { body: contextOf(state) });
       if (error) throw error;
-      if (!data?.success || !data.data) throw new Error(data?.error || 'The Product Owner could not refine the Backlog.');
+      if (!data?.success || !data.data) throw new Error(data?.error || 'The Product Owner could not refine the Product Backlog.');
       return data.data as PoDecisions;
     } finally {
       setIsRefining(false);

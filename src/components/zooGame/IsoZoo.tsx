@@ -4,6 +4,7 @@ import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscape
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { zonePlots } from './parkZones';
+import { riverOutline } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, edgeNoise } from './parkLayout';
 import { TRAVEL_MS } from './walkThrough';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
@@ -894,6 +895,13 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     <clipPath key="grass-clip" id={grassClip}><path d={grassPath} /></clipPath>,
     <polygon key="prom" points={ground(0, promY, CANVAS_W, PLAY_H)} fill="#e7d6a8" />,
     <polygon key="apron" data-land="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
+  );
+
+  // The river, drawn on the land rather than standing on it - terrain, the same course the plan
+  // draws, put through this view's own projection.
+  nodes.push(
+    <path key="river" data-part="river" d={outlinePath(riverOutline().map((pt) => P(pt.x, pt.y)))}
+      fill="#6db6d8" stroke="#4f9cbf" strokeWidth={1.5} clipPath={`url(#${grassClip})`} />,
   );
 
   // The ground each area of the zoo owns, tinted on the grass. The same plots the plan marks out:

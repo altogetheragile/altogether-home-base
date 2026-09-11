@@ -6,7 +6,7 @@ import { floraAcceptance, pathAcceptance, amenityAcceptance } from './design';
 // A Product Owner who only ever reacts is not doing half the job. Forecasting the Penguins means
 // the Waterside is about to open, and a zone opens on three things - somewhere to see an animal, an
 // animal to see, and a path to walk in on. Noticing the third one is missing BEFORE the Sprint ends
-// is exactly the work: the Backlog is not a record of what has happened, it is what the Product
+// is exactly the work: the Product Backlog is not a record of what has happened, it is what the Product
 // Owner thinks the product needs next.
 //
 // So this reads the forecast and says what it implies. Deliberately not an AI call and deliberately
@@ -15,15 +15,15 @@ import { floraAcceptance, pathAcceptance, amenityAcceptance } from './design';
 //  - Not an AI call, because it runs every Sprint. A trainer in a room with no signal should still
 //    get it, it should be the same every time so it can be taught, and a rule you can read is a
 //    rule you can argue with. The AI Product Owner still exists for refining what is already there.
-//  - Not automatic, because a Backlog that grows behind your back teaches that items simply appear.
+//  - Not automatic, because a Product Backlog that grows behind your back teaches that items simply appear.
 //    Each one arrives as a proposal with its reason attached, and you accept it or you do not. That
 //    is what a Product Owner does with a suggestion, and it is the decision worth practising.
 
 /** Two things the Product Owner can suggest, because there are two ways a thing can be missing.
  *
- *  It is not in the Backlog at all - so write it. Or it IS, buried inside an area epic where it
+ *  It is not in the Product Backlog at all - so write it. Or it IS, buried inside an area epic where it
  *  cannot be sized or pulled - so break the epic up. Offering to "add" the second one would put a
- *  second Waterside Paths in the Backlog beside the one already there, which is not help.
+ *  second Waterside Paths in the Product Backlog beside the one already there, which is not help.
  */
 export type Proposal =
   | { id: string; why: string; kind: 'add'; label: string; draft: PbiDraft }
@@ -32,7 +32,7 @@ export type Proposal =
 /** A real Product Backlog item - one you could refine, size and pull. */
 const hasItem = (state: ZooGameState, match: (it: BacklogItem) => boolean) => state.backlog.some(match);
 
-/** The epic hiding a thing like this, if one is. A member of an epic is in the Backlog in the sense
+/** The epic hiding a thing like this, if one is. A member of an epic is in the Product Backlog in the sense
  *  that somebody has thought of it, and not in the sense that anyone can plan it. */
 function hidingIn(state: ZooGameState, zone: string, kind: string): { epic: BacklogItem; memberIds: string[] } | null {
   for (const epic of state.backlog.filter((it) => it.category === 'epic' && it.zone === zone)) {
@@ -47,7 +47,7 @@ function hidingIn(state: ZooGameState, zone: string, kind: string): { epic: Back
  *  Only looking at the forecast made this almost silent, and looking only backwards is the habit
  *  worth breaking. A Product Owner who notices the Waterside needs paths on the day the Waterside
  *  Sprint ends has noticed too late; the point is to see it while there is still time to order it.
- *  The top of the Backlog is what the Product Owner expects to be next, so that is what to read.
+ *  The top of the Product Backlog is what the Product Owner expects to be next, so that is what to read.
  */
 const HORIZON = 5;
 const forecast = (state: ZooGameState) => {
@@ -67,14 +67,14 @@ export function lookAhead(state: ZooGameState): Proposal[] {
   // A zone about to have an animal in it needs a way in and something growing. Both are its own
   // items, because a zone is a slice: the paths for the Big Cats belong to the Big Cats.
   // A zone is "coming" if an animal or a habitat for it is coming - or if the whole area is still
-  // one epic near the top of the Backlog, which is the usual way a zone arrives.
+  // one epic near the top of the Product Backlog, which is the usual way a zone arrives.
   const brings = (it: BacklogItem) => it.category === 'exhibit' || it.category === 'enclosure'
     || (it.category === 'epic' && (it.epicMembers ?? []).some((m) => m.kind === 'exhibit'));
   const zones = Array.from(new Set(soon.filter(brings).map((it) => it.zone)));
   const needs: { kind: 'path' | 'flora'; name: string; why: (z: string) => string; draft: (z: string) => PbiDraft }[] = [
     {
       kind: 'path', name: 'Paths',
-      why: (z) => `${z} is coming up. A zone opens on three things - somewhere to see an animal, an animal to see, and a path to walk in on - and the third one is not in the Backlog.`,
+      why: (z) => `${z} is coming up. A zone opens on three things - somewhere to see an animal, an animal to see, and a path to walk in on - and the third one is not in the Product Backlog.`,
       draft: (z) => ({ name: `${z} Paths`, category: 'path', zone: z, acceptance: pathAcceptance() }),
     },
     {

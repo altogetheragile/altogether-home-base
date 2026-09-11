@@ -29,7 +29,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
   note?: string;
   onPick: () => void;
   onFix?: () => void;
-  /** Shown for context rather than to be selected - topic one and topic three, where the Backlog is
+  /** Shown for context rather than to be selected - topic one and topic three, where the Product Backlog is
    *  what you are looking at rather than what you are choosing from. Reading it still works. */
   readOnly?: boolean;
 }) {
@@ -40,7 +40,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
     badges={<><Chip>{item.zone}</Chip><CategoryChip item={item} /></>} />;
 
   // Reading before choosing, in a takeover. It used to be a popover hanging off the card, which is
-  // the same fault the Backlog had: something small opens somewhere else on the screen and you do
+  // the same fault the Product Backlog had: something small opens somewhere else on the screen and you do
   // not notice it. Every other detail view in the game takes the screen, so this one does too.
   const takeover = (
     <Dialog open={reading} onOpenChange={setReading}>

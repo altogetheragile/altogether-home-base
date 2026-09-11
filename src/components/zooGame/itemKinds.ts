@@ -60,7 +60,7 @@ export function itemKind(item: Pick<BacklogItem, 'category' | 'template' | 'desi
   }
 }
 
-/** The same question for something that is not a Backlog item yet - a draft in the editor. */
+/** The same question for something that is not a Product Backlog item yet - a draft in the editor. */
 export function draftKind(draft: Pick<PbiDraft, 'category' | 'template'>): ItemKind {
   return itemKind({ category: draft.category, template: draft.template });
 }

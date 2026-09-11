@@ -27,7 +27,7 @@ type Seat = {
 const ROLES: Record<SeatName, { role: string; does: string }> = {
   product_owner: {
     role: 'Product Owner',
-    does: 'Orders the Backlog. Writes what each item needs to be, answers questions about it while you build, and decides when Done work opens to visitors.',
+    does: 'Orders the Product Backlog. Writes what each item needs to be, answers questions about it while you build, and decides when Done work opens to visitors.',
   },
   scrum_master: {
     role: 'Scrum Master',
@@ -73,7 +73,7 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
   return (
     <div className="mx-auto flex h-full w-full max-w-[1400px] flex-col gap-4 overflow-y-auto pr-1">
       <header>
-        <div className={cn(EYEBROW, 'text-primary')}>Before there is a Backlog</div>
+        <div className={cn(EYEBROW, 'text-primary')}>Before there is a Product Backlog</div>
         <h2 className="text-3xl font-bold leading-tight tracking-tight">Meet the Scrum Team</h2>
         <p className="text-sm text-muted-foreground">
           {seat

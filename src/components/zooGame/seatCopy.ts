@@ -18,17 +18,17 @@ export const NAME: Record<SeatName, string> = {
 };
 
 /** What this accountability is holding on this particular screen. Phase by phase, because
- *  "the Product Owner orders the Backlog" is not much use while you are building. */
+ *  "the Product Owner orders the Product Backlog" is not much use while you are building. */
 export const YOURS: Record<SeatName, Record<string, string>> = {
   product_owner: {
     refine: 'What goes on the Product Backlog, and the order it is in.',
     planning: 'You propose where the value is. The Sprint Goal is the whole team’s to agree.',
     sprint: 'What is Done is yours to release, whenever it is worth releasing.',
-    review: 'What the visitors asked for becomes a Backlog item if you decide it does.',
+    review: 'What the visitors asked for becomes a Product Backlog item if you decide it does.',
     retro: 'You are here as part of the Scrum Team, not as its customer.',
   },
   scrum_master: {
-    refine: 'You are accountable for the events happening, not for the Backlog.',
+    refine: 'You are accountable for the events happening, not for the Product Backlog.',
     planning: 'You make the event work. The forecast is the Developers’.',
     sprint: 'The Daily Scrum happening is yours. Impediments get removed outside it.',
     review: 'You keep it a working session rather than a demonstration.',

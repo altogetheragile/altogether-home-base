@@ -36,7 +36,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
   switch (action.type) {
     case 'START':
       // There is no Product Backlog yet. The Scrum Team answers three questions about the zoo and
-      // writes one - because a Backlog that is simply there teaches that a Product Backlog is
+      // writes one - because a Product Backlog that is simply there teaches that a Product Backlog is
       // something you are handed rather than the Product Owner's to create and order.
       return { ...initialZooState(action.gameSeed ?? state.gameSeed), phase: 'brief', backlog: [] };
     case 'SET_PHASE':

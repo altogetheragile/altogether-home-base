@@ -77,7 +77,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
   {
     id: 'product-goal', kind: 'commitment', of: 'Product Backlog', title: 'The Product Goal',
     summary: 'The Product Backlog’s commitment: the future state of the product you are working toward.',
-    why: 'It gives every Sprint something to aim at, so the Backlog is a plan rather than a list. Progress toward it is what the Sprint Review discusses.',
+    why: 'It gives every Sprint something to aim at, so the Product Backlog is a plan rather than a list. Progress toward it is what the Sprint Review discusses.',
     who: 'The Product Owner is accountable for it, and for making it transparent to everyone.',
     when: 'Before the work starts, and it holds until it is met or abandoned. A product has one Product Goal at a time.',
     how: 'Describe a future state of the product, not a list of features. It can be shaped as an objective and key results, or as an epic user story - the shape is yours.',
@@ -95,14 +95,14 @@ export const SCRUM_CARDS: ScrumCard[] = [
     id: 'pbi', kind: 'concept', title: 'A Product Backlog Item',
     summary: 'One thing that would improve the product, with enough detail to be understood.',
     why: 'Work has to be broken into pieces small enough to finish inside a Sprint, or the Sprint cannot end with something usable.',
-    who: 'Anyone can suggest one; the Product Owner decides whether it goes on the Backlog and where.',
+    who: 'Anyone can suggest one; the Product Owner decides whether it goes on the Product Backlog and where.',
     when: 'Whenever a need is discovered, from anywhere - including the Sprint Review.',
     how: 'There is no mandated format. A user story ("as a ... I want ... so that ...") with acceptance criteria is a common one. What matters is that it is understood, valuable, and can be Done in a Sprint.',
     notScrum: 'User stories and story points are common practices, not part of Scrum.',
   },
   {
     id: 'refinement', kind: 'concept', title: 'Product Backlog Refinement',
-    summary: 'Breaking items down and adding detail, so the top of the Backlog is ready.',
+    summary: 'Breaking items down and adding detail, so the top of the Product Backlog is ready.',
     why: 'Sprint Planning cannot forecast what nobody understands. Refinement is what makes items ready to be selected.',
     who: 'The whole Scrum Team. The Developers who will do the work are responsible for the sizing; the Product Owner helps them understand and select trade-offs.',
     when: 'Ongoing, during the Sprint, for Sprints still to come. It is not an event, and there is no gap between Sprints for it to happen in.',
@@ -132,7 +132,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     who: 'The whole Scrum Team. The Scrum Master typically facilitates; others may be invited for advice.',
     when: 'At the start of every Sprint.',
     how: 'Topic one: the Product Owner proposes how the product could increase in value, and the Scrum Team defines a Sprint Goal together. Topic two: the Developers select items they forecast they can finish. Topic three: the Developers plan how, in as much detail as they need. The Scrum Team may refine items here to understand them better and pick with more confidence.',
-    notScrum: 'Doing the bulk of the sizing and splitting here is not forbidden, but a Planning that turns into a refinement session usually means the top of the Backlog was not ready.',
+    notScrum: 'Doing the bulk of the sizing and splitting here is not forbidden, but a Planning that turns into a refinement session usually means the top of the Product Backlog was not ready.',
     timebox: 'Up to 8 hours for a one-month Sprint, usually shorter for shorter Sprints',
   },
   {
@@ -170,10 +170,10 @@ export const SCRUM_CARDS: ScrumCard[] = [
   },
   {
     id: 'slices', kind: 'concept', title: 'Slices, not layers',
-    summary: 'A Backlog item should be a slice of the cake, not a layer of it.',
+    summary: 'A Product Backlog item should be a slice of the cake, not a layer of it.',
     why: 'A slice has everything it needs to be eaten: sponge, filling, icing. A layer is a part - you need the others before anyone gets anything. Work sliced the second way looks like progress for weeks and delivers nothing, because none of it can be used until all of it is finished.',
     who: 'The Developers slice the work; the Product Owner orders it by the value each slice would deliver.',
-    when: 'Whenever the Backlog is refined, and again at Sprint Planning when the Developers decide what they can actually finish.',
+    when: 'Whenever the Product Backlog is refined, and again at Sprint Planning when the Developers decide what they can actually finish.',
     how: 'In this park a zone is a slice: somewhere to see an animal, an animal to see, and a path to walk in on. Deliver those and the gates open. Deliver eight habitats across six zones and you have laid a layer - real work, and nobody can visit any of it. Slicing is not in the Scrum Guide: the Guide asks that an Increment be usable and leaves the how to the Developers. This is one of the ways.',
   },
   {
@@ -200,7 +200,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'One person has to be able to decide what is worth building, or ordering the work becomes a committee.',
     who: 'One person, not a committee. They may delegate the work, but they remain accountable.',
     when: 'Throughout. Their decisions are visible in the Product Backlog’s content and order.',
-    how: 'Develop and communicate the Product Goal, create and order Product Backlog items, and make sure the Backlog is transparent. For them to succeed, the whole organisation must respect their decisions.',
+    how: 'Develop and communicate the Product Goal, create and order Product Backlog items, and make sure the Product Backlog is transparent. For them to succeed, the whole organisation must respect their decisions.',
   },
   {
     id: 'developers', kind: 'accountability', title: 'The Developers',

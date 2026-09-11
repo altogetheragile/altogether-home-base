@@ -12,7 +12,7 @@ import type { ZooGameState } from './types';
 // Reported from a live session: "I chose a Dev role and got stuck at this screen." The screen was
 // the third of the three questions that write the Product Backlog, with a button that writes it.
 // Writing the Product Backlog is the Product Owner's, so the press was refused - and the seat
-// playing the Product Owner had nothing it could do before a Backlog existed, so the game sat
+// playing the Product Owner had nothing it could do before a Product Backlog existed, so the game sat
 // there. Two faults, and either one alone would still have left a learner stuck.
 
 const brief = (): ZooGameState => ({ ...initialZooState(3), phase: 'brief' }) as ZooGameState;
@@ -20,20 +20,20 @@ const brief = (): ZooGameState => ({ ...initialZooState(3), phase: 'brief' }) as
 describe('the Product Owner seat, played by the game', () => {
   it('writes the Product Backlog, which is the only way off that screen', () => {
     const move = aiTurn(brief(), 'product_owner');
-    expect(move, 'the seat that owns the Backlog had nothing to do before there was one').toBeTruthy();
+    expect(move, 'the seat that owns the Product Backlog had nothing to do before there was one').toBeTruthy();
     expect(move!.action.type).toBe('WRITE_BACKLOG');
-    expect(move!.says, 'it writes a Backlog without saying what it chose').toMatch(/open/i);
+    expect(move!.says, 'it writes a Product Backlog without saying what it chose').toMatch(/open/i);
   });
 
-  it('and the Backlog it writes is a real one', () => {
+  it('and the Product Backlog it writes is a real one', () => {
     const move = aiTurn(brief(), 'product_owner')!;
     const after = reducer(brief(), move.action);
-    expect(after.phase, 'writing the Backlog did not move the game on').toBe('refine');
-    expect(after.backlog.length, 'the Backlog is empty').toBeGreaterThan(5);
+    expect(after.phase, 'writing the Product Backlog did not move the game on').toBe('refine');
+    expect(after.backlog.length, 'the Product Backlog is empty').toBeGreaterThan(5);
     expect(after.zones.length, 'the zoo has no areas').toBeGreaterThan(1);
   });
 
-  it('leaves the other seats alone before there is a Backlog', () => {
+  it('leaves the other seats alone before there is a Product Backlog', () => {
     for (const seat of ['developer', 'scrum_master'] as const) {
       expect(aiTurn(brief(), seat), `the ${seat} seat wrote the Product Backlog`).toBeNull();
     }
@@ -72,7 +72,7 @@ describe('the screen, to a seat that is not the Product Owner', () => {
       const { container } = wizard({ seat });
       toTheEnd();
       expect(container.querySelector('[data-part="not-yours"]'),
-        `${seat ?? 'a solo player'} was told the Backlog was somebody else’s`).toBeNull();
+        `${seat ?? 'a solo player'} was told the Product Backlog was somebody else’s`).toBeNull();
       expect(screen.getAllByRole('button', { name: /Write the Product Backlog/ })
         .some((b) => !b.hasAttribute('disabled')), 'they cannot write it either').toBe(true);
     }

@@ -102,7 +102,7 @@ export function whoDoesWhatNow(state: ZooGameState, seat?: string | null): strin
         ? 'Five seats, three accountabilities. Yours is outlined.'
         : 'Five seats, three accountabilities. Playing alone you hold all three.';
     case 'refine':
-      return `${po} orders the Backlog. The Developers size it.`;
+      return `${po} orders the Product Backlog. The Developers size it.`;
     case 'planning':
       switch (state.planningTopic ?? 'why') {
         case 'why': return `${po} proposes the value. The whole Scrum Team agrees the Sprint Goal.`;
@@ -151,7 +151,7 @@ export function seatLines(state: ZooGameState): SeatLine[] {
   };
 
   const poDoing = (): string => {
-    if (state.phase === 'refine' || state.phase === 'brief' || state.phase === 'intro') return 'ordering the Backlog';
+    if (state.phase === 'refine' || state.phase === 'brief' || state.phase === 'intro') return 'ordering the Product Backlog';
     if (state.phase === 'planning') return 'making the case';
     if (state.phase === 'review') return 'presenting';
     if (state.phase === 'retro') return 'one voice of five';

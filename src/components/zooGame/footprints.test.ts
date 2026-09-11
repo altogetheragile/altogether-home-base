@@ -43,7 +43,7 @@ describe('how much ground a feature takes up', () => {
     const byDesign = item({ design: { parts: { type: 'cafe' }, colors: {} }, template: 'kiosk' });
     expect(footprintFor(byDesign)).toEqual(FOOTPRINT.cafe);
     expect(footprintFor(item({ template: 'toilets' }))).toEqual(FOOTPRINT.toilets);
-    // A Backlog item written by hand has no template at all, only a name.
+    // A Product Backlog item written by hand has no template at all, only a name.
     expect(footprintFor(item({ name: 'Gift Shop' }))).toEqual(FOOTPRINT.shop);
     expect(footprintFor(item({ name: 'Ice Cream Stand', services: 'food' }))).toEqual(FOOTPRINT.kiosk);
   });

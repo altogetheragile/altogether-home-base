@@ -35,7 +35,7 @@ describe('what the visitors said, as decisions', () => {
     // The Review walks Done, then the visitors, then what we do about it.
     fireEvent.click(screen.getByRole('button', { name: /Next: the visitors/ }));
     fireEvent.click(screen.getByRole('button', { name: /Next: what we do about it/ }));
-    expect(screen.getAllByRole('button', { name: 'Add to Backlog' }).length).toBe(2);
+    expect(screen.getAllByRole('button', { name: 'Add to the Product Backlog' }).length).toBe(2);
     expect(screen.getAllByRole('button', { name: 'Decline' }).length, 'declining was not offered at all').toBe(2);
   });
 
@@ -121,7 +121,7 @@ describe('improvements drawn from the log', () => {
 
     // ...and with one thing in the log, that one leads and the rest follow it.
     const one = improvementsFrom(after({ decisions: [
-      { sprint: 1, kind: 'refinement', what: 'No time set aside this Sprint to refine the Backlog.' },
+      { sprint: 1, kind: 'refinement', what: 'No time set aside this Sprint to refine the Product Backlog.' },
     ] } as Partial<ZooGameState>));
     expect(one.length).toBeGreaterThanOrEqual(3);
     expect(one[0].because, 'the option the log pointed at was not first').toBeTruthy();
@@ -169,7 +169,7 @@ describe('two defects the review found', () => {
         : it)),
     } as ZooGameState;
     const after = reviewSprint(inSprint).backlog.find((it) => it.id === item.id)!;
-    expect(after.carriedOver, 'unfinished work did not come back to the Backlog').toBe(true);
+    expect(after.carriedOver, 'unfinished work did not come back to the Product Backlog').toBe(true);
     expect(after.estimate, 'it came back at its old size, as though nothing had been built').toBeLessThan(5);
     expect(after.wasEstimate, 'nothing remembers what it was, so the change cannot be explained').toBe(5);
   });

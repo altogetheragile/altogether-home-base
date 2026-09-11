@@ -1,4 +1,5 @@
 import { CANVAS_W, PAD, PROMENADE_Y } from './parkLayout';
+import { riverBand } from './parkWater';
 import { ZOO_AREAS } from './config';
 
 /** The ground each area of the zoo owns.
@@ -26,7 +27,7 @@ export const plotSize = (p: Plot) => ({ w: p.x1 - p.x0, h: p.y1 - p.y0 });
 /** Which areas own ground, in the order they take it.
  *
  *  From the brief, and in the fixed order the areas are written in - NOT from the zones currently on
- *  the Backlog. The Backlog's list grows as items are added, and ground that reshuffled underneath a
+ *  the Product Backlog. The Backlog's list grows as items are added, and ground that reshuffled underneath a
  *  built zoo every time somebody split an epic would be the opposite of safe to grow into.
  *
  *  `Grounds` and `Facilities` are not areas of the zoo: paths, the river, signposts and the toilets
@@ -51,15 +52,26 @@ export function zonePlots(state: { brief?: { zones: string[] }; zones?: string[]
   const cols = order.length <= 1 ? 1 : order.length <= 4 ? 2 : 3;
   const rows = Math.ceil(order.length / cols);
   const cellW = (right - left - PLOT_GAP * (cols - 1)) / cols;
-  const cellH = (bottom - top - PLOT_GAP * (rows - 1)) / rows;
+
+  // The zoo is laid out around the water, not the other way round: the river was here first, so the
+  // rows take the ground it leaves. The front row is this side of it - which is why Sprint 1, in the
+  // area nearest the way in, is dry, and why everything in the back row needs a bridge.
+  const river = riverBand();
+  const band = (row: number) => (rows < 2 || row === 0
+    ? { y0: river.y1, y1: bottom }
+    : { y0: top, y1: river.y0 });
 
   order.forEach((zone, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     const x0 = left + col * (cellW + PLOT_GAP);
-    // Row 0 is the front row, so counting up from the bottom rather than down from the top.
-    const y1 = bottom - row * (cellH + PLOT_GAP);
-    plots.set(zone, { zone, x0, y0: y1 - cellH, x1: x0 + cellW, y1 });
+    const side = band(row);
+    // More rows than sides of the river: they share the ground on their side, stacked.
+    const perSide = Math.max(1, Math.ceil(rows / 2));
+    const depth = (side.y1 - side.y0 - PLOT_GAP * (perSide - 1)) / perSide;
+    const nth = Math.floor(row / 2);
+    const y1 = row % 2 === 0 ? side.y1 - nth * (depth + PLOT_GAP) : side.y0 + nth * (depth + PLOT_GAP) + depth;
+    plots.set(zone, { zone, x0, y0: y1 - depth, x1: x0 + cellW, y1 });
   });
   return plots;
 }

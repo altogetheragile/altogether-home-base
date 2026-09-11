@@ -22,7 +22,7 @@ import { whereItStands } from './parkModel';
 // about - it stays deterministic (so a trainer can still replay a seed), it costs nothing,
 // and it answers instantly.
 //
-// The Product Owner's ordering of the Backlog is the one place real judgement is wanted,
+// The Product Owner's ordering of the Product Backlog is the one place real judgement is wanted,
 // and that already has an edge function (`zoo-po-refine`); it is left where it is rather
 // than dragged in here, so a session can run with no network at all.
 //
@@ -419,11 +419,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     }
   }
 
-  // What the visitors asked for becomes a Backlog item when they decide it does, which is
+  // What the visitors asked for becomes a Product Backlog item when they decide it does, which is
   // the value call the Review exists to produce.
   if (state.phase === 'review' && state.signals.length > 0) {
     return { action: { type: 'ACCEPT_SIGNAL', index: 0 },
-             says: `Visitors asked for this. I am putting it on the Backlog: ${state.signals[0].suggestion}.` };
+             says: `Visitors asked for this. I am putting it on the Product Backlog: ${state.signals[0].suggestion}.` };
   }
   return null;
 }
