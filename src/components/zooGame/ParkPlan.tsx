@@ -355,7 +355,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               style={{ cursor: onPlaceItem ? 'grab' : 'pointer' }}>
               <rect x={x} y={y} width={b.size.w} height={b.size.h} rx={6}
                 fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill)
-                  : b.item.category === 'enclosure' && isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id))
+                  : b.item.category === 'enclosure' && isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id), b.item)
                     ? tankWater(currentDesign(b.item))
                     : c.fill}
                 fillOpacity={b.underWay ? 0.45 : 1}

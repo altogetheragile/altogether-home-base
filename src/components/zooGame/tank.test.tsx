@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { isTank, coatWord, coatChoices, AQUATIC, groupChoices, groupSize, hasRoomToRoam, roomNeeded } from './design';
 import { splitEpic } from './engine';
+import { TOOLBOX, toolboxDraft } from './toolboxItems';
+import { iconKey } from './itemIcons';
 import { initialZooState } from './config';
 import { IsoZoo } from './IsoZoo';
 import type { ZooGameState, BacklogItem } from './types';
@@ -112,5 +114,40 @@ describe('how many fish', () => {
     const { container } = render(<IsoZoo state={s} />);
     const drawn = container.querySelectorAll('[data-spot^="reef:"]').length;
     expect(drawn, 'a shoal was drawn as a handful').toBeGreaterThan(6);
+  });
+});
+
+describe('a tank on the Product Backlog', () => {
+  it('can be written before there is a fish to put in it', () => {
+    // "Can we add the tank to the toolbox for the PBL?" A Product Owner ordering a Backlog writes
+    // "Reef Tank", not "Medium Enclosure, and make it wet later" - so it is a tank from the moment
+    // it is written, with no animal in it yet.
+    const tanks = TOOLBOX.flatMap((g) => g.items).filter((t) => t.template === 'tank');
+    expect(tanks.length, 'the toolbox offers no tank').toBeGreaterThan(2);
+    for (const t of tanks) {
+      const draft = toolboxDraft(t);
+      expect(draft.category, 'a tank is not a habitat').toBe('enclosure');
+      expect(draft.enclosureSize, 'a tank arrived with no size').toBeTruthy();
+      expect(isTank(undefined, [], { template: draft.template }),
+        `${t.name} is on the Backlog as a paddock`).toBe(true);
+    }
+  });
+
+  it('is still the Developers’ to change on the park', () => {
+    // The three ways in, in the order they win: their choice, then what was written, then what
+    // swims in it.
+    const written = { template: 'tank' };
+    expect(isTank({ parts: { ground: 'land' }, colors: {} }, [], written),
+      'a tank they turned back into dry land stayed a tank').toBe(false);
+    expect(isTank({ parts: {}, colors: {} }, [], written)).toBe(true);
+  });
+});
+
+describe('a tank in the Backlog', () => {
+  it('does not look like a fence', () => {
+    // A habitat, so not a fish - that is the trap the icon rule already warns about, where a "Tiger
+    // Enclosure" comes out as a tiger. What makes a tank a tank is that it holds water.
+    expect(iconKey({ name: 'Small Tank', category: 'enclosure', template: 'tank' })).toBe('pond');
+    expect(iconKey({ name: 'Small Enclosure', category: 'enclosure' })).toBe('fence');
   });
 });

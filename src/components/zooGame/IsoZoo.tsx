@@ -1057,7 +1057,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     // A tank, or a paddock. A reef is not kept in a field with a pond in the corner: it is kept
     // behind glass with water to the top, and the visitors look through it.
     const living = state.backlog.filter((it) => it.enclosureId === e.id);
-    const tank = isTank(d, living);
+    const tank = isTank(d, living, e);
     const floor = tank ? shade(tankWater(d), -22) : (d?.colors.ground ?? theme.plot);
     const fence = tank ? (d?.colors.fence ?? '#cfe6f2') : (d?.colors.fence ?? theme.plotBorder);
 

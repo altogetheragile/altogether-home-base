@@ -134,7 +134,10 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     // A habitat is fenced by construction, so this is a fact the park states rather than a hurdle:
     // what it earns is the shape being named, which is the thing the learner chose.
     const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
-    return { met: true, evidence: `Closed${shape ? `, ${shape.label.toLowerCase()}` : ''}` };
+    // ...and a tank says glass, because that is what is holding the animals in. The question still
+    // says "fence", which is the word for the general case; the evidence is what this one has.
+    const held = isTank(design, state.backlog.filter((it) => it.enclosureId === item.id), item) ? 'Glass' : 'Closed';
+    return { met: true, evidence: `${held}${shape ? `, ${shape.label.toLowerCase()}` : ''}` };
   }
 
   if (label === 'Can an animal move about in here?') {
@@ -164,7 +167,7 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
     // while the learner ticked it themselves.
     // A tank IS water: asking it for a pond in the corner is asking a fish to build a pond.
     const living = state.backlog.filter((it) => it.enclosureId === item.id);
-    const tank = isTank(design, living);
+    const tank = isTank(design, living, item);
     const water = tank || enclosureWater(design).length > 0;
     const growing = enclosureFlora(design).length > 0;
     const ground = tank ? !!(design.colors?.water ?? true) : !!design.colors?.ground;
