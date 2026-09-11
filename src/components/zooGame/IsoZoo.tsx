@@ -135,7 +135,7 @@ function along(route: Pt[], t: number): Pt {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
 }
 
-export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, placing, onPlace, selected, onSelect,
+export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlaceItem, placing, onPlace, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
   onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
   selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false, camera = null }: {
@@ -166,6 +166,9 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   onAddConnector?: (c: ZooConnector) => void;
   /** The width and colour the run is laid with - the pathway's own, while one is on the bench. */
   newConn?: { thickness: number; color: string };
+  /** How wide the room is, when whatever is drawing the park knows. Without it the park has to
+   *  guess the shape of its pane, and a guess leaves either empty ground or a cropped zoo. */
+  width?: number;
   /** Which item is open on the design bench. Only its own parts answer to a touch: a park where
    *  every fence in sight opens somebody else's controls is a park you cannot build in. */
   building?: string | null;
@@ -206,8 +209,8 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   // This drawing's own id for the shape landscape is cut to. Two parks on one page - the Increment
   // tab and the Review - would otherwise share one clip path, and share whichever was drawn last.
   const grassClip = `grass-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
-  const scene = useMemo(() => build(state, height, turn, incrementOnly, grassClip),
-    [state, height, turn, incrementOnly, grassClip]);
+  const scene = useMemo(() => build(state, height, turn, incrementOnly, grassClip, width ?? 0),
+    [state, height, turn, incrementOnly, grassClip, width]);
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
   const laying = tool === 'connect' && !!onAddConnector;
@@ -695,7 +698,7 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   );
 }
 
-function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false, grassClip = 'park-grass') {
+function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false, grassClip = 'park-grass', targetW = 0) {
   // WHAT is on the park, how big it is and where it stands are decided in one place, shared with
   // the plan view - see parkModel. This file's job is to draw it from the corner, nothing else.
   // "Show the Increment only" takes the sites away: what is left is what has actually been
@@ -751,7 +754,12 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
 
   // Fit the whole thing, car park included, into the space we have been given.
   const fit = screenBounds(RW, RH, 1);
-  const u = Math.min((targetH * 1.9) / fit.w, targetH / fit.h) * 0.94;
+  // Fitted to the pane it is actually in, when the pane has said how wide it is. Left to guess, it
+  // assumed the room was 1.9 times as wide as it is tall - which was true of the pane it was written
+  // for and of nothing else: in a narrower one the zoo is drawn small with a band of empty ground
+  // above it, and the reading beside it gets pushed off the bottom of the screen. Reported from
+  // playing it: "why do I need to scroll when there is lots of white space on the page above?"
+  const u = Math.min((targetW || targetH * 1.9) / fit.w, targetH / fit.h) * 0.94;
   const b = screenBounds(RW, RH, u);
   const MARGIN = 26;
   // Room above the park for the tallest prop standing at the very back of it.

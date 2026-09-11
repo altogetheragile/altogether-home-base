@@ -29,7 +29,7 @@ export function EventStage({ state, title, note, at, walk, children }: {
   note?: string;
   children: ReactNode;
 }) {
-  const [picture, setPicture] = useState(470);
+  const [picture, setPicture] = useState({ w: 0, h: 470 });
   // Which side the room is looking from. The Review is where somebody is presenting the zoo to
   // stakeholders, and "can we see behind the enclosure?" is a question a room asks out loud.
   const [turn, setTurn] = useState(0);
@@ -37,7 +37,13 @@ export function EventStage({ state, title, note, at, walk, children }: {
   useEffect(() => { if (read.current) read.current.scrollTop = 0; }, [at]);
   const frame = useCallback((el: HTMLDivElement | null) => {
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = () => setPicture(Math.max(240, Math.round(el.clientHeight - 34)));
+    // Both dimensions, and no floor under the height. The floor was 240: in a short window the
+    // picture insisted on more room than the panel had, so the zoo was drawn over the bottom of its
+    // own card and everything beside it went below the fold. A picture takes the room it is given.
+    const measure = () => setPicture({
+      w: Math.max(120, Math.round(el.clientWidth - 24)),
+      h: Math.max(120, Math.round(el.clientHeight - 34)),
+    });
     new ResizeObserver(measure).observe(el);
     measure();
   }, []);
@@ -59,10 +65,10 @@ export function EventStage({ state, title, note, at, walk, children }: {
               it, and the same walk is offered on the Increment tab - one component, one walk. */}
           {walk ? (
             <FlyThrough state={state} className="px-3 pb-2">
-              {(camera) => <IsoZoo state={state} height={picture} turn={turn} camera={camera} />}
+              {(camera) => <IsoZoo state={state} height={picture.h} width={picture.w} turn={turn} camera={camera} />}
             </FlyThrough>
           ) : (
-            <IsoZoo state={state} height={picture} turn={turn} className="px-3 pb-2" />
+            <IsoZoo state={state} height={picture.h} width={picture.w} turn={turn} className="px-3 pb-2" />
           )}
         </Suspense>
       </section>
