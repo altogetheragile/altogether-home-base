@@ -8,7 +8,7 @@ import { ISO_ART } from './art/isoArt.generated';
 import { ANIMAL_ART } from './art/animalArt.generated';
 import { hasAnimalArt } from './art/animalArt';
 import { footprintFor } from './design';
-import { CANVAS_W } from './parkLayout';
+import { CANVAS_W, PLAY_H } from './parkLayout';
 import { VEHICLE_ART } from './art/vehicleArt.generated';
 
 /** A species nobody has drawn.
@@ -800,7 +800,9 @@ describe('a river is a decision, not a fixture', () => {
     ...initialZooState(), zones: ['Grounds'],
     backlog: [{
       id: 'riv', name: 'River', zone: 'Grounds', category: 'flora', template: 'river',
-      status: 'open', points: 1, acceptance: [], acConfirmed: [], tasks: [], pos: { x: 410, y: 330 },
+      // The middle of the park, worked out rather than written down: this used to say 410, 330,
+      // which WAS the middle until the plot grew.
+      status: 'open', points: 1, acceptance: [], acConfirmed: [], tasks: [], pos: { x: CANVAS_W / 2, y: PLAY_H / 2 },
       design: { parts: { type: 'river', piece: 'stream' }, colors: {} }, ...over,
     } as unknown as BacklogItem],
   } as unknown as ZooGameState);

@@ -4,7 +4,7 @@ import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, qu
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater } from './parkWater';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
 import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater } from './design';
@@ -55,7 +55,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, inside, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, inside, focusZone, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -77,6 +77,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void;
   /** Something is being put down for the first time: it follows the cursor with a verdict on it. */
   placing?: { id: string; w: number; h: number } | null;
+  /** The area of the zoo to fill the picture with, when the whole zoo is not what is wanted.
+   *  Building happens in an area: a park drawn small enough to show all of it is a park nothing can
+   *  be dropped on accurately. */
+  focusZone?: string | null;
   onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }, into?: string) => void;
   /** The park's own tool. A path is drawn point to point: click where it starts, click where it
    *  ends, and it runs between them. Nothing else on the park needs a tool. */
@@ -123,15 +127,29 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   // What the picture covers: the whole park, or one habitat when you are working inside it. The
   // same renderer and the same coordinates, closer in - not a window over the park.
   const insideBox = inside ? boxes.find((b) => b.item.id === inside) : undefined;
+  // Three levels of the same picture, and they are the same picture: the whole zoo, one area of it,
+  // and the inside of one habitat. Nothing is drawn differently at any of them - the viewBox moves,
+  // and that is all. A separate "zone screen" would be a second park to keep in step with the first.
+  const lot = focusZone ? plots.get(focusZone) : null;
   const box = insideBox
     ? { x: insideBox.at.x - insideBox.size.w * 0.8, y: insideBox.at.y - insideBox.size.h * 0.8,
         w: insideBox.size.w * 1.6, h: insideBox.size.h * 1.6 }
-    : { x: -VERGE, y: -VERGE, w: CANVAS_W + VERGE * 2, h: PLAY_H + APRON_H + VERGE };
+    : lot
+      ? { x: lot.x0 - 26, y: lot.y0 - 26, w: lot.x1 - lot.x0 + 52, h: lot.y1 - lot.y0 + 52 }
+      : { x: -VERGE, y: -VERGE, w: CANVAS_W + VERGE * 2, h: PLAY_H + APRON_H + VERGE };
   const view = `${box.x} ${box.y} ${box.w} ${box.h}`;
   // Zoomed in, a label written in park units comes out enormous. Everything that is chrome rather
   // than park - names, pills, grips - is scaled by how much the picture is magnified, so it stays
   // the size it looks on the whole park.
+  // How much the picture is magnified, so that anything which is chrome rather than park - names,
+  // pills, grips - comes out the same size on the screen at every level.
+  //
+  // Written in park units, which is why the second number is here: a label sized for a park 820
+  // across is half the size it should be on a park 1760 across, because the whole thing is drawn
+  // into the same pane. So chrome is sized as a FRACTION of the park rather than in pixels somebody
+  // measured once.
   const k = box.w / CANVAS_W;
+  const ch = (px: number) => (px * CANVAS_W * k) / 820;
 
   /** Pointer to park coordinates, whatever the picture is covering. */
   const worldAt = (e: { clientX: number; clientY: number }) => {
@@ -344,8 +362,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             the way in is - so the plan and the Increment agree about where the park stops. Seen
             from straight above, a tree is its canopy. */}
         <g>
-          {hedgePoints(24).map(({ x, y, n }) => {
-            const r = 11 + 7 * edgeNoise(n);
+          {hedgePoints(HEDGE_STEP).map(({ x, y, n }) => {
+            const r = HEDGE_R * (1 + 0.6 * edgeNoise(n));
             return (
               <g key={`tree-${n}`}>
                 <circle cx={x} cy={y} r={r} fill="#3f6a31" />
@@ -381,7 +399,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               <rect x={p.x0} y={p.y0} width={size.w} height={size.h} rx={16}
                 fill={theme.plot} opacity={open ? 0.3 : 0.14}
                 stroke={theme.plotBorder} strokeWidth={2} strokeDasharray={open ? undefined : '11 9'} />
-              <text x={p.x0 + 14} y={p.y0 + 24} fontSize={15 * k} fontWeight={700} fill="#3f4a2f"
+              <text x={p.x0 + 14} y={p.y0 + 24} fontSize={ch(15)} fontWeight={700} fill="#3f4a2f"
                 opacity={open ? 0.85 : 0.6}>{p.zone}</text>
             </g>
           );
@@ -524,7 +542,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               {/* The name, and only out on the whole park: inside a habitat the picture IS the
                   habitat, and the inspector's pill already says which. */}
               {!inside && (
-                <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={13 * k} fontWeight={700} fill="#20351f">
+                <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={ch(13)} fontWeight={700} fill="#20351f">
                   {b.item.name}{b.underWay ? ' · built, not Done' : ''}
                 </text>
               )}
@@ -553,7 +571,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                     <rect x={b.at.x - Math.max(90, text.length * 3.4)} y={y + b.size.h + 6}
                       width={Math.max(180, text.length * 6.8)} height={24} rx={12}
                       fill={ready ? '#dcfce7' : '#fff7ed'} stroke={ready ? '#16a34a' : '#f59e0b'} strokeWidth={2} />
-                    <text x={b.at.x} y={y + b.size.h + 22} textAnchor="middle" fontSize={12} fontWeight={600}
+                    <text x={b.at.x} y={y + b.size.h + 22} textAnchor="middle" fontSize={ch(12)} fontWeight={600}
                       fill={ready ? '#166534' : '#9a3412'}>{text}</text>
                   </g>
                 );
@@ -566,9 +584,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 <g data-part="turn-grip" style={{ cursor: 'pointer' }}
                   onPointerDown={(e) => { e.stopPropagation(); onTurn(b.item.id, ((b.item.rot ?? 0) + 90) % 360); }}>
                   <title>Turn it a quarter</title>
-                  <circle cx={x + b.size.w - 9 * k} cy={y + 9 * k} r={11 * k} fill="#fff" stroke="#e6842a" strokeWidth={3 * k} />
+                  <circle cx={x + b.size.w - ch(9)} cy={y + ch(9)} r={ch(11)} fill="#fff" stroke="#e6842a" strokeWidth={ch(3)} />
                   <path d="M -5 -1 A 5 5 0 1 1 -1 5" fill="none" stroke="#e6842a" strokeWidth={2.4}
-                    strokeLinecap="round" transform={`translate(${x + b.size.w - 9 * k} ${y + 9 * k}) scale(${k})`} />
+                    strokeLinecap="round" transform={`translate(${x + b.size.w - ch(9)} ${y + ch(9)}) scale(${ch(1)})`} />
                 </g>
               )}
 
@@ -577,8 +595,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   it needs to be - which is what the takeover promises when it says its size is set
                   on the park. */}
               {on && onSetSize && (b.item.category === 'enclosure' || b.item.category === 'flora') && (
-                <rect data-part="size-grip" x={x + b.size.w - 9 * k} y={y + b.size.h - 9 * k} width={18 * k} height={18 * k} rx={4 * k}
-                  fill="#fff" stroke="#e6842a" strokeWidth={3 * k}
+                <rect data-part="size-grip" x={x + b.size.w - ch(9)} y={y + b.size.h - ch(9)} width={ch(18)} height={ch(18)} rx={ch(4)}
+                  fill="#fff" stroke="#e6842a" strokeWidth={ch(3)}
                   style={{ cursor: 'nwse-resize' }}
                   onPointerDown={(e) => sizeFrom(e, b)} />
               )}
@@ -600,7 +618,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               fill={ghost.ok ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)'}
               stroke={ghost.ok ? '#059669' : '#dc2626'} strokeWidth={3} />
             {!ghost.ok && ghost.why && (
-              <text x={ghost.x} y={ghost.y} textAnchor="middle" fontSize={14} fontWeight={700} fill="#b91c1c">{ghost.why}</text>
+              <text x={ghost.x} y={ghost.y} textAnchor="middle" fontSize={ch(14)} fontWeight={700} fill="#b91c1c">{ghost.why}</text>
             )}
           </g>
         )}

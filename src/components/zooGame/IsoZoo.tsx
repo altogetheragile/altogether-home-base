@@ -5,7 +5,7 @@ import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { zonePlots } from './parkZones';
 import { riverOutline } from './parkWater';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, edgeNoise } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, edgeNoise, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { TRAVEL_MS } from './walkThrough';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { FACILITY } from './facilities';
@@ -840,7 +840,10 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
    *  It does not make the arithmetic right - a tree held at the edge is still a tree in the wrong
    *  place. It makes it stay in the picture, where it can be seen to be wrong, instead of floating
    *  in the white beside the park looking like the game has come apart. */
-  const onLand = (v: number, hi: number) => Math.max(0, Math.min(hi, v));
+  // A pace inside the edge, not exactly on it: held to the boundary, a prop's feet land on the line
+  // itself, which is as much off the park as on it - and reads as a tree growing out of thin air at
+  // the corner of the land.
+  const onLand = (v: number, hi: number) => Math.max(1, Math.min(hi - 1, v));
   const place = (name: string, rawX: number, rawY: number, k: number, key: string, tintTo?: string, filter?: string,
     /** What this drawing IS, so a pointer that lands on it can say what it touched. A prop is drawn
      *  above the ground it stands on - you grab a tree by its canopy, and its canopy is nowhere
@@ -919,8 +922,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // A line of trees along the boundary, standing on the same points the boundary is drawn through.
   // Not decoration for its own sake: a green edge fading into a green middle reads as a blob, and
   // the trees are what say "the park stops here". None along the front - that is the way in.
-  hedgePoints(62).forEach(({ x, y, n }) => {
-    place(n % 4 ? 'tree' : 'treeTall', x, y, u * (0.44 + 0.2 * edgeNoise(n)), `hedge-${n}`,
+  hedgePoints(HEDGE_STEP * 2.5).forEach(({ x, y, n }) => {
+    place(n % 4 ? 'tree' : 'treeTall', x, y, u * HEDGE_R * (0.04 + 0.018 * edgeNoise(n)), `hedge-${n}`,
       undefined, undefined, { 'data-prop': 'hedge' });
   });
 

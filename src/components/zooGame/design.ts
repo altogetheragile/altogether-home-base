@@ -1269,7 +1269,10 @@ export const DEFAULT_FOOTPRINT = { w: 64, h: 60 };
 /** How long a river is cut. It runs right across the land, fence to fence, with no gap at either
  *  end - so it is cut long enough to reach past two opposite edges even on the diagonal, and
  *  whatever draws it clips it to the park. */
-export const RIVER_LEN = 1180;
+// Kept here as a number rather than worked out from the park's size: parkLayout reads this module,
+// so this module cannot read it back. `river.test.tsx` holds it to the park's diagonal, which is the
+// rule - a river cut shorter than that leaves a gap at one end when it is turned.
+export const RIVER_LEN = 2520;
 
 /** The ground a feature stands on. Landscape scenery keeps its own resizable footprint; everything
  *  else takes the size its kind is worth.

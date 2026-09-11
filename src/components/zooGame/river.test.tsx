@@ -6,7 +6,8 @@ import { initialZooState, starterBacklog } from './config';
 import { riverCourse, riverBand, riverY, waterRects, onWater, inWater, RIVER_Y } from './parkWater';
 import { zonePlots, plotOrder } from './parkZones';
 import { walkTo } from './parkNetwork';
-import { CANVAS_W, FRONT_Y } from './parkLayout';
+import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
+import { RIVER_LEN } from './design';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The river was here before the zoo was.
@@ -76,6 +77,18 @@ describe('the river', () => {
   it('winds, rather than running straight across', () => {
     const ys = riverCourse().map((p) => p.y);
     expect(Math.max(...ys) - Math.min(...ys), 'the river is a canal').toBeGreaterThan(20);
+  });
+});
+
+describe('a river somebody adds as scenery', () => {
+  it('is still cut long enough to cross the park at any angle', () => {
+    // Not the terrain river - the pond-and-stream kind, from the toolbox. It is cut to a fixed
+    // length and clipped to the park, so it has to be longer than the park's diagonal or turning it
+    // leaves a gap at one end. The park has grown once already; this is what notices the next time.
+    // Turned to 45 degrees, crossing a park W wide takes W times root two - which is longer than
+    // the park's diagonal, and is the number that caught this when the plot grew.
+    expect(RIVER_LEN, 'a river no longer reaches across the park it is drawn on')
+      .toBeGreaterThanOrEqual(Math.max(CANVAS_W, PLAY_H) * Math.SQRT2);
   });
 });
 

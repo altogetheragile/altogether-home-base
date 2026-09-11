@@ -11,7 +11,7 @@ import { applyParkChecks, checkCriterion } from './parkChecks';
 import { lookAhead } from './lookAhead';
 import { standingOnPark, parkPositions, restingPlace } from './parkModel';
 import { autoLayout, insidePark, parkBounds, shapeEdge, insideShape, CANVAS_W, PLAY_H } from './parkLayout';
-import { type AnimalGroup, KIND_SCALE, groupMembers, groupSize, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance } from './design';
+import { type AnimalGroup, KIND_SCALE, groupMembers, groupSize, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance, RIVER_LEN } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 import { copyEntries, applyCopyOverrides } from './copy';
@@ -3162,7 +3162,9 @@ describe('zoo game: a position saved when the park was a different size', () => 
   });
 
   it('holds a river by its centre, because it is meant to run off both edges', () => {
-    const river = { w: 1180, h: 40 };
+    // The river's own length rather than a number copied from it: this said 1180, which was longer
+    // than the park until the plot grew, and then quietly stopped being a river that spans it.
+    const river = { w: RIVER_LEN, h: 40 };
     const b = parkBounds(river);
     expect(b.minX).toBe(8);
     expect(b.maxX).toBe(CANVAS_W - 8);

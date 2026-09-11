@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { deliveredThisSprint, walkTo, parkNetwork, ENTRANCE } from './parkNetwork';
+import { RIVER_Y } from './parkWater';
 import { initialZooState } from './config';
 import { presetFor } from './design';
 import type { ZooGameState, BacklogItem } from './types';
@@ -29,7 +30,9 @@ describe('the walkable park', () => {
   it('lets a visitor reach a habitat standing in the open', () => {
     const s = sprint();
     const h = habitat(s);
-    const built = delivered(s, h.id, { x: 400, y: 300 });
+    // On the near side of the river: "the open" is the ground between the way in and the water, and
+    // the far bank is open ground a visitor genuinely cannot reach without a bridge.
+    const built = delivered(s, h.id, { x: 400, y: RIVER_Y + 220 });
     expect(walkTo(built, built.backlog.find((it) => it.id === h.id)!),
       'nobody could walk to a habitat in the middle of an empty park').toBeTruthy();
   });
@@ -37,7 +40,9 @@ describe('the walkable park', () => {
   it('walks round a habitat rather than through it', () => {
     const s = sprint();
     const h = habitat(s);
-    const built = delivered(s, h.id, { x: 400, y: 300 });
+    // On the near side of the river: "the open" is the ground between the way in and the water, and
+    // the far bank is open ground a visitor genuinely cannot reach without a bridge.
+    const built = delivered(s, h.id, { x: 400, y: RIVER_Y + 220 });
     const net = parkNetwork(built);
     expect(net.solid?.length, 'a habitat is not something to walk around').toBeGreaterThan(0);
     expect(net.paths.some((p) => p.length > 1), 'there is nowhere to walk at all').toBe(true);

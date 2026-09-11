@@ -9,13 +9,21 @@ import { enclosureShapePoints } from './design';
 /** Anything that takes up room in the park: an id and a footprint in design pixels. */
 export interface LayoutBox { id: string; w: number; h: number }
 
-// The park is one of three columns - Product Backlog, Sprint Backlog, product - so it is taller
-// than it is wide. A landscape park squeezed into a third of the screen is a postage stamp.
-export const CANVAS_W = 820;
+// The plot is sized from what has to FIT on it, not from the pane it is drawn in.
+//
+// Six areas of the zoo, three across and two deep, and an area has to hold its animals: the Big
+// Cats is a lion, a tiger, a leopard and a kiosk, with room to walk between them. That is about
+// 520 x 400 an area, which is where these numbers come from. Reported from playing it, looking at
+// a finished Big Cats: "if this is the finished Big Cats Zone then it is too small."
+//
+// It is bigger than a pane, and that is the point of the park having levels: the whole zoo is for
+// reading and planning, one area is for building in. Drawn all at once, a habitat is sixty pixels
+// wide and nothing can be dropped on it accurately.
+export const CANVAS_W = 1760;
 // The park's own height, and it does not change. It used to be measured from wherever the lowest
 // thing had ended up, which meant the park grew when you added a gift shop and the whole scene
 // rescaled to fit - so laying down one more thing resized everything already laid down.
-export const PLAY_H = 700;
+export const PLAY_H = 1080;
 // Room to walk. The park's edge is a boundary, not a wall you can put a habitat against: a
 // visitor asked "can I walk right round it?" and a Product Owner looking at an enclosure jammed
 // into the corner has to answer no, with nothing they can do about it - the layout put it there.
@@ -137,7 +145,10 @@ export const edgeNoise = (i: number): number => wobble(i * 7 + 5);
  *  50 gives a shaky hand rather than a hedge line. */
 export function parkOutline(wander = EDGE_WANDER): { x: number; y: number }[] {
   const pts: { x: number; y: number }[] = [];
-  const inset = 8;
+  // Far enough in that the treeline, which stands just OUTSIDE the grass, is still on the plot: a
+  // tree planted beyond the lot gets held to the edge by the drawing, and a prop standing exactly on
+  // the boundary is a prop half off the park.
+  const inset = 18;
   const round = wander * 0.9; // how far the two back corners are cut off
   const side = (ax: number, ay: number, bx: number, by: number, k: number, step = 108, amp = wander) => {
     const len = Math.hypot(bx - ax, by - ay);
@@ -168,6 +179,13 @@ export function parkOutline(wander = EDGE_WANDER): { x: number; y: number }[] {
  *  in. Where the treeline runs is decided here, once; how finely each drawing plants it is the
  *  drawing's own business, because a canopy from above and a tree in the round are not the same
  *  width on the screen. */
+/** How far apart the trees along the boundary stand, and how big their canopies are drawn: both in
+ *  proportion to the plot, so that growing the park plants a bigger wood rather than the same number
+ *  of trees stretched thin - or, as it did the day the plot doubled, four times as many of them and
+ *  a park too slow to draw. */
+export const HEDGE_STEP = CANVAS_W / 36;
+export const HEDGE_R = CANVAS_W / 73;
+
 export function hedgePoints(step: number): { x: number; y: number; n: number }[] {
   const ring = parkOutline();
   const out: { x: number; y: number; n: number }[] = [];
@@ -181,7 +199,7 @@ export function hedgePoints(step: number): { x: number; y: number; n: number }[]
       // Off the line by a few paces, and always OUTWARD, on the countryside side: a stand of trees
       // rather than beads threaded on a string, and no canopy hanging over ground something is
       // allowed to stand on.
-      const off = -(2 + 11 * edgeNoise(n + 40));
+      const off = -(2 + 10 * edgeNoise(n + 40));
       const p = { x: a.x + (b.x - a.x) * t + nx * off, y: a.y + (b.y - a.y) * t + ny * off, n };
       n += 1;
       if (p.y < PROMENADE_Y - 12) out.push(p);
