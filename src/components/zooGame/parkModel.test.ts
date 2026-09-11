@@ -80,7 +80,7 @@ describe('what is standing on the park', () => {
     const river = item({ id: 'riv', category: 'flora', template: 'river' });
     const s = zoo([river]);
     const standing = standingOnPark(s);
-    const auto = parkPositions(standing);
+    const auto = parkPositions(standing, new Map());
     expect(restingPlace(river, standing[0].size, auto).x).toBe(CANVAS_W / 2);
     // dragged, it stays where it was put
     const moved = { ...river, pos: { x: 200, y: 300 } };
@@ -95,7 +95,7 @@ describe('what is standing on the park', () => {
       item({ id: 'd', category: 'flora', template: 'oak' }),
     ]);
     const standing = standingOnPark(s);
-    const auto = parkPositions(standing);
+    const auto = parkPositions(standing, new Map());
     for (const st of standing) {
       const p = restingPlace(st.item, st.size, auto);
       expect(p.x, st.item.id).toBeGreaterThan(0);
@@ -198,7 +198,7 @@ describe('two things cannot stand on the same ground', () => {
     const size = { w: 220, h: 160 };
     const placed = { item: { id: 'lion-enc', pos: { x: 300, y: 300 } }, size } as unknown as Standing;
     const fresh = { item: { id: 'tiger-enc' }, size } as unknown as Standing;
-    const where = parkPositions([placed, fresh]);
+    const where = parkPositions([placed, fresh], new Map());
     const tiger = where.get('tiger-enc')!;
     expect(tiger, 'the new habitat was never given a place at all').toBeTruthy();
     expect(overlap({ ...tiger, ...size }, { x: 300, y: 300, ...size }),
@@ -212,7 +212,7 @@ describe('two things cannot stand on the same ground', () => {
       { item: { id: 'b', pos: { x: 520, y: 220 } }, size },
       ...['c', 'd', 'e'].map((id) => ({ item: { id }, size })),
     ] as unknown as Standing[];
-    const where = parkPositions(standing);
+    const where = parkPositions(standing, new Map());
     const boxes = standing.map((s) => ({ id: s.item.id, ...size, ...(s.item.pos ?? where.get(s.item.id)!) }));
     for (let i = 0; i < boxes.length; i += 1) {
       for (let j = i + 1; j < boxes.length; j += 1) {

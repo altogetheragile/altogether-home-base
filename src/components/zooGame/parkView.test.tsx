@@ -52,7 +52,7 @@ function busyPark(): ZooGameState {
  *  off a drawing: the layout is a rule about the zoo, not about how it is painted. */
 function layout(state: ZooGameState): string[] {
   const standing = standingOnPark(state);
-  const auto = parkPositions(standing);
+  const auto = parkPositions(standing, new Map());
   return standing
     .map((s) => { const p = positionOf(s, auto); return `${s.item.id} at ${Math.round(p.x)},${Math.round(p.y)} in ${s.size.w}x${s.size.h}`; })
     .sort();

@@ -40,7 +40,11 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 
 /** Default tidy layout for features without a saved position: shelf-pack left-to-right,
  *  wrapping within the canvas width. Returns each feature's CENTRE in design px. */
-export function autoLayout(boxes: LayoutBox[], taken: (LayoutBox & { x: number; y: number })[] = []): Map<string, { x: number; y: number }> {
+export function autoLayout(boxes: LayoutBox[], taken: (LayoutBox & { x: number; y: number })[] = [],
+  /** The ground to lay them out on. The whole park unless an area of the zoo owns this lot - the
+   *  packing is the same either way, so an area and the park cannot drift apart in how they fill. */
+  area: { x0: number; y0: number; x1: number; y1: number } = { x0: PAD, y0: PAD, x1: CANVAS_W - PAD, y1: PLAY_H - PAD },
+): Map<string, { x: number; y: number }> {
   // Two passes: shelf-pack into rows by width, then space the rows down the park.
   //
   // It used to be one pass that clamped each feature into the park as it went, which was fine until
@@ -50,9 +54,9 @@ export function autoLayout(boxes: LayoutBox[], taken: (LayoutBox & { x: number; 
   // full zoo tightens up rather than piling up.
   const rows: LayoutBox[][] = [];
   let row: LayoutBox[] = [];
-  let x = PAD;
+  let x = area.x0;
   for (const f of boxes) {
-    if (x + f.w > CANVAS_W - PAD && row.length) { rows.push(row); row = []; x = PAD; }
+    if (x + f.w > area.x1 && row.length) { rows.push(row); row = []; x = area.x0; }
     row.push(f);
     x += f.w + GAP;
   }
@@ -60,17 +64,18 @@ export function autoLayout(boxes: LayoutBox[], taken: (LayoutBox & { x: number; 
 
   const heights = rows.map((r) => Math.max(...r.map((f) => f.h)));
   const needed = heights.reduce((a, b) => a + b, 0) + GAP * Math.max(0, rows.length - 1);
-  const room = PLAY_H - PAD * 2;
+  const room = area.y1 - area.y0;
   // When it will not fit, close the gaps between rows first and overlap only as much as is left -
   // evenly, so no two rows sit exactly on top of each other.
   const squeeze = needed > room && rows.length > 1 ? (room - heights.reduce((a, b) => a + b, 0)) / (rows.length - 1) : GAP;
 
   const pos = new Map<string, { x: number; y: number }>();
-  let top = PAD;
+  let top = area.y0;
   rows.forEach((r, i) => {
-    let cx = PAD;
+    let cx = area.x0;
     for (const f of r) {
-      pos.set(f.id, { x: cx + f.w / 2, y: clamp(top + heights[i] / 2, PAD + f.h / 2, PLAY_H - PAD - f.h / 2) });
+      pos.set(f.id, { x: cx + f.w / 2, y: clamp(top + heights[i] / 2,
+        Math.min(area.y0 + f.h / 2, area.y1 - f.h / 2), area.y1 - f.h / 2) });
       cx += f.w + GAP;
     }
     top += heights[i] + squeeze;

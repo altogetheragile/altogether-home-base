@@ -2202,7 +2202,7 @@ describe('zoo game: where work stands while it is being built', () => {
     for (const w of wanted.filter((x) => x.category !== 'enclosure')) s = startItem(s, w.id);
 
     const standing = standingOnPark(s);
-    const auto = parkPositions(standing);
+    const auto = parkPositions(standing, new Map());
     const where = standing.map((st) => ({ name: st.item.name, size: st.size, at: restingPlace(st.item, st.size, auto) }));
     // The park draws fewer boxes than there are items: an animal in a built habitat is drawn
     // inside it rather than beside it. What matters is that none of the boxes it does draw sit

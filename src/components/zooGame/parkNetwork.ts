@@ -1,4 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
+import { zonePlots } from './parkZones';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
 import { buildNav, routeAcross, type NavInput, type Pt, type Rect } from './parkNav';
@@ -20,7 +21,7 @@ export const ENTRANCE: Pt = { x: CANVAS_W / 2, y: FRONT_Y };
 
 const boxOf = (state: ZooGameState) => {
   const standing = standingOnPark(state);
-  const auto = parkPositions(standing);
+  const auto = parkPositions(standing, zonePlots(state));
   return standing.map((s) => ({ item: s.item, size: s.size, at: restingPlace(s.item, s.size, auto) }));
 };
 

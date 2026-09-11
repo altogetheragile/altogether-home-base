@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
 import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
+import { zonePlots } from './parkZones';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, edgeNoise } from './parkLayout';
 import { TRAVEL_MS } from './walkThrough';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
@@ -201,13 +202,19 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
    *  the Increment is the thing being inspected, and a site is not part of it. */
   incrementOnly?: boolean;
 }) {
-  const scene = useMemo(() => build(state, height, turn, incrementOnly), [state, height, turn, incrementOnly]);
+  // This drawing's own id for the shape landscape is cut to. Two parks on one page - the Increment
+  // tab and the Review - would otherwise share one clip path, and share whichever was drawn last.
+  const grassClip = `grass-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
+  const scene = useMemo(() => build(state, height, turn, incrementOnly, grassClip),
+    [state, height, turn, incrementOnly, grassClip]);
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
   const laying = tool === 'connect' && !!onAddConnector;
   // Placing something with the palette: the footprint follows the cursor as a translucent copy,
   // green where it can go and red where it cannot, with the reason in a word. No dialog - you can
   // see the answer before you commit to the question.
+  // This drawing's own id for the shape landscape is cut to. Two parks on one page - the Increment
+  // tab and the Review - would otherwise share one clip path, and share whichever was rendered last.
   const [ghost, setGhost] = useState<{ x: number; y: number; ok: boolean; why?: string } | null>(null);
   // Drawing the boundary: a habitat is a rectangle you drag on the grid, and the fence follows the
   // drag. The park builds three footprints, so what you draw is answered with the nearest of them -
@@ -687,7 +694,7 @@ export function IsoZoo({ state, height = 460, className, turn = 0, onPlaceItem, 
   );
 }
 
-function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false) {
+function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false, grassClip = 'park-grass') {
   // WHAT is on the park, how big it is and where it stands are decided in one place, shared with
   // the plan view - see parkModel. This file's job is to draw it from the corner, nothing else.
   // "Show the Increment only" takes the sites away: what is left is what has actually been
@@ -807,7 +814,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // Positions: the item's own spot if it has one, otherwise the same automatic layout the park uses,
   // so the two views never disagree about where anything is.
   const sizeOf = (it: BacklogItem): { w: number; h: number } => roomFor.get(it.id)?.size ?? groundSize(it);
-  const auto = parkPositions(standing);
+  const plots = zonePlots(state);
+  const auto = parkPositions(standing, plots);
   const posOf = (it: BacklogItem): Pt => restingPlace(it, sizeOf(it), auto);
 
   const pieces: Piece[] = [];
@@ -871,6 +879,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // The same front the plan paints and the routing walks - one definition, in parkLayout.
   const promY = PROMENADE_Y;
   const meadow = '#bcc98e';
+  const grassPath = outlinePath(parkOutline().map((pt) => P(pt.x, pt.y)));
   const cFL = P(0, worldH), cFR = P(CANVAS_W, worldH), cR = P(CANVAS_W, 0);
   nodes.push(
     <polygon key="edge-l" points={`${P(0, worldH).x},${P(0, worldH).y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cFL.x},${cFL.y + EDGE}`} fill={shade(tarmac, -40)} />,
@@ -879,11 +888,25 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     // wandering boundary the plan draws, put through the same projection as everything else, so the
     // two views are one park seen twice rather than two parks that nearly agree.
     <polygon key="field" data-land="field" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={meadow} />,
-    <path key="grass" data-land="grass" d={outlinePath(parkOutline().map((pt) => P(pt.x, pt.y)))}
+    <path key="grass" data-land="grass" d={grassPath}
       fill={grass} stroke={shade(grass, -34)} strokeWidth={2} />,
+    // Landscape is cut to this, so a river stops at its bank instead of hanging over the meadow.
+    <clipPath key="grass-clip" id={grassClip}><path d={grassPath} /></clipPath>,
     <polygon key="prom" points={ground(0, promY, CANVAS_W, PLAY_H)} fill="#e7d6a8" />,
     <polygon key="apron" data-land="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
   );
+
+  // The ground each area of the zoo owns, tinted on the grass. The same plots the plan marks out:
+  // an Increment that showed no areas, beside a plan laid out in them, would be two zoos.
+  [...plots.values()].forEach((p) => {
+    const theme = themeOf(p.zone);
+    const open = standing.some((s) => s.item.zone === p.zone);
+    nodes.push(
+      <polygon key={`plot-${p.zone}`} data-plot={p.zone} points={ground(p.x0, p.y0, p.x1, p.y1)}
+        fill={theme.plot} opacity={open ? 0.34 : 0.16} stroke={theme.plotBorder} strokeWidth={1.5}
+        strokeDasharray={open ? undefined : '10 8'} />,
+    );
+  });
 
   // A line of trees along the boundary, standing on the same points the boundary is drawn through.
   // Not decoration for its own sake: a green edge fading into a green middle reads as a blob, and
@@ -968,8 +991,10 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     const a = x0 - pad, b = y0 - pad, c = x1 + pad, d = y1 + pad;
     const dash = Math.max(2.5, u * 7);
     nodes.push(
-      <polygon key={`site-${id}`} points={ground(a, b, c, d)} fill="#f59e0b" opacity={0.16} />,
+      <polygon key={`site-${id}`} points={ground(a, b, c, d)} fill="#f59e0b" opacity={0.16}
+        clipPath={`url(#${grassClip})`} />,
       <polygon key={`site-edge-${id}`} points={ground(a, b, c, d)} fill="none" stroke="#f59e0b"
+        clipPath={`url(#${grassClip})`}
         strokeWidth={Math.max(0.7, u * 1.6)} strokeDasharray={`${dash} ${dash * 0.7}`} strokeLinejoin="round" />,
     );
     // Named, and said. Orange hoardings read as "something is happening here"; the name and the
@@ -1589,7 +1614,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // river reaching both banks at any angle without swinging out over the car park.
         const lie = clipTo(swing(c.x, c.y, size.w, size.h, spin), 0, 0, CANVAS_W, PLAY_H);
         if (!lie.length) continue;
-        nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92} />);
+        nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92}
+          clipPath={`url(#${grassClip})`} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string, copy?: number) =>
           place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage),
