@@ -26,6 +26,19 @@ export function DayClock({ state, onPause }: {
   const pct = big ? Math.max(0, Math.min(100, (big.seconds / Math.max(1, big.total)) * 100)) : 0;
   const low = !!big && pct <= 25;
 
+  // Nothing is being counted, so nothing is drawn as though it were. Outside a Sprint this showed a
+  // dash where the minutes go and a full-width empty bar under it - two grey bars around a label,
+  // which is what a clock reading nothing looks like when it is drawn anyway. Reported from playing
+  // it: "there is a funny thing on the header."
+  if (!big) {
+    return (
+      <div data-part="day-clock" className="flex min-w-0 shrink-0 items-center gap-2">
+        <span className="truncate text-sm font-semibold text-white/80">{note ?? 'no Sprint yet'}</span>
+        {small && <span className="shrink-0 text-[10px] leading-none text-white/60">{small}</span>}
+      </div>
+    );
+  }
+
   return (
     <div data-part="day-clock" className="flex min-w-0 shrink-0 items-center gap-2">
       {onPause && !state.learnMode && big && (
