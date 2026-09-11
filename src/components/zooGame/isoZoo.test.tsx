@@ -233,7 +233,9 @@ describe('the isometric projection', () => {
 
     // The river is the widest blue thing on the ground; the visitors are nested <svg> props. Both
     // are in screen coordinates, so a visitor drawn over the water is one standing in it.
-    const people = [...svg.querySelectorAll('svg')];
+    // Not the treeline: it stands ON the park's boundary, and the river runs bank to bank, so a
+    // tree beside the water is a tree beside the water. It is the visitors who must keep out of it.
+    const people = [...svg.querySelectorAll('svg:not([data-prop="hedge"])')];
     expect(people.length, 'nobody came to the zoo').toBeGreaterThan(2);
     const blue = (fill: string | null) => {
       const m = /^#([0-9a-f]{6})$/i.exec(fill ?? '');
@@ -721,7 +723,10 @@ function boxOf(el: Element): { left: number; right: number; top: number; bottom:
 function land(scene: Element): { x: number; y: number }[] {
   const pts = [...scene.querySelectorAll('[data-land]')]
     .flatMap((p) => (p.getAttribute('points') ?? '').split(' ')
-      .map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; }));
+      .map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; }))
+    // The park's own boundary wanders, and is drawn as a curve rather than as corners. The land a
+    // drawing may stand on is still the whole lot - the meadow the park sits in, and the tarmac.
+    .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
   expect(pts.length, 'the park draws no ground').toBeGreaterThan(3);
   // Grass and tarmac together make one parallelogram, so its four corners are the four extremes.
   const pick = (f: (p: { x: number; y: number }) => number) => pts.reduce((a, b) => (f(b) < f(a) ? b : a));
@@ -824,9 +829,11 @@ describe('a river is a decision, not a fixture', () => {
       .not.toEqual(drawn(river({ rot: 0 })));
   });
 
-  /** The grass alone - not the tarmac, which is where a river must never reach. */
+  /** The ground above the promenade - not the tarmac, which is where a river must never reach.
+   *  A river runs out into the countryside at either end, which is what rivers do; what it may not
+   *  do is run over the car park. */
   const grassOf = (scene: Element) => {
-    const pts = ((scene.querySelector('[data-land="grass"]')?.getAttribute('points')) ?? '')
+    const pts = ((scene.querySelector('[data-land="field"]')?.getAttribute('points')) ?? '')
       .split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return { x, y }; });
     expect(pts.length, 'the park draws no grass').toBe(4);
     return pts;

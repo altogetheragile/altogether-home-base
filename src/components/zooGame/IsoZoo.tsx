@@ -3,7 +3,7 @@ import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './ty
 import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, edgeNoise } from './parkLayout';
 import { TRAVEL_MS } from './walkThrough';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { FACILITY } from './facilities';
@@ -870,14 +870,28 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   const tarmac = '#9a9ea3';
   // The same front the plan paints and the routing walks - one definition, in parkLayout.
   const promY = PROMENADE_Y;
+  const meadow = '#bcc98e';
   const cFL = P(0, worldH), cFR = P(CANVAS_W, worldH), cR = P(CANVAS_W, 0);
   nodes.push(
     <polygon key="edge-l" points={`${P(0, worldH).x},${P(0, worldH).y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cFL.x},${cFL.y + EDGE}`} fill={shade(tarmac, -40)} />,
-    <polygon key="edge-r" points={`${cR.x},${cR.y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cR.x},${cR.y + EDGE}`} fill={shade(grass, -52)} />,
-    <polygon key="grass" data-land="grass" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={grass} />,
+    <polygon key="edge-r" points={`${cR.x},${cR.y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cR.x},${cR.y + EDGE}`} fill={shade(meadow, -52)} />,
+    // The countryside the park sits in, and then the park's own ground on top of it - the same
+    // wandering boundary the plan draws, put through the same projection as everything else, so the
+    // two views are one park seen twice rather than two parks that nearly agree.
+    <polygon key="field" data-land="field" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={meadow} />,
+    <path key="grass" data-land="grass" d={outlinePath(parkOutline().map((pt) => P(pt.x, pt.y)))}
+      fill={grass} stroke={shade(grass, -34)} strokeWidth={2} />,
     <polygon key="prom" points={ground(0, promY, CANVAS_W, PLAY_H)} fill="#e7d6a8" />,
     <polygon key="apron" data-land="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
   );
+
+  // A line of trees along the boundary, standing on the same points the boundary is drawn through.
+  // Not decoration for its own sake: a green edge fading into a green middle reads as a blob, and
+  // the trees are what say "the park stops here". None along the front - that is the way in.
+  hedgePoints(62).forEach(({ x, y, n }) => {
+    place(n % 4 ? 'tree' : 'treeTall', x, y, u * (0.44 + 0.2 * edgeNoise(n)), `hedge-${n}`,
+      undefined, undefined, { 'data-prop': 'hedge' });
+  });
 
   // A bay's x,y is its CENTRE, the same as a parked car's - so the markings line up with what is
   // parked in them instead of sitting half a bay down the tarmac.

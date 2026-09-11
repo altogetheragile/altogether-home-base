@@ -69,6 +69,8 @@ describe('a building looks like the kind of building it is', () => {
     }
   });
 
+  // Slow on purpose, and given the room for it: this draws the whole park once per building type
+  // per colour, so it is forty-odd full scenes - and a scene now has a treeline round it.
   it('wears the colours it was given, whichever kind it is', () => {
     // Four kinds arrived as photographs and could not be repainted, so their colour controls were
     // hidden - and that is what left the Gift Shop unfinishable. They are drawn now, so the paint
@@ -85,7 +87,7 @@ describe('a building looks like the kind of building it is', () => {
         expect(paint(key), `a ${type} ignores the ${key} it was given`).not.toEqual(plain);
       }
     }
-  });
+  }, 20_000);
 });
 
 describe('turning a building', () => {

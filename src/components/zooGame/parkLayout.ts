@@ -99,6 +99,109 @@ export function autoLayout(boxes: LayoutBox[], taken: (LayoutBox & { x: number; 
 }
 
 
+// ============= The park's own edge =============
+//
+// The park is a piece of ground, not a rectangle of green. Its boundary with the countryside
+// wanders; the front, where the promenade and the car park are, is straight, because that edge is
+// built rather than grown.
+//
+// This is the one definition, and both drawings read it. A plan with a wandering edge and an
+// isometric view with a square one would be two parks - and the two views disagreeing about where
+// the ground is has cost us three bugs in a fortnight.
+//
+// It is decoration that cannot lie: the wander only ever comes INWARD by `EDGE_WANDER`, and nothing
+// may stand within `PAD` of the rectangle, so the land is always wider than anything on it. That is
+// held by a test rather than by this paragraph.
+export const EDGE_WANDER = 34;
+
+/** A hash, not a random number. A park has one coastline and keeps it: the scene is redrawn on
+ *  every tick, and an edge that reshuffled would be a hedge nobody could aim at. */
+const wobble = (i: number): number => {
+  let h = (i * 374761393 + 668265263) >>> 0;
+  h = ((h ^ (h >>> 13)) * 1274126177) >>> 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+};
+
+/** The same hash, for anything that has to vary ALONG the boundary and still come out the same in
+ *  both drawings - the size of the trees standing on it, for one. */
+export const edgeNoise = (i: number): number => wobble(i * 7 + 5);
+
+/** The park's boundary, in park coordinates, going round.
+ *
+ *  Few points, well apart: the curve drawn through them is what makes the edge, and a point every
+ *  50 gives a shaky hand rather than a hedge line. */
+export function parkOutline(wander = EDGE_WANDER): { x: number; y: number }[] {
+  const pts: { x: number; y: number }[] = [];
+  const inset = 8;
+  const round = wander * 0.9; // how far the two back corners are cut off
+  const side = (ax: number, ay: number, bx: number, by: number, k: number, step = 108, amp = wander) => {
+    const len = Math.hypot(bx - ax, by - ay);
+    const n = Math.max(2, Math.round(len / step));
+    // Inward only: the normal points into the park, so the boundary never claims ground the model
+    // does not have, and never takes any from under something standing on it.
+    const nx = -(by - ay) / len, ny = (bx - ax) / len;
+    for (let i = 0; i <= n; i += 1) {
+      const t = i / n;
+      // Held at both ends, so the corners stay where the corners are and only the middle wanders.
+      const ease = Math.sin(Math.PI * t);
+      const w = (0.25 + 0.75 * wobble(k * 131 + i)) * amp * ease;
+      pts.push({ x: ax + (bx - ax) * t + nx * w, y: ay + (by - ay) * t + ny * w });
+    }
+  };
+  const L = inset, R = CANVAS_W - inset, T = inset, B = PROMENADE_Y;
+  side(L, B, L, T + round, 1);            // the left boundary, up
+  side(L + round, T, R - round, T, 2);    // the back, its corners cut off
+  side(R, T + round, R, B, 3);            // the right, down
+  // ...and the front is straight: the promenade is built, and the car park is beyond it. Points
+  // along it as well as at its ends, or the curve closing the shape bows out over the promenade and
+  // the tarmac - a green hook drawn across the car park.
+  side(R, B, L, B, 4, 108, 0);
+  return pts;
+}
+
+/** Trees along the boundary, one every `step` of it, and none across the front - that is the way
+ *  in. Where the treeline runs is decided here, once; how finely each drawing plants it is the
+ *  drawing's own business, because a canopy from above and a tree in the round are not the same
+ *  width on the screen. */
+export function hedgePoints(step: number): { x: number; y: number; n: number }[] {
+  const ring = parkOutline();
+  const out: { x: number; y: number; n: number }[] = [];
+  let n = 0;
+  for (let i = 0; i < ring.length; i += 1) {
+    const a = ring[i], b = ring[(i + 1) % ring.length];
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    const nx = -(b.y - a.y) / (len || 1), ny = (b.x - a.x) / (len || 1);
+    for (let d = 0; d < len; d += step) {
+      const t = d / len;
+      // Off the line by a few paces, and always OUTWARD, on the countryside side: a stand of trees
+      // rather than beads threaded on a string, and no canopy hanging over ground something is
+      // allowed to stand on.
+      const off = -(2 + 11 * edgeNoise(n + 40));
+      const p = { x: a.x + (b.x - a.x) * t + nx * off, y: a.y + (b.y - a.y) * t + ny * off, n };
+      n += 1;
+      if (p.y < PROMENADE_Y - 12) out.push(p);
+    }
+  }
+  return out;
+}
+
+/** A closed path through those points, rounded off. Whatever space the points are in - park
+ *  coordinates for the plan, screen coordinates for the isometric view - the curve through them is
+ *  worked out the same way, so the same boundary comes out the same shape in both drawings. */
+export function outlinePath(pts: { x: number; y: number }[]): string {
+  const n = pts.length;
+  if (n < 3) return '';
+  const at = (i: number) => pts[(i + n) % n];
+  let d = `M ${at(0).x.toFixed(1)} ${at(0).y.toFixed(1)}`;
+  for (let i = 0; i < n; i += 1) {
+    const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return `${d} Z`;
+}
+
 /** Where a thing of this size is allowed to stand. One rule, used both while dragging and when a
  *  saved position is read back - so a position can never be outside the park, whoever wrote it.
  *
