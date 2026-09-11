@@ -594,7 +594,7 @@ export function enclosureAcceptance(): string[] {
   // one of them ticked itself - which reads as busywork rather than as the difference between how
   // you build a thing and what the Product Owner asked for. The plan is the work; these are what
   // somebody would notice if the work were not done.
-  return ['Can I see a fence with no way out of it?', 'Can an animal move about in here?', 'Can I tell an animal lives here, not a shed?', 'Can I walk right round it?'];
+  return ['Is it bordered safely, with no way out of it?', 'Can an animal move about in here?', 'Can I tell an animal lives here, not a shed?', 'Can I walk right round it?'];
 }
 
 /** Build + placement acceptance criteria for an exhibit (animal): built to look right, then settled

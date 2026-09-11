@@ -42,8 +42,9 @@ describe('the way to Sprint Planning', () => {
 
   it('offers starting without one as a choice a team could actually make', () => {
     refine(ready({ dodAgreed: false }));
-    // The third step is where a team considers what Done means, so it is where both answers live.
-    fireEvent.click(screen.getByText(/And agree the Definition of Done/i));
+    // The step where a team considers what Done means is where both answers live. It comes BEFORE
+    // sizing now: the bar the work has to meet is part of how big the work is.
+    fireEvent.click(screen.getByText(/And agree what Done means/i));
     expect(screen.getByText(/Start without one/i), 'the only way on was to agree one').toBeTruthy();
   });
 });
@@ -78,5 +79,20 @@ describe('what the Sprint remembers about it', () => {
     // three things to answer for used to push that question off the list.
     const busy = ready({ dodAgreed: false, sprintGoalMet: false, signals: [{ drivenBy: 'x', suggestion: 'y', estimatedValue: 'high' }] } as Partial<ZooGameState>);
     expect(retroQuestions(busy).some((q) => /together|help/i.test(q))).toBe(true);
+  });
+});
+
+describe('the order the agreements are made in', () => {
+  it('puts what Done means before the sizing', () => {
+    // "When we estimate size then we need to understand what Done looks like." Quite so: the bar the
+    // work has to meet is part of how big the work is, and a team sizing before it has agreed one is
+    // sizing against a guess. The steps were numbered the other way round.
+    const { container } = refine(ready({ dodAgreed: false }));
+    const text = container.textContent ?? '';
+    const done = text.indexOf('And agree what Done means');
+    const size = text.indexOf('Then get the top ready');
+    expect(done, 'the screen no longer asks what Done means').toBeGreaterThan(-1);
+    expect(size, 'the screen no longer asks for anything to be sized').toBeGreaterThan(-1);
+    expect(done, 'sizing is still asked for before the bar it is sized against').toBeLessThan(size);
   });
 });

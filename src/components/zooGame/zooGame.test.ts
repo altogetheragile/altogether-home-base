@@ -2745,8 +2745,13 @@ describe('zoo game: every acceptance criterion is a question', () => {
   it('asks, rather than asserts', () => {
     const all = everyCriterion();
     expect(all.length).toBeGreaterThan(30);
+    // Asking is the rule; "Can" was a proxy for it, and the proxy started refusing perfectly good
+    // questions. A habitat is asked "Is it bordered safely?" rather than "Can I see a fence?"
+    // because a tank is held in by glass - the question has to fit every habitat, not the commonest
+    // one. So the test asks what it means: does this open like a question, and end like one.
+    const OPENERS = /^(Can|Is|Are|Does|Do|Will|Has|Have|Could|Would|Should) /;
     for (const { where, label } of all) {
-      expect(label.startsWith('Can '), `${where}: "${label}" should ask something`).toBe(true);
+      expect(OPENERS.test(label), `${where}: "${label}" should ask something`).toBe(true);
       expect(label.endsWith('?'), `${where}: "${label}" should end in a question mark`).toBe(true);
     }
   });

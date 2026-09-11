@@ -109,7 +109,7 @@ export const checkedAt = (label: string): 'object' | 'park' => (isDeployAcceptan
  *  the reason acceptance is a conversation - the park is never going to tick "can I walk right round
  *  it?" for anybody. */
 const PARK_ANSWERS = [
-  'Can I see a fence with no way out of it?',
+  'Is it bordered safely, with no way out of it?',
   'Can an animal move about in here?',
   'Can I tell an animal lives here, not a shed?',
   'Can I see a group rather than one animal on its own?',
@@ -118,11 +118,28 @@ const PARK_ANSWERS = [
   'Can I get to this zone without crossing the grass?',
 ];
 
-export const answerable = (label: string): boolean => PARK_ANSWERS.includes(label);
+/** Criteria that have been reworded, and the words they were written in.
+ *
+ *  The park matches a criterion by its exact text, so rewording one orphans every item already
+ *  carrying the old words - a game in play, and every save ever taken. This is the migration, and it
+ *  is deliberately a short list of dead spellings rather than a second way of saying the rule: one
+ *  question, and the sentence it used to be. Delete an entry when no save could still hold it. */
+const WAS_CALLED: Record<string, string> = {
+  // A tank is held in by glass and a paddock by a fence. Asking every habitat about its "fence" was
+  // asking about the one case. Reported from playing it: something more general that could mean
+  // walled, fenced or secure.
+  'Can I see a fence with no way out of it?': 'Is it bordered safely, with no way out of it?',
+};
+/** The words this criterion is asked in now. */
+export const asAsked = (label: string): string => WAS_CALLED[label] ?? label;
+
+export const answerable = (label: string): boolean => PARK_ANSWERS.includes(asAsked(label));
 
 /** The park's answer to one criterion, or null when it is a matter of judgement. */
-export function checkCriterion(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
+export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: string): Verdict | null {
   const design = currentDesign(item);
+  // A game in play, or a save taken before a question was reworded, still carries the old sentence.
+  const label = asAsked(asked);
 
   // ---- Answered about the object itself, while it is being built ----
   //
@@ -130,7 +147,7 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, label: st
   // them: whether it is closed, whether the animals fit, whether it is a home rather than a shed.
   // The park answers them, with its working shown, and the learner gets on with the fourth.
 
-  if (label === 'Can I see a fence with no way out of it?') {
+  if (label === 'Is it bordered safely, with no way out of it?') {
     // A habitat is fenced by construction, so this is a fact the park states rather than a hurdle:
     // what it earns is the shape being named, which is the thing the learner chose.
     const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
