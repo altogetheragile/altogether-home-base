@@ -4,6 +4,8 @@ import { isTank, coatWord, coatChoices, AQUATIC, groupChoices, groupSize, hasRoo
 import { splitEpic } from './engine';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { iconKey } from './itemIcons';
+import { enclosureAcceptance } from './design';
+import { asAsked, answerable } from './parkChecks';
 import { initialZooState } from './config';
 import { IsoZoo } from './IsoZoo';
 import type { ZooGameState, BacklogItem } from './types';
@@ -149,5 +151,23 @@ describe('a tank in the Backlog', () => {
     // Enclosure" comes out as a tiger. What makes a tank a tank is that it holds water.
     expect(iconKey({ name: 'Small Tank', category: 'enclosure', template: 'tank' })).toBe('pond');
     expect(iconKey({ name: 'Small Enclosure', category: 'enclosure' })).toBe('fence');
+  });
+});
+
+describe('the question a habitat is asked about its edge', () => {
+  it('fits a tank as well as a paddock', () => {
+    // "Something more general that could mean walled, fenced, secure." A tank is held in by glass,
+    // and asking every habitat about its "fence" was asking about the commonest case.
+    const asked = enclosureAcceptance();
+    expect(asked.some((a) => /fence/i.test(a)), 'a glass tank is still asked about its fence').toBe(false);
+    expect(asked.some((a) => /bordered safely/i.test(a))).toBe(true);
+  });
+
+  it('still answers a game that was saved before it was reworded', () => {
+    // The park matches a criterion by its exact text, so rewording one orphans every item already
+    // carrying the old words - including a game somebody is in the middle of.
+    const old = 'Can I see a fence with no way out of it?';
+    expect(asAsked(old), 'the old sentence leads nowhere').toBe('Is it bordered safely, with no way out of it?');
+    expect(answerable(old), 'a habitat saved yesterday stopped being checkable').toBe(true);
   });
 });

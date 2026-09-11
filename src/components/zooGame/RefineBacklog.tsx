@@ -175,15 +175,6 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           </Step>
         )}
   
-        {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
-            Each one is now a labelled figure in the colour of what it means. */}
-        {/* A Sprint's worth of Ready work is what step two is FOR, so that is when it is done. */}
-        {first ? (
-          <Step n={2} title="Then get the top ready" done={horizon >= 1} right={figures} />
-        ) : (
-          <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
-        )}
-  
         {/* The Definition of Done is the Increment's commitment, and this is where a team would
             agree one. It is not a gate.
             
@@ -193,7 +184,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
             asks the question with the evidence in front of them. Reported as "there is no learning
             opportunity here". */}
         {first && onSetDod && (
-          <Step n={3} title="And agree the Definition of Done" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
+          <Step n={2} title="And agree what Done means" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
             onToggle={() => setDodOpen((o) => !o)}
             right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
               {!dodOpen && (state.dodAgreed
@@ -221,6 +212,18 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
               </div>
             )}
           </Step>
+        )}
+
+        {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
+            Each one is now a labelled figure in the colour of what it means. */}
+        {/* Sizing comes AFTER the Definition of Done, and that is the whole reason these are
+            numbered. Reported from playing it: "when we estimate size then we need to understand
+            what Done looks like." Quite so - the bar the work has to meet is part of how big the
+            work is, and a team sizing before it has agreed one is sizing against a guess. */}
+        {first ? (
+          <Step n={3} title="Then get the top ready" done={horizon >= 1} right={figures} />
+        ) : (
+          <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
         )}
   
         </div>
