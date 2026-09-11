@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
-  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove,
-} from './engine';
+  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -761,6 +760,50 @@ describe('zoo game: design choices are the product', () => {
     expect(clone.status).toBe('backlog'); // a new item to plan and build
     expect(clone.design).toBeUndefined(); // not built yet
     expect(clone.name).toBe('Lion 2');
+  });
+});
+
+describe('zoo game: what the Developers have in hand', () => {
+  // The build controls belong to work in progress. Anything on the park can be clicked - a habitat
+  // that is Done and open to visitors, the lion living inside it - and clicking one handed you its
+  // fences and its coats with nothing in Doing at all. Reported from playing it: "I have the place
+  // object control but nothing is in Doing."
+  //
+  // Changing something delivered is a change to the product, and the game already says where that
+  // goes: onto the Product Backlog, to be ordered and pulled like everything else.
+  const built = (): ZooGameState => {
+    const s = initialZooState(3);
+    const [doneItem, doing] = s.backlog.filter((it) => !it.unsized && it.category !== 'epic');
+    return {
+      ...s, phase: 'sprint', sprintNumber: 1,
+      backlog: s.backlog.map((it) => {
+        if (it.id === doneItem.id) return { ...it, status: 'open' as const, started: true, sprintNumber: 1 };
+        if (it.id === doing.id) return { ...it, status: 'committed' as const, started: true, sprintNumber: 1 };
+        return it;
+      }),
+    } as ZooGameState;
+  };
+
+  it('is not something that is Done, however hard it is clicked', () => {
+    const s = built();
+    const done = s.backlog.find((it) => it.status === 'open' && it.started)!;
+    expect(inHandItem(s, done.id)?.id, 'a released item handed over its build controls')
+      .not.toBe(done.id);
+  });
+
+  it('is whatever is actually being built, when something else is picked', () => {
+    const s = built();
+    const done = s.backlog.find((it) => it.status === 'open' && it.started)!;
+    const doing = s.backlog.find((it) => it.status === 'committed' && it.started)!;
+    expect(inHandItem(s, done.id)?.id, 'the work in progress was lost').toBe(doing.id);
+  });
+
+  it('is nothing at all when nothing is being built', () => {
+    const s = built();
+    const settled = { ...s, backlog: s.backlog.map((it) => (it.status === 'committed' && it.started
+      ? { ...it, status: 'open' as const } : it)) } as ZooGameState;
+    const done = settled.backlog.find((it) => it.started)!;
+    expect(inHandItem(settled, done.id), 'the bench was open with nothing in Doing').toBeUndefined();
   });
 });
 
