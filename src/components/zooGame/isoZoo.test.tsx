@@ -87,37 +87,9 @@ describe('the isometric showcase', () => {
   });
 });
 
-describe('an animal’s coat', () => {
-  // "Changing the colour of a lion does nothing. Is that right?" It was not: the swatches wrote
-  // `colors.coat` and this view read `parts.coat`, which no control has ever written. Two names for
-  // one thing, and the half that was drawn was the half nobody could set.
-  const pride = (coat?: string): ZooGameState => ({
-    ...initialZooState(), zones: ['Big Cats'],
-    backlog: [
-      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'medium', pos: { x: 300, y: 700 },
-        design: { parts: {}, colors: { ground: '#c9a86a', fence: '#7a5230' } } }),
-      item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
-        design: { parts: {}, colors: coat ? { coat } : {}, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } } }),
-    ],
-  } as unknown as ZooGameState);
-
-  const lionFilter = (s: ZooGameState) => {
-    const svg = render(<IsoZoo state={s} height={460} />).container.querySelector('svg[role="img"]')!;
-    const drawn = [...svg.querySelectorAll('svg')].map((el) => (el as SVGElement).style.filter).filter(Boolean);
-    return drawn;
-  };
-
-  it('is painted on the animal when one is chosen', () => {
-    const white = lionFilter(pride('#f0efe9'));
-    expect(white.length, 'nothing in the zoo was painted the colour it was given').toBeGreaterThan(0);
-  });
-
-  it('leaves the drawing alone when the animal is the colour it already is', () => {
-    const plain = lionFilter(pride('#c9963f'));
-    const white = lionFilter(pride('#f0efe9'));
-    expect(white).not.toEqual(plain);
-  });
-});
+// An animal's coat is covered in animalLook.test.tsx, from the control through to the drawing.
+// It was covered here, badly: the test looked for ANY element carrying a filter and passed on the
+// trees, which carry one for their foliage. It went green on a lion nothing had painted.
 
 describe('the isometric projection', () => {
   it('turns a world square into a diamond a little under twice as wide as it is tall', () => {
