@@ -2523,10 +2523,17 @@ export function refinementTalk(state: ZooGameState, item: BacklogItem): {
  *  have to agree on what it is - when they each worked it out for themselves, the switch offered
  *  Build on a screen with nothing to build. */
 export function inHandItem(state: ZooGameState, picked?: string | null): BacklogItem | undefined {
-  const beingBuilt = state.backlog.find((it) => it.status === 'committed' && it.started
-    && it.sprintNumber === state.sprintNumber);
-  const id = picked ?? beingBuilt?.id ?? null;
-  return id ? state.backlog.find((it) => it.id === id) : undefined;
+  const held = (it?: BacklogItem): boolean => !!it && it.status === 'committed' && !!it.started
+    && it.sprintNumber === state.sprintNumber;
+  const beingBuilt = state.backlog.find(held);
+  // What is picked only counts if it is actually in hand. Anything on the park can be clicked - a
+  // habitat that is Done and open to visitors, the lion living in it - and clicking one used to hand
+  // you its build controls with nothing in Doing at all: fences and coats to change on work that has
+  // been released. Reported from playing it: "I have the place object control but nothing is in
+  // Doing." Changing something delivered is a change to the product, and the game already says where
+  // that goes - through the Product Backlog.
+  const pickedItem = picked ? state.backlog.find((it) => it.id === picked) : undefined;
+  return held(pickedItem) ? pickedItem : beingBuilt;
 }
 
 /** What is being asked of each accountability, right now.
