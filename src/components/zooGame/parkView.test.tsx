@@ -73,6 +73,8 @@ describe('where the park puts things', () => {
 });
 
 describe('the drawing stands everything that is on the park', () => {
+  // Draws a full park for every thing standing on it, which is a slow test on purpose and needs
+  // the room to be one: the park carries a treeline, four areas and a river now.
   it('offers every standing thing to be picked up', () => {
     // The guard the two views needed, which one view still needs: what is on the park is decided by
     // `standingOnPark`, and the drawing must not quietly go back to having an answer of its own.
@@ -85,7 +87,7 @@ describe('the drawing stands everything that is on the park', () => {
       const ring = [...ringed.querySelectorAll('polygon')].find((p) => p.getAttribute('stroke') === '#f97316');
       expect(ring, `${id} is on the park but cannot be picked up in the drawing`).toBeTruthy();
     }
-  });
+  }, 20_000);
 });
 
 describe('rock is drawn as rock, not as a shrub', () => {
