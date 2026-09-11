@@ -117,12 +117,17 @@ describe('putting something down', () => {
       <ParkPlan state={s} placing={{ id: enc.id, w: 132, h: 90 }} onPlace={() => {}} />,
     );
     const svg = container.querySelector('[data-part="park-plan"]')!;
-    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 880, height: 790,
-      right: 880, bottom: 790, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
-    // The picture carries a margin of countryside, so park coordinates are offset inside it.
+    // A park coordinate is not a client coordinate: the picture is fitted to the room it is given
+    // and carries a margin of countryside round the plot. Read off the viewBox the park drew, so
+    // that this keeps pointing at the same piece of ground whatever size the plot becomes.
+    const [vx, vy, vw, vh] = (svg.getAttribute('viewBox') ?? '').split(' ').map(Number);
+    const W = 880, H = 790;
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: W, height: H,
+      right: W, bottom: H, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    const k = Math.min(W / vw, H / vh);
     fireEvent.pointerMove(svg, {
-      clientX: (elsewhere.x0 + elsewhere.x1) / 2 + 30,
-      clientY: (elsewhere.y0 + elsewhere.y1) / 2 + 30,
+      clientX: ((elsewhere.x0 + elsewhere.x1) / 2 - vx) * k + (W - vw * k) / 2,
+      clientY: ((elsewhere.y0 + elsewhere.y1) / 2 - vy) * k + (H - vh * k) / 2,
     });
     const why = container.querySelector('[data-part="ghost"] text')?.textContent ?? '';
     expect(why, `dropping a ${enc.zone} habitat on the ${elsewhere.zone} was allowed`)

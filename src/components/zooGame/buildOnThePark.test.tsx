@@ -128,8 +128,16 @@ describe('an animal', () => {
     const svg = container.querySelector('[data-part="park-plan"]')!;
     // jsdom has no layout, so the pointer lands at the origin of the box - which is inside the
     // habitat as far as the maths is concerned once the box is stubbed.
-    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 820, height: 700, right: 820, bottom: 700, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
-    fireEvent.pointerDown(svg, { clientX: 300, clientY: 300 });
+    // The picture is fitted to whatever room it is given and carries a margin of countryside, so a
+    // park coordinate is not a client coordinate. Worked out from the viewBox the park actually
+    // drew: written as literals, this test dropped the lion on the habitat until the plot grew, and
+    // then dropped it on the grass.
+    const [vx, vy, vw, vh] = (svg.getAttribute('viewBox') ?? '').split(' ').map(Number);
+    const W = 820, H = 700;
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: W, height: H, right: W, bottom: H, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    const k = Math.min(W / vw, H / vh);
+    const client = (x: number, y: number) => ({ clientX: (x - vx) * k + (W - vw * k) / 2, clientY: (y - vy) * k + (H - vh * k) / 2 });
+    fireEvent.pointerDown(svg, client(300, 300));
     expect(onPlace, 'an animal dropped on a habitat did not move in').toHaveBeenCalledWith(
       lion.id, expect.anything(), undefined, h.id,
     );

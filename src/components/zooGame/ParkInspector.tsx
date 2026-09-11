@@ -3,7 +3,8 @@ import { answerable, checkCriterion, checkedAt } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { Check, Circle } from 'lucide-react';
+import { Check, Circle, GripVertical } from 'lucide-react';
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 // ============= The inspector =============
 //
@@ -52,6 +53,34 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
     tl: 'left-2 top-2', tr: 'right-2 top-2', bl: 'left-2 bottom-2', br: 'right-2 bottom-2',
   }[corner];
 
+  // ...and wherever it is put, it stays. Docking to the corner furthest from the selected thing is a
+  // good guess and not much more than that: reported from playing it, "the ACs dialog needs to be
+  // moveable too - it can get in the way when placing an object". So it can be picked up by its
+  // heading and dropped anywhere on the park, and once it has been moved the guess stops applying.
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  const box = useRef<HTMLDivElement | null>(null);
+  const carry = (e: ReactPointerEvent) => {
+    const panel = box.current;
+    // The pane it is positioned against. `offsetParent` is the right answer and is not always an
+    // answer at all - it reads null where nothing has been laid out - so the element it actually
+    // sits in stands in for it.
+    const pane = (panel?.offsetParent as HTMLElement | null) ?? panel?.parentElement ?? null;
+    if (!panel || !pane) return;
+    e.preventDefault();
+    const r = panel.getBoundingClientRect(), p = pane.getBoundingClientRect();
+    const grabX = e.clientX - r.left, grabY = e.clientY - r.top;
+    // Kept inside the pane it belongs to: a panel dragged out of the window cannot be dragged back.
+    const hold = (v: number, span: number) => (span > 0 ? Math.max(0, Math.min(span, v)) : Math.max(0, v));
+    const move = (ev: PointerEvent) => setAt({
+      x: hold(ev.clientX - p.left - grabX, p.width - r.width),
+      y: hold(ev.clientY - p.top - grabY, p.height - r.height),
+    });
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  const moved = at ? { left: at.x, top: at.y, right: 'auto', bottom: 'auto' } : undefined;
+
   if (collapsed) {
     return (
       <div data-part="park-inspector" data-collapsed="yes"
@@ -62,11 +91,13 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   }
 
   return (
-    <div data-part="park-inspector"
+    <div ref={box} data-part="park-inspector" style={moved}
       className={cn('absolute z-20 w-[min(20rem,45%)] rounded-lg border border-border bg-background/95 p-2.5 shadow-md backdrop-blur-sm transition-opacity',
-        quiet && 'pointer-events-none opacity-45', place, className)}>
-      <h3 className="text-sm font-bold">
-        Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span>
+        quiet && 'pointer-events-none opacity-45', !at && place, className)}>
+      <h3 data-part="inspector-grip" onPointerDown={carry}
+        className="flex cursor-grab select-none items-center gap-1.5 text-sm font-bold active:cursor-grabbing">
+        <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+        <span>Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span></span>
       </h3>
       <ul className="mt-1.5 space-y-1.5">
         {criteria.map((c, i) => {

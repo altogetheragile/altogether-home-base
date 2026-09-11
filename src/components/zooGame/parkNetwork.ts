@@ -66,7 +66,13 @@ export function parkNetwork(state: ZooGameState): NavInput {
     if (!isLandscapeType(kind)) continue;
     const size = groundSize(b.item);
     if (kind === 'bridge') {
-      crossings.push(rectOf(b.at, size, b.item));
+      // The dry ground a bridge makes is a little wider than the bridge: it has approaches at both
+      // ends, and a run of path leaving it at an angle has to get clear of the water before it is
+      // out over it again. Without the margin, a path drawn diagonally off a bridge is refused
+      // halfway across for no reason anybody can see - the bridge is built, the path is laid, and
+      // the visitors still stand on the bank.
+      const APPROACH = 18;
+      crossings.push(rectOf(b.at, { w: size.w + APPROACH * 2, h: size.h + APPROACH * 2 }, b.item));
       paths.push([{ x: b.at.x, y: b.at.y - size.h / 2 - 10 }, { x: b.at.x, y: b.at.y + size.h / 2 + 10 }]);
       continue;
     }

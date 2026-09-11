@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { SprintReview } from './SprintReview';
 import { ProductBacklogSidebar } from './Board';
+import { ParkInspector } from './ParkInspector';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 
@@ -86,6 +87,30 @@ describe('a bar', () => {
       expect(bar.getAttribute('aria-valuenow'), 'a bar with no value on it').toBeTruthy();
       expect(bar.getAttribute('aria-valuetext'), 'a number with nothing saying what it counts').toBeTruthy();
     }
+  });
+});
+
+describe('the acceptance criteria panel', () => {
+  it('can be picked up and put somewhere else', () => {
+    // It docks to the corner furthest from what is selected, which is a good guess and no more than
+    // that. Reported from playing it: "the ACs dialog needs to be moveable too - it can get in the
+    // way when placing an object."
+    const s = initialZooState(3);
+    const item = s.backlog.find((it) => (it.acceptance ?? []).length > 0)!;
+    const { container } = render(
+      <MemoryRouter><div style={{ position: 'relative' }}>
+        <ParkInspector state={s} item={item} onAskToCheck={noop} />
+      </div></MemoryRouter>,
+    );
+    const panel = container.querySelector('[data-part="park-inspector"]') as HTMLElement;
+    const grip = container.querySelector('[data-part="inspector-grip"]') as HTMLElement;
+    expect(grip, 'there is nothing to pick the panel up by').toBeTruthy();
+    // jsdom lays nothing out, so the pane and the panel both measure zero - which is enough to
+    // check that dragging MOVES it rather than to check where it lands.
+    fireEvent.pointerDown(grip, { clientX: 40, clientY: 10 });
+    fireEvent.pointerMove(window, { clientX: 200, clientY: 300 });
+    fireEvent.pointerUp(window);
+    expect(panel.style.left || panel.style.top, 'dragging the panel left it where it was').toBeTruthy();
   });
 });
 

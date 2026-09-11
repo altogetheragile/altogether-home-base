@@ -19,7 +19,11 @@ import type { ZooGameState } from './types';
  *  Raise it when a change would make an older save WRONG rather than merely incomplete - a field
  *  that changed meaning or type. Adding a field with a sensible default does not need a raise: the
  *  merge over a fresh state covers that, which is what it is for. */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
+// 2: the plot grew from 820 x 700 to 1760 x 1080, so every position saved by an older game is in
+//    the top-left corner of a park more than twice the size. The zoo would still be drawn - nothing
+//    is ever hidden - but it would be a zoo crammed into one quarter of its own ground, which reads
+//    as a broken game rather than an old one.
 
 export type SaveRead =
   | { ok: true; state: ZooGameState; note?: string }
