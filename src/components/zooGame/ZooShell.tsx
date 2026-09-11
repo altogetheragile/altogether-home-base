@@ -556,9 +556,15 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
         {/* An event fills the screen it takes over: the whole width, and the whole height, so what
             it has to say fits on it. It was a column down the middle of a wide screen with the room
             either side of it left empty, which put half of a Sprint Review below the fold. */}
+        {/* Taller than the window when it needs to be, and then the event scrolls - as a page, with
+            one scrollbar, the way a document does. Pinned to the height of the screen with
+            `overflow-hidden` it did not make the Sprint Review shorter: it made the column beside
+            the picture into a little scrolling well with its top line cut off and nothing saying so.
+            Reported from playing it: "why do I need to scroll when there is lots of white space on
+            the page above the info?" */}
         {takeover && (
-          <div data-part="takeover" className="absolute inset-0 z-30 flex bg-background/80 p-2 pb-20 backdrop-blur-sm sm:p-3 sm:pb-20">
-            <div className="flex min-h-0 w-full flex-col overflow-hidden rounded-xl border border-border bg-background p-3 shadow-xl">
+          <div data-part="takeover" className="absolute inset-0 z-30 flex overflow-y-auto bg-background/80 p-2 pb-20 backdrop-blur-sm sm:p-3 sm:pb-20">
+            <div className="flex min-h-full w-full flex-col rounded-xl border border-border bg-background p-3 shadow-xl">
               {children}
             </div>
           </div>
