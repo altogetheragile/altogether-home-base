@@ -3,7 +3,7 @@ import { zonePlots } from './parkZones';
 import { waterRects } from './parkWater';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
-import { buildNav, routeAcross, type NavInput, type Pt, type Rect } from './parkNav';
+import { buildNav, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
 import { CANVAS_W, FRONT_Y } from './parkLayout';
 
 // ============= Where a visitor can go =============
@@ -117,4 +117,41 @@ export function deliveredThisSprint(state: ZooGameState, sprint = state.sprintNu
       return { item, reachable: !!route, steps };
     });
   return out.sort((a, z) => a.steps - z.steps);
+}
+
+// ============= What nobody can get to =============
+//
+// A zoo is not paid for what it built. It is paid for what a visitor could walk up to and look at,
+// and those are different things the moment there is water in the way.
+//
+// This is what the river is FOR. Ground on the far side cannot be reached until somebody builds a
+// bridge, so "open the Penguins" quietly depends on a piece of work with no visitors of its own -
+// and the Product Owner has to order that piece above the thing everyone actually wants. The lesson
+// only lands if the Sprint Review proves it: deliver the habitat, deliver the animal, open the
+// gates, and watch six hundred people stand on the far bank.
+
+export type Stranded = { item: BacklogItem; why: 'water' | 'path' };
+
+/** Everything delivered, split into what a visitor can get to and what they cannot - with the
+ *  reason, because "nobody came" teaches nothing and "nobody could cross the river" teaches the
+ *  whole lesson. One network, built once: this is asked per item and the answer is the same park. */
+export function whatVisitorsCanReach(state: ZooGameState): { reached: BacklogItem[]; stranded: Stranded[] } {
+  const boxes = boxOf(state);
+  const nav = buildNav(parkNetwork(state));
+  const reached: BacklogItem[] = [];
+  const stranded: Stranded[] = [];
+  for (const it of state.backlog) {
+    if (it.status !== 'open') continue;
+    const stand = boxes.find((b) => b.item.id === it.id)
+      ?? boxes.find((b) => b.item.id === it.enclosureId);
+    // Nothing that stands on the park - a path, the signposts - is nowhere to walk TO. It is what
+    // everything else is walked to along, so it is never stranded.
+    if (!stand) { reached.push(it); continue; }
+    const to: Pt = { x: stand.at.x, y: stand.at.y + stand.size.h / 2 + 26 };
+    if (routeAcross(nav, ENTRANCE, to)) { reached.push(it); continue; }
+    // Why not: water that has no crossing on it is a different failure from no path at all, and the
+    // fix is a different Product Backlog item.
+    stranded.push({ item: it, why: wet(ENTRANCE, to, nav.input) ? 'water' : 'path' });
+  }
+  return { reached, stranded };
 }

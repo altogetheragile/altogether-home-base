@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
+import { whatVisitorsCanReach } from './parkNetwork';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
@@ -65,6 +66,9 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   const slices = zoneSlices(state);
+  // Everything finished and open that a visitor could not walk up to. Asked of the park rather than
+  // remembered from the simulation: it is the same park, and one of them would go stale.
+  const { stranded } = whatVisitorsCanReach(state);
   // A snapshot rather than a diff: the Review inspects the Increment as it stands, and "what a
   // visitor can walk into today" is the honest version of that.
   const openZones = slices.filter((z) => z.open).map((z) => z.zone);
@@ -281,6 +285,42 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
 
       {/* Slices, not layers. Points delivered says how much was built; zones open says how much of it
           anybody can visit, and the gap between the two is the lesson. The card explains it. */}
+      {/* The one thing a Sprint Review can prove that no rule can tell you: the work is finished, it
+          is open, and nobody could get to it.
+          
+          It is the payoff for the river being terrain. A habitat on the far bank with its animal and
+          its own paths is still a place people stand and look across at, and the item that would
+          have fixed it - the Bridge - has no visitors of its own, which is exactly why it is hard to
+          order above the penguins. This is where that decision is settled. */}
+      {stranded.length > 0 && (
+        <section data-part="stranded" className="rounded-lg border-2 border-rose-400/60 bg-rose-500/[0.06] px-3 py-2.5 text-sm">
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-rose-700 dark:text-rose-400')}>
+            Nobody could get to it
+          </div>
+          <p className="mb-1">
+            <strong>{stranded.map((s) => s.item.name).join(', ')}</strong>{' '}
+            {stranded.length === 1 ? 'is' : 'are'} finished and open, and there is no way to walk there.
+            {' '}Visitors who came for {stranded.length === 1 ? 'it' : 'them'} did not see{' '}
+            {stranded.length === 1 ? 'it' : 'them'}, and the zoo was paid nothing for the work.
+          </p>
+          {stranded.some((s) => s.why === 'water') && (
+            <p className="mb-1 italic text-muted-foreground">
+              &ldquo;We could see it from the other side of the river. There was nothing to cross on.&rdquo;
+            </p>
+          )}
+          {stranded.some((s) => s.why === 'path') && (
+            <p className="mb-1 italic text-muted-foreground">
+              &ldquo;We never found a way in. There was no path to it.&rdquo;
+            </p>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            {stranded.some((s) => s.why === 'water')
+              ? 'A bridge carries no visitors of its own, which is what makes it easy to leave at the bottom of the Product Backlog and expensive to have left there.'
+              : 'A path carries no visitors of its own. It is what everything else is reached along.'}
+          </p>
+        </section>
+      )}
+
       {velocity > 0 && (openZones.length > 0 || startedNotOpen.length > 0) && (
         <div className={cn('rounded-lg border px-3 py-2.5 text-sm',
           openZones.length ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
