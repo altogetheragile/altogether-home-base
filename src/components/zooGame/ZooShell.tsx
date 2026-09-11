@@ -228,10 +228,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // toggle. Nothing in hand: the board at full width, no park. Something in hand: the park takes
   // the width and the board becomes a column of tokens beside it.
   const inHand = onSprint && state.dayStage !== 'dailyScrum' ? inHandItem(state, building ?? null) : null;
-  // The area of the zoo the work in hand belongs to - the level of the park to be looking at. Items
-  // that belong to no area (the paths, the bridge, the toilets) are zoo-wide work, so they are built
-  // looking at the whole zoo.
-  const parkZone = inHand ? zonePlots(state).get(inHand.zone)?.zone ?? null : null;
+  // Where to point the park's camera: at the area the work in hand belongs to, or at the habitat
+  // being worked inside. A request, not a mode - the player is free to zoom and pan away from it,
+  // and it only moves again when the work does. Items that belong to no area (the paths, the bridge,
+  // the toilets) are zoo-wide work, so the camera is left where it is.
+  const plot = inHand ? zonePlots(state).get(inHand.zone) ?? null : null;
+  // A fresh object every render is fine: the park watches the numbers in it, not its identity.
+  const frame = plot ? { x0: plot.x0, y0: plot.y0, x1: plot.x1, y1: plot.y1 } : null;
   /** The item the Done gate is about: whatever is in hand, once there is something to judge. */
   const gateItem = state.phase === 'sprint' && building
     ? state.backlog.find((it) => it.id === building && (it.status === 'committed' || it.status === 'done'))
@@ -260,11 +263,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // "Back to the park" zooms out. This replaces the takeover: there is no window over the park any
   // more, and nothing is built anywhere else.
   const [inside, setInside] = useState<string | null>(null);
-  // Which level of the park you are looking at. The area you are working in fills the picture,
-  // because that is where building happens; "the whole zoo" pulls back to the plan of the place.
-  // Derived from what is in hand rather than remembered, so picking up a Savanna item takes you to
-  // the Savanna instead of leaving you building it in the Big Cats.
-  const [wholeZoo, setWholeZoo] = useState(false);
+
   const insideItem = inside ? state.backlog.find((it) => it.id === inside) ?? null : null;
 
   // Pick a card and the thing is in your hands: it follows the cursor until you put it down. There
@@ -280,9 +279,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   const farthestCorner = (it: { pos?: { x: number; y: number } }): 'tl' | 'tr' | 'bl' | 'br' => {
     const at = it.pos ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
     const corner = `${at.y > PLAY_H / 2 ? 't' : 'b'}${at.x > CANVAS_W / 2 ? 'l' : 'r'}` as 'tl' | 'tr' | 'bl' | 'br';
-    // ...never bottom right, whatever is selected: the day's dock floats there, and two things in
-    // one corner means one of them cannot be read or pressed.
-    return corner === 'br' ? 'bl' : corner;
+    // ...never bottom right, whatever is selected: the day's dock floats there. And never top
+    // right, which is the camera's. Two things in one corner means one of them cannot be read or
+    // pressed - and the pair that collided were the criteria and the zoom, which is the worst of
+    // both: the control you reach for while placing a thing, over the panel that says where it goes.
+    return corner === 'br' ? 'bl' : corner === 'tr' ? 'tl' : corner;
   };
 
   const pill = eventPill(state);
@@ -497,16 +498,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem} quiet={drawing}
                       corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck} />
                   )}
-                  {parkZone && (
-                    <button type="button" data-part="park-level"
-                      onClick={() => setWholeZoo((w) => !w)}
-                      className={cn(FOCUS, 'absolute left-2 top-2 z-20 rounded-full border-2 border-primary/30 bg-background/90',
-                        'px-3 py-1 text-[11px] font-semibold text-foreground shadow-sm hover:bg-background')}>
-                      {wholeZoo ? `Go to the ${parkZone}` : 'See the whole zoo'}
-                    </button>
-                  )}
                   <ParkPlan state={state} height={620} selected={building ?? null} inside={inside}
-                    focusZone={wholeZoo ? null : parkZone}
+                    frame={frame}
                     // Picking a thing up on the park opens it, the way picking its card up does.
                     // Reported from playing it: "when I click the bridge it does not automatically
                     // open - I have to click the card." Once something had been kept as a draft or

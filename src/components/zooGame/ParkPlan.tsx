@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
@@ -9,6 +9,7 @@ import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOu
 import { answerable, checkCriterion } from './parkChecks';
 import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater } from './design';
 import { cn } from '@/lib/utils';
+import { FOCUS } from './ui/tokens';
 
 /** How much of the car park to show at the foot of the plan. Not ground you build on - it is there
  *  so the front of the park reads as the front of the park, and so a run drawn to meet the way in
@@ -18,6 +19,9 @@ const APRON_H = 60;
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
  *  through the picture's box, so widening the box does not move anything standing on the park. */
 const VERGE = 30;
+/** The whole plot, countryside and car park included: where the camera starts and what "Whole zoo"
+ *  comes back to. */
+const WHOLE_PARK = { x: -VERGE, y: -VERGE, w: CANVAS_W + VERGE * 2, h: PLAY_H + APRON_H + VERGE };
 
 
 // The park, seen from above, for building on.
@@ -55,7 +59,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, inside, focusZone, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, inside, frame, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -77,10 +81,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void;
   /** Something is being put down for the first time: it follows the cursor with a verdict on it. */
   placing?: { id: string; w: number; h: number } | null;
-  /** The area of the zoo to fill the picture with, when the whole zoo is not what is wanted.
-   *  Building happens in an area: a park drawn small enough to show all of it is a park nothing can
-   *  be dropped on accurately. */
-  focusZone?: string | null;
+  /** Somewhere to point the camera - an area of the zoo, a habitat. A request, not a mode: the
+   *  camera moves there and the player is free to go elsewhere from it. */
+  frame?: { x0: number; y0: number; x1: number; y1: number } | null;
   onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }, into?: string) => void;
   /** The park's own tool. A path is drawn point to point: click where it starts, click where it
    *  ends, and it runs between them. Nothing else on the park needs a tool. */
@@ -124,19 +127,78 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     return it.category === 'flora' && (kind === 'river' || kind === 'pond');
   };
 
-  // What the picture covers: the whole park, or one habitat when you are working inside it. The
-  // same renderer and the same coordinates, closer in - not a window over the park.
-  const insideBox = inside ? boxes.find((b) => b.item.id === inside) : undefined;
-  // Three levels of the same picture, and they are the same picture: the whole zoo, one area of it,
-  // and the inside of one habitat. Nothing is drawn differently at any of them - the viewBox moves,
-  // and that is all. A separate "zone screen" would be a second park to keep in step with the first.
-  const lot = focusZone ? plots.get(focusZone) : null;
-  const box = insideBox
-    ? { x: insideBox.at.x - insideBox.size.w * 0.8, y: insideBox.at.y - insideBox.size.h * 0.8,
-        w: insideBox.size.w * 1.6, h: insideBox.size.h * 1.6 }
-    : lot
-      ? { x: lot.x0 - 26, y: lot.y0 - 26, w: lot.x1 - lot.x0 + 52, h: lot.y1 - lot.y0 + 52 }
-      : { x: -VERGE, y: -VERGE, w: CANVAS_W + VERGE * 2, h: PLAY_H + APRON_H + VERGE };
+  // ============= The camera =============
+  //
+  // One mechanism instead of a set of named levels. The park does not have a "zone screen" and a
+  // "whole zoo screen": it has a box it is looking at, and everything that used to be a level is now
+  // something that moves the box - framing an area, looking inside a habitat, or the player's own
+  // wheel and drag. That is why it is here rather than in whatever is rendering the park: a level
+  // you can be in or out of cannot show a path that runs from one area into the next, and every new
+  // level would be another state for everything else to reason about.
+  //
+  // The box IS the viewBox, which is what keeps the pointer honest: `worldAt` reads the same box the
+  // picture is drawn from, so a thing lands where it was dropped at any magnification.
+  const whole = WHOLE_PARK;
+  const [cam, setCam] = useState(whole);
+  const camNow = useRef(cam);
+  camNow.current = cam;
+  const box = cam;
+
+  /** The tightest the park can be looked at, and the widest. */
+  const CLOSEST = 260;
+  const held = (c: { x: number; y: number; w: number; h: number }) => {
+    const w = Math.max(CLOSEST, Math.min(whole.w, c.w));
+    const h = (w / c.w) * c.h;
+    // Kept over the park, with a hand's breadth of slack so the edge of the plot can be worked on
+    // comfortably. Panned further than that there is nothing to see and nothing to come back to.
+    const slackX = w * 0.12, slackY = h * 0.12;
+    return {
+      w, h,
+      x: Math.max(whole.x - slackX, Math.min(whole.x + whole.w - w + slackX, c.x)),
+      y: Math.max(whole.y - slackY, Math.min(whole.y + whole.h - h + slackY, c.y)),
+    };
+  };
+
+  // Framing something - an area, a habitat - is an ACTION rather than a mode: it moves the camera
+  // there, and from there the player can zoom and pan wherever they like.
+  const aim = frame ? `${frame.x0},${frame.y0},${frame.x1},${frame.y1}` : '';
+  useEffect(() => {
+    if (!frame) return;
+    const pad = Math.max(30, (frame.x1 - frame.x0) * 0.06);
+    const to = held({ x: frame.x0 - pad, y: frame.y0 - pad,
+      w: frame.x1 - frame.x0 + pad * 2, h: frame.y1 - frame.y0 + pad * 2 });
+    const from = camNow.current;
+    // Moved rather than jumped: the picture changing under you without anything appearing to move is
+    // the thing that makes a zoom disorienting.
+    let raf = 0;
+    // Timed against the frames themselves rather than against a clock read before them. Those are
+    // not guaranteed to be the same clock, and when they are not the elapsed time comes out
+    // negative - which reads as "before the start", and the camera flies off backwards.
+    let t0 = 0;
+    const step = (now: number) => {
+      if (!t0) t0 = now;
+      const t = Math.max(0, Math.min(1, (now - t0) / 220));
+      const e = t * t * (3 - 2 * t);
+      setCam({ x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e,
+        w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e });
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aim]);
+
+  const panning = useRef(false);
+
+  /** Closer in or further out, about a point that stays put under the pointer. */
+  const zoomAbout = (at: { x: number; y: number } | null, by: number) => setCam((c) => {
+    const w = Math.max(CLOSEST, Math.min(whole.w, c.w * by));
+    const h = (w / c.w) * c.h;
+    const p = at ?? { x: c.x + c.w / 2, y: c.y + c.h / 2 };
+    const tx = (p.x - c.x) / c.w, ty = (p.y - c.y) / c.h;
+    return held({ x: p.x - tx * w, y: p.y - ty * h, w, h });
+  });
+
   const view = `${box.x} ${box.y} ${box.w} ${box.h}`;
   // Zoomed in, a label written in park units comes out enormous. Everything that is chrome rather
   // than park - names, pills, grips - is scaled by how much the picture is magnified, so it stays
@@ -283,8 +345,34 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     window.addEventListener('pointerup', up);
   };
 
+  // The wheel zooms about the pointer. Listened for directly rather than through React so it can be
+  // taken non-passively: left passive, the browser scrolls the page behind the park instead.
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      zoomAbout(worldAt(e), e.deltaY > 0 ? 1.12 : 1 / 1.12);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  });
+
+  const stepper = 'flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/90 text-sm font-bold shadow-sm hover:bg-background';
+
   return (
-    <div className={cn('h-full w-full', className)}>
+    <div className={cn('relative h-full w-full', className)}>
+      {/* The camera's own controls. The park is bigger than the pane it is drawn in, so moving
+          about it is an ordinary thing to want rather than a mode to be in. */}
+      <div data-part="park-camera" className="absolute right-2 top-2 z-20 flex items-center gap-1">
+        <button type="button" aria-label="Zoom out" className={cn(FOCUS, stepper)}
+          onClick={() => zoomAbout(null, 1.3)}>&minus;</button>
+        <button type="button" aria-label="Zoom in" className={cn(FOCUS, stepper)}
+          onClick={() => zoomAbout(null, 1 / 1.3)}>+</button>
+        <button type="button" data-part="park-fit" aria-label="See the whole zoo"
+          className={cn(FOCUS, 'rounded-full border border-border bg-background/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm hover:bg-background')}
+          onClick={() => setCam(whole)}>Whole zoo</button>
+      </div>
       {/* No selecting. Dragging across the park was painting the browser's own selection highlight
           over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
           there. Reported from playing it: "blue squares appear as trails." */}
@@ -307,6 +395,31 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         onPointerDown={(e) => {
           const w = worldAt(e);
           if (!w) return;
+          // Dragging the ground moves the picture. Started on every press and only TAKEN as a pan
+          // once the pointer has travelled: a press that does not move is still the click it was, so
+          // placing, path-drawing and clearing the selection all behave exactly as they did.
+          if (!placing && tool !== 'path') {
+            const r = svgRef.current?.getBoundingClientRect();
+            const from = { x: e.clientX, y: e.clientY }, start = camNow.current;
+            const scale = r ? Math.min(r.width / start.w, r.height / start.h) : 1;
+            let travelled = false;
+            const move = (ev: PointerEvent) => {
+              const dx = ev.clientX - from.x, dy = ev.clientY - from.y;
+              if (!travelled && Math.hypot(dx, dy) < 5) return;
+              travelled = true;
+              panning.current = true;
+              setCam(held({ ...start, x: start.x - dx / scale, y: start.y - dy / scale }));
+            };
+            const up = () => {
+              window.removeEventListener('pointermove', move);
+              window.removeEventListener('pointerup', up);
+              // Cleared after this press has been handled, so the click that ENDS a pan does not
+              // also clear the selection.
+              setTimeout(() => { panning.current = false; }, 0);
+            };
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', up);
+          }
           if (placing) {
             // An animal goes IN somewhere: dropped on a habitat that is standing, it moves in.
             const item = state.backlog.find((it) => it.id === placing.id);
@@ -345,7 +458,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             setRunFrom(null); setRunTo(null);
             return;
           }
-          onSelect?.(null);
+          if (!panning.current) onSelect?.(null);
         }}>
         {/* The ground, the promenade along the front, and a grid you can judge a footprint against. */}
         {/* Grass, then the promenade along the front, then the car park BEYOND the park's edge -

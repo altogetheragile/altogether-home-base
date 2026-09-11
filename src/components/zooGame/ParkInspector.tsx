@@ -3,7 +3,7 @@ import { answerable, checkCriterion, checkedAt } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { Check, Circle, GripVertical } from 'lucide-react';
+import { Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 // ============= The inspector =============
@@ -58,6 +58,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   // moveable too - it can get in the way when placing an object". So it can be picked up by its
   // heading and dropped anywhere on the park, and once it has been moved the guess stops applying.
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  const [hidden, setHidden] = useState(false);
   const box = useRef<HTMLDivElement | null>(null);
   const carry = (e: ReactPointerEvent) => {
     const panel = box.current;
@@ -81,12 +82,21 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   };
   const moved = at ? { left: at.x, top: at.y, right: 'auto', bottom: 'auto' } : undefined;
 
-  if (collapsed) {
+  // Out of the way entirely, and a way back. Inside a habitat it is out of the way by default: in
+  // there the whole picture is the pen, and the panel would be most of it.
+  //
+  // The same pill either way, and it is a button when it is one the player put there: something you
+  // put away has to be something you can get back, or it is gone.
+  if (collapsed || hidden) {
     return (
-      <div data-part="park-inspector" data-collapsed="yes"
-        className={cn('pointer-events-none absolute z-20 rounded-full border border-border bg-background/95 px-3 py-1 text-xs font-semibold shadow-sm', place, className)}>
+      <button type="button" data-part="park-inspector" data-collapsed="yes"
+        onClick={() => setHidden(false)} disabled={collapsed && !hidden}
+        className={cn('absolute z-20 rounded-full border border-border bg-background/95 px-3 py-1 text-xs font-semibold shadow-sm',
+          collapsed && !hidden && 'pointer-events-none', !collapsed && FOCUS, !collapsed && 'hover:bg-background',
+          !at && place, className)}
+        style={moved}>
         Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span>
-      </div>
+      </button>
     );
   }
 
@@ -97,7 +107,12 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
       <h3 data-part="inspector-grip" onPointerDown={carry}
         className="flex cursor-grab select-none items-center gap-1.5 text-sm font-bold active:cursor-grabbing">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
-        <span>Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span></span>
+        <span className="flex-1">Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span></span>
+        <button type="button" data-part="hide-inspector" aria-label="Put the acceptance criteria away"
+          onPointerDown={(e) => e.stopPropagation()} onClick={() => setHidden(true)}
+          className={cn(FOCUS, 'rounded p-0.5 text-muted-foreground hover:text-foreground')}>
+          <X className="h-3.5 w-3.5" />
+        </button>
       </h3>
       <ul className="mt-1.5 space-y-1.5">
         {criteria.map((c, i) => {
