@@ -562,9 +562,15 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             the picture into a little scrolling well with its top line cut off and nothing saying so.
             Reported from playing it: "why do I need to scroll when there is lots of white space on
             the page above the info?" */}
+        {/* `items-start`, or the panel is stretched to the height of the window by the flex box
+            round it and its content spills out of the bottom - past its own padding, under the dock,
+            with the panel's border ending somewhere up the page. */}
         {takeover && (
-          <div data-part="takeover" className="absolute inset-0 z-30 flex overflow-y-auto bg-background/80 p-2 pb-20 backdrop-blur-sm sm:p-3 sm:pb-20">
-            <div className="flex min-h-full w-full flex-col rounded-xl border border-border bg-background p-3 shadow-xl">
+          <div data-part="takeover" className="absolute inset-0 z-30 flex items-start overflow-y-auto bg-background/80 p-2 backdrop-blur-sm sm:p-3">
+            {/* The room for the dock is INSIDE the panel. On the scroll container it is padding
+                below the scrolled content, which browsers disagree about: the last line ended up
+                under the Back/Next pill, which is the one thing that must never be covered. */}
+            <div className="flex min-h-full w-full flex-col rounded-xl border border-border bg-background p-3 pb-20 shadow-xl">
               {children}
             </div>
           </div>
