@@ -227,7 +227,7 @@ export function parkBounds(box: { w: number; h: number }): { minX: number; maxX:
  *
  *  Saved games are why this exists. The park used to GROW with its contents, so a habitat could
  *  quite legally be standing at y=780 - and when the park became a fixed 700 tall, that position
- *  was suddenly off the bottom of it. The item was still delivered, still on the Backlog, still
+ *  was suddenly off the bottom of it. The item was still delivered, still on the Product Backlog, still
  *  Done; it was simply drawn somewhere you could not look. Nobody's zoo should need a migration to
  *  be visible, so every position is read through this.
  */

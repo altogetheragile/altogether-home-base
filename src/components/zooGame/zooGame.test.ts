@@ -110,10 +110,13 @@ describe('zoo game: setup', () => {
     const s = initialZooState(1);
     expect(s.zones).toContain('Grounds');
     const grounds = s.backlog.filter((i) => i.zone === 'Grounds');
-    // pathways plus a spread of scenery (trees, rocks, river, bridge...)
+    // pathways plus a spread of scenery (trees, rocks, bridge...)
     expect(grounds.some((i) => i.category === 'path')).toBe(true);
     expect(grounds.some((i) => i.template === 'bridge')).toBe(true);
-    expect(grounds.some((i) => i.template === 'river')).toBe(true);
+    // ...and NOT a river. The river is terrain: it is on the plot before the zoo is, nobody builds
+    // it, and it is what makes the Bridge worth ordering above the thing on the far side of it.
+    expect(grounds.some((i) => i.template === 'river'),
+      'the river is back on the Product Backlog as something to build').toBe(false);
     expect(grounds.some((i) => i.template === 'tree')).toBe(true);
     // each is a ready, estimated PBI (not an unsized epic) so it can be pulled straight in
     expect(grounds.every((i) => i.category === 'flora' || i.category === 'path')).toBe(true);
@@ -183,7 +186,7 @@ describe('zoo game: the Sprint loop', () => {
     expect(s.lastReview!.segments.every((seg) => seg.happiness === 0)).toBe(true); // no open exhibits
   });
 
-  it('unfinished committed items return to the Backlog', () => {
+  it('unfinished committed items return to the Product Backlog', () => {
     let s = planSprint(flat(bigCatsSplit(1)), ['lion', 'tiger', 'penguins']);
     s = openItem(finish(s, 'lion'), 'lion'); // only lion finished
     s = reviewSprint(s);
@@ -270,7 +273,7 @@ describe('zoo game: arranging the park layout', () => {
     let s = splitAll(initialZooState(1));
     const before = s.backlog.length;
     const lion = s.backlog.find((i) => i.id === 'lion')!;
-    // Duplicate: a new item "... (copy)" right after the original, back in the Backlog.
+    // Duplicate: a new item "... (copy)" right after the original, back in the Product Backlog.
     s = duplicatePbi(s, 'lion');
     expect(s.backlog.length).toBe(before + 1);
     const copy = s.backlog.find((i) => i.name === `${lion.name} (copy)`)!;
@@ -410,7 +413,7 @@ describe('zoo game: the PO adds and refines PBIs', () => {
     expect(st.backlog.find((i) => i.name === 'Meerkats')!.story).toContain('so that');
   });
 
-  it('drag-and-drop reorders the Backlog (move one item before another)', () => {
+  it('drag-and-drop reorders the Product Backlog (move one item before another)', () => {
     const s = initialZooState(1);
     const ids = s.backlog.map((i) => i.id);
     const moved = moveItemBefore(s, ids[3], ids[0]); // move the 4th item before the 1st
@@ -461,7 +464,7 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
     expect(s.committedIds).toContain('elephant');
   });
 
-  it('the Product Owner can re-order the Backlog', () => {
+  it('the Product Owner can re-order the Product Backlog', () => {
     const s = initialZooState(1);
     const order = () => availableItems(s).map((i) => i.id);
     const before = order();
@@ -586,8 +589,8 @@ describe('zoo game: work that outlives the Sprint it was built in', () => {
   });
 });
 
-describe('zoo game: pulling Backlog items mid-Sprint', () => {
-  it('commits a Backlog item into the running Sprint', () => {
+describe('zoo game: pulling Product Backlog items mid-Sprint', () => {
+  it('commits a Product Backlog item into the running Sprint', () => {
     let s = planSprint(bigCatsSplit(1), ['lion']);
     expect(availableItems(s).some((i) => i.id === 'tiger')).toBe(true);
     s = pullIntoSprint(s, 'tiger');
@@ -598,11 +601,11 @@ describe('zoo game: pulling Backlog items mid-Sprint', () => {
     expect(availableItems(s).some((i) => i.id === 'tiger')).toBe(false);
   });
 
-  it('only pulls from the Backlog, and only during a Sprint', () => {
+  it('only pulls from the Product Backlog, and only during a Sprint', () => {
     const planning = bigCatsSplit(1); // phase 'intro', not a Sprint
     expect(pullIntoSprint(planning, 'tiger')).toBe(planning);
     const s = planSprint(bigCatsSplit(1), ['lion']);
-    expect(pullIntoSprint(s, 'lion')).toBe(s); // lion is committed, not in the Backlog
+    expect(pullIntoSprint(s, 'lion')).toBe(s); // lion is committed, not in the Product Backlog
   });
 });
 
@@ -823,7 +826,7 @@ describe('zoo game: product goal progress is an OUTCOME, not backlog burn', () =
     expect(s.lastReview!.overallHappiness).toBeGreaterThan(0);
   });
 
-  it('adding unbuilt Backlog items does NOT lower progress (it is outcome, not % built)', () => {
+  it('adding unbuilt Product Backlog items does NOT lower progress (it is outcome, not % built)', () => {
     let s = reviewSprint(buildAndOpen(flat(initialZooState(1)), NICE_ZOO));
     const before = productGoalProgress(s);
     expect(before).toBeGreaterThan(0);
@@ -1376,7 +1379,7 @@ describe('zoo game: the toolbox', () => {
     const partial = { parts: { body: 'round' }, colors: { body: '#123456' } };
     s = setDraftDesign(s, 'lion', partial);
     expect(s.backlog.find((i) => i.id === 'lion')!.draftDesign).toEqual(partial);
-    // The Sprint ends with it unfinished: it returns to the Backlog but the work must not be lost.
+    // The Sprint ends with it unfinished: it returns to the Product Backlog but the work must not be lost.
     s = reviewSprint(s);
     const lion = s.backlog.find((i) => i.id === 'lion')!;
     expect(lion.status).toBe('backlog');
@@ -1509,7 +1512,7 @@ describe('zoo game: richer studio kit', () => {
 });
 
 describe('zoo game: the coach nudges a new player through the loop', () => {
-  it('sends a brand-new player to plan, rather than to finish the Backlog first', () => {
+  it('sends a brand-new player to plan, rather than to finish the Product Backlog first', () => {
     // This used to tell them to split the epics before starting, which is Sprint 0 taught as
     // a screen. The Guide has no phase before the first Sprint, and the first area arrives
     // ready, so there is already a Sprint's worth to plan from.
@@ -1609,7 +1612,7 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
     expect(running.refinePenalty).toBeGreaterThan(0);
   });
 
-  it('measures how far ahead the Backlog is prepared, in Sprints of ready work', () => {
+  it('measures how far ahead the Product Backlog is prepared, in Sprints of ready work', () => {
     const s: ZooGameState = { ...bigCatsSplit(1), velocity: [20] };
     const pts = availableItems(s).filter(isReady).reduce((n, it) => n + it.estimate, 0);
     expect(readyHorizon(s)).toBeCloseTo(Math.round((pts / 20) * 10) / 10, 5);
@@ -2087,7 +2090,7 @@ describe('zoo game: AI Product Owner refinement', () => {
     expect(ice.unsized).toBe(true); // the PO does NOT estimate - it arrives unsized
     // Clarified acceptance.
     expect(s.backlog.find((i) => i.id === 'lion')!.acceptance).toContain('Unmistakably a lion');
-    // Re-ordered by value: lion then kiosk at the front of the Backlog.
+    // Re-ordered by value: lion then kiosk at the front of the Product Backlog.
     const backlogIds = s.backlog.filter((i) => i.status === 'backlog').map((i) => i.id);
     expect(backlogIds[0]).toBe('lion');
     expect(backlogIds[1]).toBe('kiosk');
@@ -2103,7 +2106,7 @@ describe('zoo game: AI Product Owner refinement', () => {
 });
 
 describe('zoo game: the Sprint Goal is the Scrum Team\'s, not the PO\'s', () => {
-  it('is never set by refining the Backlog, whatever the PO says', () => {
+  it('is never set by refining the Product Backlog, whatever the PO says', () => {
     // Nothing set yet: asking the PO to refine leaves the field empty for Sprint Planning, where the
     // whole Scrum Team crafts the Goal from the work they select.
     let s = applyPoRefinements(initialZooState(1), { order: ['lion', 'lion-enc'] });
@@ -2149,7 +2152,7 @@ describe('zoo game: the seeded Backlog reads correctly', () => {
   it('gives every starting item an icon that matches what it is', () => {
     const want: Record<string, string> = {
       'Lion Enclosure': 'fence', Lion: 'cat', 'Main Pathways': 'path', 'Big Cats Paths': 'path', Trees: 'tree', Flowerbed: 'flower',
-      Rockery: 'rocks', River: 'river', Bridge: 'bridge', Signposts: 'signpost', Fountain: 'fountain',
+      Rockery: 'rocks', Bridge: 'bridge', Signposts: 'signpost', Fountain: 'fountain',
       Toilets: 'toilets', 'Gift Shop': 'shop', 'Seating Area': 'seating',
     };
     const s = initialZooState(1);
@@ -2165,7 +2168,7 @@ describe('zoo game: a board that will not move says which kind of stuck it is', 
   it('tells a blocked Sprint from a spent day', () => {
     // Two very different things look identical from the outside: a day with no room left in it,
     // and a Sprint Backlog nobody can start. The reported game was the second and the board said
-    // the first, which sends a player looking at the clock for a problem that is in the Backlog.
+    // the first, which sends a player looking at the clock for a problem that is in the Product Backlog.
     let s = planSprint(withEnclosuresBuilt(initialZooState(1)), ['lion']);
     s = { ...s, dayStage: 'building', daySecondsLeft: DAY_SECONDS };
     // The Lion is in the Sprint and its habitat is not: nothing here can start, whatever the time.
@@ -2685,7 +2688,7 @@ describe('zoo game: starting an item by dropping it on the park', () => {
   });
 });
 
-describe('zoo game: what kind of thing a Backlog item is', () => {
+describe('zoo game: what kind of thing a Product Backlog item is', () => {
   it('files scenery by what it actually is, not all as planting', () => {
     // `flora` had become a bin for everything that was not an animal, a habitat, a building or a
     // path, so a bridge went about the park labelled "Planting".
@@ -3146,7 +3149,7 @@ describe('zoo game: a position saved when the park was a different size', () => 
   it('brings a thing standing off the bottom back inside the park', () => {
     // The bug a saved game kept alive. The park used to GROW with its contents, so y=780 was a
     // perfectly legal place for a habitat - and when the park became a fixed 700 tall, that habitat
-    // was drawn below the bottom of it. Still delivered, still Done, still on the Backlog, and
+    // was drawn below the bottom of it. Still delivered, still Done, still on the Product Backlog, and
     // simply not anywhere you could look. Saving and reloading preserved it exactly.
     const rescued = insidePark(habitat, { x: 400, y: 780 });
     expect(rescued.y).toBeLessThanOrEqual(PLAY_H);
@@ -3214,7 +3217,7 @@ describe('zoo game: the Product Owner looks ahead', () => {
     if (p!.kind === 'split') expect(p!.memberIds.length).toBeGreaterThan(0);
   });
 
-  it('says nothing about a zone that already has its paths in the Backlog', () => {
+  it('says nothing about a zone that already has its paths in the Product Backlog', () => {
     // bigcats-paths is right there, unbuilt but written - the Product Owner has nothing to add.
     const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
     expect(lookAhead(s).some((p) => p.id === 'paths:Big Cats')).toBe(false);

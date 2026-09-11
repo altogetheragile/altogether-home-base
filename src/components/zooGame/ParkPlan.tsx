@@ -3,6 +3,7 @@ import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { themeFor } from './zoneTheme';
+import { riverOutline, inWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
@@ -158,13 +159,17 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     const zone = state.backlog.find((it) => it.id === id)?.zone;
     const plot = plotFor(state, zone);
     const strayed = !off && plot && !insidePlot(plot, box, at);
+    // Nothing is built in the river. The exception is the one thing whose whole job is to cross it.
+    const bridge = (state.backlog.find((it) => it.id === id)?.template ?? '') === 'bridge';
+    const wet = !off && !bridge && inWater(box, at);
     // Water is the exception, and it is the whole point of a bridge: a bridge over a river has to
     // overlap it or it is not a bridge. Reported from playing it - "I can't place it over the
     // river". Everything else keeps its ground to itself.
     const over = boxes.find((b) => b.item.id !== id && !overWater(b.item)
       && Math.abs(at.x - b.at.x) < (b.size.w + box.w) / 2 && Math.abs(at.y - b.at.y) < (b.size.h + box.h) / 2);
-    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed && !over,
-      why: off ? 'off the park' : strayed ? `outside the ${zone} area` : over ? `on top of ${over.item.name}` : undefined };
+    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed && !wet && !over,
+      why: off ? 'off the park' : wet ? 'in the river' : strayed ? `outside the ${zone} area`
+        : over ? `on top of ${over.item.name}` : undefined };
   };
 
   /** Drag something that is already standing: it follows the pointer and lands where you let go. */
@@ -359,6 +364,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             <line key={`h${i}`} x1={0} y1={(i + 1) * 40} x2={CANVAS_W} y2={(i + 1) * 40} />
           ))}
         </g>
+
+        {/* The river, which was here before the zoo was. Drawn under the areas and everything in
+            them, because it is the ground rather than something standing on it. */}
+        <path data-part="river" d={outlinePath(riverOutline())} fill="#6db6d8" stroke="#4f9cbf" strokeWidth={2} />
 
         {/* The ground each area of the zoo owns, marked out from the day the brief was agreed.
             An area nobody has opened yet is drawn as ground with a name on it - which is the rest

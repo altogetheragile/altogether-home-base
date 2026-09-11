@@ -54,7 +54,7 @@ describe('moving work without a pointer', () => {
 
 describe('what a finger has to hit', () => {
   it('gives the Product Backlog’s ordering a target, not a glyph', () => {
-    // Ordering the Backlog is the Product Owner's central act and it was a 12px chevron.
+    // Ordering the Product Backlog is the Product Owner's central act and it was a 12px chevron.
     const s = initialZooState(3);
     const { container } = render(
       <MemoryRouter>

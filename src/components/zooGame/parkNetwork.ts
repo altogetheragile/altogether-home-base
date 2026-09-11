@@ -1,5 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { zonePlots } from './parkZones';
+import { waterRects } from './parkWater';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
 import { buildNav, routeAcross, type NavInput, type Pt, type Rect } from './parkNav';
@@ -34,7 +35,9 @@ const rectOf = (at: Pt, size: { w: number; h: number }, item: BacklogItem): Rect
 export function parkNetwork(state: ZooGameState): NavInput {
   const boxes = boxOf(state);
   const paths: Pt[][] = [];
-  const water: Rect[] = [];
+  // The river is terrain: it is in the way whether or not anybody has built anything. Everything
+  // else here is read off what the Scrum Team has delivered; this is read off the plot.
+  const water: Rect[] = [...waterRects()];
   const crossings: Rect[] = [];
   const solid: Rect[] = [];
 

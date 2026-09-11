@@ -31,7 +31,7 @@ export interface PbiDraft {
 export interface ZooBrief {
   /** The areas the zoo will have. Each becomes an epic, except the one you open first. */
   zones: string[];
-  /** Who the zoo is mainly for, which is what orders the Backlog by value. */
+  /** Who the zoo is mainly for, which is what orders the Product Backlog by value. */
   audience: 'families' | 'enthusiasts' | 'comfortSeekers';
   /** The area to open first: it arrives refined and ready, the rest arrive as epics. */
   firstZone: string;
@@ -224,7 +224,7 @@ export interface BacklogItem {
    *  product-wide Definition of Done. */
   acceptance: string[];
   status: ItemStatus;
-  /** The Sprint this item was committed to (null while in the Backlog). */
+  /** The Sprint this item was committed to (null while in the Product Backlog). */
   sprintNumber: number | null;
   accessible: boolean;
   /** The finish the team built: for an exhibit the one animal, for an amenity the
@@ -357,7 +357,7 @@ export interface ZooGameState {
   phase: ZooPhase;
   /** The one Scrum Team - the accountabilities made visible (PO, Scrum Master, Developers). */
   team: ScrumTeam;
-  /** The long-term objective the Backlog is ordered toward (coached, editable). */
+  /** The long-term objective the Product Backlog is ordered toward (coached, editable). */
   productGoal: string;
   /** The single objective for the current Sprint (coached, outcome-shaped). Empty
    *  until set at Planning. The Daily Scrum inspects progress toward it. */
@@ -444,7 +444,7 @@ export interface ZooGameState {
   /** The most recent Sprint Review's simulation output. */
   lastReview: SimulationResult | null;
   /** Outstanding signals from the visitors (persist and worsen until addressed).
-   *  The Product Owner decides whether to turn one into a Backlog item. */
+   *  The Product Owner decides whether to turn one into a Product Backlog item. */
   signals: Signal[];
   /** How many consecutive Reviews each signal has recurred, for persist-and-worsen. */
   signalAge: Record<string, number>;

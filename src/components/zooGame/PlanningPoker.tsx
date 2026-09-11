@@ -18,7 +18,7 @@ interface PlanningPokerProps {
   talk?: boolean;
 }
 
-/** Estimate a Backlog item by planning poker: the Developers each reveal a card, and the
+/** Estimate a Product Backlog item by planning poker: the Developers each reveal a card, and the
  *  forecast is the most common value (ties rounding up). The Product Owner commits a
  *  size - a shared forecast from size and complexity, not a promise. */
 export function PlanningPoker({ item, state, seed, onCommit, talk: withTalk = true }: PlanningPokerProps) {

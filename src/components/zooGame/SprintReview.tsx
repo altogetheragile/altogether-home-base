@@ -90,7 +90,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   const finished = [...waiting, ...unreleased];
 
   const [step, setStep] = useState<Step>('done');
-  const [taken, setTaken] = useState(0); // signals turned into Backlog items in this Review
+  const [taken, setTaken] = useState(0); // signals turned into Product Backlog items in this Review
   const [declined, setDeclined] = useState(0);
   // Every call made on what the visitors said, this Sprint - both answers, in the order they were
   // given.
@@ -222,7 +222,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
             </div>
             <p className="text-[11px] text-muted-foreground">
               Visitor happiness <strong className="text-foreground">{Math.round(r.overallHappiness)}</strong> of {GOAL_HAPPINESS_TARGET} -
-              that is the finish line this bar is measured against, not how much of the Backlog is built. There is no set
+              that is the finish line this bar is measured against, not how much of the Product Backlog is built. There is no set
               number of Sprints; you get there when the visitors say so.
             </p>
           </>
@@ -391,10 +391,10 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         </>
       ))}
 
-      {/* ---- What next: adapt the Backlog, and the Product Goal call ---- */}
+      {/* ---- What next: adapt the Product Backlog, and the Product Goal call ---- */}
       {step === 'next' && (<>
           {/* What the visitors said, as decisions rather than as a list with one button on it.
-              Each line is the Product Owner's call - take it into the Backlog, or turn it down -
+              Each line is the Product Owner's call - take it into the Product Backlog, or turn it down -
               and either way the game writes down what was decided, because the Retrospective reads
               the decisions back and "we ignored the queues twice" is the sort of thing a team
               should be able to see. Turning one down does not make the cause go away: if it is
@@ -403,14 +403,14 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
             <section className="space-y-2 rounded-lg border border-amber-300 bg-amber-50/70 p-4 dark:border-amber-800/50 dark:bg-amber-950/20">
               <div className={cn(TONE.attention.text, "flex items-center gap-2 text-sm font-semibold")}><Lightbulb className="h-4 w-4" /> What the visitors said &middot; your call on each</div>
               <p className={cn(TONE.attention.text, "text-[11px]")}>
-                You are the Product Owner: take it into the Backlog now, or turn it down. Both are decisions and both
+                You are the Product Owner: take it into the Product Backlog now, or turn it down. Both are decisions and both
                 are recorded. A cause you turn down is still there - if it holds, they say it again louder.
               </p>
               {state.signals.map((sig, i) => (
                 <div key={sig.drivenBy} className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
                   <span className="min-w-0 flex-1">{sig.suggestion}</span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
-                  <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to Backlog</Button>
+                  <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to the Product Backlog</Button>
                   {onDeclineSignal && (
                     <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground"
                       onClick={() => { onDeclineSignal(i); setDeclined((n) => n + 1); }}>Decline</Button>
@@ -442,7 +442,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
             </p>
           )}
 
-      {/* What is next: the top of the Backlog as it stands after this conversation. The Guide has the
+      {/* What is next: the top of the Product Backlog as it stands after this conversation. The Guide has the
           attendees collaborating on what to do next, and "next" is a list you can point at. */}
       <section className={cn(SURFACE.quiet, PADDING.roomy, 'space-y-1.5')}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">

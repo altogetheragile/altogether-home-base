@@ -6,7 +6,7 @@ import { Overlay } from './Overlay';
 /** A focused surface for something that is its own piece of work.
  *
  *  Estimating an item, splitting an epic, writing a Product Backlog item: each is a conversation
- *  with its own shape, and each was being rendered inline at the top of a Backlog list that scrolls
+ *  with its own shape, and each was being rendered inline at the top of a Product Backlog list that scrolls
  *  inside a fixed height. The result was a panel clipped at the top, sparse across a very wide
  *  column, and competing with the list behind it.
  *

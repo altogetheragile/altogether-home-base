@@ -218,7 +218,7 @@ function BacklogHeading({ count, note, onRefine }: { count: number; note?: strin
       <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({count})</span></h3>
       {onRefine
         ? <button type="button" onClick={onRefine} title="You can refine here, but it goes better in the Sprint before this one."
-          className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline")}>Refine the Backlog</button>
+          className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline")}>Refine the Product Backlog</button>
         : note && <span className="text-[11px] text-muted-foreground/70">{note}</span>}
     </div>
   );
@@ -298,7 +298,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // go looking for after the popover that offered it has closed.
   const fixRef = useRef<HTMLDivElement>(null);
   useEffect(() => { if (fixing) fixRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [fixing]);
-  // What a Goal would be about before anything is picked: the top of the Backlog, capped at a Sprint.
+  // What a Goal would be about before anything is picked: the top of the Product Backlog, capped at a Sprint.
   const candidates = goalCandidates(state);
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
   const stars = revealed(state, 'essentials');
@@ -307,7 +307,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // How the work gets done is topic three's whole job, so an item with no steps is topic three left
   // undone. "Suggest steps for all" is one press away if you would rather not write them yourself.
   const unplanned = chosen.filter((i) => !(i.tasks ?? []).some((t) => t.label.trim())).length;
-  // Habitats an animal can be assigned to: anything in the Backlog that is an enclosure.
+  // Habitats an animal can be assigned to: anything in the Product Backlog that is an enclosure.
   const habitats = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
   const toggle = (id: string) => setSelected((prev) => {
@@ -380,7 +380,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   offer: filled, not a tinted ghost of the primary action. */}
               <Button size="sm" className={cn(WIZARD, 'h-8 gap-1 px-3 text-xs font-semibold')}
                 onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
-                title="Writes a first draft from what is ready in the Backlog. Wording only - the Goal is the Scrum Team's to agree.">
+                title="Writes a first draft from what is ready in the Product Backlog. Wording only - the Goal is the Scrum Team's to agree.">
                 <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
               </Button>
             </div>
@@ -468,7 +468,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           {fixingItem && (
             <Workspace wide={fixingItem.category === 'epic'}
               title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}
-              subtitle="Refining here is allowed, but a Backlog refined during the last Sprint would not need it - and this is Planning's time."
+              subtitle="Refining here is allowed, but a Product Backlog refined during the last Sprint would not need it - and this is Planning's time."
               onClose={() => setFixing(null)}>
               {fixingItem.category === 'epic'
                 ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} />
@@ -486,7 +486,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
                     note={state.readyHabit && notReady(it)
                       ? 'You agreed at a Retrospective to forecast only what is Ready. Put this right first, or take it knowing what you agreed.'
-                      : "You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
+                      : "You can put that right here, but a Product Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
                 ))}
               </div>
             </>}
@@ -494,7 +494,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
               {onSetBet && <TheBet state={state} onSetBet={onSetBet} />}
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
-              {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Backlog that serve the Sprint Goal.</p>}
+              {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Product Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">
                 {chosen.map((it) => (
                   <div key={it.id}>

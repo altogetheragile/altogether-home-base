@@ -6,7 +6,7 @@ import type { SeatName } from './useZooSessions';
 // This is the point of playing together. Alone you are the Product Owner and the Developers
 // and the Scrum Master at once, so nothing you do is different because of who you are and
 // nothing ever pushes back - which is exactly why the accountabilities read as labels. Here
-// one person orders the Backlog and the others have to go and talk to them.
+// one person orders the Product Backlog and the others have to go and talk to them.
 //
 // Two rules kept this honest while writing it:
 //
@@ -29,15 +29,15 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   SET_PRODUCT_GOAL:  { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate.' },
   SET_GOAL_FORM:     { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate.' },
   WRITE_BACKLOG:     { who: 'product_owner', because: 'The Product Backlog is the Product Owner’s to create and order.' },
-  ADD_PBI:           { who: 'product_owner', because: 'Anyone may suggest an item, but whether it goes on the Backlog is the Product Owner’s call.' },
+  ADD_PBI:           { who: 'product_owner', because: 'Anyone may suggest an item, but whether it goes on the Product Backlog is the Product Owner’s call.' },
   DELETE_PBI:        { who: 'product_owner', because: 'What is on the Product Backlog is the Product Owner’s call.' },
   DUPLICATE_PBI:     { who: 'product_owner', because: 'What is on the Product Backlog is the Product Owner’s call.' },
   REORDER_IN_ZONE:   { who: 'product_owner', because: 'Ordering the Product Backlog is the Product Owner’s call.' },
   MOVE_ITEM_BEFORE:  { who: 'product_owner', because: 'Ordering the Product Backlog is the Product Owner’s call.' },
   MOVE_ZONE:         { who: 'product_owner', because: 'Ordering the Product Backlog is the Product Owner’s call.' },
-  ACCEPT_SIGNAL:     { who: 'product_owner', because: 'What the visitors asked for becomes a Backlog item when the Product Owner decides it does.' },
+  ACCEPT_SIGNAL:     { who: 'product_owner', because: 'What the visitors asked for becomes a Product Backlog item when the Product Owner decides it does.' },
   DECLINE_SIGNAL:    { who: 'product_owner', because: 'Turning down what the visitors asked for is a decision about value, and value is the Product Owner\u2019s.' },
-  DECLINE_PROPOSAL:  { who: 'product_owner', because: 'Turning something down is a Backlog decision, and the Backlog is the Product Owner’s.' },
+  DECLINE_PROPOSAL:  { who: 'product_owner', because: 'Turning something down is a Product Backlog decision, and the Product Backlog is the Product Owner’s.' },
   PO_REFINE:         { who: 'product_owner', because: 'This is the Product Owner doing their own work on the Product Backlog.' },
   OPEN_ITEM:         { who: 'product_owner', because: 'When something Done is released to visitors is the Product Owner’s call.' },
   // A question is addressed to a seat, and answering it is that seat's - but the gate cannot know

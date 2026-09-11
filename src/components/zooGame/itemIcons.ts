@@ -4,7 +4,7 @@ import {
   Utensils, Package, type LucideIcon,
 } from 'lucide-react';
 
-// The icon for a Backlog item, picked from what the item actually is rather than from its category.
+// The icon for a Product Backlog item, picked from what the item actually is rather than from its category.
 // A tiger is a cat, a pathway is a route, the toilets are not a fish. The item carries the toolbox
 // template it was made from ('tiger', 'kiosk', 'bridge'), so that is the first thing we look at; a
 // hand-written PBI has no template, so we fall back to its name and then to its category.
@@ -93,7 +93,7 @@ export function iconKey(item: IconItem): IconKey {
     return BY_TEMPLATE[item.template];
   }
   // For these the category IS what the item is, and the name would mislead: a "Tiger Enclosure" is a
-  // habitat, not a tiger, and telling the two apart in the Backlog is the whole point.
+  // habitat, not a tiger, and telling the two apart in the Product Backlog is the whole point.
   //
   // A tank is the exception worth making: it is a habitat, and a fence is the wrong picture for one
   // - the thing that makes it a tank is that it holds water. Not a fish, which would put it back in

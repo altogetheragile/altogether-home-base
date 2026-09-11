@@ -36,7 +36,7 @@ export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
  *  refinement costs below are absolute, and they move with it. */
 export const DAY_SECONDS = 180;
 
-/** Refining the Backlog DURING a Sprint takes time from building (ongoing refinement is
+/** Refining the Product Backlog DURING a Sprint takes time from building (ongoing refinement is
  *  real work with a cost). Each action spends this many seconds of the current day. In the
  *  Refinement/Planning phases it is free - that is the dedicated time to refine. */
 export const REFINE_COSTS = { estimate: 16, split: 24, addPbi: 12, refinePbi: 10 } as const;
@@ -72,7 +72,7 @@ export const MISSED_SCRUM_TIP =
 // The Definition of Done reads top-to-bottom as the workflow every item follows to be Done:
 // build it to its acceptance criteria, review it, get the PO's sign-off (all in Doing), then
 // place & open it (Deploy). It is the team's standing bar, editable and refined at the Retro.
-/** The team's own agreement about when a Backlog item is ready to be forecast into a Sprint. Scrum
+/** The team's own agreement about when a Product Backlog item is ready to be forecast into a Sprint. Scrum
  *  does not require one - it is a working agreement, not a gate handed down - so it is theirs to
  *  edit. The game only holds them to the parts it can see: sized, small enough (not still an epic),
  *  and with acceptance criteria. See `notReady`. */
@@ -202,11 +202,14 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
     items.push(epic(slug(area.zone), area.zone, area.zone, [...area.members, ...sceneryFor(area.zone)]));
   }
 
-  // The park's own fabric: the spine everyone walks, the water that crosses it, and the greenery
-  // that is nobody's zone in particular. Small pieces, ready alongside the exhibits.
+  // The park's own fabric: the spine everyone walks, the way over the water, and the greenery that
+  // is nobody's zone in particular. Small pieces, ready alongside the exhibits.
+  //
+  // No River. The river is terrain - it was on the plot before the zoo was, it is on nobody's
+  // Product Backlog, and it cannot be moved. What IS work is the Bridge, and it is only work because
+  // the river is there: ground on the far side cannot be reached until somebody builds one.
   items.push(
     pth('paths', 'Main Pathways', 'Grounds', 3),
-    flr('river', 'River', 'Grounds', 'river', 3),
     flr('bridge', 'Bridge', 'Grounds', 'bridge', 3),
     flr('signposts', 'Signposts', 'Grounds', 'signpost', 2),
     flr('fountain', 'Fountain', 'Grounds', 'fountain', 3),

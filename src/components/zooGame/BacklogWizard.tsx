@@ -22,7 +22,7 @@ import { Check, Sparkles, Users, Camera, Armchair } from 'lucide-react';
 //
 // On ONE page. They were three, with a step track and two Next presses, and each one used a fifth
 // of a tall window - four tick boxes on an acre of white. Reported from playing it: "can we combine
-// these three screens?" They are three parts of one decision, and a Product Owner writing a Backlog
+// these three screens?" They are three parts of one decision, and a Product Owner writing a Product Backlog
 // holds all three in their head at once: which areas, for whom, and which one first. Answering them
 // on one page is also the honest shape of the thing - the third question is made of the first
 // question's answers, and on three screens you could not see that.
@@ -93,7 +93,7 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
       <header className="space-y-2">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className={cn(EYEBROW, 'text-primary')}>Before there is a Backlog</div>
+            <div className={cn(EYEBROW, 'text-primary')}>Before there is a Product Backlog</div>
             <h2 className="text-3xl font-bold leading-tight tracking-tight">Writing the Product Backlog</h2>
             <p className="text-sm text-muted-foreground">
               Three questions, and the answers change what comes out - which areas exist, which one is
@@ -139,7 +139,7 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
       </Ask>
 
       <Ask n={2} question="Who are you building it for?"
-        lead="The Product Owner orders the Backlog by value, and value depends on who is coming.">
+        lead="The Product Owner orders the Product Backlog by value, and value depends on who is coming.">
         <div className="grid gap-2">
           {AUDIENCES.map((a) => (
             <Choice key={a.key} on={audience === a.key} onClick={() => setAudience(a.key)}>

@@ -58,7 +58,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
     const unready = (state.decisions ?? []).filter((d) => d.kind === 'unready');
     if (unready.length > 1) out.push(`Work that was not ready has gone into a Sprint ${unready.length} times.`);
     const noRefine = (state.decisions ?? []).filter((d) => d.kind === 'refinement' && /^No time/.test(d.what));
-    if (noRefine.length > 1) out.push(`${noRefine.length} Sprints have set aside no time to refine the Backlog.`);
+    if (noRefine.length > 1) out.push(`${noRefine.length} Sprints have set aside no time to refine the Product Backlog.`);
     return out;
   })();
   const current = STEPS.find((s) => s.key === step)!;

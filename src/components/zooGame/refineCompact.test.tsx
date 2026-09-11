@@ -27,7 +27,7 @@ describe('refinement, compact', () => {
   it('draws one row per item rather than a card', () => {
     const { container } = screen();
     const rows = [...container.querySelectorAll('[aria-label^="Refine "]')];
-    expect(rows.length, 'the Backlog is not on the screen').toBeGreaterThan(10);
+    expect(rows.length, 'the Product Backlog is not on the screen').toBeGreaterThan(10);
     // One line each: the name and its chips share a row, so twenty-three of them fit a screen.
     for (const r of rows.slice(0, 5)) {
       expect(r.innerHTML, 'the row is stacked into two lines again').toMatch(/h-\[1\.75rem\]/);

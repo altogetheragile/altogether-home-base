@@ -419,7 +419,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
 }
 
 interface SidebarProps {
-  /** One 44px row per item, so a Backlog of twenty-three reads on one screen. */
+  /** One 44px row per item, so a Product Backlog of twenty-three reads on one screen. */
   compact?: boolean;
   state: ZooGameState;
   mode: 'plan' | 'sprint' | 'refine' | 'view';
@@ -440,7 +440,7 @@ interface SidebarProps {
   onPull?: (id: string) => void;
   /** Refine an epic by splitting the chosen members into their own PBIs. */
   onSplitEpic?: (id: string, memberIds: string[]) => void;
-  /** Delete or duplicate a Backlog PBI. */
+  /** Delete or duplicate a Product Backlog PBI. */
   onDeletePbi?: (id: string) => void;
   onDuplicatePbi?: (id: string) => void;
   /** The item open on the refinement bench beside this list, and how to change it. Given, the whole
@@ -475,7 +475,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
 
-  // Group the Backlog by zone (in first-appearance order) so a long list stays scannable;
+  // Group the Product Backlog by zone (in first-appearance order) so a long list stays scannable;
   // reorder/drag still act on the whole ordered Backlog underneath.
   const flatIndex = new Map(items.map((it, i) => [it.id, i]));
   const zoneOrder: string[] = [];
@@ -494,9 +494,9 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
     // do about it is a button, and sits with the actions. Keeping them apart is what lets a row fit
     // in the narrow Backlog rail. In Planning an unready item cannot be forecast until it is put
     // right - the Guide allows refining here ("The Scrum Team may refine these items during this
-    // process"), but a Backlog refined during the last Sprint would not need it.
+    // process"), but a Product Backlog refined during the last Sprint would not need it.
     const status = why ? (
-      <span title={mode === 'plan' ? `${why}. You can put that right here, but a Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
+      <span title={mode === 'plan' ? `${why}. You can put that right here, but a Product Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
         className={cn(TONE.attention.text, "flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide")}>
         <AlertCircle className="h-3 w-3" /> Not ready
       </span>
@@ -638,7 +638,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
           </button>
           Product Backlog <span className="font-normal text-muted-foreground">({items.length})</span>
           {mode === 'sprint' && (
-            // How far ahead the Backlog is prepared. Refining here costs the day's build time, and
+            // How far ahead the Product Backlog is prepared. Refining here costs the day's build time, and
             // what it prepares is for LATER Sprints - this Sprint's plan is already settled.
             <span className={cn('ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-medium',
               horizon > 3 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
@@ -701,7 +701,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
       )}
 
       <div className="space-y-2.5">
-        {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
+        {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Product Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
         {zoneOrder.map((zone, zi) => {
           const zoneItems = byZone.get(zone)!;
           const collapsed = collapsedZones.has(zone);

@@ -10,7 +10,7 @@ import { RADIUS, TONE } from './ui/tokens';
 // ============= One card for one Product Backlog item =============
 //
 // A Product Backlog item used to be drawn by six different pieces of code - two card components,
-// the Backlog sidebar row, and three hand-rolled rows on Planning and the Review - each with its
+// the Product Backlog sidebar row, and three hand-rolled rows on Planning and the Review - each with its
 // own padding, icon size and badges. It is the most repeated object in the game, so its
 // inconsistency was the game's inconsistency, multiplied.
 //
@@ -22,7 +22,7 @@ import { RADIUS, TONE } from './ui/tokens';
 /** Where an item is in its journey. Drives the card's treatment, and nothing else does. */
 export type PbiState =
   | 'backlog'   // waiting in the Product Backlog, ready to be chosen
-  | 'locked'    // in the Backlog but not ready - it cannot be forecast yet
+  | 'locked'    // in the Product Backlog but not ready - it cannot be forecast yet
   | 'forecast'  // pulled into this Sprint
   | 'doing'     // being built
   | 'built'     // built, waiting to be placed and released

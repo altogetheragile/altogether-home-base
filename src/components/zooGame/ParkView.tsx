@@ -238,7 +238,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   const open = state.backlog.filter((it) => it.status === 'open' && !it.enhancesId);
   // Ids of live features that already have an improvement in flight (so we don't stack PBIs).
   // "Improving…" shows only while an improvement is actively being built this Sprint (committed or
-  // done) - a transient state - not while it merely sits in the Backlog waiting to be pulled.
+  // done) - a transient state - not while it merely sits in the Product Backlog waiting to be pulled.
   const improving = new Set(state.backlog.filter((it) => it.enhancesId && (it.status === 'committed' || it.status === 'done')).map((it) => it.enhancesId!));
   // Zones a visitor could actually walk into, not zones with something standing in them. A habitat
   // with an animal in it and no path to it is work delivered and value not: that is the difference
@@ -374,7 +374,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
             return (
             <div className="flex flex-col gap-1.5 rounded-md border border-emerald-500/50 bg-emerald-500/5 px-2 py-1.5 text-[11px]">
               <div className="flex flex-wrap items-center gap-2">
-                <span className={cn(TONE.done.text, "font-medium")}>Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Backlog.</span>
+                <span className={cn(TONE.done.text, "font-medium")}>Deploying <b>{deployMode}</b>: drag it into place, and use <b>Connect</b> to lay the paths that link it in. Paths are set at deployment - later changes go through the Product Backlog.</span>
                 {onFinishDeploy && (
                   <button type="button"
                     onClick={() => { stopDrawing(); setSelectedConn(null); onFinishDeploy(); }}
@@ -419,7 +419,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
               {(() => {
                 // Three cases, and they are genuinely different. A run of the pathway on the bench
                 // is yours to change. A run of a DELIVERED pathway is part of the Increment, so it
-                // changes the way anything else delivered changes - through the Backlog. And a run
+                // changes the way anything else delivered changes - through the Product Backlog. And a run
                 // nobody owns is a leftover from the old free-draw step, which anyone may tidy away.
                 const owner = state.backlog.find((it) => it.id === selected.itemId);
                 const onBench = !!drawRoute && drawRoute.id === selected.itemId;
@@ -427,14 +427,14 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                 if (owner) return (
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-muted-foreground">A run of <b className="text-foreground">{owner.name}</b>, delivered.
-                      Re-routing it is a change to the product, so it goes through the Backlog.</span>
+                      Re-routing it is a change to the product, so it goes through the Product Backlog.</span>
                     {onImprove && !improving?.has(owner.id) && (
                       <button type="button" onClick={() => { onImprove(owner.id); setSelectedConn(null); }}
                         className={cn(FOCUS, "flex items-center gap-1 rounded border border-primary/60 bg-background px-1.5 py-0.5 font-semibold text-primary hover:bg-primary/10")}>
                         <Sparkles className="h-3 w-3" /> Improve {owner.name}
                       </button>
                     )}
-                    {improving?.has(owner.id) && <span className={cn(TONE.attention.text, "rounded bg-amber-500/10 px-1.5 py-0.5 font-medium")}>Already on the Backlog to improve</span>}
+                    {improving?.has(owner.id) && <span className={cn(TONE.attention.text, "rounded bg-amber-500/10 px-1.5 py-0.5 font-medium")}>Already on the Product Backlog to improve</span>}
                   </span>
                 );
                 return <span className="font-medium text-muted-foreground">A run left over from an earlier way of drawing paths. Nothing owns it.</span>;

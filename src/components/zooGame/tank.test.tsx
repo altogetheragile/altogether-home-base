@@ -121,7 +121,7 @@ describe('how many fish', () => {
 
 describe('a tank on the Product Backlog', () => {
   it('can be written before there is a fish to put in it', () => {
-    // "Can we add the tank to the toolbox for the PBL?" A Product Owner ordering a Backlog writes
+    // "Can we add the tank to the toolbox for the PBL?" A Product Owner ordering a Product Backlog writes
     // "Reef Tank", not "Medium Enclosure, and make it wet later" - so it is a tank from the moment
     // it is written, with no animal in it yet.
     const tanks = TOOLBOX.flatMap((g) => g.items).filter((t) => t.template === 'tank');
@@ -131,7 +131,7 @@ describe('a tank on the Product Backlog', () => {
       expect(draft.category, 'a tank is not a habitat').toBe('enclosure');
       expect(draft.enclosureSize, 'a tank arrived with no size').toBeTruthy();
       expect(isTank(undefined, [], { template: draft.template }),
-        `${t.name} is on the Backlog as a paddock`).toBe(true);
+        `${t.name} is on the Product Backlog as a paddock`).toBe(true);
     }
   });
 
@@ -145,7 +145,7 @@ describe('a tank on the Product Backlog', () => {
   });
 });
 
-describe('a tank in the Backlog', () => {
+describe('a tank in the Product Backlog', () => {
   it('does not look like a fence', () => {
     // A habitat, so not a fish - that is the trap the icon rule already warns about, where a "Tiger
     // Enclosure" comes out as a tiger. What makes a tank a tank is that it holds water.

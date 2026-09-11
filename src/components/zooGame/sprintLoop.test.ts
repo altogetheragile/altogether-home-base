@@ -44,7 +44,7 @@ describe('a Sprint, played through to the Review', () => {
     s = reducer(s, { type: 'AGREE_DOD' });
     s = reducer(s, { type: 'SET_PHASE', phase: 'planning' });
 
-    settle();                                                     // the Developers size the Backlog
+    settle();                                                     // the Developers size the Product Backlog
     po({ type: 'SET_SPRINT_GOAL', goal: 'Open the Big Cats zone so families have something to see' });
     settle();                                                     // the team agrees, forecasts, plans the how
     po({ type: 'AGREE_SPRINT_GOAL', seat: ME });

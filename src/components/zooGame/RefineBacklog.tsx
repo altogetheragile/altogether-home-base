@@ -81,9 +81,9 @@ interface RefineBacklogProps {
 }
 
 /** The two decisions that genuinely precede the first Sprint - how long a Sprint is, and
- *  what Done means - plus a look at the Backlog the Product Owner has just written.
+ *  what Done means - plus a look at the Product Backlog the Product Owner has just written.
  *
- *  This screen used to be called Initial Refinement and invited you to get the Backlog
+ *  This screen used to be called Initial Refinement and invited you to get the Product Backlog
  *  right before starting. That is Sprint 0, and it is the habit trainers spend a day
  *  undoing: the Guide has no phase before the first Sprint ("a new Sprint starts
  *  immediately after the conclusion of the previous Sprint"), and refinement is ongoing
@@ -120,13 +120,13 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
     // the card that acts on it on the right. The card has two faces - the agreements before the
     // first Sprint, and the item you are refining once you pick one.
     <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3">
-      {/* The first pass through the Backlog is not the same conversation as the ones after it: nothing
+      {/* The first pass through the Product Backlog is not the same conversation as the ones after it: nothing
           has been built, nothing is ready, and there is no Sprint yet to be "in". Either way what
           refining costs comes out of the Sprint you are about to forecast, not one you are inside. */}
       {/* One question, like every other screen. What refinement is, who does it and how much is
           enough sits behind the "?" rather than as a paragraph over the work. */}
       <header className="space-y-1">
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">{first ? 'Before the first Sprint' : 'Backlog Refinement'}</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">{first ? 'Before the first Sprint' : 'Product Backlog Refinement'}</div>
         <div className="flex items-center gap-2">
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Ready to start the first Sprint?' : 'What is ready for the Sprints ahead?'}</h2>
           <ExplainButton cards={['refinement', 'product-backlog', 'pbi']} phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught} />
@@ -135,7 +135,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       </header>
 
       {/* This screen asks for two things in order, and nothing said so. Numbering them is the whole
-          fix: agree the cadence, then get the top of the Backlog ready. */}
+          fix: agree the cadence, then get the top of the Product Backlog ready. */}
       {/* Agreed once and then in the way. It folds down to what was agreed, and opens again if the
           Scrum Team wants to change its mind before the first Sprint starts. */}
       {/* Green when it is settled, like the Definition of Done below - the three steps then read as

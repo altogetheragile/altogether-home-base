@@ -160,7 +160,7 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
   if (label === 'Can an animal move about in here?') {
     const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
     const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
-    // Against the animals that will actually live here, where the Backlog says which they are.
+    // Against the animals that will actually live here, where the Product Backlog says which they are.
     const living = state.backlog.filter((it) => it.enclosureId === item.id);
     const group = living.map((it) => currentDesign(it).group).find(Boolean);
     if (!living.length) return { met: true, evidence: `${tiles}, room for a pair` };

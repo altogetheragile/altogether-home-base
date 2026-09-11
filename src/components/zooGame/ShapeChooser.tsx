@@ -43,7 +43,7 @@ function Choice({ options, value, onPick }: { options: { key: string; label: str
  *  pathway needs no kind, and the game should not invent a question to ask. */
 export function ShapeChooser({ item, enclosures, onPlan }: {
   item: BacklogItem;
-  /** Habitats already in the Backlog, for an animal to be assigned to. */
+  /** Habitats already in the Product Backlog, for an animal to be assigned to. */
   enclosures: { id: string; name: string }[];
   onPlan: (patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string }) => void;
 }) {

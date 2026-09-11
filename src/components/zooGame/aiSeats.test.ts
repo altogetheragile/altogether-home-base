@@ -42,12 +42,12 @@ describe('a seat nobody is sitting in', () => {
     expect(aiTurn(at({ phase: 'refine' }), 'scrum_master')).toBeNull();
   });
 
-  it('has the Product Owner take the visitors’ feedback onto the Backlog', () => {
+  it('has the Product Owner take the visitors’ feedback onto the Product Backlog', () => {
     const s = at({ phase: 'review', signals: [{ suggestion: 'Somewhere to eat', drivenBy: 'food', estimatedValue: 'high' }] });
     const move = aiTurn(s, 'product_owner')!;
     expect(move.action.type).toBe('ACCEPT_SIGNAL');
     expect(move.says).toMatch(/Somewhere to eat/);
-    // ...and nobody else may decide what goes on the Backlog
+    // ...and nobody else may decide what goes on the Product Backlog
     expect(aiTurn(s, 'developer')).toBeNull();
     expect(aiTurn(s, 'scrum_master')).toBeNull();
   });
@@ -303,7 +303,7 @@ describe('a seat nobody is sitting in', () => {
     expect(move!.says, 'they did not say why they were guessing').toMatch(/no velocity/i);
   });
 
-  it('can build the biggest item in the Backlog at all', () => {
+  it('can build the biggest item in the Product Backlog at all', () => {
     // Every day after the first opens with what is left of ninety seconds once the Daily Scrum
     // has been held. An eight point item costs ninety eight seconds, and the rule that lets an
     // item bigger than a day start anyway was measured against the nominal ninety - so it wanted

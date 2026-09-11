@@ -28,7 +28,7 @@ const flora = (name: string, type: string): ToolboxItem => ({ template: type, na
 const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint });
 /** A habitat that holds water rather than ground: glass on every side, and the visitors look
  *  through it. It is a tank from the moment it is written, before any fish has moved in - a Product
- *  Owner ordering a Backlog puts "Reef Tank" on it, not "Medium Enclosure, and make it wet later". */
+ *  Owner ordering a Product Backlog puts "Reef Tank" on it, not "Medium Enclosure, and make it wet later". */
 const tank = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint, template: 'tank' });
 // A pathway has no studio design; its delivery is drawing the route on the Park at deployment.
 const pathway = (name: string): ToolboxItem => ({ name, category: 'path', zone: 'General' });
