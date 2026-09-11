@@ -375,6 +375,7 @@ describe('the isometric projection', () => {
     expect(fenceOf(repainted), 'the chosen fence was not put up').not.toBe(fenceOf(svg));
   });
 
+  // Eight full parks in one test, which is slow on purpose and needs the room to be one.
   it('keeps the drawing inside the picture', () => {
     // A prop is drawn ABOVE the point it stands on, so a tall tree at the back of the park reaches
     // past the top of the scene. With the picture uncropped it was painted over the PAGE instead -
@@ -401,7 +402,7 @@ describe('the isometric projection', () => {
         expect(b.top, `turn ${turn}: something is drawn below the picture`).toBeLessThan(vh);
       }
     }
-  });
+  }, 20_000);
 
   it('plants what was chosen, in the colour it was chosen in', () => {
     // An oak, a pine and a blossom were all the same green tree here however they were designed on

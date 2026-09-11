@@ -340,7 +340,10 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
               people happy once and cannot do it again. */}
           <section className={cn(SURFACE.quiet, PADDING.roomy, 'space-y-2')}>
             <div className="text-sm font-semibold">Key value measures</div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            {/* Four across where there is room for four. They are read together - two about the
+                value the visitors are getting, two about the team's ability to keep giving it - and
+                stacked two-by-two they pushed what the visitors actually SAID off the bottom. */}
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {valueMeasures(state).map((m) => (
                 <div key={m.key} className={cn(SURFACE.card, PADDING.default)}>
                   <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</div>
