@@ -94,16 +94,24 @@ describe('the acceptance criteria panel', () => {
     </div>).container;
   };
 
-  it('can be put away, and got back', () => {
-    // "Can the AC dialog also be hideable?" - and anything put away has to be something you can get
-    // back, or it is gone.
+  it('starts closed, and says enough closed to be worth leaving closed', () => {
+    // "Make the ACs closed by default - they are always in the way." What is left behind still has
+    // to carry the teaching: the criteria belong to the item, and how many are met is the thing
+    // worth knowing at a glance.
     const c = open();
-    expect(c.querySelector('[data-part="hide-inspector"]'), 'there is no way to put it away').toBeTruthy();
-    fireEvent.click(c.querySelector('[data-part="hide-inspector"]')!);
     const pill = c.querySelector('[data-part="park-inspector"]') as HTMLElement;
-    expect(pill.getAttribute('data-collapsed'), 'the panel is still taking up the park').toBe('yes');
-    expect(pill.textContent, 'nothing says what the pill would bring back').toMatch(/Acceptance criteria/);
-    fireEvent.click(pill);
-    expect(c.querySelector('[data-part="hide-inspector"]'), 'the panel could not be got back').toBeTruthy();
+    expect(pill.getAttribute('data-collapsed'), 'the criteria are open over the park again').toBe('yes');
+    expect(pill.textContent, 'the pill says nothing about how many criteria are met')
+      .toMatch(/Acceptance criteria.*\d+ of \d+/);
+  });
+
+  it('opens when it is asked for, and can be put away again', () => {
+    // Anything put away has to be something you can get back, or it is gone.
+    const c = open();
+    fireEvent.click(c.querySelector('[data-part="park-inspector"]')!);
+    expect(c.querySelector('[data-part="hide-inspector"]'), 'the criteria could not be opened').toBeTruthy();
+    fireEvent.click(c.querySelector('[data-part="hide-inspector"]')!);
+    expect(c.querySelector('[data-part="park-inspector"]')?.getAttribute('data-collapsed'),
+      'the panel is still taking up the park').toBe('yes');
   });
 });
