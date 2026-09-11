@@ -94,7 +94,10 @@ describe('what you can change about each kind of thing', () => {
     const s = game();
     const { container } = open(s, of(s, 'exhibit'));
     expect(container.textContent).toMatch(/How many/);
-    expect(swatches(container).some((l) => /^Coat /.test(l)), 'an animal has no coat colour').toBe(true);
+    // A few named looks rather than a palette: "White" is a white lion, which is a decision with an
+    // opinion in it and a consequence at the Review. "#f0efe9" is neither.
+    expect(container.querySelector('[data-part="look-white"]'), 'an animal cannot be given a look').toBeTruthy();
+    expect(container.textContent, 'the looks are unnamed swatches again').toMatch(/Natural/);
     expect(container.textContent, 'an animal cannot be moved to another habitat').toMatch(/Lives in/);
     // An animal has no ground of its own: it lives inside a habitat, so it is not turned or moved
     // about the park like a kiosk.

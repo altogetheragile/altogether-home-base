@@ -965,6 +965,41 @@ export const COATS_BY_KIND: Record<string, string[]> = {
 export const coatChoices = (item: { template?: string; id?: string } | undefined): string[] =>
   (AQUATIC.includes((item?.template ?? item?.id ?? '').toLowerCase()) ? COATS_BY_KIND.fish : COATS_BY_KIND.fur);
 
+/** The looks worth offering for this animal: a few named ones, not a palette.
+ *
+ *  Choosing a colour from a grid of swatches is a weak decision - no answer is wrong, none is
+ *  obviously better than the default, and what comes out rarely looks like anything. It is the same
+ *  argument that gave the planting ready pieces: you choose an oak, not a green.
+ *
+ *  A LOOK is a decision. "White" is a white lion, which is the thing a zoo puts on its posters and
+ *  what the enthusiasts come for - and unusual is measured against the animal's own colour, so the
+ *  choice has a consequence at the Review rather than being a dial. One press, obviously different,
+ *  and an opinion worth having about which one this zoo is for.
+ */
+export interface AnimalLook { key: string; label: string; coat: string }
+
+const FUR_LOOKS = (own: string): AnimalLook[] => [
+  { key: 'natural', label: 'Natural', coat: own },
+  { key: 'pale', label: 'Pale', coat: '#e0c9a6' },
+  { key: 'white', label: 'White', coat: '#f0efe9' },
+  { key: 'dark', label: 'Dark', coat: '#5b4636' },
+  { key: 'black', label: 'Black', coat: '#2a2622' },
+];
+
+const FISH_LOOKS: AnimalLook[] = [
+  { key: 'coral', label: 'Coral', coat: '#e2803c' },
+  { key: 'gold', label: 'Gold', coat: '#f4c430' },
+  { key: 'blue', label: 'Blue', coat: '#4a90d9' },
+  { key: 'jade', label: 'Jade', coat: '#3fb3a6' },
+  { key: 'rose', label: 'Rose', coat: '#e0679a' },
+  { key: 'silver', label: 'Silver', coat: '#f2f0ea' },
+];
+
+export const looksFor = (item: { template?: string; id?: string } | undefined): AnimalLook[] =>
+  (AQUATIC.includes((item?.template ?? item?.id ?? '').toLowerCase())
+    ? FISH_LOOKS
+    : FUR_LOOKS(speciesBody(item ?? {})));
+
 export const SWATCHES = ['#c8873b', '#e6842a', '#e3c66b', '#8a5a2b', '#2a2622', '#f0efe9', '#43a047', '#ef6f53', '#f4c430', '#4a90d9'];
 
 // ---- Presets: a recognisable starting shape per species (uncoloured) ----

@@ -4,7 +4,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
-  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, coatChoices, isTank, groupChoices,
+  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices,
   type ItemDesign,
 } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -284,15 +284,24 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               </p>
             );
           })()}
-          {/* A fish has no coat. The word and the palette both come from the animal: a row of
-              browns labelled "Coat" is the wrong control in the wrong words for a reef. */}
-          <Group label={coatWord(subject)}>
-            {coatChoices(subject).map((c) => (
-              <Swatch key={c} hex={c} label={coatWord(subject)} on={design.colors?.coat === c}
-                onClick={() => set({ colors: { ...design.colors, coat: c } })} />
-            ))}
-            <MoreColours label={coatWord(subject)} current={design.colors?.coat} options={ALL_COLOURS}
-              onPick={(c) => set({ colors: { ...design.colors, coat: c } })} />
+          {/* A few named looks rather than a palette. "White" is a white lion - the thing a zoo puts
+              on its posters, and what the enthusiasts come for - where "#f0efe9" is a decision with
+              no opinion in it. The same argument that gave the planting ready pieces: you choose an
+              oak, not a green. A fish gets its own list and its own word, because a row of browns
+              labelled "Coat" is the wrong control in the wrong words for a reef. */}
+          <Group label={coatWord(subject) === 'Coat' ? 'Look' : 'Colour'}>
+            {looksFor(subject).map((look) => {
+              const on = (design.colors?.coat ?? looksFor(subject)[0].coat) === look.coat;
+              return (
+                <button key={look.key} type="button" data-part={`look-${look.key}`} aria-pressed={on}
+                  onClick={() => set({ colors: { ...design.colors, coat: look.coat } })}
+                  className={cn(FOCUS, 'inline-flex items-center gap-1.5 rounded-md border-2 px-2 py-1 text-[11px] font-medium',
+                    on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
+                  <span className="h-3 w-3 shrink-0 rounded-full border border-black/20" style={{ background: look.coat }} />
+                  {look.label}
+                </button>
+              );
+            })}
           </Group>
           {/* Where they live. An animal has no place of its own on the park - it lives inside a
               habitat - so "move" for an animal means moving house. */}
