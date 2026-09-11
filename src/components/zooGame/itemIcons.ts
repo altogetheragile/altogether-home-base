@@ -94,6 +94,11 @@ export function iconKey(item: IconItem): IconKey {
   }
   // For these the category IS what the item is, and the name would mislead: a "Tiger Enclosure" is a
   // habitat, not a tiger, and telling the two apart in the Backlog is the whole point.
+  //
+  // A tank is the exception worth making: it is a habitat, and a fence is the wrong picture for one
+  // - the thing that makes it a tank is that it holds water. Not a fish, which would put it back in
+  // the trap above.
+  if (item.category === 'enclosure' && item.template === 'tank') return 'pond';
   if (item.category === 'epic' || item.category === 'enclosure' || item.category === 'path') return BY_CATEGORY[item.category];
   const name = item.name ?? '';
   for (const [re, key] of BY_WORD) if (re.test(name)) return key;

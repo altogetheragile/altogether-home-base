@@ -68,7 +68,12 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
                         {it.category === 'exhibit'
                           ? <Preview item={it} cell={2} />
                           : it.category === 'enclosure'
-                            ? <span className="rounded-sm border-2 border-muted-foreground/50 bg-background" style={{ width: it.footprint === 'large' ? 28 : it.footprint === 'small' ? 15 : 22, height: it.footprint === 'large' ? 20 : it.footprint === 'small' ? 11 : 16 }} />
+                            // A habitat shows its FOOTPRINT rather than an icon, because its size is
+                            // the thing being chosen. A tank shows the same footprint holding water:
+                            // same information, and you can tell the two apart down the list.
+                            ? <span className={cn('rounded-sm border-2', it.template === 'tank'
+                                ? 'border-sky-300 bg-sky-400/70' : 'border-muted-foreground/50 bg-background')}
+                                style={{ width: it.footprint === 'large' ? 28 : it.footprint === 'small' ? 15 : 22, height: it.footprint === 'large' ? 20 : it.footprint === 'small' ? 11 : 16 }} />
                           : (() => {
                             // The piece's own icon: a bath for the toilets, a route for a pathway.
                             const Icon = ICONS[iconKey(it)];

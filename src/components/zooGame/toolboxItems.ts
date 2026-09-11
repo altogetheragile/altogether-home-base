@@ -26,6 +26,10 @@ const amenity = (name: string, zone: string, services: 'food' | 'toilet' | 'rest
 // The template carries the starting flora shape (tree / bush / flowers / signpost).
 const flora = (name: string, type: string): ToolboxItem => ({ template: type, name, category: 'flora', zone: 'General' });
 const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint });
+/** A habitat that holds water rather than ground: glass on every side, and the visitors look
+ *  through it. It is a tank from the moment it is written, before any fish has moved in - a Product
+ *  Owner ordering a Backlog puts "Reef Tank" on it, not "Medium Enclosure, and make it wet later". */
+const tank = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint, template: 'tank' });
 // A pathway has no studio design; its delivery is drawing the route on the Park at deployment.
 const pathway = (name: string): ToolboxItem => ({ name, category: 'path', zone: 'General' });
 
@@ -34,7 +38,8 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
     // Habitats are built FIRST, then animals go in them (animals and enclosures are
     // separate PBIs). Pick a footprint here, then point an animal at it.
     group: 'Habitats',
-    items: [enclosure('Small Enclosure', 'small'), enclosure('Medium Enclosure', 'medium'), enclosure('Large Enclosure', 'large')],
+    items: [enclosure('Small Enclosure', 'small'), enclosure('Medium Enclosure', 'medium'), enclosure('Large Enclosure', 'large'),
+      tank('Small Tank', 'small'), tank('Medium Tank', 'medium'), tank('Large Tank', 'large')],
   },
   {
     group: 'Big Cats',

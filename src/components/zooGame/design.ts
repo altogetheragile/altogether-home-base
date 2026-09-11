@@ -928,10 +928,21 @@ export function floraColors(type?: string): { key: string; label: string }[] {
  *  in the plan and an aquarium in the Increment. */
 export const AQUATIC = ['reef', 'shark', 'ray', 'turtle', 'jellyfish'];
 
-/** Whether this habitat is a tank: chosen, or implied by what lives in it. */
-export function isTank(design: ItemDesign | undefined, living: { template?: string; id?: string }[] = []): boolean {
+/** Whether this habitat is a tank: chosen, or asked for when it was written, or implied by what
+ *  lives in it.
+ *
+ *  Three ways in, in the order they should win. The Developers' choice on the park beats everything.
+ *  A habitat the Product Owner wrote as a tank - "Small Tank" from the toolbox - is one before any
+ *  animal has moved in, which is the point of being able to put one on the Backlog. And a habitat
+ *  full of fish is a tank whether or not anybody said so. */
+export function isTank(
+  design: ItemDesign | undefined,
+  living: { template?: string; id?: string }[] = [],
+  habitat?: { template?: string },
+): boolean {
   if (design?.parts?.ground === 'water') return true;
   if (design?.parts?.ground === 'land') return false;
+  if ((habitat?.template ?? '').toLowerCase() === 'tank') return true;
   return living.length > 0 && living.every((a) => AQUATIC.includes((a.template ?? a.id ?? '').toLowerCase()));
 }
 

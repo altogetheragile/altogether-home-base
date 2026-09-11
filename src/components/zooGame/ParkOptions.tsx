@@ -190,7 +190,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               being asked; everything else can be given one. */}
           {(() => {
             const living = state.backlog.filter((it) => it.enclosureId === subject.id);
-            const tank = isTank(design, living);
+            const tank = isTank(design, living, subject);
             return (
               <>
                 <Group label="Holds">
