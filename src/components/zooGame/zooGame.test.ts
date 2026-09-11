@@ -3012,10 +3012,15 @@ describe('zoo game: an exhibit is stocked, not built', () => {
     const one = at({ parts: {}, colors: { body: '#c8873b' }, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } });
     const family = at({ parts: {}, colors: { body: '#c8873b' }, group: { males: 2, females: 0, juveniles: 1, cubs: 2 } });
     expect(family).toBeGreaterThan(one);
-    // A rare coat is what the enthusiasts come for; the families come for a lively group.
+    // An unusual coat is what the enthusiasts come for; the families come for a lively group.
+    //
+    // Measured against the colour the species actually is - a white lion is a poster, a tawny one is
+    // a lion. It used to be keyed on `parts.coat`, a field no control has ever written, so the rule
+    // only ever fired in this test.
     const keen = (d: ItemDesign) => appealFromDesign(lion, d)!.enthusiasts;
-    const plain = { parts: {}, colors: { body: '#c8873b' }, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } };
-    expect(keen({ ...plain, parts: { coat: 'pale' } })).toBeGreaterThan(keen(plain));
+    const plain = { parts: {}, colors: { body: '#c8873b', coat: '#c9963f' }, group: { males: 1, females: 0, juveniles: 0, cubs: 0 } };
+    expect(keen({ ...plain, colors: { ...plain.colors, coat: '#f0efe9' } }),
+      'a white lion draws no more than a tawny one').toBeGreaterThan(keen(plain));
   });
 
   it('plans the work as stocking rather than as pixel art', () => {

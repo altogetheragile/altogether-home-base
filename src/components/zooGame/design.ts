@@ -1045,6 +1045,27 @@ export function coatColors(base: Record<string, string>, coat?: string): Record<
   return Object.fromEntries(Object.entries(base).map(([k, v]) => [k, shade(v, by)]));
 }
 
+/** The colour this animal is when nobody has repainted it - what a coat is measured against. */
+/** Whether this animal has been painted something its species is not. */
+export function unusualCoat(item: { template?: string; id?: string }, design: ItemDesign): boolean {
+  const coat = design.colors?.coat;
+  if (!coat) return false;
+  const own = speciesBody(item);
+  const rgb = (hex: string) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return null;
+    const v = parseInt(m[1], 16);
+    return [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff];
+  };
+  const a = rgb(coat), b = rgb(own);
+  if (!a || !b) return false;
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) > 110;
+}
+
+/** The colour this animal is when nobody has repainted it - what a coat is measured against. */
+export const speciesBody = (item: { template?: string; id?: string }): string =>
+  (SPECIES_COLORS[item.template ?? item.id ?? ''] ?? GENERIC_COLORS).body;
+
 export function speciesColors(item: BacklogItem, coat?: string): Record<string, string> {
   return coatColors(SPECIES_COLORS[item.template ?? item.id] ?? GENERIC_COLORS, coat);
 }
@@ -1342,7 +1363,11 @@ export function appealFromDesign(item: BacklogItem, design: ItemDesign): Record<
   // them decisions rather than dials. Diminishing: the fourth lion adds less than the second.
   const size = groupSize(design.group);
   const crowd = clamp(Math.log2(1 + size) / 2, 0, 1);
-  const rare = COATS.find((c) => c.key === design.parts.coat)?.rare ? 1 : 0;
+  // An animal painted a colour that species is not - a white lion, a black leopard - is the thing a
+  // zoo puts on its posters. Measured against the animal's own colour, because that is the only
+  // thing "unusual" can mean. It used to read `design.parts.coat`, which no control has ever
+  // written, so the rule never fired and the enthusiasts never got their reason to come.
+  const rare = unusualCoat(item, design) ? 1 : 0;
   const busy = clamp(0.4 + 0.6 * crowd, 0, 1);
   const distinctive = rare === 1;
   const finish = clamp(coloured(design) / 4, 0, 1);

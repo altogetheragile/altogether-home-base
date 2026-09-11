@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ANIMAL_ART } from './art/animalArt.generated';
-import { hasAnimalArt, animalArtFor, animalArtSize, animalArtFit, coatFilter, UNITS_PER_CELL } from './art/animalArt';
+import { hasAnimalArt, animalArtFor, animalArtSize, animalArtFit, coatTint, UNITS_PER_CELL } from './art/animalArt';
 import { TOOLBOX } from './toolboxItems';
 
 const exhibitTemplates = new Set(
@@ -104,11 +104,15 @@ describe('animal artwork', () => {
   });
 
   it('carries a coat through as a visible change, or leaves the drawing alone', () => {
-    expect(coatFilter('pale')).toBeTruthy();
-    expect(coatFilter('dark')).toBeTruthy();
-    expect(coatFilter('pale')).not.toEqual(coatFilter('dark'));
-    expect(coatFilter('common')).toBeUndefined();
-    expect(coatFilter(undefined)).toBeUndefined();
+    // Against the colour the animal already is: a cream lion goes pale, a black one goes dark, and
+    // a lion left the colour a lion is is left alone.
+    const lion = '#c9963f';
+    expect(coatTint('#f0efe9', lion), 'a cream coat changed nothing').toBeTruthy();
+    expect(coatTint('#2a2622', lion), 'a black coat changed nothing').toBeTruthy();
+    expect(coatTint('#f0efe9', lion)).not.toEqual(coatTint('#2a2622', lion));
+    expect(coatTint(lion, lion), 'the colour it already is was still painted on').toBeUndefined();
+    expect(coatTint(undefined, lion), 'an animal nobody painted was painted').toBeUndefined();
+    expect(coatTint('not a colour', lion)).toBeUndefined();
   });
 
   it('brings a species in from a second sheet at the right size', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
-import { shade, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
+import { shade, speciesBody, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { zonePlots } from './parkZones';
@@ -12,7 +12,7 @@ import { FACILITY } from './facilities';
 import { themeFor } from './zoneTheme';
 import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
-import { animalArtFor, coatFilter } from './art/animalArt';
+import { animalArtFor, coatTint } from './art/animalArt';
 import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
@@ -1264,7 +1264,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         const art = animalArtFor(species, m.kind);
         // ...and a coat is a decision about what the zoo is for, so it has to be visible. It was
         // drawn on the plan view's animals, and the plan view stopped drawing animals.
-        const coat = coatFilter(working(a).parts.coat);
+        const coat = coatTint(working(a).colors.coat, speciesBody(a));
         const at = P(wx, wy);
         const key = `a-${e.id}-${a.id}-${mi}`;
         // Each animal of the family, on its own. A pride is not a blob, and arranging them is the
