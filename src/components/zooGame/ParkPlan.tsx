@@ -1,7 +1,7 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
 import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater } from './design';
@@ -11,6 +11,10 @@ import { cn } from '@/lib/utils';
  *  so the front of the park reads as the front of the park, and so a run drawn to meet the way in
  *  lands where the isometric view will draw it. */
 const APRON_H = 60;
+/** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
+ *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
+ *  through the picture's box, so widening the box does not move anything standing on the park. */
+const VERGE = 30;
 
 
 // The park, seen from above, for building on.
@@ -115,7 +119,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const box = insideBox
     ? { x: insideBox.at.x - insideBox.size.w * 0.8, y: insideBox.at.y - insideBox.size.h * 0.8,
         w: insideBox.size.w * 1.6, h: insideBox.size.h * 1.6 }
-    : { x: 0, y: 0, w: CANVAS_W, h: PLAY_H + APRON_H };
+    : { x: -VERGE, y: -VERGE, w: CANVAS_W + VERGE * 2, h: PLAY_H + APRON_H + VERGE };
   const view = `${box.x} ${box.y} ${box.w} ${box.h}`;
   // Zoomed in, a label written in park units comes out enormous. Everything that is chrome rather
   // than park - names, pills, grips - is scaled by how much the picture is magnified, so it stays
@@ -312,10 +316,29 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             the same three bands, in the same places, as the isometric view draws them. The car park
             used to be painted over the bottom 90 of the play area here, so a run drawn onto what
             looked like tarmac was, in the model, still out on the grass. */}
-        <rect x={0} y={0} width={CANVAS_W} height={PLAY_H} fill="#8cc063" />
+        {/* Countryside first, then the park's own ground on top of it. The park is a plot of land
+            with a boundary that wanders, not a green rectangle: the shape comes from `parkOutline`,
+            which the isometric view draws from as well. */}
+        <rect x={-VERGE} y={-VERGE} width={CANVAS_W + VERGE * 2} height={PLAY_H + APRON_H + VERGE} fill="#bcc98e" />
+        <path d={outlinePath(parkOutline())} fill="#8cc063" stroke="#5c7a3e" strokeWidth={2} opacity={0.98} />
+        <clipPath id="park-edge"><path d={outlinePath(parkOutline())} /></clipPath>
+        {/* The treeline along the boundary, from the same points, and open along the front where
+            the way in is - so the plan and the Increment agree about where the park stops. Seen
+            from straight above, a tree is its canopy. */}
+        <g>
+          {hedgePoints(24).map(({ x, y, n }) => {
+            const r = 11 + 7 * edgeNoise(n);
+            return (
+              <g key={`tree-${n}`}>
+                <circle cx={x} cy={y} r={r} fill="#3f6a31" />
+                <circle cx={x - r * 0.22} cy={y - r * 0.22} r={r * 0.6} fill="#68a04c" />
+              </g>
+            );
+          })}
+        </g>
         <rect x={0} y={PROMENADE_Y} width={CANVAS_W} height={PROMENADE_H} fill="#e7d6a8" />
         <rect x={0} y={PLAY_H} width={CANVAS_W} height={APRON_H} fill="#9aa0a6" />
-        <g opacity={0.16} stroke="#2f4f2f" strokeWidth={1}>
+        <g opacity={0.16} stroke="#2f4f2f" strokeWidth={1} clipPath="url(#park-edge)">
           {Array.from({ length: Math.floor(CANVAS_W / 40) }, (_, i) => (
             <line key={`v${i}`} x1={(i + 1) * 40} y1={0} x2={(i + 1) * 40} y2={PLAY_H} />
           ))}
