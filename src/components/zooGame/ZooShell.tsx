@@ -481,7 +481,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onUnplace: (id) => setMoving(id),
                       onSetSize,
                       onPutIn,
-                      onInside: (id) => setInside(id),
+                      // Going inside puts the pen away. The pen belongs to the park - it draws the
+                      // way IN to a habitat - and inside one it is only in the way: the strip stops
+                      // offering it, so the tool stayed out invisibly, every press inside the pen
+                      // was read as drawing a run, and moving a pool or a tree stopped working.
+                      // Reported from playing it: the path tool stayed active during Look Inside.
+                      onInside: (id) => { setInside(id); if (id) onDrawing?.(false); },
                       onRemoveRun,
                     }} />
                 )}
@@ -513,7 +518,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       if (into) { onPutIn?.(id, into); setMoving(null); return; }
                       onCommitBuild?.(id); onPlaceItem?.(id, pos); setMoving(null);
                     }}
-                    tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
+                    tool={drawing && !inside ? 'path' : 'none'} pathStyle={drawRoute?.style}
                     // Whose run it is. A habitat holds the pen too, now that being walkable to is one
                     // of its own criteria: the run a player draws to their pen belongs to that pen,
                     // so it counts as its work and the Developers do not lay a second one beside it.
