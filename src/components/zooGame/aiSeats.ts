@@ -1,7 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove } from './engine';
-import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
+import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
 import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
@@ -54,7 +54,15 @@ const topUnsized = (s: ZooGameState): BacklogItem | undefined =>
  *  so it can only ever satisfy criteria the game actually asks for. A car park has tarmac and
  *  markings and no foliage; asking for foliage would leave it unbuildable forever. */
 export function aiDesign(item: BacklogItem): ItemDesign {
-  const base = presetFor(item);
+  // What is already there, not a blank one. The Developers take over a card somebody is working on
+  // and build it, and building used to mean "a preset, painted" - so a ground colour, a barrier, a
+  // pool and a tree chosen by the player were thrown away the moment a Developer touched the same
+  // item. Reported from playing it twice in a row: "I'm sure I added them before", and "the ground
+  // colour disappeared after I did Look Inside".
+  //
+  // Every fill below is already written as "only if it has not been chosen", so basing it on the
+  // work in hand is all it takes: what the player decided stands, and the Developers finish the rest.
+  const base = currentDesign(item);
   const colors: Record<string, string> = { ...base.colors };
   const parts: Record<string, string> = { ...(base.parts as Record<string, string>) };
   const paint = (key: string, fallback: string) => { if (!colors[key]) colors[key] = fallback; };
@@ -69,8 +77,14 @@ export function aiDesign(item: BacklogItem): ItemDesign {
     // tick "Lay the ground, shelter and water", which is three things promised and one done -
     // and it left a hatched box that no Product Owner could look at and say an animal lives
     // here rather than a shed. Doing what the step says is cheaper than arguing about it.
-    const withWater = { ...base, colors, parts, water: addWaterTo({ ...base, colors, parts }) };
-    return { ...withWater, flora: addFloraTo(withWater, 'oak') } as ItemDesign;
+    // ...and only what is not in yet. A pool somebody has already dug and put where they want it is
+    // not improved by a second one appearing beside it.
+    const withWater = enclosureWater(base).length
+      ? { ...base, colors, parts }
+      : { ...base, colors, parts, water: addWaterTo({ ...base, colors, parts }) };
+    return (enclosureFlora(withWater).length
+      ? withWater
+      : { ...withWater, flora: addFloraTo(withWater, 'oak') }) as ItemDesign;
   }
   if (item.category === 'amenity') {
     paint('walls', '#cfd4d8'); paint('roof', '#9aa3ab'); paint('sign', '#e6842a');
