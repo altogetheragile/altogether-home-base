@@ -36,7 +36,9 @@ const onTheLion = (s: ZooGameState): string[] => {
   const svg = render(<IsoZoo state={s} height={460} />).container.querySelector('svg[role="img"]')!;
   const lions = [...svg.querySelectorAll('[data-spot^="lion:"]')];
   expect(lions.length, 'there is no lion in the park to look at').toBeGreaterThan(0);
-  return lions.map((g) => (g.querySelector('svg') as SVGElement | null)?.style.filter ?? '');
+  // What is ON the lion: the `filter` attribute, which is how a tint reaches the screen in every
+  // browser. As a CSS style it reached it in Chromium only, and this test was written in Chromium.
+  return lions.map((g) => g.getAttribute('filter') ?? '');
 };
 
 const pride: ItemDesign = { parts: {}, colors: {}, group: { males: 1, females: 1, juveniles: 0, cubs: 0 } };

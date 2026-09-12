@@ -54,42 +54,7 @@ export function animalArtFit(art: AnimalArt, maxW: number, maxH: number): { w: n
  *  its parts recoloured the way a built sprite could, but a pale morph reads as a pale morph: lift
  *  the whole animal towards white and drain some of the colour out of it, or take it the other way
  *  for a dark one. Anything else is left exactly as the illustrator drew it. */
-/** The colour an animal was given, as something that can be laid over the drawing of it.
- *
- *  The artwork is a photograph's worth of detail - a lion is twenty browns, not one - so it cannot
- *  simply be filled with the colour somebody picked. What it can be is MOVED: how far the chosen
- *  colour is from the animal's own, in hue, in how strong it is, and in how light. A cream lion goes
- *  pale, a black one goes dark, and a lion left the colour a lion is stays exactly as drawn.
- *
- *  The same trick the planting uses for foliage, which is why it is worth having twice: a control
- *  that writes a colour nothing draws is not a control, and this one wrote to `colors.coat` while
- *  the park read `parts.coat`, which nothing has ever written. Reported from playing it: "changing
- *  the colour of a lion does nothing."
- */
-export function coatTint(coat?: string, own?: string): string | undefined {
-  const hsl = (hex?: string) => {
-    const m = /^#?([0-9a-f]{6})$/i.exec((hex ?? '').trim());
-    if (!m) return null;
-    const v = parseInt(m[1], 16);
-    const r = ((v >> 16) & 0xff) / 255, g = ((v >> 8) & 0xff) / 255, b = (v & 0xff) / 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-    const l = (max + min) / 2;
-    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-    let h = 0;
-    if (d !== 0) {
-      h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-      h = (h * 60 + 360) % 360;
-    }
-    return { h, s, l };
-  };
-  const want = hsl(coat), base = hsl(own) ?? { h: 33, s: 0.52, l: 0.52 };
-  if (!want) return undefined;
-  const turn = Math.round(((want.h - base.h + 540) % 360) - 180);
-  const sat = Math.max(0.1, Math.min(2.4, want.s / Math.max(0.08, base.s)));
-  const lit = Math.max(0.45, Math.min(1.75, want.l / Math.max(0.1, base.l)));
-  // Near enough to what it already is that a filter would be a lie about having done something.
-  if (Math.abs(turn) < 6 && Math.abs(sat - 1) < 0.12 && Math.abs(lit - 1) < 0.1) return undefined;
-  return `hue-rotate(${turn}deg) saturate(${sat.toFixed(2)}) brightness(${lit.toFixed(2)})`;
-}
+// Recolouring lives in ./tint, which carries it as an SVG filter rather than a CSS one - the
+// difference between working everywhere and working everywhere except Safari.
 
 export type { AnimalArt };
