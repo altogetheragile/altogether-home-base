@@ -125,6 +125,18 @@ Four decisions that replace what the note says:
   layout fills the visitors' side of the river first, because a habitat on the far bank cannot be
   walked to until something crosses the water; and "At the back", when the Product Owner asks for it,
   is kept this side of the river with the log saying why. (#588)
+- **The pen is the player's too.** A habitat holds the same pen a pathway item does, with the same
+  width, surface and list of its runs to lift one back up; the pen wins over placing while it is out,
+  and nothing standing on the park swallows the press; and going inside a habitat puts it away.
+  (#589, #592)
+- **The Developers finish your work rather than start it again.** A seat nobody is sitting in used to
+  build from a preset, so a ground colour, a barrier, a pool and a tree chosen by the player were
+  thrown away by a teammate. (#591)
+- **A bridge snaps to the water.** Dropped anywhere, it lands square across the river and keeps the x
+  you aimed at - which part of the river to cross is a real decision, and lying square on it is not.
+  Its crossing criterion is the park's answer rather than a tick, and goes green as it lands, so a
+  bridge can be unbuilt but never in the wrong place. One definition of "something crosses the
+  water", shared by the criterion, the routing and the placing nudge. (#593)
 
 ### Animals
 - **An animal is drawn the colour it was given**, in both views, including while the work is in hand.
@@ -148,23 +160,18 @@ Four decisions that replace what the note says:
 
 In the order I would build them.
 
-### 1. The rest of the bridge
-- **The bridge snaps to the water.** A bridge can only be dropped on the river, and its "crosses the
-  water" criterion goes green the moment it snaps - so a bridge can never be in the wrong place,
-  only unbuilt.
-
-### 2. Coins
+### 1. Coins
 Nothing exists. Visitors pay to come in; the header counts; a refund, a closure and a welfare fine
 take coins away; ground costs coins. The guard the note sets: **points never buy anything**, and
 coins come only from Done work that visitors used.
 
 Open: entry per visitor, the price of ground, the size of a refund.
 
-### 3. Ground is bought, not given
+### 2. Ground is bought, not given
 The first area is free; every area after it is bought with coins the visitors paid, and Priya places
 it at refinement, because where an area sits is a value decision. Needs coins first.
 
-### 4. The flow rewrite
+### 3. The flow rewrite
 The biggest piece, and the one that changes the shape of the game:
 - **Start on the board.** Sprint 1 arrives pre-planned - Priya wrote the goal, the Developers chose
   the work. One screen, one button, under a minute to first action.
@@ -175,7 +182,7 @@ The biggest piece, and the one that changes the shape of the game:
 - **Refinement is mid-Sprint** and costs something (see the open question below).
 - **AI wands only after the learner has tried.**
 
-### 5. Product Goals as a series
+### 4. Product Goals as a series
 Al's idea, not yet designed: PG1 delivers the Big Cats; achieving it lets the player set the next
 one, which is a new learning layer. Today there is one permanent Product Goal measured by happiness -
 which can never be *met*, and so teaches nothing about achieving a goal and setting another.
@@ -184,7 +191,7 @@ My view on the shape: a Product Goal has to be an outcome the Review can judge (
 reachable, and its visitors happy above a threshold), and the next one should be a choice between
 outcomes with visible trade-offs rather than a free-text box, or it cannot be measured.
 
-### 6. The visual system
+### 5. The visual system
 From the note's section 9, and from "make everything more distinct and pop more":
 - **One meaning per colour.** Orange does about five jobs today; it should mean "the next action" and
   nothing else.
@@ -192,20 +199,20 @@ From the note's section 9, and from "make everything more distinct and pop more"
 - **Components**: sticker, section fill, tag, point disc, bar-with-marker for every number that
   matters, speech sticker in the speaker's hue, one spotlight per screen, 40px icon buttons.
 
-### 7. Sam and Priya
+### 6. Sam and Priya
 Two voices, never saying the same thing. Sam coaches - once per new screen, at the Retro to name the
 habit, once as a warning before the designed mistake, then lets it happen. Priya is value and order,
 and in Sprint 1 she opens the shoddy item because the lesson needs her to. Most "What is this?"
 buttons go.
 
-### 8. The deletions
+### 7. The deletions
 The note's section 10. Several are already gone (the takeover window, the six-tool palette, "Holds",
 the Backlog questionnaire). The rest: the intro screen, Meet the Team as cards, the Refine screen
 before Sprint 1, the in-hand card, "Next step", "Plan 0/4", "More controls", the always-on Definition
 of Done block, the instruction line, the Increment pill on the Sprint Backlog, "3 Developers on the
 team".
 
-### 9. Rules that must not drift
+### 8. Rules that must not drift
 Section 11 of the note, as tests rather than prose: acceptance criteria belong to the item and are
 never merged with the Definition of Done; the isometric view draws only what the model holds; ground
 is bought only with visitors' coins; the Definition of Done is the whole team's and Priya decides

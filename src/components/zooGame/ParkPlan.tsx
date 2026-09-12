@@ -3,7 +3,7 @@ import type { ZooGameState, ZooConnector } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { themeFor } from './zoneTheme';
-import { riverOutline, inWater } from './parkWater';
+import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
@@ -231,8 +231,14 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
 
   /** Can this go here, and if not, why not. The same question the ghost answers on the isometric. */
   const verdict = (id: string, box: { w: number; h: number }, w: { x: number; y: number }) => {
-    const at = insidePark(box, w);
-    const off = Math.abs(at.x - w.x) > 1 || Math.abs(at.y - w.y) > 1;
+    // A bridge snaps to the water. Which part of the river to cross is a real decision and stays
+    // yours; how squarely it sits on the water is not a decision anybody makes well by eye, and a
+    // bridge that misses by six pixels is a bridge nobody can cross for a reason nobody can see.
+    const crossing = (state.backlog.find((it) => it.id === id)?.template ?? '') === 'bridge';
+    const at = insidePark(box, crossing ? acrossTheWater(box, w) : w);
+    // Snapped is not strayed: a bridge lands on the water rather than under the pointer, on purpose.
+    const aim = crossing ? acrossTheWater(box, w) : w;
+    const off = Math.abs(at.x - aim.x) > 1 || Math.abs(at.y - aim.y) > 1;
     // Everything belongs to an area of the zoo, and every area owns its ground. Refused rather than
     // slid quietly into place: where the Savanna is is worth learning, and a thing that lands
     // somewhere other than where you let go of it teaches nothing.
@@ -240,8 +246,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     const plot = plotFor(state, zone);
     const strayed = !off && plot && !insidePlot(plot, box, at);
     // Nothing is built in the river. The exception is the one thing whose whole job is to cross it.
-    const bridge = (state.backlog.find((it) => it.id === id)?.template ?? '') === 'bridge';
-    const wet = !off && !bridge && inWater(box, at);
+    const wet = !off && !crossing && inWater(box, at);
     // Water is the exception, and it is the whole point of a bridge: a bridge over a river has to
     // overlap it or it is not a bridge. Reported from playing it - "I can't place it over the
     // river". Everything else keeps its ground to itself.

@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { zonePlots } from './parkZones';
-import { waterRects } from './parkWater';
+import { waterRects, spansTheWater } from './parkWater';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
 import { buildNav, navRoute, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
@@ -72,6 +72,10 @@ export function parkNetwork(state: ZooGameState): NavInput {
       // halfway across for no reason anybody can see - the bridge is built, the path is laid, and
       // the visitors still stand on the bank.
       const APPROACH = 18;
+      // ...and only if it actually crosses. A bridge that reaches the water and stops is a jetty,
+      // and the routing must not walk people over it - the same question its own criterion asks, so
+      // a bridge the park says is unfinished is a bridge nobody can cross.
+      if (!spansTheWater(size, b.at)) continue;
       crossings.push(rectOf(b.at, { w: size.w + APPROACH * 2, h: size.h + APPROACH * 2 }, b.item));
       paths.push([{ x: b.at.x, y: b.at.y - size.h / 2 - 10 }, { x: b.at.x, y: b.at.y + size.h / 2 + 10 }]);
       continue;

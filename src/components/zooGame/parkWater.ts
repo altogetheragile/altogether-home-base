@@ -99,6 +99,37 @@ export function inWater(box: { w: number; h: number }, at: { x: number; y: numbe
   return false;
 }
 
+/** Where something of this size has to stand to lie ACROSS the water rather than beside it: on the
+ *  middle of the water, averaged over the stretch it covers.
+ *
+ *  The river wanders, so the middle under one end of a bridge is not the middle under the other. The
+ *  average is what centres it on the water it actually spans, and it is what makes a bridge snap:
+ *  drop one anywhere and the park puts it square across the river, so a bridge can be unbuilt but
+ *  never in the wrong place. Its x is yours - which part of the river to cross is a real decision. */
+export function acrossTheWater(box: { w: number; h: number }, at: { x: number; y: number }): { x: number; y: number } {
+  let sum = 0, n = 0;
+  for (let x = at.x - box.w / 2; x <= at.x + box.w / 2; x += 8) {
+    const y = courseAt(x);
+    if (y == null) continue;
+    sum += y; n += 1;
+  }
+  return n ? { x: at.x, y: Math.round(sum / n) } : at;
+}
+
+/** Whether something of this size, standing here, covers the water bank to bank the whole way
+ *  across itself. A bridge that reaches one bank and stops is a jetty. */
+export function spansTheWater(box: { w: number; h: number }, at: { x: number; y: number }): boolean {
+  const y0 = at.y - box.h / 2, y1 = at.y + box.h / 2;
+  let wet = false;
+  for (let x = at.x - box.w / 2; x <= at.x + box.w / 2; x += 8) {
+    const y = courseAt(x);
+    if (y == null) continue;
+    wet = true;
+    if (y - RIVER_W / 2 < y0 || y + RIVER_W / 2 > y1) return false;
+  }
+  return wet;
+}
+
 /** The water as ground to walk on - or rather not to. Rectangles, because that is what the routing
  *  understands, in thin slices because each one is the BOUNDING BOX of its stretch of river: cut
  *  coarsely, a sloping stretch gives a box far taller than the water, and guests are stopped on
