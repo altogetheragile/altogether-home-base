@@ -29,7 +29,9 @@ const built = (): { s: ZooGameState; item: BacklogItem } => {
   };
   const item = {
     ...h, status: 'committed' as const, sprintNumber: 1, started: true, design,
-    pos: { x: 300, y: 300 }, assignedDevs: [base.team.developers[0].id],
+    // On the near bank, where the zoo opens first - the far side needs a bridge, which is a
+    // different lesson and not this test's.
+    pos: { x: 300, y: 800 }, assignedDevs: [base.team.developers[0].id],
     // The sign-off step, which the shipped Definition of Done asks for. Its presence is what says
     // anybody has to accept this at all - take the line out of the agreement and it goes.
     tasks: [{ id: 't-signoff', label: "Get the PO's sign-off", done: false }],
@@ -38,6 +40,10 @@ const built = (): { s: ZooGameState; item: BacklogItem } => {
     s: {
       ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, dayNumber: 1,
       committedIds: [h.id], backlog: base.backlog.map((it) => (it.id === h.id ? item : it)),
+      // The run the habitat's own criterion now asks for: a path a visitor can walk in on. It used
+      // to be a Product Backlog item of its own; it is part of making this habitat usable.
+      connectors: [{ id: 'r-in', itemId: h.id, a: { x: 300, y: 1058 }, b: { x: 300, y: 871 }, bends: [], thickness: 14, color: '#c9a86a' }],
+
     } as ZooGameState,
     item,
   };

@@ -351,7 +351,18 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         </Group>
       ))}
 
-      {/* ---- a pathway: the pen, and what it lays ---- */}
+      {/* ---- the pen: for a pathway, and for a habitat that needs joining to the way in ---- */}
+      {/* Not `placed`: that asks whether somebody has DRAGGED it, and a habitat the park seated
+          itself is standing on the park just as much as one you moved. Gating on it meant a player
+          who never dragged their pen was offered no pen to draw with, and the one criterion the park
+          answers by looking for a path could not be met by hand at all. */}
+      {!inside && isHabitat && onDrawing && (
+        <Group label="Path to it">
+          <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
+            {drawing ? 'Drawing - click where it starts, then where it ends' : 'Draw a path to it'}
+          </Chip>
+        </Group>
+      )}
       {!inside && isPath && (
         <>
           <Group label="Draw">

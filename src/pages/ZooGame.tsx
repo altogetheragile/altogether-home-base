@@ -249,7 +249,11 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // pen - at the width and colour it was designed at. It used to be drawn as a small building with
   // its name under it, sitting in a spot, which is not what a path is.
   const benchItem = state.backlog.find((i) => i.id === buildingId);
-  const benchPath = benchItem?.category === 'path' && benchItem.status === 'committed' ? benchItem : undefined;
+  // A habitat draws paths too, now that being walkable to is one of its own criteria: the run
+  // belongs to the habitat that needed it. The main pathways are still their own item, and still
+  // draw the same way - what changed is who else may hold the pen.
+  const benchPath = benchItem && benchItem.status === 'committed'
+    && (benchItem.category === 'path' || benchItem.category === 'enclosure') ? benchItem : undefined;
   const benchPathDesign = benchPath ? benchPath.design ?? benchPath.draftDesign ?? presetFor(benchPath) : undefined;
   const drawRoute = benchPath && benchPathDesign
     ? { id: benchPath.id, name: benchPath.name, style: { thickness: pathWidthPx(benchPathDesign.parts.thickness), color: benchPathDesign.colors.path ?? '#c9a86a' } }

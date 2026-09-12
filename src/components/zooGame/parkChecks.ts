@@ -2,6 +2,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
 import { settleStatus, isSignOffTask, commitWhenBuilt } from './engine';
 import { whereItStands } from './parkModel';
+import { areasOnAPath, pathTo, whatVisitorsCanReach } from './parkNetwork';
 
 // ============= The criteria the park can answer for itself =============
 //
@@ -116,6 +117,8 @@ const PARK_ANSWERS = [
   'Can I fit them in the habitat with room to spare?',
   'Can I find them in their habitat?',
   'Can I get to this zone without crossing the grass?',
+  'Does it join every area to the way in?',
+  'Can I walk to it from the way in?',
 ];
 
 /** Criteria that have been reworded, and the words they were written in.
@@ -129,6 +132,10 @@ const WAS_CALLED: Record<string, string> = {
   // asking about the one case. Reported from playing it: something more general that could mean
   // walled, fenced or secure.
   'Can I see a fence with no way out of it?': 'Is it bordered safely, with no way out of it?',
+  // The main pathways serve every area, so they are judged on whether every area is joined up. Asked
+  // about "this zone" they were asked about the Grounds, which has no habitat in it and so could
+  // never answer yes - an item that could not be finished.
+  'Can I get to this zone without crossing the grass?': 'Does it join every area to the way in?',
 };
 /** The words this criterion is asked in now. */
 export const asAsked = (label: string): string => WAS_CALLED[label] ?? label;
@@ -233,7 +240,40 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
 
   if (label === 'Can I find them in their habitat?') return inHabitat(state, item);
 
-  if (label === 'Can I get to this zone without crossing the grass?') return pathReaches(state, item);
+  if (label === 'Does it join every area to the way in?') {
+    // The areas, not what is built in them. The spine serves the place; judging it on open habitats
+    // would mean the main pathways could not be finished until a habitat was, which is the
+    // dependency this change exists to remove.
+    // ...and only the areas that HAVE something in them. The spine joins up the zoo as it exists: in
+    // Sprint 1 that is one area, and requiring it to reach four before it could be finished would be
+    // the same un-finishable item by another route. It stops being adequate as the zoo grows, which
+    // is the honest behaviour of infrastructure.
+    const lively = new Set(state.backlog
+      .filter((it) => it.status === 'open' && it.category !== 'path')
+      .map((it) => it.zone));
+    const areas = areasOnAPath(state).filter((a) => lively.has(a.zone));
+    if (!areas.length) return { met: true, evidence: 'nothing open for it to join up yet' };
+    const adrift = areas.filter((a) => !a.joined);
+    if (!adrift.length) return { met: true, evidence: `every area joined - ${areas.length} of them` };
+    return { met: false, evidence: `nothing runs to the ${adrift[0].zone}` };
+  }
+
+  // Walked, not measured from nearby. The zone-level question above counts a run that finishes close
+  // to something here; this one asks the routing that the Sprint Review itself uses - can a visitor
+  // actually get from the way in to this habitat. Two definitions of "reachable" is how a park ends
+  // up telling a team they are fine and then charging them for it at the Review.
+  if (label === 'Can I walk to it from the way in?') {
+    // On a path, not across the grass. Visitors will cut over the grass rather than not come - that
+    // is what `walkTo` allows for - and asking that question here made this criterion free
+    // everywhere except across water.
+    const route = pathTo(state, item);
+    if (route) return { met: true, evidence: 'a path from the way in' };
+    // Why not, in the words of the thing that would fix it.
+    const wet = whatVisitorsCanReach(state).stranded.find((x) => x.item.id === item.id);
+    return { met: false, evidence: wet?.why === 'water'
+      ? 'the water is in the way, and nothing crosses it'
+      : 'no path reaches it from the way in' };
+  }
 
   return null; // judgement: yours to make
 }

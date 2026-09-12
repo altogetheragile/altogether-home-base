@@ -92,10 +92,13 @@ describe('the stops on the walk', () => {
 
 describe('the caption', () => {
   it('says what the rest of the game says about who can visit', () => {
-    // "Open to visitors" means the item was released. A ZONE opens on three things, and the Review
-    // says so in a panel beside this very picture - so a caption reading "open to visitors" next to
-    // it would be the game contradicting itself in one glance.
-    const s = afterASprint();
+    // "Open to visitors" means the item was released; whether a ZONE is open is a different
+    // question, and the Review answers it in a panel beside this very picture - so a caption
+    // claiming one while the Review says the other would be the game contradicting itself in one
+    // glance. The walk reads the same `zoneSlices` the Review does, which is what keeps them level.
+    //
+    // No run laid here, so the zone is not open: the animal is released and nobody can walk to it.
+    const s = { ...afterASprint(), connectors: [] } as ZooGameState;
     const stop = walkStops(s).find((st) => st.item?.category === 'exhibit');
     expect(stop, 'this test needs a released animal').toBeTruthy();
     const zone = zoneSlices(s).find((z) => z.zone === stop!.item!.zone);

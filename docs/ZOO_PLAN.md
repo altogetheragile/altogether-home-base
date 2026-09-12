@@ -117,6 +117,14 @@ Four decisions that replace what the note says:
   nothing; a zone is not open unless somebody can get there; the Review names what was out of reach
   and which Product Backlog item would fix it. This is what the river and the Bridge exist for: the
   Bridge has no visitors of its own, which is what makes it hard to order above the penguins. (#580)
+- **The way in is part of the habitat.** "Can I walk to it from the way in?" is one of a habitat's own
+  five acceptance criteria, answered by the park looking for a made path from the promenade to that
+  pen, and the player draws it with the same pen the pathways are drawn with. There is no paths item
+  per area any more: what stays an item of its own is infrastructure that serves many things - the
+  Main Pathways through the grounds, and the Bridge. Two consequences of asking it: the automatic
+  layout fills the visitors' side of the river first, because a habitat on the far bank cannot be
+  walked to until something crosses the water; and "At the back", when the Product Owner asks for it,
+  is kept this side of the river with the log saying why. (#588)
 
 ### Animals
 - **An animal is drawn the colour it was given**, in both views, including while the work is in hand.

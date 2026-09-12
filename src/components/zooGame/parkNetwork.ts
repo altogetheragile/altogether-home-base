@@ -3,7 +3,7 @@ import { zonePlots } from './parkZones';
 import { waterRects } from './parkWater';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
-import { buildNav, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
+import { buildNav, navRoute, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
 import { CANVAS_W, FRONT_Y } from './parkLayout';
 
 // ============= Where a visitor can go =============
@@ -80,6 +80,59 @@ export function parkNetwork(state: ZooGameState): NavInput {
   }
 
   return { paths, water, crossings, solid };
+}
+
+/** Whether there is a made route from the way in to this thing - paths only, no walking over the
+ *  grass to get there.
+ *
+ *  Two different questions, and the park needs both. Whether a visitor CAN get somewhere allows for
+ *  cutting across the grass, because a guest who cannot get anywhere at all is a worse bug than one
+ *  who clips a corner - that is `walkTo`. Whether they can get there ON A PATH is what a habitat's
+ *  own criterion asks, and it is the one that makes laying a path necessary rather than decorative.
+ *  Asking the first question for the second one made the criterion free everywhere except across
+ *  water. */
+export function pathTo(state: ZooGameState, item: BacklogItem): Pt[] | null {
+  const boxes = boxOf(state);
+  const stand = boxes.find((b) => b.item.id === item.id)
+    ?? boxes.find((b) => b.item.id === item.enclosureId);
+  if (!stand) return null;
+  const nav = buildNav(parkNetwork(state));
+  const to: Pt = { x: stand.at.x, y: stand.at.y + stand.size.h / 2 + 26 };
+  return navRoute(nav, ENTRANCE, to);
+}
+
+/** Which areas of the zoo the made paths reach.
+ *
+ *  What the main pathways are FOR: the spine serves the areas, whether or not anything has been built
+ *  in them yet. Judging it on open habitats instead made finishing the spine depend on finishing a
+ *  habitat, which is the dependency this whole change exists to remove. */
+export function areasOnAPath(state: ZooGameState): { zone: string; joined: boolean }[] {
+  // Asked of the runs somebody drew, not of the routing. The routing will let a point join the
+  // network from any distance - that is deliberate, because a visitor who cannot get anywhere is a
+  // worse bug than one who clips a corner - and it made this question answer yes wherever the
+  // promenade existed, which is everywhere. A run with an end in the area is what "it runs to the
+  // Savanna" means.
+  const EDGE = 40; // design px of slack round the area's own ground
+  const ends = (state.connectors ?? []).flatMap((c) => [c.a, c.b]);
+  return [...zonePlots(state).values()].map((p) => ({
+    zone: p.zone,
+    joined: ends.some((e) => e.x >= p.x0 - EDGE && e.x <= p.x1 + EDGE
+      && e.y >= p.y0 - EDGE && e.y <= p.y1 + EDGE),
+  }));
+}
+
+/** Everything with a made route to it from the way in, by id. One network for the whole zoo, because
+ *  this is asked of every zone on every render and building the park's paths per habitat is how a
+ *  cheap question becomes an expensive one. */
+export function reachedByPath(state: ZooGameState): Set<string> {
+  const boxes = boxOf(state);
+  const nav = buildNav(parkNetwork(state));
+  const out = new Set<string>();
+  for (const b of boxes) {
+    const to: Pt = { x: b.at.x, y: b.at.y + b.size.h / 2 + 26 };
+    if (navRoute(nav, ENTRANCE, to)) out.add(b.item.id);
+  }
+  return out;
 }
 
 /** Whether a visitor can get from the way in to this thing, and by what route. */

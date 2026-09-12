@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ActionRail } from './ActionRail';
+import { enclosureAcceptance } from './design';
 import { initialZooState } from './config';
 import type { ZooGameState, BacklogItem } from './types';
 
@@ -55,7 +56,9 @@ describe('the rail', () => {
     // The Review is not the gate: work can go live the day it is Done, and holding it is a decision.
     const onOpen = vi.fn();
     const s = sprint({}, {
-      design, status: 'done', acConfirmed: [true, true, true, true],
+      // Every criterion, however many there are: a fixture that counts them by hand breaks the day
+      // one is added, which is what happened when a habitat gained "can I walk to it".
+      design, status: 'done', acConfirmed: enclosureAcceptance().map(() => true),
       tasks: [{ id: 't', label: 'Get the PO’s sign-off', done: true }],
     } as Partial<BacklogItem>);
     const { container } = rail(s, { onOpen });

@@ -42,10 +42,13 @@ const zoo = (plot: { zone: string; x0: number; y0: number; x1: number; y1: numbe
       open({ id: 'enc', name: `${plot.zone} Enclosure`, category: 'enclosure', enclosureSize: 'medium', pos: at }),
       open({ id: 'beast', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
         appeal: { families: 8, enthusiasts: 7, comfortSeekers: 6 } }),
-      open({ id: 'zone-paths', name: `${plot.zone} Paths`, category: 'path' }),
       ...extra,
     ],
-  } as ZooGameState;
+    // The run that joins it to the way in. It used to be a Product Backlog item of its own; it is
+    // the habitat's own acceptance criterion now, and these zoos are ones where it was laid.
+    connectors: [{ id: 'r-in', itemId: 'enc', a: { x: at.x, y: FRONT_Y }, b: { x: at.x, y: at.y + 60 },
+      bends: [], thickness: 14, color: '#c9a86a' }],
+  } as unknown as ZooGameState;
 };
 
 const bridge = (): BacklogItem => {

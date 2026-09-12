@@ -514,7 +514,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onCommitBuild?.(id); onPlaceItem?.(id, pos); setMoving(null);
                     }}
                     tool={drawing ? 'path' : 'none'} pathStyle={drawRoute?.style}
-                    runFor={inHand?.category === 'path' ? inHand.id : undefined}
+                    // Whose run it is. A habitat holds the pen too, now that being walkable to is one
+                    // of its own criteria: the run a player draws to their pen belongs to that pen,
+                    // so it counts as its work and the Developers do not lay a second one beside it.
+                    runFor={inHand && (inHand.category === 'path' || inHand.category === 'enclosure') ? inHand.id : undefined}
                     onAddConnector={onAddConnector}
                     onAskToCheck={onAskToCheck} />
                 </div>

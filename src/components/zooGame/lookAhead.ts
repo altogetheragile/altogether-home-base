@@ -1,5 +1,5 @@
 import type { ZooGameState, PbiDraft, BacklogItem } from './types';
-import { floraAcceptance, pathAcceptance, amenityAcceptance } from './design';
+import { floraAcceptance, amenityAcceptance } from './design';
 
 // ============= The Product Owner looking ahead =============
 //
@@ -64,19 +64,17 @@ export function lookAhead(state: ZooGameState): Proposal[] {
   const out: Proposal[] = [];
   const soon = forecast(state);
 
-  // A zone about to have an animal in it needs a way in and something growing. Both are its own
-  // items, because a zone is a slice: the paths for the Big Cats belong to the Big Cats.
+  // A zone about to have an animal in it needs something growing. It needs a way in too, and that
+  // is no longer an item to propose: a path serving one habitat is one of that habitat's own
+  // acceptance criteria ("can I walk to it from the way in?"), so proposing "<zone> Paths" would be
+  // proposing a second item that has to be finished before the first is worth anything - which is
+  // the layer this game exists to warn about.
   // A zone is "coming" if an animal or a habitat for it is coming - or if the whole area is still
   // one epic near the top of the Product Backlog, which is the usual way a zone arrives.
   const brings = (it: BacklogItem) => it.category === 'exhibit' || it.category === 'enclosure'
     || (it.category === 'epic' && (it.epicMembers ?? []).some((m) => m.kind === 'exhibit'));
   const zones = Array.from(new Set(soon.filter(brings).map((it) => it.zone)));
   const needs: { kind: 'path' | 'flora'; name: string; why: (z: string) => string; draft: (z: string) => PbiDraft }[] = [
-    {
-      kind: 'path', name: 'Paths',
-      why: (z) => `${z} is coming up. A zone opens on three things - somewhere to see an animal, an animal to see, and a path to walk in on - and the third one is not in the Product Backlog.`,
-      draft: (z) => ({ name: `${z} Paths`, category: 'path', zone: z, acceptance: pathAcceptance() }),
-    },
     {
       kind: 'flora', name: 'Planting',
       why: (z) => `${z} is coming up with nothing growing in it. Planting is what makes a zone feel like somewhere rather than a fenced field, and it is cheap next to a habitat.`,
