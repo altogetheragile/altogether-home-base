@@ -55,6 +55,10 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
   if (kind === 'bridge') return { fill: '#c8965a', stroke: '#7a5230' };
   if (kind === 'rocks') return { fill: '#9aa1a8', stroke: '#6f757b' };
   if (kind === 'fountain') return { fill: '#bcd9e8', stroke: '#7a8f9b' };
+  // The way in and the way from the car park to it. Drawn as planting, the first thing a visitor
+  // meets was a green patch on a green park - the same fault the river and the bridge had.
+  if (kind === 'entrance') return { fill: '#d9d3c7', stroke: '#e6842a' };
+  if (kind === 'carpark') return { fill: '#9aa0a6', stroke: '#6f757b' };
   return FILL.flora;
 }
 
