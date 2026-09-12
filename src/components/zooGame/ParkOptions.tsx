@@ -352,24 +352,24 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       ))}
 
       {/* ---- the pen: for a pathway, and for a habitat that needs joining to the way in ---- */}
-      {/* Not `placed`: that asks whether somebody has DRAGGED it, and a habitat the park seated
+      {/* The same three controls for both, because it is the same work: the pen, how wide the path
+          is, and the runs already laid with a way to take one back up. A habitat was offered the pen
+          alone - so a player could draw its way in and then not say how wide it was, while the same
+          path drawn from a pathway item could be a track or a boulevard.
+          Not `placed`: that asks whether somebody has DRAGGED it, and a habitat the park seated
           itself is standing on the park just as much as one you moved. Gating on it meant a player
           who never dragged their pen was offered no pen to draw with, and the one criterion the park
           answers by looking for a path could not be met by hand at all. */}
-      {!inside && isHabitat && onDrawing && (
-        <Group label="Path to it">
-          <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
-            {drawing ? 'Drawing - click where it starts, then where it ends' : 'Draw a path to it'}
-          </Chip>
-        </Group>
-      )}
-      {!inside && isPath && (
+      {!inside && (isPath || isHabitat) && (
         <>
-          <Group label="Draw">
-            <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
-              {drawing ? 'Drawing - click where it starts, then where it ends' : 'Draw a run'}
-            </Chip>
-          </Group>
+          {onDrawing && (
+            <Group label={isHabitat ? 'Path to it' : 'Draw'}>
+              <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
+                {drawing ? 'Drawing - click where it starts, then where it ends'
+                  : isHabitat ? 'Draw a path to it' : 'Draw a run'}
+              </Chip>
+            </Group>
+          )}
           <Group label="Width">
             {PATH_WIDTHS.map((w) => (
               <Chip key={w.key} on={design.parts.thickness === w.key}

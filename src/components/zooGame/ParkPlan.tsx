@@ -420,7 +420,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             window.addEventListener('pointermove', move);
             window.addEventListener('pointerup', up);
           }
-          if (placing) {
+          // The pen wins while it is out. A thing waiting to be put down ALSO wants this press, and
+          // it used to take it: somebody with the pen in their hand pressed the park where the path
+          // should start, the habitat was set down there instead, and the run they were drawing was
+          // never begun. Reported from playing it as "how can I get the Product Owner to review?" -
+          // the criterion could not be met because the first press never drew anything.
+          if (placing && tool !== 'path') {
             // An animal goes IN somewhere: dropped on a habitat that is standing, it moves in.
             const item = state.backlog.find((it) => it.id === placing.id);
             if (item?.category === 'exhibit') {
@@ -545,7 +550,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               // While something is being put down, the things already standing keep out of the way:
               // the click that places a bridge over a river used to select the river first and open
               // it instead of the thing you had just placed.
-              onPointerDown={placing ? undefined : (e) => dragFrom(e, b)}
+              // With the pen out, the park is a drawing surface and nothing on it is a handle. Every
+              // standing thing stopped the press reaching the park, so a run could not START or END
+              // on a habitat - which is exactly where the way in has to reach. Reported from playing
+              // it: pressing Draw, clicking twice, and nothing being drawn.
+              onPointerDown={placing || tool === 'path' ? undefined : (e) => dragFrom(e, b)}
               style={{ cursor: onPlaceItem ? 'grab' : 'pointer' }}>
               <rect x={x} y={y} width={b.size.w} height={b.size.h} rx={6}
                 // Landscape is cut to the land it lies on. A river is as long as the park is wide,
@@ -612,12 +621,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                         cx={x + b.size.w * (wf.x + wf.w / 2)} cy={y + b.size.h * (wf.y + wf.h / 2)}
                         rx={(b.size.w * wf.w) / 2} ry={(b.size.h * wf.h) / 2} fill="#7cc0e8"
                         style={{ cursor: onMoveInside ? 'grab' : 'default' }}
-                        onPointerDown={onMoveInside ? (e) => movePiece(e, b, 'water', i) : undefined} />
+                        onPointerDown={onMoveInside && tool !== 'path' ? (e) => movePiece(e, b, 'water', i) : undefined} />
                     ))}
                     {enclosureFlora(d).map((f, i) => (
                       <g key={`f-${b.item.id}-${i}`} data-piece={`flora-${i}`} data-of={b.item.id}
                         style={{ cursor: onMoveInside ? 'grab' : 'default' }}
-                        onPointerDown={onMoveInside ? (e) => movePiece(e, b, 'flora', i) : undefined}>
+                        onPointerDown={onMoveInside && tool !== 'path' ? (e) => movePiece(e, b, 'flora', i) : undefined}>
                         {/rock|shelter/i.test(f.type)
                           ? <rect x={x + b.size.w * f.x - 12} y={y + b.size.h * f.y - 9} width={24} height={18} rx={4}
                               fill={f.foliage ?? '#8a5a2b'} />
@@ -652,7 +661,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                       // you chose Black, the Increment went black, and the plan stayed tawny.
                       fill={currentDesign(a).colors?.coat ?? '#c8761f'} stroke="#7a4712" strokeWidth={2}
                       style={{ cursor: onSetMemberSpot ? 'grab' : 'default' }}
-                      onPointerDown={onSetMemberSpot ? (e) => moveAnimal(e, a.id, k, { x, y, w: b.size.w, h: b.size.h }) : undefined} />
+                      onPointerDown={onSetMemberSpot && tool !== 'path' ? (e) => moveAnimal(e, a.id, k, { x, y, w: b.size.w, h: b.size.h }) : undefined} />
                   );
                 });
               })}
@@ -683,8 +692,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   : `${met} of ${facts.length} checked · ${next?.v?.evidence ?? 'still being built'}`;
                 return (
                   <g data-part="built-pill" data-ready={ready ? 'yes' : 'no'}
-                    onPointerDown={(e) => { e.stopPropagation(); if (ready) onAskToCheck?.(b.item.id); else onSelect?.(b.item.id); }}
-                    style={{ cursor: 'pointer' }}>
+                    // Not while the pen is out: this pill sits directly under the habitat, which is
+                    // where a run from the way in has to finish, and it is 180px of press that never
+                    // reached the park.
+                    onPointerDown={tool === 'path' ? undefined : (e) => { e.stopPropagation(); if (ready) onAskToCheck?.(b.item.id); else onSelect?.(b.item.id); }}
+                    style={{ cursor: tool === 'path' ? 'crosshair' : 'pointer', pointerEvents: tool === 'path' ? 'none' : undefined }}>
                     <rect x={b.at.x - Math.max(90, text.length * 3.4)} y={y + b.size.h + 6}
                       width={Math.max(180, text.length * 6.8)} height={24} rx={12}
                       fill={ready ? '#dcfce7' : '#fff7ed'} stroke={ready ? '#16a34a' : '#f59e0b'} strokeWidth={2} />
@@ -715,7 +727,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 <rect data-part="size-grip" x={x + b.size.w - ch(9)} y={y + b.size.h - ch(9)} width={ch(18)} height={ch(18)} rx={ch(4)}
                   fill="#fff" stroke="#e6842a" strokeWidth={ch(3)}
                   style={{ cursor: 'nwse-resize' }}
-                  onPointerDown={(e) => sizeFrom(e, b)} />
+                  onPointerDown={tool === 'path' ? undefined : (e) => sizeFrom(e, b)} />
               )}
             </g>
           );

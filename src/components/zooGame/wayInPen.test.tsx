@@ -3,8 +3,10 @@ import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ParkOptions } from './ParkOptions';
 import { ZooShell } from './ZooShell';
+import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
-import { presetFor } from './design';
+import { presetFor, PATH_WIDTHS } from './design';
+import type { ItemDesign } from './design';
 import type { ZooGameState, BacklogItem, ZooConnector } from './types';
 
 // The pen, in the player's hand.
@@ -44,6 +46,85 @@ describe('the pen is offered for a habitat', () => {
     const strip = container.querySelector('[data-part="park-options"]')!;
     expect(strip.textContent, 'the habitat was offered no pen to draw its way in with')
       .toMatch(/Draw a path to it/i);
+  });
+});
+
+describe('how wide the path is', () => {
+  it('is asked of a habitat too, not only of a pathway item', () => {
+    // Reported from playing it: "how can I set the path width?" A habitat holding the pen was given
+    // the pen and nothing else, so the same path drawn from the Main Pathways could be a track or a
+    // boulevard and the one drawn to a pen could only be whatever the default was.
+    const s = game();
+    const chosen: ItemDesign[] = [];
+    const { container } = render(
+      <MemoryRouter>
+        <ParkOptions state={s} item={penOf(s)} inside={null} onDrawing={() => {}}
+          api={{ onDesign: (_id, d) => chosen.push(d), onSetEnclosure: () => {}, onAddInside: () => {} }} />
+      </MemoryRouter>,
+    );
+    const strip = container.querySelector('[data-part="park-options"]')!;
+    expect(strip.textContent, 'the habitat was given the pen and no width to draw at').toMatch(/Width/);
+    const wide = [...strip.querySelectorAll('button')]
+      .find((x) => x.textContent?.trim() === PATH_WIDTHS[PATH_WIDTHS.length - 1].label)!;
+    expect(wide, 'the widths are not offered as something to press').toBeTruthy();
+    fireEvent.click(wide);
+    expect(chosen[0]?.parts.thickness, 'pressing a width changed nothing about the habitat')
+      .toBe(PATH_WIDTHS[PATH_WIDTHS.length - 1].key);
+  });
+});
+
+describe('a run already laid can be taken back up', () => {
+  it('is listed on the habitat that owns it, with a way to lift it', () => {
+    // Reported from playing it: "how do I delete a path mistake?" The runs of a pathway item were
+    // listed on its own strip with a bin on each; a habitat's runs were not listed anywhere, so a
+    // run drawn to the wrong place could only be worked around.
+    const s = game();
+    const pen = penOf(s);
+    const lifted: string[] = [];
+    const withRun = { ...s, connectors: [{ id: 'r1', itemId: pen.id,
+      a: { x: 300, y: 1060 }, b: { x: 300, y: 800 }, bends: [], thickness: 9, color: '#c9a86a' }] } as ZooGameState;
+    const { container } = render(
+      <MemoryRouter>
+        <ParkOptions state={withRun} item={pen} inside={null} onDrawing={() => {}}
+          api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {},
+            onRemoveRun: (id: string) => lifted.push(id) }} />
+      </MemoryRouter>,
+    );
+    const strip = container.querySelector('[data-part="park-options"]')!;
+    expect(strip.textContent, 'the habitat does not say what runs it has').toMatch(/1 run/);
+    const bin = strip.querySelector('[data-part="remove-run"]') as HTMLButtonElement | null;
+    expect(bin, 'there is no way to take a run back up from the habitat that owns it').toBeTruthy();
+    fireEvent.click(bin!);
+    expect(lifted, 'pressing it lifted nothing').toEqual(['r1']);
+  });
+});
+
+describe('the pen wins while it is out', () => {
+  it('draws where you press, instead of putting the habitat down there', () => {
+    // The fault behind "how can I get the Product Owner to review?": an item waiting to be built on
+    // the park wanted the same press as the pen, and took it. The first click set the habitat down
+    // where the path should have started, so the run was never begun and the criterion could not be
+    // met - with the chip still saying "click where it starts, then where it ends".
+    const s = game();
+    const pen = penOf(s);
+    const laid: ZooConnector[] = [];
+    const placed: string[] = [];
+    const { container } = render(
+      <MemoryRouter>
+        <ParkPlan state={s} tool="path" runFor={pen.id}
+          placing={{ id: pen.id, w: 172, h: 114 }}
+          onPlace={(id: string) => placed.push(id)}
+          onAddConnector={(c: ZooConnector) => laid.push(c)} />
+      </MemoryRouter>,
+    );
+    const svg = container.querySelector('[data-part="park-plan"]')!;
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 820, height: 760,
+      right: 820, bottom: 760, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    fireEvent.pointerDown(svg, { clientX: 60, clientY: 700 });
+    fireEvent.pointerDown(svg, { clientX: 140, clientY: 420 });
+    expect(placed, 'the press put the habitat down instead of drawing').toEqual([]);
+    expect(laid.length, 'two presses with the pen out drew nothing').toBe(1);
+    expect(laid[0].itemId).toBe(pen.id);
   });
 });
 

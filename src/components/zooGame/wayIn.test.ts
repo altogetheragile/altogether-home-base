@@ -70,7 +70,9 @@ describe('a habitat is not finished until you can walk to it', () => {
     const { state, item } = habitatInHand();
     const v = checkCriterion(state, item, WAY_IN)!;
     expect(v.met, 'a habitat nobody can reach was walkable to').toBe(false);
-    expect(v.evidence, 'nothing says what would fix it').toMatch(/path|water/i);
+    // Not just the fact. The evidence names the thing that would fix it, and for a pen on dry
+    // ground that is the pen in the strip: "draw a path to it".
+    expect(v.evidence, 'nothing says what would fix it').toMatch(/draw a path to it|Bridge/i);
   });
 
   it('says yes once a run joins it to the way in', () => {

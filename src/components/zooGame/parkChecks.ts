@@ -270,9 +270,12 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
     if (route) return { met: true, evidence: 'a path from the way in' };
     // Why not, in the words of the thing that would fix it.
     const wet = whatVisitorsCanReach(state).stranded.find((x) => x.item.id === item.id);
+    // ...and it names the CONTROL, because "no path reaches it" is a fact and not an instruction:
+    // reported from playing it, "how can I get the Product Owner to review?" - the answer was to
+    // draw the way in, and nothing on the screen said so.
     return { met: false, evidence: wet?.why === 'water'
-      ? 'the water is in the way, and nothing crosses it'
-      : 'no path reaches it from the way in' };
+      ? 'the water is in the way, and nothing crosses it - the Bridge would'
+      : 'nothing reaches it yet - draw a path to it from the way in' };
   }
 
   return null; // judgement: yours to make
