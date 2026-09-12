@@ -76,7 +76,10 @@ export function readSave(raw: unknown): SaveRead {
   // Older, known versions are migrated up. There is nothing to do between 0 and 1 beyond the
   // defaulting the reducer already does; the point of the ladder is that the next change has
   // somewhere to go, rather than being discovered by a player.
-  return { ok: true, state: { ...(state as ZooGameState), version: SAVE_VERSION } };
+  // Anything added since a save was taken comes in at its default, and a till is a number: a game
+  // resumed from before there were coins starts at nothing in the bank rather than at NaN.
+  const read = state as ZooGameState;
+  return { ok: true, state: { ...read, coins: read.coins ?? 0, lastLedger: read.lastLedger ?? null, version: SAVE_VERSION } };
 }
 
 /** What goes into the row: the game, stamped with the build that wrote it. */
