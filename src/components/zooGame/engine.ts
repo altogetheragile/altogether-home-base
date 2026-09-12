@@ -2,7 +2,7 @@ import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, Ba
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
-import { appealFromDesign, barrierOf, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
+import { appealFromDesign, barrierOf, barrierVerdict, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -885,6 +885,38 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
  *  see what it did cannot inspect it, and that is the first half of inspect and adapt. */
 export function note(state: ZooGameState, d: Omit<TeamDecision, 'sprint'>): ZooGameState {
   return { ...state, decisions: [...(state.decisions ?? []), { sprint: state.sprintNumber, ...d }] };
+}
+
+// ============= What got out =============
+//
+// The consequence of opening something that does not hold what lives in it.
+//
+// It can only happen to a habitat that is OPEN: the mistake being taught is not building a weak
+// fence, it is opening a zone with one. Two ways to arrive at it, both real - downgrade what holds
+// them after it is open, or move an animal into a pen that was built for something smaller. The
+// second is the honest one: a pen that held the penguins does not hold the leopard.
+//
+// What it costs is the zone. Not the habitat - the zone: an escape shuts the place for the day, so
+// nothing in there is seen by anybody. That reuses what unreachable work already does rather than
+// inventing a second kind of penalty, and it is legible in one sentence: the Big Cats shut, and
+// nobody saw anything in there.
+
+export interface GotOut { habitat: BacklogItem; escapee: string; zone: string }
+
+/** Everything that is open and cannot hold what lives in it. */
+export function whatGotOut(state: ZooGameState): GotOut[] {
+  const out: GotOut[] = [];
+  for (const e of state.backlog) {
+    if (e.category !== 'enclosure' || e.status !== 'open') continue;
+    const living = state.backlog.filter((it) => it.enclosureId === e.id && it.status === 'open');
+    if (!living.length) continue;
+    const design = currentDesign(e);
+    // A tank holds water, and the water is holding the fish. Nothing gets out of it.
+    if (isTank(design, living, e)) continue;
+    const v = barrierVerdict(design, living);
+    if (!v.ok && v.escapee) out.push({ habitat: e, escapee: v.escapee, zone: e.zone });
+  }
+  return out;
 }
 
 /** What the Scrum Team did in one Sprint, newest last. */
@@ -2183,7 +2215,11 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     // Against the plain fence, which is what "an ordinary habitat" looks like.
     return barrierOf(currentDesign(home), [it]).seeThrough / 0.9;
   };
-  const openItems = reached.filter((it) => it.category !== 'enclosure').map((it) => {
+  // ...and not in a zone that spent the day shut because something got out of it. An escape closes
+  // the place: nobody saw anything in there, including the things that were perfectly fine.
+  const escaped = whatGotOut(state);
+  const shut = new Set(escaped.map((g) => g.zone));
+  const openItems = reached.filter((it) => it.category !== 'enclosure' && !shut.has(it.zone)).map((it) => {
     const z = toZooItem(it);
     const k = seenThrough(it);
     return k === 1 || !z.appeal ? z : { ...z, appeal: {
@@ -2219,6 +2255,18 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
   const backlog = returnUnfinished(state);
+
+  // What got out goes in the log, in the team's own words, so the Retrospective has it to inspect
+  // rather than a memory of a bad Review. It costs nothing extra to say - the zone shutting already
+  // cost the Sprint - and it is the difference between "that went badly" and "we opened the Big Cats
+  // with a hedge round a lion".
+  for (const g of escaped) {
+    state = note(state, {
+      kind: 'moved', by: 'developer',
+      what: `${g.escapee} got out of the ${g.habitat.name} and the ${g.zone} shut for the day.`,
+      cost: `${barrierOf(currentDesign(g.habitat), []).note} round something that needed more`,
+    });
+  }
 
   return {
     ...state,
