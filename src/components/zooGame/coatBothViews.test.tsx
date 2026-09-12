@@ -51,8 +51,7 @@ describe('an animal being painted while it is in hand', () => {
     const lions = [...svg.querySelectorAll('[data-spot^="lion:"]')];
     expect(lions.length, 'the Increment draws no lion').toBeGreaterThan(0);
     for (const g of lions) {
-      expect((g.querySelector('svg') as SVGElement | null)?.style.filter,
-        'the Increment left the lion as drawn').toBeTruthy();
+      expect(g.getAttribute('filter'), 'the Increment left the lion as drawn').toBeTruthy();
     }
   });
 });

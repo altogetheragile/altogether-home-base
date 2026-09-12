@@ -418,8 +418,10 @@ describe('the isometric projection', () => {
              copies: [{ x: 334, y: 300, piece: 'blossom' }, { x: 300, y: 334, piece: 'pine' }] }),
     ] } as ZooGameState;
     const { container } = render(<IsoZoo state={state} height={460} />);
-    const filters = [...container.querySelectorAll<SVGElement>('svg svg')]
-      .map((el) => el.style.filter).filter(Boolean);
+    // The `filter` ATTRIBUTE, not a CSS style: a style on a nested drawing is ignored by WebKit,
+    // so a test that looked for one passed on a park Safari drew in the artwork's own colours.
+    const filters = [...container.querySelectorAll('[filter]')]
+      .map((el) => el.getAttribute('filter')).filter(Boolean);
     expect(filters.length, 'the planting was not coloured at all').toBeGreaterThan(1);
     // three different plants, and no two of them drawn the same
     expect(new Set(filters).size, 'every plant was drawn the same').toBeGreaterThan(1);
@@ -625,8 +627,13 @@ describe('the isometric projection', () => {
       item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 300, y: 240 },
              design: { parts: {}, colors: {}, flora: [{ x: 0.3, y: 0.5, s: 1, type: 'tree', foliage }] } }),
     ] } as ZooGameState);
-    const filtersFor = (foliage: string) => [...render(<IsoZoo state={withFlora(foliage)} height={460} />)
-      .container.querySelectorAll<SVGElement>('svg svg')].map((el) => el.style.filter).filter(Boolean).join('|');
+    // What the filters ARE, by their definitions: the reference is a generated id, so two different
+    // choices differ in the `<filter>` they point at rather than in the attribute's text.
+    const filtersFor = (foliage: string) => {
+      const c = render(<IsoZoo state={withFlora(foliage)} height={460} />).container;
+      return [...c.querySelectorAll('filter')].map((f) => [...f.children]
+        .map((k) => `${k.tagName}:${k.getAttribute('values') ?? k.getAttribute('slope') ?? ''}`).join(',')).join('|');
+    };
     expect(filtersFor('#e05c5c'), 'the planting was not coloured at all').not.toBe('');
     // ...and two different choices are not drawn the same
     expect(filtersFor('#e05c5c')).not.toBe(filtersFor('#2f6b3b'));

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ANIMAL_ART } from './art/animalArt.generated';
-import { hasAnimalArt, animalArtFor, animalArtSize, animalArtFit, coatTint, UNITS_PER_CELL } from './art/animalArt';
+import { hasAnimalArt, animalArtFor, animalArtSize, animalArtFit, UNITS_PER_CELL } from './art/animalArt';
+import { coatTint } from './art/tint';
 import { TOOLBOX } from './toolboxItems';
 
 const exhibitTemplates = new Set(

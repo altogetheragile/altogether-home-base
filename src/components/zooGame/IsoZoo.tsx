@@ -12,7 +12,9 @@ import { FACILITY } from './facilities';
 import { themeFor } from './zoneTheme';
 import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
-import { animalArtFor, coatTint } from './art/animalArt';
+import { animalArtFor } from './art/animalArt';
+import { coatTint, foliageTint, tintKey, tintRef, type Tint } from './art/tint';
+import { TintDefs } from './art/TintDefs';
 import { KIND_SCALE, groupMembers } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
@@ -55,24 +57,9 @@ interface Piece { z: number; el: React.ReactNode }
  *  designed on the Plan. Turning the whole drawing by the difference between its own green and the
  *  chosen colour is not the same as repainting it leaf by leaf, but it is honest: choose a pink
  *  blossom on the Plan and a pink tree is what stands in the Increment. */
-function foliageFilter(hex?: string): string | undefined {
-  const m = /^#?([0-9a-f]{6})$/i.exec((hex ?? '').trim());
-  if (!m) return undefined;
-  const v = parseInt(m[1], 16);
-  const r = ((v >> 16) & 0xff) / 255, g = ((v >> 8) & 0xff) / 255, b = (v & 0xff) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-  const l = (max + min) / 2;
-  const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-  let h = 0;
-  if (d !== 0) {
-    h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-    h = (h * 60 + 360) % 360;
-  }
-  // What the artwork already is: a mid, fairly saturated green.
-  const BASE_H = 104, BASE_S = 0.42, BASE_L = 0.42;
-  const turn = Math.round(((h - BASE_H + 540) % 360) - 180);
-  return `hue-rotate(${turn}deg) saturate(${Math.max(0.15, sat / BASE_S).toFixed(2)}) brightness(${Math.max(0.55, Math.min(1.5, l / BASE_L)).toFixed(2)})`;
-}
+// ...and how it is carried to the screen is `art/tint`: an SVG filter, referenced by attribute,
+// because the CSS shorthand this used to build is ignored by WebKit on a nested drawing. It worked
+// in every test and every driver here, all of which are Chromium, and did nothing at all in Safari.
 
 /** The outline of a habitat, as points round its own box.
  *
@@ -829,6 +816,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
 
   const pieces: Piece[] = [];
   const push = (z: number, el: React.ReactNode) => pieces.push({ z, el });
+  // Every distinct tint the scene wears, so each gets one `<filter>` and no more.
+  const tints = new Map<string, Tint>();
 
   /** A licensed prop, standing on a world point. `k` scales it; props are drawn feet-down, so the
    *  drawing hangs above the point it stands on. */
@@ -852,7 +841,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // itself, which is as much off the park as on it - and reads as a tree growing out of thin air at
   // the corner of the land.
   const onLand = (v: number, hi: number) => Math.max(1, Math.min(hi - 1, v));
-  const place = (name: string, rawX: number, rawY: number, k: number, key: string, tintTo?: string, filter?: string,
+  const place = (name: string, rawX: number, rawY: number, k: number, key: string, tintTo?: string, paint?: Tint,
     /** What this drawing IS, so a pointer that lands on it can say what it touched. A prop is drawn
      *  above the ground it stands on - you grab a tree by its canopy, and its canopy is nowhere
      *  near its footprint - so what was touched cannot be worked out from where its feet are. */
@@ -864,10 +853,16 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     const w = p.w * k, h = p.h * k;
     const body = p.tint && tintTo ? tint(p.body, tintTo, p.tint) : p.body;
     const top = at.y - h + w * 0.29;
-    push(depth(wx, wy), (
+    // Tinted by a filter hung on a wrapper, not by a style on the drawing: the drawing is a nested
+    // `<svg>`, and that is precisely where WebKit drops a CSS filter on the floor.
+    if (paint) tints.set(tintKey(paint), paint);
+    const drawing = (
       <svg key={key} x={at.x - w / 2} y={top} width={w} height={h} viewBox={p.viewBox} overflow="visible"
-        {...tag} style={filter ? { filter } : undefined} dangerouslySetInnerHTML={{ __html: body }} />
-    ));
+        {...tag} dangerouslySetInnerHTML={{ __html: body }} />
+    );
+    push(depth(wx, wy), paint
+      ? <g key={key} filter={tintRef(grassClip, paint)}>{drawing}</g>
+      : drawing);
     // Where the top of the drawing came out, for anything that has to sit clear of it.
     return { x: at.x, top };
   };
@@ -1229,7 +1224,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         continue;
       }
       place(treeProp(f.type), fx, fy, u * 1.2 * (f.s || 1),
-        `ef-${e.id}-${i}`, undefined, foliageFilter(f.foliage ?? floraDefaultColors(f.type).foliage));
+        `ef-${e.id}-${i}`, undefined, foliageTint(f.foliage ?? floraDefaultColors(f.type).foliage));
     }
     const plants = roomFor.get(e.id)?.plants ?? [];
     plants.forEach((pl, i) => {
@@ -1237,7 +1232,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       const wx = x0 + 16 + t * Math.max(4, size.w - 32);
       const wy = y0 + 12 + jitter(i + 2, e.id.length + 7) * Math.max(4, size.h - 24);
       place(treeProp(landType(pl)), wx, wy, u * 1.2, `pl-${e.id}-${pl.id}-${i}`,
-        undefined, foliageFilter(working(pl).colors.foliage), { 'data-spot': `${pl.id}:0` });
+        undefined, foliageTint(working(pl).colors.foliage), { 'data-spot': `${pl.id}:0` });
       // Planting can be dragged back out of a habitat; an animal cannot walk itself out.
       spots.push({ id: pl.id, member: 0, enc: e.id, x: wx, y: wy, w: 24, h: 24,
         z: depth(wx, wy), box: { x: x0, y: y0, w: size.w, h: size.h }, unnestable: true });
@@ -1265,6 +1260,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // ...and a coat is a decision about what the zoo is for, so it has to be visible. It was
         // drawn on the plan view's animals, and the plan view stopped drawing animals.
         const coat = coatTint(working(a).colors.coat, speciesBody(a));
+        if (coat) tints.set(tintKey(coat), coat);
         const at = P(wx, wy);
         const key = `a-${e.id}-${a.id}-${mi}`;
         // Each animal of the family, on its own. A pride is not a blob, and arranging them is the
@@ -1292,10 +1288,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
             // `scale(-1,1)` alone reflects through the origin and sends it off the far side, so the
             // translate brings it back. A CSS transform with transform-box: fill-box looked like the
             // tidier way to say this and put two lions in four somewhere off the picture entirely.
-            <g key={key} data-spot={`${a.id}:${mi}`}
+            <g key={key} data-spot={`${a.id}:${mi}`} filter={coat ? tintRef(grassClip, coat) : undefined}
               transform={mirror ? `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)` : undefined}>
               <svg x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
-                style={coat ? { filter: coat } : undefined}
                 dangerouslySetInnerHTML={{ __html: art.body }} />
             </g>
           ));
@@ -1637,7 +1632,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           clipPath={`url(#${grassClip})`} />);
       } else {
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string, copy?: number) =>
-          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageFilter(foliage),
+          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageTint(foliage),
             // One planting is several trees, and each of them stands somewhere of its own. Tagged
             // as which one it is, or dragging the third tree walked the whole planting across the
             // park - they are all drawn from the same item.
@@ -1792,7 +1787,11 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   return {
     w: total.w + MARGIN * 2,
     h: total.h + MARGIN * 2 + EDGE + HEAD,
-    nodes: [...(paths.length ? [<defs key="walks">{paths}</defs>] : []), ...nodes.filter(Boolean), ...pieces.map((p) => p.el)],
+    nodes: [
+      ...(paths.length ? [<defs key="walks">{paths}</defs>] : []),
+      <TintDefs key="tints" where={grassClip} tints={tints.values()} />,
+      ...nodes.filter(Boolean), ...pieces.map((p) => p.el),
+    ],
     label: `The zoo from above: ${encs.length} habitat${encs.length === 1 ? '' : 's'}, ${live.filter((i) => i.category === 'exhibit').length} exhibits, ${visitors} visitors`,
     // What a pointer can take hold of, and the frame needed to work out where it is pointing. The
     // hit area is the thing's own footprint on the ground - not its drawing, which for a habitat
