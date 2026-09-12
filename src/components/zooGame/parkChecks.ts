@@ -208,8 +208,12 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
       .filter(Boolean) as string[];
     const missing = [!ground && 'ground', !growing && 'shelter or planting', !water && 'water']
       .filter(Boolean) as string[];
+    // ...and where the missing ones are put. The ground is a swatch on the strip, but planting and
+    // water are inside the habitat, behind "Look Inside" - which is the one place a player has to
+    // know about to finish a habitat and the one place nothing pointed at.
+    const indoors = !growing || !water;
     return missing.length
-      ? { met: false, evidence: `no ${missing.join(' or ')} yet` }
+      ? { met: false, evidence: `no ${missing.join(' or ')} yet${indoors ? ' - Look Inside to add them' : ''}` }
       : { met: true, evidence: `${has.join(', ')} in` };
   }
 
