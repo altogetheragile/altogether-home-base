@@ -74,6 +74,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   // the Review's own numbers: it is the same barrier the strip chose and the same criterion the park
   // answered, and a second copy of that answer is a second thing to keep in step.
   const escaped = whatGotOut(state);
+  const ledger = state.lastLedger ?? null;
   // A snapshot rather than a diff: the Review inspects the Increment as it stands, and "what a
   // visitor can walk into today" is the honest version of that.
   const openZones = slices.filter((z) => z.open).map((z) => z.zone);
@@ -296,6 +297,55 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           around: do not open without something that holds them. It is said in the keeper's words
           rather than as a number, because "happiness fell 14" is a result and "the lion was in the
           car park" is a lesson. */}
+      {/* The till. Coins are the visitors' money and they are the only money there is: they come in
+          at the gate and go back over the counter when the day was not worth paying for. Shown as a
+          line of arithmetic rather than a balance, because "you have 1,240" is a score and "900
+          people came, 300 of them wanted their money back" is a Sprint Review. */}
+      {ledger && (
+        <section data-part="ledger" className="rounded-lg border border-border bg-card px-3 py-2.5 text-sm">
+          <div className={cn(EYEBROW, 'mb-1.5')}>What the gate took</div>
+          <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+            <div>
+              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Takings</dt>
+              <dd className="font-bold tabular-nums">{ledger.takings.toLocaleString()}</dd>
+            </div>
+            {ledger.refunds > 0 && (
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Refunded</dt>
+                <dd className="font-bold tabular-nums text-rose-600 dark:text-rose-400">
+                  &minus;{ledger.refunds.toLocaleString()}
+                  <span className="ml-1 text-[11px] font-medium text-muted-foreground">
+                    {ledger.refundedVisits.toLocaleString()} visits
+                  </span>
+                </dd>
+              </div>
+            )}
+            {ledger.fines > 0 && (
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Welfare fines</dt>
+                <dd className="font-bold tabular-nums text-rose-600 dark:text-rose-400">
+                  &minus;{ledger.fines.toLocaleString()}
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">In the bank</dt>
+              <dd className="font-bold tabular-nums">{(state.coins ?? 0).toLocaleString()}</dd>
+            </div>
+          </dl>
+          {ledger.finedFor.length > 0 && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Fined for {ledger.finedFor.join(', ')}.
+            </p>
+          )}
+          {ledger.refundedVisits > 0 && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              A visit that ended early, or a day nobody enjoyed, is money handed back at the gate.
+            </p>
+          )}
+        </section>
+      )}
+
       {escaped.length > 0 && (
         <section data-part="escaped" className="rounded-lg border-2 border-rose-500/70 bg-rose-500/[0.09] px-3 py-2.5 text-sm">
           <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-rose-700 dark:text-rose-400')}>

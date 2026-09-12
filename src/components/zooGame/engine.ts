@@ -1,5 +1,5 @@
-import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
-import type { Signal } from './simulation/types';
+import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger } from './types';
+import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { riverY, BANK, spansTheWater } from './parkWater';
@@ -7,7 +7,7 @@ import { riverY, BANK, spansTheWater } from './parkWater';
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
 import { whereItStands, groundSize } from './parkModel';
-import { appealFromDesign, barrierOf, barrierVerdict, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
+import { appealFromDesign, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -2220,6 +2220,55 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
   });
 }
 
+// ============= The gate: what the visitors paid for =============
+//
+// Coins are the visitors' money. They are taken at the gate, given back when the day was not worth
+// paying for, and fined away when an animal is kept badly. Nothing else makes them, and in
+// particular POINTS NEVER BUY ANYTHING: a team that could spend its estimates would be a team whose
+// estimates were a currency, and estimating would stop being a forecast and become a budget the
+// moment anybody noticed. It is the one rule this whole mechanism exists to protect.
+//
+// The shape is deliberately "take it, then give it back", because that is what teaches. Nobody is
+// turned away at the gate of an empty zoo - they come, they pay, they walk round a field, and the
+// refund is the Sprint Review saying what an output that is not an outcome actually cost. A zoo
+// that delivered nothing anybody could use does not merely earn less; it hands the money back.
+
+/** What one visitor pays to come in. */
+export const ENTRY = 4;
+/** What a visit is worth when it was not worth anything: they saw nothing at all, or their day was
+ *  cut short. Both are the visitors' own words for it, and neither is a threshold somebody tuned -
+ *  happiness is a score out of a hundred that a good small zoo scores eight on, and refunding
+ *  everybody below a line would mean refunding everybody for the first several Sprints. */
+/** What keeping an animal badly costs when the inspector calls. */
+export const WELFARE_FINE = 200;
+
+/** The day's takings, what went back over the counter, and what the inspector took. */
+function tookAtTheGate(state: ZooGameState, result: SimulationResult,
+  escaped: { escapee: string; habitat: BacklogItem; zone: string }[]): Ledger {
+  const takings = Math.round(result.totalAttendance * ENTRY);
+
+  // A segment that saw nothing is refunded outright - `topExhibit` is null when there was not one
+  // thing in the zoo they could get to and look at. A segment that saw something is refunded for
+  // the visits that ended early, because those people did not get the day they paid for.
+  const refundedVisits = Math.round(result.segments.reduce((n: number, seg: SegmentResult) =>
+    n + seg.attendance * (seg.topExhibit === null ? 1 : seg.truncationRate), 0));
+  const refunds = refundedVisits * ENTRY;
+
+  // Kept badly: one that got out, and one with nowhere to move. Both are welfare, both are things
+  // the player chose, and both are already visible on the card - this is what they cost.
+  const finedFor: string[] = escaped.map((g) => `${g.escapee} got out of the ${g.habitat.name}`);
+  for (const a of state.backlog.filter((it) => it.category === 'exhibit' && it.status === 'open')) {
+    const home = state.backlog.find((e) => e.id === a.enclosureId);
+    if (!home || escaped.some((g) => g.habitat.id === home.id)) continue;
+    if (!hasRoomToRoam(currentDesign(a).group, homeSizeOf(a, state.backlog))) {
+      finedFor.push(`${a.name} has nowhere to move in the ${home.name}`);
+    }
+  }
+  const fines = finedFor.length * WELFARE_FINE;
+
+  return { takings, refunds, refundedVisits, fines, finedFor, net: takings - refunds - fines };
+}
+
 export function reviewSprint(state: ZooGameState): ZooGameState {
   // Nothing is owed to a Sprint that is over.
   state = { ...state, owedSeconds: 0 };
@@ -2282,6 +2331,8 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     ? goalItems.length > 0 && goalItems.every((it) => it.status === 'done' || it.status === 'open')
     : null;
 
+  const ledger = tookAtTheGate(state, result, escaped);
+
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
   const backlog = returnUnfinished(state);
@@ -2307,6 +2358,9 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     velocityDays: [...(state.velocityDays ?? []), state.sprintDays],
     attendance: result.nextAttendance,
     lastReview: result,
+    // A save taken before there were coins has none, and NaN in a till is worse than a zero.
+    coins: Math.max(0, (state.coins ?? 0) + ledger.net),
+    lastLedger: ledger,
     happiness: [...(state.happiness ?? []), result.overallHappiness],
     sprintGoalMet,
     signals,

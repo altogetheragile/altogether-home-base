@@ -355,6 +355,10 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     burndown: [],
     attendance: driftAttendance(DEFAULT_CONFIG, gameSeed),
     lastReview: null,
+    // Nothing in the bank. The first area is the one the zoo was given; everything after it is
+    // bought with money visitors paid, which is the whole point of having coins at all.
+    coins: 0,
+    lastLedger: null,
     signals: [],
     signalAge: {},
     improvements: [],

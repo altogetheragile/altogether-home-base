@@ -353,6 +353,22 @@ export interface GameQuestion {
  *  self-management) and the Developers (who build the Increment). Ten or fewer, no sub-teams. */
 export interface ScrumTeam { productOwner: ScrumTeamMember; scrumMaster: ScrumTeamMember; developers: ScrumTeamMember[] }
 
+/** The takings of one Sprint, and what came off them. */
+export interface Ledger {
+  /** Everyone who came through the gate, times the entry price. */
+  takings: number;
+  /** Given back to visitors whose day was not worth paying for. */
+  refunds: number;
+  /** How many visits were refunded. */
+  refundedVisits: number;
+  /** Fines for animals kept badly - one that got out, one with nowhere to move. */
+  fines: number;
+  /** Which animals were fined for, in the words the keeper would use. */
+  finedFor: string[];
+  /** takings - refunds - fines, which is what went into the bank. */
+  net: number;
+}
+
 export interface ZooGameState {
   phase: ZooPhase;
   /** The one Scrum Team - the accountabilities made visible (PO, Scrum Master, Developers). */
@@ -443,6 +459,16 @@ export interface ZooGameState {
   attendance: Record<SegmentId, number>;
   /** The most recent Sprint Review's simulation output. */
   lastReview: SimulationResult | null;
+  /** What the zoo has in the bank.
+   *
+   *  Coins are the visitors' money and nothing else: they come in at the gate, from people who came
+   *  because of work that was Done and that they could use. Points never buy anything - a team that
+   *  could spend story points on ground would be a team whose estimates were a currency, which is
+   *  the single worst thing a Scrum game could teach. */
+  coins: number;
+  /** What the last Review's gate took, gave back and was fined. Kept so the Review can show its
+   *  working: a number that changes with no account of why is a score, not a consequence. */
+  lastLedger: Ledger | null;
   /** Outstanding signals from the visitors (persist and worsen until addressed).
    *  The Product Owner decides whether to turn one into a Product Backlog item. */
   signals: Signal[];
