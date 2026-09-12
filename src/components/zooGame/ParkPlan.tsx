@@ -646,7 +646,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                     : y + b.size.h * (Math.floor(k / cols) + 1) / (Math.ceil(shown / cols) + 1);
                   return (
                     <circle key={`${a.id}-${i}-${k}`} data-animal={`${a.id}-${k}`} cx={gx} cy={gy} r={9}
-                      fill={a.design?.colors?.coat ?? '#c8761f'} stroke="#7a4712" strokeWidth={2}
+                      // The colour it is being GIVEN, not the colour it was last delivered in. This
+                      // read `a.design` while the Increment reads the draft as well, so the whole
+                      // time an animal was in hand the two views disagreed about what colour it was:
+                      // you chose Black, the Increment went black, and the plan stayed tawny.
+                      fill={currentDesign(a).colors?.coat ?? '#c8761f'} stroke="#7a4712" strokeWidth={2}
                       style={{ cursor: onSetMemberSpot ? 'grab' : 'default' }}
                       onPointerDown={onSetMemberSpot ? (e) => moveAnimal(e, a.id, k, { x, y, w: b.size.w, h: b.size.h }) : undefined} />
                   );
