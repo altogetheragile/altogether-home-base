@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { whatVisitorsCanReach } from './parkNetwork';
+import { whatGotOut } from './engine';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
@@ -69,6 +70,10 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   // Everything finished and open that a visitor could not walk up to. Asked of the park rather than
   // remembered from the simulation: it is the same park, and one of them would go stale.
   const { stranded } = whatVisitorsCanReach(state);
+  // ...and what got out, which shuts a zone for the day. Derived from the park rather than taken from
+  // the Review's own numbers: it is the same barrier the strip chose and the same criterion the park
+  // answered, and a second copy of that answer is a second thing to keep in step.
+  const escaped = whatGotOut(state);
   // A snapshot rather than a diff: the Review inspects the Increment as it stands, and "what a
   // visitor can walk into today" is the honest version of that.
   const openZones = slices.filter((z) => z.open).map((z) => z.zone);
@@ -285,6 +290,34 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
 
       {/* Slices, not layers. Points delivered says how much was built; zones open says how much of it
           anybody can visit, and the gap between the two is the lesson. The card explains it. */}
+      {/* What got out.
+
+          The consequence the whole barrier decision exists for, and the one the note builds Sprint 1
+          around: do not open without something that holds them. It is said in the keeper's words
+          rather than as a number, because "happiness fell 14" is a result and "the lion was in the
+          car park" is a lesson. */}
+      {escaped.length > 0 && (
+        <section data-part="escaped" className="rounded-lg border-2 border-rose-500/70 bg-rose-500/[0.09] px-3 py-2.5 text-sm">
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-rose-700 dark:text-rose-400')}>
+            The keeper&rsquo;s report
+          </div>
+          {escaped.map((g) => (
+            <p key={g.habitat.id} className="mb-1">
+              <strong>{g.escapee}</strong> got out of the {g.habitat.name}.{' '}
+              The <strong>{g.zone}</strong> shut for the day and everybody was walked back to the gate -
+              so nothing in there was seen by anybody, including what was finished and fine.
+            </p>
+          ))}
+          <p className="mb-1 italic text-muted-foreground">
+            &ldquo;We were told to leave. Nobody said why until we were outside.&rdquo;
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            The park said so while it was being built - it names the animal that would be over it the
+            moment the barrier is chosen. Opening it anyway is the decision the Review is inspecting.
+          </p>
+        </section>
+      )}
+
       {/* The one thing a Sprint Review can prove that no rule can tell you: the work is finished, it
           is open, and nobody could get to it.
           

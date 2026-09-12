@@ -8,6 +8,46 @@ disagree, this one is what was built.
 
 ---
 
+## The spine
+
+**Every mechanic should shorten the distance between a belief and its test.**
+
+The game teaches empiricism, so the thing it is really about is finding out how wrong you are as soon
+as possible - and the cost of being wrong growing with how long you took to find out. That is not a
+feature; it is what the features are for, and it is the test to apply to any new one.
+
+The game already has both ends of the spectrum. What is missing is the middle.
+
+| when you find out | what it costs | where it is |
+|---|---|---|
+| The park answers as you choose | nothing - "a low hedge, Lion would be over it" | built |
+| You ask a Developer or Priya mid-build | minutes of the day | partly - "Ask Priya to check" |
+| You show it to visitors mid-Sprint | a slice of the day, and some rework | **missing** |
+| The Sprint Review tells you | the Sprint | built |
+| Nobody tells you | next Sprint's attendance | built |
+
+Three rules follow, and they decide the shape of anything added here:
+
+1. **Inspection needs transparency, or it misleads.** Every answer shows its working, the way the
+   park already does - "the park says: 8 x 5, room for the lion". An inspection that only says "they
+   did not like it" leaves nothing to adapt with.
+2. **Inspection without adaptation is pointless.** If nothing can be changed at the moment of
+   finding out, do not offer the inspection. Change it while it is in your hands, hand it back,
+   reorder what is next, or carry on regardless - and the log records which.
+3. **A belief has to be stated before it is tested.** The Sprint bet already does this at Sprint
+   scale: what the team predicted the work would do, and what the visitors actually did. The
+   mid-Sprint version is the same shape at item scale, so it is one idea to learn rather than two -
+   and the gap between the prediction and the answer IS the information.
+
+What this changes about the mid-Sprint inspection: it is not a meeting with attendees, and there are
+not four kinds of review. It is one act - **predict, then find out** - and who you show it to is a
+question of *who can know what*. A Developer cannot tell you whether the families will care; the
+families cannot tell you whether the fence will hold. The prediction belongs only on the visitor
+inspections, because Priya's answer and a Developer's are facts rather than preferences, and asking
+somebody to predict a fact is a chore.
+
+---
+
 ## Changed since the note
 
 Four decisions that replace what the note says:
@@ -63,6 +103,16 @@ Four decisions that replace what the note says:
 - **The header clock draws nothing when nothing is being counted.** (#574)
 
 ### Consequences that bite
+- **What holds an animal in is a decision that can be wrong two ways.** Too little and the criterion
+  fails in the words of the animal that would be over it; too much and the visitors cannot see what
+  they came for. The default is the lightest barrier that will hold what lives there, so an escape is
+  somebody's choice rather than a default's. (#586)
+- **An escape shuts the zone.** Open a habitat that does not hold what lives in it and the animal
+  gets out: everybody is walked back to the gate, so nothing in that zone is seen by anybody -
+  including what was finished and fine. The keeper's report names the animal and the zone, and it
+  goes into the decision log in the team's own words so the Retrospective can inspect it. Two honest
+  routes to it: move an animal into a pen built for something smaller, or downgrade what holds them
+  after it is open. (#587)
 - **The Sprint Review pays for reach, not for what was built.** Work a visitor cannot walk to earns
   nothing; a zone is not open unless somebody can get there; the Review names what was out of reach
   and which Product Backlog item would fix it. This is what the river and the Bridge exist for: the
@@ -90,10 +140,7 @@ Four decisions that replace what the note says:
 
 In the order I would build them.
 
-### 1. The other two consequences
-- **No fence.** Open a habitat that is not securely bordered and the animal gets out: the zone shuts
-  for a day, visitors leave, the keeper files a report. This is the failure Sprint 1 is designed
-  around, and it needs a "shut for a day" state the game does not have yet.
+### 1. The rest of the bridge
 - **The bridge snaps to the water.** A bridge can only be dropped on the river, and its "crosses the
   water" criterion goes green the moment it snaps - so a bridge can never be in the wrong place,
   only unbuilt.
