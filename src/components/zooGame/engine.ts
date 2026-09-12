@@ -2,10 +2,11 @@ import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, Ba
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
-import { riverY, BANK } from './parkWater';
+import { riverY, BANK, spansTheWater } from './parkWater';
 // Re-exported below as well; a re-export is not a local binding, and this module asks the question
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
+import { whereItStands, groundSize } from './parkModel';
 import { appealFromDesign, barrierOf, barrierVerdict, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
@@ -954,8 +955,14 @@ export const PLACEMENT_CHOICES: { key: string; label: string; of: (box: { w: num
 
 /** Whether anything on the park gets a visitor over the river. */
 const crossesTheWater = (state: ZooGameState): boolean =>
-  state.backlog.some((it) => standsHere(it)
-    && (currentDesign(it).parts.type ?? it.template) === 'bridge');
+  state.backlog.some((it) => {
+    if (!standsHere(it) || (currentDesign(it).parts.type ?? it.template) !== 'bridge') return false;
+    // Built AND across it. One definition of "something crosses the water", shared with the bridge's
+    // own acceptance criterion and with the routing: a bridge that exists but lies beside the river
+    // must not quietly make the far bank somewhere the game will put your work.
+    const at = whereItStands(state, it);
+    return !!at && spansTheWater(groundSize(it), at);
+  });
 
 /** The river's lowest point, so a thing kept clear of it is clear of it all the way across. */
 const deepestRiver = (): number =>

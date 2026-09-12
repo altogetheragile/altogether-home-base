@@ -1,7 +1,8 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
 import { settleStatus, isSignOffTask, commitWhenBuilt } from './engine';
-import { whereItStands } from './parkModel';
+import { whereItStands, groundSize } from './parkModel';
+import { spansTheWater, inWater } from './parkWater';
 import { areasOnAPath, pathTo, whatVisitorsCanReach } from './parkNetwork';
 
 // ============= The criteria the park can answer for itself =============
@@ -119,6 +120,7 @@ const PARK_ANSWERS = [
   'Can I get to this zone without crossing the grass?',
   'Does it join every area to the way in?',
   'Can I walk to it from the way in?',
+  'Can I cross the water on it?',
 ];
 
 /** Criteria that have been reworded, and the words they were written in.
@@ -280,6 +282,22 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
     return { met: false, evidence: wet?.why === 'water'
       ? 'the water is in the way, and nothing crosses it - the Bridge would'
       : 'nothing reaches it yet - draw a path to it from the way in' };
+  }
+
+  // A bridge is the one piece of work whose whole job is a fact about the park, so the park says
+  // whether it has been done: does it lie across the water, bank to bank, all the way along itself.
+  // It cannot be ticked by hand, and it does not need to be - a bridge snaps to the river when it is
+  // put down, so this goes green as it lands. What it leaves worth arguing about is WHERE: a bridge
+  // is the only item in the game with no visitors of its own, and that is what makes it hard to
+  // order above the penguins.
+  if (label === 'Can I cross the water on it?') {
+    const at = whereItStands(state, item);
+    if (!at) return { met: false, evidence: 'not on the park yet' };
+    const size = groundSize(item);
+    if (spansTheWater(size, at)) return { met: true, evidence: 'bank to bank' };
+    return { met: false, evidence: inWater(size, at)
+      ? 'it reaches the water and stops - it has to cross it'
+      : 'it is not over the water' };
   }
 
   return null; // judgement: yours to make

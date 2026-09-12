@@ -3,7 +3,7 @@ import { standsOnPark } from './onThePark';
 import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
 import { autoLayout, insidePark, CANVAS_W, PAD, PROMENADE_Y } from './parkLayout';
 import { zonePlots, type Plot } from './parkZones';
-import { riverY, BANK } from './parkWater';
+import { riverY, BANK, acrossTheWater } from './parkWater';
 
 // ============= One park, described once =============
 //
@@ -247,6 +247,11 @@ export function restingPlace(item: BacklogItem, size: { w: number; h: number },
   const base = item.pos ?? auto.get(item.id) ?? { x: PAD, y: PAD };
   // A river starts life running across the middle; from there it can be dragged and turned.
   const at = parkType(item) === 'river' && !item.pos ? { x: CANVAS_W / 2, y: base.y } : base;
+  // A bridge lies across the water, always - dragged there by a player or laid there by the
+  // Developers. It is the one thing in the zoo whose position is not a matter of taste in one axis:
+  // a bridge beside the river is not a bridge. Which part of the river it crosses is still a real
+  // decision, and that is the axis it keeps.
+  if (parkType(item) === 'bridge') return insidePark(size, acrossTheWater(size, at));
   // Read through the park's bounds, so a position saved when the park was a different size cannot
   // leave a delivered thing drawn somewhere nobody can look.
   return insidePark(size, at);

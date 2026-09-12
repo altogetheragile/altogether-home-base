@@ -75,6 +75,9 @@ describe('where the park puts things', () => {
     // acceptance criteria, that meant work nobody could finish and nothing saying why. So everything
     // visitors walk up to fills the near bank first, and terrain - the river itself - does not: it
     // is what decides which bank is which.
+    //
+    // And a fourth time, for the bridge: it lies ACROSS the water now, wherever the layout put it
+    // along the park, because a bridge beside the river is not a bridge.
     expect(layout(busyPark())).toMatchSnapshot();
   });
 });
