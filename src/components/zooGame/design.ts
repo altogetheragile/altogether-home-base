@@ -1359,6 +1359,83 @@ export const ENCLOSURE_SIZE: Record<'small' | 'medium' | 'large', { w: number; h
   large: { w: 172, h: 114 },
 };
 
+// ============= What holds an animal in =============
+//
+// The one decision in this game that can be wrong in two directions, which is what makes it worth
+// making. Too little and the animal is out: the zone shuts, the visitors leave, and it is the
+// Developers' own choice that did it rather than a box they forgot to tick. Too much and you have
+// walled off the thing people came to see - contained, safe, and a disappointing day out.
+//
+// Two numbers, not a table of species against barriers. A barrier HOLDS so much and shows so much;
+// an animal needs holding so much. Everything else follows from comparing them, which means a new
+// species needs one number rather than a row.
+//
+// Before this, "is it bordered safely, with no way out of it?" was answered `met: true` always - "a
+// habitat is fenced by construction". So the criterion could not fail, there was nothing to get
+// wrong, and Sprint 1 had no mistake to reflect on. That is what this is for.
+
+export interface Barrier {
+  key: string;
+  label: string;
+  /** How much animal it keeps in. */
+  holds: number;
+  /** How much of the animal the visitors get, 0 to 1. */
+  seeThrough: number;
+  /** What the park says about it when it is asked. */
+  note: string;
+}
+
+export const BARRIERS: Barrier[] = [
+  { key: 'hedge', label: 'Low hedge', holds: 1, seeThrough: 0.75, note: 'a low hedge' },
+  { key: 'fence', label: 'Fence', holds: 2, seeThrough: 0.9, note: 'a 2m fence' },
+  { key: 'high', label: 'High fence', holds: 3, seeThrough: 0.75, note: 'a 4m fence' },
+  { key: 'wall', label: 'Wall', holds: 3, seeThrough: 0.25, note: 'a 3m wall' },
+  { key: 'glass', label: 'Glass', holds: 3, seeThrough: 1, note: 'glass' },
+];
+
+/** How much holding a species takes.
+ *
+ *  Three for anything that climbs or is strong enough not to care; two for the big hoofed animals,
+ *  which are not going over a fence; one for the small and the flightless. A species nobody has
+ *  listed takes an ordinary fence, which is the safe default to be wrong in the cheap direction. */
+export const CONTAINMENT: Record<string, number> = {
+  lion: 3, tiger: 3, leopard: 3, cheetah: 3, bear: 3, monkey: 3, gorilla: 3,
+  elephant: 2, giraffe: 2, zebra: 2, rhino: 2, camel: 2, bison: 2,
+  penguins: 1, seal: 1, otter: 1, flamingo: 1, meerkat: 1, tortoise: 1, emu: 1, kangaroo: 2,
+};
+
+export const needsHolding = (species?: string): number =>
+  CONTAINMENT[(species ?? '').toLowerCase()] ?? 2;
+
+/** What is holding this habitat in.
+ *
+ *  Chosen, or else the lightest thing that will hold what lives here - so the Developers are taken to
+ *  have built something adequate rather than something negligent. That matters for what the choice
+ *  MEANS: an escape should be a decision somebody made, not a default nobody saw. Choosing worse than
+ *  the animals need is the mistake this exists to allow; choosing a wall is the other one. */
+export const barrierOf = (design: ItemDesign, living: { template?: string; id?: string }[] = []): Barrier => {
+  const chosen = BARRIERS.find((b) => b.key === design.parts.barrier);
+  if (chosen) return chosen;
+  const needs = living.reduce((n, a) => Math.max(n, needsHolding(a.template ?? a.id)), 0);
+  return BARRIERS.find((b) => b.key !== 'wall' && b.key !== 'glass' && b.holds >= needs) ?? BARRIERS[1];
+};
+
+/** Whether what is round this habitat will hold what lives in it - and if not, which animal walks.
+ *
+ *  Asked of the animals the Product Backlog says live here, so it changes when they do: a pen that
+ *  held the penguins does not hold the leopard somebody moved into it. */
+export function barrierVerdict(design: ItemDesign, living: { template?: string; id?: string; name?: string }[]):
+{ barrier: Barrier; needs: number; ok: boolean; escapee?: string } {
+  const barrier = barrierOf(design, living);
+  let needs = 0;
+  let escapee: string | undefined;
+  for (const a of living) {
+    const n = needsHolding(a.template ?? a.id);
+    if (n > needs) { needs = n; if (n > barrier.holds) escapee = a.name ?? a.template ?? a.id; }
+  }
+  return { barrier, needs, ok: needs <= barrier.holds, escapee };
+}
+
 export const ENCLOSURE_SHAPES = [
   { key: 'rounded', label: 'Rounded' },
   { key: 'pill', label: 'Pill' },

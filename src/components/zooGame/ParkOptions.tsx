@@ -4,7 +4,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
-  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices,
+  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, barrierOf,
   type ItemDesign,
 } from './design';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -210,6 +210,23 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               </>
             );
           })()}
+          {/* What holds them in - the one choice in the game that can be wrong in two directions.
+              A hedge shows a lion beautifully and does not hold it; a wall holds it and hides it.
+              What each one holds, and what the animals in here need, is in `barrierVerdict`, and the
+              acceptance criterion says so in the words of the animal that would get out. */}
+          <Group label="Holds them">
+            {BARRIERS.map((b) => {
+              const on = barrierOf(design).key === b.key;
+              return (
+                <button key={b.key} type="button" data-part={`barrier-${b.key}`} aria-pressed={on}
+                  title={b.note} onClick={() => set({ parts: { ...design.parts, barrier: b.key } })}
+                  className={cn(FOCUS, 'rounded-md border-2 px-2 py-1 text-[11px] font-medium',
+                    on ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
+                  {b.label}
+                </button>
+              );
+            })}
+          </Group>
           <Group label="Fence">
             {FENCE_COLOURS.map((c) => (
               <Swatch key={c} hex={c} label="Fence" on={design.colors?.fence === c}

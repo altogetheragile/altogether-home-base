@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank } from './design';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
 import { settleStatus, isSignOffTask, commitWhenBuilt } from './engine';
 import { whereItStands } from './parkModel';
 
@@ -148,13 +148,21 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
   // The park answers them, with its working shown, and the learner gets on with the fourth.
 
   if (label === 'Is it bordered safely, with no way out of it?') {
-    // A habitat is fenced by construction, so this is a fact the park states rather than a hurdle:
-    // what it earns is the shape being named, which is the thing the learner chose.
+    // A real question now, and the only one in the game that can be answered wrongly on purpose.
+    //
+    // It used to say `met: true` always - "a habitat is fenced by construction" - so there was
+    // nothing to get wrong and Sprint 1 had no mistake in it to reflect on. What is round the
+    // habitat is a choice, and whether it holds what lives inside is a fact about that choice.
+    const living = state.backlog.filter((it) => it.enclosureId === item.id);
+    // A tank is glass by construction: the water is what needs holding, and it is.
+    if (isTank(design, living, item)) return { met: true, evidence: 'Glass' };
     const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
-    // ...and a tank says glass, because that is what is holding the animals in. The question still
-    // says "fence", which is the word for the general case; the evidence is what this one has.
-    const held = isTank(design, state.backlog.filter((it) => it.enclosureId === item.id), item) ? 'Glass' : 'Closed';
-    return { met: true, evidence: `${held}${shape ? `, ${shape.label.toLowerCase()}` : ''}` };
+    const v = barrierVerdict(design, living);
+    const where = shape ? `, ${shape.label.toLowerCase()}` : '';
+    // Said in the words of the thing that would get out, because "needs 3" is not a reason anybody
+    // can act on and "a leopard climbs a 2m fence" is.
+    if (!v.ok) return { met: false, evidence: `${v.barrier.note} - ${v.escapee} would be over it` };
+    return { met: true, evidence: `${v.barrier.note}${living.length ? ', holds them' : ''}${where}` };
   }
 
   if (label === 'Can an animal move about in here?') {

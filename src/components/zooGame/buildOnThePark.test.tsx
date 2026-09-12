@@ -60,11 +60,14 @@ describe('what the park can already answer about a habitat', () => {
     return { s: { ...s, backlog: s.backlog.map((it) => (it.id === h.id ? item : it)) } as ZooGameState, item };
   };
 
-  it('states the fence rather than asking anybody to certify it', () => {
+  it('says what is holding them in, and whether it will', () => {
+    // It used to answer `met: true` always - "a habitat is fenced by construction" - so the one
+    // criterion about safety could not fail and Sprint 1 had no mistake in it to reflect on. What is
+    // round a habitat is a choice now, and this says whether that choice holds what lives inside.
     const { s, item } = habitat();
     const v = checkCriterion(s, item, 'Can I see a fence with no way out of it?')!;
-    expect(v.met).toBe(true);
-    expect(v.evidence, 'the evidence does not say what was built').toMatch(/Closed/);
+    expect(v.met, 'the habitat was built adequate and still failed').toBe(true);
+    expect(v.evidence, 'the evidence does not say what is holding them').toMatch(/fence|wall|hedge|Glass/i);
   });
 
   it('says a home is not a home until it has ground, shelter and water', () => {

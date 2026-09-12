@@ -2,7 +2,7 @@ import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, Ba
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
-import { appealFromDesign, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
+import { appealFromDesign, barrierOf, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -2170,7 +2170,28 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   // it. The Review is where that has to bite, or the Product Owner never has a reason to order it
   // above the penguins.
   const { reached } = whatVisitorsCanReach(state);
-  const openItems = reached.filter((it) => it.category !== 'enclosure').map(toZooItem);
+  // ...and seen through whatever is holding them in. A wall holds a lion and hides it: contained,
+  // safe, and a disappointing day out. This is the other direction the fence can be wrong in, and it
+  // is only wrong at the Review - where the visitors say so - because nothing about a wall is unsafe.
+  //
+  // Applied here because the barrier belongs to the HABITAT and the appeal to the animal: two
+  // Product Backlog items, one visit, and the only place they meet is the day people come.
+  const seenThrough = (it: BacklogItem): number => {
+    if (it.category !== 'exhibit' || !it.enclosureId) return 1;
+    const home = state.backlog.find((e) => e.id === it.enclosureId);
+    if (!home) return 1;
+    // Against the plain fence, which is what "an ordinary habitat" looks like.
+    return barrierOf(currentDesign(home), [it]).seeThrough / 0.9;
+  };
+  const openItems = reached.filter((it) => it.category !== 'enclosure').map((it) => {
+    const z = toZooItem(it);
+    const k = seenThrough(it);
+    return k === 1 || !z.appeal ? z : { ...z, appeal: {
+      families: z.appeal.families * k,
+      enthusiasts: z.appeal.enthusiasts * k,
+      comfortSeekers: z.appeal.comfortSeekers * k,
+    } };
+  });
   // Visitor happiness comes from what the game actually models - the design quality of what
   // you delivered - not from the wording of the Definition of Done. The DoD's job is to be the
   // team's completion gate (the workflow every item follows to be Done), not a happiness dial.
