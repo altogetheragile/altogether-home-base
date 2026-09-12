@@ -1372,6 +1372,64 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     ));
   };
 
+  /** The way in, built rather than painted on.
+   *
+   *  Reported from playing it: "the entrance structure is not right." It was not a structure at all -
+   *  it fell through to the flat coloured diamond every other piece of landscape gets, which is right
+   *  for a pond and says nothing here. An entrance is the first thing a visitor meets and the thing
+   *  the car park points at, and a green patch of grass with a label on it is neither.
+   *
+   *  What reads as a way in from the corner of a park: a paved forecourt, two piers with a gap
+   *  between them you can see through, and a banner across the top on the side people arrive from.
+   *  The gap runs the way people walk - up from the car park into the park - so the drawing says
+   *  which way to go without a word on it.
+   */
+  const gateway = (id: string, x0: number, y0: number, x1: number, y1: number, banner: string, post: string) => {
+    const w = x1 - x0, h = y1 - y0;
+    const pier = Math.max(8, w * 0.22);          // how wide each side of the gate is
+    const depthOf = Math.max(8, h * 0.34);        // how deep the piers are
+    const my0 = y0 + (h - depthOf) / 2, my1 = my0 + depthOf;
+    const pierH = Math.max(10, u * 26);
+    const beamH = Math.max(5, u * 11);
+    // Paving, not a lighter shade of the posts: lightened brown is a patch of mud, and the forecourt
+    // is the one part of this that says "you are expected here".
+    const stone = '#cfc9bd';
+    const lift = (s: string, by: number) => s.split(' ')
+      .map((q) => { const [px, py] = q.split(',').map(Number); return `${px},${(py - by).toFixed(1)}`; }).join(' ');
+    const face = (f: { left: string; right: string; top: string }, fill: string, by = 0) => (
+      <>
+        <polygon points={shift(lift(f.left, by))} fill={shade(fill, -32)} />
+        <polygon points={shift(lift(f.right, by))} fill={shade(fill, -16)} />
+        <polygon points={shift(lift(f.top, by))} fill={fill} />
+      </>
+    );
+    const left = boxFaces(x0, my0, x0 + pier, my1, pierH, u);
+    const right = boxFaces(x1 - pier, my0, x1, my1, pierH, u);
+    // The banner spans pier to pier, standing on top of them.
+    const beam = boxFaces(x0 + pier * 0.35, my0 + depthOf * 0.22, x1 - pier * 0.35, my0 + depthOf * 0.62, beamH, u);
+    // `P` already lays the margin in, so these are drawn straight - adding it again puts the
+    // forecourt in the next field along, which is exactly what it did.
+    const court = drawPoly([{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }]);
+    // Lettering, as blocks: at this size a word is a smudge, and three even marks on a banner is
+    // what a sign looks like from across a car park.
+    const marks = Array.from({ length: 3 }, (_, i) => {
+      const t = 0.3 + i * 0.2;
+      const mx = x0 + pier * 0.4 + (x1 - x0 - pier * 0.8) * t;
+      const a = P(mx, my0 + depthOf * 0.25), b = P(mx, my0 + depthOf * 0.6);
+      return <line key={`m${i}`} x1={a.x} y1={a.y - pierH - beamH * 0.5} x2={b.x} y2={b.y - pierH - beamH * 0.5}
+        stroke={shade(banner, -34)} strokeWidth={Math.max(0.8, u * 1.4)} strokeLinecap="round" />;
+    });
+    push(depth((x0 + x1) / 2, (y0 + y1) / 2), (
+      <g key={`gate-${id}`} data-part="gateway" data-item={id}>
+        <polygon points={court} fill={stone} opacity={0.95} />
+        {face(left, post)}
+        {face(right, post)}
+        {face(beam, banner, pierH)}
+        {marks}
+      </g>
+    ));
+  };
+
   // ---- facilities --------------------------------------------------------------------------
   //
   // Drawn, not photographed. These were tiles out of a city set - four flat-roofed boxes - and a
@@ -1618,6 +1676,13 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // river, looked at the Increment, and it was still lying flat across the park. The seventh
         // time these two drawings have disagreed about the same piece of state.
         const spin = it.rot ?? 0;
+        if (type === 'entrance') {
+          gateway(it.id, x0, y0, x1, y1, primary, secondary);
+          // People walk THROUGH it, from the car park into the park, so the routing has a door here
+          // rather than a wall: the drawing and the walking agree about where the way in is.
+          walks.push([{ x: (x0 + x1) / 2, y: y1 + 10 }, { x: (x0 + x1) / 2, y: y0 - 10 }]);
+          continue;
+        }
         if (type === 'bridge') {
           bridge(it.id, x0, y0, x1, y1, primary, secondary);
           // A bridge is the one door through the water, and it is walked across bank to bank.
