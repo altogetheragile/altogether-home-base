@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
-import { shade, speciesBody, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
+import { shade, barrierOf, speciesBody, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
 import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { zonePlots } from './parkZones';
@@ -1147,7 +1147,14 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     // posts, a top rail and mesh between them, tall enough to read as an enclosure from across the
     // park. Every side is its own piece, sorted with everything else, so the near ones stand in
     // front of what is inside.
-    const fenceH = Math.max(6, u * 22);
+    // ...and how tall, and how much you see through it, is the choice somebody made about what holds
+    // the animals in. A hedge is low and solid green; a wall is high and you see nothing; a high
+    // fence is tall and still mesh. A choice the park does not draw is a choice nobody can check.
+    const held = barrierOf(d, living);
+    const tall = (({ hedge: 0.45, fence: 1, high: 1.7, wall: 1.35, glass: 1 } as Record<string, number>)[held.key]) ?? 1;
+    const fenceH = Math.max(6, u * 22) * tall;
+    const solid = held.key === 'wall' || held.key === 'hedge';
+    const barrierPaint = held.key === 'hedge' ? '#4e7a3c' : fence;
     const lift = (q: Pt, k: number): Pt => ({ x: q.x, y: q.y - k });
     outline.forEach((from, i) => {
       const to = outline[(i + 1) % outline.length];
@@ -1165,20 +1172,23 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         mesh.push(<line key={`m${k}`} x1={g.x} y1={g.y} x2={g.x} y2={g.y - fenceH} stroke={fence} strokeWidth={wire} opacity={0.5} />);
       }
       push(depth((from.x + to.x) / 2, (from.y + to.y) / 2), (
-        <g key={`fence-${e.id}-${i}`} data-item={e.id} data-part="fence">
+        <g key={`fence-${e.id}-${i}`} data-item={e.id} data-part="fence" data-holds={held.key}>
           {/* What you see through - a wash, not a wall. A tank's is glass: one pane, no mesh, with
               the water behind it and a bright edge where the light catches the top. */}
           <polygon points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
-            fill={tank ? tankWater(d) : fence} fillOpacity={tank ? 0.5 : 0.14} />
-          {tank
+            fill={tank ? tankWater(d) : barrierPaint}
+            fillOpacity={tank ? 0.5 : solid ? 0.92 : held.key === 'glass' ? 0.22 : 0.14} />
+          {tank || held.key === 'glass'
             ? <polygon points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
                 fill="#eaf6fb" fillOpacity={0.16} />
-            : mesh}
+            : solid ? null : mesh}
           {/* Posts at the corners of every run, and a rail along the top and the middle. */}
           <line x1={a.x} y1={a.y} x2={topA.x} y2={topA.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1.2, u * 1.8)} strokeLinecap="round" />
           <line x1={b.x} y1={b.y} x2={topB.x} y2={topB.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1.2, u * 1.8)} strokeLinecap="round" />
           <line x1={topA.x} y1={topA.y} x2={topB.x} y2={topB.y} stroke={shade(fence, -20)} strokeWidth={Math.max(1, u * 1.4)} strokeLinecap="round" />
-          <line x1={a.x} y1={a.y - fenceH * 0.55} x2={b.x} y2={b.y - fenceH * 0.55} stroke={fence} strokeWidth={wire} opacity={0.6} />
+          {!solid && held.key !== 'glass' && (
+            <line x1={a.x} y1={a.y - fenceH * 0.55} x2={b.x} y2={b.y - fenceH * 0.55} stroke={fence} strokeWidth={wire} opacity={0.6} />
+          )}
         </g>
       ));
     });
