@@ -167,8 +167,13 @@ const slug = (zone: string) => ZONE_ID[zone] ?? zone.toLowerCase().replace(/[^a-
  *  area: you lay the Big Cats paths when you open Big Cats, not in some park-wide tidy-up later.
  *  That is what makes an area a slice you can actually deliver. */
 function sceneryFor(zone: string): EpicMember[] {
+  // No "<zone> Paths" any more. A path that serves one habitat is part of making that habitat
+  // usable, so it is one of the habitat's own acceptance criteria - "can I walk to it from the way
+  // in?" - rather than a second item somebody has to finish before the first is worth anything.
+  // That was a layer wearing a slice's clothes, in a game whose central lesson is the difference.
+  //
+  // What stays an item is infrastructure that serves MANY: the main pathways, and the bridge.
   return [
-    { id: `${slug(zone)}-paths`, name: `${zone} Paths`, kind: 'path', size: 3 },
     { id: `${slug(zone)}-planting`, name: `${zone} Planting`, kind: 'flora', flora: 'tree', size: 2 },
   ];
 }
@@ -190,7 +195,6 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
     const flag = FLAGSHIP[first.zone] ?? FLAGSHIP['Big Cats'];
     items.push(enc(`${flag.id}-enc`, `${flag.name} Enclosure`, first.zone, 5, flag.footprint));
     items.push(ex(flag.id, flag.name, first.zone, flag.size, flag.appeal, `${flag.id}-enc`));
-    items.push(pth(`${slug(first.zone)}-paths`, `${first.zone} Paths`, first.zone, 3));
     items.push(flr(`${slug(first.zone)}-planting`, `${first.zone} Planting`, first.zone, 'tree', 2));
     // What is left of the opening area is still an epic - opening it is not finishing it.
     const rest = first.members.filter((mem) => mem.id !== flag.id);

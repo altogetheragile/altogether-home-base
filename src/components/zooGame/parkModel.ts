@@ -1,8 +1,9 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './onThePark';
 import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
-import { autoLayout, insidePark, CANVAS_W, PAD } from './parkLayout';
+import { autoLayout, insidePark, CANVAS_W, PAD, PROMENADE_Y } from './parkLayout';
 import { zonePlots, type Plot } from './parkZones';
+import { riverY, BANK } from './parkWater';
 
 // ============= One park, described once =============
 //
@@ -170,7 +171,21 @@ export function parkPositions(standing: Standing[], plots: Map<string, Plot>): M
   const box = (s: Standing) => ({ id: s.item.id, w: s.size.w, h: s.size.h });
   const fixed = standing.filter((s) => s.item.pos).map((s) => ({ ...box(s), ...insidePark(s.size, s.item.pos!) }));
   const loose = standing.filter((s) => !s.item.pos);
-  if (!plots.size) return autoLayout(loose.map(box), fixed);
+  if (!plots.size) {
+    // Terrain first, and anywhere: a river is not a thing visitors walk up to, it is what decides
+    // which side of the park they are on, and holding it to the near bank ran it along the front of
+    // the park instead of across the middle.
+    const out = new Map<string, { x: number; y: number }>();
+    const busy = [...fixed];
+    const terrain = loose.filter((s) => isLandscapeType(parkType(s.item) ?? ''));
+    for (const [id, at] of autoLayout(terrain.map(box), busy)) {
+      out.set(id, at);
+      const s = terrain.find((t) => t.item.id === id);
+      if (s) busy.push({ ...box(s), ...at });
+    }
+    for (const [id, at] of nearBankFirst(loose.filter((s) => !out.has(s.item.id)).map(box), busy)) out.set(id, at);
+    return out;
+  }
 
   // Each area fills its own ground; the fabric between the areas - paths, water, signposts, the
   // toilets - belongs to no area and fills what is left. Laid out area by area rather than all at
@@ -188,9 +203,42 @@ export function parkPositions(standing: Standing[], plots: Map<string, Plot>): M
       busy.push({ ...box(s), ...at });
     }
   }
-  const rest = loose.filter((s) => !out.has(s.item.id));
-  for (const [id, at] of autoLayout(rest.map(box), busy)) out.set(id, at);
+  // Whatever did not fit its own area's ground. It used to be laid down anywhere in the park that
+  // was free, and anywhere includes the far bank of the river: a Big Cats habitat stood across the
+  // water with nothing to cross it, so no path could be laid to it and the item could not be
+  // finished. Being crowded out of your area is a real thing to see and argue about; being put down
+  // where nobody can walk to you is not, so the overflow goes on the visitors' side of the water
+  // first, and only takes what is left over if there is no room there either.
+  const rest = loose.filter((s) => !out.has(s.item.id) && !isLandscapeType(parkType(s.item) ?? ''));
+  for (const [id, at] of nearBankFirst(rest.map(box), busy)) out.set(id, at);
+  const terrain = loose.filter((s) => !out.has(s.item.id));
+  for (const [id, at] of autoLayout(terrain.map(box), busy)) out.set(id, at);
   return out;
+}
+
+/** Lay these out on the visitors' side of the river if they will go there, and in whatever is left
+ *  if they will not. Whatever ends up on the far bank needs a bridge before anybody can walk to it,
+ *  which is a fair thing to have to notice - being put there by a layout nobody asked for is not. */
+function nearBankFirst(boxes: { id: string; w: number; h: number }[],
+  busy: { id: string; w: number; h: number; x: number; y: number }[]): Map<string, { x: number; y: number }> {
+  const out = new Map<string, { x: number; y: number }>();
+  const taken = [...busy];
+  for (const [id, at] of autoLayout(boxes, taken, nearBank())) {
+    out.set(id, at);
+    const b = boxes.find((x) => x.id === id);
+    if (b) taken.push({ ...b, ...at });
+  }
+  for (const [id, at] of autoLayout(boxes.filter((b) => !out.has(b.id)), taken)) out.set(id, at);
+  return out;
+}
+
+/** The band between the river and the promenade: park a visitor can reach on foot without a bridge,
+ *  whatever the river is doing at that x. Taken from the river's lowest point so the band is clear
+ *  of the water the whole way across rather than only where it happens to be shallow. */
+function nearBank(): { x0: number; y0: number; x1: number; y1: number } {
+  const span = CANVAS_W - 2 * PAD;
+  const deepest = Math.max(...Array.from({ length: 24 }, (_, i) => riverY(PAD + (i * span) / 23)));
+  return { x0: PAD, y0: deepest + BANK + 24, x1: CANVAS_W - PAD, y1: PROMENADE_Y - 12 };
 }
 
 /** Where one thing stands, given how much ground it takes. */

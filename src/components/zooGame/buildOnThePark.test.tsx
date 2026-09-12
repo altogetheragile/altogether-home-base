@@ -6,6 +6,8 @@ import { ParkPlan } from './ParkPlan';
 import { checkCriterion, checkedAt } from './parkChecks';
 import { initialZooState } from './config';
 import { presetFor, addWaterTo, addFloraTo, HABITAT_FEATURE_TYPES } from './design';
+import { whereItStands } from './parkModel';
+import { FRONT_Y } from './parkLayout';
 import type { ItemDesign } from './design';
 import type { ZooGameState, BacklogItem } from './types';
 
@@ -101,10 +103,22 @@ describe('the inspector on the park', () => {
     const s = game();
     const h = itemOf(s, 'enclosure');
     const p = presetFor(h);
-    const built = { ...h, design: { ...p, colors: { ...p.colors, ground: '#c8a06a' },
-      flora: addFloraTo({ ...p, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...p, water: [] }) },
-      pos: { x: 300, y: 300 } } as BacklogItem;
-    const standing = { ...s, backlog: s.backlog.map((it) => (it.id === h.id ? built : it)) } as ZooGameState;
+    // In hand, so it is standing on the park while it is built: the park cannot answer where
+    // something is until it is somewhere.
+    const built = { ...h, status: 'committed' as const, started: true,
+      design: { ...p, colors: { ...p.colors, ground: '#c8a06a' },
+        flora: addFloraTo({ ...p, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...p, water: [] }) },
+    } as BacklogItem;
+    const seated = { ...s, backlog: s.backlog.map((it) => (it.id === h.id ? built : it)) } as ZooGameState;
+    // Joined to the way in: "every fact is in" now includes being walkable to, which used to be a
+    // separate Product Backlog item and is part of this habitat's own job. The run has to start on
+    // the promenade and end at the pen, and the pen sits where its plot seats it - a hard-coded
+    // position here was ignored, so the run was drawn across the grass to nowhere.
+    const at = whereItStands(seated, built)!;
+    const standing = { ...seated,
+      connectors: [{ id: 'r-in', itemId: h.id, a: { x: at.x, y: FRONT_Y }, b: { x: at.x, y: at.y + 60 },
+        bends: [], thickness: 14, color: '#c9a86a' }],
+    } as unknown as ZooGameState;
     const { container } = inspector(standing, built, { onAskToCheck: () => {} });
     expect(container.textContent, 'the facts are in and it still will not ask').toMatch(/Ask Priya to check/);
   });

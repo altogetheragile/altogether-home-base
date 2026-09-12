@@ -594,7 +594,15 @@ export function enclosureAcceptance(): string[] {
   // one of them ticked itself - which reads as busywork rather than as the difference between how
   // you build a thing and what the Product Owner asked for. The plan is the work; these are what
   // somebody would notice if the work were not done.
-  return ['Is it bordered safely, with no way out of it?', 'Can an animal move about in here?', 'Can I tell an animal lives here, not a shed?', 'Can I walk right round it?'];
+  //
+  // ...and the way in, which used to be a Product Backlog item of its own - "Big Cats Paths". A path
+  // that only serves THIS habitat is part of making this habitat usable, so it belongs here: an item
+  // that needs another item finished before anybody can use it is a layer, which is the exact thing
+  // the zone lesson warns about. What stays an item is infrastructure that serves MANY: the main
+  // pathways, and the bridge.
+  return ['Is it bordered safely, with no way out of it?', 'Can an animal move about in here?',
+    'Can I tell an animal lives here, not a shed?', 'Can I walk to it from the way in?',
+    'Can I walk right round it?'];
 }
 
 /** Build + placement acceptance criteria for an exhibit (animal): built to look right, then settled
@@ -614,7 +622,12 @@ export function exhibitAcceptance(name: string): string[] {
 /** Build + placement acceptance criteria for a pathway: designed as a width + colour in the studio,
  *  then routed (placed) on the park to link things - the route can only be judged once drawn. */
 export function pathAcceptance(): string[] {
-  return ['Can two people walk it side by side?', 'Can I get to this zone without crossing the grass?'];
+  // What the spine is FOR. It used to ask whether a path reached "this zone", which made sense when
+  // every area had a paths item of its own; the main pathways belong to the Grounds, and the Grounds
+  // has no habitat in it - so that question could never be answered yes and the item could never be
+  // Done. A path that serves one habitat is now that habitat's own criterion; this one serves all of
+  // them, and this is how you tell.
+  return ['Can two people walk it side by side?', 'Does it join every area to the way in?'];
 }
 
 /** The criteria that can only be answered once the thing is standing in the park - about where it
@@ -633,6 +646,7 @@ const PLACEMENT_CRITERIA = new Set([
   'Can I find it from the car park?',
   'Can I walk from it to the entrance?',
   'Can I get to this zone without crossing the grass?',
+  'Does it join every area to the way in?',
   'Can I find it from the entrance?',
 ]);
 

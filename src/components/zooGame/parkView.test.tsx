@@ -68,6 +68,13 @@ describe('where the park puts things', () => {
     // real size the moment it was delivered; a site is now the size of the thing that will stand
     // there. And it was read off the blueprint's own boxes until the blueprint was retired, so it
     // is now read from the model both drawings always agreed on.
+    //
+    // Moved a third time, and this is the interesting one: the automatic layout used to fill the
+    // park from the top, which is the FAR side of the river. A habitat put there cannot be walked to
+    // until something crosses the water, and now that being walkable to is one of a habitat's own
+    // acceptance criteria, that meant work nobody could finish and nothing saying why. So everything
+    // visitors walk up to fills the near bank first, and terrain - the river itself - does not: it
+    // is what decides which bank is which.
     expect(layout(busyPark())).toMatchSnapshot();
   });
 });

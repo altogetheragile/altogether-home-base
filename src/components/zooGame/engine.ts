@@ -1,12 +1,16 @@
 import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet } from './types';
 import type { Signal } from './simulation/types';
 import type { ItemDesign } from './design';
-import { nearestFreeSpot, CANVAS_W, PLAY_H } from './parkLayout';
+import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
+import { riverY, BANK } from './parkWater';
+// Re-exported below as well; a re-export is not a local binding, and this module asks the question
+// itself when it works out where something can go.
+import { standsOnPark as standsHere } from './onThePark';
 import { appealFromDesign, barrierOf, barrierVerdict, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
-import { whatVisitorsCanReach } from './parkNetwork';
+import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
@@ -948,6 +952,15 @@ export const PLACEMENT_CHOICES: { key: string; label: string; of: (box: { w: num
   { key: 'side', label: 'Off to one side', of: () => ({ x: CANVAS_W - 200, y: PLAY_H / 2 }) },
 ];
 
+/** Whether anything on the park gets a visitor over the river. */
+const crossesTheWater = (state: ZooGameState): boolean =>
+  state.backlog.some((it) => standsHere(it)
+    && (currentDesign(it).parts.type ?? it.template) === 'bridge');
+
+/** The river's lowest point, so a thing kept clear of it is clear of it all the way across. */
+const deepestRiver = (): number =>
+  Math.max(...Array.from({ length: 24 }, (_, i) => riverY(PAD + (i * (CANVAS_W - 2 * PAD)) / 23)));
+
 /** The Product Owner answers, and the thing goes as near to there as the park allows. */
 export function answerPlacement(state: ZooGameState, id: string, choice: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
@@ -965,11 +978,21 @@ export function answerPlacement(state: ZooGameState, id: string, choice: string)
   const taken = state.backlog.filter((it) => it.pos && it.id !== id)
     .map((it) => ({ id: it.id, ...ground(it), ...it.pos! }));
   const box = { id, ...ground(item) };
-  const pos = nearestFreeSpot(taken, box, spot.of(box));
+  const wanted = spot.of(box);
+  // "At the back" is across the river, and until something crosses the water the back of the park is
+  // somewhere you can see and not somewhere you can walk to. So the answer is kept and the thing
+  // goes to the back of the ground people can reach, and the log says why: a habitat put down where
+  // no path could ever reach it could not be finished, and nothing anywhere said what was wrong.
+  const marooned = wanted.y - box.h / 2 < riverY(wanted.x) + BANK && !crossesTheWater(state);
+  const aim = marooned
+    ? { x: wanted.x, y: Math.round(deepestRiver() + BANK + box.h / 2 + 24) }
+    : wanted;
+  const pos = nearestFreeSpot(taken, box, aim);
   const placed = { ...state, pendingPlacement: null,
     backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
   return note(placed, { kind: 'placement', by: 'product_owner',
-    what: `${spot.label.toLowerCase().replace(/^by /, 'By ')}: the Product Owner said where ${item.name} goes.` });
+    what: `${spot.label.toLowerCase().replace(/^by /, 'By ')}: the Product Owner said where ${item.name} goes.`,
+    cost: marooned ? 'this side of the river, because nothing crosses the water yet' : undefined });
 }
 
 // ============= The bet: a Sprint with a question in it =============
@@ -2910,22 +2933,31 @@ export function zoneSlices(state: ZooGameState): ZoneSlice[] {
   // and still be a place six hundred people stand and look across at.
   const { stranded } = whatVisitorsCanReach(state);
   const cutOff = new Map(stranded.map((s) => [s.item.id, s.why]));
+  // ...and what has a made route to it. Two different questions on purpose: visitors will trudge
+  // over the grass rather than not come, which is what `stranded` allows for, but a zone is not a
+  // slice until there is a path to walk in on. So the numbers can move while the zone is still not
+  // open - which is the lesson, said by the park rather than by a rule.
+  const onAPath = reachedByPath(state);
 
   return zones.map((zone) => {
     const here = live.filter((it) => it.zone === zone);
-    const animal = here.some((it) => it.category === 'exhibit');
-    // Its OWN path. The park's main spine is the plate: it serves every zone and opens none of
-    // them, which is the whole point - laying it is not the same as finishing anything.
-    const wayIn = here.some((it) => it.category === 'path');
+    // One question, asked plainly: is there an animal here that a visitor can walk up to?
+    //
+    // Everything else follows from it. The animal has to be released, it has to have a home that is
+    // released, and there has to be a made path to that home - which is what the habitat's own
+    // acceptance criterion asks for, now that the way in is not a Product Backlog item of its own.
+    const animals = here.filter((it) => it.category === 'exhibit');
+    // Reached WHERE IT STANDS, which is its habitat if it has one and its own plot if it does not.
+    // The same rule `walkTo` uses. Asking only about the habitat said a zone was shut whenever an
+    // animal had been released before its home was, which is a real mistake but not this one.
+    const visitable = animals.filter((a) => onAPath.has(a.enclosureId ?? '') || onAPath.has(a.id));
     const stuck = here.filter((it) => cutOff.has(it.id));
     const water = stuck.some((it) => cutOff.get(it.id) === 'water');
     const missing: string[] = [];
-    if (!animal) missing.push('an animal to see');
-    if (!wayIn) missing.push('a path to walk in on');
-    // ...and said in the words that name the Product Backlog item that would fix it.
-    if (stuck.length && water) missing.push('a bridge over the water');
-    else if (stuck.length) missing.push('a path that joins up with the way in');
-    return { zone, open: animal && wayIn && !stuck.length, delivered: here.length, missing, stranded: stuck.length };
+    if (!animals.length) missing.push('an animal to see');
+    // ...said in the words of the thing that would fix it.
+    else if (!visitable.length) missing.push(water ? 'a bridge over the water' : 'a path to walk in on');
+    return { zone, open: visitable.length > 0, delivered: here.length, missing, stranded: stuck.length };
   });
 }
 

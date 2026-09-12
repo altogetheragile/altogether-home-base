@@ -9,8 +9,9 @@ import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine'
 import { applyParkChecks, checkCriterion } from './parkChecks';
 import { lookAhead } from './lookAhead';
 import { standingOnPark, parkPositions, restingPlace } from './parkModel';
-import { autoLayout, insidePark, parkBounds, shapeEdge, insideShape, CANVAS_W, PLAY_H } from './parkLayout';
-import { type AnimalGroup, KIND_SCALE, groupMembers, groupSize, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance, RIVER_LEN } from './design';
+import { whereItStands } from './parkModel';
+import { autoLayout, insidePark, parkBounds, shapeEdge, insideShape, CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
+import { type AnimalGroup, KIND_SCALE, groupMembers, groupSize, hasRoomToRoam, roomNeeded, appealFromDesign, isDesignDone, exhibitAcceptance, FLORA_PIECES, piecesFor, applyPiece, floraFamily, presetFor, renderDesign, designCriteria, EXHIBIT_PARTS, GRID_W, GRID_H, defaultFlora, enclosureFlora, enclosureWater, addFloraTo, addWaterTo, FLORA_TYPES, BUILDING_TYPES, amenityAcceptance, pathWidthPx, isLandscapeType, landscapeDefaultSize, floraColors, isDeployAcceptance, RIVER_LEN, HABITAT_FEATURE_TYPES } from './design';
 import { TOOLBOX, toolboxDraft } from './toolboxItems';
 import { SCRUM_CARDS, CARDS_BY_PHASE, cardFor, EVENT_CONTRACT, roleFor } from './scrumContent';
 import { copyEntries, applyCopyOverrides } from './copy';
@@ -42,7 +43,7 @@ function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIG
  *  Product Owner's sign-off ticks. Then the Developers move it: Done is their word, and a card no
  *  longer walks into the column by itself when the Product Owner accepts it. */
 function accept(state: ZooGameState, id: string): ZooGameState {
-  let s = placeOnPark(state, id);
+  let s = withPaths(placeOnPark(state, id));
   const it = s.backlog.find((x) => x.id === id);
   (it?.acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, id, i, true); });
   return finishItem(s, id, 'developer');
@@ -53,21 +54,15 @@ function accept(state: ZooGameState, id: string): ZooGameState {
  *
  *  A zoo is not open until an animal is there to be walked TO. A test that wants visitors is asking
  *  for a zoo that has opened, so it has to deliver the whole slice; opening a lion in a habitat
- *  nobody can reach is the layer, and the game is now honest about what that earns. Paths already
- *  in the list, or missing from this Backlog, are skipped. */
+ *  nobody can reach is the layer, and the game is now honest about what that earns.
+ *
+ *  The way in used to be a Product Backlog item per zone, which this helper pulled into the Sprint
+ *  alongside the animal. It is the habitat's own acceptance criterion now, so what this does instead
+ *  is lay the run - which is the same work, done by the same Developers, in one item. */
 function buildAndOpen(state: ZooGameState, ids: string[]): ZooGameState {
-  const zoneSlug = (zone: string) => (zone === 'Big Cats' ? 'bigcats' : zone.toLowerCase().replace(/[^a-z]+/g, '-'));
-  const wanted = new Set(ids);
-  for (const id of ids) {
-    const it = state.backlog.find((x) => x.id === id);
-    if (!it || it.category !== 'exhibit') continue;
-    const paths = `${zoneSlug(it.zone)}-paths`;
-    if (state.backlog.some((x) => x.id === paths)) wanted.add(paths);
-  }
-  const all = [...wanted];
-  let s = planSprint(state, all);
-  for (const id of all) s = openItem(finish(s, id), id);
-  return s;
+  let s = planSprint(state, ids);
+  for (const id of ids) s = openItem(finish(s, id), id);
+  return withPaths(s);
 }
 
 /** Mark enclosure items as built (Done), so their animals can be started - the game
@@ -91,6 +86,42 @@ function flat(state: ZooGameState): ZooGameState {
   for (const it of s.backlog) if (it.unsized && it.category !== 'epic') s = estimateItem(s, it.id, it.trueSize ?? 5);
   return s;
 }
+
+/** Open these items, and nothing else. */
+const openOnly = (st: ZooGameState, ...ids: string[]): ZooGameState =>
+  ({ ...st, backlog: st.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'open' as const } : it)) });
+
+/** Lay a run from the way in to every open habitat, which is what a habitat's own criterion now asks
+ *  for. It used to be a Product Backlog item per zone; it is the habitat's own job, and these
+ *  fixtures are zoos where the Developers did it. */
+const withPaths = (st: ZooGameState): ZooGameState => ({
+  ...st,
+  // ADDED to what is there, not instead of it. Replacing the list wholesale meant the second Sprint
+  // took up the first Sprint's paths, and a zone that had opened quietly shut again.
+  // Done as well as open: the park stands anything the Developers have finished, and the run is laid
+  // while the habitat is built rather than after somebody releases it.
+  // Anything STANDING, not only what is open: the run is laid while the habitat is built, which is
+  // the order the criterion asks for. Laid after somebody released it, it arrived too late to be
+  // accepted - the Developers were asked whether visitors could walk to a habitat before there was
+  // anything to walk on.
+  // To a habitat, or to an animal standing on ground of its own because its habitat is not up yet:
+  // a run goes to whatever is there to be walked to.
+  connectors: [
+    ...(st.connectors ?? []),
+    ...st.backlog
+      .filter((it) => (it.category === 'enclosure' || it.category === 'exhibit')
+        && !(st.connectors ?? []).some((c) => c.itemId === it.id))
+      .flatMap((h) => {
+        const at = whereItStands(st, h);
+        if (!at) return [];
+        return [{ id: `run-${h.id}`, itemId: h.id, a: { x: at.x, y: FRONT_Y }, b: { x: at.x, y: at.y + 60 },
+          bends: [], thickness: 14, color: '#c9a86a' }];
+      }),
+  ],
+} as ZooGameState);
+
+/** ...and a zoo where they are open AND walkable to, which is what "open" means now. */
+const openWalkable = (st: ZooGameState, ...ids: string[]): ZooGameState => withPaths(openOnly(st, ...ids));
 
 describe('zoo game: setup', () => {
   it('starts with a rough backlog, a Product Goal, a DoD, and drifted attendance', () => {
@@ -164,13 +195,15 @@ describe('zoo game: the Sprint loop', () => {
     let s = bigCatsSplit(1);
     s = buildAndOpen(s, ['lion', 'tiger', 'kiosk']);
     // The paths come with them: an animal nobody can walk to is not an open zoo.
-    expect(openZoo(s).map((i) => i.id).sort()).toEqual(['bigcats-paths', 'kiosk', 'lion', 'tiger']);
+    expect(openZoo(s).map((i) => i.id).sort()).toEqual(['kiosk', 'lion', 'tiger']);
     expect(zooIsOpen(s)).toBe(true);
     s = reviewSprint(s);
     expect(s.phase).toBe('review');
     expect(s.lastReview).not.toBeNull();
     expect(s.lastReview!.overallHappiness).toBeGreaterThan(0); // visitors enjoyed the exhibits
-    expect(s.velocity).toEqual([8 + 8 + 5 + 3]); // lion, tiger, kiosk and the paths in to them
+    // lion, tiger and the kiosk. No paths item: the way in to each of them is that habitat's own
+    // acceptance criterion, so its cost is inside the habitat rather than beside it.
+    expect(s.velocity).toEqual([8 + 8 + 5]);
     // Word of mouth moved attendance for next Sprint.
     expect(s.attendance).toEqual(s.lastReview!.nextAttendance);
   });
@@ -219,7 +252,7 @@ describe('zoo game: the Sprint loop', () => {
     expect(s.velocity).toHaveLength(2);
     // Two zones open, each with its own way in - two slices, not four animals in a field.
     expect(openZoo(s).map((i) => i.id).sort())
-      .toEqual(['bigcats-paths', 'kiosk', 'lion', 'penguins', 'tiger', 'waterside-paths']);
+      .toEqual(['kiosk', 'lion', 'penguins', 'tiger']);
     expect(zoneSlices(s).filter((z) => z.open).map((z) => z.zone).sort()).toEqual(['Big Cats', 'Waterside']);
   });
 });
@@ -1095,10 +1128,10 @@ describe('zoo game: enclosures are built before their animals', () => {
     // out only the animals and the facility leaves the ground they stand on behind.
     s = splitEpic(s, 'waterside', ['penguins', 'reef', 'wc']);
     expect(find(s, 'waterside').category).toBe('epic');
-    expect(find(s, 'waterside').epicMembers?.map((m) => m.id)).toEqual(['waterside-paths', 'waterside-planting']);
-    s = splitEpic(s, 'waterside', ['waterside-paths', 'waterside-planting']);
-    expect(find(s, 'waterside-paths').category).toBe('path');
-    expect(find(s, 'waterside-paths').zone).toBe('Waterside');
+    expect(find(s, 'waterside').epicMembers?.map((m) => m.id)).toEqual(['waterside-planting']);
+    s = splitEpic(s, 'waterside', ['waterside-planting']);
+    expect(find(s, 'waterside-planting').category).toBe('flora');
+    expect(find(s, 'waterside-planting').zone).toBe('Waterside');
     expect(find(s, 'waterside-planting').category).toBe('flora');
     expect(s.backlog.some((i) => i.id === 'waterside')).toBe(false); // fully split -> epic gone
     expect(find(s, 'penguin-enc').category).toBe('enclosure');
@@ -2194,7 +2227,7 @@ describe('zoo game: an item looks like what it is', () => {
 describe('zoo game: the seeded Backlog reads correctly', () => {
   it('gives every starting item an icon that matches what it is', () => {
     const want: Record<string, string> = {
-      'Lion Enclosure': 'fence', Lion: 'cat', 'Main Pathways': 'path', 'Big Cats Paths': 'path', Trees: 'tree', Flowerbed: 'flower',
+      'Lion Enclosure': 'fence', Lion: 'cat', 'Main Pathways': 'path', Trees: 'tree', Flowerbed: 'flower',
       Rockery: 'rocks', Bridge: 'bridge', Signposts: 'signpost', Fountain: 'fountain',
       Toilets: 'toilets', 'Gift Shop': 'shop', 'Seating Area': 'seating',
     };
@@ -2278,16 +2311,16 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     // on it sat in Doing for the rest of the Sprint. The park answers "can I get to this zone
     // without crossing the grass?" itself, and answering it re-derived the sign-off without
     // moving the card - so the one route to Done that nobody clicks was the one that stopped.
-    let s = planSprint(bigCatsSplit(1), ['bigcats-paths', 'lion-enc']);
+    let s = planSprint(bigCatsSplit(1), ['paths', 'lion-enc']);
     s = startItem(s, 'lion-enc');
     s = buildItem(s, 'lion-enc', FULL_DESIGN);
-    s = startItem(s, 'bigcats-paths');
-    const path = () => s.backlog.find((i) => i.id === 'bigcats-paths')!;
-    s = buildItem(s, 'bigcats-paths', presetFor(path()));
-    for (const t of path().tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'bigcats-paths', t.id);
+    s = startItem(s, 'paths');
+    const path = () => s.backlog.find((i) => i.id === 'paths')!;
+    s = buildItem(s, 'paths', presetFor(path()));
+    for (const t of path().tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'paths', t.id);
     // Everything a person can accept, accepted - and then the park has its say, which is what
     // the reducer does after every action. It reads its own criteria back off again.
-    (path().acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, 'bigcats-paths', i, true); });
+    (path().acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, 'paths', i, true); });
     s = applyParkChecks(s);
     expect(path().status, 'the park has not answered its criterion yet').toBe('committed');
 
@@ -2295,10 +2328,10 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     // one, so the card is ready for the Developers to move. Moving it is theirs: Done is a word
     // somebody says, not something the park does to the work while nobody is looking.
     const home = s.backlog.find((i) => i.id === 'lion-enc')!;
-    s = applyParkChecks(addConnector(s, { id: 'run-1', itemId: 'bigcats-paths', bends: [], thickness: 14, color: '#b9a888',
+    s = applyParkChecks(addConnector(s, { id: 'run-1', itemId: 'paths', bends: [], thickness: 14, color: '#b9a888',
       a: { x: 200, y: 500 }, b: { x: home.pos?.x ?? 200, y: home.pos?.y ?? 200, featureId: 'lion-enc' } }));
     expect(readyToMove(path()), 'the park answered the last criterion and the card was still not ready').toBe(true);
-    s = finishItem(s, 'bigcats-paths', 'developer');
+    s = finishItem(s, 'paths', 'developer');
     expect(path().status, 'the Developers moved it and it did not go to Done').toBe('done');
   });
 
@@ -2540,24 +2573,25 @@ describe('zoo game: the Product Backlog is written, not handed over', () => {
     expect(s.phase).toBe('refine');
   });
 
-  it('gives every area its OWN paths and planting, so opening one is a whole slice of zoo', () => {
+  it('gives every area its own planting, and the way in as the habitat’s own criterion', () => {
     const s = writeBacklog(blank, { zones: ['Big Cats', 'Forest'], audience: 'families', firstZone: 'Big Cats' });
     // The area you open first arrives refined: habitat, animal, and the ground around them.
-    expect(s.backlog.find((i) => i.id === 'bigcats-paths')?.category).toBe('path');
+    expect(s.backlog.find((i) => i.id === 'bigcats-planting')?.category).toBe('flora');
     expect(s.backlog.find((i) => i.id === 'bigcats-planting')?.zone).toBe('Big Cats');
     // The others carry theirs inside the epic, so refining an area yields them.
     const forest = s.backlog.find((i) => i.id === 'forest');
-    expect(forest?.epicMembers?.map((m) => m.id)).toContain('forest-paths');
+    // ...and not a path: the way in is the habitat's own criterion, not a second item to finish.
     expect(forest?.epicMembers?.map((m) => m.id)).toContain('forest-planting');
+    expect(forest?.epicMembers?.map((m) => m.id)).not.toContain('forest-paths');
   });
 
   it('opens whichever area the Scrum Team chose, not always the same one', () => {
     const s = writeBacklog(blank, { zones: ['Big Cats', 'Savanna'], audience: 'enthusiasts', firstZone: 'Savanna' });
     expect(s.backlog.find((i) => i.id === 'giraffe')?.unsized).toBeFalsy();
-    expect(s.backlog.find((i) => i.id === 'savanna-paths')?.category).toBe('path');
+    expect(s.backlog.find((i) => i.id === 'savanna-planting')?.category).toBe('flora');
     // Big Cats is now the epic, and it carries its own scenery.
     expect(s.backlog.find((i) => i.id === 'bigcats')?.category).toBe('epic');
-    expect(s.backlog.find((i) => i.id === 'bigcats')?.epicMembers?.map((m) => m.id)).toContain('bigcats-paths');
+    expect(s.backlog.find((i) => i.id === 'bigcats')?.epicMembers?.map((m) => m.id)).toContain('bigcats-planting');
   });
 
   it('orders it by what the chosen visitors value, which is the Product Owner\'s job', () => {
@@ -2818,8 +2852,7 @@ describe('zoo game: every acceptance criterion is a question', () => {
 });
 
 describe('zoo game: a zone is a slice of cake, not a layer', () => {
-  const open = (st: ZooGameState, ...ids: string[]): ZooGameState =>
-    ({ ...st, backlog: st.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'open' as const } : it)) });
+  const open = openWalkable;
 
   it('counts only the zones with an animal in them - the Grounds are the plate, not the cake', () => {
     const zones = zoneSlices(initialZooState(1)).map((z) => z.zone);
@@ -2829,7 +2862,8 @@ describe('zoo game: a zone is a slice of cake, not a layer', () => {
   });
 
   it('does not open a zone for a habitat and an animal with no way to walk in', () => {
-    const s = open(initialZooState(1), 'lion-enc', 'lion');
+    // No run laid: the habitat is built, the animal is in it, and there is no path to walk in on.
+    const s = openOnly(initialZooState(1), 'lion-enc', 'lion');
     const bigCats = zoneSlices(s).find((z) => z.zone === 'Big Cats')!;
     expect(bigCats.delivered).toBe(2);           // real work, delivered
     expect(bigCats.open).toBe(false);            // and nobody can get to it
@@ -2837,14 +2871,14 @@ describe('zoo game: a zone is a slice of cake, not a layer', () => {
   });
 
   it('does not open a zone for a path with nothing at the end of it', () => {
-    const s = open(initialZooState(1), 'bigcats-paths');
+    const s = open(initialZooState(1), 'paths');
     const bigCats = zoneSlices(s).find((z) => z.zone === 'Big Cats')!;
     expect(bigCats.open).toBe(false);
     expect(bigCats.missing).toEqual(['an animal to see']);
   });
 
   it('opens the zone once there is something to see and a way to reach it', () => {
-    const s = open(initialZooState(1), 'lion-enc', 'lion', 'bigcats-paths');
+    const s = open(initialZooState(1), 'lion-enc', 'lion');
     expect(zoneSlices(s).find((z) => z.zone === 'Big Cats')!.open).toBe(true);
   });
 
@@ -2856,25 +2890,28 @@ describe('zoo game: a zone is a slice of cake, not a layer', () => {
   });
 
   it('reports which zones a Sprint opened, so the Review can say what was really delivered', () => {
-    const before = open(initialZooState(1), 'lion-enc', 'lion');
-    const after = open(before, 'bigcats-paths');
+    // Built and stocked, with nothing to walk in on: real work, and the zone is not open yet.
+    const before = openOnly(initialZooState(1), 'lion-enc', 'lion');
+    // ...and then the run is laid, which is the moment it opens.
+    const after = withPaths(before);
     expect(zonesOpenedSince(before, after)).toEqual(['Big Cats']);
     expect(zonesOpenedSince(after, after)).toEqual([]);
   });
 });
 
 describe('zoo game: paths and grass are a park, not a zoo', () => {
-  const open = (st: ZooGameState, ...ids: string[]): ZooGameState =>
-    ({ ...st, backlog: st.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'open' as const } : it)) });
+  const open = openWalkable;
 
   it('keeps the gates shut until an animal is there to be walked to', () => {
     const bare = initialZooState(1);
     expect(zooIsOpen(bare)).toBe(false);
     // Every bit of the park's fabric, delivered. Still not a zoo.
     expect(zooIsOpen(open(bare, 'paths', 'river', 'bridge', 'signposts', 'trees', 'flowerbed'))).toBe(false);
-    // An animal nobody can walk to is not one either.
-    expect(zooIsOpen(open(bare, 'lion-enc', 'lion'))).toBe(false);
-    expect(zooIsOpen(open(bare, 'lion-enc', 'lion', 'bigcats-paths'))).toBe(true);
+    // An animal nobody can walk to is not one either...
+    expect(zooIsOpen(openOnly(bare, 'lion-enc', 'lion'))).toBe(false);
+    // ...and the run that joins it to the way in is what opens the zoo. It used to be an item of
+    // its own; it is the habitat's own criterion now.
+    expect(zooIsOpen(openWalkable(bare, 'lion-enc', 'lion'))).toBe(true);
   });
 
   it('lets people turn up and be disappointed, rather than turning them away', () => {
@@ -2892,7 +2929,7 @@ describe('zoo game: paths and grass are a park, not a zoo', () => {
   });
 
   it('opens to the public the moment one zone is a whole slice', () => {
-    const s = open({ ...initialZooState(1), phase: 'sprint' } as ZooGameState, 'lion-enc', 'lion', 'bigcats-paths');
+    const s = open({ ...initialZooState(1), phase: 'sprint' } as ZooGameState, 'lion-enc', 'lion');
     const after = reviewSprint(s);
     expect(after.lastReview!.totalAttendance).toBeGreaterThan(0);
   });
@@ -3068,35 +3105,31 @@ describe('zoo game: the park answers the criteria it can answer', () => {
     expect(lion(lied).acConfirmed?.[i]).toBe(false);
   });
 
-  it('answers whether a path reaches the zone, and names the thing it reaches', () => {
-    const s = initialZooState(1);
-    const paths = s.backlog.find((i) => i.id === 'bigcats-paths')!;
-    const none = checkCriterion(s, paths, 'Can I get to this zone without crossing the grass?');
-    // A "no" the player cannot overrule has to say what would make it a yes.
-    expect(none!.met).toBe(false);
-    expect(none!.evidence).toMatch(/^draw a run up to the /);
-    const linked: ZooGameState = { ...s, connectors: [{ id: 'c1', a: { featureId: 'lion-enc', x: 0, y: 0 }, b: { x: 40, y: 40 }, bends: [], thickness: 9, color: '#c9a86a' }] };
-    expect(checkCriterion(linked, paths, 'Can I get to this zone without crossing the grass?'))
-      .toEqual({ met: true, evidence: 'a path runs to the Lion Enclosure' });
+  it('answers whether the main pathways join every area to the way in', () => {
+    // The spine serves every area, so that is what it is judged on. It used to be asked whether a
+    // path reached "this zone" - and the main pathways belong to the Grounds, which has no habitat
+    // in it, so the question could never be answered yes and the item could never be Done.
+    const s = openOnly(initialZooState(1), 'lion-enc', 'lion');
+    const paths = s.backlog.find((i) => i.id === 'paths')!;
+    const none = checkCriterion(s, paths, 'Does it join every area to the way in?')!;
+    expect(none.met, 'nothing is joined up and the spine says it is').toBe(false);
+    expect(none.evidence, 'it does not name the area that is adrift').toMatch(/Big Cats/);
 
-    // And a run that finishes on the grass BESIDE the habitat counts too. It plainly reaches it,
-    // and this criterion is one the park answers - so being wrong about it left the card stuck with
-    // no way to say otherwise.
-    const placed: ZooGameState = {
-      ...s,
-      backlog: s.backlog.map((it) => (it.id === 'lion-enc' ? { ...it, pos: { x: 300, y: 300 } } : it)),
-      connectors: [{ id: 'c2', a: { x: 300, y: 380 }, b: { x: 300, y: 640 }, bends: [], thickness: 9, color: '#c9a86a' }],
-    };
-    expect(checkCriterion(placed, paths, 'Can I get to this zone without crossing the grass?'))
-      .toEqual({ met: true, evidence: 'a path runs to the Lion Enclosure' });
-
-    // Far away is still far away.
-    const away: ZooGameState = { ...placed, connectors: [{ id: 'c3', a: { x: 700, y: 60 }, b: { x: 760, y: 90 }, bends: [], thickness: 9, color: '#c9a86a' }] };
-    expect(checkCriterion(away, paths, 'Can I get to this zone without crossing the grass?')!.met).toBe(false);
+    const joined = withPaths(s);
+    const yes = checkCriterion(joined, paths, 'Does it join every area to the way in?')!;
+    expect(yes.met, 'every habitat is on a path and the spine still says no').toBe(true);
+    expect(yes.evidence).toMatch(/every area joined/);
   });
-});
 
-describe('zoo game: a thing you have built stays where you built it', () => {
+  it('reads a save written when that criterion had its old words', () => {
+    // The park matches a criterion by its exact text, so rewording one orphans every item already
+    // carrying the old words - including every save ever taken.
+    const s = withPaths(openOnly(initialZooState(1), 'lion-enc', 'lion'));
+    const paths = s.backlog.find((i) => i.id === 'paths')!;
+    expect(checkCriterion(s, paths, 'Can I get to this zone without crossing the grass?')?.met,
+      'a save from before the rewording cannot be answered').toBe(true);
+  });
+
   it('does not make a finished habitat disappear off the park', () => {
     // Ticking the last task of a plan promotes an item to Done on the spot. That route never goes
     // near placeOnPark, and the park used to refuse to draw a Done item without the `placed` flag -
@@ -3236,21 +3269,21 @@ describe('zoo game: the Product Owner looks ahead', () => {
     ({ ...s, backlog: s.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber } : it)) });
 
   it('says nothing when nothing is forecast', () => {
-    expect(lookAhead(initialZooState(1))).toEqual([]);
+    // Nothing coming: no committed work and nothing at the top of the Product Backlog. The starting
+    // Product Backlog no longer counts as "nothing" - it is four items shorter since the way in
+    // stopped being an item, so the horizon now reaches the next area's epic.
+    expect(lookAhead({ ...initialZooState(1), backlog: [] } as ZooGameState)).toEqual([]);
   });
 
-  it('notices that a zone about to open has no way in, and offers to write one', () => {
+  it('does not offer to write a paths item, because the way in is not one', () => {
+    // It used to, and the proposal was right for the design of the day: a zone opened on three
+    // things and one of them was a path item. The way in is an acceptance criterion on the habitat
+    // now - "can I walk to it from the way in?" - so proposing a second item to finish before the
+    // first is worth anything would be proposing the layer this game warns about.
     const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
-    // No paths item, and no epic hiding one either: there is nothing to split, so write it.
-    const bare: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.id !== 'bigcats-paths' && it.category !== 'epic') };
-    const p = lookAhead(bare).find((x) => x.id === 'path:Big Cats');
-    expect(p).toBeTruthy();
-    expect(p!.why).toMatch(/path to walk in on/i);
-    expect(p!.kind).toBe('add');
-    if (p!.kind === 'add') {
-      expect(p!.draft.category).toBe('path');
-      expect(p!.draft.zone).toBe('Big Cats');
-    }
+    const bare: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.category !== 'epic') };
+    expect(lookAhead(bare).find((x) => x.id === 'path:Big Cats'),
+      'the Product Owner is being told to write a paths item again').toBeUndefined();
   });
 
   it('offers to SPLIT rather than duplicate when the thing is buried in an epic', () => {
@@ -3287,16 +3320,19 @@ describe('zoo game: the Product Owner looks ahead', () => {
   });
 
   it('does not put the same suggestion twice once it has been turned down', () => {
+    // On planting, since the way in stopped being a proposal at all.
     const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
-    const noPaths: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.id !== 'bigcats-paths' && it.category !== 'epic') };
-    expect(lookAhead(noPaths).some((p) => p.id === 'path:Big Cats')).toBe(true);
-    const declined = { ...noPaths, declinedProposals: ['path:Big Cats'] };
-    expect(lookAhead(declined).some((p) => p.id === 'path:Big Cats')).toBe(false);
+    const bare: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.category !== 'epic' && it.category !== 'flora') };
+    const one = lookAhead(bare).find((p) => p.id.endsWith(':Big Cats') || p.id.includes('Big Cats'));
+    expect(one, 'the Product Owner is told nothing about an area with nothing growing in it').toBeTruthy();
+    const declined = { ...bare, declinedProposals: [one!.id] };
+    expect(lookAhead(declined).some((p) => p.id === one!.id),
+      'a suggestion turned down came straight back').toBe(false);
   });
 
   it('proposes items the Scrum Team still has to refine and size', () => {
     const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
-    const noPaths: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.id !== 'bigcats-paths' && it.category !== 'epic') };
+    const noPaths: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.category !== 'epic') };
     for (const p of lookAhead(noPaths)) {
       expect(p.why.length, `${p.label} says why`).toBeGreaterThan(20);
       if (p.kind !== 'add') continue;
@@ -3311,32 +3347,41 @@ describe("zoo game: the Product Owner's sign-off follows the park's answers too"
     // The sign-off is derived from the criteria. Ticking the last one by hand re-derived it; the
     // park answering the last one did not - so every criterion went green and the approval sat
     // there unticked with nothing the player could do to shift it.
-    let s = planSprint(bigCatsSplit(1), ['bigcats-paths']);
-    s = setItemTasks(s, 'bigcats-paths', suggestTasks(s.backlog.find((x) => x.id === 'bigcats-paths')!));
-    s = buildItem(s, 'bigcats-paths', { parts: { thickness: 'medium' }, colors: { path: '#c9a86a' } });
-    const item = () => s.backlog.find((x) => x.id === 'bigcats-paths')!;
+    //
+    // On a habitat now, whose own criterion is the way in: it used to be a paths item, and the way
+    // in stopped being an item of its own.
+    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
+    s = setItemTasks(s, 'lion-enc', suggestTasks(s.backlog.find((x) => x.id === 'lion-enc')!));
+    s = startItem(s, 'lion-enc');
+    // A home, not a shed: ground, shelter and water in, so the only fact left outstanding is the
+    // one this test is about.
+    const bare = presetFor(s.backlog.find((x) => x.id === 'lion-enc')!);
+    s = buildItem(s, 'lion-enc', { ...bare, colors: { ...bare.colors, ground: '#c8a06a' },
+      flora: addFloraTo({ ...bare, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...bare, water: [] }) });
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion-enc' ? { ...it, pos: { x: 300, y: 800 } } : it)) };
+    const item = () => s.backlog.find((x) => x.id === 'lion-enc')!;
     const signOff = () => (item().tasks ?? []).find((t) => isSignOffTask(t.label))!;
 
     // Accept everything a person can accept. The remaining one is the park's: no run is drawn yet.
     item().acceptance.forEach((label, i) => {
-      if (!checkCriterion(s, item(), label)) s = confirmAcceptance(s, 'bigcats-paths', i, true);
+      if (!checkCriterion(s, item(), label)) s = confirmAcceptance(s, 'lion-enc', i, true);
     });
     s = applyParkChecks(s);
-    expect(signOff().done, 'not yet - the park has not seen a path').toBe(false);
+    expect(signOff().done, 'not yet - the park has not seen a path to it').toBe(false);
 
-    // Lay a run to the habitat. The park answers the last criterion, and the sign-off must follow.
+    // Lay a run from the way in. The park answers the last criterion, and the sign-off must follow.
     s = applyParkChecks({
       ...s,
-      backlog: s.backlog.map((it) => (it.id === 'lion-enc' ? { ...it, pos: { x: 300, y: 300 } } : it)),
-      connectors: [{ id: 'r1', a: { featureId: 'lion-enc', x: 0, y: 0 }, b: { x: 300, y: 600 }, bends: [], thickness: 9, color: '#c9a86a' }],
+      connectors: [{ id: 'r1', itemId: 'lion-enc', a: { x: 300, y: FRONT_Y }, b: { x: 300, y: 871 }, bends: [], thickness: 14, color: '#c9a86a' }],
     });
     expect(item().acceptance.every((_, i) => item().acConfirmed?.[i]), 'every criterion met').toBe(true);
     expect(signOff().done, 'and the sign-off follows').toBe(true);
 
     // Take the run back up and it all comes undone again, which is the point of deriving it.
     const undone = applyParkChecks({ ...s, connectors: [] });
-    const paths = undone.backlog.find((x) => x.id === 'bigcats-paths')!;
-    expect((paths.tasks ?? []).find((t) => isSignOffTask(t.label))!.done).toBe(false);
+    const pen = undone.backlog.find((x) => x.id === 'lion-enc')!;
+    expect((pen.tasks ?? []).find((t) => isSignOffTask(t.label))!.done).toBe(false);
+
   });
 });
 

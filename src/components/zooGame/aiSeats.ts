@@ -4,7 +4,7 @@ import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapac
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
-import { CANVAS_W, PLAY_H } from './parkLayout';
+import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
 import { whereItStands } from './parkModel';
 
 // A seat nobody is sitting in, played by the game.
@@ -96,7 +96,11 @@ function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null
   // so they have no position of their own: the park lays them out, and the park is what to ask.
   const here = state.backlog.map((i) => ({ item: i, at: i.zone === item.zone ? (i.pos ?? whereItStands(state, i)) : null }))
     .filter((x): x is { item: BacklogItem; at: { x: number; y: number } } => !!x.at);
-  const target = here.find((x) => x.item.category === 'enclosure') ?? here.find((x) => x.item.category === 'amenity') ?? here[0];
+  // A habitat's run goes to THAT habitat. Taking the first one in the zone meant the Tiger
+  // Enclosure's path was drawn to the Lion Enclosure, which satisfied nothing and looked like it had.
+  const target = item.category === 'enclosure'
+    ? here.find((x) => x.item.id === item.id)
+    : here.find((x) => x.item.category === 'enclosure') ?? here.find((x) => x.item.category === 'amenity') ?? here[0];
   const design = item.design ?? presetFor(item);
   if (!target) {
     // Nothing in this zone to walk to yet, which is the ordinary case for the paths through the
@@ -117,8 +121,10 @@ function pathRunFor(state: ZooGameState, item: BacklogItem): ZooConnector | null
   return {
     id: `run-${item.id}`,
     itemId: item.id,
-    // From the way in, to the thing worth walking to.
-    a: { x: Math.round(target.at.x), y: Math.round(target.at.y) + 220 },
+    // From the way in - the promenade along the front - to the thing worth walking to. It used to
+    // start 220 away from the target, which is out on the grass: near enough for a criterion that
+    // measured proximity, and no use at all to a visitor walking from the gate.
+    a: { x: Math.round(target.at.x), y: Math.round(FRONT_Y) },
     b: { x: Math.round(target.at.x), y: Math.round(target.at.y), featureId: target.item.id },
     bends: [],
     thickness: Number(design.parts.thickness ?? 14) || 14,
@@ -294,13 +300,16 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       // answers that criterion itself - it either has a path running there or it does not -
       // so a path could be built, planned and Done, and still never be releasable, because
       // nobody had drawn the run. Deploying it is the Developers' work, like building it.
-      const undeployed = state.backlog.find((it) => it.category === 'path' && it.design
-        && (it.status === 'done' || it.status === 'committed') && it.started
+      // ...and a habitat is only finished when somebody can walk to it, which is now one of its own
+      // acceptance criteria rather than a paths item of its own. Same work, same seat: the run that
+      // joins it to the way in is the Developers'.
+      const undeployed = state.backlog.find((it) => (it.category === 'path' || it.category === 'enclosure')
+        && it.design && (it.status === 'done' || it.status === 'committed') && it.started
         && !(state.connectors ?? []).some((c) => c.itemId === it.id));
       if (undeployed) {
         const run = pathRunFor(state, undeployed);
         if (run) return { action: { type: 'ADD_CONNECTOR', connector: run },
-                          says: `Ran ${undeployed.name} to the ${run.b.featureId ? 'zone' : 'park'}, so you can get there without crossing the grass.` };
+                          says: `Ran a path to ${undeployed.name}, so you can get there without crossing the grass.` };
       }
 
       const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
