@@ -1920,6 +1920,64 @@ export function suggestSprintGoal(items: BacklogItem[]): string {
   return `Our goal is to deliver ${capability} so that ${value}`;
 }
 
+/** The Sprint Goal a learner wrote, put into shape - and what was changed about it.
+ *
+ *  Asked for while playing it: "to support learning can the wizard reword a goal for a learner and
+ *  not just write it?" Writing it for them does the one piece of thinking the screen exists to
+ *  teach. Rewording what they wrote is the opposite move: their idea survives, and the game says
+ *  what a Goal needs that their sentence did not have.
+ *
+ *  Two things are corrected, because they are the two mistakes people actually make:
+ *
+ *  - **A list of work instead of one outcome.** "Lion enclosure and the kiosk and the paths" is a
+ *    Sprint Backlog, not a Sprint Goal. Everything after the first goal is dropped.
+ *  - **No "so that".** Naming the work is the commonest one by a distance - it is what a plan looks
+ *    like - and a Goal is what the work is FOR. The value clause is taken from what is actually
+ *    being forecast, so it says something true about this Sprint.
+ *
+ *  Deterministic, like every other judgement in the game: no model call, so a trainer replaying a
+ *  seed gets the same words, and it costs nothing.
+ */
+const GOAL_WHY = /\b(so that|so they|so we|so visitors|so families|so people|in order to)\b/i;
+const GOAL_FLUFF = /^(our goal is to|our goal is|the goal is to|the goal is|goal:|we want to|we will|we are going to|i want to|to)\s+/i;
+const GOAL_SPLIT = /\.\s+|;\s*|\s+and also\s+|\s*\n+\s*/i;
+/** Openings that already carry their own determiner, so no article is put in front of them. */
+const GOAL_DETERMINED = /^(a|an|the|some|somewhere|something|more|our|my|your|all|every|each|both|two|three|four|five|enough|better)\b/i;
+/** Verbs that already say "deliver", so the rewording does not say it twice. */
+const GOAL_VERB = /^(build|open|make|create|add|deliver|finish|complete|launch|install|put|get|give|lay|run|set up|stock|fill|show|bring)\b/i;
+
+export function rewordSprintGoal(theirs: string, items: BacklogItem[]): { goal: string; note: string } {
+  const said = theirs.trim().replace(/\s+/g, ' ');
+  if (!said) return { goal: suggestSprintGoal(items), note: '' };
+
+  // One goal. What follows the first full stop, semicolon or "and also" is a second goal, and a
+  // Sprint has one - that is what makes it something to steer by when a day goes wrong.
+  const first = said.split(GOAL_SPLIT)[0].trim().replace(/[,\s]+$/, '');
+  const trimmed = first.length < said.replace(/\.$/, '').length;
+
+  const core = first.replace(GOAL_FLUFF, '').trim();
+  const already = GOAL_WHY.test(core);
+  // Their words, kept. Only the opening is normalised, so the sentence reads as one thing the team
+  // can agree to rather than as a note to self. An ordinary capital at the front is lowered; SHOUTING
+  // is left alone, because mangling it to "oPEN THE SAVANNA" is worse than either.
+  const lower = /^[A-Z][a-z]/.test(core) ? core.charAt(0).toLowerCase() + core.slice(1) : core;
+  // Their verb is kept if they used one. "Deliver build the lion enclosure" is what happens when a
+  // rewording is bolted on rather than read, and it reads as a machine rather than as a coach.
+  // ...and an article where a bare name needs one: "deliver lion enclosure" is a telegram.
+  const bare = !GOAL_VERB.test(lower) && !GOAL_DETERMINED.test(lower);
+  const stem = GOAL_VERB.test(lower) ? lower : `deliver ${bare ? 'the ' : ''}${lower}`;
+  // The value clause from what is actually being forecast, so the "why" is true of this Sprint
+  // rather than a stock phrase.
+  const value = suggestSprintGoal(items).replace(/^.*?\bso that\b\s*/i, '');
+  const goal = already ? `Our goal is to ${stem}` : `Our goal is to ${stem} so that ${value}`;
+
+  const notes: string[] = [];
+  if (trimmed) notes.push('A Sprint Goal is one thing the whole team can commit to, so I kept the first of yours and left the rest for the Sprint Backlog.');
+  if (!already) notes.push('You named the work. A Goal names what the work is FOR, so I kept your words and added who it is for and why - that is the part the Review can judge.');
+  if (!notes.length) notes.push('That was already a Goal: one outcome, and what it gives visitors. I have only tidied the opening so it reads as one sentence to agree to.');
+  return { goal, note: notes.join(' ') };
+}
+
 /** Why an item is not ready to be forecast, or null if it is. The team's Definition of Ready is
  *  their own agreement; these are the parts of it the game can see for itself. */
 export function notReady(item: BacklogItem): string | null {
