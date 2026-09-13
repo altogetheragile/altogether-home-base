@@ -78,7 +78,7 @@ export function PlanningPoker({ item, state, seed, onCommit, talk: withTalk = tr
       </div>
 
       <div className="mb-3">
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Commit an estimate</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Commit the size</div>
         <div className="flex flex-wrap gap-1.5">
           {FIB.map((f) => (
             <button key={f} type="button" onClick={() => setPick(f)}

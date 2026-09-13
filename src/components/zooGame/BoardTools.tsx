@@ -75,7 +75,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
             // badly, it is for a Sprint Goal that has stopped being worth pursuing.
             <div className="border-t border-border pt-2">
               <button type="button"
-                onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-estimated. A new Sprint starts straight away.')) onCancelSprint(); }}
+                onClick={() => { if (window.confirm('Cancel this Sprint?\n\nOnly the Product Owner can, and only when the Sprint Goal has become obsolete - not because the Sprint is going badly.\n\nWork that is Done is kept and can still be released. Everything unfinished goes back to the Product Backlog to be re-sized. A new Sprint starts straight away.')) onCancelSprint(); }}
                 className={cn(FOCUS, "text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline")}>
                 Cancel the Sprint
               </button>

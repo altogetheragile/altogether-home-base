@@ -164,6 +164,10 @@ Four decisions that replace what the note says:
 ### Housekeeping worth remembering
 - **Say Product Backlog or Sprint Backlog**, never just "Backlog", everywhere a player can read it.
   (#569)
+- **Say Size, never estimate**, everywhere a player can read it. The Guide puts sizing on the people
+  who will do the work; "estimate" is the word that turns into a commitment in somebody's head. The
+  field is still `estimate` in the code and the points are still points - this is about what is read.
+  A test walks every component and fails on the word. (#600)
 - **Saves**: `SAVE_VERSION` is 2; an older or newer save is refused out loud. A name is proposed
   ("Big Cats zoo · 11 Sep") and a game that has one is not asked again. (#570, #576)
 
