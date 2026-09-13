@@ -190,19 +190,23 @@ Four decisions that replace what the note says:
 
 In the order I would build them.
 
-### 1. The flow rewrite, continued
+### 1. The flow rewrite, what is left
 Two of the five are built (#603): Sprint 1 arrives planned, one screen and one button from the front
 page to a running board, with no Definition of Done - and the Retrospective hands one over, naming
 what went out without it in this zoo. "Scrum on one page" moved from the doorway to the front page's
 own link: it is the best page in the game to read second.
 
+The ladder is built (#604): one practice per Retrospective, in the order the pain arrives -
+Definition of Done, Sprint Planning, refinement, the bet - each offered with what its absence has
+been costing and what taking it on changes. A practice that has not been adopted is absent, not
+padlocked: the next Sprint arrives planned until the team takes Planning on, the Product Backlog is
+a list you read until they take refinement on, and Planning does not ask for a prediction until they
+take the bet on. The order is not configurable, because the order a learner meets Scrum in IS the
+teaching.
+
 What is left:
-- **One unlock per Sprint**, named at the Retrospective and adopted at Adapt. A control that has not
-  been adopted is **absent** - not greyed, not padlocked. The ladder the first two suggest: Sprint 1
-  builds; Retro 1 hands over the Definition of Done; Retro 2 hands over Sprint Planning (you choose
-  the Goal and the forecast, rather than arriving with them); Retro 3 hands over refinement; Retro 4
-  hands over the bet. Each one unlocked by the pain that motivates it.
-- **Refinement is mid-Sprint** and costs something (see the open question below).
+- **Refinement is mid-Sprint** and costs something (see the open question below). Partly there: it
+  costs day-time already, and it is now a practice a team takes on rather than one it is born with.
 - **AI wands only after the learner has tried.** Half done: the Sprint Goal wand rewords what a
   learner wrote rather than writing one from nothing (#599).
 

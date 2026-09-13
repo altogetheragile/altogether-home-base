@@ -38,6 +38,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     planShape: (id: string, patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string }) => send({ type: 'PLAN_ITEM_SHAPE', id, patch }),
     estimate: (id: string, points: number) => send({ type: 'ESTIMATE_ITEM', id, points }),
     openGround: (zone: string) => send({ type: 'OPEN_GROUND', zone }),
+    adopt: (key: string) => send({ type: 'ADOPT', key }),
     setTasks: (id: string, tasks: SprintTask[]) => send({ type: 'SET_TASKS', id, tasks }),
     toggleTask: (id: string, taskId: string) => send({ type: 'TOGGLE_TASK', id, taskId }),
     confirmAc: (id: string, index: number, value: boolean) => send({ type: 'CONFIRM_AC', id, index, value }),
