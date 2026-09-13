@@ -1,7 +1,7 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { standsOnPark } from './onThePark';
 import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
-import { autoLayout, insidePark, CANVAS_W, PAD, PROMENADE_Y } from './parkLayout';
+import { autoLayout, insidePark, CANVAS_W, PAD, PLAY_H, PROMENADE_Y } from './parkLayout';
 import { zonePlots, type Plot } from './parkZones';
 import { riverY, BANK, acrossTheWater } from './parkWater';
 
@@ -252,6 +252,12 @@ export function restingPlace(item: BacklogItem, size: { w: number; h: number },
   // a bridge beside the river is not a bridge. Which part of the river it crosses is still a real
   // decision, and that is the axis it keeps.
   if (parkType(item) === 'bridge') return insidePark(size, acrossTheWater(size, at));
+  // The way in stands ON the way in: the strip between the park and the car park, half on the grass
+  // and half on the tarmac. Reported from playing it - "it needs to be between the park and the car
+  // park as it is a liminal space" - and it is the same rule as the bridge: which part of the front
+  // you come in by is a real decision and stays yours; standing an entrance in the middle of a field
+  // is not a decision anybody meant to make.
+  if (parkType(item) === 'entrance') return { x: insidePark(size, at).x, y: PLAY_H - size.h / 2 + 6 };
   // Read through the park's bounds, so a position saved when the park was a different size cannot
   // leave a delivered thing drawn somewhere nobody can look.
   return insidePark(size, at);

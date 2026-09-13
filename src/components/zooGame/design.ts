@@ -684,7 +684,9 @@ export function landscapeDefaultSize(type?: string): { w: number; h: number } {
     case 'hedge': return { w: 150, h: 44 };
     case 'carpark': return { w: 150, h: 104 };
     case 'pond': return { w: 120, h: 88 };
-    case 'entrance': return { w: 96, h: 96 };
+    // Wide across the front and shallow, because it stands ON the front: a gateway is a thing you
+    // walk through, not a compound you walk around.
+    case 'entrance': return { w: 150, h: 78 };
     default: return { w: 96, h: 80 }; // rocks, fountain
   }
 }

@@ -3,7 +3,8 @@ import { render } from '@testing-library/react';
 import { IsoZoo } from './IsoZoo';
 import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
-import { CANVAS_W, FRONT_Y } from './parkLayout';
+import { CANVAS_W, FRONT_Y, PLAY_H } from './parkLayout';
+import { whereItStands, groundSize } from './parkModel';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The way in is a structure, not a patch of ground.
@@ -38,7 +39,31 @@ describe('the entrance in the Increment', () => {
     expect(built!.querySelectorAll('polygon').length,
       'it has no structure to it - one flat shape is what it used to be').toBeGreaterThanOrEqual(7);
     expect(built!.querySelectorAll('line').length,
-      'nothing on the banner says it is a sign').toBeGreaterThan(0);
+      'nothing on the piers says it is a gate').toBeGreaterThan(0);
+  });
+
+  it('says what it is, in a word', () => {
+    // Reported from playing it: "it needs to look like an entrance - with words indicating what it
+    // is". A gate you have to be told is a gate is not a gate.
+    const { container } = render(<IsoZoo state={parkWith(gate())} height={420} width={800} />);
+    expect(container.querySelector('[data-part="gateway"]')!.textContent,
+      'the way in has no word on it').toMatch(/ZOO/);
+  });
+});
+
+describe('where the entrance stands', () => {
+  it('is on the front of the park, between the grass and the car park', () => {
+    // It is a liminal thing: half on the park and half on the tarmac, which is what an entrance IS.
+    // Aimed at the middle of a field, it belongs on the boundary - the same rule as a bridge, which
+    // belongs on the water however carefully somebody aims it at the bank.
+    const aimed = { ...gate(), pos: { x: CANVAS_W / 2, y: 400 } } as BacklogItem;
+    const state = parkWith(aimed);
+    const at = whereItStands(state, aimed)!;
+    const size = groundSize(aimed);
+    expect(at.x, 'the park moved it along the front, which is the choice that is yours').toBe(CANVAS_W / 2);
+    expect(at.y + size.h / 2, 'the gate stands wholly inside the park, not on its edge')
+      .toBeGreaterThan(PLAY_H - 1);
+    expect(at.y - size.h / 2, 'the gate has left the park altogether').toBeLessThan(PLAY_H);
   });
 });
 
