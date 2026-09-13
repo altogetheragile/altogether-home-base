@@ -84,7 +84,14 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
   const valid = name.trim().length > 0 && zone.trim().length > 0;
 
   const toggleStory = (on: boolean) => { setStoryMode(on); onToggleStories(on); };
-  const autoSuggest = () => { const s = suggestStory({ name, category, zone }); setRole(s.role); setWant(s.want); setSoThat(s.soThat); };
+  // Their words survive: only the blanks are filled. Overwriting what somebody wrote is the fault
+  // the Sprint Goal wand had, and it reads as the game correcting you rather than helping.
+  const autoSuggest = () => {
+    const s = suggestStory({ name, category, zone });
+    if (!role.trim()) setRole(s.role);
+    if (!want.trim()) setWant(s.want);
+    if (!soThat.trim()) setSoThat(s.soThat);
+  };
   const story = storyMode && (role.trim() || want.trim() || soThat.trim())
     ? `As ${role.trim() || 'a visitor'}, I want ${want.trim()} so that ${soThat.trim()}.` : undefined;
 
@@ -122,7 +129,19 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
             <input type="checkbox" checked={storyMode} onChange={(e) => toggleStory(e.target.checked)} />
             Write as a user story
           </label>
-          {storyMode && <Button size="sm" className={cn(WIZARD, 'h-6 px-2 text-xs')} onClick={autoSuggest}><Wand2 className="mr-1 h-3.5 w-3.5" /> Auto-suggest</Button>}
+          {/* After the learner has tried. A story written for somebody who has typed nothing teaches
+              that the button writes user stories; offered once they have a line of their own, it
+              fills the parts they left out and leaves what they wrote alone. */}
+          {storyMode && (
+            <Button size="sm" className={cn(WIZARD, 'h-6 px-2 text-xs')}
+              disabled={!role.trim() && !want.trim() && !soThat.trim()}
+              title={role.trim() || want.trim() || soThat.trim()
+                ? 'Fills in the parts you have left blank. What you wrote is left alone.'
+                : 'Write a line of it first - then this fills in the rest.'}
+              onClick={autoSuggest}>
+              <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the rest
+            </Button>
+          )}
         </div>
         {storyMode && (
           <div className="space-y-1.5 text-sm">

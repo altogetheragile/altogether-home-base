@@ -204,11 +204,15 @@ a list you read until they take refinement on, and Planning does not ask for a p
 take the bet on. The order is not configurable, because the order a learner meets Scrum in IS the
 teaching.
 
-What is left:
-- **Refinement is mid-Sprint** and costs something (see the open question below). Partly there: it
-  costs day-time already, and it is now a practice a team takes on rather than one it is born with.
-- **AI wands only after the learner has tried.** Half done: the Sprint Goal wand rewords what a
-  learner wrote rather than writing one from nothing (#599).
+The last two are done as well (#605). **Refinement is mid-Sprint and costs time**, which was the
+open question and is answered: time, never points. Sizing, splitting, adding and refining each cost
+seconds of the day they are done on, the day's spend is one line in the decision log, and there is no
+refinement step between Sprints - it is work done during one, for the Sprints after it.
+
+**AI wands help after the learner has tried.** The Sprint Goal wand rewords what they wrote (#599);
+the steps wand fills the gaps in a plan they have started and is absent until they start one; the
+user story wand fills the parts they left blank and leaves their words alone. No button in the game
+now offers to do the thinking first - the thinking is what the screens are for.
 
 ### 2. Product Goals as a series
 Al's idea, not yet designed: PG1 delivers the Big Cats; achieving it lets the player set the next
