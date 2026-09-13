@@ -2220,53 +2220,56 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
   });
 }
 
-// ============= The gate: what the visitors paid for =============
+// ============= What the visitors got out of it =============
 //
-// Coins are the visitors' money. They are taken at the gate, given back when the day was not worth
-// paying for, and fined away when an animal is kept badly. Nothing else makes them, and in
-// particular POINTS NEVER BUY ANYTHING: a team that could spend its estimates would be a team whose
-// estimates were a currency, and estimating would stop being a forecast and become a budget the
-// moment anybody noticed. It is the one rule this whole mechanism exists to protect.
+// The zoo's value is what the people who came got from coming. One visit that was worth making is
+// worth one; a visit that was not is worth nothing. Nothing else makes it, and in particular POINTS
+// NEVER BUY ANYTHING: a team that could spend its estimates would be a team whose estimates were a
+// currency, and estimating would stop being a forecast and become a budget the moment anybody
+// noticed. It is the one rule this whole mechanism exists to protect.
 //
-// The shape is deliberately "take it, then give it back", because that is what teaches. Nobody is
-// turned away at the gate of an empty zoo - they come, they pay, they walk round a field, and the
-// refund is the Sprint Review saying what an output that is not an outcome actually cost. A zoo
-// that delivered nothing anybody could use does not merely earn less; it hands the money back.
+// Deliberately counted as visits rather than takings. An entry price would make the measure money,
+// and money is a different lesson - a zoo can make money by charging more for the same day out, and
+// no Scrum Team ever improved an outcome that way. What this counts is whether the thing the team
+// built was worth somebody's afternoon, which is the only question the Sprint Review is really
+// asking. Nobody is turned away at the gate of an empty zoo: they come, they walk round a field,
+// and the day is worth nothing to them - which is what an output that is not an outcome looks like
+// when you count it honestly.
 
-/** What one visitor pays to come in. */
-export const ENTRY = 4;
-/** What a visit is worth when it was not worth anything: they saw nothing at all, or their day was
- *  cut short. Both are the visitors' own words for it, and neither is a threshold somebody tuned -
- *  happiness is a score out of a hundred that a good small zoo scores eight on, and refunding
- *  everybody below a line would mean refunding everybody for the first several Sprints. */
-/** What keeping an animal badly costs when the inspector calls. */
-export const WELFARE_FINE = 200;
+/** What one visit that was worth making is worth. */
+export const VALUE_PER_VISIT = 1;
+/** What keeping an animal badly costs, in the same units: about a tenth of a good Sprint. */
+export const WELFARE_PENALTY = 50;
 
-/** The day's takings, what went back over the counter, and what the inspector took. */
-function tookAtTheGate(state: ZooGameState, result: SimulationResult,
+/** What the visitors got out of this Sprint, and what the keeping of the animals cost. */
+function whatItWasWorth(state: ZooGameState, result: SimulationResult,
   escaped: { escapee: string; habitat: BacklogItem; zone: string }[]): Ledger {
-  const takings = Math.round(result.totalAttendance * ENTRY);
+  const visits = Math.round(result.totalAttendance);
 
-  // A segment that saw nothing is refunded outright - `topExhibit` is null when there was not one
-  // thing in the zoo they could get to and look at. A segment that saw something is refunded for
-  // the visits that ended early, because those people did not get the day they paid for.
-  const refundedVisits = Math.round(result.segments.reduce((n: number, seg: SegmentResult) =>
+  // A segment that saw nothing got nothing: `topExhibit` is null when there was not one thing in
+  // the zoo they could get to and look at. A segment that saw something still loses the visits that
+  // ended early, because those people did not get the day they came for. Both are read from the
+  // simulation rather than from a threshold somebody tuned: happiness is a score out of a hundred
+  // that a good small zoo scores eight on, and "worth nothing below a line" would write off every
+  // visit for the first several Sprints.
+  const wasted = Math.round(result.segments.reduce((n: number, seg: SegmentResult) =>
     n + seg.attendance * (seg.topExhibit === null ? 1 : seg.truncationRate), 0));
-  const refunds = refundedVisits * ENTRY;
+  const worthMaking = Math.max(0, visits - wasted);
+  const earned = worthMaking * VALUE_PER_VISIT;
 
   // Kept badly: one that got out, and one with nowhere to move. Both are welfare, both are things
   // the player chose, and both are already visible on the card - this is what they cost.
-  const finedFor: string[] = escaped.map((g) => `${g.escapee} got out of the ${g.habitat.name}`);
+  const penalisedFor: string[] = escaped.map((g) => `${g.escapee} got out of the ${g.habitat.name}`);
   for (const a of state.backlog.filter((it) => it.category === 'exhibit' && it.status === 'open')) {
     const home = state.backlog.find((e) => e.id === a.enclosureId);
     if (!home || escaped.some((g) => g.habitat.id === home.id)) continue;
     if (!hasRoomToRoam(currentDesign(a).group, homeSizeOf(a, state.backlog))) {
-      finedFor.push(`${a.name} has nowhere to move in the ${home.name}`);
+      penalisedFor.push(`${a.name} has nowhere to move in the ${home.name}`);
     }
   }
-  const fines = finedFor.length * WELFARE_FINE;
+  const penalties = penalisedFor.length * WELFARE_PENALTY;
 
-  return { takings, refunds, refundedVisits, fines, finedFor, net: takings - refunds - fines };
+  return { visits, worthMaking, wasted, earned, penalties, penalisedFor, net: earned - penalties };
 }
 
 export function reviewSprint(state: ZooGameState): ZooGameState {
@@ -2331,7 +2334,7 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     ? goalItems.length > 0 && goalItems.every((it) => it.status === 'done' || it.status === 'open')
     : null;
 
-  const ledger = tookAtTheGate(state, result, escaped);
+  const ledger = whatItWasWorth(state, result, escaped);
 
   const { signals, signalAge } = escalateSignals(state.signalAge, result.signals);
 
@@ -2358,8 +2361,8 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     velocityDays: [...(state.velocityDays ?? []), state.sprintDays],
     attendance: result.nextAttendance,
     lastReview: result,
-    // A save taken before there were coins has none, and NaN in a till is worse than a zero.
-    coins: Math.max(0, (state.coins ?? 0) + ledger.net),
+    // A save taken before this was counted has none, and NaN is worse than a zero.
+    value: Math.max(0, (state.value ?? 0) + ledger.net),
     lastLedger: ledger,
     happiness: [...(state.happiness ?? []), result.overallHappiness],
     sprintGoalMet,

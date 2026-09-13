@@ -297,50 +297,53 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           around: do not open without something that holds them. It is said in the keeper's words
           rather than as a number, because "happiness fell 14" is a result and "the lion was in the
           car park" is a lesson. */}
-      {/* The till. Coins are the visitors' money and they are the only money there is: they come in
-          at the gate and go back over the counter when the day was not worth paying for. Shown as a
-          line of arithmetic rather than a balance, because "you have 1,240" is a score and "900
-          people came, 300 of them wanted their money back" is a Sprint Review. */}
+      {/* What it was worth. Value is the visitors' own verdict counted honestly: one for every
+          visit that was worth making, nothing for a visit that saw nothing or ended early. Shown as
+          arithmetic rather than a balance, because "you have 1,756" is a score and "525 people came
+          and 86 of them got nothing out of it" is a Sprint Review. */}
       {ledger && (
         <section data-part="ledger" className="rounded-lg border border-border bg-card px-3 py-2.5 text-sm">
-          <div className={cn(EYEBROW, 'mb-1.5')}>What the gate took</div>
+          <div className={cn(EYEBROW, 'mb-1.5')}>What it was worth to them</div>
           <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
             <div>
-              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Takings</dt>
-              <dd className="font-bold tabular-nums">{ledger.takings.toLocaleString()}</dd>
+              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Visits worth making</dt>
+              <dd className="font-bold tabular-nums">
+                {ledger.worthMaking.toLocaleString()}
+                <span className="ml-1 text-[11px] font-medium text-muted-foreground">
+                  of {ledger.visits.toLocaleString()}
+                </span>
+              </dd>
             </div>
-            {ledger.refunds > 0 && (
+            {ledger.wasted > 0 && (
               <div>
-                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Refunded</dt>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Got nothing out of it</dt>
                 <dd className="font-bold tabular-nums text-rose-600 dark:text-rose-400">
-                  &minus;{ledger.refunds.toLocaleString()}
-                  <span className="ml-1 text-[11px] font-medium text-muted-foreground">
-                    {ledger.refundedVisits.toLocaleString()} visits
-                  </span>
+                  {ledger.wasted.toLocaleString()}
                 </dd>
               </div>
             )}
-            {ledger.fines > 0 && (
+            {ledger.penalties > 0 && (
               <div>
-                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Welfare fines</dt>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Welfare penalty</dt>
                 <dd className="font-bold tabular-nums text-rose-600 dark:text-rose-400">
-                  &minus;{ledger.fines.toLocaleString()}
+                  &minus;{ledger.penalties.toLocaleString()}
                 </dd>
               </div>
             )}
             <div>
-              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">In the bank</dt>
-              <dd className="font-bold tabular-nums">{(state.coins ?? 0).toLocaleString()}</dd>
+              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">Value all told</dt>
+              <dd className="font-bold tabular-nums">{(state.value ?? 0).toLocaleString()}</dd>
             </div>
           </dl>
-          {ledger.finedFor.length > 0 && (
+          {ledger.penalisedFor.length > 0 && (
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Fined for {ledger.finedFor.join(', ')}.
+              Penalised for {ledger.penalisedFor.join(', ')}.
             </p>
           )}
-          {ledger.refundedVisits > 0 && (
+          {ledger.wasted > 0 && (
             <p className="mt-1 text-[11px] text-muted-foreground">
-              A visit that ended early, or a day nobody enjoyed, is money handed back at the gate.
+              A visit with nothing to get to, or a day cut short by something the zoo does not have,
+              is worth nothing to the person who made it.
             </p>
           )}
         </section>

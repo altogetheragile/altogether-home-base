@@ -353,19 +353,21 @@ export interface GameQuestion {
  *  self-management) and the Developers (who build the Increment). Ten or fewer, no sub-teams. */
 export interface ScrumTeam { productOwner: ScrumTeamMember; scrumMaster: ScrumTeamMember; developers: ScrumTeamMember[] }
 
-/** The takings of one Sprint, and what came off them. */
+/** What one Sprint's visitors got out of the zoo, and what it cost them. */
 export interface Ledger {
-  /** Everyone who came through the gate, times the entry price. */
-  takings: number;
-  /** Given back to visitors whose day was not worth paying for. */
-  refunds: number;
-  /** How many visits were refunded. */
-  refundedVisits: number;
-  /** Fines for animals kept badly - one that got out, one with nowhere to move. */
-  fines: number;
-  /** Which animals were fined for, in the words the keeper would use. */
-  finedFor: string[];
-  /** takings - refunds - fines, which is what went into the bank. */
+  /** Everybody who came. */
+  visits: number;
+  /** Visits that were worth making: they got to something and stayed for it. */
+  worthMaking: number;
+  /** Visits that were not: nothing they could get to, or a day cut short by something missing. */
+  wasted: number;
+  /** Value earned - one for each visit that was worth making. */
+  earned: number;
+  /** Value lost for animals kept badly: one that got out, one with nowhere to move. */
+  penalties: number;
+  /** What was penalised, in the words the keeper would use. */
+  penalisedFor: string[];
+  /** earned - penalties, which is what the zoo is worth more by. */
   net: number;
 }
 
@@ -459,13 +461,17 @@ export interface ZooGameState {
   attendance: Record<SegmentId, number>;
   /** The most recent Sprint Review's simulation output. */
   lastReview: SimulationResult | null;
-  /** What the zoo has in the bank.
+  /** What the zoo is worth to the people who come to it, added up over every Sprint.
    *
-   *  Coins are the visitors' money and nothing else: they come in at the gate, from people who came
-   *  because of work that was Done and that they could use. Points never buy anything - a team that
-   *  could spend story points on ground would be a team whose estimates were a currency, which is
-   *  the single worst thing a Scrum game could teach. */
-  coins: number;
+   *  Not money. A visit that was worth making is worth one, and a visit that was not is worth
+   *  nothing - so this is the outcome of the work rather than a takings figure, and a zoo that
+   *  delivered plenty nobody could use has nothing to show for it. It is also what pays for growing:
+   *  a zoo earns the ground for its next area by being worth visiting, which is the honest link
+   *  between an outcome and the investment it justifies.
+   *
+   *  Points never buy anything. A team that could spend its estimates would be a team whose
+   *  estimates were a currency, which is the single worst thing a Scrum game could teach. */
+  value: number;
   /** What the last Review's gate took, gave back and was fined. Kept so the Review can show its
    *  working: a number that changes with no account of why is a score, not a consequence. */
   lastLedger: Ledger | null;
