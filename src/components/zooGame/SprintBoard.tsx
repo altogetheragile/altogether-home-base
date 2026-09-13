@@ -733,7 +733,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           )}
           <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
             {backlog.map((it) => (
-              <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => { onPull(it.id); setShowBacklog(false); }} onFix={() => setFixing(it.id)}
+              <PickCard key={it.id} item={it} why={notReady(it, state)} onPick={() => { onPull(it.id); setShowBacklog(false); }} onFix={() => setFixing(it.id)}
                 note={"Refining now is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints."} />
             ))}
           </div>

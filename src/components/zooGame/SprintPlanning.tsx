@@ -367,7 +367,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
               {items.map((it) => (
                 <div key={it.id} className={cn(candidates.some((c) => c.id === it.id) ? 'border-l-4 border-l-primary pl-1' : 'pl-1 opacity-60')}>
-                  <PickCard item={it} why={notReady(it)} readOnly onPick={() => {}} />
+                  <PickCard item={it} why={notReady(it, state)} readOnly onPick={() => {}} />
                 </div>
               ))}
             </div>
@@ -516,8 +516,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               <BacklogHeading count={items.length - chosen.length} onRefine={onRefine} />
               <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
-                  <PickCard key={it.id} item={it} why={notReady(it)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
-                    note={state.readyHabit && notReady(it)
+                  <PickCard key={it.id} item={it} why={notReady(it, state)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
+                    note={state.readyHabit && notReady(it, state)
                       ? 'You agreed at a Retrospective to forecast only what is Ready. Put this right first, or take it knowing what you agreed.'
                       : "You can put that right here, but a Product Backlog refined during the last Sprint would not need it - and this is Planning\u2019s time."} />
                 ))}

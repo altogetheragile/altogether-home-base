@@ -4,6 +4,7 @@ import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { riverY, BANK, spansTheWater } from './parkWater';
 import { tune } from './tuning';
+import { zonePlots, plotOrder } from './parkZones';
 // Re-exported below as well; a re-export is not a local binding, and this module asks the question
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
@@ -1478,7 +1479,7 @@ export function sprintCapacity(state: ZooGameState): { points: number; estimated
  *  to keep a couple of Sprints ready - enough that Planning has a real choice, not so much that the
  *  team has analysed work it may never build. */
 export function readyHorizon(state: ZooGameState): number {
-  const pts = availableItems(state).filter(isReady).reduce((n, it) => n + it.estimate, 0);
+  const pts = availableItems(state).filter((it) => isReady(it, state)).reduce((n, it) => n + it.estimate, 0);
   const cap = sprintCapacity(state).points;
   return cap > 0 ? Math.round((pts / cap) * 10) / 10 : 0;
 }
@@ -1979,15 +1980,74 @@ export function rewordSprintGoal(theirs: string, items: BacklogItem[]): { goal: 
   return { goal, note: notes.join(' ') };
 }
 
+// ============= Ground: the first area is given, the rest are earned =============
+//
+// A zoo that can build anywhere, for nothing, has no ordering decision worth having: every Product
+// Backlog item is just work, and "what is worth doing next" is a matter of taste. Ground costs
+// what the zoo is WORTH - the value its visitors got out of coming - so growing is paid for by
+// being good, and the Product Owner's argument becomes the real one: another animal in the area we
+// have, or the ground for the area we have not?
+//
+// The first area is the one the zoo was given. Everything between the areas - the paths, the
+// bridge, the way in - is the grounds, and the grounds are nobody's plot and always open: a zoo
+// that had to buy the ground its own entrance stands on would be a joke.
+
+/** What opening the ground for another area costs. A dial - see `tuning.ts`. */
+export const groundPrice = (): number => tune('tune.ground.price');
+
+/** The areas whose ground the zoo has. The first area, plus whatever has been opened since. */
+export function groundOpen(state: ZooGameState): string[] {
+  // A fixture may have no brief and no zones at all; a zoo with no areas has no ground to be short of.
+  const first = state.brief?.firstZone ?? state.zones?.[0];
+  const bought = state.ground ?? [];
+  return [...new Set([first, 'Grounds', ...bought].filter(Boolean))] as string[];
+}
+
+/** Whether this area's ground is the zoo's to build on. */
+export const hasGround = (state: ZooGameState, zone: string): boolean =>
+  groundOpen(state).includes(zone) || !zonePlots(state).has(zone);
+
+/** Why the ground for this area cannot be opened right now, or null if it can. */
+export function cannotOpenGround(state: ZooGameState, zone: string): string | null {
+  if (hasGround(state, zone)) return 'The zoo already has that ground.';
+  if (!plotOrder(state).includes(zone)) return 'That is not one of the areas in the brief.';
+  const short = groundPrice() - (state.value ?? 0);
+  if (short > 0) return `The zoo is worth ${state.value ?? 0}. Opening the ${zone} costs ${groundPrice()}, so it is ${short} short.`;
+  return null;
+}
+
+/** Open the ground for an area, paid for out of what the zoo is worth.
+ *
+ *  A decision, and recorded as one: it is the Product Owner spending what the visitors gave the zoo,
+ *  and the Retrospective should be able to look back at it beside the Sprint that paid for it. */
+export function openGround(state: ZooGameState, zone: string): ZooGameState {
+  if (cannotOpenGround(state, zone)) return state;
+  const price = groundPrice();
+  const opened = { ...state, value: (state.value ?? 0) - price, ground: [...(state.ground ?? []), zone] };
+  return note(opened, {
+    kind: 'placement', by: 'product_owner',
+    what: `The ground for the ${zone} was opened, out of what the zoo is worth to its visitors.`,
+    cost: `${price} of ${state.value ?? 0}`,
+  });
+}
+
 /** Why an item is not ready to be forecast, or null if it is. The team's Definition of Ready is
- *  their own agreement; these are the parts of it the game can see for itself. */
-export function notReady(item: BacklogItem): string | null {
+ *  their own agreement; these are the parts of it the game can see for itself.
+ *
+ *  Given the game as well as the item, it also answers the one that is about the zoo rather than
+ *  about the card: there is no ground to build it on yet. That belongs here rather than at the point
+ *  of starting, because it is a thing to find out at refinement - which is where the Product Owner
+ *  can do something about it - and not on the third morning of a Sprint. */
+export function notReady(item: BacklogItem, state?: ZooGameState): string | null {
+  if (state && item.zone && !hasGround(state, item.zone)) {
+    return `The zoo has no ground in the ${item.zone} yet - the Product Owner opens it at refinement`;
+  }
   if (item.category === 'epic') return 'Too big - split it into the pieces you could build';
   if (item.unsized) return 'Not sized yet - the Developers size it in Refinement';
   if (!item.acceptance.length) return 'No acceptance criteria agreed';
   return null;
 }
-export const isReady = (item: BacklogItem): boolean => notReady(item) === null;
+export const isReady = (item: BacklogItem, state?: ZooGameState): boolean => notReady(item, state) === null;
 
 /** Edit the Definition of Ready (a working agreement, so the team owns it). */
 export function setDefinitionOfReady(state: ZooGameState, dor: string[]): ZooGameState {
@@ -2680,7 +2740,7 @@ export const COACH_NUDGES: CoachNudge[] = [
 ];
 
 export function nextNudge(state: ZooGameState, seen: ReadonlySet<string> = new Set()): { id: string; text: string } | null {
-  const ready = availableItems(state).filter(isReady);
+  const ready = availableItems(state).filter((it) => isReady(it, state));
   const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
   const c: NudgeContext = {
     state,
@@ -2991,7 +3051,7 @@ export function artifactState(state: ZooGameState): {
     {
       id: 'product-backlog',
       exists: true, // it exists from the start, and for as long as the product does
-      summary: `${waiting.length} item${waiting.length === 1 ? '' : 's'} waiting, ${waiting.filter(isReady).length} of them ready`,
+      summary: `${waiting.length} item${waiting.length === 1 ? '' : 's'} waiting, ${waiting.filter((it) => isReady(it, state)).length} of them ready`,
       commitment: state.productGoal.trim() || 'No Product Goal set',
       commitmentMet: state.productGoal.trim().length > 0,
     },

@@ -586,7 +586,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           {upNext.length === 0
             ? <p className="text-xs text-muted-foreground">Nothing ready. The next Sprint starts with refinement.</p>
             : upNext.map((it) => (
-              <PbiCard key={it.id} item={it} state={notReady(it) ? 'locked' : 'backlog'}
+              <PbiCard key={it.id} item={it} state={notReady(it, state) ? 'locked' : 'backlog'}
                 note={it.carriedOver
                   ? `Carried over${it.wasEstimate && it.wasEstimate !== it.estimate ? `: it was ${it.wasEstimate} points, and what is left of it is ${it.estimate}` : ''}. What was built is kept.`
                   : undefined} />

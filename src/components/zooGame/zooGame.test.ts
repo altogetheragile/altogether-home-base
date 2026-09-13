@@ -1690,7 +1690,7 @@ describe('zoo game: refinement prepares later Sprints, and only Ready work is fo
 
   it('measures how far ahead the Product Backlog is prepared, in Sprints of ready work', () => {
     const s: ZooGameState = { ...bigCatsSplit(1), velocity: [20] };
-    const pts = availableItems(s).filter(isReady).reduce((n, it) => n + it.estimate, 0);
+    const pts = availableItems(s).filter((it) => isReady(it, s)).reduce((n, it) => n + it.estimate, 0);
     expect(readyHorizon(s)).toBeCloseTo(Math.round((pts / 20) * 10) / 10, 5);
     // nothing ready -> nothing prepared
     expect(readyHorizon({ ...s, backlog: s.backlog.map((it) => ({ ...it, unsized: true })) })).toBe(0);
@@ -2469,8 +2469,8 @@ describe('zoo game: a suggested Sprint Goal comes off the top of the Product Bac
     expect(s.backlog[0].zone).toBe('Big Cats');
     const top = goalCandidates(s);
     expect(top.length).toBeGreaterThan(0);
-    expect(top[0].id).toBe(availableItems(s).find(isReady)!.id);   // starts at the top
-    expect(top.every(isReady)).toBe(true);                          // and only what could be forecast
+    expect(top[0].id).toBe(availableItems(s).find((it) => isReady(it))!.id);   // starts at the top
+    expect(top.every((it) => isReady(it))).toBe(true);                          // and only what could be forecast
     expect(suggestSprintGoal(top)).toMatch(/Big Cats/i);
   });
 

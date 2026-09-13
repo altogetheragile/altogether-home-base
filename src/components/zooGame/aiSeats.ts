@@ -1,11 +1,12 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
 import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
 import { whereItStands } from './parkModel';
+import { plotOrder } from './parkZones';
 
 // A seat nobody is sitting in, played by the game.
 //
@@ -406,6 +407,17 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   if (state.phase === 'brief') {
     return { action: { type: 'WRITE_BACKLOG', brief: DEFAULT_BRIEF },
              says: `Here is what I want us to build: ${DEFAULT_BRIEF.zones.length} areas for families, and we open ${DEFAULT_BRIEF.firstZone} first.` };
+  }
+
+  // Growing the zoo: the biggest ordering decision there is, and this seat's to make. Only when the
+  // zoo can afford it AND there is work waiting on that ground - buying a field nobody has anything
+  // to put in is what a Product Owner does when they are optimising for having spent the money.
+  const growable = plotOrder(state)
+    .filter((z) => !cannotOpenGround(state, z))
+    .find((z) => state.backlog.some((it) => it.zone === z && it.status === 'backlog' && it.category !== 'epic'));
+  if (growable) {
+    return { action: { type: 'OPEN_GROUND', zone: growable },
+             says: `We have earned the ${growable}. Opening the ground for it out of what the zoo is worth - that is what being worth visiting buys us.` };
   }
 
   // Product Owner. They proposed it, so they are in - but it is still the team's to agree.

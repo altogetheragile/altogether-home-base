@@ -7,6 +7,7 @@ import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
+import { hasGround, groundPrice } from './engine';
 import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -519,6 +520,13 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         <rect x={-VERGE} y={-VERGE} width={CANVAS_W + VERGE * 2} height={PLAY_H + APRON_H + VERGE} fill="#bcc98e" />
         <path d={outlinePath(parkOutline())} fill="#8cc063" stroke="#5c7a3e" strokeWidth={2} opacity={0.98} />
         <clipPath id="park-edge"><path d={outlinePath(parkOutline())} /></clipPath>
+        {/* Rough ground: what an area looks like before the zoo owns it. A tone apart from the mown
+            green was not enough to read at a glance - the difference between ground you can build on
+            and ground you cannot is the biggest thing on this drawing, and it has to look like it. */}
+        <pattern id="rough-ground" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+          <rect width="18" height="18" fill="#93a271" />
+          <line x1="0" y1="0" x2="0" y2="18" stroke="#7b8a5c" strokeWidth="6" />
+        </pattern>
         {/* The treeline along the boundary, from the same points, and open along the front where
             the way in is - so the plan and the Increment agree about where the park stops. Seen
             from straight above, a tree is its canopy. */}
@@ -555,13 +563,25 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           const theme = themeFor(p.zone, order.indexOf(p.zone));
           const open = boxes.some((b) => b.item.zone === p.zone);
           const size = plotSize(p);
+          // Ground the zoo does not have is drawn as ground the zoo does not have: rough, unmown,
+          // with what it would cost written on it. It is the rest of the Product Backlog to scale,
+          // in the place it is going to be, and now with the price of getting there - which is the
+          // Product Owner's argument made into a picture.
+          const ours = hasGround(state, p.zone);
           return (
-            <g key={p.zone} data-part="zone-plot" data-zone={p.zone} data-open={open ? 'yes' : 'no'}>
+            <g key={p.zone} data-part="zone-plot" data-zone={p.zone} data-open={open ? 'yes' : 'no'}
+              data-ours={ours ? 'yes' : 'no'}>
               <rect x={p.x0} y={p.y0} width={size.w} height={size.h} rx={16}
-                fill={theme.plot} opacity={open ? 0.3 : 0.14}
-                stroke={theme.plotBorder} strokeWidth={2} strokeDasharray={open ? undefined : '11 9'} />
+                fill={ours ? theme.plot : 'url(#rough-ground)'} opacity={ours ? (open ? 0.3 : 0.14) : 0.5}
+                stroke={ours ? theme.plotBorder : '#6f7d52'} strokeWidth={2}
+                strokeDasharray={open && ours ? undefined : '11 9'} />
               <text x={p.x0 + 14} y={p.y0 + 24} fontSize={ch(15)} fontWeight={700} fill="#3f4a2f"
                 opacity={open ? 0.85 : 0.6}>{p.zone}</text>
+              {!ours && (
+                <text x={p.x0 + 14} y={p.y0 + 44} fontSize={ch(12)} fontWeight={600} fill="#4a5238" opacity={0.75}>
+                  not the zoo&rsquo;s ground &middot; {groundPrice().toLocaleString()}
+                </text>
+              )}
             </g>
           );
         })}
