@@ -83,7 +83,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
           )}
           {why && onFix && (
             <Button className="w-full" onClick={() => { setReading(false); onFix(); }}>
-              {item.category === 'epic' ? <><Scissors className="mr-1.5 h-4 w-4" /> Split it</> : <><Wand2 className="mr-1.5 h-4 w-4" /> Estimate it</>}
+              {item.category === 'epic' ? <><Scissors className="mr-1.5 h-4 w-4" /> Split it</> : <><Wand2 className="mr-1.5 h-4 w-4" /> Size it</>}
             </Button>
           )}
           {!readOnly && !why && (

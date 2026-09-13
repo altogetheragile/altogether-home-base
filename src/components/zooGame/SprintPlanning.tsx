@@ -238,7 +238,7 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
           run there is nothing measured to go on. */}
       <p className="text-[11px] text-muted-foreground">
         {basis.estimated
-          ? <><strong className="text-foreground">Estimated velocity</strong> - nothing measured at this Sprint length yet{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
+          ? <><strong className="text-foreground">Expected velocity</strong> - nothing measured at this Sprint length yet{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
           : <><strong className="text-foreground">Velocity</strong> - measured over your last {basis.measuredSprints} Sprint{basis.measuredSprints === 1 ? '' : 's'} of this length{basis.discarded > 0 ? `, ignoring ${basis.discarded} at a different length` : ''}.</>}
       </p>
       <div className="h-3 w-full overflow-hidden rounded-full bg-muted">

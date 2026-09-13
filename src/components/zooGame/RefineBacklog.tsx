@@ -110,7 +110,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       <Figure value={items.length} label="in the Product Backlog" tone="quiet" />
       <Figure value={`${horizon}`} label={`Sprint${horizon === 1 ? '' : 's'} ready`} tone={horizon > 3 ? 'attention' : horizon >= 1 ? 'done' : 'attention'}
         title="How far ahead the Product Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use." />
-      {unsized > 0 && <Figure value={unsized} label="to estimate" tone="coach" />}
+      {unsized > 0 && <Figure value={unsized} label="to size" tone="coach" />}
       <Figure value={ready.length} label="Ready" tone="done" icon={CheckCircle2} />
     </div>
   );
@@ -233,7 +233,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} onClose={() => setFocus(null)} />
       )}
 
-      <ActionBar hint={!canPlan ? 'Estimate at least one item so it is Ready to plan'
+      <ActionBar hint={!canPlan ? 'Size at least one item so it is Ready to plan'
         : first && !state.dodAgreed
           ? state.definitionOfDone.length
             ? 'Nobody has agreed the Definition of Done. You can start anyway.'

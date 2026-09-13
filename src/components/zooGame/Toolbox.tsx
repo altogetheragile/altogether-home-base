@@ -49,7 +49,7 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
         <div className="mb-3 flex items-center justify-between gap-2">
           <div>
             <h3 id="toolbox-title" className="text-lg font-bold">Toolbox</h3>
-            <p className="text-[11px] text-muted-foreground">Pick pieces to build your zoo from - each becomes a Product Backlog item you estimate, then tailor in the studio.</p>
+            <p className="text-[11px] text-muted-foreground">Pick pieces to build your zoo from - each becomes a Product Backlog item you size, then tailor in the studio.</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>Done</Button>
         </div>
@@ -94,7 +94,7 @@ export function Toolbox({ onPick, onClose }: { onPick: (item: ToolboxItem) => vo
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
-          <span className="text-[11px] text-muted-foreground">Added items appear in the Product Backlog, unsized - estimate them, then build.</span>
+          <span className="text-[11px] text-muted-foreground">Added items appear in the Product Backlog, unsized - size them, then build.</span>
           <Button size="sm" onClick={onClose}><X className="mr-1 h-3.5 w-3.5" /> Close toolbox</Button>
         </div>
       </div>

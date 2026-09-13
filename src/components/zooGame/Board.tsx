@@ -458,7 +458,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   // fallback for the places that have no takeover to open, and having both was the fault reported:
   // three screens to size one item, each one saying the same things again.
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
-  const [estimating, setEstimating] = useState<string | null>(null);
+  const [sizing, setSizing] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [showToolbox, setShowToolbox] = useState(false);
@@ -473,7 +473,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   const horizon = readyHorizon(state); // Sprints' worth of Ready work - refinement aims to keep 1-3
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
-  const estimatingItem = estimating ? items.find((i) => i.id === estimating) : null;
+  const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
 
   // Group the Product Backlog by zone (in first-appearance order) so a long list stays scannable;
   // reorder/drag still act on the whole ordered Backlog underneath.
@@ -511,7 +511,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
         // the work this screen is asking for, so it asks.
         <Button size="sm" className={cn(TONE.reflect.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-rose-700")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
-        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => (onFocus ? onFocus(it.id) : setEstimating(it.id))}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Estimate</Button>
+        <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => (onFocus ? onFocus(it.id) : setSizing(it.id))}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Size it</Button>
       ) : mode === 'refine' ? null
       : mode === 'plan' ? (
         // Sizing is refinement, not planning, so an item that is not ready for another reason has
@@ -663,7 +663,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
         {mode === 'view'
           ? 'Ordered by the Product Owner, most valuable first. This is what a Sprint Goal is built from - read it, then select the work in topic two.'
           : mode === 'refine'
-          ? 'Ordered by you (the PO). Estimate the unsized items and order the list, so the top items are Ready to plan. You do not have to finish this list. Take a Sprint\u2019s worth off the top and go; the rest gets built out through the Sprints, where refining happens alongside the build and takes a little of the Sprint.'
+          ? 'Ordered by you (the PO). Size the unsized items and order the list, so the top items are Ready to plan. You do not have to finish this list. Take a Sprint\u2019s worth off the top and go; the rest gets built out through the Sprints, where refining happens alongside the build and takes a little of the Sprint.'
           : mode === 'plan'
             ? 'Ordered by you (the PO). The Developers select the ready ones they forecast they can finish, and those become the Sprint Backlog.'
             : 'Pull a Ready item in by agreement, if it will not put the Sprint Goal at risk. Refining here is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints.'}
@@ -691,12 +691,12 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
             onSplit={(ids) => { onSplitEpic?.(splitting.id, ids); setSplitting(null); }} />
         </Workspace>
       )}
-      {estimatingItem && (
-        <Workspace title={`Size ${estimatingItem.name}`}
+      {sizingItem && (
+        <Workspace title={`Size ${sizingItem.name}`}
           subtitle="The Developers size the work, because they are the ones who will do it."
-          onClose={() => setEstimating(null)}>
-          <PlanningPoker item={estimatingItem} state={state} seed={state.gameSeed}
-            onCommit={(pts) => { onEstimate?.(estimatingItem.id, pts); setEstimating(null); }} />
+          onClose={() => setSizing(null)}>
+          <PlanningPoker item={sizingItem} state={state} seed={state.gameSeed}
+            onCommit={(pts) => { onEstimate?.(sizingItem.id, pts); setSizing(null); }} />
         </Workspace>
       )}
 
