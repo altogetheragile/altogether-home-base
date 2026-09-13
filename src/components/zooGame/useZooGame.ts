@@ -2,7 +2,7 @@ import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
-import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, spendDay, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, finishItem, moveInside, openGround} from './engine';
+import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, spendDay, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, finishItem, moveInside, openGround, startOnTheBoard} from './engine';
 import { applyParkChecks } from './parkChecks';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
@@ -35,9 +35,15 @@ const CLOCK_ONLY = new Set<ZooAction['type']>(['TICK_DAY', 'TICK_SCRUM', 'SET_CL
 function step(state: ZooGameState, action: ZooAction): ZooGameState {
   switch (action.type) {
     case 'START':
-      // There is no Product Backlog yet. The Scrum Team answers three questions about the zoo and
-      // writes one - because a Product Backlog that is simply there teaches that a Product Backlog is
-      // something you are handed rather than the Product Owner's to create and order.
+      // Straight onto the board. Sprint 1 arrives planned, the way a Sprint arrives on somebody's
+      // first day at a job: Priya wrote the Goal, the Developers took what they thought they could
+      // finish, and the clock is running. The screens that used to come first - the brief, the
+      // refinement, the three topics of Planning - are still in the game, and they are what the
+      // Retrospective hands over once the team has felt the lack of them.
+      return startOnTheBoard(initialZooState(action.gameSeed ?? state.gameSeed));
+    // Writing the Product Backlog from the three questions. No longer the way in, but still the way
+    // a group that wants to do it themselves can: the Scrum Master's menu offers it.
+    case 'START_FROM_THE_BRIEF':
       return { ...initialZooState(action.gameSeed ?? state.gameSeed), phase: 'brief', backlog: [] };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };

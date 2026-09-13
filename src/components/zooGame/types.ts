@@ -624,6 +624,7 @@ export type ZooAction =
   | { type: 'START_ITEM_AT'; id: string; pos: { x: number; y: number } }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'OPEN_GROUND'; zone: string }
+  | { type: 'START_FROM_THE_BRIEF'; gameSeed?: number }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }

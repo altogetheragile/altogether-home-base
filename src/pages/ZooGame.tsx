@@ -42,7 +42,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void }) {
-  const { state, start, setPhase, setGoal, openGround, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removeCopy, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
+  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removeCopy, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -61,7 +61,11 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // shippable increment reaching visitors.
   const [celebrate, setCelebrate] = useState(0);
   const [metTeam, setMetTeam] = useState(false);
-  const [onePager, setOnePager] = useState(true); // shown once per visit, before the intro
+  // "Scrum on one page" is a page about Scrum, and it used to be the first thing anybody met. It is
+  // the best page in the game to read SECOND: one screen and one button is what a first visit should
+  // be, and a learner who has built something has a reason to read it. Opened from the front page's
+  // own link, and from Learn, rather than standing in the doorway.
+  const [onePager, setOnePager] = useState(false);
   const [onePagerSeen, setOnePagerSeen] = useState(false); // ...and re-openable from the intro
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
@@ -298,7 +302,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
           return <ScrumOnePager onDone={() => setOnePager(false)} onSkipTeaching={() => { setTeaching(false); setOnePager(false); }}
             onBack={onePagerSeen ? () => setOnePager(false) : undefined} copy={copyProps} />;
         }
-        return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={start}
+        return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={start} onStartFromTheBrief={startFromTheBrief}
           teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
           onMarkTaught={markTaught}
           onBack={(state.teaching ?? true) ? () => { setOnePagerSeen(true); setOnePager(true); } : undefined}

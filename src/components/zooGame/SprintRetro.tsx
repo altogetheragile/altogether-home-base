@@ -4,6 +4,7 @@ import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
+import { DodHandover } from './DodHandover';
 import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
@@ -231,6 +232,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       {/* Not a scroll box. The Definition of Done is the Increment's commitment and the whole point
           of inspecting it here is to read it; a list that scrolls inside a card on a page that also
           scrolls is a list nobody reads to the end of. */}
+      {/* Sprint 1 has none, on purpose. This is where it is handed over, with what it would have
+          caught in this zoo this Sprint - and after that it is an ordinary editor again. */}
+      <DodHandover state={state} onSetDod={onSetDod} />
+
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
 
       {/* ...and the only place the Sprint's own length changes, because a fixed container is the
