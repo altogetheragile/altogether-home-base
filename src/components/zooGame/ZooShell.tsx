@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { GameNotesProvider } from './GameNotes';
 import type { GameNote } from './notesDock';
 import type { SeatName } from './useZooSessions';
-import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge, Coins } from 'lucide-react';
+import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge, Heart } from 'lucide-react';
 import { FOCUS, SURFACE } from './ui/tokens';
 
 /** The work tab's label per phase - what you are actually doing there. */
@@ -341,14 +341,14 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                 pill.event ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-white')}>
               {pill.text}
             </span>
-            {/* What the visitors have paid, less what was given back. The only money in the game:
-                points are a forecast and buy nothing, which is the rule this whole counter exists to
-                make visible - you cannot spend an estimate. */}
-            <span data-part="coins" title="Coins the visitors have paid, less refunds and fines"
-              className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-sm font-bold text-amber-200">
-              <Coins className="h-4 w-4" aria-hidden />
-              {(state.coins ?? 0).toLocaleString()}
-              <span className="sr-only"> coins</span>
+            {/* What the zoo is worth to the people who come to it: one for every visit that was
+                worth making. Not money and not points - a forecast buys nothing, which is the rule
+                this counter exists to make visible. */}
+            <span data-part="value" title="What the zoo is worth to its visitors: one for every visit worth making, less welfare penalties"
+              className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-sm font-bold text-emerald-200">
+              <Heart className="h-4 w-4" aria-hidden />
+              {(state.value ?? 0).toLocaleString()}
+              <span className="sr-only"> value</span>
             </span>
           </div>
 

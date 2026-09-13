@@ -149,14 +149,17 @@ Four decisions that replace what the note says:
   ignored by WebKit - animals and planting both. (#584)
 
 ### Money
-- **Coins are the visitors' money and there is no other kind.** Taken at the gate (4 a head), given
-  back when the day was not worth paying for, and fined away (200) when an animal is kept badly -
-  one that got out, one with nowhere to move. A visit is refunded when the visitor saw nothing at
-  all or their day was cut short by something the zoo did not provide, which is read from the
-  simulation rather than from a tuned threshold. An escape therefore costs the whole day's takings
-  AND a fine: the zone shut, so nobody saw anything. The header counts, and the Review shows the
-  arithmetic rather than a balance. **Points never buy anything** - a test proves the same zoo
-  estimated at four times the size banks exactly the same coins. (#595)
+- **What the zoo is worth is what its visitors got out of coming.** One for every visit that was
+  worth making; nothing for a visit that got to nothing, or that ended early because of something
+  the zoo does not have. Both are read from the simulation rather than from a tuned threshold.
+  Animals kept badly cost 50 each - one that got out, one with nowhere to move - so an escape costs
+  the whole day AND a penalty, because the zone shut and nobody saw anything.
+
+  Counted as visits rather than takings on purpose: an entry price would make the measure money, and
+  a zoo can make money by charging more for the same day out. No Scrum Team ever improved an outcome
+  that way. The header counts it, and the Review shows the arithmetic rather than a balance.
+  **Points never buy anything** - a test proves the same zoo sized at four times the work is worth
+  exactly the same. (#595, #596)
 
 ### Housekeeping worth remembering
 - **Say Product Backlog or Sprint Backlog**, never just "Backlog", everywhere a player can read it.
@@ -171,10 +174,10 @@ Four decisions that replace what the note says:
 In the order I would build them.
 
 ### 1. Ground is bought, not given
-The first area is free; every area after it is bought with coins the visitors paid, and Priya places
-it at refinement, because where an area sits is a value decision. The coins exist now, so this is
-next: what an area costs is the open question, and the scale to answer it against is that a zoo with
-one habitat worth visiting banks about 1,750 a Sprint and one that shut for an escape banks nothing.
+The first area is free; every area after it is earned by being worth visiting, and Priya places it at
+refinement, because where an area sits is a value decision. The measure exists now, so this is next:
+what an area costs is the open question, and the scale to answer it against is that a zoo with one
+habitat worth visiting earns about 440 a Sprint and one that shut for an escape earns nothing.
 
 ### 2. The flow rewrite
 The biggest piece, and the one that changes the shape of the game:
@@ -220,7 +223,7 @@ team".
 ### 7. Rules that must not drift
 Section 11 of the note, as tests rather than prose: acceptance criteria belong to the item and are
 never merged with the Definition of Done; the isometric view draws only what the model holds; ground
-is bought only with visitors' coins; the Definition of Done is the whole team's and Priya decides
+is earned only by being worth visiting; the Definition of Done is the whole team's and Priya decides
 what opens; Planning is the whole team's and refinement is mid-Sprint; Sam warns once.
 
 ---
@@ -241,7 +244,7 @@ what opens; Planning is the whole team's and refinement is mid-Sprint; Sam warns
 Al's, answered:
 - Sprint 2 Planning shows **all three topics**.
 - The terrain is **pre-drawn**; the player never draws the river.
-- **Coins** as proposed above.
+- **What a zoo is worth**, as proposed above.
 - **Six areas** is the right number for the plot.
 
 Still open:
