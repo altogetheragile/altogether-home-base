@@ -14,6 +14,7 @@ import { ParkPlan } from './ParkPlan';
 import { zonePlots } from './parkZones';
 import { DOCKED_BAR_H } from './ActionBar';
 import { CopyEditor } from './CopyEditor';
+import { DialEditor } from './DialEditor';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
@@ -410,6 +411,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {/* Polishing the teaching happens while playing, so the editor lives here rather than
                 in an admin screen. Admins only - it renders nothing for everyone else. */}
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
+            {/* The numbers, beside the words, for the same person for the same reason. */}
+            {copy && <DialEditor overrides={copy.overrides} onChanged={copy.onChanged} />}
             {/* The settings that were icons on the strip live in here now: they are set once, and a
                 gear beside the clock was a control competing with the thing it sits next to. */}
             <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} onMeasures={() => setLearnAt('value')} links={menuLinks} tools={tools} />

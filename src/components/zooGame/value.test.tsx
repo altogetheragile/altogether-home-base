@@ -88,7 +88,7 @@ describe('what keeping an animal badly costs', () => {
     const loose = reviewSprint(zoo('hedge'));
     expect(held.lastLedger!.penalties, 'a zoo that held its animals was penalised').toBe(0);
     expect(loose.lastLedger!.penalties, 'a lion in the car park cost nothing')
-      .toBeGreaterThanOrEqual(WELFARE_PENALTY);
+      .toBeGreaterThanOrEqual(WELFARE_PENALTY());
     expect(loose.lastLedger!.penalisedFor.join(' ')).toMatch(/got out of the Lion Enclosure/);
   });
 
@@ -104,7 +104,7 @@ describe('what keeping an animal badly costs', () => {
           : it)),
     } as ZooGameState;
     const after = reviewSprint(crowded);
-    expect(after.lastLedger!.penalties, 'a crowded habitat cost nothing').toBeGreaterThanOrEqual(WELFARE_PENALTY);
+    expect(after.lastLedger!.penalties, 'a crowded habitat cost nothing').toBeGreaterThanOrEqual(WELFARE_PENALTY());
     expect(after.lastLedger!.penalisedFor.join(' ')).toMatch(/nowhere to move/);
   });
 });

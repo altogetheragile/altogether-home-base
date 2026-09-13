@@ -12,8 +12,9 @@ const db = supabase as unknown as {
   };
 };
 import { applyCopyOverrides } from './copy';
+import { applyTuning } from './tuning';
 
-// Saved wording, laid over what the game shipped with.
+// Saved wording and saved numbers, laid over what the game shipped with.
 //
 // Loaded once before the game renders, so there is no flash of default text and no re-render
 // machinery: the content structures are simply correct by the time anything reads them. If the
@@ -41,6 +42,9 @@ export function useZooCopy() {
       }
       if (!live) return;
       applyCopyOverrides(map);
+      // The same table and the same fetch: the numbers a trainer has turned are saved as rows like
+      // any other override, keyed `tune.*`. One query, one load, and the same silence if it fails.
+      applyTuning(map);
       setOverrides(map);
       setReady(true);
     })();
