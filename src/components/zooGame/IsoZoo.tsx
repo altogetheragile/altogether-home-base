@@ -1386,15 +1386,15 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
    */
   const gateway = (id: string, x0: number, y0: number, x1: number, y1: number, banner: string, post: string) => {
     const w = x1 - x0, h = y1 - y0;
-    const pier = Math.max(8, w * 0.22);          // how wide each side of the gate is
-    const depthOf = Math.max(8, h * 0.34);        // how deep the piers are
+    const pier = Math.max(10, w * 0.16);          // how wide each side of the gate is
+    const depthOf = Math.max(10, h * 0.36);       // how deep the piers are
     const my0 = y0 + (h - depthOf) / 2, my1 = my0 + depthOf;
-    const pierH = Math.max(10, u * 26);
-    const beamH = Math.max(5, u * 11);
+    const pierH = Math.max(12, u * 30);
+    const beamH = Math.max(6, u * 13);
     // Paving, not a lighter shade of the posts: lightened brown is a patch of mud, and the forecourt
     // is the one part of this that says "you are expected here".
     const stone = '#cfc9bd';
-    const lift = (s: string, by: number) => s.split(' ')
+    const lift = (str: string, by: number) => str.split(' ')
       .map((q) => { const [px, py] = q.split(',').map(Number); return `${px},${(py - by).toFixed(1)}`; }).join(' ');
     const face = (f: { left: string; right: string; top: string }, fill: string, by = 0) => (
       <>
@@ -1405,27 +1405,39 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     );
     const left = boxFaces(x0, my0, x0 + pier, my1, pierH, u);
     const right = boxFaces(x1 - pier, my0, x1, my1, pierH, u);
-    // The banner spans pier to pier, standing on top of them.
-    const beam = boxFaces(x0 + pier * 0.35, my0 + depthOf * 0.22, x1 - pier * 0.35, my0 + depthOf * 0.62, beamH, u);
+    // The banner spans pier to pier and overhangs both, the way a ribbon sign does.
+    const beam = boxFaces(x0 - pier * 0.15, my0 + depthOf * 0.22, x1 + pier * 0.15, my0 + depthOf * 0.6, beamH, u);
     // `P` already lays the margin in, so these are drawn straight - adding it again puts the
     // forecourt in the next field along, which is exactly what it did.
     const court = drawPoly([{ x: x0, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y1 }, { x: x0, y: y1 }]);
-    // Lettering, as blocks: at this size a word is a smudge, and three even marks on a banner is
-    // what a sign looks like from across a car park.
-    const marks = Array.from({ length: 3 }, (_, i) => {
-      const t = 0.3 + i * 0.2;
-      const mx = x0 + pier * 0.4 + (x1 - x0 - pier * 0.8) * t;
-      const a = P(mx, my0 + depthOf * 0.25), b = P(mx, my0 + depthOf * 0.6);
-      return <line key={`m${i}`} x1={a.x} y1={a.y - pierH - beamH * 0.5} x2={b.x} y2={b.y - pierH - beamH * 0.5}
-        stroke={shade(banner, -34)} strokeWidth={Math.max(0.8, u * 1.4)} strokeLinecap="round" />;
+    // Stripes up the piers, which is what a zoo gate looks like and what tells it from a wall.
+    const stripes = [0, 1].flatMap((s) => {
+      const which = s === 0 ? { a: x0, b: x0 + pier } : { a: x1 - pier, b: x1 };
+      return Array.from({ length: 3 }, (_, i) => {
+        const t = (i + 1) / 4;
+        const sx = which.a + (which.b - which.a) * t;
+        const top = P(sx, my1), bot = P(sx, my1);
+        return <line key={`s${s}-${i}`} x1={top.x} y1={top.y - pierH} x2={bot.x} y2={bot.y}
+          stroke={shade(banner, -6)} strokeWidth={Math.max(0.8, u * 1.6)} strokeLinecap="round" opacity={0.9} />;
+      });
     });
+    // The word. Reported from playing it: an entrance needs "words indicating what it is" - and a
+    // gate you have to be told is a gate is not a gate. Drawn level rather than laid into the
+    // isometric grid, because a sign that is legible is worth more here than a sign that is
+    // geometrically honest, and at this size a skewed word is a smudge.
+    const mid = P((x0 + x1) / 2, my0 + depthOf * 0.4);
+    const size = Math.max(5, u * 9);
     push(depth((x0 + x1) / 2, (y0 + y1) / 2), (
       <g key={`gate-${id}`} data-part="gateway" data-item={id}>
         <polygon points={court} fill={stone} opacity={0.95} />
         {face(left, post)}
         {face(right, post)}
+        {stripes}
         {face(beam, banner, pierH)}
-        {marks}
+        <text x={mid.x} y={mid.y - pierH - beamH * 0.45} textAnchor="middle" dominantBaseline="middle"
+          fontSize={size} fontWeight={800} letterSpacing={size * 0.12}
+          fill="#fff" stroke={shade(banner, -40)} strokeWidth={size * 0.06} paintOrder="stroke"
+          style={{ pointerEvents: 'none' }}>ZOO</text>
       </g>
     ));
   };
