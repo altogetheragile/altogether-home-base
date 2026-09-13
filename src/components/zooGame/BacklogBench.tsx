@@ -97,7 +97,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
     );
   }
 
-  const why = notReady(item);
+  const why = notReady(item, state);
   const talk = refinementTalk(state, item);
   return (
     <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2.5', className)}>

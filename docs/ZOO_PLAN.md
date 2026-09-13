@@ -161,6 +161,19 @@ Four decisions that replace what the note says:
   **Points never buy anything** - a test proves the same zoo sized at four times the work is worth
   exactly the same. (#595, #596)
 
+- **Ground is earned, not given.** The zoo starts with the area it was given and the grounds between
+  the areas; every other area costs what the zoo is WORTH to its visitors (1,200 by default, about
+  three good Sprints). Work in an area the zoo has no ground in is not Ready to plan, and says so, so
+  opening ground is how a whole branch of the Product Backlog becomes plannable - which makes the
+  Product Owner's argument the real one: another animal in the area we have, or the ground for the
+  area we have not? The park draws unbought ground as rough ground with its price on it, the decision
+  goes in the log, and a Product Owner seat played by the game will buy ground it has earned but
+  never a field with nothing waiting to go in it. (#602)
+- **The numbers are dials.** What a visit is worth, what keeping an animal badly costs, and what
+  ground costs are editable by an admin from inside the game, saved in `zoo_copy` beside the teaching
+  copy, read live so a dial turned between Sprints lands at the next Review. There are no dials for
+  the lessons, and the panel says so. (#601)
+
 ### Housekeeping worth remembering
 - **Say Product Backlog or Sprint Backlog**, never just "Backlog", everywhere a player can read it.
   (#569)
@@ -177,13 +190,7 @@ Four decisions that replace what the note says:
 
 In the order I would build them.
 
-### 1. Ground is bought, not given
-The first area is free; every area after it is earned by being worth visiting, and Priya places it at
-refinement, because where an area sits is a value decision. The measure exists now, so this is next:
-what an area costs is the open question, and the scale to answer it against is that a zoo with one
-habitat worth visiting earns about 440 a Sprint and one that shut for an escape earns nothing.
-
-### 2. The flow rewrite
+### 1. The flow rewrite
 The biggest piece, and the one that changes the shape of the game:
 - **Start on the board.** Sprint 1 arrives pre-planned - Priya wrote the goal, the Developers chose
   the work. One screen, one button, under a minute to first action.
@@ -194,7 +201,7 @@ The biggest piece, and the one that changes the shape of the game:
 - **Refinement is mid-Sprint** and costs something (see the open question below).
 - **AI wands only after the learner has tried.**
 
-### 3. Product Goals as a series
+### 2. Product Goals as a series
 Al's idea, not yet designed: PG1 delivers the Big Cats; achieving it lets the player set the next
 one, which is a new learning layer. Today there is one permanent Product Goal measured by happiness -
 which can never be *met*, and so teaches nothing about achieving a goal and setting another.
@@ -203,7 +210,7 @@ My view on the shape: a Product Goal has to be an outcome the Review can judge (
 reachable, and its visitors happy above a threshold), and the next one should be a choice between
 outcomes with visible trade-offs rather than a free-text box, or it cannot be measured.
 
-### 4. The visual system
+### 3. The visual system
 From the note's section 9, and from "make everything more distinct and pop more":
 - **One meaning per colour.** Orange does about five jobs today; it should mean "the next action" and
   nothing else.
@@ -211,20 +218,20 @@ From the note's section 9, and from "make everything more distinct and pop more"
 - **Components**: sticker, section fill, tag, point disc, bar-with-marker for every number that
   matters, speech sticker in the speaker's hue, one spotlight per screen, 40px icon buttons.
 
-### 5. Sam and Priya
+### 4. Sam and Priya
 Two voices, never saying the same thing. Sam coaches - once per new screen, at the Retro to name the
 habit, once as a warning before the designed mistake, then lets it happen. Priya is value and order,
 and in Sprint 1 she opens the shoddy item because the lesson needs her to. Most "What is this?"
 buttons go.
 
-### 6. The deletions
+### 5. The deletions
 The note's section 10. Several are already gone (the takeover window, the six-tool palette, "Holds",
 the Backlog questionnaire). The rest: the intro screen, Meet the Team as cards, the Refine screen
 before Sprint 1, the in-hand card, "Next step", "Plan 0/4", "More controls", the always-on Definition
 of Done block, the instruction line, the Increment pill on the Sprint Backlog, "3 Developers on the
 team".
 
-### 7. Rules that must not drift
+### 6. Rules that must not drift
 Section 11 of the note, as tests rather than prose: acceptance criteria belong to the item and are
 never merged with the Definition of Done; the isometric view draws only what the model holds; ground
 is earned only by being worth visiting; the Definition of Done is the whole team's and Priya decides

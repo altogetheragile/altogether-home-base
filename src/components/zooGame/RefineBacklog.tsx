@@ -5,6 +5,7 @@ import { ExplainButton } from './Explain';
 import { availableItems, readyHorizon } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductBacklogSidebar } from './Board';
+import { GroundPanel } from './GroundPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS, TONE, type Tone } from './ui/tokens';
@@ -70,6 +71,8 @@ interface RefineBacklogProps {
   onDuplicatePbi: (id: string) => void;
   /** Move on to Sprint Planning with the refined Backlog. */
   onPlan: () => void;
+  /** Open the ground for another area, out of what the zoo is worth. The Product Owner's call. */
+  onOpenGround?: (zone: string) => void;
   /** Agreed once, here, before the first Sprint. After that only a Retrospective changes it. */
   onSetSprintDays?: (days: number) => void;
   /** The Increment's commitment, agreed before the first Sprint. */
@@ -91,7 +94,7 @@ interface RefineBacklogProps {
  *  worth ready at the top is enough, and the rest is built out through the Sprints - which
  *  is what actually happens, and what costs capacity you can see. You can still tidy the
  *  list here; the screen just stops telling you to finish it first. */
-export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan, teachCard, onMarkTaught }: RefineBacklogProps) {
+export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan, onOpenGround, teachCard, onMarkTaught }: RefineBacklogProps) {
   const [lengthOpen, setLengthOpen] = useState(true);
   // Which item is on the bench. Nothing, until you pick one.
   const [focus, setFocus] = useState<string | null>(null);
@@ -220,6 +223,12 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
             numbered. Reported from playing it: "when we estimate size then we need to understand
             what Done looks like." Quite so - the bar the work has to meet is part of how big the
             work is, and a team sizing before it has agreed one is sizing against a guess. */}
+        {/* What the zoo cannot build on yet, and what it would cost to be able to. Here because
+            refinement is where the Product Backlog's order is argued about, and this is the biggest
+            ordering decision there is: another animal in the area we have, or the ground for the
+            area we have not. */}
+        <GroundPanel state={state} onOpenGround={onOpenGround} />
+
         {first ? (
           <Step n={3} title="Then get the top ready" done={horizon >= 1} right={figures} />
         ) : (

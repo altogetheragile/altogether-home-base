@@ -488,7 +488,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
 
   const renderItem = (it: BacklogItem, idx: number) => {
     const on = selected?.has(it.id);
-    const why = notReady(it); // null once it meets the Definition of Ready
+    const why = notReady(it, state); // null once it meets the Definition of Ready - in THIS zoo
     const isOpen = expandedItems.has(it.id);
     // Whether the item is Ready is a fact ABOUT the item, so it reads with the badges; what you can
     // do about it is a button, and sits with the actions. Keeping them apart is what lets a row fit

@@ -456,7 +456,10 @@ describe('the isometric projection', () => {
     const shapeAt = (turn: number) => render(<IsoZoo state={state} height={460} turn={turn} />)
       .container.querySelector('svg[role="img"]')!.querySelector('polygon')!.getAttribute('points');
     expect(shapeAt(1)).not.toBe(shapeAt(0));
-  });
+    // Six full parks, drawn with everything in them. Slow on purpose and given the room to be:
+    // at the default five seconds it timed out under load about one run in six, which is a test
+    // that cries wolf rather than a test that has found something.
+  }, 20_000);
 
   it('answers a pointer on a park that has been turned', () => {
     // The pointer arrives on the park as it is being LOOKED at; the zoo is laid out on the park as

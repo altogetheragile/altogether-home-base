@@ -444,6 +444,11 @@ export interface ZooGameState {
   useUserStories: boolean;
   /** The Product Backlog: dynamic and emergent (signals add to it). */
   backlog: BacklogItem[];
+  /** The areas whose GROUND the zoo has. The first area is the one it was given; everything after
+   *  it is opened by the Product Owner, paid for out of what the zoo is worth to its visitors.
+   *  Optional because a game saved before ground was bought has none, and reads as the first area
+   *  only - which is what it was playing with anyway. */
+  ground?: string[];
   /** The themes / zones known so far. */
   zones: string[];
   sprintNumber: number;
@@ -618,6 +623,7 @@ export type ZooAction =
   | { type: 'PLAN_ITEM_SHAPE'; id: string; patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string } }
   | { type: 'START_ITEM_AT'; id: string; pos: { x: number; y: number } }
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
+  | { type: 'OPEN_GROUND'; zone: string }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
