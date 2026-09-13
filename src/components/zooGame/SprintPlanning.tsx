@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, suggestTasks } from './engine';
+import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, suggestTasks } from './engine';
 
 
 import { TaskEditor, SplitEpicPanel } from './Board';
@@ -254,6 +254,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // Where the Scrum Team is in the event, not where this browser is. Sprint Planning has three
   // topics in an order, and a topic each player was privately on meant the seats played by the
   // game could not tell which one the team was in.
+  // What the wand changed about the Goal the learner wrote, and why. Cleared the moment they type
+  // again: it is feedback on a sentence, not a notice that hangs about after the sentence is gone.
+  const [reworded, setReworded] = useState<string | null>(null);
   const step: Step = state.planningTopic ?? 'why';
   const setStep = (s: Step) => { onNavigateStep?.(); onSetTopic?.(s); };
   // The forecast is shared state, not this component's: another player at Planning must see
@@ -378,15 +381,45 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               </div>
               {/* The wizards are the game offering to do a piece of work for you, so they read as an
                   offer: filled, not a tinted ghost of the primary action. */}
+              {/* The wizards are the game offering to do a piece of work for you, so they read as an
+                  offer: filled, not a tinted ghost of the primary action.
+
+                  What it offers depends on whether you have had a go. With something in the box it
+                  REWORDS what you wrote and says what it changed, which is the teaching move - your
+                  idea survives and the game tells you what a Goal needs that your sentence did not
+                  have. Writing one from nothing does the one piece of thinking this screen exists
+                  for, so that is only what it does when there is nothing to work with. */}
               <Button size="sm" className={cn(WIZARD, 'h-8 gap-1 px-3 text-xs font-semibold')}
-                onClick={() => onSetSprintGoal(suggestSprintGoal(goalCandidates(state)))}
-                title="Writes a first draft from what is ready in the Product Backlog. Wording only - the Goal is the Scrum Team's to agree.">
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> Word it for me
+                onClick={() => {
+                  if (!state.sprintGoal.trim()) { onSetSprintGoal(suggestSprintGoal(goalCandidates(state))); setReworded(null); return; }
+                  const out = rewordSprintGoal(state.sprintGoal, goalCandidates(state));
+                  onSetSprintGoal(out.goal);
+                  setReworded(out.note);
+                }}
+                title={state.sprintGoal.trim()
+                  ? 'Puts what you wrote into shape, and says what it changed. Your words, the Goal\u2019s shape.'
+                  : "Writes a first draft from what is ready in the Product Backlog. Wording only - the Goal is the Scrum Team's to agree."}>
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> {state.sprintGoal.trim() ? 'Reword mine' : 'Word it for me'}
               </Button>
             </div>
-            <textarea value={state.sprintGoal} onChange={(e) => onSetSprintGoal(e.target.value)} rows={3} autoFocus
-              placeholder="One outcome for this Sprint - e.g. &ldquo;Open the Savanna so families have more to see.&rdquo;"
-              className="w-full resize-none rounded-lg border-2 border-primary/40 bg-background px-3 py-2 text-lg font-medium leading-snug outline-none focus:border-primary" />
+            {/* The example is under the box, not inside it. As a placeholder it was set in the same
+                large type as the Goal itself and ran off the end of its own line: reported from
+                playing it, "text is large and hard to read the example template for a Sprint Goal".
+                A placeholder says what the box is for; an example is something you read beside it. */}
+            <textarea value={state.sprintGoal} onChange={(e) => { onSetSprintGoal(e.target.value); setReworded(null); }} rows={3} autoFocus
+              placeholder="One outcome for this Sprint"
+              className="w-full resize-none rounded-lg border-2 border-primary/40 bg-background px-3 py-2 text-base font-medium leading-snug outline-none focus:border-primary" />
+            <p className="text-xs leading-snug text-muted-foreground">
+              For example: <span className="italic">Open the Savanna so families have more to see.</span>
+              {' '}Name what it gives visitors, not the work.
+            </p>
+            {/* What the rewording changed, and why. The point of the wand: not a better sentence
+                handed over, but the reason yours was not one yet. */}
+            {reworded && (
+              <p data-part="reworded" className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs leading-snug">
+                <span className="font-semibold">Reworded.</span> {reworded}
+              </p>
+            )}
             {/* Who has agreed. A Product Owner proposes how the product could increase in
                 value; the whole Scrum Team then defines the Goal - so this row is the
                 difference between a sentence somebody typed and a Sprint Goal. Re-wording it
