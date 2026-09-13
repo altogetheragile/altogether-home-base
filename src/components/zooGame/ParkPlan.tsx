@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { ZooGameState, ZooConnector } from './types';
+import type { ZooGameState, ZooConnector, BacklogItem } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { themeFor } from './zoneTheme';
@@ -7,7 +7,7 @@ import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
-import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater } from './design';
+import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
 
@@ -44,6 +44,40 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
   exhibit: { fill: '#e8b76a', stroke: '#a97a2e' },
   default: { fill: '#cfe0c2', stroke: '#7f9a72' },
 };
+
+/** What a habitat looks like from above, in the choices somebody has made about it.
+ *
+ *  Reported from playing it, twice and five minutes apart: "nothing changes on the enclosure image
+ *  to indicate the feature has been set - e.g. the ground colour, or barrier type or colour", and
+ *  "I lost the ground setting again". The second was the first: the plan painted every habitat the
+ *  same category beige whatever was chosen, so a ground colour that had been set perfectly well
+ *  looked exactly like one that had been forgotten - and there was no way to tell a choice from a
+ *  loss by looking, which is the whole point of building in place.
+ *
+ *  The isometric view has painted the chosen ground and fence since the day that was reported there.
+ *  This is the eighth time the two drawings have disagreed about the same piece of state.
+ *
+ *  What is round it reads as what it is: a hedge is a soft green line, a fence is a line, a high
+ *  fence is a thicker one, a wall is thick and solid, glass is pale and cold. The colour is whatever
+ *  was chosen for it, because that is the choice on the strip.
+ */
+function penLook(item: BacklogItem, living: BacklogItem[]): { fill: string; stroke: string; width: number } {
+  const design = currentDesign(item);
+  const barrier = barrierOf(design, living);
+  const WEIGHT: Record<string, { width: number; stroke: string }> = {
+    hedge: { width: 4, stroke: '#4f7a3a' },
+    fence: { width: 2.5, stroke: '#8a6a3b' },
+    high: { width: 4.5, stroke: '#6b5b45' },
+    wall: { width: 7, stroke: '#8d8d8d' },
+    glass: { width: 3, stroke: '#9ec8dd' },
+  };
+  const look = WEIGHT[barrier.key] ?? WEIGHT.fence;
+  return {
+    fill: design.colors?.ground ?? FILL.enclosure.fill,
+    stroke: design.colors?.fence ?? look.stroke,
+    width: look.width,
+  };
+}
 
 /** What colour a thing is drawn in. Scenery is not one colour: a river is water, a bridge is a
  *  deck, rocks are stone. Drawn as one flat green they all read as "some planting", which is why a
@@ -571,11 +605,23 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 // ends - water with no bank.
                 clipPath={b.item.category === 'flora' ? 'url(#park-edge)' : undefined}
                 fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill)
-                  : b.item.category === 'enclosure' && isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id), b.item)
-                    ? tankWater(currentDesign(b.item))
+                  : b.item.category === 'enclosure'
+                    ? (isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id), b.item)
+                      ? tankWater(currentDesign(b.item))
+                      : penLook(b.item, state.backlog.filter((it) => it.enclosureId === b.item.id)).fill)
                     : c.fill}
                 fillOpacity={b.underWay ? 0.45 : 1}
-                stroke={on ? '#e6842a' : c.stroke} strokeWidth={on ? 4 : 2}
+                // What is holding them in, as the line round the pen: its kind decides the weight,
+                // and its colour is the one that was chosen. Still dashed while it is being built,
+                // because "not Done" is a different thing from "made of hedge".
+                stroke={on ? '#e6842a'
+                  : b.item.category === 'enclosure'
+                    ? penLook(b.item, state.backlog.filter((it) => it.enclosureId === b.item.id)).stroke
+                    : c.stroke}
+                strokeWidth={on ? 4
+                  : b.item.category === 'enclosure'
+                    ? penLook(b.item, state.backlog.filter((it) => it.enclosureId === b.item.id)).width
+                    : 2}
                 strokeDasharray={b.underWay ? '8 6' : undefined} />
               {/* A building, in the colours somebody is choosing for it.
                   It was a flat blue-grey box, the same one for a cafe and a lavatory block, so every
@@ -648,7 +694,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
 
               {/* The animals inside their fence, big enough to see and to take hold of. */}
               {b.animals.map((a, i) => {
-                const members = Math.max(1, groupMembers(a.design?.group).length);
+                // The group being CHOSEN, not the one last delivered. Reported from playing it:
+                // "when I select Family for Lion should I see multiple dots to indicate a pride?"
+                // You should, and the Increment drew them - this read the saved design, so the plan
+                // stayed a single lion the whole time the choice was in hand. The same fault the
+                // coat had, two lines below, in the same element.
+                const members = Math.max(1, groupMembers(currentDesign(a).group).length);
                 // Twelve, not six. A family is six at most, so this only ever bit a shoal - and a
                 // shoal of forty drawn as six dots is a picture that disagrees with the card beside
                 // it about how many there are.
@@ -755,6 +806,16 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             <rect x={ghost.x - ghost.w / 2} y={ghost.y - ghost.h / 2} width={ghost.w} height={ghost.h} rx={6}
               fill={ghost.ok ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)'}
               stroke={ghost.ok ? '#059669' : '#dc2626'} strokeWidth={3} />
+            {/* WHAT is being put down, not only whether it may go here. With two things in Doing it
+                is the whole question: reported from playing it, somebody placing the Entrance was
+                told "outside the Big Cats area" - which was true, and was about the Lion they were
+                still holding. A refusal that does not name what it refused is a puzzle. */}
+            {placing && (
+              <text x={ghost.x} y={ghost.y - ghost.h / 2 - 8} textAnchor="middle"
+                fontSize={ch(13)} fontWeight={700} fill={ghost.ok ? '#047857' : '#b91c1c'}>
+                {state.backlog.find((it) => it.id === placing.id)?.name ?? 'Put it down'}
+              </text>
+            )}
             {!ghost.ok && ghost.why && (
               <text x={ghost.x} y={ghost.y} textAnchor="middle" fontSize={ch(14)} fontWeight={700} fill="#b91c1c">{ghost.why}</text>
             )}

@@ -129,7 +129,12 @@ describe('putting something down', () => {
       clientX: ((elsewhere.x0 + elsewhere.x1) / 2 - vx) * k + (W - vw * k) / 2,
       clientY: ((elsewhere.y0 + elsewhere.y1) / 2 - vy) * k + (H - vh * k) / 2,
     });
-    const why = container.querySelector('[data-part="ghost"] text')?.textContent ?? '';
+    // The whole ghost, because it says two things now: WHAT is being put down and why it may not go
+    // here. With two things in Doing the first half is the one people need - a refusal that does not
+    // name what it refused is a puzzle.
+    const ghost = container.querySelector('[data-part="ghost"]')!;
+    expect(ghost.textContent, 'the ghost does not say what it is putting down').toContain(enc.name);
+    const why = [...ghost.querySelectorAll('text')].map((t) => t.textContent).join(' ');
     expect(why, `dropping a ${enc.zone} habitat on the ${elsewhere.zone} was allowed`)
       .toMatch(new RegExp(`outside the ${enc.zone} area`));
   });
