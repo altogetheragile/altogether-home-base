@@ -5,6 +5,7 @@ import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
 import { DodHandover } from './DodHandover';
+import { NextRung } from './NextRung';
 import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
@@ -26,6 +27,8 @@ interface SprintRetroProps {
   state: ZooGameState;
   onNextSprint: (improvement: string) => void;
   onSetDod: (dod: string[]) => void;
+  /** Take on a practice from the ladder. The Retrospective is the only place one arrives from. */
+  onAdopt?: (key: string) => void;
   /** The one place the Sprint's length can change - inspect and adapt, from the next Sprint. */
   onSetSprintDays?: (days: number) => void;
   /** The Retrospective teaching card, shown inside the "?" rather than on the page. */
@@ -36,7 +39,7 @@ interface SprintRetroProps {
 
 /** Retrospective: inspect how the Scrum Team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
-export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, teachCard, onMarkTaught }: SprintRetroProps) {
+export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprintDays, teachCard, onMarkTaught }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [step, setStep] = useState<Step>('inspect');
   const questions = retroQuestions(state);
@@ -235,6 +238,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onSetSprintDays, te
       {/* Sprint 1 has none, on purpose. This is where it is handed over, with what it would have
           caught in this zoo this Sprint - and after that it is an ordinary editor again. */}
       <DodHandover state={state} onSetDod={onSetDod} />
+
+      {/* ...and after that, one rung of the ladder per Retrospective: the practice whose absence has
+          been costing this team something, named against the Sprint that just happened. */}
+      {onAdopt && <NextRung state={state} onAdopt={onAdopt} />}
 
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
 

@@ -318,6 +318,13 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   } else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
   else if (draft.category === 'enclosure') item = { ...base, enclosureSize: draft.enclosureSize ?? 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
+  // A team that has not taken refinement on cannot size anything, so an item that arrived unsized
+  // would be an item they could never plan. The Developers size it off-screen, the same as they
+  // sized the Product Backlog before the learner arrived - and when the team DOES take refinement
+  // on, sizing becomes theirs and new work arrives waiting for them.
+  if (!adopted(state, 'refinement') && item.unsized) {
+    item = { ...item, unsized: false, estimate: item.trueSize ?? DEFAULT_SIZE[draft.category] ?? 5 };
+  }
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
   return chargeRefine(state, { ...state, backlog: [...state.backlog, item], zones }, REFINE_COSTS.addPbi);
 }
@@ -2625,6 +2632,90 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
   };
 }
 
+// ============= The ladder: one practice per Sprint, and only once it is missed =============
+//
+// Scrum has a lot of parts, and a game that hands over all of them on the first screen teaches the
+// shape of a syllabus rather than the point of a practice. So the game starts with the smallest
+// thing that is still Scrum - a Sprint, a board, a Review, a Retrospective - and every Retrospective
+// hands over ONE more practice, named against what its absence just cost.
+//
+// A practice that has not been adopted is ABSENT. Not greyed out, not padlocked, not behind a
+// tooltip saying you will get this later: absent. A padlock teaches that the game is withholding
+// something; an absence teaches nothing at all, which is right, because a learner who has not missed
+// Sprint Planning has no question that Sprint Planning is the answer to.
+//
+// The order is the order the pain arrives in, and each rung is unlocked by the Sprint that hurt:
+//
+//   1. The Definition of Done - after a Sprint where anything could be called finished.
+//   2. Sprint Planning     - after two Sprints of being handed somebody else's forecast.
+//   3. Refinement          - after planning work that turned out not to be ready.
+//   4. The Sprint bet      - after three Reviews of finding out, without having predicted.
+//
+// This is deliberately not configurable. A trainer can turn the game's numbers; the order a learner
+// meets Scrum in is the teaching, and it is the one thing the game is actually opinionated about.
+
+export interface Rung {
+  key: string;
+  /** What the team is being offered, in their words. */
+  label: string;
+  /** What its absence has been costing, said at the Retrospective that offers it. */
+  because: string;
+  /** What it changes about the next Sprint. */
+  changes: string;
+}
+
+export const LADDER: Rung[] = [
+  {
+    key: 'definition-of-done',
+    label: 'A Definition of Done',
+    because: 'Nobody had agreed what finished meant, so finished meant whatever anybody said it meant.',
+    changes: 'Every item is held to the same bar before it can be released.',
+  },
+  {
+    key: 'sprint-planning',
+    label: 'Sprint Planning',
+    because: 'Somebody else wrote the Goal and chose the work, and you built what you were handed.',
+    changes: 'The next Sprint starts with the three topics: why it is valuable, what you forecast, and how you will do it.',
+  },
+  {
+    key: 'refinement',
+    label: 'Product Backlog refinement',
+    because: 'Work arrived in the Sprint before anybody had looked at it closely enough to forecast it.',
+    changes: 'You can size, split and order the Product Backlog during a Sprint - which costs a little of the day.',
+  },
+  {
+    key: 'sprint-bet',
+    label: 'A bet on the Sprint',
+    because: 'Every Review has told you what the visitors did. None of them has told you whether you were right.',
+    changes: 'Planning asks what you think will happen, and the Review says whether it did.',
+  },
+];
+
+/** Whether the team has taken a practice on. The Definition of Done is a list rather than a flag, so
+ *  it answers for itself: a team that has one has adopted it, whoever wrote it. */
+export function adopted(state: ZooGameState, key: string): boolean {
+  if (key === 'definition-of-done') return state.definitionOfDone.length > 0;
+  return (state.adopted ?? []).includes(key);
+}
+
+/** The next practice to offer, or null when the team has them all. One per Retrospective: a
+ *  Retrospective that hands over three things is a syllabus with a wrapper on it. */
+export function nextRung(state: ZooGameState): Rung | null {
+  return LADDER.find((r) => !adopted(state, r.key)) ?? null;
+}
+
+/** Take a practice on. From the Retrospective's Adapt step, where deciding how the team will work is
+ *  the whole business of the event. */
+export function adopt(state: ZooGameState, key: string): ZooGameState {
+  if (!LADDER.some((r) => r.key === key) || adopted(state, key)) return state;
+  const rung = LADDER.find((r) => r.key === key)!;
+  return note({ ...state, adopted: [...(state.adopted ?? []), key] }, {
+    kind: 'dod', by: 'scrum_master',
+    what: `The Scrum Team took on ${rung.label.toLowerCase()}.`,
+    cost: rung.changes,
+  });
+}
+
 export function startNextSprint(state: ZooGameState, improvement: string): ZooGameState {
   // The chosen improvement has a mechanical effect next Sprint, so inspect-and-adapt
   // actually changes how the team works (not just a note): "finish fewer" tightens the
@@ -2637,7 +2728,7 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
   const refineHabit = state.refineHabit || /set aside time/i.test(imp);
   // ...and forecast only what is Ready: Planning says so before an unready item goes in.
   const readyHabit = state.readyHabit || /definition of ready/i.test(imp);
-  return {
+  const next: ZooGameState = {
     ...state,
     // Straight to Planning. Refinement is not a step between Sprints - there is no gap between
     // Sprints - it is work the Developers do DURING one, preparing the Product Backlog for later ones.
@@ -2655,6 +2746,44 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     readyHabit,
     improvements: imp ? [...state.improvements, imp] : state.improvements,
   };
+  // ...unless the team has not taken Sprint Planning on yet, in which case the next Sprint arrives
+  // planned, exactly as the first one did. Being handed somebody else's forecast twice is what makes
+  // the third Sprint's Planning worth having: a learner who has never been handed one has no
+  // question that "we plan it ourselves" is the answer to.
+  return adopted(state, 'sprint-planning') ? next : planTheNextSprint(next);
+}
+
+/** The next Sprint, planned for the team the way Sprint 1 was: the Goal written, the work chosen off
+ *  the top of what is Ready, their plan on each card, and the board open. */
+function planTheNextSprint(state: ZooGameState): ZooGameState {
+  const room = sprintCapacity(state).points;
+  const here = availableItems(state).filter((it) => isReady(it, state) && it.zone !== 'Grounds');
+  const chosen: string[] = [];
+  let pts = 0;
+  for (const it of here) {
+    if (chosen.length >= 3) break;
+    if (pts + it.estimate > room && chosen.length) continue;
+    chosen.push(it.id);
+    pts += it.estimate;
+  }
+  if (!chosen.length) return state;   // nothing Ready: the team gets Planning to sort it out in
+
+  let s = state;
+  for (const id of chosen) {
+    const it = s.backlog.find((x) => x.id === id);
+    if (it && !(it.tasks ?? []).length) s = setItemTasks(s, id, suggestTasks(it));
+  }
+  const home = (id: string) => s.backlog.find((x) => x.id === id)?.enclosureId;
+  const take: string[] = [];
+  for (const id of chosen) {
+    const pen = home(id);
+    if (pen && chosen.includes(pen) && !take.includes(pen)) take.push(pen);
+    if (!take.includes(id)) take.push(id);
+  }
+  s = { ...s, sprintGoal: suggestSprintGoal(s.backlog.filter((it) => take.includes(it.id))),
+    sprintGoalAgreed: ['product_owner', 'developer', 'scrum_master'] };
+  s = planSprint(s, take);
+  return { ...s, phase: 'sprint', dayStage: 'building' };
 }
 
 /** What this team could improve, drawn from what this team actually did.

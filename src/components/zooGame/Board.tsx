@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
-import { availableItems, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
+import { availableItems, adopted, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
 import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
 import { dodVerdicts } from './dodChecks';
@@ -506,6 +506,12 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
     const action =
       // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
       mode === 'view' ? null
+      // ...and refinement is a practice the Scrum Team takes on, not one it is born with. Until they
+      // have, the Product Backlog is a list you can read and order is somebody else's: sizing and
+      // splitting are ABSENT rather than disabled, because a padlock teaches that the game is
+      // withholding something and an absence teaches nothing at all - which is right, until they
+      // have missed it.
+      : !adopted(state, 'refinement') && (it.category === 'epic' || it.unsized) ? null
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.

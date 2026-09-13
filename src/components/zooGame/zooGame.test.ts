@@ -87,6 +87,10 @@ function flat(state: ZooGameState): ZooGameState {
   return s;
 }
 
+/** A Scrum Team that has taken Product Backlog refinement on. Sizing and splitting are theirs from
+ *  that point; before it, the Developers do it off-screen so that nothing is unplannable. */
+const refines = (st: ZooGameState): ZooGameState => ({ ...st, adopted: [...(st.adopted ?? []), 'refinement'] });
+
 /** Open these items, and nothing else. */
 const openOnly = (st: ZooGameState, ...ids: string[]): ZooGameState =>
   ({ ...st, backlog: st.backlog.map((it) => (ids.includes(it.id) ? { ...it, status: 'open' as const } : it)) });
@@ -242,7 +246,9 @@ describe('zoo game: the Sprint loop', () => {
   });
 
   it('runs across Sprints, carrying velocity and the growing zoo', () => {
-    let s = flat(bigCatsSplit(1));
+    // A team that plans its own Sprints. Before Sprint Planning is taken on, the next Sprint arrives
+    // planned instead - the ladder's second rung, tested where it belongs.
+    let s = { ...flat(bigCatsSplit(1)), adopted: ['sprint-planning'] } as ZooGameState;
     s = reviewSprint(buildAndOpen(s, ['lion', 'kiosk']));
     s = startNextSprint(s, 'Swarm on fewer exhibits at once');
     expect(s.phase).toBe('planning');
@@ -359,7 +365,8 @@ describe('zoo game: arranging the park layout', () => {
 
 describe('zoo game: the Sprint Goal', () => {
   it('is set at Planning and coached from the selection, and is judged at the Review', () => {
-    let s = setSprintGoal(bigCatsSplit(1), 'Open Big Cats so families have more to see.');
+    let s = setSprintGoal({ ...bigCatsSplit(1), adopted: ['sprint-planning'] } as ZooGameState,
+      'Open Big Cats so families have more to see.');
     expect(s.sprintGoal).toContain('Big Cats');
     expect(s.sprintGoalMet).toBeNull();
     // Deliver everything committed -> goal met.
@@ -417,7 +424,9 @@ describe('zoo game: the Sprint Goal', () => {
 
 describe('zoo game: the PO adds and refines PBIs', () => {
   it('adds a custom PBI (unsized, with acceptance criteria), including flora', () => {
-    let s = addPbi(initialZooState(1), { name: 'Meerkats', category: 'exhibit', zone: 'Savanna', acceptance: ['Recognisable meerkats', 'A lookout mound'] });
+    // A team that has taken refinement on: sizing is theirs, so new work arrives waiting for them.
+    // Before that the Developers size it off-screen, or it could never be planned - see ladder.test.
+    let s = addPbi(refines(initialZooState(1)), { name: 'Meerkats', category: 'exhibit', zone: 'Savanna', acceptance: ['Recognisable meerkats', 'A lookout mound'] });
     const meerkats = s.backlog.find((i) => i.name === 'Meerkats')!;
     expect(meerkats.category).toBe('exhibit');
     expect(meerkats.unsized).toBe(true);
@@ -1282,7 +1291,7 @@ describe('zoo game: Retrospective coaching questions', () => {
 describe('zoo game: the toolbox', () => {
   it('adds a templated PBI that keeps its species shape into the studio', () => {
     const lion = TOOLBOX.flatMap((g) => g.items).find((i) => i.template === 'lion')!;
-    const s = addPbi(initialZooState(1), toolboxDraft(lion));
+    const s = addPbi(refines(initialZooState(1)), toolboxDraft(lion));
     const item = s.backlog.find((i) => i.template === 'lion' && i.status === 'backlog')!;
     expect(item.category).toBe('exhibit');
     expect(item.unsized).toBe(true);
@@ -1310,7 +1319,7 @@ describe('zoo game: the toolbox', () => {
     const encs = TOOLBOX.flatMap((g) => g.items).filter((i) => i.category === 'enclosure');
     expect(encs.length).toBeGreaterThanOrEqual(3);
     const large = encs.find((e) => e.footprint === 'large')!;
-    const s = addPbi(initialZooState(1), toolboxDraft(large));
+    const s = addPbi(refines(initialZooState(1)), toolboxDraft(large));
     const item = s.backlog.find((i) => i.name === large.name && i.status === 'backlog')!;
     expect(item.category).toBe('enclosure');
     expect(item.enclosureSize).toBe('large');
@@ -1655,7 +1664,10 @@ describe('zoo game: the coach nudges a new player through the loop', () => {
 
 describe('zoo game: refinement prepares later Sprints, and only Ready work is forecast', () => {
   it('does not put a refinement step between Sprints - there is no gap between them', () => {
-    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
+    // A team that has taken Sprint Planning on: before that, the next Sprint arrives planned, which
+    // is a different lesson and has its own tests.
+    let s = { ...bigCatsSplit(1), adopted: ['sprint-planning'] } as ZooGameState;
+    s = planSprint(s, ['lion-enc']);
     s = startNextSprint(reviewSprint(s), '');
     expect(s.phase).toBe('planning');
   });
@@ -2145,7 +2157,7 @@ describe('zoo game: ongoing refinement consumes Sprint time', () => {
 
 describe('zoo game: AI Product Owner refinement', () => {
   it('splits, adds, clarifies and re-orders by value - and never estimates (Developers do)', () => {
-    let s = bigCatsSplit(1);
+    let s = refines(bigCatsSplit(1));
     const decisions: PoDecisions = {
       rationale: 'Open Waterside; add food near the cats.',
       splitEpics: [{ epicId: 'waterside', memberIds: ['penguins'] }],

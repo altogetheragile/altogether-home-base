@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, suggestTasks } from './engine';
+import { availableItems, adopted, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, suggestTasks } from './engine';
 
 
 import { TaskEditor, SplitEpicPanel } from './Board';
@@ -525,7 +525,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             </>}
             right={<>
               <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
-              {onSetBet && <TheBet state={state} onSetBet={onSetBet} />}
+              {/* The bet is the fourth rung: a team that has not yet sat through three Reviews of
+                  finding out has no reason to want to predict first. Absent until they take it on. */}
+              {onSetBet && adopted(state, 'sprint-bet') && <TheBet state={state} onSetBet={onSetBet} />}
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
               {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Product Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">

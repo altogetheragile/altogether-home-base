@@ -444,6 +444,10 @@ export interface ZooGameState {
   useUserStories: boolean;
   /** The Product Backlog: dynamic and emergent (signals add to it). */
   backlog: BacklogItem[];
+  /** Which practices the Scrum Team has taken on, in the order a Retrospective handed them over.
+   *  A practice that is not here is ABSENT from the game - not disabled, not padlocked. Optional
+   *  because a game saved before the ladder existed has them all, and is treated as such. */
+  adopted?: string[];
   /** The areas whose GROUND the zoo has. The first area is the one it was given; everything after
    *  it is opened by the Product Owner, paid for out of what the zoo is worth to its visitors.
    *  Optional because a game saved before ground was bought has none, and reads as the first area
@@ -625,6 +629,7 @@ export type ZooAction =
   | { type: 'ESTIMATE_ITEM'; id: string; points: number }
   | { type: 'OPEN_GROUND'; zone: string }
   | { type: 'START_FROM_THE_BRIEF'; gameSeed?: number }
+  | { type: 'ADOPT'; key: string }
   | { type: 'SET_TASKS'; id: string; tasks: SprintTask[] }
   | { type: 'TOGGLE_TASK'; id: string; taskId: string }
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
