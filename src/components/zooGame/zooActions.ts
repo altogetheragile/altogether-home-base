@@ -15,6 +15,7 @@ import type { ItemDesign } from './design';
 export function zooActions(send: (action: ZooAction) => void) {
   return {
     start: (seed?: number) => send({ type: 'START', gameSeed: seed }),
+    startFromTheBrief: (seed?: number) => send({ type: 'START_FROM_THE_BRIEF', gameSeed: seed }),
     setPhase: (phase: ZooPhase) => send({ type: 'SET_PHASE', phase }),
     setGoal: (goal: string) => send({ type: 'SET_PRODUCT_GOAL', goal }),
     setSprintGoal: (goal: string) => send({ type: 'SET_SPRINT_GOAL', goal }),

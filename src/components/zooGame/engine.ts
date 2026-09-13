@@ -14,7 +14,7 @@ import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
-import { starterBacklog, toZooItem, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
+import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -1494,6 +1494,100 @@ export function agreeSprintGoal(state: ZooGameState, seat: string): ZooGameState
 
 export function setForecast(state: ZooGameState, ids: string[]): ZooGameState {
   return state.phase === 'planning' ? { ...state, forecast: ids } : state;
+}
+
+// ============= Starting on the board =============
+//
+// A learner used to meet Scrum before they met the zoo: a page about Scrum, then the team, then the
+// brief, then refinement, then three topics of Sprint Planning - and only then something to build.
+// Five screens of being told, before one thing done. Everything on them is worth learning and none
+// of it is worth learning THEN, because none of it is yet an answer to a question the learner has.
+//
+// So Sprint 1 arrives as a Sprint 1 arrives on somebody's first day: already planned. Priya wrote
+// the Goal, the Developers took what they thought they could finish, and the board is open with the
+// clock running. The screens that made it are still in the game - they are what the Retrospective
+// hands over, one at a time, when the team has felt the lack of them.
+//
+// And it arrives with NO DEFINITION OF DONE, on purpose. That is the first thing a team misses, the
+// first thing the Review can punish, and therefore the first thing worth being given. A game that
+// starts by asking a learner to agree what Done means is asking them to write a rule for a job they
+// have not done yet.
+
+/** Sprint 1, already planned, with the clock about to run. One button's worth of setup. */
+export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_BRIEF): ZooGameState {
+  // Priya's Product Backlog, ordered by what this audience values.
+  let s = writeBacklog(state, brief);
+
+  // The Developers sized what they took. Sizing is theirs and it happened before the learner
+  // arrived, which is exactly what "it arrives planned" means.
+  for (const it of s.backlog) {
+    if (it.unsized && it.category !== 'epic') s = estimateItem(s, it.id, it.trueSize ?? 5);
+  }
+
+  // What they took: off the top, in order, up to what a Sprint of this length holds - and out of the
+  // one area the zoo has ground in. A first Sprint that reaches across the whole park is a first
+  // Sprint with no slice in it, and the slice is the thing this game is for.
+  const room = sprintCapacity(s).points;
+  const here = availableItems(s).filter((it) => isReady(it, s) && hasGround(s, it.zone) && it.zone !== 'Grounds');
+  // Three cards, which is a board somebody can read on their first morning, and no more than the
+  // Sprint holds. The Developers were not asked to fill the Sprint - they were asked what they
+  // thought they could finish.
+  const FIRST_SPRINT_ITEMS = 3;
+  const chosen: string[] = [];
+  let pts = 0;
+  for (const it of here) {
+    if (chosen.length >= FIRST_SPRINT_ITEMS) break;
+    if (pts + it.estimate > room && chosen.length) continue;
+    chosen.push(it.id);
+    pts += it.estimate;
+  }
+  // ...in an order the Developers would actually work in: a habitat before the animal that lives in
+  // it. The Product Owner orders the Product Backlog by value, which puts the lion above its pen;
+  // the people doing the work know the pen has to exist first, and this is them saying so.
+  const home = (id: string) => s.backlog.find((x) => x.id === id)?.enclosureId;
+  const take: string[] = [];
+  for (const id of chosen) {
+    const pen = home(id);
+    if (pen && chosen.includes(pen) && !take.includes(pen)) take.push(pen);
+    if (!take.includes(id)) take.push(id);
+  }
+
+  // Their plan for each one, which is the third topic of Planning done for them.
+  for (const id of take) {
+    const it = s.backlog.find((x) => x.id === id);
+    if (it) s = setItemTasks(s, id, suggestTasks(it));
+  }
+
+  // Priya's Goal, and the team agreed it before the learner sat down.
+  const goal = suggestSprintGoal(s.backlog.filter((it) => take.includes(it.id)));
+  s = { ...s, sprintGoal: goal, sprintGoalAgreed: ['product_owner', 'developer', 'scrum_master'] };
+
+  s = planSprint(s, take);
+
+  // The Developers put their own Sprint Backlog in the order they will work in: the pen before the
+  // lion that lives in it. The Product Backlog's order is the Product Owner's and is by value, which
+  // puts the lion first; the Sprint Backlog's order is theirs. Done with the game's own move rather
+  // than by rewriting the list, because it is the same move a learner makes by dragging a card.
+  for (const id of take) {
+    const pen = home(id);
+    if (!pen || !take.includes(pen)) continue;
+    for (let guard = 0; guard < take.length + 2; guard += 1) {
+      const order = s.backlog.filter((it) => it.status === 'committed' && it.sprintNumber === s.sprintNumber).map((it) => it.id);
+      if (order.indexOf(pen) < order.indexOf(id)) break;
+      const moved = moveSprintItem(s, pen, 'up');
+      if (moved === s) break;
+      s = moved;
+    }
+  }
+
+  // No Definition of Done. The Retrospective hands it over once the Review has shown what it costs.
+  return {
+    ...s,
+    phase: 'sprint',
+    definitionOfDone: [],
+    dodAgreed: false,
+    dayStage: 'building',
+  };
 }
 
 export function planSprint(state: ZooGameState, ids: string[], refinementPoints = 0): ZooGameState {

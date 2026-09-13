@@ -22,6 +22,8 @@ interface ZooIntroProps {
   goalMeasures?: GoalMeasure[];
   onSetGoalShape?: (shape: GoalShape, goal: string, measures: GoalMeasure[]) => void;
   onStart: () => void;
+  /** The long way round: write the Product Backlog from the brief, then plan the Sprint. */
+  onStartFromTheBrief?: () => void;
   /** Signed-in players can resume a saved game. */
   onOpenSaves?: () => void;
   /** Editing the teaching copy, for an admin polishing it in place. */
@@ -32,7 +34,7 @@ interface ZooIntroProps {
  *  Goal is, and then the Product Goal itself - which is the one thing the player writes before they
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
-export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy }: ZooIntroProps) {
+export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onSetGoal, onSetGoalShape, onStart, onStartFromTheBrief, onOpenSaves, copy }: ZooIntroProps) {
   const [goal, setGoal] = useState(productGoal);
 
   return (
@@ -121,8 +123,20 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             {!goal.trim() && (
               <span className="hidden text-[11px] text-muted-foreground sm:block">Write a Product Goal first.</span>
             )}
+            {/* The other way in, kept quiet. Sprint 1 arrives planned, which is how a Sprint arrives
+                on somebody's first day - but a group that wants to write the Product Backlog and
+                plan the Sprint themselves is doing the exercise the long way round on purpose, and
+                that is a trainer's call rather than a thing to take away. */}
+            {onStartFromTheBrief && (
+              <button type="button" onClick={() => { onSetGoal(goal); onStartFromTheBrief(); }}
+                disabled={!goal.trim()} data-part="start-from-brief"
+                className={cn(FOCUS, 'rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40')}>
+                Write the Product Backlog first
+              </button>
+            )}
             <Button size="lg" className="rounded-full px-6" disabled={!goal.trim()}
-              title={goal.trim() ? undefined : 'Write a Product Goal first - every Sprint aims at it.'}
+              title={goal.trim() ? 'Sprint 1 is already planned - the board is open and the clock runs when you are ready'
+                : 'Write a Product Goal first - every Sprint aims at it.'}
               onClick={() => { onSetGoal(goal); onStart(); }}>
               Start building &rarr;
             </Button>

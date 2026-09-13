@@ -190,16 +190,21 @@ Four decisions that replace what the note says:
 
 In the order I would build them.
 
-### 1. The flow rewrite
-The biggest piece, and the one that changes the shape of the game:
-- **Start on the board.** Sprint 1 arrives pre-planned - Priya wrote the goal, the Developers chose
-  the work. One screen, one button, under a minute to first action.
-- **Sprint 1 has no Definition of Done**, so shoddy work can ship and the Review can punish it. The
-  Retro names the habit and hands the team the Definition of Done.
+### 1. The flow rewrite, continued
+Two of the five are built (#603): Sprint 1 arrives planned, one screen and one button from the front
+page to a running board, with no Definition of Done - and the Retrospective hands one over, naming
+what went out without it in this zoo. "Scrum on one page" moved from the doorway to the front page's
+own link: it is the best page in the game to read second.
+
+What is left:
 - **One unlock per Sprint**, named at the Retrospective and adopted at Adapt. A control that has not
-  been adopted is **absent** - not greyed, not padlocked.
+  been adopted is **absent** - not greyed, not padlocked. The ladder the first two suggest: Sprint 1
+  builds; Retro 1 hands over the Definition of Done; Retro 2 hands over Sprint Planning (you choose
+  the Goal and the forecast, rather than arriving with them); Retro 3 hands over refinement; Retro 4
+  hands over the bet. Each one unlocked by the pain that motivates it.
 - **Refinement is mid-Sprint** and costs something (see the open question below).
-- **AI wands only after the learner has tried.**
+- **AI wands only after the learner has tried.** Half done: the Sprint Goal wand rewords what a
+  learner wrote rather than writing one from nothing (#599).
 
 ### 2. Product Goals as a series
 Al's idea, not yet designed: PG1 delivers the Big Cats; achieving it lets the player set the next
