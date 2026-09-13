@@ -2023,6 +2023,30 @@ export function suggestSprintGoal(items: BacklogItem[]): string {
   return `Our goal is to deliver ${capability} so that ${value}`;
 }
 
+/** The steps a learner has not thought of, given the ones they have.
+ *
+ *  The rule this serves, from the design note: an AI wand only helps after the learner has tried.
+ *  A button that breaks the work down for somebody who has written nothing does the one piece of
+ *  thinking that topic three of Sprint Planning exists for, and does it faster than they can read
+ *  it - so they learn that the button knows how to break work down.
+ *
+ *  Given something to work with, it is the opposite: it fills the gaps in THEIR plan and leaves
+ *  their wording alone, which is what a Developer who has done this before does for one who has not.
+ */
+export function fillTheGaps(item: BacklogItem): SprintTask[] {
+  const mine = (item.tasks ?? []).filter((t) => t.label.trim());
+  if (!mine.length) return mine;
+  // Matched loosely on purpose: "fence it" and "Fence it securely" are the same step said twice,
+  // and a plan with both in it is a plan nobody trusts.
+  const said = (label: string) => label.toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter((w) => w.length > 3);
+  const already = mine.map((t) => said(t.label));
+  const missing = suggestTasks(item).filter((t) => {
+    const words = said(t.label);
+    return !already.some((have) => words.some((w) => have.includes(w)));
+  });
+  return [...mine, ...missing];
+}
+
 /** The Sprint Goal a learner wrote, put into shape - and what was changed about it.
  *
  *  Asked for while playing it: "to support learning can the wizard reword a goal for a learner and

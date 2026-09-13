@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
-import { availableItems, adopted, isSignOffTask, notReady, readyHorizon, suggestTasks } from './engine';
+import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon } from './engine';
 import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
 import { dodVerdicts } from './dodChecks';
@@ -125,8 +125,17 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
               <Star className={cn('h-3.5 w-3.5', item.goalCritical && 'fill-amber-400')} /> Goal
             </button>
           )}
-          <Button size="sm" className={cn(WIZARD, 'h-7 px-2 text-xs')} onClick={() => set(suggestTasks(item))}>
-            <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest tasks
+          {/* After the learner has tried, and not before. A button that breaks the work down for
+              somebody who has written nothing does the one piece of thinking topic three exists for,
+              faster than they can read it - so what they learn is that the button knows how. Given a
+              step to work from, it fills the gaps in THEIR plan and leaves their wording alone. */}
+          <Button size="sm" className={cn(WIZARD, 'h-7 px-2 text-xs')}
+            disabled={!(item.tasks ?? []).some((t) => t.label.trim())}
+            title={(item.tasks ?? []).some((t) => t.label.trim())
+              ? 'Adds the steps your plan is missing. Your wording is left alone.'
+              : 'Write a first step, then this will fill in the ones you have not thought of.'}
+            onClick={() => set(fillTheGaps(item))}>
+            <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps
           </Button>
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}
           {onClose && (

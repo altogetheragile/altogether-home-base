@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, adopted, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, suggestTasks } from './engine';
+import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL } from './engine';
 
 
 import { TaskEditor, SplitEpicPanel } from './Board';
@@ -310,6 +310,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // How the work gets done is topic three's whole job, so an item with no steps is topic three left
   // undone. "Suggest steps for all" is one press away if you would rather not write them yourself.
   const unplanned = chosen.filter((i) => !(i.tasks ?? []).some((t) => t.label.trim())).length;
+  // ...and the ones somebody has started, which are the only ones a wand may touch: it fills gaps in
+  // a plan, it does not write one. Breaking the work down is what this topic is for.
+  const started = chosen.length - unplanned;
   // Habitats an animal can be assigned to: anything in the Product Backlog that is an enclosure.
   const habitats = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
@@ -642,13 +645,13 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 {/* The step editor carries its own "suggest" for the item in front of you. This one
                     is for the rest: five items with no steps is five presses otherwise, and topic
                     three is a conversation about all of them. */}
-                {unplanned > 0 && onSetTasks && (
+                {started > 0 && onSetTasks && (
                   <Button size="sm" className={cn(WIZARD, 'h-7 shrink-0 px-2 text-xs')}
-                    title="Suggest a breakdown for every item that has no steps yet. They are yours to change."
+                    title="Fills the gaps in the plans you have started. Items you have not touched are left for you - breaking the work down is what this topic is for."
                     onClick={() => chosen.forEach((it) => {
-                      if (!(it.tasks ?? []).some((t) => t.label.trim())) onSetTasks(it.id, suggestTasks(it));
+                      if ((it.tasks ?? []).some((t) => t.label.trim())) onSetTasks(it.id, fillTheGaps(it));
                     })}>
-                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all {unplanned}
+                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps {started}
                   </Button>
                 )}
               </div>
