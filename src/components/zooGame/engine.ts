@@ -3,6 +3,7 @@ import type { Signal, SimulationResult, SegmentResult } from './simulation/types
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { riverY, BANK, spansTheWater } from './parkWater';
+import { tune } from './tuning';
 // Re-exported below as well; a re-export is not a local binding, and this module asks the question
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
@@ -2294,10 +2295,11 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
 // and the day is worth nothing to them - which is what an output that is not an outcome looks like
 // when you count it honestly.
 
-/** What one visit that was worth making is worth. */
-export const VALUE_PER_VISIT = 1;
-/** What keeping an animal badly costs, in the same units: about a tenth of a good Sprint. */
-export const WELFARE_PENALTY = 50;
+/** What one visit that was worth making is worth, and what keeping an animal badly costs. Read
+ *  through the dials rather than fixed here, so a trainer can turn them between Sprints without a
+ *  deploy - see `tuning.ts` for what is a dial and what is deliberately not. */
+export const VALUE_PER_VISIT = () => tune('tune.value.perVisit');
+export const WELFARE_PENALTY = () => tune('tune.welfare.penalty');
 
 /** What the visitors got out of this Sprint, and what the keeping of the animals cost. */
 function whatItWasWorth(state: ZooGameState, result: SimulationResult,
@@ -2313,7 +2315,7 @@ function whatItWasWorth(state: ZooGameState, result: SimulationResult,
   const wasted = Math.round(result.segments.reduce((n: number, seg: SegmentResult) =>
     n + seg.attendance * (seg.topExhibit === null ? 1 : seg.truncationRate), 0));
   const worthMaking = Math.max(0, visits - wasted);
-  const earned = worthMaking * VALUE_PER_VISIT;
+  const earned = worthMaking * VALUE_PER_VISIT();
 
   // Kept badly: one that got out, and one with nowhere to move. Both are welfare, both are things
   // the player chose, and both are already visible on the card - this is what they cost.
@@ -2325,7 +2327,7 @@ function whatItWasWorth(state: ZooGameState, result: SimulationResult,
       penalisedFor.push(`${a.name} has nowhere to move in the ${home.name}`);
     }
   }
-  const penalties = penalisedFor.length * WELFARE_PENALTY;
+  const penalties = penalisedFor.length * WELFARE_PENALTY();
 
   return { visits, worthMaking, wasted, earned, penalties, penalisedFor, net: earned - penalties };
 }
