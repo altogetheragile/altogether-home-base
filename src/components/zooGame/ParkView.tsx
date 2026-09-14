@@ -11,7 +11,7 @@ import type { SegmentId } from './simulation/types';
 import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { zoneSlices, zooIsOpen } from './engine';
+import { zoneSlices, zooIsOpen, crowdNow } from './engine';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FlyThrough } from './FlyThrough';
 import { TurnControl } from './TurnControl';
@@ -255,12 +255,15 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
   const happiness = state.lastReview?.overallHappiness ?? null;
 
-  // Little visitors stroll once there is an exhibit to see.
+  // Little visitors stroll once there is an exhibit to see. How many of them is `crowdNow`, which
+  // is the same number the Increment fills its car park from - the two views used to count the
+  // crowd differently, so one of them could show a park full of people and the other an empty lot.
   const dots: SegmentId[] = [];
-  if (open.some((it) => it.category === 'exhibit')) {
+  const crowd = crowdNow(state);
+  if (crowd > 0) {
     const cap = compact ? 8 : 34;
     for (const seg of ['families', 'enthusiasts', 'comfortSeekers'] as SegmentId[]) {
-      const n = Math.min(cap, Math.round(((state.attendance[seg] ?? 0) / Math.max(1, total)) * Math.min(cap, Math.max(3, Math.round(total / 60)))));
+      const n = Math.min(cap, Math.round(((state.attendance[seg] ?? 0) / Math.max(1, total)) * Math.min(cap, Math.max(3, Math.round(crowd / 60)))));
       for (let i = 0; i < n; i++) dots.push(seg);
     }
   }

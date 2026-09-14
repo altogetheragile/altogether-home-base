@@ -136,6 +136,40 @@ export function askIfDue(state: ZooGameState): ZooGameState {
   };
 }
 
+/** How many people are actually in the park right now, and how many cars are in the lot for them.
+ *
+ *  `state.attendance` is the AUDIENCE - how many people there are to be had - and it is a number
+ *  about the world rather than about the zoo. Reading it as a crowd meant a zoo with nothing open at
+ *  all drew four hundred and eighty people strolling round an empty field, having arrived, somehow,
+ *  in an empty car park. The lot was counted from what is open and the people were not, so the two
+ *  of them disagreed about whether anybody had come. Reported from playing it: "there are no cars in
+ *  the car park either."
+ *
+ *  One number, and everything that draws a person or a car reads it: nobody comes to a zoo with
+ *  nothing in it, and as it fills up so does the park and so does the lot.
+ */
+export function crowdNow(state: ZooGameState): number {
+  const open = state.backlog.filter((it) => it.status === 'open');
+  const seeable = open.filter((it) => it.category === 'exhibit').length;
+  // Nobody comes for a car park and a gift shop. An animal is what a zoo is for, and until there is
+  // one the gates may be open and the park is empty.
+  if (!seeable) return 0;
+  const comforts = open.filter((it) => it.category === 'amenity').length;
+  const audience = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
+  // A zoo with about half a dozen things worth stopping at is a zoo everybody who might come, comes
+  // to. Amenities count for less than exhibits: they are why you STAY, not why you set off.
+  const draw = Math.min(1, (seeable + comforts * 0.5) / 6);
+  return Math.round(audience * draw);
+}
+
+/** ...and they came in something. About forty to a car, which is generous, and coaches once there
+ *  are enough of them to fill one. */
+export const carsNow = (state: ZooGameState): number => Math.round(crowdNow(state) / 40);
+export const coachesNow = (state: ZooGameState): number => {
+  const crowd = crowdNow(state);
+  return crowd >= 300 ? 2 : crowd >= 150 ? 1 : 0;
+};
+
 /** Whether one acceptance criterion has been SETTLED.
  *
  *  Settled is two things, not one: the Product Owner ticked it, or the Product Owner looked at it

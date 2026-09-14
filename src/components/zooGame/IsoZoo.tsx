@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
 import { shade, barrierOf, speciesBody, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
-import { standsOnPark } from './engine';
+import { standsOnPark, crowdNow, carsNow, coachesNow } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { zonePlots } from './parkZones';
 import { riverOutline } from './parkWater';
@@ -741,10 +741,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
 
   // How busy the zoo is, on the same terms the park view uses: the lot fills with what is open to
   // visit, so the two views never disagree about how many cars turned up.
-  const visitors = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
-  const built = live.filter((i) => i.category === 'exhibit' || i.category === 'amenity').length;
-  const carCount = Math.min(carCapacity(CANVAS_W), built * 3);
-  const busCount = built >= 5 ? 2 : built >= 3 ? 1 : 0;
+  const visitors = crowdNow(state);
+  const carCount = Math.min(carCapacity(CANVAS_W), carsNow(state));
+  const busCount = coachesNow(state);
   const lot = carParkLayout(CANVAS_W, PLAY_H, carCount, busCount);
   const worldH = PLAY_H + lot.height;
 
@@ -1889,12 +1888,20 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   const PACE = 34;
   const paths: React.ReactNode[] = [];
 
-  // A party per forty-five visitors rather than per eighty. The park is big and the people are
-  // small; what says a zoo is open is seeing somebody in it wherever you happen to be looking.
-  const parties = Math.max(1, Math.min(18, Math.round(visitors / 45)));
+  // A party is a sample of the crowd rather than a headcount: one for every twenty-five people who
+  // came. The park is big and the people are small, and what says a zoo is open is seeing somebody
+  // in it wherever you happen to be looking.
+  // ...and none at all when nobody came. The floor used to be one party whatever the crowd was, so
+  // a zoo with nothing open still had somebody wandering round it.
+  const parties = visitors > 0 ? Math.max(1, Math.min(20, Math.round(visitors / 25))) : 0;
   let n = 0;
   for (let i = 0; i < parties; i++) {
-    const route = routes[i % routes.length];
+    // Their own spot to stand at, a pace or two from the next party's: a queue of parties on one
+    // line is the other half of a conveyor belt.
+    const base = routes[i % routes.length];
+    const last = base[base.length - 1];
+    const route = [...base.slice(0, -1),
+      { x: last.x + (jitter(i + 5, 17) - 0.5) * 34, y: last.y + (jitter(i + 6, 19) - 0.5) * 22 }];
     // Where along the route this party is. Still a hash, so a party keeps its place in the queue -
     // and when they walk it becomes WHEN they set off rather than where they are stuck.
     const t = 0.08 + jitter(i + 1, 7) * 0.88;
@@ -1905,14 +1912,29 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     if (insidePen(spot)) continue;      // nobody is in with the lions
 
     // The route in the picture, and how long it takes to walk it.
-    const screen = route.map((q2) => P(q2.x, q2.y));
-    const len = screen.reduce((sum, q2, k) => (k ? sum + Math.hypot(q2.x - screen[k - 1].x, q2.y - screen[k - 1].y) : 0), 0);
-    const secs = Math.max(14, Math.min(70, len / PACE));
+    //
+    // OUT AND BACK, with a stop at the far end. It used to be one way with `repeatCount` on it, so
+    // everybody walked to the lions and then snapped back to the car park to do it again: a loop of
+    // figures moving one way and vanishing. Reported from playing it: "they look like they are on a
+    // conveyer belt. They move from the car park and disappear at the enclosure."
+    //
+    // A visit is arrive, walk, STAND AND LOOK, walk back. The path returns to where it started, so
+    // the loop closes on itself and nobody teleports; the stop is what makes it a visit rather than
+    // a lap; and half of them are on their way back at any moment, which is the other half of why a
+    // one-way line read as a belt.
+    const there = route.map((q2) => P(q2.x, q2.y));
+    const screen = [...there, ...there.slice(0, -1).reverse()];
+    const len = there.reduce((sum, q2, k) => (k ? sum + Math.hypot(q2.x - there[k - 1].x, q2.y - there[k - 1].y) : 0), 0);
+    // Their own pace, so a park full of people is not a park full of metronomes.
+    const secs = Math.max(16, Math.min(80, (len * 2) / (PACE * (0.75 + jitter(i + 9, 13) * 0.6))));
     const id = `walk-${i}`;
     if (stroll) {
       paths.push(<path key={id} id={id} fill="none" stroke="none"
         d={screen.map((q2, k) => `${k ? 'L' : 'M'}${q2.x.toFixed(1)},${q2.y.toFixed(1)}`).join(' ')} />);
     }
+    // Which way they face on the way out. The drawings face one way, so somebody walking the other
+    // way slides rather than walks - and on the way back everybody is walking the other way.
+    const goesLeft = there[there.length - 1].x < there[0].x;
     /** Everybody in this party, walking together or standing together. */
     const party: React.ReactNode[] = [];
     party.push(walker(VISITOR_PROPS[n % VISITOR_PROPS.length], u * 0.92, `guest-${n}`));
@@ -1934,9 +1956,19 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     // buys: the alternative is re-sorting the scene on every frame.
     push(depth(spot.x, spot.y), stroll ? (
       <g key={`party-${i}`}>
+        {/* Out, a stop to look at what they came for, and back. `keyPoints` are fractions of the
+            path, so 0.5 is the far end of an out-and-back: walk out over the first four tenths,
+            stand for a fifth of the visit, walk home over the last four. */}
         <animateMotion dur={`${secs.toFixed(1)}s`} repeatCount="indefinite"
-          begin={`${(-t * secs).toFixed(1)}s`}><mpath href={`#${id}`} /></animateMotion>
-        {party}
+          begin={`${(-t * secs).toFixed(1)}s`} calcMode="linear"
+          keyPoints="0;0.5;0.5;1" keyTimes="0;0.4;0.6;1"><mpath href={`#${id}`} /></animateMotion>
+        <g transform={`scale(${goesLeft ? -1 : 1} 1)`}>
+          {/* Turned round for the walk home. Half the visit out, half of it back. */}
+          <animateTransform attributeName="transform" type="scale" calcMode="discrete"
+            values={`${goesLeft ? '-1 1' : '1 1'};${goesLeft ? '1 1' : '-1 1'}`}
+            dur={`${secs.toFixed(1)}s`} begin={`${(-t * secs).toFixed(1)}s`} repeatCount="indefinite" />
+          {party}
+        </g>
       </g>
     ) : (
       // Motion turned down: they stand where they had got to, which is what this used to be.
