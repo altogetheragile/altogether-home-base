@@ -4,6 +4,7 @@ import type { ZooGameState, ZooConnector } from './types';
  *  imported: it carries the isometric artwork, which is more than half of what the game weighs,
  *  and nobody needs it until they ask to look. */
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
+import { motionWanted } from './motion';
 import type { ItemDesign } from './design';
 import { PATH_STYLES, pathStyleFor, type PathStyle } from './pathStyles';
 import type { SegmentId } from './simulation/types';
@@ -334,6 +335,16 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                 {onPlaceItem
                   ? <><Move className="h-3.5 w-3.5" /> The zoo as a visitor would see it. Drag a habitat, building or planting to arrange it.</>
                   : <><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands.</>}
+                {/* ...and if the zoo is standing still, say why. The visitors walk and the animals
+                    pace, both of which stop when the machine is set to reduce motion - and a zoo
+                    that has quietly stopped, with nothing anywhere saying so, is the game knowing
+                    something and not telling you. Asked from playing it: "can the people and animals
+                    be animated at all?" They are; they were switched off. */}
+                {!motionWanted() && (
+                  <span data-part="motion-off" className="italic opacity-80">
+                    Nothing is moving: this machine is set to reduce motion.
+                  </span>
+                )}
               </p>
             )}
             <div className="flex items-center gap-3">
