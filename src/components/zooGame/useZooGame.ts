@@ -4,6 +4,7 @@ import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, spendDay, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks } from './parkChecks';
+import { remember, trailStartedAt, forgetTrail } from './trail';
 import { aiDesign } from './aiSeats';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
@@ -277,6 +278,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
 
 export function useZooGame(gameSeed?: number, runClock = true) {
   const [state, dispatch] = useReducer(reducer, gameSeed, initialZooState);
+  // What has been pressed, kept so a fault can be replayed rather than described. One place,
+  // because every change in the game goes through one reducer - including the moves made by seats
+  // the game is playing, which are the ones a player cannot tell you about.
+  useEffect(() => { trailStartedAt(gameSeed ?? 1); forgetTrail(); }, [gameSeed]);
 
   // The one clock. It used to live in DayTimer and DailyScrum, one countdown per component,
   // which meant it could not be saved, shared or paused - and in a shared session every
@@ -293,7 +298,7 @@ export function useZooGame(gameSeed?: number, runClock = true) {
 
   // Every action lives in zooActions, built around a carrier, so a shared game and a solo
   // game offer the screens exactly the same surface and there is only one list to maintain.
-  const send = useCallback((action: ZooAction) => dispatch(action), []);
+  const send = useCallback((action: ZooAction) => { remember(action); dispatch(action); }, []);
   const actions = useMemo(() => zooActions(send), [send]);
 
   return { state, ...actions };

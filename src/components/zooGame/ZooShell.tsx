@@ -15,6 +15,7 @@ import { zonePlots } from './parkZones';
 import { DOCKED_BAR_H } from './ActionBar';
 import { CopyEditor } from './CopyEditor';
 import { DialEditor } from './DialEditor';
+import { TrailButton } from './TrailButton';
 import { TeachingCard } from './ScrumTeaching';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
@@ -413,6 +414,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
             {/* The numbers, beside the words, for the same person for the same reason. */}
             {copy && <DialEditor overrides={copy.overrides} onChanged={copy.onChanged} />}
+            {/* ...and what has just been pressed, for when something goes wrong and describing it
+                from memory is the slow way round. Alongside the other tools an admin gets, and gated
+                the same way: they all ask who is signed in, and a screen rendered without that is a
+                screen with no tools on it rather than a broken one. */}
+            {copy && <TrailButton />}
             {/* The settings that were icons on the strip live in here now: they are set once, and a
                 gear beside the clock was a control competing with the thing it sits next to. */}
             <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} onMeasures={() => setLearnAt('value')} links={menuLinks} tools={tools} />
