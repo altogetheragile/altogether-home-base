@@ -35,9 +35,29 @@ describe('what the game remembers', () => {
   it('keeps the last of a long game, not the first', () => {
     for (let i = 0; i < 200; i += 1) remember({ type: 'START_ITEM', id: `item-${i}` } as ZooAction);
     const kept = trail().actions;
-    expect(kept.length, 'it kept a whole session, which nobody can paste').toBeLessThanOrEqual(60);
+    expect(kept.length, 'it kept a whole session, which nobody can paste').toBeLessThanOrEqual(80);
     expect((kept[kept.length - 1] as { id: string }).id, 'it kept the beginning instead of the end')
       .toBe('item-199');
+  });
+
+  it('keeps one entry per gesture, not one per pointer move', () => {
+    // The first real trail anybody sent back was sixty entries of which fifty were two drags: the
+    // window reached back about a minute, and the fault being reported had happened before it.
+    for (let i = 0; i < 40; i += 1) {
+      remember({ type: 'MOVE_INSIDE', id: 'lion-enc', kind: 'flora', index: 0, spot: { x: i / 40, y: 0.5 } } as ZooAction);
+    }
+    remember({ type: 'ADD_INSIDE', id: 'lion-enc', kind: 'tree' } as ZooAction);
+    const kept = trail().actions;
+    expect(kept.map((a) => a.type), 'a drag filled the window with its own pointer moves')
+      .toEqual(['MOVE_INSIDE', 'ADD_INSIDE']);
+    // ...and the one it kept is where the piece ended up, which is the only part that is state.
+    expect((kept[0] as { spot: { x: number } }).spot.x).toBeCloseTo(39 / 40, 5);
+  });
+
+  it('tells two gestures apart, even of the same kind', () => {
+    remember({ type: 'MOVE_INSIDE', id: 'lion-enc', kind: 'flora', index: 0, spot: { x: 0.1, y: 0.1 } } as ZooAction);
+    remember({ type: 'MOVE_INSIDE', id: 'lion-enc', kind: 'flora', index: 3, spot: { x: 0.2, y: 0.2 } } as ZooAction);
+    expect(trail().actions, 'moving a second rock overwrote the first').toHaveLength(2);
   });
 
   it('carries the seed, so a replay starts where the game did', () => {

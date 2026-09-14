@@ -15,13 +15,33 @@ import type { ZooAction } from './types';
 // It is deliberately small and deliberately dumb. No timestamps that would make two runs differ, no
 // state snapshots, nothing about who was signed in. Just the seed, and what was pressed.
 
-/** How many actions to keep. Enough to cover "what did I do in the last minute or so", and small
- *  enough to paste into a message. Ticks are not kept, so a minute of play is a handful of entries
- *  rather than sixty. */
-const KEEP = 60;
+/** How many actions to keep. Enough to cover what somebody did in the last several minutes, and
+ *  small enough to paste into a message. */
+const KEEP = 80;
 
 /** The clock's heartbeat, which is every second and says nothing about what anybody did. */
 const NOISE = new Set(['TICK_DAY', 'TICK_SCRUM']);
+
+/** Actions that arrive in floods, and what makes two of them the same gesture.
+ *
+ *  A drag sends one action per pointer move, and typing sends one per keystroke. The first real
+ *  trail anybody sent back was sixty entries of which fifty were two drags - so the window reached
+ *  back about a minute, and the fault being reported had happened before it. Only the last of a
+ *  flood says anything: the state is the last position, not the path the pointer took to it.
+ */
+const FLOOD: Record<string, (a: Record<string, unknown>) => string> = {
+  MOVE_INSIDE: (a) => `${a.id}:${a.kind}:${a.index}`,
+  SET_POS: (a) => `${a.id}`,
+  SET_SPOT: (a) => `${a.id}`,
+  SET_MEMBER_SPOT: (a) => `${a.id}:${a.member}`,
+  SET_ITEM_SIZE: (a) => `${a.id}`,
+  SET_ITEM_ROT: (a) => `${a.id}`,
+  MOVE_COPY: (a) => `${a.id}:${a.index}`,
+  UPDATE_CONNECTOR: (a) => `${a.id}`,
+  SET_SPRINT_GOAL: () => 'sprint-goal',
+  SET_PRODUCT_GOAL: () => 'product-goal',
+  SET_DRAFT_DESIGN: (a) => `${a.id}`,
+};
 
 export interface Trail {
   /** The seed the game started from, so the replay starts where the game did. */
@@ -42,6 +62,15 @@ export function trailStartedAt(gameSeed: number): void {
  *  game send - which are exactly the ones a player cannot tell you about. */
 export function remember(action: ZooAction): void {
   if (NOISE.has(action.type)) return;
+  // One entry per gesture, not one per pointer move: the last of a flood is the one that says what
+  // happened, and the other forty are the path the pointer took to say it.
+  const same = FLOOD[action.type];
+  const last = kept[kept.length - 1];
+  if (same && last && last.type === action.type
+    && same(last as unknown as Record<string, unknown>) === same(action as unknown as Record<string, unknown>)) {
+    kept[kept.length - 1] = action;
+    return;
+  }
   kept.push(action);
   if (kept.length > KEEP) kept.splice(0, kept.length - KEEP);
 }
