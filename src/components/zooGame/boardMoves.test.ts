@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState } from './config';
+import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
 import { splitEpic, planSprint, decisionsIn } from './engine';
 import type { ZooGameState } from './types';
@@ -17,7 +17,7 @@ function midSprint(): { s: ZooGameState; habitat: string } {
   for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
   const habitat = s.backlog.find((it) => it.category === 'enclosure')!.id;
   s = planSprint({ ...s, phase: 'planning' }, [habitat]);
-  return { s: { ...s, dayStage: 'building', daySecondsLeft: 90 }, habitat };
+  return { s: { ...s, dayStage: 'building', daySecondsLeft: DAY_SECONDS }, habitat };
 }
 
 const moves = (s: ZooGameState) => decisionsIn(s, s.sprintNumber).filter((d) => d.kind === 'moved');

@@ -43,7 +43,12 @@ function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIG
  *  Product Owner's sign-off ticks. Then the Developers move it: Done is their word, and a card no
  *  longer walks into the column by itself when the Product Owner accepts it. */
 function accept(state: ZooGameState, id: string): ZooGameState {
-  let s = withPaths(placeOnPark(state, id));
+  // The building takes the time the building takes. Everything else on a card can be done as fast
+  // as somebody's hands; the day is what pays for the build, and nothing reaches Done before it has
+  // been paid for. These fixtures are about what it takes to get an item Done rather than about the
+  // clock, so the time is spent here in one go instead of a second at a time.
+  let s = withPaths(placeOnPark({ ...state,
+    backlog: state.backlog.map((x) => (x.id === id ? { ...x, buildLeft: 0 } : x)) }, id));
   const it = s.backlog.find((x) => x.id === id);
   (it?.acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, id, i, true); });
   return finishItem(s, id, 'developer');
@@ -2329,6 +2334,9 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     s = startItem(s, 'paths');
     const path = () => s.backlog.find((i) => i.id === 'paths')!;
     s = buildItem(s, 'paths', presetFor(path()));
+    // ...and the day has spent the time the building costs. This is about who may answer the last
+    // criterion, not about the clock.
+    s = { ...s, backlog: s.backlog.map((x) => ({ ...x, buildLeft: 0 })) };
     for (const t of path().tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'paths', t.id);
     // Everything a person can accept, accepted - and then the park has its say, which is what
     // the reducer does after every action. It reads its own criteria back off again.

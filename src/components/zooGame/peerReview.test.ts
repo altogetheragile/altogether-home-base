@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState } from './config';
+import { initialZooState, DAY_SECONDS } from './config';
 import { startItem } from './engine';
 import { dodVerdicts } from './dodChecks';
 import { aiTurn } from './aiSeats';
@@ -20,7 +20,7 @@ const sprint = (over: Partial<ZooGameState> = {}): ZooGameState => {
   const item = base.backlog.find((it) => !it.unsized && it.category === 'enclosure')!;
   return {
     ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, dayNumber: 1,
-    daySecondsLeft: 90, committedIds: [item.id],
+    daySecondsLeft: DAY_SECONDS, committedIds: [item.id],
     backlog: base.backlog.map((it) => (it.id === item.id
       ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)),
     ...over,
@@ -50,10 +50,13 @@ describe('who is working on it', () => {
   it('gives the work to the Developer with the least on', () => {
     // Deterministic, so the same game always reads the same way.
     const base = initialZooState(3);
-    // Two things that can start on their own - an animal waits for its habitat.
-    const two = base.backlog.filter((it) => !it.unsized && !['epic', 'exhibit'].includes(it.category)).slice(0, 2);
+    // Two things that can start on their own - an animal waits for its habitat - and two SMALL
+    // ones, so that a single day can pay for both. This is about who takes the work, not about
+    // running out of day.
+    const two = base.backlog.filter((it) => !it.unsized && !['epic', 'exhibit'].includes(it.category))
+      .sort((a, z) => a.estimate - z.estimate).slice(0, 2);
     let s = {
-      ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: 90, wipLimit: 0,
+      ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: DAY_SECONDS, wipLimit: 0,
       backlog: base.backlog.map((it) => (two.some((t) => t.id === it.id)
         ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)),
     } as ZooGameState;

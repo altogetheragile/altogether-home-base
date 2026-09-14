@@ -301,6 +301,17 @@ export interface BacklogItem {
   /** The Product Owner looked at the built work and did not accept it: which criteria it did not
    *  meet, and when. Cleared when the Developers finish it again. */
   sentBack?: { sprint: number; day: number; criteria: string[] };
+  /** How much building this still has in it, in seconds of build day.
+   *
+   *  Set when the Developers take the item on, from its size at what a point of work costs, and
+   *  drawn down a second per second of the day while it is in flight - shared with anything else
+   *  in flight, so three things on the go all finish late. Nothing may be moved to Done until it
+   *  reaches nought: everything else on a card can be done as fast as somebody's hands, so without
+   *  this the length of a Sprint meant nothing to anybody who knew the controls.
+   *
+   *  Undefined means work nobody ever took on through the board - a fixture, an older save - and
+   *  costs nothing. Work sent back gets a fresh one: doing it again is doing it again. */
+  buildLeft?: number;
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
@@ -523,10 +534,6 @@ export interface ZooGameState {
    *  what was promised, not what survived. */
   forecastPoints?: number;
   daySecondsLeft: number;
-  /** Work the Developers have taken on and not yet worked off, in seconds. It drains a second per
-   *  second while the day runs, so a five-point build takes five points' worth of day rather than
-   *  vanishing off the clock the moment somebody starts it. */
-  owedSeconds?: number;
   /** Seconds left in the Daily Scrum's timebox, for the same reasons. Reset each time the
    *  event opens; on expiry the disciplined default is taken (adapt and continue). */
   scrumSecondsLeft: number;
