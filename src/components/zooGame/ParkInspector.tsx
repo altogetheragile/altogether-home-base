@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { acSettled } from './engine';
 
 // ============= The inspector =============
 //
@@ -32,13 +33,13 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
 }) {
   const criteria = (item.acceptance ?? []).filter(Boolean);
   const met = (label: string, i: number) =>
-    !!item.acConfirmed?.[i] || (!!item.design && !!checkCriterion(state, item, label)?.met);
+    acSettled(item, i) || (!!item.design && !!checkCriterion(state, item, label)?.met);
   const done = criteria.filter((c, i) => met(c, i)).length;
   const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
   const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
   // Already accepted: asking again is asking a question that has been answered. Reported from
   // playing it - "I get multiple ask Priya to check".
-  const accepted = criteria.length > 0 && criteria.every((_, i) => !!item.acConfirmed?.[i])
+  const accepted = criteria.length > 0 && criteria.every((_, i) => acSettled(item, i))
     && (item.tasks ?? []).some((t) => /sign[- ]?off/i.test(t.label) && t.done);
   // Ready to ask means every criterion the park can answer is answered. The rest are judgement, and
   // judgement is what the asking is for.

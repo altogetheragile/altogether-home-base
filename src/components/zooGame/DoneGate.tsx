@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { checkCriterion } from './parkChecks';
 import { dodVerdicts, unlockedBy } from './dodChecks';
-import { isSignOffTask } from './engine';
+import { isSignOffTask, acSettled } from './engine';
 import { cn } from '@/lib/utils';
 import { Check, X, HelpCircle } from 'lucide-react';
 
@@ -53,7 +53,7 @@ export function DoneGate({ state, item, className }: { state: ZooGameState; item
   const waiting = unlockedBy(state, item);
 
   const stepsLeft = tasks.filter((t) => !t.done).length;
-  const criteriaLeft = criteria.filter((_, i) => !item.acConfirmed?.[i]).length;
+  const criteriaLeft = criteria.filter((_, i) => !acSettled(item, i)).length;
   const dodLeft = dod.filter((l) => l.answer?.kind === 'fact' && !l.answer.met).length;
   const done = !stepsLeft && !criteriaLeft && !dodLeft;
 
@@ -77,7 +77,7 @@ export function DoneGate({ state, item, className }: { state: ZooGameState; item
       <Section title="Acceptance criteria" note="this item">
         {criteria.map((label, i) => {
           const said = checkCriterion(state, item, label);
-          const accepted = !!item.acConfirmed?.[i];
+          const accepted = acSettled(item, i);
           return (
             <Line key={label} mark={accepted ? 'yes' : said && !said.met ? 'no' : 'judgement'}
               evidence={said ? `the park says: ${said.evidence}` : 'the Product Owner’s judgement'}>

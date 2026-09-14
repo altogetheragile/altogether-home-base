@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, currentDesign, homeSizeOf } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, buildLeftOf } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, buildLeftOf, acSettled } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -240,7 +240,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     // nothing left to press is a card that has stopped for no reason anybody can see.
     const building = Math.ceil(buildLeftOf(it));
     if (building > 0) return `Being built · ${building}s of work left`;
-    const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
+    const left = (it.acceptance ?? []).filter((_, i) => !acSettled(it, i)).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
     const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);
     if (task) return `Next: ${task.label.toLowerCase()}`;

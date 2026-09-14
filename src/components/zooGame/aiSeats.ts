@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
@@ -448,7 +448,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   if (state.phase === 'sprint') {
     for (const it of state.backlog.filter((x) => x.sprintNumber === state.sprintNumber
       && x.status === 'committed' && x.design)) {
-      const i = (it.acceptance ?? []).findIndex((label, k) => !it.acConfirmed?.[k] && !isChecked(state, it, label));
+      const i = (it.acceptance ?? []).findIndex((label, k) => !acSettled(it, k) && !isChecked(state, it, label));
       if (i >= 0) return { action: { type: 'CONFIRM_AC', id: it.id, index: i, value: true },
         says: `Looked at ${it.name}: yes, ${it.acceptance[i].replace(/\?$/, '').replace(/^Can I /, 'I can ')}.` };
     }

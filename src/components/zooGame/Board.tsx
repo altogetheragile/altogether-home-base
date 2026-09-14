@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
-import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon } from './engine';
+import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon, acSettled } from './engine';
 import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
 import { dodVerdicts } from './dodChecks';
@@ -282,7 +282,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
   // green the moment an item had a design, on the reasoning that it could not have left the studio
   // otherwise - but there is no studio now, you build on the park, and a criterion nobody looked at
   // is not a criterion that has been met. This count is what the Product Owner's sign-off waits on.
-  const met = (_label: string, i: number) => !!item.acConfirmed?.[i];
+  const met = (_label: string, i: number) => acSettled(item, i);
   const acMet = criteria.filter(met).length;
   const acAll = criteria.length > 0 && acMet === criteria.length;
   return (

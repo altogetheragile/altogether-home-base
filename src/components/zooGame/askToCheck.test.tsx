@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { askToCheck, answerQuestion, sendItemBack } from './engine';
+import { askToCheck, answerQuestion, sendItemBack, acSettled, acOpen, asksNow, readyForDone, readyToMove } from './engine';
 import { initialZooState, DAY_SECONDS } from './config';
 import { presetFor } from './design';
 import type { ZooGameState, BacklogItem } from './types';
@@ -81,5 +81,71 @@ describe('asking the Product Owner to look at it', () => {
     // The same function the card's own "Send it back" uses - one way for work to come back.
     const byHand = sendItemBack(s, item.id);
     expect(now.sentBack!.criteria).toEqual(byHand.backlog.find((it) => it.id === item.id)!.sentBack!.criteria);
+  });
+});
+
+describe('an answer, once given, is not asked for again', () => {
+  // Reported from playing it, after three goes round the loop: "I have the PO accept but it does not
+  // go to Done." The Product Owner had accepted a habitat as it was, and the rail went on telling
+  // them there was one criterion still to check - so they asked again, accepted as-is again, and
+  // nothing changed.
+  //
+  // "Has this criterion been settled?" is two things, not one: the Product Owner ticked it, or the
+  // Product Owner looked at it and said ship it anyway. Both are answers. That was known in exactly
+  // one place - the sign-off - and counted as `acConfirmed` alone in the fourteen others.
+
+  const shipped = (): { s: ZooGameState; item: BacklogItem } => {
+    const { s, item } = ready();
+    const after = answerQuestion(askToCheck(s, item.id), `check-${item.id}`, 'accept-as-is', 'product_owner');
+    return { s: after, item: after.backlog.find((x) => x.id === item.id)! };
+  };
+
+  it('counts a criterion shipped knowing as settled', () => {
+    const { item } = shipped();
+    expect(item.acceptance.every((_, i) => acSettled(item, i)),
+      'the Product Owner accepted it and the game still calls it unanswered').toBe(true);
+    expect(acOpen(item), 'there is still something open on work that was accepted').toEqual([]);
+  });
+
+  it('stops asking the Product Owner to check it', () => {
+    const { s, item } = shipped();
+    const asked = asksNow(s).filter((a) => a.of === 'product_owner' && /criterion|criteria/i.test(a.text));
+    expect(asked, `the Product Owner is being asked again: ${asked.map((a) => a.text).join(' / ')}`).toEqual([]);
+    expect(item.status !== 'backlog', 'the work fell off the board').toBe(true);
+  });
+
+  it('asks a different question if they are asked to look again', () => {
+    // Nothing is open, so it is "is this what you asked for?" rather than "it does not meet these".
+    const { s, item } = shipped();
+    const q = (askToCheck(s, item.id).questions ?? [])[0];
+    expect(q.text, 'it named criteria that have been answered').not.toMatch(/does not meet/i);
+    expect(q.choices.map((c) => c.key), 'Accept is not on offer for work with nothing outstanding')
+      .toContain('accept');
+  });
+
+  it('writes it down once, however many times it is answered', () => {
+    let { s, item } = shipped();
+    for (let i = 0; i < 3; i += 1) {
+      s = answerQuestion(askToCheck(s, item.id), `check-${item.id}`, 'accept-as-is', 'product_owner');
+      item = s.backlog.find((x) => x.id === item.id)!;
+    }
+    expect((item.acceptedAsIs ?? []).length, 'the same criterion was recorded once per press')
+      .toBe(new Set(item.acceptedAsIs ?? []).size);
+  });
+
+  it('leaves the Developers free to move it, once the building is done', () => {
+    const { s, item } = shipped();
+    expect(readyForDone(item), 'everything was answered and the sign-off never followed').toBe(true);
+    // The building is the only thing left, and it is the one thing a fast pair of hands cannot hurry.
+    const built = { ...item, buildLeft: 0 } as BacklogItem;
+    expect(readyToMove(built), 'nothing was outstanding and the card still would not move').toBe(true);
+    expect(readyToMove({ ...item, buildLeft: 40 } as BacklogItem),
+      'it went to Done with the building unfinished').toBe(false);
+    expect(s.backlog.find((x) => x.id === item.id)).toBeTruthy();
+  });
+
+  it('will not send back work the Product Owner has already accepted as it is', () => {
+    const { s, item } = shipped();
+    expect(sendItemBack(s, item.id), 'work that was accepted was refused afterwards anyway').toBe(s);
   });
 });

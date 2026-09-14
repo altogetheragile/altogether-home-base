@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
-import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit } from './engine';
+import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit, acSettled } from './engine';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
 
@@ -81,7 +81,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   // "does the park answer this one", not "is it met" - so a habitat with no water wore a tick for a
   // criterion it was failing.
   const met = (label: string, i: number) =>
-    !!item.acConfirmed?.[i] || (!!item.design && !!checkCriterion(state, item, label)?.met);
+    acSettled(item, i) || (!!item.design && !!checkCriterion(state, item, label)?.met);
 
   const todo = item.status === 'committed' && !item.started;
   // ...and why it cannot start, where it cannot: an animal waits for its habitat, and the WIP limit
