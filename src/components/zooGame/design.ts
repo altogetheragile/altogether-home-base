@@ -675,6 +675,29 @@ export function landscapePalette(type: string | undefined, colors?: Record<strin
 export const LANDSCAPE_TYPES = ['river', 'pond', 'rocks', 'hedge', 'fountain', 'bridge', 'entrance', 'carpark'];
 export const isLandscapeType = (type?: string): boolean => !!type && LANDSCAPE_TYPES.includes(type);
 
+/** What kind of flora this is, with the draft winning - the same rule every other reader uses. */
+export const floraTypeOf = (item: { design?: ItemDesign; draftDesign?: ItemDesign; template?: string }): string | undefined =>
+  item.draftDesign?.parts.type ?? item.design?.parts.type ?? item.template;
+
+/** The things that are a CLUMP rather than a plot.
+ *
+ *  A hedge is in both lists and counts as landscape, because the thing about a hedgerow is how far
+ *  it runs. A tree, a bush and a bed of flowers are none of them a rectangle: what you choose about
+ *  them is what they are, how many there are, where each one stands and how big they grew. */
+const PLANT_KINDS = ['tree', 'bush', 'flowers'];
+export const isPlanting = (item: { category: string; design?: ItemDesign; draftDesign?: ItemDesign; template?: string }): boolean =>
+  item.category === 'flora' && PLANT_KINDS.includes(floraTypeOf(item) ?? '');
+
+/** How big the plants in a clump grew. A choice about the plant, not about the ground it stands on,
+ *  so it lives in the design with what kind it is and what colour it is - and both drawings read it,
+ *  or the plan says "large" over an Increment full of ordinary trees.
+ *
+ *  Reported from playing it, looking at a planting dragged out into a slab: "what's the point of
+ *  expanding the trees?" There was none. The corner handle wrote a footprint that made the plan draw
+ *  a bigger rectangle, the Increment ignored, and nothing in the simulation ever read. */
+export const PLANT_SIZES: Record<string, number> = { small: 0.68, medium: 1, large: 1.5 };
+export const plantScale = (design: ItemDesign): number => PLANT_SIZES[design.parts.size ?? 'medium'] ?? 1;
+
 /** The starting footprint (design px) for a landscape feature - a river starts wide, a fountain
  *  square - then you resize it on the park. */
 export function landscapeDefaultSize(type?: string): { w: number; h: number } {
@@ -1380,8 +1403,16 @@ export const RIVER_LEN = 2520;
  *  rivers: this rule was private to the park, so the Sprint Review drew a two-hundred-pixel puddle
  *  where the park had a river across the whole zoo. */
 export function footprintFor(item: BacklogItem): { w: number; h: number } {
-  const type = item.design?.parts.type ?? item.template
+  const type = floraTypeOf(item)
     ?? (item.category === 'amenity' ? buildingTypeFor(item.name, item.services) : undefined);
+  // A clump of trees has no plot. Its ground is what its plants take up, which grows with how big
+  // they grew and with nothing else - the corner handle and the S/M/L chips both used to write a
+  // rectangle here, and a rectangle is not a thing a tree has. See `isPlanting`.
+  if (isPlanting(item)) {
+    const one = FOOTPRINT[type ?? ''] ?? DEFAULT_FOOTPRINT;
+    const k = plantScale(item.draftDesign ?? item.design ?? { parts: {}, colors: {} });
+    return { w: Math.round(one.w * k), h: Math.round(one.h * k) };
+  }
   if (item.category === 'flora' && isLandscapeType(type)) {
     // A river STARTS reaching bank to bank, because that is what makes a bridge worth building -
     // and it was pinned there, so the length handle moved nothing and only the width could change.

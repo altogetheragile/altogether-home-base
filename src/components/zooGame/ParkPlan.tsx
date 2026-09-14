@@ -8,7 +8,7 @@ import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOu
 
 import { answerable, checkCriterion } from './parkChecks';
 import { hasGround, groundPrice } from './engine';
-import { pieceByKey, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
+import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
 
@@ -45,6 +45,54 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
   exhibit: { fill: '#e8b76a', stroke: '#a97a2e' },
   default: { fill: '#cfe0c2', stroke: '#7f9a72' },
 };
+
+/** A plant, seen from straight above: its canopy.
+ *
+ *  ONE drawing of a plant on the plan, because there were three. The wood along the boundary drew
+ *  canopies, the planting inside a habitat drew a flat disc, and a planting standing on open ground
+ *  drew a RECTANGLE - which is why a park with three plantings on it read as three green slabs, and
+ *  why dragging one bigger made a bigger slab rather than a bigger tree.
+ *
+ *  Flat from above, so shape is all there is to tell one kind from another: a canopy with its light
+ *  side towards the sun, scrub as a low huddle, a bed of flowers as a scatter of heads, stone as a
+ *  block with corners. */
+function Canopy({ x, y, r, kind, foliage, trunk }: {
+  x: number; y: number; r: number; kind?: string; foliage?: string; trunk?: string;
+}) {
+  const leaf = foliage ?? '#3f8f43';
+  if (/rock|shelter|stone/i.test(kind ?? '')) {
+    return <rect x={x - r} y={y - r * 0.78} width={r * 2} height={r * 1.56} rx={r * 0.34}
+      fill={leaf} stroke={shade(leaf, -28)} strokeWidth={Math.max(1, r * 0.12)} />;
+  }
+  if (/flower/i.test(kind ?? '')) {
+    // A bed is many small heads, not one big one.
+    const heads = [[-0.52, -0.3], [0.1, -0.52], [0.56, -0.1], [-0.2, 0.34], [0.38, 0.46], [-0.62, 0.3]];
+    return (
+      <g>
+        <ellipse cx={x} cy={y} rx={r} ry={r * 0.74} fill={shade(leaf, -34)} opacity={0.5} />
+        {heads.map(([dx, dy], i) => (
+          <circle key={i} cx={x + dx * r} cy={y + dy * r * 0.8} r={r * 0.27} fill={i % 2 ? leaf : shade(leaf, 22)} />
+        ))}
+      </g>
+    );
+  }
+  if (/bush|hedge|shrub/i.test(kind ?? '')) {
+    return (
+      <g>
+        <circle cx={x - r * 0.42} cy={y + r * 0.12} r={r * 0.62} fill={shade(leaf, -20)} />
+        <circle cx={x + r * 0.4} cy={y + r * 0.16} r={r * 0.56} fill={shade(leaf, -26)} />
+        <circle cx={x} cy={y - r * 0.18} r={r * 0.68} fill={leaf} />
+      </g>
+    );
+  }
+  return (
+    <g>
+      <circle cx={x} cy={y} r={r} fill={shade(leaf, -26)} />
+      <circle cx={x - r * 0.22} cy={y - r * 0.22} r={r * 0.6} fill={leaf} />
+      {trunk && <circle cx={x + r * 0.28} cy={y + r * 0.3} r={Math.max(1, r * 0.14)} fill={trunk} opacity={0.65} />}
+    </g>
+  );
+}
 
 /** What a habitat looks like from above, in the choices somebody has made about it.
  *
@@ -552,8 +600,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             const leaf = pieceByKey(piece)?.colors.foliage ?? '#3f6a31';
             return (
               <g key={`tree-${n}`} data-tree={piece}>
-                <circle cx={x} cy={y} r={r} fill={shade(leaf, -26)} />
-                <circle cx={x - r * 0.22} cy={y - r * 0.22} r={r * 0.6} fill={leaf} />
+                <Canopy x={x} y={y} r={r} kind={pieceByKey(piece)?.type} foliage={leaf} />
               </g>
             );
           })}
@@ -613,14 +660,19 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             const piece = pieceByKey(c.piece);
             const d = currentDesign(b.item);
             const fill = piece?.colors.foliage ?? d.colors?.foliage ?? fillFor(b.item).fill;
-            const stroke = piece?.colors.trunk ?? d.colors?.trunk ?? fillFor(b.item).stroke;
+            const trunk = piece?.colors.trunk ?? d.colors?.trunk;
+            const r = Math.min(b.size.w, b.size.h) * 0.48;
             return (
               <g key={`copy-${b.item.id}-${i}`} data-copy={`${b.item.id}:${i}`}
+                opacity={b.underWay ? 0.5 : 1}
                 onPointerDown={placing || tool === 'path' ? undefined : (e) => dragCopy(e, b.item.id, i)}
                 style={{ cursor: onMoveCopy ? 'grab' : 'default' }}>
-                <rect x={c.x - b.size.w / 2} y={c.y - b.size.h / 2} width={b.size.w} height={b.size.h} rx={6}
-                  clipPath="url(#park-edge)" fill={fill} fillOpacity={b.underWay ? 0.45 : 1}
-                  stroke={stroke} strokeWidth={2} strokeDasharray={b.underWay ? '8 6' : undefined} />
+                {/* The canopy, and an invisible square round it to take hold of: a circle is a small
+                    target on a tablet, and the whole point of drawing these was that each plant can
+                    be moved to where somebody wants it. */}
+                <rect x={c.x - b.size.w / 2} y={c.y - b.size.h / 2} width={b.size.w} height={b.size.h}
+                  fill="transparent" />
+                <Canopy x={c.x} y={c.y} r={r} kind={piece?.type ?? d.parts.type} foliage={fill} trunk={trunk} />
               </g>
             );
           })
@@ -664,7 +716,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 // and the park's edge wanders, so an uncut one hangs over the countryside at both
                 // ends - water with no bank.
                 clipPath={b.item.category === 'flora' ? 'url(#park-edge)' : undefined}
-                fill={b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill)
+                // A clump of trees is not a box. Its box is still here - it is what you take hold of
+                // to move it, and what carries the ring when it is picked up and the hoarding while
+                // it is being built - but nothing is painted in it. The canopies below are the thing.
+                fill={isPlanting(b.item) ? 'transparent'
+                  : b.item.category === 'amenity' ? (currentDesign(b.item).colors?.roof ?? c.fill)
                   : b.item.category === 'enclosure'
                     ? (isTank(currentDesign(b.item), state.backlog.filter((it) => it.enclosureId === b.item.id), b.item)
                       ? tankWater(currentDesign(b.item))
@@ -675,6 +731,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 // and its colour is the one that was chosen. Still dashed while it is being built,
                 // because "not Done" is a different thing from "made of hedge".
                 stroke={on ? '#e6842a'
+                  : isPlanting(b.item) ? (b.underWay ? c.stroke : 'none')
                   : b.item.category === 'enclosure'
                     ? penLook(b.item, state.backlog.filter((it) => it.enclosureId === b.item.id)).stroke
                     : c.stroke}
@@ -724,6 +781,17 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   </>
                 );
               })()}
+              {/* The plants. A planting item is a clump, and its own plant stands at the middle of
+                  its box; the rest of the clump is drawn further down, where each one has a spot of
+                  its own on the park. Seen from straight above, a plant is its canopy. */}
+              {isPlanting(b.item) && (() => {
+                const d = currentDesign(b.item);
+                const piece = pieceOf(d, b.item.template);
+                return (
+                  <Canopy x={x + b.size.w / 2} y={y + b.size.h / 2} r={Math.min(b.size.w, b.size.h) * 0.48}
+                    kind={piece?.type ?? d.parts.type} foliage={d.colors?.foliage} trunk={d.colors?.trunk} />
+                );
+              })()}
               {/* What is inside the fence: the pool, the rocks, the planting. Drawn here because
                   this is where a habitat is built now - there is no window over the park with a
                   picture of the pen in it - and each piece can be taken hold of and moved. */}
@@ -742,10 +810,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                       <g key={`f-${b.item.id}-${i}`} data-piece={`flora-${i}`} data-of={b.item.id}
                         style={{ cursor: onMoveInside ? 'grab' : 'default' }}
                         onPointerDown={onMoveInside && tool !== 'path' ? (e) => movePiece(e, b, 'flora', i) : undefined}>
-                        {/rock|shelter/i.test(f.type)
-                          ? <rect x={x + b.size.w * f.x - 12} y={y + b.size.h * f.y - 9} width={24} height={18} rx={4}
-                              fill={f.foliage ?? '#8a5a2b'} />
-                          : <circle cx={x + b.size.w * f.x} cy={y + b.size.h * f.y} r={10} fill={f.foliage ?? '#3f8f43'} />}
+                        <Canopy x={x + b.size.w * f.x} y={y + b.size.h * f.y} r={11 * (f.s || 1)}
+                          kind={f.type} foliage={f.foliage} trunk={f.trunk} />
                       </g>
                     ))}
                   </>
@@ -843,7 +909,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               {/* Scenery is sized here too - a river as wide as you want it, a bridge as long as
                   it needs to be - which is what the takeover promises when it says its size is set
                   on the park. */}
-              {on && onSetSize && (b.item.category === 'enclosure' || b.item.category === 'flora') && (
+              {/* ...but a clump of trees has no plot to change. The handle wrote a rectangle, which
+                  made the plan draw a bigger slab, the Increment ignored, and nothing else ever
+                  read: "what's the point of expanding the trees?" How big the plants grew is a
+                  choice about the plants, and it is made on the strip. */}
+              {on && onSetSize && !isPlanting(b.item) && (b.item.category === 'enclosure' || b.item.category === 'flora') && (
                 <rect data-part="size-grip" x={x + b.size.w - ch(9)} y={y + b.size.h - ch(9)} width={ch(18)} height={ch(18)} rx={ch(4)}
                   fill="#fff" stroke="#e6842a" strokeWidth={ch(3)}
                   style={{ cursor: 'nwse-resize' }}

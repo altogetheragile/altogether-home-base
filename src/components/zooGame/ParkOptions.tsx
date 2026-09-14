@@ -114,8 +114,6 @@ export interface ParkOptionsApi {
    *  and nothing replaced it: "we used to have joints on paths too and the ability to delete them."
    *  A run laid in the wrong place could not be picked up at all. */
   onRemoveRun?: (connectorId: string) => void;
-  /** Set a footprint outright. Dragging a corner does anything in between. */
-  onSetSize?: (id: string, size: { w: number; h: number }) => void;
   /** Plant another beside this one: a planting item is a clump, not one tree. */
   onAddCopy?: (id: string, piece: string) => void;
   /** Change what one of them is - an oak beside a bush beside a blossom. */
@@ -264,11 +262,17 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               ))}
             </Group>
           )}
-          {api.onSetSize && (
+          {/* How big the plants grew - a sapling, a tree, a mature oak. A choice about the PLANT,
+              which is why it is written into the design beside what kind it is and what colour it
+              is, and why both drawings read it. These chips used to write a rectangle on the park
+              instead, which made the plan draw a bigger slab and changed nothing anywhere else.
+              Reported from playing it: "what's the point of expanding the trees?" */}
+          {!LANDSCAPE_TYPES.includes(kind) && (
             <Group label="Size">
-              {([['small', 'S', 0.6], ['medium', 'M', 1], ['large', 'L', 1.6]] as const).map(([key, label, mult]) => (
-                <Chip key={key} title={`${label} - drag a corner for anything in between`}
-                  onClick={() => api.onSetSize?.(subject.id, { w: Math.round(80 * mult), h: Math.round(60 * mult) })}>{label}</Chip>
+              {(['small', 'medium', 'large'] as const).map((key) => (
+                <Chip key={key} on={(design.parts.size ?? 'medium') === key}
+                  title={{ small: 'A sapling', medium: 'A tree', large: 'A mature one' }[key]}
+                  onClick={() => set({ parts: { ...design.parts, size: key } })}>{key[0].toUpperCase()}</Chip>
               ))}
             </Group>
           )}

@@ -497,7 +497,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onSetEnclosure: edit.onSetEnclosure,
                       onTurn,
                       onUnplace: (id) => setMoving(id),
-                      onSetSize,
                       onPutIn,
                       // Going inside puts the pen away. The pen belongs to the park - it draws the
                       // way IN to a habitat - and inside one it is only in the way: the strip stops

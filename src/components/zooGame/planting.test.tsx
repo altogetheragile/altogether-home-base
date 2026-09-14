@@ -4,7 +4,7 @@ import { ParkOptions } from './ParkOptions';
 import { ParkPlan } from './ParkPlan';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
-import { footprintFor, floraPalette, piecesFor, presetFor, currentDesign, type ItemDesign } from './design';
+import { footprintFor, floraPalette, piecesFor, presetFor, currentDesign, plantScale, type ItemDesign } from './design';
 import { removePlant } from './engine';
 import type { ZooGameState, BacklogItem } from './types';
 
@@ -147,16 +147,36 @@ describe('the clump is one list', () => {
 });
 
 describe('the size of a plant', () => {
-  it('is the size somebody chose', () => {
-    // The chips wrote a size and the drawing read the kind's default, so they did nothing at all.
-    const { item } = planting({ size: { w: 128, h: 96 } } as Partial<BacklogItem>);
-    expect(footprintFor(item), 'a tree set to large is drawn at whatever size trees are')
-      .toEqual({ w: 128, h: 96 });
+  // The chips used to write a FOOTPRINT: a rectangle on the park. It made the plan draw a bigger
+  // slab, the Increment ignored it, and nothing in the simulation ever read it. Reported from
+  // playing it, looking at a planting dragged out into a green slab: "what's the point of expanding
+  // the trees?" There was none. How big a plant grew is a choice about the plant.
+
+  it('is how big the plant grew, not how much ground it was given', () => {
+    const { item } = planting();
+    const one = footprintFor(item);
+    const big = footprintFor({ ...item, draftDesign: { ...presetFor(item), parts: { ...presetFor(item).parts, size: 'large' } } } as BacklogItem);
+    const small = footprintFor({ ...item, draftDesign: { ...presetFor(item), parts: { ...presetFor(item).parts, size: 'small' } } } as BacklogItem);
+    expect(big.w, 'a tree grown large is no bigger than an ordinary one').toBeGreaterThan(one.w);
+    expect(small.w, 'a sapling is no smaller than an ordinary one').toBeLessThan(one.w);
+  });
+
+  it('cannot be dragged out into a plot', () => {
+    // A rectangle is not a thing a tree has, so a footprint written on one is ignored.
+    const { item } = planting({ size: { w: 400, h: 300 } } as Partial<BacklogItem>);
+    expect(footprintFor(item).w, 'a clump of trees was given a plot to fill').toBeLessThan(200);
   });
 
   it('is the kind’s own size until somebody chooses one', () => {
     const { item } = planting();
     expect(footprintFor(item).w, 'a plant nobody has sized has no size at all').toBeGreaterThan(0);
+  });
+
+  it('is the same choice in both drawings', () => {
+    const { item } = planting();
+    const big = { ...item, design: { ...presetFor(item), parts: { ...presetFor(item).parts, size: 'large' } } } as BacklogItem;
+    expect(plantScale(big.design!), 'the Increment has no idea how big the plant grew').toBeGreaterThan(1);
+    expect(plantScale(presetFor(item)), 'a plant nobody sized is drawn as something other than ordinary').toBe(1);
   });
 });
 
@@ -222,8 +242,22 @@ describe('both drawings show the whole clump', () => {
   it('gives each plant its own kind, so a pine is not drawn as a blossom', () => {
     const { state, item } = clump();
     const { container } = render(<ParkPlan state={state} />);
-    const fills = [...container.querySelectorAll(`[data-copy^="${item.id}"] rect`)]
+    // Canopies, not boxes: a plant seen from straight above is its canopy, and a pine's is darker
+    // than a blossom's. The square behind each one is only there to take hold of.
+    const fills = [...container.querySelectorAll(`[data-copy^="${item.id}"] circle`)]
       .map((r) => r.getAttribute('fill'));
-    expect(new Set(fills).size, 'every plant in the clump is drawn the same colour').toBe(2);
+    expect(fills.length, 'the clump is drawn as boxes again').toBeGreaterThan(1);
+    expect(new Set(fills).size, 'every plant in the clump is drawn the same colour').toBeGreaterThan(1);
+  });
+
+  it('draws a planting as planting, and not as a green rectangle', () => {
+    // Reported from playing it, of a park with three plantings standing on it as slabs: "what's the
+    // point of expanding the trees?" A plot is a thing a habitat has. A clump of trees has plants.
+    const { state, item } = clump();
+    const { container } = render(<ParkPlan state={state} />);
+    const box = container.querySelector(`[data-plan-item="${item.id}"] rect`)!;
+    expect(box.getAttribute('fill'), 'a clump of trees is still painted as a filled box').toBe('transparent');
+    expect(container.querySelectorAll(`[data-plan-item="${item.id}"] circle`).length,
+      'nothing was drawn where the planting stands').toBeGreaterThan(0);
   });
 });
