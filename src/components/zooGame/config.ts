@@ -5,9 +5,6 @@ import { DEFAULT_CONFIG } from './simulation/config';
 import { jitterItems, driftAttendance } from './simulation/simulate';
 import { amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance } from './design';
 
-/** First-Sprint capacity guess, before there is velocity. A deliberate over-guess: you
- *  cannot know velocity yet, so this is a starting point you learn away from by doing. */
-export const STARTER_CAPACITY = 22;
 /** How many recent Sprints the velocity average looks back over (a rolling window, so an
  *  unusual early Sprint stops skewing the forecast forever). */
 export const VELOCITY_WINDOW = 3;
@@ -23,6 +20,31 @@ export const SPRINT_DAYS = 3;
 /** Sprint-length choices: fewer days = faster feedback but more event overhead per unit
  *  of build time; more days = more build time but slower feedback. */
 export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
+
+/** What a team really gets through in a day, before anybody has measured them.
+ *
+ *  A FACT about the work, not an opinion about the team - and the difference is the point. What a
+ *  point of work costs used to be worked out from the team's own first-Sprint guess, which meant
+ *  guessing high made every point cheaper in exactly the proportion you had over-guessed. The
+ *  mistake paid for itself: an over-optimistic team delivered everything they took, and a Sprint
+ *  priced at three days went in about one and a half.
+ *
+ *  Only in force until there is a velocity to read. After that a point costs what the team's own
+ *  measured Sprints say it costs, which is the loop doing its job. */
+export const TRUE_VELOCITY_PER_DAY = 5;
+
+/** First-Sprint capacity guess, before there is velocity: what the board offers on day one.
+ *
+ *  It starts honest rather than ambitious. It was an over-guess on purpose once - something to
+ *  learn away from by doing - but the game hands you the first Sprint ready-planned now, so all
+ *  that over-guess did was make the first Sprint's work cheap and finish it a day early. A guess
+ *  that is half as big again as anything the board can supply is not a lesson, it is a trap: the
+ *  Goal could not be met however well it was played. Velocity is learned by measuring what actually
+ *  happened - the impediments, the events, the work sent back - not by starting from a wrong number.
+ *
+ *  Derived, so that moving what a team can do moves what they would guess with it, and NOT the
+ *  other way round: change this on its own and the price of work does not follow. */
+export const STARTER_CAPACITY = TRUE_VELOCITY_PER_DAY * SPRINT_DAYS;
 /** Seconds of build time in a full day (before any Daily Scrum / impediment cost).
  *
  *  Ninety was too few. Reported from playing it: the time disappears too quickly - and it did,

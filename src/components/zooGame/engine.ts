@@ -14,7 +14,7 @@ import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
-import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
+import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -51,7 +51,14 @@ export const dayTotalSeconds = (mult: number): number => Math.round(DAY_SECONDS 
  *  DAY_SECONDS each, and the team forecasts against a measured capacity, so a point costs
  *  `sprintSeconds / capacity`. A Sprint's forecast then costs about a Sprint. */
 export function secondsPerPoint(state: ZooGameState): number {
-  return (DAY_SECONDS * Math.max(1, state.sprintDays)) / Math.max(1, sprintCapacity(state).points);
+  const cap = sprintCapacity(state);
+  // Measured Sprints price a point; a GUESS must not. Before there was a velocity this read the
+  // team's own first-Sprint estimate, which is deliberately an over-guess - so every point came out
+  // cheaper in exactly the proportion they had over-guessed, and the whole of Sprint 1's work fitted
+  // in about a day and a half. An opinion about yourself cannot be allowed to change what the work
+  // costs, or a team that over-forecasts is rewarded for it.
+  const points = cap.estimated ? TRUE_VELOCITY_PER_DAY * Math.max(1, state.sprintDays) : cap.points;
+  return (DAY_SECONDS * Math.max(1, state.sprintDays)) / Math.max(1, points);
 }
 
 /** Spend build time on work that was done rather than waited out.
