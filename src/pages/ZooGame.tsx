@@ -3,7 +3,9 @@ import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
-import { inHandItem } from '@/components/zooGame/engine';
+import { inHandItem, copyOffset } from '@/components/zooGame/engine';
+import { whereItStands } from '@/components/zooGame/parkModel';
+import { insidePark, CANVAS_W, PLAY_H } from '@/components/zooGame/parkLayout';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
 import { useZooProductOwner } from '@/components/zooGame/useZooProductOwner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,7 +44,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void }) {
-  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removeCopy, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
+  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removeCopy, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -108,6 +110,17 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     },
     onSetEnclosure: setEnclosureSize,
     onAddInside: addInside,
+  };
+
+  // Another plant beside this one. The strip says WHAT to plant; where it goes is the park's
+  // business - a clump ringing outwards from the one already there, so a planting near the edge does
+  // not walk off it. Each new plant keeps the spot it is given and can be dragged from there.
+  const plantAnother = (id: string, piece: string) => {
+    const it = state.backlog.find((x) => x.id === id);
+    if (!it) return;
+    const at = whereItStands(state, it) ?? it.pos ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
+    const { dx, dy } = copyOffset((it.copies ?? []).length);
+    addCopy(id, insidePark({ w: 40, h: 40 }, { x: at.x + dx, y: at.y + dy }), piece);
   };
 
   const clearDeploy = () => { setDeploying(null); setDeployId(null); setDeployStyle(null); };
@@ -285,7 +298,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     // a habitat: whatever is in the draft becomes its design. Without it the Product Owner had
     // nothing built to accept - "how do I fulfil the last AC?" - and the card sat in Doing.
     planShape(id, { enclosureId }); commitBuild(id); placeOnPark(id);
-  }, onAskToCheck: askToCheck, rail: <ActionRail className="mt-2" state={state} seat={seat} onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete} onAddProposal={handleProposal} onSplitEpic={splitEpic} onDeclineProposal={declineProposal} />, onSetClockPaused: setClockPaused, onRenameMember: renameMember, onWho: (why: string) => toast(why), seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, canBuild: !!inHandItem(state, buildingId), links: <GameLinks />, menuLinks: <GameLinks variant="menu" />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onRemoveRun: deleteConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot,  onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  }, onAskToCheck: askToCheck, rail: <ActionRail className="mt-2" state={state} seat={seat} onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete} onAddProposal={handleProposal} onSplitEpic={splitEpic} onDeclineProposal={declineProposal} />, onSetClockPaused: setClockPaused, onRenameMember: renameMember, onWho: (why: string) => toast(why), seat, observer, covering, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, canBuild: !!inHandItem(state, buildingId), links: <GameLinks />, menuLinks: <GameLinks variant="menu" />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onRemoveRun: deleteConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot,  onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemoveCopy: removeCopy, onAddCopy: plantAnother, onSetCopyPiece: setCopyPiece, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     // The Coach is gone. It floated advice over whatever you were doing - often about refinement,
     // often at the wrong moment, twice over the button you needed. Every lesson it carried belongs
     // in the flow, at the moment it applies, as part of the screen that applies it. What survives

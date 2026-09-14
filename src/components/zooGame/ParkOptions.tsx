@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
-  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize,
+  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize, piecesFor, pieceByKey, floraPalette,
   hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, barrierOf,
   type ItemDesign,
 } from './design';
@@ -25,7 +25,6 @@ import { EYEBROW, FOCUS } from './ui/tokens';
 // footprint and an inside; a river has neither. Nothing here asks "what kind of thing is this?" for
 // an object that came from a Product Backlog item - the card already said.
 
-const SCENERY_COLOURS = ['#43a047', '#7a5230', '#8fa3b0', '#c8a06a', '#7cc0e8', '#e0679a', '#6b7280'];
 const BUILDING_COLOURS = ['#e6ddcf', '#cfd8e3', '#a4623a', '#3f6f4f', '#c8761f', '#6b7280'];
 /** Everything, behind the "+". The strip shows the handful you reach for first; this is the rest,
  *  the same palette the bench used to open from every colour well. */
@@ -117,6 +116,12 @@ export interface ParkOptionsApi {
   onRemoveRun?: (connectorId: string) => void;
   /** Set a footprint outright. Dragging a corner does anything in between. */
   onSetSize?: (id: string, size: { w: number; h: number }) => void;
+  /** Plant another beside this one: a planting item is a clump, not one tree. */
+  onAddCopy?: (id: string, piece: string) => void;
+  /** Change what one of them is - an oak beside a bush beside a blossom. */
+  onSetCopyPiece?: (id: string, index: number, piece: string) => void;
+  /** Take one of them out again. */
+  onRemoveCopy?: (id: string, index: number) => void;
   /** Move an animal into a habitat - which is what "where it lives" means for an animal. */
   onPutIn?: (id: string, enclosureId: string) => void;
 }
@@ -266,9 +271,52 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               ))}
             </Group>
           )}
+          {/* A planting item is a CLUMP, not one plant. The model has always held several - each
+              with its own kind and its own spot on the park, and the park has always drawn them and
+              let them be dragged - but the strip never grew the control, so a planting card was one
+              tree of one kind. Reported from playing it: "we can only add one tree and one type of
+              tree. There used to be the ability to plant multiple trees of different types." */}
+          {!LANDSCAPE_TYPES.includes(kind) && api.onAddCopy && (
+            <Group label="Plant another">
+              {piecesFor(kind).map((p) => (
+                <Chip key={p.key} title={`Add a ${p.label.toLowerCase()} beside it`}
+                  onClick={() => api.onAddCopy?.(subject.id, p.key)}>+ {p.label}</Chip>
+              ))}
+            </Group>
+          )}
+          {/* What it is planted with, and the way to take one out again - the same shape as a
+              pathway's runs, because it is the same kind of list: the pieces this one item is. */}
+          {(() => {
+            const copies = subject.copies ?? [];
+            if (!copies.length || !api.onSetCopyPiece) return null;
+            return (
+              <Group label={`${copies.length + 1} plants`}>
+                {copies.map((c, i) => {
+                  const piece = pieceByKey(c.piece) ?? piecesFor(kind)[0];
+                  return (
+                    <span key={`${c.x}-${c.y}-${i}`} className="flex items-center gap-0.5">
+                      <select value={c.piece ?? piece?.key ?? ''} data-part={`copy-${i}`}
+                        onChange={(e) => api.onSetCopyPiece?.(subject.id, i, e.target.value)}
+                        className={cn(FOCUS, 'rounded-md border border-border bg-card px-1 py-1 text-[11px] font-medium')}>
+                        {piecesFor(kind).map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+                      </select>
+                      {api.onRemoveCopy && (
+                        <button type="button" data-part={`remove-copy-${i}`} title={`Take this ${piece?.label.toLowerCase() ?? 'plant'} out`}
+                          aria-label={`Take plant ${i + 2} out`}
+                          onClick={() => api.onRemoveCopy?.(subject.id, i)}
+                          className={cn(FOCUS, 'rounded-md border border-border bg-card p-1 text-muted-foreground hover:border-destructive/60 hover:text-destructive')}>
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
+              </Group>
+            );
+          })()}
           {floraColors(kind).map((slot) => (
             <Group key={slot.key} label={slot.label}>
-              {SCENERY_COLOURS.map((c) => (
+              {floraPalette(slot.key, kind).map((c) => (
                 <Swatch key={c} hex={c} label={slot.label} on={design.colors?.[slot.key] === c}
                   onClick={() => set({ colors: { ...design.colors, [slot.key]: c } })} />
               ))}

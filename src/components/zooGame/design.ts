@@ -912,6 +912,33 @@ export function applyPiece(design: ItemDesign, piece: FloraPiece): ItemDesign {
  *  So the sheet-drawn kinds - trees, bushes, flowerbeds, signposts - offer the one colour they can
  *  honour. The plan's build steps come from this same list, so dropping a control drops the task
  *  that asked for it too, and nothing is left demanding something the studio cannot do. */
+/** What a colour slot may plausibly be.
+ *
+ *  Reported from playing it: "a lot of the colour options are pointless - blue trees?" Quite so. One
+ *  palette for everything meant every slot offered every colour, so choosing foliage meant picking
+ *  green out of a row that also offered pink and sky blue. A choice between things somebody might
+ *  actually want is a choice; a choice that includes six wrong answers is a quiz.
+ *
+ *  Blossom is pink and a bare tree in autumn is rust, so this is not "greens only" - it is the range
+ *  a gardener would recognise, per slot and per kind. */
+export function floraPalette(slot: string, type?: string): string[] {
+  if (slot === 'trunk') {
+    if (type === 'rocks' || type === 'fountain') return ['#9aa1a8', '#6f757b', '#c9cdd2', '#8a8f96'];
+    if (type === 'river' || type === 'pond') return ['#b7965f', '#c8a06a', '#8a6134', '#9aa1a8'];
+    return ['#7a5228', '#6b4a25', '#8a6134', '#5c4326', '#9aa1a8'];
+  }
+  switch (type) {
+    case 'rocks': return ['#9aa1a8', '#6f757b', '#b0a89a', '#7d7468', '#c9cdd2'];
+    case 'flowers': return ['#e05c5c', '#e8a6c0', '#e6b422', '#b06ec0', '#f0f0ea', '#4f8f3a'];
+    case 'pond': case 'river': case 'fountain': return ['#5aa9c8', '#7cc0e8', '#4a90b8'];
+    case 'carpark': return ['#8a8f96', '#6b7280', '#9aa1a8'];
+    case 'entrance': return ['#e6842a', '#c8761f', '#3f6f4f', '#b23a48'];
+    case 'bridge': return ['#c8965a', '#a4623a', '#7a5230'];
+    // Everything that grows: the greens, and the two a tree is honestly allowed to be.
+    default: return ['#4e9146', '#2f6b3b', '#5ca352', '#4f8f3a', '#e8a6c0', '#c8761f'];
+  }
+}
+
 export function floraColors(type?: string): { key: string; label: string }[] {
   switch (type) {
     // Landscape: drawn as geometry, so both colours land. Water is not one of them - water is
@@ -1363,7 +1390,10 @@ export function footprintFor(item: BacklogItem): { w: number; h: number } {
     if (type === 'river') return item.size ?? { w: RIVER_LEN, h: landscapeDefaultSize('river').h };
     return item.size ?? landscapeDefaultSize(type);
   }
-  return FOOTPRINT[type ?? ''] ?? DEFAULT_FOOTPRINT;
+  // A size somebody chose beats the size the kind starts at - for planting as well as for
+  // landscape. The S/M/L chips and the corner handle both wrote one and nothing read it, so they
+  // were controls that did nothing. Reported from playing it: "the tree size buttons do nothing."
+  return item.size ?? FOOTPRINT[type ?? ''] ?? DEFAULT_FOOTPRINT;
 }
 
 /** Enclosure footprints (in the fixed design px). A bigger habitat is simply a bigger box; how many
