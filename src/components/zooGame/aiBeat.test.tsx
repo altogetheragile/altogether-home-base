@@ -72,8 +72,10 @@ describe('a seat played by the game, while the clock is running', () => {
     const built = fake.sent.filter((x) => x.action.type === 'BUILD_ITEM');
     expect(built.length,
       'the Developers never built anything: a move slower than the clock never lands').toBeGreaterThan(0);
-    // ...and the work is charged to the day, the way a person's would be.
+    // What it costs the day is not sent alongside it any more: BUILD_ITEM charges the day itself,
+    // so the cost belongs to the work rather than to whoever did it. A person building the same
+    // item used to pay nothing at all. That rule is held in aDaysWork.test.ts.
     expect(fake.sent.some((x) => x.action.type === 'SPEND_DAY'),
-      'the build was free: nothing was charged to the day').toBe(true);
+      'the cost is being sent twice: the build charges it, and so does the seat').toBe(false);
   });
 });

@@ -29,7 +29,10 @@ const withStarted = (s: ZooGameState, id: string, design = presetFor(s.backlog.f
   let game = { ...s, backlog: s.backlog.map((it) => (it.id === id
     ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
   game = startItem(game, id, 'developer');
-  return applyParkChecks(buildItem(game, id, design));
+  // Building charges the day now, whoever does it. Two of these in a row would run the fixture out
+  // of time before the second one started - and this helper means "a thing that has been built",
+  // not a Sprint with a clock running in it. So time passes between them.
+  return { ...applyParkChecks(buildItem(game, id, design)), owedSeconds: 0 } as ZooGameState;
 };
 const of = (s: ZooGameState, id: string): BacklogItem => s.backlog.find((it) => it.id === id)!;
 

@@ -608,8 +608,13 @@ export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
   // eighty one seconds it could never have, so the biggest items in the Product Backlog could not be
   // built at all: taken at the top of a day, then sat in Doing while the day ran out, every day.
   const total = dayTotalSeconds(state.dayTimeMult ?? 1);
-  if (cost >= total) return state.daySecondsLeft >= total * 0.9;
-  return state.daySecondsLeft >= cost;
+  // What is left of today, minus what the team already owes on work they have started. Time that
+  // is spoken for is not time you have: measured against the raw clock, everything in the Sprint
+  // could be started in the first few seconds of Day 1 - each one affordable on its own - and the
+  // debt then evaporated when the day ended. That is a WIP limit with no cost behind it.
+  const room = state.daySecondsLeft - (state.owedSeconds ?? 0);
+  if (cost >= total) return room >= total * 0.9;
+  return room >= cost;
 }
 
 /** Why the board is standing still, when it is.
@@ -1820,6 +1825,22 @@ export function pullIntoSprint(state: ZooGameState, id: string, by?: string): Zo
  *  computed from the design (the choices are the product). Without a design the item
  *  is just marked Done. */
 export function buildItem(state: ZooGameState, id: string, design?: ItemDesign): ZooGameState {
+  // What building this costs the Sprint, and whether today can pay for it.
+  //
+  // It used to depend on WHO built it. A seat played by the game was charged
+  // `secondsPerPoint * estimate` and could not start what the day could not afford; a person was
+  // charged nothing at all and could start anything, so their work cost whatever their hands took.
+  // A Sprint's forecast is priced at about a Sprint, and a person who knows the controls does three
+  // items in a couple of minutes - so the whole Sprint went in a day and the Daily Scrum, the
+  // burndown and running out of time had nothing to bite on. Reported from playing it: "it only
+  // takes a day to get through the 3 PBIs."
+  //
+  // One question, one answer: the work costs what the work costs, whoever does it. Owed rather than
+  // taken, so it drains a second per second while the team is busy with it - which is the time you
+  // spend laying the ground, placing it and settling its criteria.
+  const before = state.backlog.find((it) => it.id === id);
+  const first = !!before && before.status === 'committed' && !before.design;
+  if (first && !dayCanAfford(state, before)) return state;
   const backlog = state.backlog.map((it) => {
     if (it.id !== id || it.status !== 'committed') return it;
     // The design is built in the studio. The item is only Done when its plan is also
@@ -1829,7 +1850,8 @@ export function buildItem(state: ZooGameState, id: string, design?: ItemDesign):
       : { ...it, started: true };
     return settleStatus(built);
   });
-  return { ...state, backlog };
+  const built = { ...state, backlog };
+  return first ? spendDay(built, secondsPerPoint(state) * (before.estimate ?? 0)) : built;
 }
 
 /** Go back and edit an already-built item (Done or Open) without changing its

@@ -7,7 +7,7 @@ import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
 import { aiTurn } from './aiSeats';
-import { secondsPerPoint, teamIsBusy } from './engine';
+import { teamIsBusy } from './engine';
 import type { SeatName } from './useZooSessions';
 
 // One shared game, kept in step across several browsers with no server code.
@@ -316,11 +316,10 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
         // move that changes the topic is about the topic it moves to.
         say?.(seat, move.says, move.action);
         send(seat, move.action);       // one move at a time, so it reads as somebody working
-        // ...and the work costs the day, the way it would if a person had done it. Owed rather than
-        // taken: the cost drains a second per second while the team works it off, and they take no
-        // new move until it is worked off. Charged in a lump, a Sprint's forecast went in a few
-        // seconds and the day clock stopped meaning anything - reported from playing it.
-        if (move.weight && now) send(seat, { type: 'SPEND_DAY', seconds: Math.round(secondsPerPoint(now) * move.weight) });
+        // The work costs the day, and BUILD_ITEM charges it - so this no longer charges it again.
+        // It used to be the only place the cost was applied, which is exactly why a person's own
+        // building was free: the charge lived with the seat rather than with the work. `weight` is
+        // still what paces a move on screen, because building reads as taking longer than deciding.
       }
       // ...and how long before the next one. A topic change, and the selection that finishes a
       // topic, are each left on screen long enough to read.

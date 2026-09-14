@@ -614,6 +614,8 @@ export type ZooAction =
   | { type: 'SET_PHASE'; phase: ZooPhase }
   | { type: 'SET_FORECAST'; ids: string[]; by?: string }
   | { type: 'AGREE_SPRINT_GOAL'; seat: string }
+  /** Build time spent on work that was done rather than waited out. BUILD_ITEM charges it itself
+   *  now, so nothing sends this any more; it is kept so an older session or trail still replays. */
   | { type: 'SPEND_DAY'; seconds: number }
   | { type: 'TICK_DAY' }
   | { type: 'SET_CLOCK_PAUSED'; paused: boolean }
