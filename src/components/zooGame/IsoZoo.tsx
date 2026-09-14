@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpot } from './carPark';
 import { animalArtFor } from './art/animalArt';
 import { coatTint, foliageTint, tintKey, tintRef, type Tint } from './art/tint';
+import { motionWanted } from './motion';
 import { TintDefs } from './art/TintDefs';
 import { KIND_SCALE, groupMembers, plantScale } from './design';
 import {
@@ -49,6 +50,41 @@ const CHILD_PROPS = ['child01', 'child02', 'child03'];
 
 /** Anything with a place in the scene, carrying how far back it stands. */
 interface Piece { z: number; el: React.ReactNode }
+
+/** A hash, so the same animal keeps the same beat every time the park is drawn. A zoo where every
+ *  lion paced in step would be a chorus line. */
+const beatNoise = (key: string): number => {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i += 1) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+  return ((h >>> 0) % 1000) / 1000;
+};
+
+/** The beat one animal paces: how far, how long, how far out of step with the rest, and whether it
+ *  turns at the far end.
+ *
+ *  Small on purpose. It is a few paces inside a pen, not a patrol: an animal that crossed its
+ *  habitat would walk through its own pool and out past the fence, and the spot it stands on is a
+ *  place somebody arranged. In water it is a drift - out on a curve and back on the other half of
+ *  it - which reads as swimming rather than marching. */
+function animalBeat(key: string, drawnHeight: number, swims: boolean): {
+  path: string; secs: string; begin: string; turns: boolean;
+} {
+  const n = beatNoise(key);
+  // Measured against the animal itself: a bit less than its own body each way. A beat in absolute
+  // pixels is a twitch on an elephant and a route march on a penguin, and one measured against the
+  // HABITAT walks a small animal in a big pen through its own pool and out past the fence.
+  const far = Math.max(6, drawnHeight * (0.6 + 0.6 * n));
+  const secs = 7 + 9 * beatNoise(`${key}-t`);
+  return {
+    path: swims
+      ? `M0,0 C${(far * 1.4).toFixed(1)},${(-far * 0.7).toFixed(1)} ${(far * 1.4).toFixed(1)},${(far * 0.7).toFixed(1)} 0,0`
+      : `M0,0 L${far.toFixed(1)},${(far * 0.14).toFixed(1)} L0,0`,
+    secs: secs.toFixed(1),
+    // Out of step: each one starts somewhere else in its own cycle.
+    begin: `${(-n * secs).toFixed(1)}`,
+    turns: !swims,
+  };
+}
 
 /** Colour a drawing to the foliage somebody chose.
  *
@@ -873,6 +909,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // Park and car park are one piece of ground, so the ground is drawn once, with one edge around
   // the outside of the lot. Giving the park its own edge put a cliff between the fence and the
   // tarmac that visitors were then seen to walk off.
+  // Whether anything in the park may move: the visitors on their routes and the animals in their
+  // pens. Asked once for the whole scene, at the top, because both of them need it.
+  const stroll = motionWanted();
   const nodes: React.ReactNode[] = [];
   /** Everything standing INSIDE a habitat that can be picked up on its own: each animal of a
    *  family, and any planting nested in with them. Held as a world box and the habitat box it
@@ -1299,15 +1338,39 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           const toRight = Math.min(x1 - wx, wy - y0);
           const facesLeft = toLeft <= toRight;
           const mirror = facesLeft !== !!art.flip;
+          // A living thing moves. Every animal in the zoo stood on its mark like a model in a shop
+          // window, which is the tell that a habitat is a box with pictures in it. It paces a short
+          // beat inside its own pen: out, turn, back, in its own time and not in step with the next
+          // one along. In water it drifts instead, which is what swimming looks like from up here.
+          //
+          // SMIL, for the same reason the visitors are: a ticker in the component would redraw a
+          // thousand polygons sixty times a second to move a lion two paces.
+          //
+          // Drawn about its own origin now rather than at absolute coordinates, because the turn is
+          // `scale(-1,1)` and a mirror is only simple about the thing it mirrors. It used to be a
+          // translate-and-flip about the line the animal stood on, which is the same thing said the
+          // hard way and could not be animated at all.
+          const beat = animalBeat(key, h, tank);
+          const face = (flip: boolean) => (flip ? '-1 1' : '1 1');
           push(depth(wx, wy), (
-            // Mirrored with an SVG transform on a wrapper, about the line the animal stands on:
-            // `scale(-1,1)` alone reflects through the origin and sends it off the far side, so the
-            // translate brings it back. A CSS transform with transform-box: fill-box looked like the
-            // tidier way to say this and put two lions in four somewhere off the picture entirely.
-            <g key={key} data-spot={`${a.id}:${mi}`} filter={coat ? tintRef(grassClip, coat) : undefined}
-              transform={mirror ? `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)` : undefined}>
-              <svg x={at.x - w / 2} y={at.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
-                dangerouslySetInnerHTML={{ __html: art.body }} />
+            <g key={key} data-spot={`${a.id}:${mi}`} filter={coat ? tintRef(grassClip, coat) : undefined}>
+              {stroll && (
+                <animateMotion dur={`${beat.secs}s`} repeatCount="indefinite" begin={`${beat.begin}s`}
+                  path={beat.path} />
+              )}
+              <g transform={`translate(${at.x.toFixed(1)},${at.y.toFixed(1)})`}>
+                <g transform={`scale(${mirror ? -1 : 1} 1)`}>
+                  {/* Facing the way it is going. Half the beat out and half of it back, so the turn
+                      lands where the animal turns rather than somewhere in the middle of a stride. */}
+                  {stroll && beat.turns && (
+                    <animateTransform attributeName="transform" type="scale" calcMode="discrete"
+                      values={`${face(mirror)};${face(!mirror)}`} dur={`${beat.secs}s`}
+                      begin={`${beat.begin}s`} repeatCount="indefinite" />
+                  )}
+                  <svg x={-w / 2} y={-h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
+                    dangerouslySetInnerHTML={{ __html: art.body }} />
+                </g>
+              </g>
             </g>
           ));
         } else {
@@ -1819,14 +1882,16 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // The walking is SMIL, not React: one <animateMotion> per party, following a path laid down once.
   // A ticker in the component would redraw the entire park sixty times a second to move eight
   // people, and the park is a thousand polygons.
-  const stroll = !(typeof window !== 'undefined'
-    && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   /** How fast somebody walks, in scene px per second. Slow enough to read as strolling round a zoo
-   *  rather than late for a train. */
-  const PACE = 26;
+   *  rather than late for a train, and fast enough to read as walking at all: at twenty-six, a
+   *  couple of parties crossing a park seventeen hundred wide is a still photograph with specks on
+   *  it, which is exactly how it was described. */
+  const PACE = 34;
   const paths: React.ReactNode[] = [];
 
-  const parties = Math.max(1, Math.min(14, Math.round(visitors / 80)));
+  // A party per forty-five visitors rather than per eighty. The park is big and the people are
+  // small; what says a zoo is open is seeing somebody in it wherever you happen to be looking.
+  const parties = Math.max(1, Math.min(18, Math.round(visitors / 45)));
   let n = 0;
   for (let i = 0; i < parties; i++) {
     const route = routes[i % routes.length];

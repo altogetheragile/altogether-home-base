@@ -662,8 +662,9 @@ describe('the isometric projection', () => {
     // By the left-hand fence and by the right-hand one: it cannot be facing the same way in both.
     expect(atSpot(0.06, 0.5), 'the lion does not turn to face its nearest fence').not.toBe(atSpot(0.94, 0.5));
     // ...and one of the two is a mirror, not a nudge sideways - the old code moved a flipped animal
-    // across the picture and never turned it round.
-    expect([atSpot(0.06, 0.5), atSpot(0.94, 0.5)].join(' ')).toContain('scale(-1,1)');
+    // across the picture and never turned it round. It is a mirror about the animal's OWN origin
+    // now, which is what lets it be turned again halfway through a pace without moving it.
+    expect([atSpot(0.06, 0.5), atSpot(0.94, 0.5)].join(' ')).toContain('scale(-1 1)');
   });
 
   it('draws every animal, whichever way it is turned', () => {
@@ -691,13 +692,13 @@ describe('the isometric projection', () => {
     const [, , vw] = svg.getAttribute('viewBox')!.split(' ').map(Number);
     let turned = 0;
     for (const lion of lions) {
-      const t = lion.parentElement?.getAttribute('transform') ?? '';
-      const x = Number(lion.getAttribute('x'));
-      // scale(-1,1) reflects through zero; the translate before it brings the animal back to itself.
-      const shift = /translate\(([-\d.]+)/.exec(t);
-      const mirrored = t.includes('scale(-1,1)');
-      if (mirrored) turned += 1;
-      const drawnAt = mirrored ? (shift ? Number(shift[1]) : 0) - x : x;
+      // Where it stands, and which way it faces, are two different wrappers now: the animal is
+      // drawn about its own origin, placed by a translate, and turned by a mirror INSIDE that. So
+      // turning one cannot move it, which is the whole of the bug this test was written for.
+      const facing = lion.parentElement?.getAttribute('transform') ?? '';
+      const placed = /translate\(([-\d.]+)/.exec(lion.parentElement?.parentElement?.getAttribute('transform') ?? '');
+      if (facing.includes('scale(-1 1)')) turned += 1;
+      const drawnAt = placed ? Number(placed[1]) : NaN;
       expect(drawnAt, `an animal is drawn at ${Math.round(drawnAt)}, off a picture ${Math.round(vw)} wide`)
         .toBeGreaterThan(0);
       expect(drawnAt).toBeLessThan(vw);
@@ -921,6 +922,70 @@ describe('a river is a decision, not a fixture', () => {
   });
 });
 
+describe('animals move', () => {
+  // Asked from playing it: "can the people and animals on the isometric view be animated at all?"
+  // The people already did. Every animal in the zoo stood on its mark like a model in a shop window,
+  // which is the tell that a habitat is a box with pictures in it rather than somewhere something
+  // lives - and it is the exhibits somebody is looking at.
+  const pride = (): ZooGameState => {
+    const base = initialZooState();
+    return { ...base, zones: ['Big Cats'], backlog: [
+      item({ id: 'enc', name: 'Lion Enclosure', enclosureSize: 'large', pos: { x: 400, y: 300 } }),
+      item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'enc',
+        design: { parts: {}, colors: {}, group: { males: 1, females: 2, juveniles: 1, cubs: 0 } } }),
+    ] } as ZooGameState;
+  };
+  const beats = (c: Element) => [...c.querySelectorAll('[data-spot] > animateMotion')];
+
+  it('paces each one, in its own pen', () => {
+    const { container } = render(<IsoZoo state={pride()} height={460} />);
+    expect(beats(container).length, 'every animal in the zoo is standing still').toBeGreaterThan(3);
+  });
+
+  it('keeps the beat inside the habitat, a few paces rather than a patrol', () => {
+    // An animal that crossed its habitat would walk through its own pool and out past the fence,
+    // and the spot it stands on is a place somebody arranged.
+    const { container } = render(<IsoZoo state={pride()} height={460} />);
+    for (const m of beats(container)) {
+      const far = Math.max(...(m.getAttribute('path') ?? '').match(/-?\d+(\.\d+)?/g)!.map((n) => Math.abs(Number(n))));
+      // Measured against the animal, not the pen: a bit less than its own body each way. Big enough
+      // to read as walking, small enough that it cannot walk out through the fence.
+      expect(far, 'an animal is marching across its own habitat').toBeLessThan(60);
+      expect(far, 'the beat is a twitch rather than a walk').toBeGreaterThan(4);
+    }
+  });
+
+  it('puts them out of step with each other', () => {
+    // A pride pacing in time would be a chorus line.
+    const { container } = render(<IsoZoo state={pride()} height={460} />);
+    const starts = beats(container).map((m) => m.getAttribute('begin'));
+    expect(new Set(starts).size, 'the whole pride paces in step').toBeGreaterThan(1);
+  });
+
+  it('turns at the end of the beat, so it walks rather than slides', () => {
+    const { container } = render(<IsoZoo state={pride()} height={460} />);
+    const turns = [...container.querySelectorAll('[data-spot] animateTransform')];
+    expect(turns.length, 'they pace backwards half the time').toBeGreaterThan(0);
+    for (const t of turns) {
+      expect(t.getAttribute('values'), 'the turn is not a mirror').toMatch(/-1 1|1 1/);
+    }
+  });
+
+  it('stands them all still when the machine says to reduce motion', () => {
+    const was = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: /reduce/.test(q), media: q,
+      addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia;
+    try {
+      const { container } = render(<IsoZoo state={pride()} height={460} />);
+      expect(beats(container).length, 'motion is turned down and the animals are still pacing').toBe(0);
+      expect([...container.querySelectorAll('*')].filter((e) => e.tagName.toLowerCase() === 'animatemotion').length,
+        'motion is turned down and the visitors are still walking').toBe(0);
+    } finally {
+      window.matchMedia = was;
+    }
+  });
+});
+
 describe('people walk', () => {
   const openZoo = (): ZooGameState => {
     const base = initialZooState();
@@ -942,8 +1007,10 @@ describe('people walk', () => {
     // park was drawn. A still photograph of a walk: everybody stopped on their way to the lions. A
     // zoo with nobody moving in it does not look open.
     const { container } = render(<IsoZoo state={openZoo()} height={460} />);
+    // The visitors, not the animals: an animal paces a beat of its own a few paces long, which it
+    // carries rather than following a route laid across the park. See 'animals move' below.
     const movers = [...container.querySelectorAll('*')]
-      .filter((e) => e.tagName.toLowerCase() === 'animatemotion');
+      .filter((e) => e.tagName.toLowerCase() === 'animatemotion' && !e.closest('[data-spot]'));
     expect(movers.length, 'nobody in the park is going anywhere').toBeGreaterThan(0);
     // Each follows a route laid down once, rather than carrying its own copy of the way.
     for (const m of movers) {
