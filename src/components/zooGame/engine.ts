@@ -1208,7 +1208,14 @@ export function addConnector(state: ZooGameState, connector: ZooConnector): ZooG
     ...next,
     backlog: next.backlog.map((it) => {
       if (it.id !== connector.itemId || it.status !== 'committed') return it;
-      const design = it.design ?? it.draftDesign ?? presetFor(it);
+      // The design as it is NOW - the draft first, because a draft that still exists is somebody's
+      // newer work. This read them the other way round, which was harmless while only a pathway
+      // could own a run: a path's design is only ever a draft, so there was nothing older to prefer.
+      // A habitat owns its runs too now, and a habitat in hand has a built design UNDER a draft - so
+      // drawing the way in committed the older one over the top and emptied the pen.
+      // Reported from playing it, with the trail that proved it: "it seems to be when I draw a path
+      // - the things I added on Look Inside disappear."
+      const design = currentDesign(it);
       const tasks = (it.tasks ?? []).map((t) => (
         !t.done && t.label.trim() && !isSignOffTask(t.label) && designSatisfiesTask(it, design, t.label)
           ? { ...t, done: true } : t));
