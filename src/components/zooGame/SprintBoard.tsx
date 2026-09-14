@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, currentDesign, homeSizeOf } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, buildLeftOf } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -235,6 +235,11 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     // Developers' word: the card no longer walks into the column when the Product Owner accepts.
     if (readyToMove(it)) return 'Ready · move it to Done';
     if (!isDesignDone(it, currentDesign(it), homeSizeOf(it, state.backlog))) return 'Next: build it on the park';
+    // Building takes the time it takes, and it is the one thing on a card that a fast pair of hands
+    // cannot hurry. Said out loud with the number on it, or a card with everything ticked and
+    // nothing left to press is a card that has stopped for no reason anybody can see.
+    const building = Math.ceil(buildLeftOf(it));
+    if (building > 0) return `Being built · ${building}s of work left`;
     const left = (it.acceptance ?? []).filter((_, i) => !it.acConfirmed?.[i]).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
     const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);

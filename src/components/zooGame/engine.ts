@@ -61,26 +61,25 @@ export function secondsPerPoint(state: ZooGameState): number {
   return (DAY_SECONDS * Math.max(1, state.sprintDays)) / Math.max(1, points);
 }
 
-/** Spend build time on work that was done rather than waited out.
- *
- *  A person building something spends the day doing it, and the clock runs while they do. A
- *  seat played by the game does it at once, so the cost has to be charged instead - or the
- *  Developers deliver a Sprint's forecast in a few seconds and the capacity the whole game
- *  turns on stops meaning anything. Same currency as refinement, which is charged the same
- *  way and for the same reason. */
-export function spendDay(state: ZooGameState, seconds: number): ZooGameState {
-  if (state.learnMode || state.phase !== 'sprint') return state;
-  // Owed, not taken. Charging the whole cost at once made the clock lie: a five-point habitat came
-  // out of the day in one jump, a Sprint's forecast in a few seconds, and the day timer stopped
-  // meaning anything you could watch. The work now takes the time it costs - the debt drains one
-  // second per second while the team is visibly busy with it, which is what a Sprint looks like.
-  return { ...state, owedSeconds: (state.owedSeconds ?? 0) + Math.max(0, Math.round(seconds)) };
-}
+/** What building this item costs the Sprint, in build time. Its size, at what a point costs. */
+export const buildCost = (state: ZooGameState, item: BacklogItem): number =>
+  secondsPerPoint(state) * (item.estimate ?? 0);
 
 /** Whether the Developers are still working off something they have taken on. Seats played by the
  *  game wait while they are: work that appeared instantly and cost nothing is not work. */
 export const teamIsBusy = (state: ZooGameState): boolean =>
-  state.phase === 'sprint' && state.dayStage === 'building' && (state.owedSeconds ?? 0) > 0;
+  state.phase === 'sprint' && state.dayStage === 'building' && inFlight(state).length > 0;
+
+/** The work the Developers have taken on and not yet finished building.
+ *
+ *  One ledger, on the items themselves. It used to be a single pot of seconds on the state, which
+ *  could say the team owed two hundred seconds but never which item they were owed on - so nothing
+ *  could be held back until its own work was done, and a day boundary wiped the lot. */
+export const inFlight = (state: ZooGameState): BacklogItem[] =>
+  state.backlog.filter((it) => it.status === 'committed' && it.started && (it.buildLeft ?? 0) > 0);
+
+/** How much building this item still has in it, in seconds of the day. */
+export const buildLeftOf = (item: BacklogItem): number => Math.max(0, item.buildLeft ?? 0);
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
@@ -93,13 +92,24 @@ export function tickDay(state: ZooGameState): ZooGameState {
   if (state.learnMode || state.phase !== 'sprint') return state;
   if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
   const left = state.daySecondsLeft - 1;
-  // A second of the day is a second of the work owed. The day and the work run down together, so
-  // the clock you are watching is the truth about how much is left to build in.
-  const owed = Math.max(0, (state.owedSeconds ?? 0) - 1);
-  if (left <= 0) return endDay({ ...state, daySecondsLeft: 0, owedSeconds: owed });
+  // A second of the day is a second of building. The day and the work run down together, so the
+  // clock you are watching is the truth about how much is left to build in.
+  //
+  // A day gives one second of build per second, however many things are on the go, so three items
+  // in flight share it three ways and all three finish late. That is what a work-in-progress limit
+  // is for, and why "swarm to finish" beats "start another" - the lesson is the arithmetic rather
+  // than a rule somebody was told.
+  const working = inFlight(state);
+  const share = working.length ? 1 / working.length : 0;
+  const worked = working.length
+    ? state.backlog.map((it) => (working.some((w) => w.id === it.id)
+      ? { ...it, buildLeft: Math.max(0, (it.buildLeft ?? 0) - share) } : it))
+    : state.backlog;
+  state = { ...state, backlog: worked };
+  if (left <= 0) return endDay({ ...state, daySecondsLeft: 0 });
   // A question has a clock on it: it is asked while the work is being done, and answered or guessed
   // before the day is out. Both happen here, so they happen the same way in every browser.
-  return askIfDue(guessUnanswered({ ...state, daySecondsLeft: left, owedSeconds: owed }));
+  return askIfDue(guessUnanswered({ ...state, daySecondsLeft: left }));
 }
 
 // ============= The question channel =============
@@ -608,6 +618,10 @@ export function syncSignOffTasks(state: ZooGameState): ZooGameState {
  *  they were separate, the board showed an item in Doing that nobody was building and said
  *  nothing about why. */
 export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
+  // No day is running, so there is no day to be short of: Planning, the Review, a game in learn
+  // mode with the clock off. "Can today pay for this?" is a question about a day that exists.
+  if (state.phase !== 'sprint' || state.dayStage !== 'building' || state.learnMode) return true;
+  if (!Number.isFinite(state.daySecondsLeft)) return true;
   const cost = secondsPerPoint(state) * item.estimate;
   // Measured against the day this team actually gets, not the nominal one. A Daily Scrum costs
   // time, so every day after the first opens with about eighty seconds of a ninety second day -
@@ -615,11 +629,7 @@ export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
   // eighty one seconds it could never have, so the biggest items in the Product Backlog could not be
   // built at all: taken at the top of a day, then sat in Doing while the day ran out, every day.
   const total = dayTotalSeconds(state.dayTimeMult ?? 1);
-  // What is left of today, minus what the team already owes on work they have started. Time that
-  // is spoken for is not time you have: measured against the raw clock, everything in the Sprint
-  // could be started in the first few seconds of Day 1 - each one affordable on its own - and the
-  // debt then evaporated when the day ended. That is a WIP limit with no cost behind it.
-  const room = state.daySecondsLeft - (state.owedSeconds ?? 0);
+  const room = state.daySecondsLeft;
   if (cost >= total) return room >= total * 0.9;
   return room >= cost;
 }
@@ -648,6 +658,10 @@ export function whyNothingMoves(state: ZooGameState): 'day' | 'blocked' | null {
 export function nothingFitsToday(state: ZooGameState): boolean {
   if (state.phase !== 'sprint' || state.dayStage !== 'building') return false;
   const inSprint = state.backlog.filter((it) => it.status === 'committed');
+  // Something is being built. The day is being spent on it a second at a time, which is the
+  // opposite of the day standing still - and saying "nothing fits" over two cards that both say
+  // how much building they have left in them is the board arguing with itself.
+  if (inFlight(state).length) return false;
   // Something already started and not yet built, that today could still pay for.
   if (inSprint.some((it) => it.started && !it.design && dayCanAfford(state, it))) return false;
   // ...or a plan still to tick, or a pathway still to run: those cost nothing but a moment.
@@ -770,7 +784,12 @@ export function settleStatus(item: BacklogItem): BacklogItem {
 /** Whether this card is waiting for the Developers to move it to Done: everything the agreement
  *  asks for is in, and nobody has said so yet. */
 export const readyToMove = (item: BacklogItem): boolean =>
-  item.status === 'committed' && !!item.started && !!item.design && readyForDone(item);
+  item.status === 'committed' && !!item.started && !!item.design
+  // The work takes the time the work takes. Everything else on a card can be finished as fast as
+  // somebody's hands - design it, place it, tick the plan, have the criteria accepted - so without
+  // this the Sprint's length meant nothing at all to a person who knew the controls.
+  && buildLeftOf(item) <= 0
+  && readyForDone(item);
 
 /** The Developers move a card to Done. The one place a card becomes Done, so it cannot happen by
  *  accident somewhere else - and it is refused, with the reason, where the work is not ready. */
@@ -899,6 +918,7 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   const wip = activeWipLimit(state);
   if (wip > 0 && doingCount(state) >= wip) return state; // WIP limit reached (0 = no limit, or not met yet)
   if (!enclosureReady(state, item)) return state; // build the enclosure before the animals
+
   // Starting work puts it ON the park - that is where it gets built - but it does not pick a spot
   // for it. It used to: the next slot in a fixed grid, two hundred pixel rows marching down a park
   // seven hundred pixels tall, so the fifth row was off the bottom, the sixth further off, and
@@ -918,9 +938,22 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   const load = (dev: { id: string }) => state.backlog.filter((it) => it.status === 'committed' && it.started
     && (it.assignedDevs ?? []).includes(dev.id)).length;
   const freest = [...state.team.developers].sort((a, z) => load(a) - load(z) || a.id.localeCompare(z.id))[0];
+  // Taking work into Doing is the moment the Developers take it ON, and it is the one moment every
+  // route through the game passes through - dragged to Doing, started from the park, or picked up
+  // by a seat played by the game. So it is where the work's cost is written down.
+  //
+  // The cost used to be charged where a design was first STORED, and there turned out to be four
+  // ways to get a design stored: the studio's "start building", a plan step ticking itself off the
+  // park, dropping the thing on the park, and the park's own checks noticing the plan was finished.
+  // Only the first was charged, so a whole Sprint could be built for nothing by never pressing it.
+  // Reported from playing it: "I finished everything 15 seconds into the second day."
   const moved: ZooGameState = { ...state, pendingPlacement: pending,
     backlog: state.backlog.map((it) => (it.id === id
-      ? { ...it, started: true, assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (freest ? [freest.id] : []) }
+      // Nothing to pay where no clock is running: learn mode has the day switched off, and work
+      // taken on before the Sprint has started has no day to take it out of.
+      ? { ...it, started: true,
+        buildLeft: state.learnMode || state.phase !== 'sprint' ? undefined : buildCost(state, item),
+        assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (freest ? [freest.id] : []) }
       : it)) };
   // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
   // may make it - the Sprint Backlog belongs to them - which is why the accountability is named
@@ -1693,7 +1726,7 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     // the Product Backlog, so counting the Sprint's items then gives "delivered 0 of 0" - which
     // told a team that had over-forecast by eighteen points nothing at all.
     forecastPoints: committedPts,
-    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, owedSeconds: 0, pendingImpediment: null, carriedImpediment: null,
+    dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
     // Topic three's decision. Refinement planned into a Sprint is work in the plan, with a size,
     // that somebody has to actually hold - not a tax quietly docked from every day whether or not
     // anyone does it. It takes capacity from building, which is the trade-off, and it is not Done
@@ -1832,22 +1865,9 @@ export function pullIntoSprint(state: ZooGameState, id: string, by?: string): Zo
  *  computed from the design (the choices are the product). Without a design the item
  *  is just marked Done. */
 export function buildItem(state: ZooGameState, id: string, design?: ItemDesign): ZooGameState {
-  // What building this costs the Sprint, and whether today can pay for it.
-  //
-  // It used to depend on WHO built it. A seat played by the game was charged
-  // `secondsPerPoint * estimate` and could not start what the day could not afford; a person was
-  // charged nothing at all and could start anything, so their work cost whatever their hands took.
-  // A Sprint's forecast is priced at about a Sprint, and a person who knows the controls does three
-  // items in a couple of minutes - so the whole Sprint went in a day and the Daily Scrum, the
-  // burndown and running out of time had nothing to bite on. Reported from playing it: "it only
-  // takes a day to get through the 3 PBIs."
-  //
-  // One question, one answer: the work costs what the work costs, whoever does it. Owed rather than
-  // taken, so it drains a second per second while the team is busy with it - which is the time you
-  // spend laying the ground, placing it and settling its criteria.
-  const before = state.backlog.find((it) => it.id === id);
-  const first = !!before && before.status === 'committed' && !before.design;
-  if (first && !dayCanAfford(state, before)) return state;
+  // Nothing is charged here. What building costs the Sprint is written down where the Developers
+  // take the work ON - `startItem` - because that is the one moment every route passes through,
+  // and there are four ways to get a design stored.
   const backlog = state.backlog.map((it) => {
     if (it.id !== id || it.status !== 'committed') return it;
     // The design is built in the studio. The item is only Done when its plan is also
@@ -1857,8 +1877,7 @@ export function buildItem(state: ZooGameState, id: string, design?: ItemDesign):
       : { ...it, started: true };
     return settleStatus(built);
   });
-  const built = { ...state, backlog };
-  return first ? spendDay(built, secondsPerPoint(state) * (before.estimate ?? 0)) : built;
+  return { ...state, backlog };
 }
 
 /** Go back and edit an already-built item (Done or Open) without changing its
@@ -1948,6 +1967,9 @@ export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooG
     status: 'committed' as const,
     draftDesign: it.design ?? it.draftDesign,
     design: undefined,
+    // Doing it again is work, and work takes time. The Sprint has built this once; the second go
+    // has its own building to do, which is what "finishing it again costs Sprint time" means.
+    buildLeft: buildCost(state, it),
     sentBack: { sprint: state.sprintNumber, day: state.dayNumber, criteria: unmet },
   })));
   return note({ ...state, backlog }, {
@@ -2383,7 +2405,6 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
     // the game take no new move while the team is busy, so a debt that outlived its day froze every
     // one of them for the rest of the game. A Sprint 2 Planning sat waiting for Developers who were
     // never going to answer. Reported from a live game.
-    owedSeconds: 0,
     carriedImpediment: waited, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult) };
 }
 
@@ -2415,7 +2436,7 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
   // has to happen here rather than when the day turned over - otherwise holding the event
   // costs nothing, which is the opposite of what it should teach.
-  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, owedSeconds: 0, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
+  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(cleared, mult);
 }
 
@@ -2482,7 +2503,7 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
     impedimentLog: [...(logged.impedimentLog ?? []),
       { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal }],
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, owedSeconds: 0, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult) };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult) };
   return advanceDay(base, outcome.mult);
 }
 
@@ -2508,7 +2529,7 @@ export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
     carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
     missedScrums: state.missedScrums + (imp ? 1 : 0),
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, owedSeconds: 0, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
   return advanceDay(base, mult);
 }
 
@@ -2544,7 +2565,9 @@ const seedFor = (state: ZooGameState): number => ((state.gameSeed * 100003) ^ (s
 function returnUnfinished(state: ZooGameState): BacklogItem[] {
   return state.backlog.map((it) => {
     if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
-    const back = { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false };
+    // Building it is not part-paid for next time: it is re-sized below to what is left of it, and
+    // whoever takes it on then takes on that. Work that did not finish does not carry its progress.
+    const back = { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false, buildLeft: undefined };
     if (!it.started) return back;
     const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
     const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
@@ -2611,7 +2634,6 @@ function whatItWasWorth(state: ZooGameState, result: SimulationResult,
 
 export function reviewSprint(state: ZooGameState): ZooGameState {
   // Nothing is owed to a Sprint that is over.
-  state = { ...state, owedSeconds: 0 };
   // Enclosures are infrastructure, not something visitors score directly - exclude them
   // from the simulation (the animals inside them carry the appeal).
   // ...and only what a visitor could actually walk up to. A zoo is not paid for what it built: an
@@ -2727,7 +2749,6 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
   return {
     ...state,
     phase: 'planning',
-    owedSeconds: 0,
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
@@ -2849,8 +2870,11 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     // Straight to Planning. Refinement is not a step between Sprints - there is no gap between
     // Sprints - it is work the Developers do DURING one, preparing the Product Backlog for later ones.
     phase: 'planning',
-    // Nothing is owed to the Sprint that just ended.
-    owedSeconds: 0,
+    // Nothing is owed to the Sprint that just ended. Unfinished work leaves at the Review, re-sized
+    // to what is left of it, so this is belt and braces - but a single second of building left on
+    // an item keeps the team "busy", and seats played by the game take no move while they are:
+    // one stray second once froze every seat for the rest of the game.
+    backlog: state.backlog.map((it) => (it.buildLeft ? { ...it, buildLeft: undefined } : it)),
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,

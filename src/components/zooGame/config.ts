@@ -29,9 +29,14 @@ export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
  *  mistake paid for itself: an over-optimistic team delivered everything they took, and a Sprint
  *  priced at three days went in about one and a half.
  *
+ *  Six rather than five, which is a day's clock with the Daily Scrum taken out of it: a team that
+ *  holds their event every day should still be able to finish what a Sprint's worth of work is
+ *  defined as. Priced at the nominal day, holding the event would cost them the last item - which
+ *  would teach that the event is a tax and skipping it pays.
+ *
  *  Only in force until there is a velocity to read. After that a point costs what the team's own
  *  measured Sprints say it costs, which is the loop doing its job. */
-export const TRUE_VELOCITY_PER_DAY = 5;
+export const TRUE_VELOCITY_PER_DAY = 6;
 
 /** First-Sprint capacity guess, before there is velocity: what the board offers on day one.
  *

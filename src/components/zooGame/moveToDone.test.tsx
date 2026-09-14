@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
-import { initialZooState } from './config';
+import { initialZooState, DAY_SECONDS } from './config';
 import { readyToMove, startItem, setDraftDesign, suggestTasks } from './engine';
 import { applyParkChecks } from './parkChecks';
 import { isDesignDone, currentDesign, homeSizeOf, presetFor } from './design';
@@ -48,7 +48,7 @@ function acceptedFamily(homeSize: 'small' | 'medium' | 'large' = 'large'): ZooGa
     ]).map((t) => ({ ...t, done: true })),
   });
   return {
-    ...s, phase: 'sprint', dayStage: 'building', sprintNumber: 1, dayNumber: 1, daySecondsLeft: 80,
+    ...s, phase: 'sprint', dayStage: 'building', sprintNumber: 1, dayNumber: 1, daySecondsLeft: DAY_SECONDS,
     committedIds: [habitat.id, lion.id],
     backlog: s.backlog.map((it) => {
       if (it.id === lion.id) return accepted(it);
@@ -114,7 +114,7 @@ describe('a plan the park ticks off by itself', () => {
     const s = initialZooState(3);
     const habitat = s.backlog.find((it) => it.category === 'enclosure' && !it.unsized)!;
     let g = {
-      ...s, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: 80,
+      ...s, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: DAY_SECONDS,
       backlog: s.backlog.map((it) => (it.id === habitat.id
         ? { ...it, status: 'committed' as const, sprintNumber: 1, tasks: suggestTasks(it) } : it)),
     } as ZooGameState;

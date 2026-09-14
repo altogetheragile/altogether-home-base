@@ -225,7 +225,8 @@ describe('a seat nobody is sitting in', () => {
       // true thing about days and has nothing to do with what this is asking: whether every KIND of
       // item can be finished. The day running out is held in 'stops building when the day cannot
       // afford it', just below.
-      s = { ...reducer(s, m.action), owedSeconds: 0, daySecondsLeft: DAY_SECONDS };
+      s = { ...reducer(s, m.action), daySecondsLeft: DAY_SECONDS,
+        backlog: reducer(s, m.action).backlog.map((it) => ({ ...it, buildLeft: undefined })) };
       moves += 1;
     }
     expect(moves, 'the seats looped instead of finishing').toBeLessThan(400);

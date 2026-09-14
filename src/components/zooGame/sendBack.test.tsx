@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CardDetail } from './Board';
-import { sendItemBack, asksNow, buildItem, askToCheck } from './engine';
+import { sendItemBack, asksNow, buildItem, askToCheck, buildLeftOf, readyToMove } from './engine';
 import { mayTake } from './seatRules';
 import { reducer } from './useZooGame';
-import { initialZooState, DAY_SECONDS } from './config';
+import { initialZooState } from './config';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The Product Owner's other answer.
@@ -86,17 +86,15 @@ describe('not accepting the work', () => {
   });
 
   it('clears when the Developers finish it again, and costs the Sprint the time', () => {
-    // Saying no takes the design off the item, so finishing it again is a build like any other: it
-    // is charged to the day, and a day with eighty seconds left cannot start a five point rebuild.
-    // The header has promised "finishing it again costs the Sprint time" since this was written;
-    // until building charged the day whoever did it, it cost a person nothing at all.
+    // Saying no takes the design off the item, so finishing it again is building it again - and the
+    // building takes the time the building takes. The header has promised "finishing it again costs
+    // the Sprint time" since this was written; until the cost was kept on the item and drawn down by
+    // the day, a person doing it again paid nothing at all.
     const sent = sendItemBack(built(), theItem(built()).id);
-    const s = { ...sent, daySecondsLeft: DAY_SECONDS } as ZooGameState;
-    const again = buildItem(s, theItem(s).id, design);
+    expect(buildLeftOf(theItem(sent)), 'doing the work twice cost the Sprint nothing').toBeGreaterThan(0);
+    const again = buildItem(sent, theItem(sent).id, design);
     expect(theItem(again).sentBack, 'it was finished again and still says it came back').toBeUndefined();
-    expect(again.owedSeconds ?? 0, 'doing the work twice cost the Sprint nothing').toBeGreaterThan(0);
-    expect(buildItem(sent, theItem(sent).id, design), 'a rebuild started on a day that cannot pay for it')
-      .toBe(sent);
+    expect(readyToMove(theItem(again)), 'it went straight back to Done with the rebuild unbuilt').toBe(false);
   });
 
   it('is the Product Owner’s call, and the game says why', () => {
