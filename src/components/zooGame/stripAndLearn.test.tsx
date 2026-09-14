@@ -47,7 +47,10 @@ describe('the strip', () => {
   });
 
   it('says whether the Sprint Goal is safe, above the Goal itself', () => {
-    const { container } = shell(sprint());
+    // A whole day in hand. The shared fixture opens with 88 seconds of Day 1 left and thirteen
+    // points still to build, and a point costs what a point costs now - so that state is honestly
+    // at risk, which is the test below.
+    const { container } = shell(sprint({ daySecondsLeft: 180 }));
     const line = container.querySelector('[data-part="goal-line"]')!;
     expect(line.textContent).toMatch(/Goal safe/);
     expect(line.textContent, 'the Goal itself is not under its own verdict').toContain('Deliver the Big Cats zone');

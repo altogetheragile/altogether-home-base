@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, DAY_SECONDS } from './config';
+import { initialZooState, DAY_SECONDS, TRUE_VELOCITY_PER_DAY } from './config';
 import { startOnTheBoard, buildItem, secondsPerPoint, dayCanAfford, nothingFitsToday, teamIsBusy } from './engine';
 import { reducer } from './useZooGame';
 import { presetFor } from './design';
@@ -59,13 +59,58 @@ describe('building costs the day', () => {
   });
 });
 
+describe('what a point of work costs', () => {
+  // It used to be worked out from the team's own first-Sprint capacity guess, which was deliberately
+  // an over-guess. So guessing high made every point cheaper in exactly the proportion you had
+  // over-guessed: the mistake paid for itself, and the first Sprint's work came to about two thirds
+  // of the days it had. An opinion about yourself cannot be allowed to change what the work costs.
+
+  it('is a fact about the work, not the team’s opinion of themselves', () => {
+    const s = sprint();
+    expect(secondsPerPoint(s), 'a point is priced at something other than what a team can really do')
+      .toBeCloseTo(DAY_SECONDS / TRUE_VELOCITY_PER_DAY, 5);
+  });
+
+  it('follows the team once they have measured themselves', () => {
+    const s = sprint();
+    const fast = { ...s, velocity: [30], velocityDays: [s.sprintDays] } as ZooGameState;
+    const slow = { ...s, velocity: [8], velocityDays: [s.sprintDays] } as ZooGameState;
+    expect(secondsPerPoint(fast), 'a team that got through more still pays the same for a point')
+      .toBeLessThan(secondsPerPoint(s));
+    expect(secondsPerPoint(slow), 'a team that got through less is not given longer for a point')
+      .toBeGreaterThan(secondsPerPoint(s));
+  });
+});
+
 describe('a Sprint takes a Sprint', () => {
-  it('costs more than one day to build what was forecast', () => {
-    // The report, as a number. Three items, priced at about two days of the three - so the Sprint
-    // cannot be done in Day 1 however fast anybody is.
+  it('costs about a Sprint to build what the first Sprint was given', () => {
+    // The report, as a number. The board hands you three items on day one; they have to be about
+    // three days of work, or the days after the first have nothing in them.
     const s = sprint();
     const owed = inSprint(s).reduce((n, it) => n + secondsPerPoint(s) * (it.estimate ?? 0), 0);
-    expect(owed, 'the whole forecast fits inside a single day').toBeGreaterThan(DAY_SECONDS * 1.5);
+    const aSprint = DAY_SECONDS * s.sprintDays;
+    expect(owed, 'the first Sprint is not a Sprint of work').toBeGreaterThan(aSprint * 0.9);
+    expect(owed, 'the first Sprint cannot be finished in the days it has').toBeLessThanOrEqual(aSprint);
+  });
+
+  it('gives every day of it something to build', () => {
+    // Reported from playing it: "it only takes a day to get through the 3 PBIs." Played by somebody
+    // who never dithers - the moment the day can pay for something, they start it - the work should
+    // still run out at about the same time the Sprint does.
+    let s = sprint();
+    const startedOn: number[] = [];
+    for (let i = 0; i < 2000 && s.phase === 'sprint'; i += 1) {
+      if (s.dayStage === 'dailyScrum') { s = reducer(s, { type: 'SKIP_DAILY_SCRUM' }); continue; }
+      if (s.dayStage !== 'building') { s = reducer(s, { type: 'START_DAY' }); continue; }
+      const next = s.backlog.find((it) => it.status === 'committed' && !it.design && dayCanAfford(s, it));
+      if (next) { s = reducer(s, { type: 'BUILD_ITEM', id: next.id, design: presetFor(next) }); startedOn.push(s.dayNumber); }
+      s = reducer(s, { type: 'TICK_DAY' });
+    }
+    expect(s.phase, 'the Sprint never reached the Review').toBe('review');
+    expect(new Set(startedOn).size, `the whole Sprint was built on day ${startedOn.join(', day ')}`)
+      .toBe(s.sprintDays);
+    expect(s.backlog.filter((it) => it.status === 'committed' && !it.design), 'and none of it was left unbuilt')
+      .toEqual([]);
   });
 
   it('will not let a day start work it cannot pay for', () => {
