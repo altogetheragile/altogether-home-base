@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { designCriteria, currentDesign } from './design';
-import { isSignOffTask } from './engine';
+import { isSignOffTask, acSettled } from './engine';
 import { pathReaches, inHabitat } from './parkChecks';
 
 // ============= What the park can see about the Definition of Done =============
@@ -45,7 +45,7 @@ export function checkDodLine(state: ZooGameState, item: BacklogItem, line: strin
   // The item's own acceptance criteria, which the DoD nearly always points at.
   if (/acceptance criteri/.test(s)) {
     const acs = item.acceptance ?? [];
-    const met = acs.filter((_, i) => !!item.acConfirmed?.[i]).length;
+    const met = acs.filter((_, i) => acSettled(item, i)).length;
     if (!acs.length) return { kind: 'na', evidence: 'no criteria on this one' };
     return { kind: 'fact', met: met === acs.length, evidence: `${met} of ${acs.length} accepted` };
   }

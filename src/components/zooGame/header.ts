@@ -1,5 +1,5 @@
 import type { ZooGameState } from './types';
-import { goalPulse, dayTotalSeconds } from './engine';
+import { goalPulse, dayTotalSeconds, acSettled } from './engine';
 
 // What the header says, read off the game rather than written on each screen.
 //
@@ -158,7 +158,7 @@ export function seatLines(state: ZooGameState): SeatLine[] {
     if (scrum) return 'not in the room';
     const waiting = state.pendingPlacement ? 'answering the Developers' : null;
     const toAccept = inSprint.find((it) => it.status === 'committed' && it.design
-      && (it.acceptance ?? []).some((_, i) => !it.acConfirmed?.[i]));
+      && (it.acceptance ?? []).some((_, i) => !acSettled(it, i)));
     return waiting ?? (toAccept ? `checking ${shortName(toAccept.name)}` : 'available');
   };
 

@@ -159,6 +159,26 @@ export function askIfDue(state: ZooGameState): ZooGameState {
   };
 }
 
+/** Whether one acceptance criterion has been SETTLED.
+ *
+ *  Settled is two things, not one: the Product Owner ticked it, or the Product Owner looked at it
+ *  and said ship it anyway. Both are answers, and an answered question must not be asked again.
+ *
+ *  It was known in exactly one place - the sign-off - and counted as `acConfirmed` alone in the
+ *  fourteen others. So a Product Owner who accepted a habitat as it was got told, by the rail, that
+ *  there was still a criterion to check; asked again; accepted as-is again; and the card still would
+ *  not move. Reported from playing it, after three goes round that loop: "I have the PO accept but
+ *  it does not go to Done."
+ *
+ *  One question, one answer, and this is it. */
+export const acSettled = (item: BacklogItem, i: number): boolean =>
+  !!item.acConfirmed?.[i] || (item.acceptedAsIs ?? []).includes(item.acceptance[i]);
+
+/** Which of an item's criteria are still open - nobody has ticked them and nobody has shipped it
+ *  knowing. This is what "N still to check" means, wherever it is said. */
+export const acOpen = (item: BacklogItem): string[] =>
+  item.acceptance.filter((_, i) => !acSettled(item, i));
+
 /** The Developers ask the Product Owner to come and look at something that meets all of its
  *  criteria. It is a question like any other: it goes on their rail, it carries a clock, and the
  *  item says who it is waiting on until it is answered. Accepting it is the sign-off; sending it
@@ -169,7 +189,7 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
   // What the park says is not met. The Developers ask anyway - it is the Product Owner's to decide,
   // and a team that cannot even ask is a team whose Product Owner has been replaced by a gate.
-  const unmet = item.acceptance.filter((_, i) => !item.acConfirmed?.[i]);
+  const unmet = acOpen(item);
   return {
     ...state,
     questions: [...(state.questions ?? []), {
@@ -215,11 +235,13 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
     // Shipped knowing. The criteria that are not met are named and kept unmet - the card goes on
     // saying so, and the Retrospective can read what was accepted and what it cost.
     if (choice === 'accept-as-is' && item) {
-      const unmet = item.acceptance.filter((_, i) => !item.acConfirmed?.[i]);
+      const unmet = acOpen(item);
       const shipped = {
         ...state, questions: rest,
+        // A set, not a tally. Accepting the same criterion as-is three times used to write it down
+        // three times, which is what a Product Owner going round the loop looks like in the data.
         backlog: state.backlog.map((it) => (it.id === q.itemId
-          ? settleStatus({ ...it, acceptedAsIs: [...(it.acceptedAsIs ?? []), ...unmet] }) : it)),
+          ? settleStatus({ ...it, acceptedAsIs: [...new Set([...(it.acceptedAsIs ?? []), ...unmet])] }) : it)),
       };
       return note(shipped, { kind: 'question', by: by ?? 'product_owner',
         what: `The Product Owner accepted ${item.name} with ${unmet.length} criterion${unmet.length === 1 ? '' : 's'} unmet: ${unmet[0]}`,
@@ -734,9 +756,7 @@ export function signOffReady(item: BacklogItem): boolean {
   if (item.status === 'backlog') return false;
   // ...or accepted as it is. The Product Owner looked at what the park said, and shipped it anyway:
   // that is a decision they are allowed to make, and the consequence of making it is the lesson.
-  const settled = (i: number) => !!item.acConfirmed?.[i]
-    || (item.acceptedAsIs ?? []).includes(item.acceptance[i]);
-  return item.acceptance.length > 0 && item.acceptance.every((_, i) => settled(i));
+  return item.acceptance.length > 0 && item.acceptance.every((_, i) => acSettled(item, i));
 }
 
 /** Whether a finished thing is standing in the park.
@@ -1957,7 +1977,7 @@ export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooG
   if (!item || item.status === 'backlog' || item.status === 'open') return state;
   // Nothing has been built yet, so there is nothing to judge.
   if (!item.design) return state;
-  const unmet = item.acceptance.filter((_, i) => !item.acConfirmed?.[i]);
+  const unmet = acOpen(item);
   // Every criterion is met. That is acceptance, not rejection - and a Product Owner who wants
   // something else says so by changing the criteria, not by refusing work that meets them.
   if (!unmet.length) return state;
@@ -3225,8 +3245,8 @@ export function asksNow(state: ZooGameState): Ask[] {
     // Built, and waiting on the Product Owner to say whether it is what they asked for. This is the
     // commonest thing anybody is waiting on, and nothing said it.
     if (it.status === 'committed' && it.started && it.design && it.acceptance.length
-      && !it.acceptance.every((_, i) => !!it.acConfirmed?.[i])) {
-      const left = it.acceptance.filter((_, i) => !it.acConfirmed?.[i]).length;
+      && !it.acceptance.every((_, i) => acSettled(it, i))) {
+      const left = acOpen(it).length;
       out.push({ id: `accept-${it.id}`, of: 'product_owner', kind: 'accept', from: nameOn(it),
         text: `${it.name} is built. ${left} criteri${left === 1 ? 'on' : 'a'} still to check against what we made.`,
         itemId: it.id });

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DEFAULT_DOD } from './config';
-import { whatGotOut } from './engine';
+import { whatGotOut, acSettled } from './engine';
 import { EYEBROW } from './ui/tokens';
 import type { ZooGameState } from './types';
 
@@ -31,7 +31,7 @@ function whatItCost(state: ZooGameState): string[] {
   // Work released with its own criteria unmet - the plainest case of all, and the one the gate is for.
   const shipped = state.backlog.filter((it) => it.status === 'open' && it.sprintNumber === state.sprintNumber
     && (it.acceptance ?? []).length > 0
-    && (it.acceptance ?? []).some((_, i) => !(it.acConfirmed ?? [])[i]));
+    && (it.acceptance ?? []).some((_, i) => !acSettled(it, i)));
   for (const it of shipped.slice(0, 2)) out.push(`${it.name} was opened to visitors with its own criteria unticked.`);
   return out;
 }
