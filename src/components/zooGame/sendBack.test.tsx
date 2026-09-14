@@ -5,7 +5,7 @@ import { CardDetail } from './Board';
 import { sendItemBack, asksNow, buildItem, askToCheck } from './engine';
 import { mayTake } from './seatRules';
 import { reducer } from './useZooGame';
-import { initialZooState } from './config';
+import { initialZooState, DAY_SECONDS } from './config';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The Product Owner's other answer.
@@ -85,10 +85,18 @@ describe('not accepting the work', () => {
     expect(sendItemBack(s, theItem(s).id), 'work nobody has built yet was sent back').toBe(s);
   });
 
-  it('clears when the Developers finish it again', () => {
-    const s = sendItemBack(built(), theItem(built()).id);
+  it('clears when the Developers finish it again, and costs the Sprint the time', () => {
+    // Saying no takes the design off the item, so finishing it again is a build like any other: it
+    // is charged to the day, and a day with eighty seconds left cannot start a five point rebuild.
+    // The header has promised "finishing it again costs the Sprint time" since this was written;
+    // until building charged the day whoever did it, it cost a person nothing at all.
+    const sent = sendItemBack(built(), theItem(built()).id);
+    const s = { ...sent, daySecondsLeft: DAY_SECONDS } as ZooGameState;
     const again = buildItem(s, theItem(s).id, design);
     expect(theItem(again).sentBack, 'it was finished again and still says it came back').toBeUndefined();
+    expect(again.owedSeconds ?? 0, 'doing the work twice cost the Sprint nothing').toBeGreaterThan(0);
+    expect(buildItem(sent, theItem(sent).id, design), 'a rebuild started on a day that cannot pay for it')
+      .toBe(sent);
   });
 
   it('is the Product Owner’s call, and the game says why', () => {

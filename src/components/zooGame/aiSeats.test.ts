@@ -220,7 +220,13 @@ describe('a seat nobody is sitting in', () => {
     for (let i = 0; i < 400; i += 1) {
       const m = aiTurn(s, 'developer') ?? aiTurn(s, 'product_owner');
       if (!m) break;
-      s = reducer(s, m.action); moves += 1;
+      // Time passes while they work. Building charges the day, so a loop with no clock in it is a
+      // team with no hours - they would run out of day after the second item and stop, which is a
+      // true thing about days and has nothing to do with what this is asking: whether every KIND of
+      // item can be finished. The day running out is held in 'stops building when the day cannot
+      // afford it', just below.
+      s = { ...reducer(s, m.action), owedSeconds: 0, daySecondsLeft: DAY_SECONDS };
+      moves += 1;
     }
     expect(moves, 'the seats looped instead of finishing').toBeLessThan(400);
 
