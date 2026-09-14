@@ -15,7 +15,7 @@ import { carParkLayout, carCapacity, CAR_HW, CAR_HH, BUS_HW, BUS_HH, type CarSpo
 import { animalArtFor } from './art/animalArt';
 import { coatTint, foliageTint, tintKey, tintRef, type Tint } from './art/tint';
 import { TintDefs } from './art/TintDefs';
-import { KIND_SCALE, groupMembers } from './design';
+import { KIND_SCALE, groupMembers, plantScale } from './design';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
   roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, jitter, COS, type Pt,
@@ -1724,8 +1724,12 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92}
           clipPath={`url(#${grassClip})`} />);
       } else {
+        // How big the plants grew, the same choice the plan draws. Without it the strip said large,
+        // the plan drew large, and the Increment stood up an ordinary tree - the eleventh time the
+        // two drawings have disagreed about the same piece of state.
+        const grown = plantScale(working(it));
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string, copy?: number) =>
-          place(name, wx, wy, u * 1.9 * (FLORA_SCALE[name] ?? 1), key, undefined, foliageTint(foliage),
+          place(name, wx, wy, u * 1.9 * grown * (FLORA_SCALE[name] ?? 1), key, undefined, foliageTint(foliage),
             // One planting is several trees, and each of them stands somewhere of its own. Tagged
             // as which one it is, or dragging the third tree walked the whole planting across the
             // park - they are all drawn from the same item.
