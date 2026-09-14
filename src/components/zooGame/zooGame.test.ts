@@ -43,12 +43,7 @@ function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIG
  *  Product Owner's sign-off ticks. Then the Developers move it: Done is their word, and a card no
  *  longer walks into the column by itself when the Product Owner accepts it. */
 function accept(state: ZooGameState, id: string): ZooGameState {
-  // The building takes the time the building takes. Everything else on a card can be done as fast
-  // as somebody's hands; the day is what pays for the build, and nothing reaches Done before it has
-  // been paid for. These fixtures are about what it takes to get an item Done rather than about the
-  // clock, so the time is spent here in one go instead of a second at a time.
-  let s = withPaths(placeOnPark({ ...state,
-    backlog: state.backlog.map((x) => (x.id === id ? { ...x, buildLeft: 0 } : x)) }, id));
+  let s = withPaths(placeOnPark(state, id));
   const it = s.backlog.find((x) => x.id === id);
   (it?.acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, id, i, true); });
   return finishItem(s, id, 'developer');
@@ -1224,18 +1219,20 @@ describe('zoo game: enclosures are built before their animals', () => {
 });
 
 describe('zoo game: a day that has run out of room', () => {
-  it('knows when nothing left fits, so the board can say why it has gone quiet', () => {
-    // The Developers stop when the day cannot pay for the next piece of work, and the board used
-    // to go silent for twenty seconds with no way to tell that from the game having stopped.
+  it('knows when there is nothing left to do, so the board can say why it has gone quiet', () => {
+    // It used to be about the day being able to PAY for the next piece of work, which is gone: a
+    // day is a timebox, and what somebody gets through in one is their velocity. What makes a board
+    // quiet now is a Sprint with nothing left on it, which is a conversation about pulling more in.
     let s = initialZooState(7);
-    s = { ...s, phase: 'sprint', dayStage: 'building', daySecondsLeft: DAY_SECONDS,
+    s = { ...s, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: DAY_SECONDS,
       backlog: s.backlog.map((it) => (it.id === 'lion-enc'
-        ? { ...it, status: 'committed' as const, estimate: 5, unsized: false } : it)) };
-    expect(nothingFitsToday(s), 'a fresh day with work waiting is not a spent one').toBe(false);
+        ? { ...it, status: 'committed' as const, sprintNumber: 1, estimate: 5, unsized: false } : it)) };
+    expect(nothingFitsToday(s), 'a day with work waiting is a quiet board').toBe(false);
 
-    // ...and with four seconds left, nothing does.
-    expect(nothingFitsToday({ ...s, daySecondsLeft: 4 }),
-      'the day had four seconds left and the board would still have said nothing').toBe(true);
+    const finished = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion-enc'
+      ? { ...it, status: 'open' as const } : it)) } as ZooGameState;
+    expect(nothingFitsToday(finished),
+      'everything forecast was finished and the board would still have said nothing').toBe(true);
   });
 });
 
@@ -2258,19 +2255,21 @@ describe('zoo game: the seeded Backlog reads correctly', () => {
 });
 
 describe('zoo game: a board that will not move says which kind of stuck it is', () => {
-  it('tells a blocked Sprint from a spent day', () => {
-    // Two very different things look identical from the outside: a day with no room left in it,
-    // and a Sprint Backlog nobody can start. The reported game was the second and the board said
-    // the first, which sends a player looking at the clock for a problem that is in the Product Backlog.
+  it('tells a blocked Sprint from a finished one', () => {
+    // Two quiet boards, opposite problems. One is a Sprint Backlog nobody can start - an animal
+    // whose habitat was left in the Product Backlog - and the other is a forecast finished with days
+    // still in the Sprint, which is a conversation about pulling more in.
     let s = planSprint(withEnclosuresBuilt(initialZooState(1)), ['lion']);
     s = { ...s, dayStage: 'building', daySecondsLeft: DAY_SECONDS };
-    // The Lion is in the Sprint and its habitat is not: nothing here can start, whatever the time.
-    expect(whyNothingMoves(s), 'a Sprint that cannot start anything was called a spent day').toBe('blocked');
+    expect(whyNothingMoves(s), 'a Sprint that cannot start anything was called something else').toBe('blocked');
 
-    // ...and with the habitat built, the same Sprint is only ever short of time.
+    // ...and with the habitat built, the same Sprint can move.
     const unblocked = withEnclosuresBuilt(s, 'lion-enc');
     expect(whyNothingMoves(unblocked)).not.toBe('blocked');
-    expect(whyNothingMoves({ ...unblocked, daySecondsLeft: 1 }), 'a day with a second left is a spent day').toBe('day');
+
+    const finished = { ...unblocked, backlog: unblocked.backlog.map((it) => (it.sprintNumber === unblocked.sprintNumber
+      ? { ...it, status: 'open' as const } : it)) } as ZooGameState;
+    expect(whyNothingMoves(finished), 'the forecast was finished and the board said nothing').toBe('empty');
   });
 });
 
@@ -2334,9 +2333,6 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     s = startItem(s, 'paths');
     const path = () => s.backlog.find((i) => i.id === 'paths')!;
     s = buildItem(s, 'paths', presetFor(path()));
-    // ...and the day has spent the time the building costs. This is about who may answer the last
-    // criterion, not about the clock.
-    s = { ...s, backlog: s.backlog.map((x) => ({ ...x, buildLeft: 0 })) };
     for (const t of path().tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'paths', t.id);
     // Everything a person can accept, accepted - and then the park has its say, which is what
     // the reducer does after every action. It reads its own criteria back off again.

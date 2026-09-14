@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, startItem, buildCost, buildLeftOf, teamIsBusy } from './engine';
+import { splitEpic, planSprint, startItem, teamIsBusy } from './engine';
 import type { ZooGameState } from './types';
 
 // A Sprint takes a Sprint.
@@ -10,10 +10,13 @@ import type { ZooGameState } from './types';
 // action and sixty-one seconds came off the day at once. A whole forecast went by in a few seconds,
 // and the clock you were watching stopped being about anything - reported from playing it, twice.
 //
-// So the cost is BUILDING STILL TO DO rather than time taken off a clock. It is written on the item
-// when the Developers take it on, it draws down a second per second while the day runs - shared
-// between whatever else is in flight - and nothing may be moved to Done until its own is finished.
-// The day timer is then the truth about how much building time is left.
+// Not by pricing the work, though. That was tried: each item owing so many seconds of day, drained
+// by the clock, and nothing allowed to be Done until its seconds had been spent. It paced a Sprint
+// correctly and was a timer you sat and watched. Reported from playing it: "watching a timer count
+// down the work is not fun or useful."
+//
+// A day is a timebox. It runs, it ends, the Sprint has three of them, and what a team gets through
+// in one is their velocity - measured at the Review, and what the next Sprint is forecast from.
 
 /** A Sprint under way, with work forecast into it. */
 function midSprint(): ZooGameState {
@@ -24,55 +27,39 @@ function midSprint(): ZooGameState {
   return { ...s, dayStage: 'building', daySecondsLeft: DAY_SECONDS };
 }
 
-describe('what work costs the day', () => {
-  /** The first thing in the Sprint, taken on. */
-  const taken = (s: ZooGameState = midSprint()) => {
-    const it = s.backlog.find((x) => x.status === 'committed')!;
-    return { before: s, item: it, after: startItem(s, it.id) };
-  };
-  const leftOn = (s: ZooGameState, id: string) => buildLeftOf(s.backlog.find((x) => x.id === id)!);
+describe('what a day is', () => {
+  const held = (s: ZooGameState) => s.backlog.find((x) => x.status === 'committed')!;
 
-  it('does not take the cost out of the clock in one jump', () => {
-    const { before, item, after } = taken();
-    expect(buildCost(before, item), 'this test needs a cost worth watching').toBeGreaterThan(20);
-    expect(after.daySecondsLeft, 'the day jumped the moment work was taken on').toBe(before.daySecondsLeft);
-    expect(leftOn(after, item.id), 'the work was taken on and cost nothing')
-      .toBeCloseTo(buildCost(before, item), 5);
+  it('does not charge for work being taken on', () => {
+    const s = midSprint();
+    expect(startItem(s, held(s).id).daySecondsLeft, 'taking work into Doing took a bite out of the day')
+      .toBe(s.daySecondsLeft);
   });
 
-  it('works it off a second at a time, with the day', () => {
-    const { before, item } = taken();
-    let s = startItem(before, item.id);
+  it('runs a second at a time and ends when it runs out', () => {
+    let s = midSprint();
     const startedAt = s.daySecondsLeft;
     for (let i = 0; i < 4; i += 1) s = reducer(s, { type: 'TICK_DAY' });
     expect(s.daySecondsLeft, 'the day did not run').toBe(startedAt - 4);
-    expect(leftOn(s, item.id), 'the work did not get worked off')
-      .toBeCloseTo(buildCost(before, item) - 4, 5);
   });
 
-  it('leaves the team busy until it is done, and free afterwards', () => {
+  it('leaves the team busy until what they took on is built', () => {
     // This is what stops a whole forecast landing inside one beat: the seats build what they took
     // on before they take anything else.
-    const { before, item } = taken();
-    let s = startItem(before, item.id);
+    let s = startItem(midSprint(), held(midSprint()).id);
     expect(teamIsBusy(s), 'the team took work on and was free the same instant').toBe(true);
-    for (let i = 0; i < Math.ceil(buildCost(before, item)); i += 1) s = reducer(s, { type: 'TICK_DAY' });
-    expect(teamIsBusy(s), 'the team was still busy after the work was worked off').toBe(false);
+    const it = s.backlog.find((x) => x.started)!;
+    s = { ...s, backlog: s.backlog.map((x) => (x.id === it.id ? { ...x, design: { parts: {}, colors: {} } } : x)) } as ZooGameState;
+    expect(teamIsBusy(s), 'the team was still busy after the work was built').toBe(false);
   });
 
-  it('cannot spend more of a Sprint than the Sprint has', () => {
-    // The point of the whole arrangement: a Sprint is a fixed box, and the work has to fit in it.
-    // Everything in the Sprint taken on at once does not fit in three days, and the Sprint ends
-    // when its days run out rather than when the work is finished.
-    // Sized far bigger than the Sprint, so that what is taken on cannot possibly fit in the days.
+  it('cannot give a Sprint more days than the Sprint has', () => {
+    // The point of the whole arrangement: a Sprint is a fixed box of days, and it ends when they
+    // run out rather than when the work is finished.
     let s = midSprint();
-    s = { ...s, backlog: s.backlog.map((it) => (it.status === 'committed' ? { ...it, estimate: 20 } : it)) } as ZooGameState;
     for (const it of s.backlog.filter((x) => x.status === 'committed')) s = startItem(s, it.id);
-    expect(s.backlog.reduce((n, it) => n + buildLeftOf(it), 0), 'this test needs more work than a Sprint holds')
-      .toBeGreaterThan(DAY_SECONDS * 3);
     let ticked = 0;
     while (s.phase === 'sprint' && ticked < DAY_SECONDS * 6) {
-      // The days turn over through the Daily Scrum, the way they do in the game.
       if (s.pendingImpediment) { s = reducer(s, { type: 'ANSWER_IMPEDIMENT', how: 'remove' }); continue; }
       if (s.dayStage === 'dailyScrum') { s = reducer(s, { type: 'RUN_DAILY_SCRUM' }); continue; }
       s = reducer(s, { type: 'TICK_DAY' });
@@ -84,17 +71,11 @@ describe('what work costs the day', () => {
     // ...and the work nobody had time for is not quietly finished: it goes back to the Product Backlog.
     expect(s.backlog.some((it) => it.carriedOver || it.status === 'backlog'),
       'work nobody had time for was quietly finished anyway').toBe(true);
-    // Half-built work does not come back half-built. It is re-sized to what is left of it, and
-    // whoever takes it on next takes on that - so nothing carries a debt across a Sprint boundary.
-    expect(s.backlog.every((it) => buildLeftOf(it) === 0),
-      'building owed in one Sprint was still owed in the next').toBe(true);
   });
 
-  it('is not charged in learn mode, where the clock is paused', () => {
-    // Nothing drains while the clock is off, so anything charged then could never be finished.
+  it('does not run at all in learn mode, where the clock is off', () => {
     const s = { ...midSprint(), learnMode: true } as ZooGameState;
-    const it = s.backlog.find((x) => x.status === 'committed')!;
-    expect(buildLeftOf(startItem(s, it.id).backlog.find((x) => x.id === it.id)!),
-      'learn mode started a clock nobody asked for').toBe(0);
+    expect(reducer(s, { type: 'TICK_DAY' }).daySecondsLeft, 'learn mode started a clock nobody asked for')
+      .toBe(s.daySecondsLeft);
   });
 });

@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, dayCanAfford, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
@@ -255,11 +255,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       const building = state.backlog.find((it) => it.status === 'committed' && it.started
         && !it.design && !it.draftDesign);
       if (building) {
-        // Only what today can still afford. Building regardless and charging afterwards let
-        // a day with five seconds left absorb an eight-point item, so a Sprint delivered
-        // whatever it liked and capacity meant nothing. A day that cannot take it ends, and
-        // the work waits for tomorrow - which is what running out of day looks like.
-        if (dayCanAfford(state, building)) {
+        {
           return { action: { type: 'BUILD_ITEM', id: building.id, byTheGame: true },
                    // What they did, not what they wish they had done. Done is the whole team's
                    // word and it waits for the Product Owner's: saying "built to the Definition
@@ -268,7 +264,6 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
                    says: `Built ${building.name}. Not Done until its criteria are accepted.`,
                    weight: building.estimate };
         }
-        return null;   // out of day. The clock runs down and the Daily Scrum comes round.
       }
 
       // Then tick their own plan off. The sign-off step is not theirs - that is the Product
@@ -333,11 +328,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         // Only something that can actually start. An animal whose habitat is not built yet
         // cannot, and proposing it anyway spun forever: the move was refused by the engine,
         // the item stayed unstarted, and the same move came back on the next tick.
-        // ...and only something today can actually pay for. Pulling an item the day cannot
-        // build left it sitting in Doing while nothing happened for the rest of the day: work
-        // in progress that nobody was working on, and a board that said nothing about why.
+        // The work-in-progress limit decides how much is on the go at once, and the day's clock
+        // decides when the day is over. Neither of them is a budget the work is priced against:
+        // what a team gets through in a day is their velocity, and the game measures it.
         const next = state.backlog.find((it) => it.status === 'committed' && !it.started
-          && enclosureReady(state, it) && dayCanAfford(state, it));
+          && enclosureReady(state, it));
         if (next) {
           // Where a habitat or a building goes is a product decision - it is what a visitor walks
           // up to, and in what order - so they ask rather than let the layout decide it quietly.

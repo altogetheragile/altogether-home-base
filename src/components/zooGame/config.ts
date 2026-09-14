@@ -21,34 +21,32 @@ export const SPRINT_DAYS = 3;
  *  of build time; more days = more build time but slower feedback. */
 export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
 
-/** What a team really gets through in a day, before anybody has measured them.
+/** About what a team gets through in a day, before anybody has measured them.
  *
- *  A FACT about the work, not an opinion about the team - and the difference is the point. What a
- *  point of work costs used to be worked out from the team's own first-Sprint guess, which meant
- *  guessing high made every point cheaper in exactly the proportion you had over-guessed. The
- *  mistake paid for itself: an over-optimistic team delivered everything they took, and a Sprint
- *  priced at three days went in about one and a half.
+ *  Used for forecasting and nothing else: how much of a Sprint's worth of work is left, and whether
+ *  the Sprint Goal is still reachable in the days that remain. Work is not PRICED against it. The
+ *  game tried that - each item owing so many seconds of day, drained by the clock, with nothing
+ *  allowed to be Done until its seconds were spent - and it paced a Sprint correctly at the cost of
+ *  being a timer you sat and watched. Reported from playing it: "watching a timer count down the
+ *  work is not fun or useful", and "we need to pull more into a sprint, not make the work last
+ *  longer to fill the time."
  *
- *  Six rather than five, which is a day's clock with the Daily Scrum taken out of it: a team that
- *  holds their event every day should still be able to finish what a Sprint's worth of work is
- *  defined as. Priced at the nominal day, holding the event would cost them the last item - which
- *  would teach that the event is a tax and skipping it pays.
- *
- *  Only in force until there is a velocity to read. After that a point costs what the team's own
- *  measured Sprints say it costs, which is the loop doing its job. */
-export const TRUE_VELOCITY_PER_DAY = 6;
+ *  So a day is a timebox and nothing else. What somebody gets through in one is their velocity, the
+ *  game measures it at the Review, and the next Sprint is forecast from what they actually did. A
+ *  fast player is given more work; a learner is given less. This number is only the opening guess,
+ *  before there is anything to measure. */
+export const TRUE_VELOCITY_PER_DAY = 10;
 
 /** First-Sprint capacity guess, before there is velocity: what the board offers on day one.
  *
- *  It starts honest rather than ambitious. It was an over-guess on purpose once - something to
- *  learn away from by doing - but the game hands you the first Sprint ready-planned now, so all
- *  that over-guess did was make the first Sprint's work cheap and finish it a day early. A guess
- *  that is half as big again as anything the board can supply is not a lesson, it is a trap: the
- *  Goal could not be met however well it was played. Velocity is learned by measuring what actually
- *  happened - the impediments, the events, the work sent back - not by starting from a wrong number.
+ *  Derived from the day, so that moving what a team gets through moves what the board offers them.
+ *  It is deliberately a whole Sprint's worth rather than a handful of cards: the first Sprint used
+ *  to arrive with three items on it, which anybody who knew the controls finished on the first
+ *  morning - and a board with nothing left on it teaches nothing at all.
  *
- *  Derived, so that moving what a team can do moves what they would guess with it, and NOT the
- *  other way round: change this on its own and the price of work does not follow. */
+ *  Over-forecasting and under-forecasting are not symmetrical here. Taking more than you finish is
+ *  a Sprint Review with something to talk about. Running out of work with two days left is somebody
+ *  sitting looking at an empty board, so the board says so and points at the Product Owner. */
 export const STARTER_CAPACITY = TRUE_VELOCITY_PER_DAY * SPRINT_DAYS;
 /** Seconds of build time in a full day (before any Daily Scrum / impediment cost).
  *

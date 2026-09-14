@@ -61,25 +61,16 @@ export function secondsPerPoint(state: ZooGameState): number {
   return (DAY_SECONDS * Math.max(1, state.sprintDays)) / Math.max(1, points);
 }
 
-/** What building this item costs the Sprint, in build time. Its size, at what a point costs. */
-export const buildCost = (state: ZooGameState, item: BacklogItem): number =>
-  secondsPerPoint(state) * (item.estimate ?? 0);
 
 /** Whether the Developers are still working off something they have taken on. Seats played by the
  *  game wait while they are: work that appeared instantly and cost nothing is not work. */
 export const teamIsBusy = (state: ZooGameState): boolean =>
   state.phase === 'sprint' && state.dayStage === 'building' && inFlight(state).length > 0;
 
-/** The work the Developers have taken on and not yet finished building.
- *
- *  One ledger, on the items themselves. It used to be a single pot of seconds on the state, which
- *  could say the team owed two hundred seconds but never which item they were owed on - so nothing
- *  could be held back until its own work was done, and a day boundary wiped the lot. */
+/** Work that has been taken on and not built yet. The seats played by the game finish what they
+ *  started before they take anything else, which is the whole of what `teamIsBusy` is for. */
 export const inFlight = (state: ZooGameState): BacklogItem[] =>
-  state.backlog.filter((it) => it.status === 'committed' && it.started && (it.buildLeft ?? 0) > 0);
-
-/** How much building this item still has in it, in seconds of the day. */
-export const buildLeftOf = (item: BacklogItem): number => Math.max(0, item.buildLeft ?? 0);
+  state.backlog.filter((it) => it.status === 'committed' && it.started && !it.design);
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
@@ -92,20 +83,6 @@ export function tickDay(state: ZooGameState): ZooGameState {
   if (state.learnMode || state.phase !== 'sprint') return state;
   if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
   const left = state.daySecondsLeft - 1;
-  // A second of the day is a second of building. The day and the work run down together, so the
-  // clock you are watching is the truth about how much is left to build in.
-  //
-  // A day gives one second of build per second, however many things are on the go, so three items
-  // in flight share it three ways and all three finish late. That is what a work-in-progress limit
-  // is for, and why "swarm to finish" beats "start another" - the lesson is the arithmetic rather
-  // than a rule somebody was told.
-  const working = inFlight(state);
-  const share = working.length ? 1 / working.length : 0;
-  const worked = working.length
-    ? state.backlog.map((it) => (working.some((w) => w.id === it.id)
-      ? { ...it, buildLeft: Math.max(0, (it.buildLeft ?? 0) - share) } : it))
-    : state.backlog;
-  state = { ...state, backlog: worked };
   if (left <= 0) return endDay({ ...state, daySecondsLeft: 0 });
   // A question has a clock on it: it is asked while the work is being done, and answered or guessed
   // before the day is out. Both happen here, so they happen the same way in every browser.
@@ -630,66 +607,37 @@ export function syncSignOffTasks(state: ZooGameState): ZooGameState {
 
 /** The plan minus the sign-off: the Developers' own work, which is what takes an item out of Doing.
  *  The sign-off is not theirs to tick and comes later, once the item is on the park. */
-/** Whether what is left of today can pay for building this item.
- *
- *  Work costs the day, or a Sprint delivers whatever it likes and the capacity the whole game
- *  turns on means nothing. An item bigger than any whole day has to start somewhere, so it goes
- *  at the top of a day rather than never.
- *
- *  Shared, because the Developers decide with it and the board says the same thing with it. When
- *  they were separate, the board showed an item in Doing that nobody was building and said
- *  nothing about why. */
-export function dayCanAfford(state: ZooGameState, item: BacklogItem): boolean {
-  // No day is running, so there is no day to be short of: Planning, the Review, a game in learn
-  // mode with the clock off. "Can today pay for this?" is a question about a day that exists.
-  if (state.phase !== 'sprint' || state.dayStage !== 'building' || state.learnMode) return true;
-  if (!Number.isFinite(state.daySecondsLeft)) return true;
-  const cost = secondsPerPoint(state) * item.estimate;
-  // Measured against the day this team actually gets, not the nominal one. A Daily Scrum costs
-  // time, so every day after the first opens with about eighty seconds of a ninety second day -
-  // and an eight point item costs ninety eight. Compared against the nominal day it needed
-  // eighty one seconds it could never have, so the biggest items in the Product Backlog could not be
-  // built at all: taken at the top of a day, then sat in Doing while the day ran out, every day.
-  const total = dayTotalSeconds(state.dayTimeMult ?? 1);
-  const room = state.daySecondsLeft;
-  if (cost >= total) return room >= total * 0.9;
-  return room >= cost;
-}
-
 /** Why the board is standing still, when it is.
  *
- *  'day' means the work is there and the day cannot pay for it, which is a day running out.
- *  'blocked' means the day has time and there is nothing in the Sprint anybody could start:
- *  an animal whose habitat is not built, and no habitat in the Sprint to build. That is a
- *  Sprint Backlog that cannot move, and telling somebody their day ran out would be a lie.
- *  Reported from a game: a Sprint Backlog of one Lion whose enclosure was left in the Product
- *  Backlog, three days of nothing, and a board that said the day had run out of room. */
-export function whyNothingMoves(state: ZooGameState): 'day' | 'blocked' | null {
+ *  'blocked' means there is work in the Sprint and nothing anybody could start: an animal whose
+ *  habitat is not built, and no habitat in the Sprint to build. Reported from a game: a Sprint
+ *  Backlog of one Lion whose enclosure was left in the Product Backlog, and three days of nothing.
+ *
+ *  'empty' means the opposite and is the better problem: the forecast is finished and the Sprint
+ *  still has days in it. That is a conversation with the Product Owner about pulling more in, and
+ *  the game should say so rather than leave somebody looking at a board with nothing on it.
+ *
+ *  There used to be a third answer, 'day', which meant the work was there and the day could not
+ *  afford it - because work was priced in seconds and a day held so many of them. That is gone. The
+ *  day is a timebox, not a budget: what somebody gets through in it is their velocity, which the
+ *  game measures and forecasts the next Sprint from. Stretching the work to fill the days taught
+ *  nothing and was miserable to sit in front of. Reported from playing it, twice: "watching a timer
+ *  count down the work is not fun or useful", and "we need to pull more into a sprint, not make the
+ *  work last longer to fill the time." */
+export function whyNothingMoves(state: ZooGameState): 'empty' | 'blocked' | null {
   if (state.phase !== 'sprint' || state.dayStage !== 'building') return null;
-  const inSprint = state.backlog.filter((it) => it.status === 'committed');
-  if (!inSprint.length) return null;
-  if (inSprint.some((it) => it.started)) return nothingFitsToday(state) ? 'day' : null;
-  // Nothing started, so the question is whether anything COULD be, time aside.
-  const startable = inSprint.filter((it) => enclosureReady(state, it));
-  if (!startable.length) return 'blocked';
-  return nothingFitsToday(state) ? 'day' : null;
+  const mine = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber);
+  if (!mine.length) return null;
+  const inSprint = mine.filter((it) => it.status === 'committed');
+  // Everything forecast is built and accepted, and there are days left to build in.
+  if (!inSprint.length) return state.dayNumber <= state.sprintDays ? 'empty' : null;
+  if (inSprint.some((it) => it.started)) return null;
+  return inSprint.some((it) => enclosureReady(state, it)) ? null : 'blocked';
 }
 
-/** Nothing the Developers could pick up fits in what is left of today. The day is spent, even
- *  though the clock has not finished running down. */
+/** Nothing anybody could pick up, so the day is over whatever the clock says. */
 export function nothingFitsToday(state: ZooGameState): boolean {
-  if (state.phase !== 'sprint' || state.dayStage !== 'building') return false;
-  const inSprint = state.backlog.filter((it) => it.status === 'committed');
-  // Something is being built. The day is being spent on it a second at a time, which is the
-  // opposite of the day standing still - and saying "nothing fits" over two cards that both say
-  // how much building they have left in them is the board arguing with itself.
-  if (inFlight(state).length) return false;
-  // Something already started and not yet built, that today could still pay for.
-  if (inSprint.some((it) => it.started && !it.design && dayCanAfford(state, it))) return false;
-  // ...or a plan still to tick, or a pathway still to run: those cost nothing but a moment.
-  if (inSprint.some((it) => it.started && it.design && (it.tasks ?? []).some((t) => !t.done && t.label.trim() && !isSignOffTask(t.label)))) return false;
-  // ...or something not started that today could take.
-  return !inSprint.some((it) => !it.started && enclosureReady(state, it) && dayCanAfford(state, it));
+  return whyNothingMoves(state) !== null;
 }
 
 export const buildTasksDone = (item: BacklogItem): boolean =>
@@ -804,12 +752,7 @@ export function settleStatus(item: BacklogItem): BacklogItem {
 /** Whether this card is waiting for the Developers to move it to Done: everything the agreement
  *  asks for is in, and nobody has said so yet. */
 export const readyToMove = (item: BacklogItem): boolean =>
-  item.status === 'committed' && !!item.started && !!item.design
-  // The work takes the time the work takes. Everything else on a card can be finished as fast as
-  // somebody's hands - design it, place it, tick the plan, have the criteria accepted - so without
-  // this the Sprint's length meant nothing at all to a person who knew the controls.
-  && buildLeftOf(item) <= 0
-  && readyForDone(item);
+  item.status === 'committed' && !!item.started && !!item.design && readyForDone(item);
 
 /** The Developers move a card to Done. The one place a card becomes Done, so it cannot happen by
  *  accident somewhere else - and it is refused, with the reason, where the work is not ready. */
@@ -969,10 +912,7 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   // Reported from playing it: "I finished everything 15 seconds into the second day."
   const moved: ZooGameState = { ...state, pendingPlacement: pending,
     backlog: state.backlog.map((it) => (it.id === id
-      // Nothing to pay where no clock is running: learn mode has the day switched off, and work
-      // taken on before the Sprint has started has no day to take it out of.
       ? { ...it, started: true,
-        buildLeft: state.learnMode || state.phase !== 'sprint' ? undefined : buildCost(state, item),
         assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (freest ? [freest.id] : []) }
       : it)) };
   // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
@@ -1664,14 +1604,17 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
   // Sprint with no slice in it, and the slice is the thing this game is for.
   const room = sprintCapacity(s).points;
   const here = availableItems(s).filter((it) => isReady(it, s) && hasGround(s, it.zone) && it.zone !== 'Grounds');
-  // Three cards, which is a board somebody can read on their first morning, and no more than the
-  // Sprint holds. The Developers were not asked to fill the Sprint - they were asked what they
-  // thought they could finish.
-  const FIRST_SPRINT_ITEMS = 3;
+  // A Sprint's worth, not a handful. It used to stop at three cards - "a board somebody can read on
+  // their first morning" - and three cards is about a third of what a Sprint holds, so anybody who
+  // knew the controls ran out of work on the first day and had nothing to do but watch the clock.
+  // Reported from playing it: "we need to pull more into a sprint, not make the work last longer to
+  // fill the time."
+  //
+  // Filling to capacity is also what a team actually does at Planning, and it makes the first
+  // Review honest: they took a Sprint's worth, and what they got through is their velocity.
   const chosen: string[] = [];
   let pts = 0;
   for (const it of here) {
-    if (chosen.length >= FIRST_SPRINT_ITEMS) break;
     if (pts + it.estimate > room && chosen.length) continue;
     chosen.push(it.id);
     pts += it.estimate;
@@ -1987,9 +1930,7 @@ export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooG
     status: 'committed' as const,
     draftDesign: it.design ?? it.draftDesign,
     design: undefined,
-    // Doing it again is work, and work takes time. The Sprint has built this once; the second go
-    // has its own building to do, which is what "finishing it again costs Sprint time" means.
-    buildLeft: buildCost(state, it),
+
     sentBack: { sprint: state.sprintNumber, day: state.dayNumber, criteria: unmet },
   })));
   return note({ ...state, backlog }, {
@@ -2587,7 +2528,7 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
     if (!(it.sprintNumber === state.sprintNumber && it.status === 'committed')) return it;
     // Building it is not part-paid for next time: it is re-sized below to what is left of it, and
     // whoever takes it on then takes on that. Work that did not finish does not carry its progress.
-    const back = { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false, buildLeft: undefined };
+    const back = { ...it, status: 'backlog' as const, sprintNumber: null, goalCritical: false };
     if (!it.started) return back;
     const tasks = (it.tasks ?? []).filter((t) => t.label.trim());
     const doneFrac = tasks.length ? tasks.filter((t) => t.done).length / tasks.length : 0;
@@ -2595,7 +2536,11 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
     // Keep what it was sized at. The number changing on its own is right - the Developers re-size
     // their remaining work every day - but a 5 that is a 3 next time you look, with nothing saying
     // why, reads as the game losing count. Reported from playing it.
-    return { ...back, carriedOver: true, wasEstimate: it.estimate, unsized: false, estimate: remaining, trueSize: remaining };
+    // ...and nobody is working on it any more. It goes back to the Product Backlog, so it comes back
+    // out of it the way anything does: taken on by somebody, on a day. Left `started`, it arrived in
+    // the next Sprint already in progress - work in flight that nobody had picked up.
+    return { ...back, started: false, assignedDevs: undefined,
+      carriedOver: true, wasEstimate: it.estimate, unsized: false, estimate: remaining, trueSize: remaining };
   });
 }
 
@@ -2894,7 +2839,6 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     // to what is left of it, so this is belt and braces - but a single second of building left on
     // an item keeps the team "busy", and seats played by the game take no move while they are:
     // one stray second once froze every seat for the rest of the game.
-    backlog: state.backlog.map((it) => (it.buildLeft ? { ...it, buildLeft: undefined } : it)),
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,

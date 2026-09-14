@@ -89,11 +89,6 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
   expect((item().tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label)).every((t) => t.done),
     `${item().name}: a step of the plan could not be ticked by building the thing`).toBe(true);
 
-  // 4b. ...and the day has spent what the building costs. Nothing reaches Done before it has: this
-  //     walk is about the ROUTE every kind of item takes, not about the clock, so the time goes in
-  //     one go rather than a second at a time.
-  s = { ...s, backlog: s.backlog.map((x) => (x.id === id ? { ...x, buildLeft: 0 } : x)) };
-
   // 5. The Developers ask, the Product Owner accepts. That is the sign-off.
   s = askToCheck(s, id, 'developer');
   s = answerQuestion(s, `check-${id}`, 'accept', 'product_owner');

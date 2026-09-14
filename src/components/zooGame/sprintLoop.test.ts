@@ -64,10 +64,6 @@ describe('a Sprint, played through to the Review', () => {
       // The Product Owner accepts what the Developers have built, the Developers move it to Done -
       // their word, not a thing that happens to the work - and then the Product Owner releases it.
       // Placement criteria are answered by the park itself, so a tick alone will not do.
-      // ...and the day is spent on whatever is being built. Nothing reaches Done before the building
-      // has been paid for, and these seats move without a clock running - this walk is about the loop
-      // getting all the way round, not about how long a day is.
-      s = { ...s, backlog: s.backlog.map((x) => (x.buildLeft ? { ...x, buildLeft: 0 } : x)) };
       for (const it of s.backlog.filter((x) => x.status === 'committed' && x.started && x.design)) {
         (it.acceptance ?? []).forEach((_, i) => { s = reducer(s, { type: 'CONFIRM_AC', id: it.id, index: i, value: true }); });
         s = reducer(s, { type: 'FINISH_ITEM', id: it.id, by: 'developer' });

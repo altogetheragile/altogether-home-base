@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CardDetail } from './Board';
-import { sendItemBack, asksNow, buildItem, askToCheck, buildLeftOf, readyToMove } from './engine';
+import { sendItemBack, asksNow, buildItem, askToCheck, readyToMove } from './engine';
 import { mayTake } from './seatRules';
 import { reducer } from './useZooGame';
 import { initialZooState } from './config';
@@ -85,16 +85,16 @@ describe('not accepting the work', () => {
     expect(sendItemBack(s, theItem(s).id), 'work nobody has built yet was sent back').toBe(s);
   });
 
-  it('clears when the Developers finish it again, and costs the Sprint the time', () => {
-    // Saying no takes the design off the item, so finishing it again is building it again - and the
-    // building takes the time the building takes. The header has promised "finishing it again costs
-    // the Sprint time" since this was written; until the cost was kept on the item and drawn down by
-    // the day, a person doing it again paid nothing at all.
+  it('clears when the Developers finish it again', () => {
+    // Saying no takes the design off the item and puts it back in Doing as a draft, so finishing it
+    // again is building it again. What that costs is doing the work twice, in a Sprint with a fixed
+    // number of days in it - not a number the game docks them.
     const sent = sendItemBack(built(), theItem(built()).id);
-    expect(buildLeftOf(theItem(sent)), 'doing the work twice cost the Sprint nothing').toBeGreaterThan(0);
+    expect(theItem(sent).design, 'the work came back and the build was still standing').toBeUndefined();
+    expect(theItem(sent).draftDesign, 'their build was thrown away rather than kept as a draft').toBeTruthy();
+    expect(readyToMove(theItem(sent)), 'work that was refused was still ready to move to Done').toBe(false);
     const again = buildItem(sent, theItem(sent).id, design);
     expect(theItem(again).sentBack, 'it was finished again and still says it came back').toBeUndefined();
-    expect(readyToMove(theItem(again)), 'it went straight back to Done with the rebuild unbuilt').toBe(false);
   });
 
   it('is the Product Owner’s call, and the game says why', () => {

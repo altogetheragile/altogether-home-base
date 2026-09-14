@@ -133,14 +133,10 @@ describe('an answer, once given, is not asked for again', () => {
       .toBe(new Set(item.acceptedAsIs ?? []).size);
   });
 
-  it('leaves the Developers free to move it, once the building is done', () => {
+  it('leaves the Developers free to move it', () => {
     const { s, item } = shipped();
     expect(readyForDone(item), 'everything was answered and the sign-off never followed').toBe(true);
-    // The building is the only thing left, and it is the one thing a fast pair of hands cannot hurry.
-    const built = { ...item, buildLeft: 0 } as BacklogItem;
-    expect(readyToMove(built), 'nothing was outstanding and the card still would not move').toBe(true);
-    expect(readyToMove({ ...item, buildLeft: 40 } as BacklogItem),
-      'it went to Done with the building unfinished').toBe(false);
+    expect(readyToMove(item), 'nothing was outstanding and the card still would not move').toBe(true);
     expect(s.backlog.find((x) => x.id === item.id)).toBeTruthy();
   });
 
