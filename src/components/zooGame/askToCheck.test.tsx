@@ -37,7 +37,20 @@ describe('asking the Product Owner to look at it', () => {
     expect(q.of).toBe('product_owner');
     expect(q.itemId).toBe(item.id);
     expect(q.from).toBe(s.team.developers[0].name);
+    // What is on offer depends on what the park says. This one has criteria outstanding, so the
+    // answers are "ship it knowing" and "send it back" - accepting work that does not meet its own
+    // criteria is a decision, and it is named as one rather than hidden behind a plain Accept.
+    expect(q.choices.map((c) => c.key)).toEqual(['accept-as-is', 'back']);
+    expect(q.text, 'the question does not say what is not met').toMatch(/does not meet/i);
+  });
+
+  it('asks the plain question when the work meets everything', () => {
+    const { s, item } = ready();
+    const met = { ...s, backlog: s.backlog.map((it) => (it.id === item.id
+      ? { ...it, acConfirmed: it.acceptance.map(() => true) } : it)) } as ZooGameState;
+    const q = (askToCheck(met, item.id).questions ?? [])[0];
     expect(q.choices.map((c) => c.key)).toEqual(['accept', 'back']);
+    expect(q.text).toMatch(/meets all of its criteria/i);
   });
 
   it('asks once, however many times the button is pressed', () => {

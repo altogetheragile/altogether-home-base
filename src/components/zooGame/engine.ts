@@ -150,14 +150,28 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
   const item = state.backlog.find((it) => it.id === id);
   if (!item || (state.questions ?? []).some((q) => q.id === `check-${id}`)) return state;
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
+  // What the park says is not met. The Developers ask anyway - it is the Product Owner's to decide,
+  // and a team that cannot even ask is a team whose Product Owner has been replaced by a gate.
+  const unmet = item.acceptance.filter((_, i) => !item.acConfirmed?.[i]);
   return {
     ...state,
     questions: [...(state.questions ?? []), {
       id: `check-${id}`, of: 'product_owner', from: by === 'developer' || !by ? asker?.name ?? 'The Developers' : whoIs(by),
       itemId: id,
-      text: `${item.name} meets all of its criteria. Is it what you asked for?`,
+      // What is actually being asked depends on what the park says. A card that meets everything is
+      // "is it what you asked for?"; a card with a fact against it is a different question, and
+      // pretending otherwise is how a Product Owner ends up pressing Accept on a lion behind a hedge
+      // without being told.
+      text: unmet.length
+        ? `${item.name} does not meet ${unmet.length === 1 ? 'one of its criteria' : `${unmet.length} of its criteria`}: ${unmet[0]}. What do you want to do?`
+        : `${item.name} meets all of its criteria. Is it what you asked for?`,
       choices: [
-        { key: 'accept', label: 'Accept it' },
+        ...(unmet.length ? [] : [{ key: 'accept', label: 'Accept it' }]),
+        // Shipping it knowing. Not a trap and not hidden: a Product Owner may decide that a thing
+        // goes out as it is, and the game's whole argument is that decisions have consequences
+        // rather than that the game prevents them. A lion behind a hedge still gets out.
+        ...(unmet.length ? [{ key: 'accept-as-is', label: 'Accept it as it is',
+          note: 'It goes out with that criterion unmet. Whatever follows from that follows.' }] : []),
         // What saying no does, on the question itself rather than in a tooltip: the two answers sit
         // side by side, one of them undoes a piece of finished work, and a Product Owner pressing it
         // should know that before rather than after.
@@ -181,6 +195,19 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
     const rest = (state.questions ?? []).filter((x) => x.id !== id);
     const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
     const item = state.backlog.find((it) => it.id === q.itemId);
+    // Shipped knowing. The criteria that are not met are named and kept unmet - the card goes on
+    // saying so, and the Retrospective can read what was accepted and what it cost.
+    if (choice === 'accept-as-is' && item) {
+      const unmet = item.acceptance.filter((_, i) => !item.acConfirmed?.[i]);
+      const shipped = {
+        ...state, questions: rest,
+        backlog: state.backlog.map((it) => (it.id === q.itemId
+          ? settleStatus({ ...it, acceptedAsIs: [...(it.acceptedAsIs ?? []), ...unmet] }) : it)),
+      };
+      return note(shipped, { kind: 'question', by: by ?? 'product_owner',
+        what: `The Product Owner accepted ${item.name} with ${unmet.length} criterion${unmet.length === 1 ? '' : 's'} unmet: ${unmet[0]}`,
+        cost: 'Shipped knowing. What follows from shipping it follows.' });
+    }
     if (choice === 'accept' && item) {
       const accepted = {
         ...state, questions: rest,
@@ -679,7 +706,11 @@ export function signOffReady(item: BacklogItem): boolean {
   // by way of the sign-off, so requiring Done first meant the sign-off could never tick and you
   // could move a card to Done with the Product Owner's approval still outstanding.
   if (item.status === 'backlog') return false;
-  return item.acceptance.length > 0 && item.acceptance.every((_, i) => !!item.acConfirmed?.[i]);
+  // ...or accepted as it is. The Product Owner looked at what the park said, and shipped it anyway:
+  // that is a decision they are allowed to make, and the consequence of making it is the lesson.
+  const settled = (i: number) => !!item.acConfirmed?.[i]
+    || (item.acceptedAsIs ?? []).includes(item.acceptance[i]);
+  return item.acceptance.length > 0 && item.acceptance.every((_, i) => settled(i));
 }
 
 /** Whether a finished thing is standing in the park.

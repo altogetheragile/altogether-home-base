@@ -108,12 +108,17 @@ describe('asking from the card, not only from the park', () => {
     expect(document.body.textContent).toMatch(/Waiting on Priya to look at it/);
   });
 
-  it('does not offer it while a fact is still missing', () => {
+  it('offers it even while a fact is missing, because that is the Product Owner’s to judge', () => {
+    // It used to be refused: every criterion the park answers had to be met before the Developers
+    // could even ask. That made a Product Owner a turnstile rather than a decision, and it made one
+    // of the game's own lessons unreachable - a low hedge round a lion can never be accepted, so the
+    // escape the barrier decision exists for could never happen. What is unmet goes INTO the
+    // question now, and saying "accept it as it is" is a decision with consequences after it.
     const { s, item } = built();
     const bare = { ...item, design: { ...item.design!, water: [] } } as BacklogItem;
     render(<CardDialog state={s} item={bare} onClose={() => {}} onBuilding={() => {}} onAskToCheck={() => {}} />);
     expect(document.querySelector('[data-part="ask-to-check"]'),
-      'half-built work was offered for sign-off').toBeNull();
+      'the Developers could not even ask about work the park has doubts over').toBeTruthy();
   });
 });
 
