@@ -40,10 +40,15 @@ describe('a new game', () => {
   it('arrives with a forecast the Developers could have chosen', () => {
     const s = started();
     const board = s.backlog.filter((it) => it.status === 'committed' && it.sprintNumber === 1);
-    expect(board.length, 'the board is empty, or unreadable on a first morning').toBeGreaterThan(1);
-    expect(board.length).toBeLessThanOrEqual(3);
+    // A Sprint's worth, not a handful. It used to stop at three cards, which is about a third of a
+    // Sprint - so anybody who knew the controls finished on the first morning and had nothing to do.
+    // Reported from playing it: "we need to pull more into a sprint, not make the work last longer
+    // to fill the time."
+    expect(board.length, 'the board is empty, or unreadable on a first morning').toBeGreaterThan(4);
     const points = board.reduce((n, it) => n + it.estimate, 0);
     expect(points, 'the Developers forecast more than the Sprint holds').toBeLessThanOrEqual(s.sprintForecast);
+    expect(points, 'a first Sprint that is a handful of cards teaches nothing about a Sprint')
+      .toBeGreaterThan(s.sprintForecast * 0.75);
     // One area: a first Sprint that reaches across the whole park has no slice in it.
     for (const it of board) expect(hasGround(s, it.zone), `${it.name} is in ground the zoo does not have`).toBe(true);
     // ...and each card carries the Developers' own plan, which is the third topic of Planning.

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
-import { inHandItem, copyOffset, dayCanAfford } from '@/components/zooGame/engine';
+import { inHandItem, copyOffset } from '@/components/zooGame/engine';
 import { whereItStands } from '@/components/zooGame/parkModel';
 import { insidePark, CANVAS_W, PLAY_H } from '@/components/zooGame/parkLayout';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
@@ -292,15 +292,6 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   const commitBuild = (id: string) => {
     const it = state.backlog.find((x) => x.id === id);
     if (!it || it.status !== 'committed' || it.design) return;
-    // Starting it costs the day what the work costs, and the Developers cannot start what today
-    // cannot pay for - the same rule the seats played by the game have always worked to. Said out
-    // loud, because a thing dropped on the park that then does not get built is a game that has
-    // stopped answering: the board's "nothing left fits in what is left of today" is on the other
-    // tab, and this is the moment somebody is waiting for something to happen.
-    if (!dayCanAfford(state, it)) {
-      toast.info(`Not enough of today left to start ${it.name} - it is ${it.estimate} points of work. It waits for tomorrow.`);
-      return;
-    }
     build(id, it.draftDesign ?? presetFor(it));
   };
   const shellProps = { backlogTab, onReading, onCommitBuild: commitBuild, onTurn: setItemRot, onSetMemberSpot: setMemberSpot, onMoveInside: moveInside, onPutIn: (id: string, enclosureId: string) => {

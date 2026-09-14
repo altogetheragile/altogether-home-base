@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
 import { isDesignDone, currentDesign, homeSizeOf } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, buildLeftOf, acSettled } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, acSettled } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -235,11 +235,6 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     // Developers' word: the card no longer walks into the column when the Product Owner accepts.
     if (readyToMove(it)) return 'Ready · move it to Done';
     if (!isDesignDone(it, currentDesign(it), homeSizeOf(it, state.backlog))) return 'Next: build it on the park';
-    // Building takes the time it takes, and it is the one thing on a card that a fast pair of hands
-    // cannot hurry. Said out loud with the number on it, or a card with everything ticked and
-    // nothing left to press is a card that has stopped for no reason anybody can see.
-    const building = Math.ceil(buildLeftOf(it));
-    if (building > 0) return `Being built · ${building}s of work left`;
     const left = (it.acceptance ?? []).filter((_, i) => !acSettled(it, i)).length;
     if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
     const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);
@@ -778,16 +773,23 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       {/* The day ends from the same floating bar every other screen uses. Say which day's Daily
           Scrum is coming: held at the day's START it belongs to the NEXT day, which otherwise reads
           as though the Scrum is an end-of-day event. */}
-      {/* Why a quiet board is quiet. Work costs the day, so what is left of one is sometimes too
-          small to build anything with, and the board used to go silent for twenty seconds with no
-          way to tell that from the game having stopped. A day running out with work still in the
-          Sprint is the lesson, not a fault to hide. */}
+      {/* Why a quiet board is quiet. A board with nothing on it is either a Sprint that cannot move
+          or a forecast that has been finished early, and those are opposite problems: one is a
+          conversation about what was forecast, the other is a conversation about pulling more in. */}
       {/* Not during the Daily Scrum: the event is the way on, and a floating "End day" beside it is
           a second way out of a conversation the game is asking you to have. */}
       {!dayStarting && state.dayStage !== 'dailyScrum' && (
-        <ActionBar hint={(() => {
+        <ActionBar
+          // ...and when the forecast is finished with days still in the Sprint, the way on is not
+          // the end of the day: it is a conversation with the Product Owner about what to take next.
+          // So the answer is a button rather than a sentence somebody has to act on themselves.
+          left={whyNothingMoves(state) === 'empty' ? (
+            <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
+          ) : undefined}
+          hint={(() => {
           const why = whyNothingMoves(state);
-          if (why === 'day') return 'Nothing left fits in what is left of today.';
+          const left = state.sprintDays - state.dayNumber + 1;
+          if (why === 'empty') return `The forecast is finished, with ${left} day${left === 1 ? '' : 's'} of the Sprint left.`;
           if (why === 'blocked') return 'Nothing in this Sprint can start: what is here is waiting on something that is not.';
           return undefined;
         })()}>

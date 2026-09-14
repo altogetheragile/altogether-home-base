@@ -240,9 +240,8 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       // Remembered rather than noted: a forecast is built item by item, and what matters is who
       // chose the one that got committed.
       return setForecast({ ...state, forecastBy: action.by ?? state.forecastBy }, action.ids);
-    // An older session or trail, replayed: build time used to be a single pot of seconds on the
-    // state, charged alongside a seat's move. It is kept on the items themselves now - see
-    // `buildLeft` - so there is nothing for this to spend.
+    // An older session or trail, replayed. Work is not priced in seconds of day any more: a day is
+    // a timebox, and what a team gets through in one is their velocity. Nothing to spend.
     case 'SPEND_DAY':
       return state;
     case 'TICK_DAY':

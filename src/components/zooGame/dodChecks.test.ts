@@ -157,10 +157,6 @@ describe('increment one changes nothing about what Done costs', () => {
     act({ type: 'PLAN_SPRINT', ids: s.forecast, refinementPoints: 0 });
     for (let day = 0; day <= s.sprintDays && s.phase === 'sprint'; day += 1) {
       settle();
-      // The day is spent on whatever is being built. Nothing reaches Done before the building has
-      // been paid for, and these seats move without a clock running - this is about what the
-      // Definition of Done gates, not about how long a day is.
-      s = { ...s, backlog: s.backlog.map((it) => (it.buildLeft ? { ...it, buildLeft: 0 } : it)) };
       act({ type: 'END_DAY' });
       if (s.dayStage === 'dailyScrum') settle();
     }

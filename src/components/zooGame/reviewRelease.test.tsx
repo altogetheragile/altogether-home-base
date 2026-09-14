@@ -54,10 +54,6 @@ function sprintWithNothingReleased(): ZooGameState {
 
   for (let day = 0; day <= s.sprintDays && s.phase === 'sprint'; day += 1) {
     settle();                       // build, tick the plan, run the pathways - and nothing else
-    // The day is spent on whatever is being built. Nothing reaches Done before the building has been
-    // paid for, and these seats move without a clock running - this is about what happens to Done
-    // work nobody released, not about how long a day is.
-    s = { ...s, backlog: s.backlog.map((it) => (it.buildLeft ? { ...it, buildLeft: 0 } : it)) };
     s = reducer(s, { type: 'END_DAY' });
     if (s.dayStage === 'dailyScrum') settle();
   }

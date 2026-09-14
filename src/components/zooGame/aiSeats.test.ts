@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks, secondsPerPoint, sprintCapacity, dayCanAfford, enclosureReady } from './engine';
+import { splitEpic, planSprint, isReady, suggestTasks, sprintCapacity, teamIsBusy, enclosureReady } from './engine';
 import { enclosureWater, enclosureFlora, designSatisfiesTask } from './design';
 import { aiTurn, aiDesign } from './aiSeats';
 
@@ -220,13 +220,10 @@ describe('a seat nobody is sitting in', () => {
     for (let i = 0; i < 400; i += 1) {
       const m = aiTurn(s, 'developer') ?? aiTurn(s, 'product_owner');
       if (!m) break;
-      // Time passes while they work. Building charges the day, so a loop with no clock in it is a
-      // team with no hours - they would run out of day after the second item and stop, which is a
-      // true thing about days and has nothing to do with what this is asking: whether every KIND of
-      // item can be finished. The day running out is held in 'stops building when the day cannot
-      // afford it', just below.
-      s = { ...reducer(s, m.action), daySecondsLeft: DAY_SECONDS,
-        backlog: reducer(s, m.action).backlog.map((it) => ({ ...it, buildLeft: undefined })) };
+      // The clock is kept full: this is about whether every KIND of item can be finished, and a
+      // day running out partway through is a true thing about days that would say nothing about
+      // that. The day running out is held in sprintClock.test.ts.
+      s = { ...reducer(s, m.action), daySecondsLeft: DAY_SECONDS };
       moves += 1;
     }
     expect(moves, 'the seats looped instead of finishing').toBeLessThan(400);
@@ -310,30 +307,6 @@ describe('a seat nobody is sitting in', () => {
     expect(move!.says, 'they did not say why they were guessing').toMatch(/no velocity/i);
   });
 
-  it('can build the biggest item in the Product Backlog at all', () => {
-    // Every day after the first opens with what is left of ninety seconds once the Daily Scrum
-    // has been held. An eight point item costs ninety eight seconds, and the rule that lets an
-    // item bigger than a day start anyway was measured against the nominal ninety - so it wanted
-    // more of the day than a day ever has. The Developers took the item at the top of a day and
-    // then sat beside it, every day, while the clock ran out.
-    //
-    // Driven through the engine rather than with a hand-set clock: the number that matters is
-    // the one a real day actually starts with, and a test that picks its own lands on whichever
-    // side of the boundary the author expected.
-    let s = at({ phase: 'sprint', dayStage: 'dailyScrum', dayNumber: 2 });
-    const big = s.backlog.find((it) => it.estimate >= 8)!;
-    s = { ...s, backlog: s.backlog.map((it) => (it.id === big.id
-      ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber } : it)) };
-    s = reducer(s, { type: 'RUN_DAILY_SCRUM' });   // the day the team actually gets
-    s = reducer(s, { type: 'TICK_DAY' });          // ...and a second of it gone, as in play
-    expect(s.dayStage, 'the Daily Scrum did not hand over to a build day').toBe('building');
-    expect(secondsPerPoint(s) * big.estimate, 'this test needs an item bigger than the day it has')
-      .toBeGreaterThan(s.daySecondsLeft);
-    expect(dayCanAfford(s, big),
-      `${big.name} costs ${Math.round(secondsPerPoint(s) * big.estimate)}s and no day the team gets is long enough to start it`)
-      .toBe(true);
-  });
-
   it('builds what the plan says it built', () => {
     // Reported from a game: "Lay the ground, shelter and water" ticked itself on a bare hatched
     // box - the ground was painted and there was no shelter and no water anywhere in it. Three
@@ -367,30 +340,26 @@ describe('a seat nobody is sitting in', () => {
     expect(move.says, 'they did not say what they had actually done').toMatch(/^Built /);
   });
 
-  it('stops building when the day cannot afford it', () => {
-    // Work has to cost time, or a Sprint delivers whatever it likes and the capacity the
-    // whole game turns on means nothing. Building first and charging afterwards let a day
-    // with five seconds left absorb an eight-point item; a forecast of forty-nine points
-    // against a capacity of twenty-two delivered the lot.
+  it('finishes what it took on before it takes anything else', () => {
+    // These two used to be about the day being able to AFFORD a build: work was priced in seconds
+    // of day, and a day with five seconds left could not take an eight point item. That pricing is
+    // gone - it paced a Sprint correctly and was a timer you sat and watched - so what paces the
+    // seats now is the same thing that paces a person: finish the thing in your hands.
     let s: ZooGameState = withWork(1);
     for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
     const take = s.backlog.filter((x) => x.status === 'backlog' && isReady(x)).slice(0, 4);
     for (const it of take) s = reducer(s, { type: 'SET_TASKS', id: it.id, tasks: suggestTasks(it) });
     s = planSprint({ ...s, phase: 'planning' }, take.map((x) => x.id));
 
-    // A day with almost nothing left in it cannot take a build.
-    const nearlyOver: ZooGameState = { ...s, daySecondsLeft: 2 };
-    const started = { ...nearlyOver, backlog: nearlyOver.backlog.map((it) =>
-      it.id === take[0].id ? { ...it, started: true } : it) };
-    const move = aiTurn(started, 'developer');
-    expect(move?.action.type, 'they built an item the day could not pay for').not.toBe('BUILD_ITEM');
+    const started = { ...s, backlog: s.backlog.map((it) =>
+      (it.id === take[0].id ? { ...it, started: true } : it)) };
+    expect(teamIsBusy(started), 'work was taken on and nobody was working').toBe(true);
+    expect(aiTurn(started, 'developer')?.action.type,
+      'they took something else on with a card half built in their hands').toBe('BUILD_ITEM');
 
-    // ...and a whole day can.
-    const fresh = { ...started, daySecondsLeft: DAY_SECONDS };
-    const ok = aiTurn(fresh, 'developer');
-    expect(ok?.action.type).toBe('BUILD_ITEM');
-    expect(ok?.weight, 'the build carried no cost, so nothing would be charged for it').toBe(take[0].estimate);
-    expect(secondsPerPoint(fresh), 'a point of work costs nothing').toBeGreaterThan(0);
+    const built = { ...started, backlog: started.backlog.map((it) =>
+      (it.id === take[0].id ? { ...it, design: { parts: {}, colors: {} } } : it)) } as ZooGameState;
+    expect(teamIsBusy(built), 'the work was built and the team was still busy with it').toBe(false);
   });
 
   it('runs out of things to do instead of looping', () => {
