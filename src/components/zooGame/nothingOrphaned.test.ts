@@ -48,12 +48,10 @@ describe('every action a player can send', () => {
         .map((f) => readFileSync(`src/pages/${f}`, 'utf8')),
     ];
     const unsent = keys.filter((k) => !screens.some((t) => new RegExp(`\\b${k}\\b`).test(t)));
-    // One is known and named rather than quietly allowed: `addCopy`/`setCopyPiece` put another
-    // plant beside a planting item, which the options strip does not offer yet. It is a decision to
-    // take, not dead code to delete, so it is listed here where the next person will see it rather
-    // than left to be rediscovered. (`reorderSprint` was on this list until the board grew the
-    // control it had been declaring for months.)
-    expect(unsent.filter((k) => !['addCopy', 'setCopyPiece'].includes(k)),
-      'the game offers this action and no screen ever sends it').toEqual([]);
+    // Nothing is allowed through any more. `addCopy`/`setCopyPiece` sat on this list for months -
+    // the model could plant a clump and the strip could not say so - until somebody playing it said
+    // "we can only add one tree and one type of tree", and the control they described was the one
+    // the actions had been declaring all along. `reorderSprint` was the same story before it.
+    expect(unsent, 'the game offers this action and no screen ever sends it').toEqual([]);
   });
 });
