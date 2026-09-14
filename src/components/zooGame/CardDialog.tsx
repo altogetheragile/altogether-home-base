@@ -99,8 +99,12 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   // "I get multiple ask Priya to check" was: the same offer in the dialog, on the card and on the
   // park, none of them noticing the sign-off had come in.
   const signedOff = (item.tasks ?? []).some((t) => isSignOffTask(t.label) && t.done);
-  const canAsk = doing && wantsSignOff && !signedOff && !!item.design && criteria.length > 0
-    && criteria.every((c, i) => !answerable(c) || met(c, i));
+  // Asking is allowed once the Developers have done their part. What the park says is not met goes
+  // INTO the question rather than stopping it being asked: acceptance is the Product Owner's, and a
+  // Product Owner who may only accept work that already passes every check is a turnstile. Reported
+  // from playing it: a low hedge round a lion could never be accepted, so the escape the barrier
+  // decision exists for could never happen.
+  const canAsk = doing && wantsSignOff && !signedOff && !!item.design && criteria.length > 0;
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>

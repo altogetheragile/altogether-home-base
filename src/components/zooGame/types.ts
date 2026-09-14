@@ -290,6 +290,14 @@ export interface BacklogItem {
    *  ACs are ticked in the studio; deploy-time ACs (sizing/placement) are ticked on the park when the
    *  item is placed & sized. undefined = none confirmed yet. */
   acConfirmed?: boolean[];
+  /** Criteria the Product Owner accepted KNOWING they were not met.
+   *
+   *  Acceptance is the Product Owner's, and one who may only accept what already passes every check
+   *  is not deciding anything - they are operating a turnstile. The park still says what is true, and
+   *  the card still shows the criterion unmet; this records that somebody looked at it and said ship
+   *  it anyway. What follows from shipping follows: a low hedge round a lion still lets the lion out,
+   *  and the zone still shuts for the day. */
+  acceptedAsIs?: string[];
   /** The Product Owner looked at the built work and did not accept it: which criteria it did not
    *  meet, and when. Cleared when the Developers finish it again. */
   sentBack?: { sprint: number; day: number; criteria: string[] };

@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintReview } from './SprintReview';
 import { initialZooState } from './config';
-import { reviewSprint, whatGotOut, editItem, decisionsIn } from './engine';
+import { reviewSprint, whatGotOut, editItem, decisionsIn, askToCheck, answerQuestion, readyForDone } from './engine';
 import { currentDesign } from './design';
 import type { ZooGameState, BacklogItem } from './types';
 
@@ -138,5 +138,56 @@ describe('the Review says it', () => {
     );
     expect(container.querySelector('[data-part="escaped"]'),
       'a Review with nothing loose is filing a keeper’s report').toBeNull();
+  });
+});
+
+describe('shipping it knowing', () => {
+  // Reported from playing it: "a low hedge is rejected as unsuitable - did we agree it would do
+  // that?" We agreed the opposite. The barrier was designed to be wrong in two directions, with the
+  // consequence arriving at the Review: "the mistake is not building a weak fence, it is OPENING a
+  // zone with one". As built it was a gate instead - the safety criterion is a fact, facts cannot be
+  // ticked by hand, so a low hedge round a lion could never be accepted, never be Done, never be
+  // opened, and the escape could never happen. The lesson was unreachable from inside the game.
+  const built = (): ZooGameState => {
+    const s = zoo('hedge');
+    return { ...s, backlog: s.backlog.map((it) => (it.id === 'enc'
+      ? { ...it, status: 'committed' as const, started: true,
+          acceptance: ['Is it bordered safely, with no way out of it?'], acConfirmed: [false],
+          tasks: [{ id: 't1', label: 'Fence it', done: true }, { id: 't2', label: "Get the PO's sign-off", done: false }] }
+      : it)) } as ZooGameState;
+  };
+
+  it('is offered when the park says a criterion is not met', () => {
+    const asked = askToCheck(built(), 'enc');
+    const q = (asked.questions ?? [])[0];
+    expect(q, 'the Developers could not even ask').toBeTruthy();
+    expect(q.choices.map((c) => c.key), 'there was no way to ship it knowing')
+      .toContain('accept-as-is');
+    expect(q.text, 'the question does not say what is wrong with it').toMatch(/does not meet/i);
+  });
+
+  it('lets the work reach Done with the criterion still unmet', () => {
+    const asked = askToCheck(built(), 'enc');
+    const after = answerQuestion(asked, 'check-enc', 'accept-as-is');
+    const pen = after.backlog.find((it) => it.id === 'enc')!;
+    expect(pen.acceptedAsIs, 'nothing recorded what was accepted').toContain('Is it bordered safely, with no way out of it?');
+    expect(pen.acConfirmed?.[0], 'the criterion was quietly ticked instead of being accepted unmet').toBe(false);
+    expect(readyForDone(pen), 'it still cannot be finished, so the decision changed nothing').toBe(true);
+  });
+
+  it('and the lion still gets out, which is the whole point', () => {
+    const asked = askToCheck(built(), 'enc');
+    const shipped = answerQuestion(asked, 'check-enc', 'accept-as-is');
+    const open = { ...shipped, backlog: shipped.backlog.map((it) => (it.id === 'enc'
+      ? { ...it, status: 'open' as const } : it)) } as ZooGameState;
+    expect(whatGotOut(open).map((g) => g.escapee), 'shipping it knowing cost nothing at all').toContain('Lion');
+  });
+
+  it('says in the log what was accepted and that it was known', () => {
+    const asked = askToCheck(built(), 'enc');
+    const after = answerQuestion(asked, 'check-enc', 'accept-as-is');
+    const said = decisionsIn(after, after.sprintNumber).map((d) => `${d.what} ${d.cost ?? ''}`).join(' | ');
+    expect(said).toMatch(/accepted .* with 1 criterion unmet/i);
+    expect(said, 'the log does not say it was a decision rather than an oversight').toMatch(/knowing/i);
   });
 });
