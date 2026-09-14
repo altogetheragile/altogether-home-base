@@ -4,11 +4,11 @@ import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, qu
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, edgeNoise, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 
 import { answerable, checkCriterion } from './parkChecks';
 import { hasGround, groundPrice } from './engine';
-import { pieceByKey, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
+import { pieceByKey, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
 
@@ -545,12 +545,15 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             the way in is - so the plan and the Increment agree about where the park stops. Seen
             from straight above, a tree is its canopy. */}
         <g>
-          {hedgePoints(HEDGE_STEP).map(({ x, y, n }) => {
-            const r = HEDGE_R * (1 + 0.6 * edgeNoise(n));
+          {hedgePoints(HEDGE_STEP).map(({ x, y, n, piece, size }) => {
+            const r = HEDGE_R * 1.3 * size;
+            // The kind's own colours, so a pine reads dark beside an oak and a blossom is pink from
+            // above. One wood, described once, drawn twice: the Increment stands the same trees up.
+            const leaf = pieceByKey(piece)?.colors.foliage ?? '#3f6a31';
             return (
-              <g key={`tree-${n}`}>
-                <circle cx={x} cy={y} r={r} fill="#3f6a31" />
-                <circle cx={x - r * 0.22} cy={y - r * 0.22} r={r * 0.6} fill="#68a04c" />
+              <g key={`tree-${n}`} data-tree={piece}>
+                <circle cx={x} cy={y} r={r} fill={shade(leaf, -26)} />
+                <circle cx={x - r * 0.22} cy={y - r * 0.22} r={r * 0.6} fill={leaf} />
               </g>
             );
           })}

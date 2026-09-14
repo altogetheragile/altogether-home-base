@@ -5,7 +5,7 @@ import { standsOnPark } from './engine';
 import { buildNav, routeAcross } from './parkNav';
 import { zonePlots } from './parkZones';
 import { riverOutline } from './parkWater';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, edgeNoise, HEDGE_STEP, HEDGE_R } from './parkLayout';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { TRAVEL_MS } from './walkThrough';
 import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
 import { FACILITY } from './facilities';
@@ -124,7 +124,7 @@ function along(route: Pt[], t: number): Pt {
 
 export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlaceItem, placing, onPlace, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
-  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemoveCopy,
+  onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemovePlant,
   selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false, camera = null }: {
   state: ZooGameState;
   height?: number;
@@ -177,7 +177,9 @@ export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlac
   /** One planting is several trees. Each of them stands somewhere of its own, and can be moved
    *  there or taken out without touching the rest. */
   onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
-  onRemoveCopy?: (id: string, index: number) => void;
+  /** Take one plant out of a clump. The index counts the item's own plant as the first of them, the
+   *  same list the strip shows, so the extras start at 1. */
+  onRemovePlant?: (id: string, index: number) => void;
   /** Which run of path is picked, so its width, its colour and taking it back up are offered for
    *  the run you touched. The controls for that already sit above both drawings. */
   selectedConn?: string | null;
@@ -638,7 +640,7 @@ export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlac
         {/* Taking one of the other plantings out. Shown on whatever is open on the bench rather
             than on hover: the machine this game is mostly played on has no hover, and an X you can
             only find by guessing it is there is one nobody finds. */}
-        {onRemoveCopy && !laying && building && scene.copies.filter((c) => c.id === building).map((c) => {
+        {onRemovePlant && !laying && building && scene.copies.filter((c) => c.id === building).map((c) => {
           const g = scene.at(c.x, c.y);
           const q = c.over ?? { x: g.x, y: g.y - Math.max(10, scene.u * 13) };
           const r = Math.max(5, scene.u * 6);
@@ -647,7 +649,7 @@ export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlac
           return (
             <g key={`rm-${c.id}-${c.index}`} style={{ cursor: 'pointer' }}
               onPointerDown={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
-              onClick={(ev) => { ev.stopPropagation(); onRemoveCopy(c.id, c.index); }}>
+              onClick={(ev) => { ev.stopPropagation(); onRemovePlant(c.id, c.index + 1); }}>
               <title>Take this one out</title>
               <circle cx={q.x} cy={q.y} r={r} fill="#fff" stroke="#b91c1c" strokeWidth={line} />
               <path d={`M${q.x - arm},${q.y - arm} L${q.x + arm},${q.y + arm} M${q.x + arm},${q.y - arm} L${q.x - arm},${q.y + arm}`}
@@ -925,9 +927,13 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // A line of trees along the boundary, standing on the same points the boundary is drawn through.
   // Not decoration for its own sake: a green edge fading into a green middle reads as a blob, and
   // the trees are what say "the park stops here". None along the front - that is the way in.
-  hedgePoints(HEDGE_STEP * 2.5).forEach(({ x, y, n }) => {
-    place(n % 4 ? 'tree' : 'treeTall', x, y, u * HEDGE_R * (0.04 + 0.018 * edgeNoise(n)), `hedge-${n}`,
-      undefined, undefined, { 'data-prop': 'hedge' });
+  // Mixed, and standing the way trees stand: which kind each one is, how big it grew and where it
+  // is are the boundary's own business, decided once in parkLayout so the plan and this view walk
+  // the same wood rather than two woods that nearly agree.
+  hedgePoints(HEDGE_STEP * 2.8).forEach(({ x, y, n, piece, size }) => {
+    const p = pieceByKey(piece);
+    place(treeProp(p?.type, piece), x, y, u * HEDGE_R * 0.05 * size, `hedge-${n}`,
+      undefined, foliageTint(p?.colors.foliage), { 'data-prop': 'hedge', 'data-tree': piece });
   });
 
   // A bay's x,y is its CENTRE, the same as a parked car's - so the markings line up with what is

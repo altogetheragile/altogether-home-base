@@ -4,7 +4,8 @@ import { ParkOptions } from './ParkOptions';
 import { ParkPlan } from './ParkPlan';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
-import { footprintFor, floraPalette, piecesFor, presetFor } from './design';
+import { footprintFor, floraPalette, piecesFor, presetFor, currentDesign, type ItemDesign } from './design';
+import { removePlant } from './engine';
 import type { ZooGameState, BacklogItem } from './types';
 
 // A planting item is a clump, not one tree.
@@ -56,21 +57,92 @@ describe('planting more than one thing', () => {
     const pulled: number[] = [];
     const said = strip(state, item, {
       onSetCopyPiece: (_id: string, i: number, p: string) => changed.push([i, p]),
-      onRemoveCopy: (_id: string, i: number) => pulled.push(i),
+      onRemovePlant: (_id: string, i: number) => pulled.push(i),
     });
     expect(said.textContent, 'it does not say how many plants this is').toMatch(/3 plants/);
-    const pick = said.querySelector('[data-part="copy-1"]') as HTMLSelectElement;
-    expect(pick.value, 'the second plant forgot what it is').toBe('blossom');
+    // Row 0 is the item's own plant, so the pine it was given is row 1 and the blossom is row 2.
+    const pick = said.querySelector('[data-part="copy-2"]') as HTMLSelectElement;
+    expect(pick.value, 'the third plant forgot what it is').toBe('blossom');
     fireEvent.change(pick, { target: { value: 'palm' } });
     expect(changed, 'changing one changed nothing').toEqual([[1, 'palm']]);
-    fireEvent.click(said.querySelector('[data-part="remove-copy-0"]')!);
-    expect(pulled, 'there is no way to take one out').toEqual([0]);
+    fireEvent.click(said.querySelector('[data-part="remove-copy-1"]')!);
+    expect(pulled, 'there is no way to take one out').toEqual([1]);
   });
 
   it('says nothing about plants for a river, which is not a clump', () => {
     const { state, item } = planting({ template: 'river', design: { parts: { type: 'river' }, colors: {} } } as Partial<BacklogItem>);
     expect(strip(state, item, { onAddCopy: () => {} }).textContent,
       'a river was offered a second river beside it').not.toMatch(/Plant another/i);
+  });
+});
+
+describe('the clump is one list', () => {
+  // Reported from playing it, with the trail: "I add an oak and two appear in the studio and the
+  // isometric view."
+  //
+  // Both drawings were right and the strip was lying. A planting item is a clump of N plants and the
+  // FIRST of them is the item itself - it has a spot and a piece like any other, it is simply the one
+  // the card arrived as. The strip listed only the extras, under a heading that counted them all: "2
+  // plants" over a single row. So the first press of "Plant another" stood a second tree beside a
+  // tree that had no row, and from the park that reads as one press planting two.
+  //
+  // One question, one answer: the list IS the clump, and the count is the length of the list.
+
+  it('counts what it lists, and lists what is planted', () => {
+    for (const copies of [[], [{ x: 300, y: 300, piece: 'pine' }], [{ x: 300, y: 300, piece: 'pine' }, { x: 346, y: 300, piece: 'oak' }]]) {
+      const { state, item } = planting({ copies } as Partial<BacklogItem>);
+      const said = strip(state, item, { onSetCopyPiece: () => {}, onRemovePlant: () => {} });
+      const rows = said.querySelectorAll('[data-part^="copy-"]').length;
+      expect(rows, 'the strip lists fewer plants than the item has').toBe(copies.length + 1);
+      expect(said.querySelector('[data-part="plants"]')?.textContent,
+        `${rows} rows are not headed as ${rows}`).toMatch(new RegExp(`^${rows} plants?`));
+    }
+  });
+
+  it('says one plant before anything has been added, so adding one says two', () => {
+    // The press that started the report. It plants one; the count has to go up by one.
+    const { state, item } = planting();
+    expect(strip(state, item, { onSetCopyPiece: () => {}, onAddCopy: () => {} })
+      .querySelector('[data-part="plants"]')?.textContent,
+      'a planting that has not been added to says nothing about what it is').toMatch(/^1 plant[^s]/);
+    const after = planting({ copies: [{ x: 300, y: 300, piece: 'oak' }] } as Partial<BacklogItem>);
+    expect(strip(after.state, after.item, { onSetCopyPiece: () => {} })
+      .querySelector('[data-part="plants"]')?.textContent,
+      'one press of Plant another did not read as one more plant').toMatch(/^2 plants/);
+  });
+
+  it('changes the item’s own plant from the first row, not a copy', () => {
+    const { state, item } = planting({ copies: [{ x: 300, y: 300, piece: 'pine' }] } as Partial<BacklogItem>);
+    const designed: ItemDesign[] = [];
+    const copied: number[] = [];
+    const said = strip(state, item, {
+      onDesign: (_id: string, d: ItemDesign) => designed.push(d),
+      onSetCopyPiece: (_id: string, i: number) => copied.push(i),
+    });
+    fireEvent.change(said.querySelector('[data-part="copy-0"]')!, { target: { value: 'blossom' } });
+    expect(copied, 'changing the first plant changed one of the others').toEqual([]);
+    expect(designed[0]?.parts.piece, 'the first row does not change the plant it names').toBe('blossom');
+    expect(designed[0]?.colors?.foliage, 'a blossom was left painted like an oak').toBe('#e8a6c0');
+  });
+
+  it('lets the first plant be taken out, by the next one taking its place', () => {
+    // It cannot simply be deleted - a planting item has to plant something - so the clump closes up
+    // and the plant that was second stands where it already stood, still being what it was.
+    const { state, item } = planting({ pos: { x: 400, y: 820 },
+      copies: [{ x: 500, y: 900, piece: 'blossom' }, { x: 540, y: 900, piece: 'pine' }] } as Partial<BacklogItem>);
+    const after = removePlant(state, item.id, 0).backlog.find((it) => it.id === item.id)!;
+    expect(after.copies, 'the clump did not close up').toHaveLength(1);
+    expect(after.pos, 'the plant that took its place moved somewhere else').toEqual({ x: 500, y: 900 });
+    expect(currentDesign(after).parts.piece, 'it took the place but not the plant').toBe('blossom');
+    expect((after.copies ?? [])[0].piece, 'the wrong plant was taken out').toBe('pine');
+  });
+
+  it('will not let the last plant be pulled up', () => {
+    const { state, item } = planting();
+    expect(removePlant(state, item.id, 0), 'a planting item was left planting nothing').toBe(state);
+    const said = strip(state, item, { onSetCopyPiece: () => {}, onRemovePlant: () => {} });
+    expect((said.querySelector('[data-part="remove-copy-0"]') as HTMLButtonElement).disabled,
+      'the only plant offers to pull itself up').toBe(true);
   });
 });
 

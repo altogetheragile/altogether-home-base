@@ -186,23 +186,78 @@ export function parkOutline(wander = EDGE_WANDER): { x: number; y: number }[] {
 export const HEDGE_STEP = CANVAS_W / 36;
 export const HEDGE_R = CANVAS_W / 73;
 
-export function hedgePoints(step: number): { x: number; y: number; n: number }[] {
+/** What grows along the boundary, in roughly the proportions a wood grows in.
+ *
+ *  Listed with repeats rather than weighted, because the proportions ARE the list: mostly oak and
+ *  pine, scrub between them, and now and then a blossom or a bare one. It used to be one drawing
+ *  repeated - every tree the same, a pace apart, all the way round - which reads as a fence made of
+ *  trees. Reported from playing it: "can we also have trees of different types and more ad-hoc
+ *  spacing and clumping around the edge?" */
+//
+// No blossom out here, though a planting inside the park can be one. Two reasons, both from looking
+// at it: from above a row of pink canopies reads as a flowerbed rather than the edge of a wood, and
+// in the round the artwork is recoloured by moving its whole hue, so a pink canopy takes its trunk
+// round with it and the tree stands on a purple stem. A choice somebody makes for their own planting
+// is theirs; scenery that paints itself wrong is a fault.
+const WOOD = ['oak', 'pine', 'oak', 'bush', 'pine', 'oak', 'bare', 'pine', 'oak', 'bush', 'pine', 'oak', 'bush', 'oak', 'pine', 'bare'];
+
+/** How big each kind grows, against an oak. Scrub is scrub. */
+const HABIT: Record<string, number> = { oak: 1, pine: 1.16, bare: 0.92, bush: 0.58 };
+
+export interface WoodTree {
+  x: number;
+  y: number;
+  /** Which tree this is, going round. Its key in a drawing, and what its own look is hashed from. */
+  n: number;
+  /** Which of `WOOD` it is - `pieceByKey` turns it into colours and a drawing. */
+  piece: string;
+  /** How big to draw it, 1 being an ordinary oak. Both drawings multiply their own canopy by it, so
+   *  a big oak is big in the plan AND in the round. */
+  size: number;
+}
+
+/** The trees along the boundary: where each one stands, what it is, and how big it grew.
+ *
+ *  Three things make it a wood rather than a row. The gap to the next stop varies by half again, so
+ *  no stretch has the same rhythm; a stop is sometimes a pair or a knot of three, all of one kind,
+ *  which is how trees actually stand; and each tree gets its own distance off the line, so a knot
+ *  has depth instead of being three canopies in a row. All of it from the same hash the boundary
+ *  itself wanders by, so the wood is the same wood every time the park is drawn. */
+export function hedgePoints(step: number): WoodTree[] {
   const ring = parkOutline();
-  const out: { x: number; y: number; n: number }[] = [];
+  const out: WoodTree[] = [];
   let n = 0;
   for (let i = 0; i < ring.length; i += 1) {
     const a = ring[i], b = ring[(i + 1) % ring.length];
     const len = Math.hypot(b.x - a.x, b.y - a.y);
     const nx = -(b.y - a.y) / (len || 1), ny = (b.x - a.x) / (len || 1);
-    for (let d = 0; d < len; d += step) {
-      const t = d / len;
-      // Off the line by a few paces, and always OUTWARD, on the countryside side: a stand of trees
-      // rather than beads threaded on a string, and no canopy hanging over ground something is
-      // allowed to stand on.
-      const off = -(2 + 10 * edgeNoise(n + 40));
-      const p = { x: a.x + (b.x - a.x) * t + nx * off, y: a.y + (b.y - a.y) * t + ny * off, n };
-      n += 1;
-      if (p.y < PROMENADE_Y - 12) out.push(p);
+    let d = 0;
+    while (d < len) {
+      const crowd = edgeNoise(n + 300);
+      const many = crowd < 0.14 ? 3 : crowd < 0.36 ? 2 : 1;
+      // A stand is one species. Trees seed from each other, so a knot of three oaks is what a wood
+      // looks like and three different trees in a huddle is what a garden centre looks like.
+      const piece = WOOD[Math.floor(edgeNoise(n * 3 + 91) * WOOD.length) % WOOD.length];
+      for (let k = 0; k < many; k += 1) {
+        // Off the line by a few paces, and always OUTWARD, on the countryside side: a stand of trees
+        // rather than beads threaded on a string, and no canopy hanging over ground something is
+        // allowed to stand on. Never further out than `inset`, or the wood is drawn off the land.
+        const off = -(2 + 14 * edgeNoise(n + 40));
+        const along = d + (edgeNoise(n + 11) - 0.5) * step * 0.8;
+        const t = along / len;
+        const p = {
+          x: a.x + (b.x - a.x) * t + nx * off,
+          y: a.y + (b.y - a.y) * t + ny * off,
+          n,
+          piece,
+          size: (HABIT[piece] ?? 1) * (0.78 + 0.5 * edgeNoise(n + 17)),
+        };
+        n += 1;
+        if (p.y < PROMENADE_Y - 12) out.push(p);
+      }
+      // Ad-hoc spacing: the next stop is anywhere from half a step to one and a half, and a knot
+      // leaves a wider gap after it - a clearing, which is what makes the clump read as a clump.
+      d += step * (0.55 + 0.95 * edgeNoise(n + 700)) * (many > 1 ? 1.3 : 1);
     }
   }
   return out;

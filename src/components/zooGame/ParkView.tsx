@@ -177,13 +177,13 @@ interface ParkViewProps {
   onSetRot?: (id: string, rot: number) => void;
   /** Extra placements of the same scenery - signposts at the junctions, trees along a path. */
   onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
-  onRemoveCopy?: (id: string, index: number) => void;
+  onRemovePlant?: (id: string, index: number) => void;
 }
 
 /** The park as it stands: built enclosures with their animals, amenities and planting,
  *  a HUD at a glance, and visitors on the promenade. `large` = the full-width, draggable
  *  Park tab; `compact`/`fill` = small read-only live views. */
-export function ParkView({ state, placing, onPlace, compact = false, large = false, focus = false, increment = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemoveCopy, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
+export function ParkView({ state, placing, onPlace, compact = false, large = false, focus = false, increment = false, building, onOpenBuild, edit, onStartHere, onPlaceItem, onSetPathStyle, onImprove, onSetSpot, onSetMemberSpot, onSetRot, onMoveCopy, onRemovePlant, onNest, onUnnest, onAddConnector, onUpdateConnector, onDeleteConnector, deployMode, deployStyle, deployAcs, onFinishDeploy, onSetSize, onPart, drawRoute, drawing, onDrawing }: ParkViewProps) {
   const style = pathStyleFor(state.pathStyle);
   const connectors = state.connectors ?? [];
   // The park tool: 'connect' draws connectors, 'none' = arrange & select. Paths are only editable
@@ -482,7 +482,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   tool={effectiveTool} newConn={newConn}
                   building={edit ? building : null} onPart={edit ? onPart : undefined}
                   onSetSpot={onSetSpot} onSetMemberSpot={onSetMemberSpot} onNest={onNest} onUnnest={onUnnest}
-                  onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemoveCopy={onRemoveCopy}
+                  onSetSize={onSetSize} onSetRot={onSetRot} onMoveCopy={onMoveCopy} onRemovePlant={onRemovePlant}
                   selectedConn={selectedConn} onSelectConn={canConnect ? setSelectedConn : undefined}
                   onStartHere={onStartHere} onImprove={onImprove} improving={improving}
                   onAddConnector={(c) => { onAddConnector?.({ ...c, itemId: drawRoute?.id }); if (!drawRoute) setTool('none'); }} />
