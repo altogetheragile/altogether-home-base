@@ -260,7 +260,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         // whatever it liked and capacity meant nothing. A day that cannot take it ends, and
         // the work waits for tomorrow - which is what running out of day looks like.
         if (dayCanAfford(state, building)) {
-          return { action: { type: 'BUILD_ITEM', id: building.id, design: aiDesign(building) },
+          return { action: { type: 'BUILD_ITEM', id: building.id, byTheGame: true },
                    // What they did, not what they wish they had done. Done is the whole team's
                    // word and it waits for the Product Owner's: saying "built to the Definition
                    // of Done" while four acceptance criteria sat untouched was the Developers

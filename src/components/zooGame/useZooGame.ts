@@ -4,6 +4,7 @@ import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, spendDay, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks } from './parkChecks';
+import { aiDesign } from './aiSeats';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
 // /scrum-game. This slice is the core loop: plan, build, open (release), review
@@ -184,8 +185,16 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return pullIntoSprint(state, action.id, action.by);
     case 'DROP_FROM_SPRINT':
       return dropFromSprint(state, action.id, action.by);
-    case 'BUILD_ITEM':
-      return buildItem(state, action.id, action.design);
+    case 'BUILD_ITEM': {
+      // A seat played by the game works out what to build from the item as it is NOW. Anything else
+      // is a lost update: the Developers decided to build a moment ago, the player chose a low hedge
+      // since, and the hedge would vanish under a design that was made before they chose it.
+      // Reported from playing it twice - "I still lose the ground colour", "the hedge I picked
+      // defaults to high fence".
+      const now = state.backlog.find((it) => it.id === action.id);
+      const design = action.byTheGame && now ? aiDesign(now) : action.design;
+      return buildItem(state, action.id, design);
+    }
     case 'EDIT_ITEM':
       return editItem(state, action.id, action.design);
     case 'ADD_ANOTHER':

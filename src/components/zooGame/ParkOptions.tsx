@@ -215,8 +215,13 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               What each one holds, and what the animals in here need, is in `barrierVerdict`, and the
               acceptance criterion says so in the words of the animal that would get out. */}
           <Group label="Holds them">
+            {/* Asked WITH the animals in it, which is how the criterion asks. Without them, an
+                unchosen barrier shows as a low hedge while the card says "a 4m fence, holds them" -
+                two answers to one question, and the strip's one is the one that looks like a choice
+                somebody made. Reported from playing it: "the hedge setting I picked defaults to high
+                fence." */}
             {BARRIERS.map((b) => {
-              const on = barrierOf(design).key === b.key;
+              const on = barrierOf(design, state.backlog.filter((it) => it.enclosureId === subject.id)).key === b.key;
               return (
                 <button key={b.key} type="button" data-part={`barrier-${b.key}`} aria-pressed={on}
                   title={b.note} onClick={() => set({ parts: { ...design.parts, barrier: b.key } })}

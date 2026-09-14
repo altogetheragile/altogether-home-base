@@ -184,3 +184,39 @@ describe('the park draws what was chosen', () => {
     expect(mesh('wall'), 'a wall was drawn with wire mesh in it').toBeLessThan(mesh('fence'));
   });
 });
+
+describe('the strip and the card agree about what is round the pen', () => {
+  it('shows what the habitat actually has, animals included', () => {
+    // Reported from playing it: "the hedge setting I picked defaults to high fence." Two answers to
+    // one question - the strip asked what holds them with the pen EMPTY, which is a low hedge, while
+    // the criterion asked with the lion in it, which is a 4m fence. Nobody chose either, and the one
+    // that looked like a choice was the wrong one.
+    const s = zoo();
+    const pen = s.backlog.find((it) => it.category === 'enclosure')!;
+    const { container } = render(
+      <ParkOptions state={s} item={pen} inside={null}
+        api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
+    );
+    const pressed = [...container.querySelectorAll('[data-part^="barrier-"]')]
+      .find((b) => b.getAttribute('aria-pressed') === 'true')!;
+    expect(pressed, 'nothing at all is shown as what holds them').toBeTruthy();
+    // What the card says, in the same breath. Compared by the barrier itself rather than by its
+    // words: the strip calls it "High fence" and the card calls it "a 4m fence", which are one
+    // thing said two ways on purpose.
+    const key = pressed.getAttribute('data-part')!.replace('barrier-', '');
+    const said = checkCriterion(s, pen, 'Is it bordered safely, with no way out of it?')!;
+    expect(said.evidence, 'the card and the strip disagree about what is round the pen')
+      .toContain(BARRIERS.find((b) => b.key === key)!.note);
+  });
+
+  it('keeps a barrier somebody chose, even a bad one', () => {
+    const s = zoo('hedge');
+    const pen = s.backlog.find((it) => it.category === 'enclosure')!;
+    const { container } = render(
+      <ParkOptions state={s} item={pen} inside={null}
+        api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
+    );
+    expect(container.querySelector('[data-part="barrier-hedge"]')!.getAttribute('aria-pressed'),
+      'a low hedge chosen on purpose was shown as something else').toBe('true');
+  });
+});

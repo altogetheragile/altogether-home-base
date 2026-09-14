@@ -684,7 +684,12 @@ export type ZooAction =
   | { type: 'DELETE_CONNECTOR'; id: string }
   | { type: 'PULL_ITEM'; id: string; by?: string }
   | { type: 'DROP_FROM_SPRINT'; id: string; by?: string }
-  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign }
+  | { type: 'BUILD_ITEM'; id: string; design?: ItemDesign;
+      /** Sent by a seat the game is playing. The design is then worked out when the action is
+       *  APPLIED rather than when it was chosen: a move decided a tick ago carries a snapshot of the
+       *  item from a tick ago, and a player who chose a fence in between would have it overwritten
+       *  by their own teammate. */
+      byTheGame?: boolean }
   | { type: 'EDIT_ITEM'; id: string; design: ItemDesign }
   | { type: 'ADD_ANOTHER'; id: string }
   | { type: 'IMPROVE_ITEM'; id: string }
