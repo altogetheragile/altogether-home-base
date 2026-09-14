@@ -8,7 +8,7 @@ import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOu
 
 import { answerable, checkCriterion } from './parkChecks';
 import { hasGround, groundPrice } from './engine';
-import { groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
+import { pieceByKey, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
 
@@ -98,7 +98,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, inside, frame, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -116,6 +116,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   inside?: string | null;
   /** Move one animal of a family about inside its habitat. */
   onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void;
+  /** Move one of a planting's other plants. A clump is several plants, each on its own spot. */
+  onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void;
   /** Move a pool or a plant about inside a habitat. */
   onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void;
   /** Something is being put down for the first time: it follows the cursor with a verdict on it. */
@@ -325,6 +327,18 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       const v = verdict(b.item.id, b.size, { x: p.x - grabX, y: p.y - grabY });
       if (v.ok) onPlaceItem(b.item.id, { x: v.x, y: v.y });
     };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  /** Drag one of a planting's other plants about the park. Its own tree on its own spot, which is
+   *  what the model has held since the day dragging the item stopped dragging the whole clump. */
+  const dragCopy = (e: ReactPointerEvent, id: string, index: number) => {
+    if (!onMoveCopy) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const move = (ev: PointerEvent) => { const p = worldAt(ev); if (p) onMoveCopy(id, index, insidePark({ w: 40, h: 40 }, p)); };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
@@ -585,6 +599,29 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             </g>
           );
         })}
+
+        {/* The rest of a planting: one Product Backlog item is a clump, and every plant in it stands
+            on its own spot. The isometric view has drawn them since the day they could be dragged;
+            this one drew the first plant and nothing else, so a player who planted three trees saw
+            one on the surface they were planting them with. The ninth time the two drawings have
+            disagreed about the same piece of state. */}
+        {boxes.filter((b) => b.item.category === 'flora' && (b.item.copies ?? []).length > 0).map((b) => (
+          (b.item.copies ?? []).map((c, i) => {
+            const piece = pieceByKey(c.piece);
+            const d = currentDesign(b.item);
+            const fill = piece?.colors.foliage ?? d.colors?.foliage ?? fillFor(b.item).fill;
+            const stroke = piece?.colors.trunk ?? d.colors?.trunk ?? fillFor(b.item).stroke;
+            return (
+              <g key={`copy-${b.item.id}-${i}`} data-copy={`${b.item.id}:${i}`}
+                onPointerDown={placing || tool === 'path' ? undefined : (e) => dragCopy(e, b.item.id, i)}
+                style={{ cursor: onMoveCopy ? 'grab' : 'default' }}>
+                <rect x={c.x - b.size.w / 2} y={c.y - b.size.h / 2} width={b.size.w} height={b.size.h} rx={6}
+                  clipPath="url(#park-edge)" fill={fill} fillOpacity={b.underWay ? 0.45 : 1}
+                  stroke={stroke} strokeWidth={2} strokeDasharray={b.underWay ? '8 6' : undefined} />
+              </g>
+            );
+          })
+        ))}
 
         {/* The apron round each habitat, which every habitat has whether anybody drew it or not:
             a pen you cannot walk round is an object in a field, not an exhibit. The pathway items
