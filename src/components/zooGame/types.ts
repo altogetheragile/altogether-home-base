@@ -671,6 +671,10 @@ export type ZooAction =
   | { type: 'ADD_COPY'; id: string; at: { x: number; y: number }; piece?: string }
   | { type: 'SET_COPY_PIECE'; id: string; index: number; piece: string }
   | { type: 'MOVE_COPY'; id: string; index: number; pos: { x: number; y: number } }
+  /** Index over the WHOLE clump: 0 is the item's own plant, which the next one then replaces. */
+  | { type: 'REMOVE_PLANT'; id: string; index: number }
+  /** What REMOVE_PLANT used to be, counting only the extras. Nothing sends it any more; it is kept
+   *  so that a trail recorded before the clump became one list still replays as what happened. */
   | { type: 'REMOVE_COPY'; id: string; index: number }
   | { type: 'SET_USE_USER_STORIES'; on: boolean }
   | { type: 'MOVE_TO_ZONE'; id: string; zone: string }

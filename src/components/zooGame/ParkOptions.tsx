@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
-  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize, piecesFor, pieceByKey, floraPalette,
+  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize, piecesFor, pieceByKey, applyPiece, floraPalette,
   hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, barrierOf,
   type ItemDesign,
 } from './design';
@@ -41,9 +41,9 @@ const WATER_COLOURS = ['#2f8fc0', '#1f6f9a', '#3fb3a6', '#7cc0e8', '#2a4f7a'];
 const INSIDE_KINDS = ['water', ...HABITAT_FEATURE_TYPES, ...PLANTING_TYPES];
 
 /** One labelled group of controls. */
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
+function Group({ label, part, children }: { label: string; part?: string; children: React.ReactNode }) {
   return (
-    <div className="flex min-w-0 shrink-0 items-center gap-1.5 border-l border-border pl-2.5 first:border-l-0 first:pl-0">
+    <div data-part={part} className="flex min-w-0 shrink-0 items-center gap-1.5 border-l border-border pl-2.5 first:border-l-0 first:pl-0">
       <span className={cn(EYEBROW, 'shrink-0 text-muted-foreground')}>{label}</span>
       <div className="flex flex-wrap items-center gap-1">{children}</div>
     </div>
@@ -120,8 +120,9 @@ export interface ParkOptionsApi {
   onAddCopy?: (id: string, piece: string) => void;
   /** Change what one of them is - an oak beside a bush beside a blossom. */
   onSetCopyPiece?: (id: string, index: number, piece: string) => void;
-  /** Take one of them out again. */
-  onRemoveCopy?: (id: string, index: number) => void;
+  /** Take one plant out of a clump, counting the item's own plant as the first of them - the list
+   *  in the strip IS the clump, so the index it hands back is an index into all of it. */
+  onRemovePlant?: (id: string, index: number) => void;
   /** Move an animal into a habitat - which is what "where it lives" means for an animal. */
   onPutIn?: (id: string, enclosureId: string) => void;
 }
@@ -285,26 +286,41 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             </Group>
           )}
           {/* What it is planted with, and the way to take one out again - the same shape as a
-              pathway's runs, because it is the same kind of list: the pieces this one item is. */}
+              pathway's runs, because it is the same kind of list: the pieces this one item is.
+              THE WHOLE clump, the item's own plant first. It used to list the extra plants only,
+              under a heading that counted them all: "2 plants" over one row. So the first press of
+              "Plant another" put a second tree beside a tree nobody had been shown a row for, and
+              from the park it read as one press planting two. Reported from playing it: "I add an
+              oak and two appear." One question, one answer - the list IS the clump. */}
           {(() => {
             const copies = subject.copies ?? [];
-            if (!copies.length || !api.onSetCopyPiece) return null;
+            if (!api.onSetCopyPiece) return null;
+            const own = design.parts.piece ?? piecesFor(kind)[0]?.key ?? '';
+            const clump = [{ piece: own }, ...copies];
             return (
-              <Group label={`${copies.length + 1} plants`}>
-                {copies.map((c, i) => {
+              <Group part="plants" label={`${clump.length} ${clump.length === 1 ? 'plant' : 'plants'}`}>
+                {clump.map((c, i) => {
                   const piece = pieceByKey(c.piece) ?? piecesFor(kind)[0];
+                  // Taking out the first plant is the next one taking its place: a planting item has
+                  // to plant something, so the last plant standing cannot be pulled up.
+                  const last = i === 0 && !copies.length;
                   return (
-                    <span key={`${c.x}-${c.y}-${i}`} className="flex items-center gap-0.5">
+                    <span key={i === 0 ? 'own' : `${(c as { x?: number }).x}-${(c as { y?: number }).y}-${i}`}
+                      className="flex items-center gap-0.5">
                       <select value={c.piece ?? piece?.key ?? ''} data-part={`copy-${i}`}
-                        onChange={(e) => api.onSetCopyPiece?.(subject.id, i, e.target.value)}
+                        title={i === 0 ? 'The plant this card arrived as' : undefined}
+                        onChange={(e) => (i === 0
+                          ? set(applyPiece(design, pieceByKey(e.target.value) ?? piecesFor(kind)[0]))
+                          : api.onSetCopyPiece?.(subject.id, i - 1, e.target.value))}
                         className={cn(FOCUS, 'rounded-md border border-border bg-card px-1 py-1 text-[11px] font-medium')}>
                         {piecesFor(kind).map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
                       </select>
-                      {api.onRemoveCopy && (
-                        <button type="button" data-part={`remove-copy-${i}`} title={`Take this ${piece?.label.toLowerCase() ?? 'plant'} out`}
-                          aria-label={`Take plant ${i + 2} out`}
-                          onClick={() => api.onRemoveCopy?.(subject.id, i)}
-                          className={cn(FOCUS, 'rounded-md border border-border bg-card p-1 text-muted-foreground hover:border-destructive/60 hover:text-destructive')}>
+                      {api.onRemovePlant && (
+                        <button type="button" data-part={`remove-copy-${i}`} disabled={last}
+                          title={last ? 'A planting has to plant something' : `Take this ${piece?.label.toLowerCase() ?? 'plant'} out`}
+                          aria-label={`Take plant ${i + 1} out`}
+                          onClick={() => api.onRemovePlant?.(subject.id, i)}
+                          className={cn(FOCUS, 'rounded-md border border-border bg-card p-1 text-muted-foreground hover:border-destructive/60 hover:text-destructive disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground')}>
                           <Trash2 className="h-3 w-3" />
                         </button>
                       )}

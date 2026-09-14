@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import { ParkPlan } from './ParkPlan';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
-import { parkOutline, outlinePath, EDGE_WANDER, CANVAS_W, PROMENADE_Y, PAD } from './parkLayout';
+import { parkOutline, outlinePath, hedgePoints, EDGE_WANDER, CANVAS_W, PROMENADE_Y, PAD, HEDGE_STEP } from './parkLayout';
 import type { ZooGameState } from './types';
 
 // The park is a piece of land, not a green rectangle.
@@ -42,6 +42,62 @@ describe('the park’s edge', () => {
     expect(front.length, 'the front of the park has grown a wobble').toBeGreaterThanOrEqual(2);
     expect(Math.max(...front.map((p) => p.x)) - Math.min(...front.map((p) => p.x)),
       'the straight front does not run the width of the park').toBeGreaterThan(CANVAS_W * 0.9);
+  });
+});
+
+describe('the wood along it', () => {
+  // Reported from playing it: "can we also have trees of different types and more ad-hoc spacing and
+  // clumping around the edge?" - of a boundary that was one drawing, at one size, repeated every
+  // HEDGE_STEP the whole way round. It read as a fence made of trees.
+  //
+  // A wood is not a row. The rules below are what makes it one, and they live in `parkLayout` with
+  // the boundary itself, so the plan and the Increment plant the same wood rather than each
+  // inventing its own.
+  const wood = hedgePoints(HEDGE_STEP);
+  const gaps = wood.slice(1).map((t, i) => Math.hypot(t.x - wood[i].x, t.y - wood[i].y));
+
+  it('is more than one kind of tree', () => {
+    expect(new Set(wood.map((t) => t.piece)).size,
+      'the whole boundary is one tree drawn over and over').toBeGreaterThan(2);
+  });
+
+  it('does not grow them all to the same height', () => {
+    expect(new Set(wood.map((t) => Math.round(t.size * 20))).size,
+      'every tree on the boundary is the same size').toBeGreaterThan(4);
+  });
+
+  it('does not stand them a fixed pace apart', () => {
+    const wide = Math.max(...gaps), tight = Math.min(...gaps);
+    expect(wide / Math.max(1, tight), 'the trees are a metronome').toBeGreaterThan(2);
+  });
+
+  it('grows in clumps, with clearings between them', () => {
+    // Both halves matter: trees close enough to be a stand, and gaps wide enough to be a gap. Jitter
+    // alone gives a wavy row, which is the same row.
+    expect(gaps.filter((g) => g < HEDGE_STEP * 0.45).length, 'nothing on the boundary clumps').toBeGreaterThan(3);
+    expect(gaps.filter((g) => g > HEDGE_STEP * 1.1).length, 'the wood has no clearings in it').toBeGreaterThan(3);
+  });
+
+  it('is the same wood every time it is asked', () => {
+    // Redrawn on every tick of the clock. A wood that reshuffled would be a park that boiled.
+    expect(hedgePoints(HEDGE_STEP)).toEqual(wood);
+  });
+
+  it('stands all of it on the land, and none across the front', () => {
+    for (const t of wood) {
+      expect(t.x, 'a tree grew off the side of the plot').toBeGreaterThanOrEqual(0);
+      expect(t.x, 'a tree grew off the side of the plot').toBeLessThanOrEqual(CANVAS_W);
+      expect(t.y, 'a tree grew across the way in').toBeLessThan(PROMENADE_Y);
+    }
+  });
+
+  it('is drawn as the mixture it is, in both views', () => {
+    const plan = render(<ParkPlan state={park()} />).container;
+    const iso = render(<IsoZoo state={park()} height={460} />).container;
+    const kinds = (el: Element) => new Set([...el.querySelectorAll('[data-tree]')]
+      .map((n) => n.getAttribute('data-tree')));
+    expect(kinds(plan).size, 'the plan paints every boundary tree the same').toBeGreaterThan(2);
+    expect(kinds(iso).size, 'the Increment stands up one tree drawing repeated').toBeGreaterThan(2);
   });
 });
 

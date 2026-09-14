@@ -9,7 +9,7 @@ import { zonePlots, plotOrder } from './parkZones';
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
 import { whereItStands, groundSize } from './parkModel';
-import { appealFromDesign, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora } from './design';
+import { appealFromDesign, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -1347,6 +1347,31 @@ export function moveItemCopy(state: ZooGameState, id: string, index: number, pos
 export function removeItemCopy(state: ZooGameState, id: string, index: number): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id
     ? { ...it, copies: (it.copies ?? []).filter((_, i) => i !== index) } : it)) };
+}
+
+/** Take one plant out of a clump, counting the item's own plant as the first of them.
+ *
+ *  A planting item is a clump of N plants, and the first of them is the item itself - it has a place
+ *  on the park and a piece like any other, it is simply the one the card arrived as. That asymmetry
+ *  was invisible and it read as a fault: the strip said "2 plants" and listed one, and the first
+ *  press of "Plant another" put a SECOND tree beside a tree nobody had been shown. Reported from
+ *  playing it: "I add an oak and two appear."
+ *
+ *  So the clump is one list from here on. Taking out the first plant cannot just delete it - a
+ *  Product Backlog item for a planting has to plant something - so the next one takes its place,
+ *  standing where it already stood and keeping what it is. Refuses when it is the only plant left,
+ *  which is the strip's business to say before it gets here. */
+export function removePlant(state: ZooGameState, id: string, index: number): ZooGameState {
+  if (index > 0) return removeItemCopy(state, id, index - 1);
+  const it = state.backlog.find((x) => x.id === id);
+  const copies = it?.copies ?? [];
+  if (!it || !copies.length) return state;
+  const [first, ...rest] = copies;
+  const piece = pieceByKey(first.piece);
+  return { ...state, backlog: state.backlog.map((b) => (b.id === id
+    ? { ...b, pos: { x: first.x, y: first.y }, copies: rest,
+      draftDesign: piece ? applyPiece(currentDesign(b), piece) : currentDesign(b) }
+    : b)) };
 }
 
 /** Turn a landscape feature on the park. Degrees clockwise from running across; kept in 0-359 so

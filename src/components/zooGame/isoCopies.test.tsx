@@ -55,23 +55,25 @@ describe('the other trees a planting plants', () => {
 
   it('offers a way to take one out, on whatever is open on the bench', () => {
     // Not on hover: the machine this game is mostly played on has no hover at all.
-    const onRemoveCopy = vi.fn();
+    const onRemovePlant = vi.fn();
     const { container } = render(
-      <IsoZoo state={planted()} onPlaceItem={() => {}} building={PLANTING} onRemoveCopy={onRemoveCopy} />,
+      <IsoZoo state={planted()} onPlaceItem={() => {}} building={PLANTING} onRemovePlant={onRemovePlant} />,
     );
     const outs = [...container.querySelectorAll('g')].filter((g) => /Take this one out/.test(g.querySelector('title')?.textContent ?? ''));
     expect(outs.length, 'there is no way to take one of the trees out').toBe(2);
     fireEvent.click(outs[1]);
-    expect(onRemoveCopy).toHaveBeenCalledWith(PLANTING, 1);
+    // Over the whole clump, the same list the strip shows: the item's own plant is 0, so the second
+    // of the extras is 2. One index, one meaning, wherever a plant is pulled up from.
+    expect(onRemovePlant).toHaveBeenCalledWith(PLANTING, 2);
   });
 
   it('offers it only for the thing on the bench, and never under the pen', () => {
-    const nothingOpen = render(<IsoZoo state={planted()} onPlaceItem={() => {}} onRemoveCopy={() => {}} />);
+    const nothingOpen = render(<IsoZoo state={planted()} onPlaceItem={() => {}} onRemovePlant={() => {}} />);
     expect([...nothingOpen.container.querySelectorAll('title')].some((t) => /Take this one out/.test(t.textContent ?? '')),
       'trees nobody has open offered to remove themselves').toBe(false);
 
     const drawing = render(
-      <IsoZoo state={planted()} onPlaceItem={() => {}} building={PLANTING} onRemoveCopy={() => {}}
+      <IsoZoo state={planted()} onPlaceItem={() => {}} building={PLANTING} onRemovePlant={() => {}}
         tool="connect" onAddConnector={() => {}} />,
     );
     expect([...drawing.container.querySelectorAll('title')].some((t) => /Take this one out/.test(t.textContent ?? '')),
