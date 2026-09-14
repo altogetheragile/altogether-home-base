@@ -1022,6 +1022,39 @@ describe('people walk', () => {
     }
   });
 
+  it('walks them there and back, with a stop to look at what they came for', () => {
+    // It was one way with `repeatCount` on it, so everybody walked to the lions and then snapped
+    // back to the car park to do it again: a loop of figures moving one way and vanishing. Reported
+    // from playing it: "they look like they are on a conveyer belt. They move from the car park and
+    // disappear at the enclosure."
+    //
+    // A visit is arrive, walk, stand and look, walk back. The path returns to where it started, so
+    // the loop closes on itself and nobody teleports.
+    const { container } = render(<IsoZoo state={openZoo()} height={460} />);
+    for (const way of routes(container)) {
+      const pts = (way.getAttribute('d') ?? '').split(/[ML]/).filter(Boolean).map((p) => p.trim());
+      expect(pts[0], `${way.id} does not bring them home again`).toBe(pts[pts.length - 1]);
+    }
+    const movers = [...container.querySelectorAll('*')]
+      .filter((e) => e.tagName.toLowerCase() === 'animatemotion' && !e.closest('[data-spot]'));
+    for (const m of movers) {
+      const keys = (m.getAttribute('keyPoints') ?? '').split(';');
+      expect(keys.length, 'they walk straight past what they came to see').toBe(4);
+      expect(keys[1], 'they turn round somewhere other than the far end').toBe(keys[2]);
+      const times = (m.getAttribute('keyTimes') ?? '').split(';').map(Number);
+      expect(times[2] - times[1], 'the stop is too short to be a look').toBeGreaterThan(0.1);
+    }
+  });
+
+  it('turns them round for the walk home', () => {
+    // The drawings face one way, so somebody walking the other way slides rather than walks - and
+    // on the way back, everybody is walking the other way.
+    const { container } = render(<IsoZoo state={openZoo()} height={460} />);
+    const turns = [...container.querySelectorAll('animateTransform')].filter((t) => !t.closest('[data-spot]'));
+    expect(turns.length, 'they walk home backwards').toBeGreaterThan(0);
+    for (const t of turns) expect(t.getAttribute('values'), 'the turn is not a mirror').toMatch(/-1 1/);
+  });
+
   it('walks them from the car park to the exhibit, over the land the whole way', () => {
     // The guards that keep drawings on the park read where a thing is drawn, and a walker is drawn
     // about the origin - so they skip them, and this is what stands in their place. A route that
