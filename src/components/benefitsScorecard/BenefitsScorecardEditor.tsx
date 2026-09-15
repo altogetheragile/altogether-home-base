@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Image, FileText, FileJson, MessageCircle } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Image, FileText, FileJson, MessageCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
@@ -217,8 +217,8 @@ export function BenefitsScorecardEditor({ initialData, artifactId, projectId }: 
         )}
         {!isArtifact && (
           <>
-            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(scorecardHasContent(scorecard))) setScorecard(exampleBenefitsScorecard()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Example</Button>
-            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(scorecardHasContent(scorecard))) setScorecard(emptyBenefitsScorecard()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Clear</Button>
+            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(scorecardHasContent(scorecard))) setScorecard(exampleBenefitsScorecard()); }}><Sparkles className="mr-1.5 h-4 w-4" /> Load Example</Button>
+            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(scorecardHasContent(scorecard))) setScorecard(emptyBenefitsScorecard()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> New scorecard</Button>
           </>
         )}
         <div className="mx-1 h-6 w-px bg-border" />

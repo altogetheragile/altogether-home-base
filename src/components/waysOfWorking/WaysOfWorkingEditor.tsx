@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, RotateCcw, Image, FileText, FileJson, MessageCircle, Check } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Image, FileText, FileJson, MessageCircle, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectArtifactMutations } from '@/hooks/useProjectArtifacts';
@@ -185,8 +185,8 @@ export function WaysOfWorkingEditor({ initialData, artifactId, projectId }: Ways
         )}
         {!isArtifact && (
           <>
-            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(wowHasContent(wow))) setWow(exampleWaysOfWorking()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Example</Button>
-            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(wowHasContent(wow))) setWow(emptyWaysOfWorking()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> Clear</Button>
+            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(wowHasContent(wow))) setWow(exampleWaysOfWorking()); }}><Sparkles className="mr-1.5 h-4 w-4" /> Load Example</Button>
+            <Button variant="outline" size="sm" onClick={() => { if (confirmReplace(wowHasContent(wow))) setWow(emptyWaysOfWorking()); }}><RotateCcw className="mr-1.5 h-4 w-4" /> New agreement</Button>
           </>
         )}
         <div className="mx-1 h-6 w-px bg-border" />

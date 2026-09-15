@@ -300,6 +300,11 @@ export interface BacklogItem {
   /** The Product Owner looked at the built work and did not accept it: which criteria it did not
    *  meet, and when. Cleared when the Developers finish it again. */
   sentBack?: { sprint: number; day: number; criteria: string[] };
+  /** How many times the Product Owner refused it and the Developers did it again. Kept after the
+   *  rebuild clears `sentBack`, because capacity spent doing something twice is spent either way -
+   *  and Ability to Innovate could not see it: the measure counted Improve items only, so a Sprint
+   *  with work sent back and rebuilt in it read "no capacity lost to rework". */
+  sentBackTimes?: number;
   /** What it actually cost: seconds in Doing, and presses aimed at it. Kept for the Retrospective
    *  to inspect and for nothing else - see whatItCost.ts, which says at length why an estimate must
    *  never be derived from it. */
