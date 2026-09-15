@@ -66,6 +66,9 @@ const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber
 export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, teachCard, onMarkTaught }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
+  // What they TOOK, which is not what they thought they could do. The header counts against this
+  // one and the sentence below used to count against the other, both of them called "forecast".
+  const tookOn = state.forecastPoints ?? state.sprintForecast;
   const slices = zoneSlices(state);
   // Everything finished and open that a visitor could not walk up to. Asked of the park rather than
   // remembered from the simulation: it is the same park, and one of them would go stale.
@@ -438,13 +441,19 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       )}
 
       {/* What was Done, and what it cost - the Increment, in numbers. */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Two numbers, named apart. The header counted against what was TAKEN and this counted
+          against what was thought possible, and both were called "forecast" - so the Review said
+          "8 of 19" at the top of the screen and "you forecast 21" in the middle of it. Reported from
+          a play-through: "two denominators on one screen." */}
+      <div className="grid grid-cols-3 gap-3">
         <Stat label="Delivered" value={`${velocity} pts`} />
-        <Stat label="Forecast" value={`${state.sprintForecast} pts`} />
+        <Stat label="Taken on" value={`${tookOn} pts`} />
+        <Stat label="Thought possible" value={`${state.sprintForecast} pts`} />
       </div>
       <p className={cn(SURFACE.quiet, 'px-4 py-2.5 text-[11px] text-muted-foreground')}>
-            You forecast <strong>{state.sprintForecast} pts</strong> and delivered <strong>{velocity} pts</strong>
-            {velocity > state.sprintForecast ? ' - faster than forecast' : velocity < state.sprintForecast ? ' - short of the forecast' : ' - right on forecast'}.
+            You took on <strong>{tookOn} pts</strong> of the <strong>{state.sprintForecast} pts</strong> you
+            thought you could do, and delivered <strong>{velocity} pts</strong>
+            {velocity >= tookOn ? ' - all of it' : ' - short of what you took'}.
         {!state.dodAgreed && 'With no agreed Definition of Done this number is a guess: the items were finished to whatever standard whoever built them had in mind. '}
         Velocity is measured, not fixed: next Sprint&rsquo;s forecast is your average over the last {sprintCapacity(state).measuredSprints} Sprint{sprintCapacity(state).measuredSprints === 1 ? '' : 's'} of this length (<strong>{sprintCapacity(state).points} pts</strong>).{sprintCapacity(state).discarded > 0 && ' Sprints run at a different length are left out - their delivery says nothing about this one.'}
       </p>

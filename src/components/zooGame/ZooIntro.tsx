@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PRODUCT_GOAL } from './config';
 import { Pencil, FolderOpen, Trophy } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
 import { INTRO_COPY } from './scrumContent';
@@ -35,7 +36,14 @@ interface ZooIntroProps {
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
 export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onSetGoal, onSetGoalShape, onStart, onStartFromTheBrief, onOpenSaves, copy }: ZooIntroProps) {
-  const [goal, setGoal] = useState(productGoal);
+  // Empty while it is still the game's own suggestion, so the placeholder is doing the suggesting.
+  // The field used to hold the default AS TEXT, identical to the placeholder behind it - so somebody
+  // typing their own Goal appended it to one they had not written, and the game ran on whichever
+  // half survived. Reported from a play-through: "the Product Goal I wrote was thrown away... this
+  // is the same pre-filled-field bug I found in the AI tools suite last week."
+  const [goal, setGoal] = useState(productGoal === PRODUCT_GOAL ? '' : productGoal);
+  // ...and what is committed is what is in the field, or the suggestion if it was left alone.
+  const chosen = () => goal.trim() || PRODUCT_GOAL;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -100,7 +108,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
           {onSetGoalShape && (
             <div className="mt-2">
-              <GoalShapes goal={goal} shape={goalShape} measures={goalMeasures}
+              <GoalShapes goal={chosen()} shape={goalShape} measures={goalMeasures}
                 onSet={(shape, text, ms) => { setGoal(text); onSetGoalShape(shape, text, ms); }} />
             </div>
           )}
@@ -128,7 +136,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                 plan the Sprint themselves is doing the exercise the long way round on purpose, and
                 that is a trainer's call rather than a thing to take away. */}
             {onStartFromTheBrief && (
-              <button type="button" onClick={() => { onSetGoal(goal); onStartFromTheBrief(); }}
+              <button type="button" onClick={() => { onSetGoal(chosen()); onStartFromTheBrief(); }}
                 disabled={!goal.trim()} data-part="start-from-brief"
                 className={cn(FOCUS, 'rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40')}>
                 Write the Product Backlog first
@@ -137,7 +145,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             <Button size="lg" className="rounded-full px-6" disabled={!goal.trim()}
               title={goal.trim() ? 'Sprint 1 is already planned - the board is open and the clock runs when you are ready'
                 : 'Write a Product Goal first - every Sprint aims at it.'}
-              onClick={() => { onSetGoal(goal); onStart(); }}>
+              onClick={() => { onSetGoal(chosen()); onStart(); }}>
               Start building &rarr;
             </Button>
           </span>

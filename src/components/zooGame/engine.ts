@@ -183,7 +183,27 @@ export const coachesNow = (state: ZooGameState): number => {
  *
  *  One question, one answer, and this is it. */
 export const acSettled = (item: BacklogItem, i: number): boolean =>
-  !!item.acConfirmed?.[i] || (item.acceptedAsIs ?? []).includes(item.acceptance[i]);
+  !!item.acConfirmed?.[i] || acWaived(item, i);
+
+/** ...and settled the OTHER way: the Product Owner looked at it, saw it was not met, and shipped it
+ *  anyway. Settled is not met, and a record that cannot tell them apart cannot be pointed at.
+ *
+ *  Reported from a play-through: accepting the Lion Enclosure with one criterion unmet turned the
+ *  panel from "4 of 5" to "5 of 5". It should stay at four with the fifth marked as waived, or the
+ *  Retrospective cannot say what was shipped knowing. */
+export const acWaived = (item: BacklogItem, i: number): boolean =>
+  !item.acConfirmed?.[i] && (item.acceptedAsIs ?? []).includes(item.acceptance[i]);
+
+/** How many of an item's criteria were actually MET, and how many were waived. What a count of
+ *  criteria says out loud, everywhere one is shown. */
+export const acTally = (item: BacklogItem): { met: number; waived: number; of: number } => {
+  const acs = item.acceptance ?? [];
+  return {
+    met: acs.filter((_, i) => !!item.acConfirmed?.[i]).length,
+    waived: acs.filter((_, i) => acWaived(item, i)).length,
+    of: acs.length,
+  };
+};
 
 /** Which of an item's criteria are still open - nobody has ticked them and nobody has shipped it
  *  knowing. This is what "N still to check" means, wherever it is said. */
@@ -1748,8 +1768,14 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
         ? `Nobody agreed a Definition of Done. The ${state.definitionOfDone.length} that were there stood.`
         : 'No Definition of Done. Done means whatever anybody says it means.',
     cost: state.dodAgreed ? undefined : 'nothing was agreed, so nothing was inspected' });
+  // Who actually chose it. Nobody did, on the way in: the first Sprint arrives planned, and the log
+  // said "You chose the Sprint Backlog: 6 items, 19 points" to somebody who had pressed Start.
+  // Attributing the game's own forecast to the player weakens the one screen that has to be
+  // trustworthy. Reported from a play-through: "I chose nothing. I pressed Start building."
   out = note(out, { kind: 'forecast', by: state.forecastBy,
-    what: `${whoIs(state.forecastBy)} chose the Sprint Backlog: ${committed.size} item${committed.size === 1 ? '' : 's'}, ${committedPts} points against a forecast of ${sprintCapacity(state).points}.` });
+    what: state.forecastBy
+      ? `${whoIs(state.forecastBy)} chose the Sprint Backlog: ${committed.size} item${committed.size === 1 ? '' : 's'}, ${committedPts} points against a forecast of ${sprintCapacity(state).points}.`
+      : `The Sprint Backlog arrived chosen: ${committed.size} item${committed.size === 1 ? '' : 's'}, ${committedPts} points against a forecast of ${sprintCapacity(state).points}. Nobody here picked it.` });
   if (turnedAway.length) {
     out = note(out, { kind: 'unready', by: state.forecastBy,
       what: `${turnedAway.length} item${turnedAway.length === 1 ? '' : 's'} could not go in: not ready by the team's own Definition of Ready.` });

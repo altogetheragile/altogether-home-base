@@ -3,9 +3,9 @@ import { answerable, checkCriterion, checkedAt } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { Check, Circle, GripVertical, X } from 'lucide-react';
+import { AlertTriangle, Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { acSettled } from './engine';
+import { acSettled, acTally, acWaived } from './engine';
 
 // ============= The inspector =============
 //
@@ -35,6 +35,12 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   const met = (label: string, i: number) =>
     acSettled(item, i) || (!!item.design && !!checkCriterion(state, item, label)?.met);
   const done = criteria.filter((c, i) => met(c, i)).length;
+  // Waived is not met. Accepting one as it is used to turn "4 of 5" into "5 of 5", which is the
+  // record agreeing with the decision instead of recording it. Reported from a play-through.
+  const tally = acTally(item);
+  const count = tally.waived
+    ? `${done - tally.waived} of ${criteria.length} \u00b7 ${tally.waived} waived`
+    : `${done} of ${criteria.length}`;
   const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
   const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
   // Already accepted: asking again is asking a question that has been answered. Reported from
@@ -108,7 +114,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
           (quiet || (collapsed && !hidden)) && 'pointer-events-none', !collapsed && !quiet && FOCUS, !collapsed && !quiet && 'hover:bg-background',
           !at && place, className)}
         style={moved}>
-        Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span>
+        Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {count}</span>
       </button>
     );
   }
@@ -120,7 +126,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
       <h3 data-part="inspector-grip" onPointerDown={carry}
         className="flex cursor-grab select-none items-center gap-1.5 text-sm font-bold active:cursor-grabbing">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
-        <span className="flex-1">Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span></span>
+        <span className="flex-1">Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {count}</span></span>
         <button type="button" data-part="hide-inspector" aria-label="Put the acceptance criteria away"
           onPointerDown={(e) => e.stopPropagation()} onClick={() => setHidden(true)}
           className={cn(FOCUS, 'rounded p-0.5 text-muted-foreground hover:text-foreground')}>
@@ -130,16 +136,22 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
       <ul className="mt-1.5 space-y-1.5">
         {criteria.map((c, i) => {
           const ok = met(c, i);
+          // Shipped knowing. Marked as what it is rather than ticked off with the rest: the whole
+          // point of the decision is that it can be pointed at afterwards.
+          const waived = acWaived(item, i);
           const verdict = ok ? null : checkCriterion(state, item, c);
           const where = checkedAt(c);
           return (
             <li key={c} className="flex items-start gap-1.5">
-              {ok ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                : <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />}
+              {waived ? <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                : ok ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  : <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />}
               <span className="min-w-0 flex-1">
-                <span className={cn('block text-[12px] leading-snug', ok && 'text-muted-foreground line-through decoration-emerald-500/40')}>{c}</span>
-                <span className="block text-[10px] text-muted-foreground">
-                  {verdict?.evidence ?? (ok ? 'met' : answerable(c) ? 'checked once it stands on the park' : `${po} judges this one`)}
+                <span className={cn('block text-[12px] leading-snug',
+                  ok && !waived && 'text-muted-foreground line-through decoration-emerald-500/40')}>{c}</span>
+                <span className={cn('block text-[10px]', waived ? 'font-medium text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>
+                  {waived ? `not met \u00b7 ${po} shipped it anyway`
+                    : verdict?.evidence ?? (ok ? 'met' : answerable(c) ? 'checked once it stands on the park' : `${po} judges this one`)}
                 </span>
               </span>
               <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold',
