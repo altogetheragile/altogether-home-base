@@ -1371,7 +1371,7 @@ describe('zoo game: the toolbox', () => {
       const build = acs.filter((a) => !isDeployAcceptance(a));
       const deploy = acs.filter((a) => isDeployAcceptance(a));
       expect(build.length, `${t.name} should have a build AC`).toBeGreaterThanOrEqual(1);
-      expect(deploy.length, `${t.name} should have exactly one deploy AC`).toBe(1);
+      expect(deploy.length, `${t.name} should have a deploy AC`).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -2852,12 +2852,15 @@ describe('zoo game: every acceptance criterion is a question', () => {
     }
   });
 
-  it('still knows which one can only be answered on the park', () => {
+  it('still knows which ones can only be answered on the park', () => {
     // The old rule sniffed the wording for "placed" or "sized", which stopped matching the moment
-    // the criteria became questions. Every item still has exactly one placement criterion.
+    // the criteria became questions. Every item has at least one placement criterion - a habitat has
+    // two, because walking TO it and walking ROUND it are both answered by where it ended up and
+    // what was drawn to it, and neither of them by anything in the studio.
     for (const t of TOOLBOX.flatMap((g) => g.items)) {
       const acs = toolboxDraft(t).acceptance;
-      expect(acs.filter(isDeployAcceptance).length, `${t.name} has one placement criterion`).toBe(1);
+      expect(acs.filter(isDeployAcceptance).length, `${t.name} has no placement criterion`).toBeGreaterThanOrEqual(1);
+      expect(acs.filter((a) => !isDeployAcceptance(a)).length, `${t.name} has nothing to build`).toBeGreaterThanOrEqual(1);
     }
   });
 

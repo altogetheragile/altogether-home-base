@@ -564,13 +564,23 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             // run. I finished with eight." The pen stays down either way: the second press just
             // becomes the new start.
             if (Math.hypot(w.x - runFrom.x, w.y - runFrom.y) < MIN_RUN) { setRunFrom(w); setRunTo(w); return; }
+            // An end that lands on something is ATTACHED to it, so the run follows when the thing
+            // moves. Runs were plain coordinates, so moving an exhibit left its paths behind,
+            // fanning across the park - reported from a play-through: "orphaned paths are never
+            // cleaned up. Mine looked like a cracked windscreen by Sprint 2." Nothing to clean up
+            // if the path goes with the thing it was drawn to.
+            const onThing = (p: { x: number; y: number }) => {
+              const hit = boxes.find((bx) => Math.abs(p.x - bx.at.x) <= bx.size.w / 2 + APRON_WIDTH
+                && Math.abs(p.y - bx.at.y) <= bx.size.h / 2 + APRON_WIDTH);
+              return hit ? { featureId: hit.item.id, x: p.x, y: p.y } : { x: p.x, y: p.y };
+            };
             onAddConnector?.({
               id: `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`,
               // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
               // you were building never counted the run you had just drawn for it, so it could not
               // be built, accepted or finished - "I added the main paths and cannot move it to Done".
               itemId: runFor,
-              a: { x: runFrom.x, y: runFrom.y }, b: { x: w.x, y: w.y }, bends: [],
+              a: onThing(runFrom), b: onThing(w), bends: [],
               thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
             });
             // The pen stays down. Laying a path is laying SEVERAL runs - round a habitat, along
@@ -724,11 +734,21 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           );
         })}
 
-        {/* Paths, drawn as the runs they are. */}
-        {(state.connectors ?? []).map((c) => (
-          <line key={c.id} data-conn={c.id} x1={c.a.x} y1={c.a.y} x2={c.b.x} y2={c.b.y}
-            stroke={c.color ?? '#c9a86a'} strokeWidth={Math.max(6, c.thickness ?? 14)} strokeLinecap="round" />
-        ))}
+        {/* Paths, drawn as the runs they are - and an end that is attached to something is drawn
+            where that thing is NOW. The isometric view has resolved them that way since connectors
+            could be attached at all; this one drew the coordinates it was given, so moving an
+            exhibit left its paths behind. */}
+        {(state.connectors ?? []).map((c) => {
+          const end = (e: { featureId?: string; x: number; y: number }) => {
+            const on = e.featureId ? boxes.find((bx) => bx.item.id === e.featureId) : undefined;
+            return on ? on.at : e;
+          };
+          const a = end(c.a), z = end(c.b);
+          return (
+            <line key={c.id} data-conn={c.id} x1={a.x} y1={a.y} x2={z.x} y2={z.y}
+              stroke={c.color ?? '#c9a86a'} strokeWidth={Math.max(6, c.thickness ?? 14)} strokeLinecap="round" />
+          );
+        })}
 
         {/* Everything standing on the park, straight down, nothing behind anything else. */}
         {boxes.map((b) => {

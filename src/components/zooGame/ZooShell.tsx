@@ -266,6 +266,23 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // more, and nothing is built anywhere else.
   const [inside, setInside] = useState<string | null>(null);
 
+  // Escape gets you out of whatever you picked up.
+  //
+  // It did nothing: a move started by accident could only be finished by putting the thing
+  // somewhere, and the criteria panel had to be closed with its own small cross. Reported from a
+  // play-through: "Escape does not cancel. It did not close the criteria panel and did not cancel a
+  // move I started by accident." One key, one meaning - put down what is in your hand.
+  useEffect(() => {
+    const out = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (moving) { setMoving(null); return; }
+      if (drawing) { onDrawing?.(false); return; }
+      if (inside) { setInside(null); return; }
+    };
+    window.addEventListener('keydown', out);
+    return () => window.removeEventListener('keydown', out);
+  }, [moving, drawing, inside, onDrawing]);
+
   const insideItem = inside ? state.backlog.find((it) => it.id === inside) ?? null : null;
 
   // Pick a card and the thing is in your hands: it follows the cursor until you put it down. There

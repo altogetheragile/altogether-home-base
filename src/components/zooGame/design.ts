@@ -648,6 +648,10 @@ const PLACEMENT_CRITERIA = new Set([
   'Can I get to this zone without crossing the grass?',
   'Does it join every area to the way in?',
   'Can I find it from the entrance?',
+  // ...and the words a facility asks it in now, which are the words a habitat asks it in. It is a
+  // placement criterion for both of them: you answer it by putting the thing somewhere a path can
+  // reach, which is what deploying is.
+  'Can I walk to it from the way in?',
 ]);
 
 export function isDeployAcceptance(label: string): boolean {
@@ -738,8 +742,14 @@ export function amenityAcceptance(name: string, services?: string): string[] {
     : (services === 'food' || /kiosk|caf|coffee|restaurant|snack|food|drink|refresh|outlet/.test(n)) ? [outside, 'Can I buy food and a drink here?']
     : (services === 'rest' || /picnic|seat|bench|shade|rest|viewing/.test(n)) ? [outside, 'Can I sit down in the shade?']
     : [outside, 'Can I get what I came for?'];
-  // ...and then the one that can only be answered once it is standing in the park.
-  return [...build, 'Can I find it from the entrance?'];
+  // ...and then the one that can only be answered once it is standing in the park. The SAME question
+  // a habitat is asked, in the same words, because it is the same question: the park answers it by
+  // walking from the way in. Asked as "can I find it from the entrance?" it was a sentence nothing
+  // recognised, so every criterion a facility had was a matter of judgement and there was no control
+  // anywhere that satisfied one. Reported from a play-through: "all three Gift Shop criteria are
+  // 'Priya judges this'. There is no control that satisfies them, so the only route to Done is the
+  // Product Owner waiving all three. That teaches that Done is whatever the Product Owner says."
+  return [...build, 'Can I walk to it from the way in?'];
 }
 // ============= Stocking, not modelling =============
 //

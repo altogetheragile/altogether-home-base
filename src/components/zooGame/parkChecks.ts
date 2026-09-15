@@ -121,6 +121,7 @@ const PARK_ANSWERS = [
   'Does it join every area to the way in?',
   'Can I walk to it from the way in?',
   'Can I cross the water on it?',
+  'Can I tell what it is from outside?',
 ];
 
 /** Criteria that have been reworded, and the words they were written in.
@@ -138,6 +139,10 @@ const WAS_CALLED: Record<string, string> = {
   // about "this zone" they were asked about the Grounds, which has no habitat in it and so could
   // never answer yes - an item that could not be finished.
   'Can I get to this zone without crossing the grass?': 'Does it join every area to the way in?',
+  // A facility asked whether you could find it from the entrance, which is the habitat's question in
+  // different words - so the park recognised one and not the other, and a facility had nothing the
+  // player could do to satisfy any of its criteria.
+  'Can I find it from the entrance?': 'Can I walk to it from the way in?',
 };
 /** The words this criterion is asked in now. */
 export const asAsked = (label: string): string => WAS_CALLED[label] ?? label;
@@ -282,6 +287,16 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
     return { met: false, evidence: wet?.why === 'water'
       ? 'the water is in the way, and nothing crosses it - the Bridge would'
       : 'nothing reaches it yet - draw a path to it from the way in' };
+  }
+
+  // A building says what it is, or it is a shed with a queue outside it. The board over the door is
+  // the control, it is on the strip, and it is a fact the park can see - so it is answered here
+  // rather than left for somebody to judge.
+  if (label === 'Can I tell what it is from outside?') {
+    const signed = design.parts?.sign !== 'off' && !!design.colors?.sign;
+    return signed
+      ? { met: true, evidence: 'a name board over the door' }
+      : { met: false, evidence: 'no name board yet - put a sign on it and give it a colour' };
   }
 
   // A bridge is the one piece of work whose whole job is a fact about the park, so the park says
