@@ -156,8 +156,15 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
               </p>
             )}
             {state.velocity.length > 0 && (
+              // ...and it is only a measurement if the thing being measured means the same each
+              // time. This screen tells a team that without an agreed Definition of Done "the
+              // estimates are guesses at different pieces of work", and then called the number they
+              // add up to measured. It makes its own argument and contradicts it two lines later.
               <p className="text-[11px] text-muted-foreground">
-                Velocity so far: {state.velocity.join(', ')} ({state.sprintDays}-day Sprints). It is measured, not chosen.
+                Velocity so far: {state.velocity.join(', ')} ({state.sprintDays}-day Sprints).{' '}
+                {state.dodAgreed
+                  ? 'It is measured, not chosen.'
+                  : 'With no agreed Definition of Done it is a guess: each item was finished to whatever standard whoever built it had in mind, so the points are not adding up the same thing twice.'}
               </p>
             )}
           </section>

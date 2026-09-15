@@ -445,6 +445,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       <p className={cn(SURFACE.quiet, 'px-4 py-2.5 text-[11px] text-muted-foreground')}>
             You forecast <strong>{state.sprintForecast} pts</strong> and delivered <strong>{velocity} pts</strong>
             {velocity > state.sprintForecast ? ' - faster than forecast' : velocity < state.sprintForecast ? ' - short of the forecast' : ' - right on forecast'}.
+        {!state.dodAgreed && 'With no agreed Definition of Done this number is a guess: the items were finished to whatever standard whoever built them had in mind. '}
         Velocity is measured, not fixed: next Sprint&rsquo;s forecast is your average over the last {sprintCapacity(state).measuredSprints} Sprint{sprintCapacity(state).measuredSprints === 1 ? '' : 's'} of this length (<strong>{sprintCapacity(state).points} pts</strong>).{sprintCapacity(state).discarded > 0 && ' Sprints run at a different length are left out - their delivery says nothing about this one.'}
       </p>
       </>)}

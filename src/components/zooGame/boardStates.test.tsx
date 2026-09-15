@@ -63,9 +63,13 @@ describe('a card on the board', () => {
       .find((c) => /Lion Enclosure/.test(c.textContent ?? ''))!);
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText(/^Steps$/), 'the dialog has no plan on it').toBeTruthy();
-    expect(within(dialog).getByText(/What this needs to be/), 'the criteria are not in the dialog').toBeTruthy();
-    // The Definition of Done is the product's bar, not this item's - it is named, and it is not listed.
-    expect(dialog.textContent).toMatch(/Definition of Done is the same for every item/);
+    // Called what every other screen calls them. It was headed "What this needs to be", with a line
+    // directly underneath saying the Definition of Done is the same for every item - which read as a
+    // label on a list that is the opposite of that.
+    expect(within(dialog).getByText(/Acceptance criteria/), 'the criteria are not in the dialog').toBeTruthy();
+    // The Definition of Done is the product's bar, not this item's - it is named as the CONTRAST to
+    // the list above it, and it is not listed.
+    expect(dialog.textContent).toMatch(/Those are this item.s\. The Definition of Done is the bar every item clears/);
     expect(within(dialog).queryByText(/Peer-reviewed by another Developer/),
       'the Definition of Done was merged into the item’s own criteria').toBeNull();
   });

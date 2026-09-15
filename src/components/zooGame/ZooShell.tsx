@@ -466,7 +466,16 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
 
         {/* The Sprint Backlog: the board, and the studio when something is in hand. Full width,
             because this is the artifact the Sprint is worked through. */}
-        <div className={cn('flex h-full min-h-0 flex-col overflow-hidden px-2 py-3 sm:px-3', tab !== 'sprint' && 'hidden')}>
+        {/* Side by side from `xl`, and STACKED AND SCROLLING below it.
+            It used to keep the same fixed-height pane at every width: both halves exactly the height
+            of the pane, which is right when they are side by side and disastrous when they are not.
+            Stacked, the park holds its height and the board has none - so between about 1024 and
+            1280 the Sprint Backlog tab showed a park and no cards at all. A 1366 x 768 laptop, or
+            any browser with a side panel open, lands in that range. Reported from playing it: "below
+            about 1280px the Sprint Backlog board is hidden behind the park", and it is most of what
+            "squashed in the middle" meant. */}
+        <div className={cn('flex min-h-0 flex-col px-2 py-3 sm:px-3',
+          'h-auto overflow-y-auto xl:h-full xl:overflow-hidden', tab !== 'sprint' && 'hidden')}>
           {/* The work on the left, the park on the right, for the whole Sprint. There is only ever one
               park in the game, so while it is here the Increment tab does without it rather than
               drawing a second one: two isometric scenes rebuilding every second is a slow game. */}
@@ -479,7 +488,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               : 'mx-auto max-w-[1600px] pb-24')}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && (
-              <div className="relative flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-border bg-card p-2">
+              // Stacked, the park keeps its own height under the board and the pane scrolls past it;
+              // side by side, it fills its half.
+              <div className="relative flex min-h-0 min-w-0 shrink-0 flex-col rounded-lg border-2 border-border bg-card p-2 xl:shrink">
                 {/* Placement, and nothing else: the object itself is built in the takeover.
                     Straight down, because a metre is a metre wherever it is on the screen and a
                     thing is where you drop it. The isometric view is the zoo as a visitor meets it,
