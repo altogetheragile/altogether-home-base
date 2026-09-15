@@ -7,11 +7,12 @@ import { ActionBar } from './ActionBar';
 import { DodHandover } from './DodHandover';
 import { NextRung } from './NextRung';
 import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns } from './engine';
+import { costBySize, sizesThatAgree } from './whatItCost';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Zap, ClipboardList, MessageCircleQuestion } from 'lucide-react';
+import { Zap, ClipboardList, MessageCircleQuestion, Ruler } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE, TONE, EYEBROW } from './ui/tokens';
 
 type Step = 'inspect' | 'adapt';
@@ -50,6 +51,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
   // habit rather than a one-off. A habit is the thing worth inspecting; a single Sprint is noise.
   const did = decisionsIn(state, state.sprintNumber);
   const prog = sprintProgress(state);
+  // What each size has actually cost this team, across everything they have finished. More than one
+  // Sprint's worth on purpose: one Sprint is an anecdote and the claim is about relative effort.
+  const sizes = costBySize(state);
+  const agree = sizesThatAgree(state);
   // What was promised, and what arrived. By now the unfinished work has gone back to the Product
   // Backlog, so counting the Sprint's own items says "0 of 0" - which tells a team that
   // over-forecast by eighteen points nothing at all.
@@ -156,6 +161,51 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
               </p>
             )}
           </section>
+
+          {/* What the sizes actually cost. The team's estimates are a claim about relative effort -
+              an 8 is four times a 2 - and this is the only place that claim meets what happened.
+              Inspection, and nothing more: nothing in the game reads these numbers back into a
+              size, because an estimate derived from the time it took makes velocity a tautology.
+              See whatItCost.ts. What to do about it is the team's to argue about, which is the
+              event. */}
+          {sizes.length > 1 && (
+            <section data-part="what-sizes-cost" className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+              <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <Ruler className="h-4 w-4" /> What your sizes actually cost
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className={cn(EYEBROW, 'text-left text-muted-foreground')}>
+                    <th className="font-medium">Size</th>
+                    <th className="font-medium">Finished</th>
+                    <th className="font-medium">Time each</th>
+                    <th className="font-medium">Presses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sizes.map((r) => (
+                    <tr key={r.points} data-part={`size-${r.points}`} className="border-t border-border">
+                      <td className="py-1 font-semibold tabular-nums">{r.points}</td>
+                      <td className="py-1 tabular-nums text-muted-foreground">{r.items}</td>
+                      <td className="py-1 tabular-nums">{Math.floor(r.seconds / 60)}m {String(r.seconds % 60).padStart(2, '0')}s</td>
+                      <td className="py-1 tabular-nums text-muted-foreground">{r.presses}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-[11px] text-muted-foreground">
+                The middle item of each size, not the average. Time is how long it sat in Doing, so
+                three things on the go means all three are ageing.
+              </p>
+              {agree && (
+                <p data-part="sizes-agree" className="rounded-md border border-amber-400/60 bg-amber-500/[0.06] px-2.5 py-2 text-[12px]">
+                  Your {agree[1].points}s took about as long as your {agree[0].points}s. Two sizes
+                  that cost the same are not two sizes. Nothing here will change them for you: that
+                  is yours to decide, and it is worth deciding out loud.
+                </p>
+              )}
+            </section>
+          )}
 
           {/* The questions and the habits belong beside the log, not under it. Stacked full width
               under a long list they were a second page of a screen that has room for one: the log
