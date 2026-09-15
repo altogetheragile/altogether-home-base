@@ -92,12 +92,20 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   //
   // The same pill either way, and it is a button when it is one the player put there: something you
   // put away has to be something you can get back, or it is gone.
-  if (collapsed || hidden) {
+  // While a run is being drawn it comes down to the one pill. It used to stay a full panel at 45%
+  // opacity: still half the park, over the very ground somebody was clicking into, and with no way
+  // to put it away without stopping drawing. Reported from a play-through: "entering path mode
+  // reopens the acceptance criteria panel at 45% opacity across the left half of the park, over the
+  // zone you are clicking into."
+  //
+  // The pill rather than nothing at all, because what you are trying to satisfy is the reason the
+  // pen is out in the first place.
+  if (collapsed || hidden || quiet) {
     return (
       <button type="button" data-part="park-inspector" data-collapsed="yes"
         onClick={() => setHidden(false)} disabled={collapsed && !hidden}
         className={cn('absolute z-20 rounded-full border border-border bg-background/95 px-3 py-1 text-xs font-semibold shadow-sm',
-          collapsed && !hidden && 'pointer-events-none', !collapsed && FOCUS, !collapsed && 'hover:bg-background',
+          (quiet || (collapsed && !hidden)) && 'pointer-events-none', !collapsed && !quiet && FOCUS, !collapsed && !quiet && 'hover:bg-background',
           !at && place, className)}
         style={moved}>
         Acceptance criteria <span className="font-normal text-muted-foreground">&middot; {done} of {criteria.length}</span>
@@ -108,7 +116,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   return (
     <div ref={box} data-part="park-inspector" style={moved}
       className={cn('absolute z-20 w-[min(20rem,45%)] rounded-lg border border-border bg-background/95 p-2.5 shadow-md backdrop-blur-sm transition-opacity',
-        quiet && 'pointer-events-none opacity-45', !at && place, className)}>
+        !at && place, className)}>
       <h3 data-part="inspector-grip" onPointerDown={carry}
         className="flex cursor-grab select-none items-center gap-1.5 text-sm font-bold active:cursor-grabbing">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-hidden />

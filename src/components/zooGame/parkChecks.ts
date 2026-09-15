@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
-import { settleStatus, isSignOffTask, commitWhenBuilt } from './engine';
+import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled } from './engine';
 import { whereItStands, groundSize } from './parkModel';
 import { spansTheWater, inWater } from './parkWater';
 import { areasOnAPath, pathTo, whatVisitorsCanReach } from './parkNetwork';
@@ -385,4 +385,18 @@ export function applyParkChecks(state: ZooGameState): ZooGameState {
   // ...and the plan, in the same pass, so a criterion and a step cannot disagree about the same
   // piece of work.
   return applyPlanChecks(changed ? { ...state, backlog } : state);
+}
+
+/** Whether the Developers can hand this item to the Product Owner: every criterion the park can
+ *  answer for itself is answered, and the rest are judgement, which is what the asking is for.
+ *
+ *  One definition, because three things ask it - the pill under the thing on the park, the panel
+ *  beside it, and the moment the game says out loud that it has happened. Here rather than in the
+ *  engine because answering a criterion is the park's own business.
+ */
+export function readyToAsk(state: ZooGameState, item: BacklogItem): boolean {
+  const criteria = (item.acceptance ?? []).filter(Boolean);
+  if (!criteria.length || !item.design) return false;
+  const facts = criteria.filter(answerable);
+  return facts.every((c) => acSettled(item, criteria.indexOf(c)) || !!checkCriterion(state, item, c)?.met);
 }

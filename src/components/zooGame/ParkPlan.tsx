@@ -5,6 +5,7 @@ import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
+import { ENTRANCE } from './parkNetwork';
 
 import { answerable, checkCriterion } from './parkChecks';
 import { hasGround, groundPrice } from './engine';
@@ -16,6 +17,11 @@ import { FOCUS } from './ui/tokens';
  *  so the front of the park reads as the front of the park, and so a run drawn to meet the way in
  *  lands where the isometric view will draw it. */
 const APRON_H = 60;
+/** How wide the gap in the front is. Wide enough to read as a gate at the whole-park zoom, which is
+ *  where somebody is when they are trying to find it. */
+const WAY_IN_W = 86;
+/** Shorter than this and it is a slip of the hand rather than a path. About a pace on the park. */
+const MIN_RUN = 26;
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
  *  through the picture's box, so widening the box does not move anything standing on the park. */
@@ -552,6 +558,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             // where visitors arrive, not somewhere the Developers lay paths.
             w.y = Math.min(w.y, FRONT_Y);
             if (!runFrom) { setRunFrom(w); setRunTo(w); return; }
+            // A stray click is not a run. Two presses in almost the same place laid a path a few
+            // pixels long, and a session hunting for the way in finished with eight of them fanned
+            // across the park. Reported from a play-through: "every stray click creates a junk path
+            // run. I finished with eight." The pen stays down either way: the second press just
+            // becomes the new start.
+            if (Math.hypot(w.x - runFrom.x, w.y - runFrom.y) < MIN_RUN) { setRunFrom(w); setRunTo(w); return; }
             onAddConnector?.({
               id: `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`,
               // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
@@ -607,6 +619,29 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         </g>
         <rect x={0} y={PROMENADE_Y} width={CANVAS_W} height={PROMENADE_H} fill="#e7d6a8" />
         <rect x={0} y={PLAY_H} width={CANVAS_W} height={APRON_H} fill="#9aa0a6" />
+        {/* THE WAY IN. Drawn, at last.
+            Every habitat has to answer "can I walk to it from the way in?", and the way in was a
+            coordinate that nothing on the screen drew: no gate, no arrow, no break in the band, no
+            label. So the game asked for a path to a place the park did not show. Reported from a
+            play-through, after twenty deliberate attempts: "the entrance is invisible, and the path
+            tool costs you twenty minutes because of it."
+            It is terrain, like the river - it was there before the zoo was, it is on nobody's
+            Product Backlog, and it cannot be moved. The Entrance you can BUILD is the arch and the
+            signage over it; this is the gap in the fence the arch goes over. */}
+        <g data-part="way-in" pointerEvents="none">
+          {/* The gap in the front, the piers either side of it, and the stub of path running up into
+              the park - which is the bit of walkable ground a run has to reach. */}
+          <rect x={ENTRANCE.x - WAY_IN_W / 2} y={PROMENADE_Y - 4} width={WAY_IN_W} height={PROMENADE_H + APRON_H / 2 + 4} fill="#e7d6a8" />
+          <rect x={ENTRANCE.x - WAY_IN_W / 2 - 9} y={PROMENADE_Y - 12} width={9} height={PROMENADE_H + 16} rx={3} fill="#8a5a2b" />
+          <rect x={ENTRANCE.x + WAY_IN_W / 2} y={PROMENADE_Y - 12} width={9} height={PROMENADE_H + 16} rx={3} fill="#8a5a2b" />
+          <line x1={ENTRANCE.x} y1={FRONT_Y} x2={ENTRANCE.x} y2={FRONT_Y - 56} stroke="#c9a86a"
+            strokeWidth={WAY_IN_W * 0.62} strokeLinecap="round" />
+          {/* ...and it says what it is. A break in a band is a break in a band until it is named. */}
+          <text x={ENTRANCE.x} y={FRONT_Y - 70} textAnchor="middle" fontSize={ch(15)} fontWeight={800}
+            fill="#6b4a22" stroke="#f3ead6" strokeWidth={ch(4)} paintOrder="stroke">Way in</text>
+          <text x={ENTRANCE.x} y={FRONT_Y - 70} textAnchor="middle" fontSize={ch(15)} fontWeight={800}
+            fill="#6b4a22">Way in</text>
+        </g>
         <g opacity={0.16} stroke="#2f4f2f" strokeWidth={1} clipPath="url(#park-edge)">
           {Array.from({ length: Math.floor(CANVAS_W / 40) }, (_, i) => (
             <line key={`v${i}`} x1={(i + 1) * 40} y1={0} x2={(i + 1) * 40} y2={PLAY_H} />
@@ -929,6 +964,28 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             stroke={pathStyle?.color ?? '#c9a86a'} strokeWidth={Math.max(6, pathStyle?.thickness ?? 14)}
             strokeLinecap="round" opacity={0.75} pointerEvents="none" />
         )}
+
+        {/* The ground the thing in your hand is allowed to stand on, while you are holding it.
+            "Outside the Big Cats area" is a true refusal about a boundary that is drawn faintly and
+            named once, in grey, at the other end of it. So while something is in the air its own
+            area is outlined and labelled - the refusal has something to point at. Reported from a
+            play-through: "it is about the zone boundary, which is also invisible." */}
+        {placing && (() => {
+          const zone = state.backlog.find((it) => it.id === placing.id)?.zone;
+          const plot = plotFor(state, zone);
+          if (!plot) return null;
+          // Lit the moment something is picked up, not once the pointer has moved: the question
+          // "where does this go?" is asked before the first move, not after it.
+          const ok = !ghost || ghost.ok;
+          return (
+            <g data-part="its-ground" pointerEvents="none">
+              <rect x={plot.x0} y={plot.y0} width={plot.x1 - plot.x0} height={plot.y1 - plot.y0} rx={8}
+                fill="none" stroke={ok ? '#059669' : '#dc2626'} strokeWidth={3} strokeDasharray="12 8" />
+              <text x={plot.x0 + 12} y={plot.y0 + 26} fontSize={ch(15)} fontWeight={800}
+                fill={ok ? '#047857' : '#b91c1c'}>{zone}</text>
+            </g>
+          );
+        })()}
 
         {/* What is being placed or moved, with the park's verdict on it. */}
         {ghost && (
