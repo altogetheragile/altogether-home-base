@@ -15,7 +15,8 @@ import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Drople
 // So a card carries four things and this dialog carries the rest, opened when you ask for it.
 //
 // Two columns, and they are never merged. Steps are the Developers' plan: how this gets built.
-// "What this needs to be" is the item's acceptance criteria: whether it is the right thing at all.
+// Acceptance criteria are the item's own: whether it is the right thing at all. Called that, in
+// those words, because that is what every other screen calls them.
 // The Definition of Done is neither - it is the product's bar, the same for every item, and it lives
 // in Learn where it applies to all of them rather than pretending to belong to this one.
 
@@ -154,7 +155,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
 
           <section className="sm:border-l sm:border-border sm:pl-6">
             <h3 className="flex items-baseline gap-2 text-base font-bold">
-              What this needs to be <span className={cn(EYEBROW, 'font-normal text-muted-foreground')}>the park checks what it can</span>
+              Acceptance criteria <span className={cn(EYEBROW, 'font-normal text-muted-foreground')}>this item&rsquo;s &middot; the park checks what it can</span>
             </h3>
             <ul className="mt-2 space-y-2">
               {criteria.map((c, i) => {
@@ -222,8 +223,13 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
           {/* One line about the Definition of Done, and no more: it is the product's bar, the same
               for every item, so it is not part of this one. It is read in Learn, where it applies
               to all of them. */}
+          {/* Said as a CONTRAST, not as a caption. Headed "What this needs to be" with this sentence
+              directly underneath, it read as a label on the list above it - and that list is the
+              opposite of the same for every item: a habitat's five are about fences and a gift
+              shop's three are about signage. Reported from playing it, and it was the "What Done
+              looks like" panel back under a new name. */}
           <span className="text-xs text-muted-foreground">
-            The Definition of Done is the same for every item &middot; read it in Learn
+            Those are this item&rsquo;s. The Definition of Done is the bar every item clears &middot; read it in Learn
           </span>
         </div>
       </DialogContent>

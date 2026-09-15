@@ -1677,6 +1677,12 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
   const goal = suggestSprintGoal(s.backlog.filter((it) => take.includes(it.id)));
   s = { ...s, sprintGoal: goal, sprintGoalAgreed: ['product_owner', 'developer', 'scrum_master'] };
 
+  // No Definition of Done, BEFORE the Sprint is planned rather than after. Planning writes down what
+  // Done meant when the Sprint started, and it was being told the three lines the wizard suggests -
+  // which this then deleted. So Sprint 1's own log said "Nobody agreed a Definition of Done. The 3
+  // that were there stood" about three lines that were not there for a moment of it, and a learner
+  // who later adopted one was told adopting had changed nothing.
+  s = { ...s, definitionOfDone: [], dodAgreed: false };
   s = planSprint(s, take);
 
   // The Developers put their own Sprint Backlog in the order they will work in: the pen before the
@@ -1695,14 +1701,8 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
     }
   }
 
-  // No Definition of Done. The Retrospective hands it over once the Review has shown what it costs.
-  return {
-    ...s,
-    phase: 'sprint',
-    definitionOfDone: [],
-    dodAgreed: false,
-    dayStage: 'building',
-  };
+  // The Retrospective hands a Definition of Done over once the Review has shown what it costs.
+  return { ...s, phase: 'sprint', dayStage: 'building' };
 }
 
 export function planSprint(state: ZooGameState, ids: string[], refinementPoints = 0): ZooGameState {
@@ -2295,10 +2295,22 @@ export function setDefinitionOfDone(state: ZooGameState, dod: string[], by?: str
   const next = dod.map((d) => d.trim()).filter((d) => d.length > 0);
   const before = state.definitionOfDone;
   if (next.length === before.length && next.every((d, i) => d === before[i])) return state;
-  // The agreement decides what Done takes, so the plans follow it: drop the line about the Product
-  // Owner's acceptance and the sign-off step goes with it, on every item still in flight.
-  return syncSignOffTasks(note({ ...state, definitionOfDone: next }, { kind: 'dod', by,
-    what: `The Definition of Done changed: ${before.length} criteria became ${next.length}.` }));
+  // Writing one IS agreeing it. There is no second act: the whole Scrum Team is sitting here, and a
+  // team that has just decided what Done means has not left the agreeing for later.
+  //
+  // These were two flags for one fact, and the fact fell down the gap between them. Pressing "Adopt
+  // this Definition of Done" at the Retrospective wrote the three lines and left `dodAgreed` false -
+  // so the Learn panel showed the learner three things every item must be, while the next Sprint's
+  // Decision Log said "Nobody agreed a Definition of Done", the estimation dialog said the same, and
+  // the poker hands stayed wide. The game taught the lesson, watched them act on it, and refused to
+  // notice. Reported from playing it, and it is the spine of the whole game.
+  //
+  // The one Definition of Done nobody has agreed is the one nobody wrote: the suggestion the game
+  // opens the wizard with. That is what `dodAgreed` starts false for.
+  return syncSignOffTasks(note({ ...state, definitionOfDone: next, dodAgreed: true }, { kind: 'dod', by,
+    what: before.length
+      ? `The Definition of Done changed: ${before.length} criteria became ${next.length}.`
+      : `The Scrum Team agreed a Definition of Done: ${next.length} things every item must be.` }));
 }
 
 // ============= Timed days and the Daily Scrum =============
