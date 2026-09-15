@@ -4,6 +4,7 @@ import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks } from './parkChecks';
+import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail } from './trail';
 import { aiDesign } from './aiSeats';
 
@@ -25,7 +26,11 @@ import { aiDesign } from './aiSeats';
  *  That re-application is only sound because this is pure - no clock, no randomness that
  *  is not seeded, no I/O. */
 export function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
-  return CLOCK_ONLY.has(action.type) ? step(state, action) : applyParkChecks(step(state, action));
+  const next = CLOCK_ONLY.has(action.type) ? step(state, action) : applyParkChecks(step(state, action));
+  // ...and what the work cost, watched as it happens. Here for the same reason the park's own
+  // checks are: there is no action that can forget to. It is kept for the Retrospective to inspect,
+  // and nothing in the game reads it back into a size - see whatItCost.ts.
+  return tallyWork(state, next, action);
 }
 
 /** Actions that cannot change a fact about the park, so the park is not re-read for them.

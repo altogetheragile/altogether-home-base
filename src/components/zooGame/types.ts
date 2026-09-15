@@ -300,6 +300,10 @@ export interface BacklogItem {
   /** The Product Owner looked at the built work and did not accept it: which criteria it did not
    *  meet, and when. Cleared when the Developers finish it again. */
   sentBack?: { sprint: number; day: number; criteria: string[] };
+  /** What it actually cost: seconds in Doing, and presses aimed at it. Kept for the Retrospective
+   *  to inspect and for nothing else - see whatItCost.ts, which says at length why an estimate must
+   *  never be derived from it. */
+  cost?: { seconds: number; presses: number };
   // Exhibits:
   appeal?: Record<SegmentId, number>;
   capacity?: number;
