@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
 import { inHandItem, copyOffset } from '@/components/zooGame/engine';
+import { readyToAsk } from '@/components/zooGame/parkChecks';
+
+/** The Product Owner, as somebody says their name. */
+const po = (s: ZooGameState) => s.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
 import { whereItStands } from '@/components/zooGame/parkModel';
 import { insidePark, CANVAS_W, PLAY_H } from '@/components/zooGame/parkLayout';
 import { useZooGameSaves } from '@/components/zooGame/useZooGameSaves';
@@ -166,6 +170,26 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
 
   // Each phase is its own screen; start it at the top.
   useEffect(() => { window.scrollTo(0, 0); }, [state.phase]);
+
+  // When a criterion the park judges finally goes green, say so.
+  //
+  // It was announced by a small label under the thing on the park, which is where somebody looking
+  // at the thing would see it - and somebody who has spent twenty attempts on "can I walk to it from
+  // the way in?" is looking at the path they just drew. Reported from a play-through: "when the
+  // criterion finally passed, nothing announced it. I found out later by reading a small label."
+  // A ref rather than state: what was ready last time is bookkeeping for this effect and nothing
+  // renders from it, and setting state inside an effect starts a second render for no reason.
+  const wasReady = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const ready = new Set(state.backlog
+      .filter((it) => it.status === 'committed' && readyToAsk(state, it)).map((it) => it.id));
+    for (const id of ready) {
+      if (wasReady.current.has(id)) continue;
+      const it = state.backlog.find((x) => x.id === id);
+      if (it) toast.success(`${it.name} meets everything the park can check. Ask ${po(state)} to look at it.`);
+    }
+    wasReady.current = ready;
+  }, [state]);
 
   const requestSave = () => {
     if (!user) { toast.error('Sign in to save your zoo.'); return; }
