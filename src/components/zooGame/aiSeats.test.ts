@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks, sprintCapacity, teamIsBusy, enclosureReady } from './engine';
+import { splitEpic, planSprint, isReady, suggestTasks, sprintCapacity, teamIsBusy, enclosureReady, pokerHand } from './engine';
 import { enclosureWater, enclosureFlora, designSatisfiesTask } from './design';
 import { aiTurn, aiDesign } from './aiSeats';
 
@@ -384,7 +384,10 @@ describe('a seat nobody is sitting in', () => {
     const a = aiTurn(at({ phase: 'refine' }), 'developer')!;
     const b = aiTurn(at({ phase: 'refine' }), 'developer')!;
     expect(a).toEqual(b);
-    const other = aiTurn(at({ phase: 'refine' }, 2), 'developer')!;
-    expect(other.action).not.toEqual(a.action);   // a different seed sizes differently
+    // A different seed deals a different hand. Whether it lands on a different NUMBER is a
+    // different question: the Fibonacci scale has 1, 2 and 3 at the small end, and most items in
+    // this game are small - a habitat is eight points and an animal is two. See `effortOf`.
+    const it = at({ phase: 'refine' }).backlog.find((x) => x.unsized && x.category !== 'epic')!;
+    expect(pokerHand(it, 1)).not.toEqual(pokerHand(it, 2));
   });
 });

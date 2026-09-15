@@ -14,7 +14,7 @@ import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
-import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
+import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -450,31 +450,34 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
         id: mem.enclosureId ?? `${mem.id}-enc`, name: mem.habitat ?? `${mem.name} Enclosure`, category: 'enclosure', zone,
         enclosureSize: mem.footprint ?? 'medium',
         acceptance: enclosureAcceptance(),
-        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: Math.max(3, Math.round(mem.size / 2)),
+        // A habitat is sized by the work of building one, not as a fraction of its animal. It used
+        // to be `max(3, mem.size / 2)` - half a number that measured how much visitors like a lion.
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0,
+        trueSize: effortOf({ category: 'enclosure', enclosureSize: mem.footprint ?? 'medium' }),
       });
       created.push({
         id: mem.id, name: mem.name, category: 'exhibit', zone, template: mem.template, enclosureId: mem.enclosureId,
         acceptance: exhibitAcceptance(mem.name),
-        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: effortOf({ category: 'exhibit' }),
         appeal: mem.appeal ? { families: mem.appeal[0], enthusiasts: mem.appeal[1], comfortSeekers: mem.appeal[2] } : undefined, capacity: 320,
       });
     } else if (mem.kind === 'path') {
       created.push({
         id: mem.id, name: mem.name, category: 'path', zone,
         acceptance: pathAcceptance(),
-        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: effortOf({ category: 'path' }),
       });
     } else if (mem.kind === 'flora') {
       created.push({
         id: mem.id, name: mem.name, category: 'flora', zone, template: mem.flora ?? 'tree',
         acceptance: floraAcceptance(mem.flora ?? 'tree'),
-        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: effortOf({ category: 'flora', template: mem.flora ?? 'tree' }),
       });
     } else {
       created.push({
         id: mem.id, name: mem.name, category: 'amenity', zone, services: mem.services, serviceCapacity: 500,
         acceptance: amenityAcceptance(mem.name, mem.services),
-        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: mem.size,
+        status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: effortOf({ category: 'amenity', services: mem.services }),
       });
     }
   }
