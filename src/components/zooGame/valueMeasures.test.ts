@@ -72,7 +72,21 @@ describe('the four key value measures', () => {
     ] as BacklogItem[] });
     const a2i = by(valueMeasures(state), 'a2i');
     expect(a2i.value, '8 of 10 points went into new capability').toBe(80);
-    expect(a2i.detail).toMatch(/2 of 10 points went on fixing/);
+    expect(a2i.detail).toMatch(/2 of 10 points went on doing things twice or putting them right/);
+  });
+
+  it('counts work that was refused and done again, not only Improve items', () => {
+    // Reported from a play-through: Ability to Innovate stayed at 100% with "no capacity lost to
+    // rework", in a Sprint where the Gift Shop had been sent back and the Lion Enclosure shipped
+    // with a criterion waived. The measure counted Improve items only, so a thing done twice inside
+    // one Sprint was free - which is the measure saying the opposite of what happened.
+    const state = reviewed({ backlog: [
+      { id: 'a', name: 'A', status: 'open', estimate: 8, sprintNumber: 1, openedIn: 1 },
+      { id: 'b', name: 'B', status: 'open', estimate: 2, sprintNumber: 1, openedIn: 1, sentBackTimes: 1 },
+    ] as BacklogItem[] });
+    const a2i = by(valueMeasures(state), 'a2i');
+    expect(a2i.value, 'a thing built twice cost the team nothing').toBeLessThan(100);
+    expect(a2i.detail, 'the rework is not named').toMatch(/2 of 12 points/);
   });
 
   it('says so plainly when nothing was lost to rework', () => {

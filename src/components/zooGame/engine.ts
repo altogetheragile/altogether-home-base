@@ -1993,7 +1993,9 @@ export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooG
     status: 'committed' as const,
     draftDesign: it.design ?? it.draftDesign,
     design: undefined,
-
+    // Counted, and kept after the rebuild clears the rest: doing something twice is capacity that
+    // did not go into anything new, whether or not the item still says it came back.
+    sentBackTimes: (it.sentBackTimes ?? 0) + 1,
     sentBack: { sprint: state.sprintNumber, day: state.dayNumber, criteria: unmet },
   })));
   return note({ ...state, backlog }, {
@@ -3672,8 +3674,17 @@ export function valueMeasures(state: ZooGameState): {
   // good enough, so the points it costs are capacity that did not go into anything new.
   const delivered = state.backlog.filter((it) => it.status === 'open' || it.status === 'done');
   const deliveredPts = delivered.reduce((s, it) => s + it.estimate, 0);
-  const reworkPts = delivered.filter((it) => it.enhancesId).reduce((s, it) => s + it.estimate, 0);
-  const a2i = deliveredPts ? Math.round(((deliveredPts - reworkPts) / deliveredPts) * 100) : null;
+  const improvePts = delivered.filter((it) => it.enhancesId).reduce((s, it) => s + it.estimate, 0);
+  // ...and work that was refused and done again. It counted Improve items only, so a Sprint where
+  // the Gift Shop was sent back and rebuilt read "no capacity lost to rework" - the measure saying
+  // the opposite of what happened. Reported from a play-through. Each extra go is another item's
+  // worth of capacity that did not go into anything new.
+  const redonePts = delivered.reduce((s, it) => s + it.estimate * (it.sentBackTimes ?? 0), 0);
+  const reworkPts = improvePts + redonePts;
+  // Against everything the capacity was spent ON: what was delivered, plus the goes at it that did
+  // not count. Against delivered points alone, doing a thing twice was free.
+  const spentPts = deliveredPts + redonePts;
+  const a2i = spentPts ? Math.round(((deliveredPts - improvePts) / spentPts) * 100) : null;
 
   return [
     { key: 'cv', label: 'Current Value', unit: '', value: review ? Math.round(review.overallHappiness) : null,
@@ -3697,7 +3708,8 @@ export function valueMeasures(state: ZooGameState): {
       moves: 'Falls when items are small and open early. Rises when Done work waits for the end of a Sprint.' },
     { key: 'a2i', label: 'Ability to Innovate', unit: '%', value: a2i,
       detail: a2i === null ? 'nothing delivered yet'
-        : reworkPts ? `${reworkPts} of ${deliveredPts} points went on fixing` : 'no capacity lost to rework',
+        : reworkPts ? `${reworkPts} of ${spentPts} points went on doing things twice or putting them right`
+          : 'no capacity lost to rework',
       what: 'How much of your capacity goes on new work.',
       how: 'Points delivered on new items, over all points delivered.',
       moves: 'Rises when the Definition of Done holds. Falls when work comes back to be fixed.' },
