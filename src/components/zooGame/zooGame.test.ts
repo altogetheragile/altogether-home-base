@@ -183,14 +183,14 @@ describe('zoo game: setup', () => {
   });
 
   it('seeds the burndown at the full commitment and appends the remaining each day', () => {
-    let s = planSprint(flat(bigCatsSplit(1)), ['lion', 'kiosk']); // 8 + 5 = 13 pts
-    expect(s.burndown).toEqual([13]); // day 0: everything remains
-    // Finish the lion (8 pts done), then end day 1: 5 pts remain.
+    let s = planSprint(flat(bigCatsSplit(1)), ['lion', 'kiosk']); // an animal and a kiosk: 2 + 3
+    expect(s.burndown).toEqual([5]); // day 0: everything remains
+    // Finish the lion (2 pts done), then end day 1: 3 pts remain.
     s = openItem(finish(s, 'lion'), 'lion');
-    expect(sprintProgress(s)).toMatchObject({ pointsCommitted: 13, pointsDone: 8, remaining: 5 });
+    expect(sprintProgress(s)).toMatchObject({ pointsCommitted: 5, pointsDone: 2, remaining: 3 });
     s = { ...s, dayStage: 'building' };
     s = endDay(s);
-    expect(s.burndown).toEqual([13, 5]);
+    expect(s.burndown).toEqual([5, 3]);
   });
 });
 
@@ -207,7 +207,7 @@ describe('zoo game: the Sprint loop', () => {
     expect(s.lastReview!.overallHappiness).toBeGreaterThan(0); // visitors enjoyed the exhibits
     // lion, tiger and the kiosk. No paths item: the way in to each of them is that habitat's own
     // acceptance criterion, so its cost is inside the habitat rather than beside it.
-    expect(s.velocity).toEqual([8 + 8 + 5]);
+    expect(s.velocity).toEqual([2 + 2 + 3]);   // two animals and a kiosk
     // Word of mouth moved attendance for next Sprint.
     expect(s.attendance).toEqual(s.lastReview!.nextAttendance);
   });
@@ -218,7 +218,7 @@ describe('zoo game: the Sprint loop', () => {
     s = finish(finish(s, 'lion'), 'penguins');
     expect(openZoo(s)).toHaveLength(0);
     s = reviewSprint(s);
-    expect(s.velocity[0]).toBe(16); // points Done
+    expect(s.velocity[0]).toBe(4); // points Done: two animals at two points each
     expect(s.lastReview!.segments.every((seg) => seg.happiness === 0)).toBe(true); // no open exhibits
   });
 
@@ -229,7 +229,7 @@ describe('zoo game: the Sprint loop', () => {
     const tiger = s.backlog.find((i) => i.id === 'tiger')!;
     expect(tiger.status).toBe('backlog');
     expect(tiger.sprintNumber).toBeNull();
-    expect(s.velocity[0]).toBe(8); // only the lion's points
+    expect(s.velocity[0]).toBe(2); // only the lion's points
   });
 
   it('Done-but-not-opened work is NOT lost when the Sprint ends (stays Done, still openable)', () => {
@@ -493,7 +493,7 @@ describe('zoo game: backlog refinement (estimation and ordering)', () => {
     expect(hand.every((c) => FIB.includes(c))).toBe(true);
     const s = estimateSuggestion(hand);
     expect(FIB.includes(s)).toBe(true);
-    expect(s).toBeGreaterThanOrEqual(5); // clusters around trueSize 10
+    expect(s).toBeGreaterThanOrEqual(2); // clusters around the animal's true size
   });
 
   it('estimating an item makes it sized and committable', () => {
@@ -667,7 +667,7 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     }
     expect(s.phase).toBe('review');
     expect(scrums).toBe(SPRINT_DAYS - 1); // no Daily Scrum after the last day
-    expect(s.velocity[0]).toBe(8);
+    expect(s.velocity[0]).toBe(2);
   });
 
   it('with END-of-day scrums, a new day pauses (dayStart) until it is started', () => {

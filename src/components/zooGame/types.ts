@@ -170,8 +170,7 @@ export interface EpicMember {
   services?: 'food' | 'toilet' | 'rest';
   /** Flora: what kind of planting (tree, bush, flowers...). */
   flora?: string;
-  /** Intended size in points (the hidden trueSize the estimate clusters around). */
-  size: number;
+
 }
 
 export interface BacklogItem {

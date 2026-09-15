@@ -35,7 +35,7 @@ export const SPRINT_LENGTH_OPTIONS = [2, 3, 5];
  *  game measures it at the Review, and the next Sprint is forecast from what they actually did. A
  *  fast player is given more work; a learner is given less. This number is only the opening guess,
  *  before there is anything to measure. */
-export const TRUE_VELOCITY_PER_DAY = 10;
+export const TRUE_VELOCITY_PER_DAY = 7;
 
 /** First-Sprint capacity guess, before there is velocity: what the board offers on day one.
  *
@@ -139,6 +139,40 @@ export const DOD_LIBRARY: { group: string; items: string[] }[] = [
 
 export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 
+/** How much WORK an item is, in the points the Developers estimate in.
+ *
+ *  Derived from what the thing is and what building it involves, so it cannot drift away from the
+ *  work again. It used to be a number hand-set beside each item, and the numbers had quietly become
+ *  a measure of something else: a Lion was an 8 and an Elephant a 10, in step with how much visitors
+ *  like them, while a habitat was defined as HALF its animal - `Math.max(3, mem.size / 2)`. So the
+ *  biggest single piece of work in the game was priced at half of a number about appeal.
+ *
+ *  Reported from playing it: "there is no way a lion is 8 and an enclosure is 5. Lion is a 2 at
+ *  most." Quite right, and it matters more than the arithmetic: an estimate is the Developers' view
+ *  of effort and appeal is the Product Owner's view of value. A game that teaches Scrum cannot have
+ *  one of them standing in for the other - that conflation is the thing it should be teaching people
+ *  to avoid. `appeal` still says what a thing is worth, and it says it somewhere else.
+ *
+ *  The numbers are what a player actually has to do to take the item to Done:
+ *
+ *    a habitat   footprint, shape, barrier, fence, ground, water, rocks, planting, place it,
+ *                a path to it and a path round it, and five criteria to answer   8 / 5 / 3
+ *    an animal   a body, a head, ears, a tail, markings, a coat, how many, put it in        2
+ *    a pathway   a width, a surface, and the runs drawn across the park                     3
+ *    a building  walls, a roof, a door, a sign, and somewhere to stand it                   3
+ *    planting    what kind, what colour, and how many of them                               2
+ *    a signpost  one post, one colour                                                       1
+ */
+export function effortOf(it: { category: string; enclosureSize?: string; template?: string; services?: string }): number {
+  if (it.category === 'enclosure') return { small: 3, medium: 5, large: 8 }[it.enclosureSize ?? 'medium'] ?? 5;
+  if (it.category === 'exhibit') return 2;
+  if (it.category === 'path') return 3;
+  // Somewhere to sit is a bench; somewhere to eat is a building you go inside.
+  if (it.category === 'amenity') return it.services === 'rest' ? 1 : 3;
+  if (it.category === 'epic') return 0;
+  return { signpost: 1, rocks: 1, flowers: 1, bridge: 2, fountain: 2 }[it.template ?? ''] ?? 2;
+}
+
 /** The starting Product Backlog: rough and partial on purpose. It grows and changes
  *  from play (signals add to it). Appeal is the base value before per-game taste
  *  jitter. */
@@ -152,36 +186,36 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
  *  walk and something growing, and saying so once is better than saying it four times. */
 export const ZOO_AREAS: { zone: string; members: EpicMember[] }[] = [
   { zone: 'Big Cats', members: [
-    m('tiger', 'Tiger', 'tiger-enc', [8, 7, 6], 'large', 8, 'Tiger Enclosure'),
-    m('leopard', 'Leopard', 'leopard-enc', [7, 8, 5], 'medium', 8, 'Leopard Enclosure'),
-    ma('kiosk', 'Kiosk', 'food', 5),
+    m('tiger', 'Tiger', 'tiger-enc', [8, 7, 6], 'large', 'Tiger Enclosure'),
+    m('leopard', 'Leopard', 'leopard-enc', [7, 8, 5], 'medium', 'Leopard Enclosure'),
+    ma('kiosk', 'Kiosk', 'food'),
   ] },
   { zone: 'Waterside', members: [
-    m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 8, 'Penguin Habitat'),
-    m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 5, 'Reef Tank'),
-    ma('wc', 'Toilets', 'toilet', 3),
+    m('penguins', 'Penguins', 'penguin-enc', [8, 6, 6], 'medium', 'Penguin Habitat'),
+    m('reef', 'Reef', 'reef-enc', [6, 8, 5], 'medium', 'Reef Tank'),
+    ma('wc', 'Toilets', 'toilet'),
   ] },
   { zone: 'Savanna', members: [
-    m('elephant', 'Elephant', 'elephant-enc', [9, 8, 7], 'large', 10, 'Elephant Reserve'),
-    m('giraffe', 'Giraffe', 'giraffe-enc', [8, 8, 6], 'large', 8, 'Giraffe Paddock'),
-    m('zebra', 'Zebra', 'zebra-enc', [7, 6, 6], 'medium', 5, 'Zebra Paddock'),
-    m('rhino', 'Rhino', 'rhino-enc', [6, 8, 5], 'large', 8, 'Rhino Reserve'),
-    ma('cafe', 'Cafe', 'food', 5),
+    m('elephant', 'Elephant', 'elephant-enc', [9, 8, 7], 'large', 'Elephant Reserve'),
+    m('giraffe', 'Giraffe', 'giraffe-enc', [8, 8, 6], 'large', 'Giraffe Paddock'),
+    m('zebra', 'Zebra', 'zebra-enc', [7, 6, 6], 'medium', 'Zebra Paddock'),
+    m('rhino', 'Rhino', 'rhino-enc', [6, 8, 5], 'large', 'Rhino Reserve'),
+    ma('cafe', 'Cafe', 'food'),
   ] },
   { zone: 'Forest', members: [
-    m('bear', 'Bear', 'bear-enc', [8, 7, 6], 'large', 8, 'Bear Habitat'),
-    m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 5, 'Monkey Habitat'),
-    ma('picnic', 'Picnic area', 'rest', 3),
+    m('bear', 'Bear', 'bear-enc', [8, 7, 6], 'large', 'Bear Habitat'),
+    m('monkey', 'Monkey', 'monkey-enc', [8, 6, 6], 'medium', 'Monkey Habitat'),
+    ma('picnic', 'Picnic area', 'rest'),
   ] },
 ];
 
 /** The animal that opens a zone: its habitat and the animal itself, ready to build. Whichever zone
  *  the Scrum Team opens first arrives like this rather than as an epic. */
-const FLAGSHIP: Record<string, { id: string; name: string; appeal: [number, number, number]; size: number; footprint: 'small' | 'medium' | 'large' }> = {
-  'Big Cats': { id: 'lion', name: 'Lion', appeal: [8, 7, 6], size: 8, footprint: 'large' },
-  Waterside: { id: 'penguins', name: 'Penguins', appeal: [8, 6, 6], size: 8, footprint: 'medium' },
-  Savanna: { id: 'giraffe', name: 'Giraffe', appeal: [8, 8, 6], size: 8, footprint: 'large' },
-  Forest: { id: 'monkey', name: 'Monkey', appeal: [8, 6, 6], size: 5, footprint: 'medium' },
+const FLAGSHIP: Record<string, { id: string; name: string; appeal: [number, number, number]; footprint: 'small' | 'medium' | 'large' }> = {
+  'Big Cats': { id: 'lion', name: 'Lion', appeal: [8, 7, 6], footprint: 'large' },
+  Waterside: { id: 'penguins', name: 'Penguins', appeal: [8, 6, 6], footprint: 'medium' },
+  Savanna: { id: 'giraffe', name: 'Giraffe', appeal: [8, 8, 6], footprint: 'large' },
+  Forest: { id: 'monkey', name: 'Monkey', appeal: [8, 6, 6], footprint: 'medium' },
 };
 
 /** Stable ids per area, so a saved game and the ids the rest of the game knows survive. */
@@ -199,7 +233,7 @@ function sceneryFor(zone: string): EpicMember[] {
   //
   // What stays an item is infrastructure that serves MANY: the main pathways, and the bridge.
   return [
-    { id: `${slug(zone)}-planting`, name: `${zone} Planting`, kind: 'flora', flora: 'tree', size: 2 },
+    { id: `${slug(zone)}-planting`, name: `${zone} Planting`, kind: 'flora', flora: 'tree' },
   ];
 }
 
@@ -218,9 +252,9 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
   if (first) {
     // The opening area, already refined: a habitat, its animal, and the ground around them.
     const flag = FLAGSHIP[first.zone] ?? FLAGSHIP['Big Cats'];
-    items.push(enc(`${flag.id}-enc`, `${flag.name} Enclosure`, first.zone, 5, flag.footprint));
-    items.push(ex(flag.id, flag.name, first.zone, flag.size, flag.appeal, `${flag.id}-enc`));
-    items.push(flr(`${slug(first.zone)}-planting`, `${first.zone} Planting`, first.zone, 'tree', 2));
+    items.push(enc(`${flag.id}-enc`, `${flag.name} Enclosure`, first.zone, flag.footprint));
+    items.push(ex(flag.id, flag.name, first.zone, flag.appeal, `${flag.id}-enc`));
+    items.push(flr(`${slug(first.zone)}-planting`, `${first.zone} Planting`, first.zone, 'tree'));
     // What is left of the opening area is still an epic - opening it is not finishing it.
     const rest = first.members.filter((mem) => mem.id !== flag.id);
     if (rest.length) items.push(epic(slug(first.zone), first.zone, first.zone, rest));
@@ -238,21 +272,21 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
   // Product Backlog, and it cannot be moved. What IS work is the Bridge, and it is only work because
   // the river is there: ground on the far side cannot be reached until somebody builds one.
   items.push(
-    pth('paths', 'Main Pathways', 'Grounds', 3),
-    flr('bridge', 'Bridge', 'Grounds', 'bridge', 3),
-    flr('signposts', 'Signposts', 'Grounds', 'signpost', 2),
-    flr('fountain', 'Fountain', 'Grounds', 'fountain', 3),
-    flr('rocks', 'Rockery', 'Grounds', 'rocks', 2),
-    flr('trees', 'Trees', 'Grounds', 'tree', 2),
-    flr('flowerbed', 'Flowerbed', 'Grounds', 'flowers', 2),
+    pth('paths', 'Main Pathways', 'Grounds'),
+    flr('bridge', 'Bridge', 'Grounds', 'bridge'),
+    flr('signposts', 'Signposts', 'Grounds', 'signpost'),
+    flr('fountain', 'Fountain', 'Grounds', 'fountain'),
+    flr('rocks', 'Rockery', 'Grounds', 'rocks'),
+    flr('trees', 'Trees', 'Grounds', 'tree'),
+    flr('flowerbed', 'Flowerbed', 'Grounds', 'flowers'),
   );
 
   // Facilities: a day out needs somewhere to eat, somewhere to go and somewhere to sit. Their own
   // PBIs rather than something buried inside an animal epic. The audience decides which comes first.
   const facilities = [
-    am('main-wc', 'Toilets', 'Facilities', 3, 'toilet'),
-    am('gift-shop', 'Gift Shop', 'Facilities', 5, 'food'),
-    am('benches', 'Seating Area', 'Facilities', 3, 'rest'),
+    am('main-wc', 'Toilets', 'Facilities', 'toilet'),
+    am('gift-shop', 'Gift Shop', 'Facilities', 'food'),
+    am('benches', 'Seating Area', 'Facilities', 'rest'),
   ];
   const wanted = brief.audience === 'families' ? 'food' : brief.audience === 'comfortSeekers' ? 'rest' : 'toilet';
   items.push(...facilities.sort((a, b) => Number(b.services === wanted) - Number(a.services === wanted)));
@@ -264,12 +298,12 @@ export const DEFAULT_BRIEF: ZooBrief = { zones: ZOO_AREAS.map((a) => a.zone), au
 
 /** An epic member that is an animal (exhibit): splits into its enclosure + the animal.
  *  `habitat` is the bespoke name for the enclosure the split creates. */
-function m(id: string, name: string, encId: string, appeal: [number, number, number], footprint: 'small' | 'medium' | 'large', size: number, habitat: string): EpicMember {
-  return { id, name, kind: 'exhibit', template: id, appeal, enclosureId: encId, footprint, size, habitat };
+function m(id: string, name: string, encId: string, appeal: [number, number, number], footprint: 'small' | 'medium' | 'large', habitat: string): EpicMember {
+  return { id, name, kind: 'exhibit', template: id, appeal, enclosureId: encId, footprint, habitat };
 }
 /** An epic member that is a facility (amenity): splits into one amenity PBI. */
-function ma(id: string, name: string, services: 'food' | 'toilet' | 'rest', size: number): EpicMember {
-  return { id, name, kind: 'amenity', services, size };
+function ma(id: string, name: string, services: 'food' | 'toilet' | 'rest'): EpicMember {
+  return { id, name, kind: 'amenity', services };
 }
 /** A themed EPIC to be refined (split) into its members. Arrives unsized - an epic is not
  *  estimated or built directly; it is broken down first. */
@@ -286,7 +320,8 @@ function epic(id: string, name: string, zone: string, members: EpicMember[]): Ba
 /** An exhibit (animal). It lives in the enclosure `enclosureId` and can only be built
  *  once that enclosure is Done. `unsized` items carry their intended size as `trueSize`
  *  and start with estimate 0 until the team estimates them. */
-function ex(id: string, name: string, zone: string, size: number, appeal: [number, number, number], enclosureId?: string, unsized = false): BacklogItem {
+function ex(id: string, name: string, zone: string, appeal: [number, number, number], enclosureId?: string, unsized = false): BacklogItem {
+  const size = effortOf({ category: 'exhibit' });
   return {
     id, name, category: 'exhibit', zone, enclosureId, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: exhibitAcceptance(name),
@@ -297,7 +332,8 @@ function ex(id: string, name: string, zone: string, size: number, appeal: [numbe
 
 /** An enclosure (habitat) - infrastructure built first, then populated with animals. Its
  *  `enclosureSize` footprint (chosen in the studio) sizes the habitat in the park. */
-function enc(id: string, name: string, zone: string, size: number, footprint: 'small' | 'medium' | 'large', unsized = false): BacklogItem {
+function enc(id: string, name: string, zone: string, footprint: 'small' | 'medium' | 'large', unsized = false): BacklogItem {
+  const size = effortOf({ category: 'enclosure', enclosureSize: footprint });
   return {
     id, name, category: 'enclosure', zone, enclosureSize: footprint, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: enclosureAcceptance(),
@@ -307,7 +343,8 @@ function enc(id: string, name: string, zone: string, size: number, footprint: 's
 
 /** A piece of scenery (flora/landscape). `type` is its template (tree, river, rocks, bridge...),
  *  which the studio starts the design from and which fixes its fitting acceptance criteria. */
-function flr(id: string, name: string, zone: string, type: string, size: number, unsized = false): BacklogItem {
+function flr(id: string, name: string, zone: string, type: string, unsized = false): BacklogItem {
+  const size = effortOf({ category: 'flora', template: type });
   return {
     id, name, category: 'flora', zone, template: type, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: floraAcceptance(type),
@@ -316,7 +353,8 @@ function flr(id: string, name: string, zone: string, type: string, size: number,
 }
 
 /** A pathway PBI - designed as a width + colour, then routed on the park at deployment. */
-function pth(id: string, name: string, zone: string, size: number, unsized = false): BacklogItem {
+function pth(id: string, name: string, zone: string, unsized = false): BacklogItem {
+  const size = effortOf({ category: 'path' });
   return {
     id, name, category: 'path', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: pathAcceptance(),
@@ -324,7 +362,8 @@ function pth(id: string, name: string, zone: string, size: number, unsized = fal
   };
 }
 
-function am(id: string, name: string, zone: string, size: number, services: 'food' | 'toilet' | 'rest', unsized = false): BacklogItem {
+function am(id: string, name: string, zone: string, services: 'food' | 'toilet' | 'rest', unsized = false): BacklogItem {
+  const size = effortOf({ category: 'amenity', services });
   return {
     id, name, category: 'amenity', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: amenityAcceptance(name, services),
