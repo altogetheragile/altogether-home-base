@@ -1,5 +1,5 @@
 import type { ZooGameState, PbiDraft, BacklogItem } from './types';
-import { floraAcceptance, amenityAcceptance } from './design';
+import { amenityAcceptance } from './design';
 
 // ============= The Product Owner looking ahead =============
 //
@@ -64,37 +64,33 @@ export function lookAhead(state: ZooGameState): Proposal[] {
   const out: Proposal[] = [];
   const soon = forecast(state);
 
-  // A zone about to have an animal in it needs something growing. It needs a way in too, and that
-  // is no longer an item to propose: a path serving one habitat is one of that habitat's own
-  // acceptance criteria ("can I walk to it from the way in?"), so proposing "<zone> Paths" would be
-  // proposing a second item that has to be finished before the first is worth anything - which is
-  // the layer this game exists to warn about.
-  // A zone is "coming" if an animal or a habitat for it is coming - or if the whole area is still
-  // one epic near the top of the Product Backlog, which is the usual way a zone arrives.
+  // Two things an area used to be told it was missing, and neither is an item any more.
+  //
+  // A way in went first: a path that serves one habitat is one of that habitat's own acceptance
+  // criteria ("can I walk to it from the way in?"), so proposing "<zone> Paths" would be proposing
+  // a second item that has to be finished before the first is worth anything - the layer this game
+  // exists to warn about.
+  //
+  // Planting has gone the same way. A habitat is asked "can I tell an animal lives here, not a
+  // shed?", and the answer is ground, shelter, planting and water inside it. Proposing a planting
+  // item was proposing the same work twice, and the Product Owner cannot help by ordering it again.
+  //
+  // What a Product Owner CAN usefully notice is a facility buried in an epic: it is real work,
+  // somebody will want it, and while it is a member of an epic nobody can size it or pull it into
+  // a Sprint. That is the proposal worth making, and splitting is the answer rather than writing a
+  // second one beside it.
   const brings = (it: BacklogItem) => it.category === 'exhibit' || it.category === 'enclosure'
     || (it.category === 'epic' && (it.epicMembers ?? []).some((m) => m.kind === 'exhibit'));
   const zones = Array.from(new Set(soon.filter(brings).map((it) => it.zone)));
-  const needs: { kind: 'path' | 'flora'; name: string; why: (z: string) => string; draft: (z: string) => PbiDraft }[] = [
-    {
-      kind: 'flora', name: 'Planting',
-      why: (z) => `${z} is coming up with nothing growing in it. Planting is what makes an area feel like somewhere rather than a fenced field, and it is cheap next to a habitat.`,
-      draft: (z) => ({ name: `${z} Planting`, category: 'flora', zone: z, template: 'tree', acceptance: floraAcceptance('tree') }),
-    },
-  ];
   for (const zone of zones) {
-    for (const need of needs) {
-      if (hasItem(state, (it) => it.category === need.kind && it.zone === zone)) continue;
-      const hidden = hidingIn(state, zone, need.kind);
-      if (hidden) {
-        out.push({
-          id: `split:${zone}:${need.kind}`, kind: 'split', label: `Split ${zone}`,
-          why: `${need.why(zone)} It is in the ${hidden.epic.name} epic, where nobody can size it or pull it into a Sprint.`,
-          epicId: hidden.epic.id, memberIds: hidden.memberIds,
-        });
-      } else {
-        out.push({ id: `${need.kind}:${zone}`, kind: 'add', label: `${zone} ${need.name}`, why: need.why(zone), draft: need.draft(zone) });
-      }
-    }
+    const hidden = hidingIn(state, zone, 'amenity');
+    if (!hidden) continue;
+    const named = hidden.memberIds.length === 1 ? 'a facility' : `${hidden.memberIds.length} facilities`;
+    out.push({
+      id: `split:${zone}:facility`, kind: 'split', label: `Split ${zone}`,
+      why: `${zone} is coming up and ${named} for it ${hidden.memberIds.length === 1 ? 'is' : 'are'} in the ${hidden.epic.name} epic, where nobody can size ${hidden.memberIds.length === 1 ? 'it' : 'them'} or pull ${hidden.memberIds.length === 1 ? 'it' : 'them'} into a Sprint.`,
+      epicId: hidden.epic.id, memberIds: hidden.memberIds,
+    });
   }
 
   // A zoo people stay in needs somewhere to eat and somewhere to go. Better raised before the

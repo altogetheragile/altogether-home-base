@@ -22,7 +22,10 @@ import type { ZooGameState, BacklogItem } from './types';
 
 const planting = (over: Partial<BacklogItem> = {}): { state: ZooGameState; item: BacklogItem } => {
   const base = initialZooState(3) as ZooGameState;
-  const found = base.backlog.find((it) => it.category === 'flora')!;
+  // A PLANTING item, said outright. This took the first flora item in the Backlog, which was the
+  // area's planting until the area stopped having one - and the first flora is now the Bridge,
+  // which is filed under flora and is not a plant.
+  const found = base.backlog.find((it) => it.category === 'flora' && it.template === 'tree')!;
   const item = { ...found, status: 'committed' as const, started: true, sprintNumber: 1,
     design: presetFor(found), ...over } as BacklogItem;
   return {

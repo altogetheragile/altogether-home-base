@@ -108,13 +108,17 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
 describe('every kind of thing gets from Product Backlog item to live', () => {
   it('walks the same route for a habitat, an animal, a path, planting and a facility', () => {
     let s = sprint();
-    const pick = (category: string) => s.backlog.find((it) => it.category === category && it.status === 'backlog' && !it.unsized)!;
+    // Named by template where "flora" covers more than one kind of thing: the first flora item in
+    // the Backlog is the Bridge, which is filed under flora and is not a plant. It was the area's
+    // planting until an area stopped having one.
+    const pick = (category: string, template?: string) => s.backlog.find((it) => it.category === category
+      && it.status === 'backlog' && !it.unsized && (!template || it.template === template))!;
 
     // The habitat first, because an animal moves into one.
     const order = ['enclosure', 'exhibit', 'path', 'flora', 'amenity'];
     const seen: string[] = [];
     for (const category of order) {
-      const item = pick(category);
+      const item = pick(category, category === 'flora' ? 'tree' : undefined);
       expect(item, `there is no ${category} in the starting Backlog to try`).toBeTruthy();
       s = takeItLive(s, item.id);
       seen.push(`${category}:${s.backlog.find((it) => it.id === item.id)!.status}`);
