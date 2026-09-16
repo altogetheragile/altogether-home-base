@@ -33,7 +33,12 @@ describe('a criterion the Product Owner waived', () => {
   const waived = (): { s: ZooGameState; item: BacklogItem } => {
     const s = sprint();
     const it0 = s.backlog.find((x) => x.status === 'committed' && x.category === 'enclosure')!;
-    const after = answerQuestion(askToCheck(s, it0.id), `check-${it0.id}`, 'accept-as-is', 'product_owner');
+    // The park has looked and refused the first one. Without that this is not a waiver at all: a
+    // criterion nobody has judged is accepted by judging it, and recording THAT as "shipped
+    // knowing" is the lie this whole file is about.
+    const refused = { ...s, backlog: s.backlog.map((x) => (x.id === it0.id
+      ? { ...x, acConfirmed: x.acceptance.map((_, i) => (i === 0 ? false : undefined)) } : x)) } as unknown as ZooGameState;
+    const after = answerQuestion(askToCheck(refused, it0.id), `check-${it0.id}`, 'accept-as-is', 'product_owner');
     return { s: after, item: after.backlog.find((x) => x.id === it0.id)! };
   };
 

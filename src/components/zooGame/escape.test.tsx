@@ -163,7 +163,10 @@ describe('shipping it knowing', () => {
     expect(q, 'the Developers could not even ask').toBeTruthy();
     expect(q.choices.map((c) => c.key), 'there was no way to ship it knowing')
       .toContain('accept-as-is');
-    expect(q.text, 'the question does not say what is wrong with it').toMatch(/does not meet/i);
+    // The fixture sets acConfirmed[0] = false: the park looked at the fence and refused it. So the
+    // question says what the park found, rather than the old sentence that said "does not meet"
+    // about anything outstanding, judgements included.
+    expect(q.text, 'the question does not say what the park found wrong').toMatch(/not right yet/i);
   });
 
   it('lets the work reach Done with the criterion still unmet', () => {

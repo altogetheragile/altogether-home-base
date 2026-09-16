@@ -212,6 +212,27 @@ export const acTally = (item: BacklogItem): { met: number; waived: number; of: n
 export const acOpen = (item: BacklogItem): string[] =>
   item.acceptance.filter((_, i) => !acSettled(item, i));
 
+// Open is two different things, and the game was calling both of them "not met".
+//
+// `applyParkChecks` writes an answer into `acConfirmed` for every criterion the park can settle -
+// true when it is met, FALSE when it is not. A criterion nobody can settle but a person is left
+// alone, so it stays unset. That is the difference, and it is already in the item's own data.
+//
+// It matters because they need different things. A fact the park says no to has a control that
+// would fix it - draw a path, put a sign up - and accepting it anyway is a waiver. A criterion
+// waiting on somebody's eye has not been refused by anything: judging it IS the acceptance, and
+// recording that as "shipped with a criterion unmet" is a lie about what the Product Owner did.
+// Reported from playing it: "how are we to act on this feedback? 'Seating Area does not meet one of
+// its criteria: Can I sit down in the shade?'"
+
+/** Open criteria the PARK has answered no to. Facts, each with something that would fix it. */
+export const acFailing = (item: BacklogItem): string[] =>
+  item.acceptance.filter((_, i) => !acSettled(item, i) && (item.acConfirmed ?? [])[i] === false);
+
+/** Open criteria nobody has looked at yet. Not "unmet" - unjudged. */
+export const acToJudge = (item: BacklogItem): string[] =>
+  item.acceptance.filter((_, i) => !acSettled(item, i) && (item.acConfirmed ?? [])[i] !== false);
+
 /** The Developers ask the Product Owner to come and look at something that meets all of its
  *  criteria. It is a question like any other: it goes on their rail, it carries a clock, and the
  *  item says who it is waiting on until it is answered. Accepting it is the sign-off; sending it
@@ -220,9 +241,11 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
   const item = state.backlog.find((it) => it.id === id);
   if (!item || (state.questions ?? []).some((q) => q.id === `check-${id}`)) return state;
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
-  // What the park says is not met. The Developers ask anyway - it is the Product Owner's to decide,
-  // and a team that cannot even ask is a team whose Product Owner has been replaced by a gate.
-  const unmet = acOpen(item);
+  // What is actually outstanding, and the two kinds are not the same news. The Developers ask
+  // either way - it is the Product Owner's to decide, and a team that cannot even ask is a team
+  // whose Product Owner has been replaced by a gate.
+  const failing = acFailing(item);
+  const judge = acToJudge(item);
   return {
     ...state,
     questions: [...(state.questions ?? []), {
@@ -232,15 +255,25 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
       // "is it what you asked for?"; a card with a fact against it is a different question, and
       // pretending otherwise is how a Product Owner ends up pressing Accept on a lion behind a hedge
       // without being told.
-      text: unmet.length
-        ? `${item.name} does not meet ${unmet.length === 1 ? 'one of its criteria' : `${unmet.length} of its criteria`}: ${unmet[0]}. What do you want to do?`
-        : `${item.name} meets all of its criteria. Is it what you asked for?`,
+      // Said as what it is. "Does not meet one of its criteria: can I sit down in the shade?" was
+      // the game asserting a thing it cannot know - nobody had looked yet - and then offering a
+      // waiver as the only way past it. Reported from playing it: "how are we to act on this
+      // feedback?" You look at it and say. That is what acceptance is.
+      text: failing.length
+        ? `${item.name} is built. The park says ${failing.length === 1 ? 'one thing is' : `${failing.length} things are`} not right yet: ${failing[0]}${judge.length ? `, and ${judge.length === 1 ? 'one more is' : `${judge.length} more are`} yours to judge` : ''}. What do you want to do?`
+        : judge.length
+          ? `${item.name} is built, and nothing is left but your eye${judge.length === 1 ? '' : ` on ${judge.length} things`}: ${judge[0]} Is it what you asked for?`
+          : `${item.name} meets all of its criteria. Is it what you asked for?`,
       choices: [
-        ...(unmet.length ? [] : [{ key: 'accept', label: 'Accept it' }]),
+        // Accepting is on offer whenever nothing is FAILING. A criterion waiting to be judged is
+        // not an obstacle to acceptance: judging it is the acceptance, and calling that a waiver
+        // wrote "shipped with a criterion unmet" into the log about a Product Owner who had looked
+        // at the thing and said yes.
+        ...(failing.length ? [] : [{ key: 'accept', label: 'Accept it' }]),
         // Shipping it knowing. Not a trap and not hidden: a Product Owner may decide that a thing
         // goes out as it is, and the game's whole argument is that decisions have consequences
         // rather than that the game prevents them. A lion behind a hedge still gets out.
-        ...(unmet.length ? [{ key: 'accept-as-is', label: 'Accept it as it is',
+        ...(failing.length ? [{ key: 'accept-as-is', label: 'Accept it as it is',
           note: 'It goes out with that criterion unmet. Whatever follows from that follows.' }] : []),
         // What saying no does, on the question itself rather than in a tooltip: the two answers sit
         // side by side, one of them undoes a piece of finished work, and a Product Owner pressing it
@@ -271,16 +304,23 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
     // Shipped knowing. The criteria that are not met are named and kept unmet - the card goes on
     // saying so, and the Retrospective can read what was accepted and what it cost.
     if (choice === 'accept-as-is' && item) {
-      const unmet = acOpen(item);
+      // Waived, and judged, are two different acts and this used to record both as the first. What
+      // the park says no to is shipped knowing; what was only waiting on somebody's eye has just
+      // been looked at and passed, which is acceptance and nothing else.
+      const waived = acFailing(item);
+      const judged = acToJudge(item);
       const shipped = {
         ...state, questions: rest,
         // A set, not a tally. Accepting the same criterion as-is three times used to write it down
         // three times, which is what a Product Owner going round the loop looks like in the data.
         backlog: state.backlog.map((it) => (it.id === q.itemId
-          ? settleStatus({ ...it, acceptedAsIs: [...new Set([...(it.acceptedAsIs ?? []), ...unmet])] }) : it)),
+          ? settleStatus({ ...it,
+            acceptedAsIs: [...new Set([...(it.acceptedAsIs ?? []), ...waived])],
+            acConfirmed: it.acceptance.map((label, i) => (judged.includes(label) ? true : (it.acConfirmed ?? [])[i])),
+          }) : it)),
       };
       return note(shipped, { kind: 'question', by: by ?? 'product_owner',
-        what: `The Product Owner accepted ${item.name} with ${unmet.length} criterion${unmet.length === 1 ? '' : 's'} unmet: ${unmet[0]}`,
+        what: `The Product Owner accepted ${item.name} with ${waived.length} criterion${waived.length === 1 ? '' : 's'} unmet: ${waived[0]}`,
         cost: 'Shipped knowing. What follows from shipping it follows.' });
     }
     if (choice === 'accept' && item) {

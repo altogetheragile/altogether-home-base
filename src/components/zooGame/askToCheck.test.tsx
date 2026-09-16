@@ -37,11 +37,14 @@ describe('asking the Product Owner to look at it', () => {
     expect(q.of).toBe('product_owner');
     expect(q.itemId).toBe(item.id);
     expect(q.from).toBe(s.team.developers[0].name);
-    // What is on offer depends on what the park says. This one has criteria outstanding, so the
-    // answers are "ship it knowing" and "send it back" - accepting work that does not meet its own
-    // criteria is a decision, and it is named as one rather than hidden behind a plain Accept.
+    // What is on offer depends on what the park says. Every criterion here has been refused by the
+    // park (the fixture sets them all false), so the answers are "ship it knowing" and "send it
+    // back" - accepting work the park says is not right is a decision, and it is named as one
+    // rather than hidden behind a plain Accept.
     expect(q.choices.map((c) => c.key)).toEqual(['accept-as-is', 'back']);
-    expect(q.text, 'the question does not say what is not met').toMatch(/does not meet/i);
+    // Said as what it is. It used to read "does not meet one of its criteria" about criteria
+    // nobody had looked at, which the game cannot know - see the judgement case below.
+    expect(q.text, 'the question does not say what the park found').toMatch(/not right yet/i);
   });
 
   it('asks the plain question when the work meets everything', () => {
@@ -51,6 +54,33 @@ describe('asking the Product Owner to look at it', () => {
     const q = (askToCheck(met, item.id).questions ?? [])[0];
     expect(q.choices.map((c) => c.key)).toEqual(['accept', 'back']);
     expect(q.text).toMatch(/meets all of its criteria/i);
+  });
+
+  it('does not call a criterion unmet when nobody has looked at it', () => {
+    // The park writes false into `acConfirmed` for anything it can settle and leaves the rest
+    // alone. A criterion waiting on somebody's eye has not been refused by anything, and saying it
+    // "does not meet" it is the game asserting what it cannot know. Reported from playing it: "how
+    // are we to act on this feedback? 'Seating Area does not meet one of its criteria: Can I sit
+    // down in the shade?'"
+    const { s, item } = ready();
+    const unjudged = { ...s, backlog: s.backlog.map((it) => (it.id === item.id
+      ? { ...it, acConfirmed: [] } : it)) } as ZooGameState;
+    const q = (askToCheck(unjudged, item.id).questions ?? [])[0];
+    expect(q.text, 'it says the park found fault where the park said nothing').not.toMatch(/not right yet/i);
+    expect(q.text, 'it does not say whose call it is').toMatch(/your eye/i);
+    // ...and accepting is on offer, because judging it IS the acceptance.
+    expect(q.choices.map((c) => c.key), 'the only way past a judgement is a waiver')
+      .toEqual(['accept', 'back']);
+  });
+
+  it('keeps the waiver for what the park did refuse, alongside what is left to judge', () => {
+    const { s, item } = ready();
+    const mixed = { ...s, backlog: s.backlog.map((it) => (it.id === item.id
+      ? { ...it, acConfirmed: it.acceptance.map((_, i) => (i === 0 ? false : undefined)) } : it)) } as unknown as ZooGameState;
+    const q = (askToCheck(mixed, item.id).questions ?? [])[0];
+    expect(q.text).toMatch(/not right yet/i);
+    expect(q.text, 'the ones waiting on a judgement are counted as faults').toMatch(/yours to judge/i);
+    expect(q.choices.map((c) => c.key)).toEqual(['accept-as-is', 'back']);
   });
 
   it('asks once, however many times the button is pressed', () => {
@@ -115,10 +145,10 @@ describe('an answer, once given, is not asked for again', () => {
   });
 
   it('asks a different question if they are asked to look again', () => {
-    // Nothing is open, so it is "is this what you asked for?" rather than "it does not meet these".
+    // Nothing is open, so it is "is this what you asked for?" rather than a list of faults.
     const { s, item } = shipped();
     const q = (askToCheck(s, item.id).questions ?? [])[0];
-    expect(q.text, 'it named criteria that have been answered').not.toMatch(/does not meet/i);
+    expect(q.text, 'it named criteria that have been answered').not.toMatch(/not right yet/i);
     expect(q.choices.map((c) => c.key), 'Accept is not on offer for work with nothing outstanding')
       .toContain('accept');
   });
