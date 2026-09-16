@@ -1,5 +1,6 @@
 import type { ItemCategory, PbiDraft } from './types';
 import { amenityAcceptance, floraAcceptance, enclosureAcceptance, exhibitAcceptance, pathAcceptance } from './design';
+import { criterionFor } from './parkChecks';
 
 // ============= The Toolbox =============
 //
@@ -18,6 +19,17 @@ export interface ToolboxItem {
   services?: 'food' | 'toilet' | 'rest';
   /** Enclosures: the habitat footprint. */
   footprint?: 'small' | 'medium' | 'large';
+  /** Criteria this piece can settle for something OTHER than itself.
+   *
+   *  Most of what a piece can meet is what it would be asked: a habitat is asked whether it holds
+   *  what lives in it, so building one is how that gets answered. Those are derived rather than
+   *  written down twice - see `meetsOf`.
+   *
+   *  This is the rest. A pathway is judged on whether it joins the areas up, but drawing one is
+   *  also how a habitat becomes walkable to, and that capability belongs to the pathway. It is the
+   *  whole reason the catalogue is worth having: the Product Owner asks for a way to reach the
+   *  lions, and the Developers know that a path is the answer. */
+  also?: string[];
 }
 
 const exhibit = (template: string, name: string, zone: string): ToolboxItem => ({ template, name, category: 'exhibit', zone });
@@ -31,7 +43,8 @@ const enclosure = (name: string, footprint: 'small' | 'medium' | 'large'): Toolb
  *  Owner ordering a Product Backlog puts "Reef Tank" on it, not "Medium Enclosure, and make it wet later". */
 const tank = (name: string, footprint: 'small' | 'medium' | 'large'): ToolboxItem => ({ name, category: 'enclosure', zone: 'General', footprint, template: 'tank' });
 // A pathway has no studio design; its delivery is drawing the route on the Park at deployment.
-const pathway = (name: string): ToolboxItem => ({ name, category: 'path', zone: 'General' });
+// Drawing one is also how everything else becomes reachable, which is not its own criterion.
+const pathway = (name: string): ToolboxItem => ({ name, category: 'path', zone: 'General', also: ['walkable-to'] });
 
 export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
   {
@@ -80,9 +93,32 @@ export const TOOLBOX: { group: string; items: ToolboxItem[] }[] = [
     // under planting, which is where this whole re-sort came from - a bridge is not a plant, it is
     // the thing that lets a path cross water, and the visitors' pathfinding has always known that.
     group: 'Infrastructure',
-    items: [pathway('Pathway'), flora('Bridge', 'bridge'), flora('Signpost', 'signpost'), flora('Entrance', 'entrance')],
+    items: [pathway('Pathway'),
+      // A bridge is judged on whether it crosses the water. What it is FOR is everything on the far
+      // bank becoming reachable, and that is somebody else's criterion.
+      { ...flora('Bridge', 'bridge'), also: ['walkable-to'] },
+      flora('Signpost', 'signpost'), flora('Entrance', 'entrance')],
   },
 ];
+
+/** Which criteria building this piece could settle.
+ *
+ *  Derived from what the piece would be ASKED, plus whatever it can settle for other things. Two
+ *  lists would be two lists to keep in step, and this game has already learned what happens when a
+ *  criterion lives in two places: see the registry in parkChecks.
+ *
+ *  This is what makes a need checkable before anybody builds anything. A need is a set of criteria;
+ *  if nothing in the catalogue meets one of them, it is not an ambition, it is a dead end. */
+export function meetsOf(t: ToolboxItem): string[] {
+  const asked = toolboxDraft(t).acceptance
+    .map((a) => criterionFor(a)?.id)
+    .filter((id): id is string => !!id);
+  return [...new Set([...asked, ...(t.also ?? [])])];
+}
+
+/** Everything the catalogue can settle between it. */
+export const CATALOGUE_MEETS = (): Set<string> =>
+  new Set(TOOLBOX.flatMap((g) => g.items).flatMap(meetsOf));
 
 /** Turn a picked toolbox item into a Product Backlog Item draft with coached defaults. */
 export function toolboxDraft(t: ToolboxItem): PbiDraft {
