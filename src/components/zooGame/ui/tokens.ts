@@ -162,5 +162,13 @@ export const PADDING = {
  *  borrow. */
 export const FOCUS = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
+/** A control you tap: 44 square, whatever the glyph inside it measures.
+ *
+ *  This game is taught on a tablet in a training room, and ordering a Backlog is the Product
+ *  Owner's central act - it was a 12px chevron, then a 36px box, and 36 is still under a fingertip.
+ *  The glyph stays small; the target it sits in is one you can hit. Two of these side by side or
+ *  stacked never overlap, which an invisible halo around a small button would. */
+export const TAP = 'h-11 w-11 shrink-0';
+
 /** The eyebrow above a question: small, bold, spaced, in the tone of what follows. */
 export const EYEBROW = 'text-[10px] font-bold uppercase tracking-[0.08em]';

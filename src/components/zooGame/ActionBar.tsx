@@ -4,9 +4,22 @@ import { cn } from '@/lib/utils';
 import { NoteStrip } from './GameNotes';
 import { DOCK_PILL, DOCK_POSITION, useDockPresence, useGameNotes } from './notesDock';
 
-/** How much room to leave at the foot of a pane so the dock never lies over the last card. */
-export const DOCKED_BAR_PX = 52;
+/** How much room to leave at the foot of a pane so the dock never lies over the last card.
+ *
+ *  Measured rather than guessed: the pill is 58 tall and sits 16 up from the foot of the window, so
+ *  74 is the least that clears it. It was 52, which is 22 short - close enough to look right on the
+ *  one pane it was written for and wrong everywhere else. */
+export const DOCKED_BAR_PX = 74;
 export const DOCKED_BAR_H = `${DOCKED_BAR_PX}px`;
+
+/** The same measure as a class, for panes that scroll rather than size themselves.
+ *
+ *  Every screen in the game ends in the dock, and the dock is fixed to the window: a scroll
+ *  container with no room reserved at its foot ends flush against the window, and its last control
+ *  sits under the pill. Found by measuring, not by looking - the Product Backlog wizard's fourth
+ *  area was underneath it at a perfectly ordinary window size. Use this on any pane that renders an
+ *  ActionBar; `withoutADock.test.tsx` fails if one does not. */
+export const DOCK_GUTTER = 'pb-24';
 
 /** The one primary action, in the one place it always is.
  *

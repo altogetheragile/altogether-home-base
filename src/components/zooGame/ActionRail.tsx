@@ -170,9 +170,14 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
           {total - 1} more <ChevronRight className="h-3.5 w-3.5" />
         </button>
       )}
+      {/* Whose call it is. It said "waiting on them", which is the one word the sentence needed to
+          not be: in a room of five people, knowing that somebody else has to answer is only half
+          the news, and the other half is which chair to look at. */}
       {seat && action && (
         <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-          {action.actor.replace(/^The /, '').toLowerCase().startsWith(seat.replace('_', ' ').slice(0, 4)) ? 'yours' : 'waiting on them'}
+          {action.actor.replace(/^The /, '').toLowerCase().startsWith(seat.replace('_', ' ').slice(0, 4))
+            ? 'yours'
+            : `waiting on ${action.actor.replace(/^The /, '')}`}
         </span>
       )}
     </div>

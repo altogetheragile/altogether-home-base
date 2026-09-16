@@ -1,13 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { ZooGameScreens } from './ZooGame';
 import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
-import { unmannedSeats } from '@/components/zooGame/seatPresence';
+import { seatIsAway, unmannedSeats } from '@/components/zooGame/seatPresence';
 import type { SeatContext } from '@/components/zooGame/seatRules';
 import { useAuth } from '@/contexts/AuthContext';
 import { TEXT } from '@/components/zooGame/ui/tokens';
+import { Button } from '@/components/ui/button';
 
 /** How long a line from a seat played by the game stays on the rail. Long enough to move to
  *  another topic and still read what happened while you were away; short enough that the
@@ -34,6 +35,14 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
     // fell to nobody: the Sprint waited on somebody who had gone home, and nothing said so.
     emptySeats: unmannedSeats(lobby.seats, lobby.participants, lobby.present),
   };
+  // Seats somebody is still holding and is not here for. The lobby has said this from the start -
+  // an amber "away" against the name - and in the game it was only a seat that had quietly become
+  // yours to cover. Covered because nobody took it and covered because whoever took it has shut
+  // their laptop are different things to a room full of people: one is a seat to fill, the other
+  // is somebody to check on.
+  const awaySeats = lobby.seats
+    .filter((x) => seatIsAway(x, lobby.participants, lobby.present))
+    .map((x) => x.seat);
   const session = useZooSession(gameId, ctx);
   useSharedClock(session);
   // Seats with nobody in them are played by the game, so a pair can still field a whole
@@ -108,7 +117,7 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
           carrier the actions were built around, which is the whole point of one surface. */}
       <ZooGameScreens game={{ ...session, state }} saves={false}
         seat={mySeat?.seat ?? null} observer={ctx.observer}
-        covering={ctx.emptySeats}
+        covering={ctx.emptySeats} away={awaySeats}
         said={saidBy.filter((m) => m.where === here(state))} onDismissSaid={forget}
         refused={refused} onDismissRefused={clearRefused}
         // Every accountability with somebody in it - a person or an AI - has to agree the
@@ -129,11 +138,17 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
 
 export default function ZooTogether() {
   const { user } = useAuth();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const sessionId = params.get('session');
   const [gameId, setGameId] = useState<string | null>(params.get('game'));
 
   if (!user) {
+    // A reason and no door. This screen explained why it needs you signed in and then offered
+    // nothing to press: somebody following a link to their trainer's session arrived at a closed
+    // page with the site header gone, and the only way on was to guess a URL. Two ways out - in,
+    // and back - and signing in returns to the session rather than to the home page, because the
+    // link somebody sent you is the thing you were trying to open.
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className={TEXT.screen}>Play together</h1>
@@ -141,6 +156,16 @@ export default function ZooTogether() {
           A shared session remembers who sat where and picks up where you left it, so it needs
           you signed in. The single-player game does not.
         </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <Button asChild>
+            <Link to="/auth" onClick={() => {
+              sessionStorage.setItem('auth:returnTo', `${location.pathname}${location.search}`);
+            }}>Sign in and carry on</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/zoo-game">Play on your own instead</Link>
+          </Button>
+        </div>
       </div>
     );
   }

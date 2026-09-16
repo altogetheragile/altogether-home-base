@@ -12,7 +12,7 @@ import { footprintFor } from './design';
 import { CANVAS_W, PLAY_H } from './parkLayout';
 import { ParkPlan } from './ParkPlan';
 import { zonePlots } from './parkZones';
-import { DOCKED_BAR_H } from './ActionBar';
+import { DOCKED_BAR_H, DOCK_GUTTER } from './ActionBar';
 import { CopyEditor } from './CopyEditor';
 import { DialEditor } from './DialEditor';
 import { TrailButton } from './TrailButton';
@@ -163,7 +163,7 @@ function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: bo
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onMoveInside, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector, onRemoveRun,         onSetSize, onAddCopy, onSetCopyPiece, onRemovePlant, onMoveCopy,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onMoveInside, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector, onRemoveRun,         onSetSize, onAddCopy, onSetCopyPiece, onRemovePlant, onMoveCopy,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onSetTeaching, onMarkTaught, onBack, copy, seat = null, observer, covering, away }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
   canBuild?: boolean;
   /** The way back to the site and who is signed in, handed in rather than reached for: the shell
@@ -190,7 +190,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   /** Dropping a thing on the park is the moment it exists: the draft becomes the item's design.
    *  Until this ran, a habitat somebody had plainly built had nothing anybody could accept. */
   onCommitBuild?: (id: string) => void;
-  backlogTab?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onTurn?: (id: string, rot: number) => void; onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onRemoveRun?: (connectorId: string) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemovePlant?: (id: string, index: number) => void; onAddCopy?: (id: string, piece: string) => void; onSetCopyPiece?: (id: string, index: number, piece: string) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[] }) {
+  backlogTab?: ReactNode; building?: string | null; onOpenBuild?: (id: string | null) => void; edit?: EditApi; onStartHere?: (id: string, pos: { x: number; y: number }) => void; onPlaceItem?: (id: string, pos: { x: number; y: number }) => void; onTurn?: (id: string, rot: number) => void; onMoveInside?: (id: string, kind: 'water' | 'flora', index: number, spot: { x: number; y: number }) => void; onSetPathStyle?: (key: string) => void; onAddConnector?: (c: ZooConnector) => void; onRemoveRun?: (connectorId: string) => void; onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void; onDeleteConnector?: (id: string) => void; deployMode?: string | null; deployStyle?: { thickness: number; color: string } | null; deployAcs?: { index: number; label: string; confirmed: boolean; placement: boolean }[]; onFinishDeploy?: () => void; onImprove?: (id: string) => void; onSetSpot?: (id: string, spot: { x: number; y: number }) => void; onSetMemberSpot?: (id: string, member: number, spot: { x: number; y: number }) => void; onSetSize?: (id: string, size: { w: number; h: number }) => void; onSetRot?: (id: string, rot: number) => void; onMoveCopy?: (id: string, index: number, pos: { x: number; y: number }) => void; onRemovePlant?: (id: string, index: number) => void; onAddCopy?: (id: string, piece: string) => void; onSetCopyPiece?: (id: string, index: number, piece: string) => void; onNest?: (id: string, enclosureId: string, spot: { x: number; y: number }) => void; onUnnest?: (id: string) => void; onSetDod?: (dod: string[]) => void; onSetDor?: (dor: string[]) => void; onSetProductGoal?: (goal: string) => void; onSave?: () => void; onOpenSaves?: () => void; onPoRefine?: () => void; poRefining?: boolean; poNote?: string | null; onDismissPoNote?: () => void; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void; onSetTeaching?: (on: boolean) => void; onMarkTaught?: (id: string) => void; onBack?: (phase: string) => void; copy?: { overrides: Record<string, string>; onChanged: (key: string, value: string) => void }; seat?: SeatName | null; observer?: boolean; covering?: SeatName[];
+  /** Of those, the ones somebody is still holding and is not here for. */
+  away?: SeatName[] }) {
   // The navigation is the three artifacts. A learner who can name the tabs can name the artifacts,
   // which is most of what this game is for - so Product Backlog, Sprint Backlog and Increment are
   // the whole of it, and there is no tab called Build or Sprint. Building is the Sprint Backlog in
@@ -459,7 +461,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
 
       {/* The band: who does what now, and what each of the five is doing. The accountabilities were
           invisible - a row of name chips that said nothing about what any of them were for. */}
-      <SeatBand state={state} seat={seat} covering={covering} observer={observer} onWho={onWho} />
+      <SeatBand state={state} seat={seat} covering={covering} away={away} observer={observer} onWho={onWho} />
 
       {/* Body: one artifact at a time, filling the width. Each pane stays mounted and is toggled
           with CSS, so the day clock, a half-finished design and the park's own scroll all survive
@@ -471,7 +473,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
         <div className={cn('h-full overflow-y-auto px-2 py-3 sm:px-3', tab !== 'backlog' && 'hidden')}>
           {/* Wide, because this tab is two panes now - the artifact and the bench that works on it.
               A 1024px column on a 1440px screen made the bench a column of wrapped words. */}
-          <div className="mx-auto max-w-[1600px] space-y-3 pb-24">
+          <div className={cn('mx-auto max-w-[1600px] space-y-3', DOCK_GUTTER)}>
             {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
             {/* The artifact is a place you can work, whatever else is going on. Refinement is the
                 screen on this tab before the first Sprint; for the rest of the game the tab is the
@@ -502,7 +504,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               messages and the studio off the bottom of it. */}
           <div className={cn('flex min-h-0 w-full flex-1 flex-col gap-3',
             onSprint ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-stretch'
-              : 'mx-auto max-w-[1600px] pb-24')}>
+              : cn('mx-auto max-w-[1600px]', DOCK_GUTTER))}>
             {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             {onSprint && (
               // Stacked, the park keeps its own height under the board and the pane scrolls past it;
@@ -628,7 +630,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {/* The room for the dock is INSIDE the panel. On the scroll container it is padding
                 below the scrolled content, which browsers disagree about: the last line ended up
                 under the Back/Next pill, which is the one thing that must never be covered. */}
-            <div className="flex min-h-full w-full flex-col rounded-xl border border-border bg-background p-3 pb-20 shadow-xl">
+            <div className={cn('flex min-h-full w-full flex-col rounded-xl border border-border bg-background p-3 shadow-xl', DOCK_GUTTER)}>
               {children}
             </div>
           </div>
