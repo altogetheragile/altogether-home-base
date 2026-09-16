@@ -970,8 +970,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   // the same wood rather than two woods that nearly agree.
   hedgePoints(HEDGE_STEP * 2.8).forEach(({ x, y, n, piece, size }) => {
     const p = pieceByKey(piece);
-    place(treeProp(p?.type, piece), x, y, u * HEDGE_R * 0.05 * size, `hedge-${n}`,
-      undefined, foliageTint(p?.colors.foliage), { 'data-prop': 'hedge', 'data-tree': piece });
+    const drawing = treeProp(p?.type, piece);
+    place(drawing, x, y, u * HEDGE_R * 0.05 * size, `hedge-${n}`,
+      undefined, treeTint(drawing, p?.colors.foliage), { 'data-prop': 'hedge', 'data-tree': piece });
   });
 
   // A bay's x,y is its CENTRE, the same as a parked car's - so the markings line up with what is
@@ -1791,12 +1792,16 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // two drawings have disagreed about the same piece of state.
         const grown = plantScale(working(it));
         const plant = (name: string, wx: number, wy: number, key: string, foliage?: string, copy?: number) =>
-          place(name, wx, wy, u * 1.9 * grown * (FLORA_SCALE[name] ?? 1), key, undefined, foliageTint(foliage),
+          place(name, wx, wy, u * 1.9 * grown * (FLORA_SCALE[name] ?? 1), key, undefined, treeTint(name, foliage),
             // One planting is several trees, and each of them stands somewhere of its own. Tagged
             // as which one it is, or dragging the third tree walked the whole planting across the
             // park - they are all drawn from the same item.
             copy === undefined ? { 'data-item': it.id } : { 'data-copy': `${it.id}:${copy}` });
-        plant(treeProp(type), c.x, c.y, `t-${it.id}`, working(it).colors.foliage);
+        // ...and WHICH tree it is. This passed the type alone - 'tree' for all five kinds - so an
+        // item's own plant came out as the sheet's oak however it had been chosen, while the copies
+        // beside it (which do pass the piece) came out right. The two halves of one planting
+        // disagreed with each other.
+        plant(treeProp(type, working(it).parts.piece), c.x, c.y, `t-${it.id}`, working(it).colors.foliage);
         // The rest of what this item plants. One planting PBI is several trees, and it has to be
         // several here too - otherwise switching to this view loses everything but the first.
         for (const [i, k] of (it.copies ?? []).entries()) {
@@ -2031,6 +2036,15 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
  *  sign on it: it is smaller than a kiosk, and much smaller than a tree. */
 const FLORA_SCALE: Record<string, number> = { signpost: 0.42, hedge: 0.8, fountain: 0.9 };
 
+/** The foliage colour to paint a tree with, or nothing where there is no foliage to paint.
+ *
+ *  The tint is a filter over the whole drawing, trunk included - which is fine on a crown that
+ *  fills the picture and wrong on a bare tree, where the only thing it can recolour is the bark. A
+ *  bare oak came out aubergine. */
+function treeTint(name: string, foliage?: string): Tint | undefined {
+  return name === 'bare' ? undefined : foliageTint(foliage);
+}
+
 function treeProp(type?: string, piece?: string): string {
   // What it is beats what it is called. This used to pick between the two trees on whether the
   // type's name had an even number of letters, which drew a signpost as a sapling.
@@ -2040,9 +2054,15 @@ function treeProp(type?: string, piece?: string): string {
     case 'hedge': case 'shrub': case 'bush': case 'flowers': return 'hedge';
     default: break;
   }
-  // Two trees and several kinds of tree, so a mixed planting is visibly mixed rather than a row of
-  // the same drawing: the taller one for the taller pieces.
-  return piece === 'pine' || piece === 'palm' ? 'treeTall' : 'tree';
+  // Which KIND of tree. The sheet has one tree - the two cuts this used to pick between are the
+  // same drawing at two places in the scene - so the kinds it has no drawing of are drawn, in the
+  // sheet's palette, and answered by `prop()` like any other. Reported from playing it: "the views
+  // are out of sync - trees look different in the build view but the same on the isometric view."
+  //
+  // An oak and a blossom are the sheet's tree, the blossom wearing its own pink through the same
+  // foliage tint every plant goes through. A conifer, a palm and a bare tree are drawn.
+  if (piece === 'pine' || piece === 'palm' || piece === 'bare') return piece;
+  return 'tree';
 }
 
 /** Some amenities are a thing the sheet already has a drawing of, and a drawn bench beats a box. */
