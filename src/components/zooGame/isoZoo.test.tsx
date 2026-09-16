@@ -922,6 +922,54 @@ describe('a river is a decision, not a fixture', () => {
   });
 });
 
+describe('the kind of tree you chose', () => {
+  // The plan drew five kinds and this view drew one, so the two disagreed about the same piece of
+  // state. Reported from playing it: "the views are out of sync - trees look different in the build
+  // view but the same on the isometric view."
+  //
+  // The licensed sheet has exactly ONE tree: the two cuts this used to pick between are the same
+  // drawing at two places in the scene. So the kinds it has no drawing of are drawn - see
+  // art/isoTrees.ts - and answered by `prop()` like anything else.
+  const planted = (piece: string): ZooGameState => ({
+    ...initialZooState(1),
+    zones: ['Big Cats'],
+    backlog: [item({ id: 'p', name: 'Planting', category: 'flora', template: 'tree',
+      status: 'open', pos: { x: 500, y: 700 },
+      design: { parts: { type: 'tree', piece }, colors: { foliage: '#4e9146', trunk: '#7a5228' } } })],
+  }) as unknown as ZooGameState;
+
+  const drawn = (piece: string) => {
+    const { container } = render(<IsoZoo state={planted(piece)} height={460} />);
+    const el = container.querySelector('[data-item="p"]');
+    return el ? el.outerHTML : '';
+  };
+
+  it('stands up the kind that was chosen, not one tree for all of them', () => {
+    const kinds = ['oak', 'pine', 'palm', 'bare'];
+    const art = kinds.map(drawn);
+    expect(art[0], 'nothing was planted at all').toBeTruthy();
+    const same: string[] = [];
+    for (let i = 0; i < kinds.length; i++) {
+      for (let j = i + 1; j < kinds.length; j++) if (art[i] === art[j]) same.push(`${kinds[i]} and ${kinds[j]}`);
+    }
+    expect(same, `drawn identically: ${same.join(', ')}`).toEqual([]);
+  });
+
+  it('does not paint a bare tree with a foliage colour', () => {
+    // The tint is a filter over the whole drawing, trunk included: right on a crown that fills the
+    // picture, wrong on a tree that is all bark. A bare oak came out aubergine.
+    const { container } = render(<IsoZoo state={planted('bare')} height={460} />);
+    const el = container.querySelector('[data-item="p"]')!;
+    expect(el.closest('g[filter]'), 'the bare tree is wearing a foliage tint').toBeNull();
+  });
+
+  it('still paints the ones that have foliage', () => {
+    const { container } = render(<IsoZoo state={planted('pine')} height={460} />);
+    expect(container.querySelector('[data-item="p"]')!.closest('g[filter]'),
+      'a conifer lost its colour with the bare tree').toBeTruthy();
+  });
+});
+
 describe('animals move', () => {
   // Asked from playing it: "can the people and animals on the isometric view be animated at all?"
   // The people already did. Every animal in the zoo stood on its mark like a model in a shop window,

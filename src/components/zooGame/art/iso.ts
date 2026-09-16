@@ -1,4 +1,5 @@
 import { ISO_ART, type IsoProp } from './isoArt.generated';
+import { DRAWN_TREES } from './isoTrees';
 import { shade } from '../design';
 
 /** The park, seen from the corner.
@@ -102,8 +103,13 @@ export const TILE_SPREAD = 1.15;
 /** The screen width a footprint projects to - what a tile is sized against. */
 export const footprintWidth = (w: number, h: number, u: number): number => (w + h) * COS * u;
 
-/** A licensed prop, ready to place. */
-export const prop = (name: string): IsoProp | undefined => ISO_ART[name];
+/** A prop, ready to place - from the licensed sheet, or drawn where the sheet has nothing.
+ *
+ *  The sheet is one illustrator's park and it holds what it holds: one tree, several fences, a
+ *  fountain. Where the game needs something it has no drawing of - a conifer, a palm, a bare tree -
+ *  it is drawn in the sheet's own palette and answered from here, so everything that places a prop
+ *  goes on placing a prop. See `isoTrees.ts`. */
+export const prop = (name: string): IsoProp | undefined => ISO_ART[name] ?? DRAWN_TREES[name];
 
 /** Hand a tinted prop its colours. The drawing keeps its own shading - it is only the hue that is
  *  being replaced - so a fence can wear the colour of the zone it encloses. */
