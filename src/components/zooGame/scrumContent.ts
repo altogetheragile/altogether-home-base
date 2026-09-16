@@ -35,17 +35,24 @@ export interface ScrumCard {
 export const SCRUM_INTRO: {
   what: string;
   foundations: { name: string; text: string }[];
+  /** Not a foundation: the approach Scrum employs, on those two foundations. */
+  approach: { name: string; text: string };
   accountabilities: { name: string; text: string }[];
   artifacts: { name: string; commitment: string; text: string }[];
   events: { name: string; text: string }[];
   values: { name: string; text: string }[];
 } = {
   what: 'Scrum is a lightweight framework that helps people, teams and organisations generate value through adaptive solutions for complex problems. It is deliberately incomplete: it defines only the parts needed to make empiricism work, and leaves how you do the work to you.',
+  // Two, which is what the Guide says. Scrum is founded on empiricism and lean thinking; it
+  // EMPLOYS an iterative, incremental approach to optimise predictability and control risk. Listing
+  // the approach as a third foundation is a small thing to get wrong in a game whose job is to be
+  // right about this.
   foundations: [
     { name: 'Empiricism', text: 'Knowledge comes from experience, and decisions are made on what is observed. Its three pillars are transparency, inspection and adaptation.' },
     { name: 'Lean thinking', text: 'Reduce waste and focus on the essential. Work not serving the Product Goal or the Sprint Goal is waste.' },
-    { name: 'Iterative and incremental', text: 'Iterate to learn and improve each cycle; deliver in slices to realise value early. Either alone falls short - only iterating delays value, only delivering loses the feedback.' },
   ],
+  /** Not a foundation: the approach Scrum employs, on those two foundations. */
+  approach: { name: 'Iterative and incremental', text: 'Scrum employs an iterative, incremental approach to optimise predictability and control risk. Iterate to learn and improve each cycle; deliver in slices to realise value early. Either alone falls short - only iterating delays value, only delivering loses the feedback.' },
   accountabilities: [
     { name: 'Product Owner', text: 'Accountable for maximising the value of the product, and for the Product Backlog and its order.' },
     { name: 'Developers', text: 'Accountable for creating a usable Increment each Sprint, for quality, and for the Sprint Backlog.' },
@@ -81,6 +88,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     who: 'The Product Owner is accountable for it, and for making it transparent to everyone.',
     when: 'Before the work starts, and it holds until it is met or abandoned. A product has one Product Goal at a time.',
     how: 'Describe a future state of the product, not a list of features. It can be shaped as an objective and key results, or as an epic user story - the shape is yours.',
+    notScrum: 'Objectives and key results, and epic user stories, are ways of writing a goal that people bring to Scrum. The Guide asks only that a Product Goal describes a future state of the product.',
   },
   {
     id: 'product-backlog', kind: 'artifact', title: 'The Product Backlog',
@@ -164,7 +172,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     id: 'increment', kind: 'artifact', title: 'The Increment',
     summary: 'A usable stepping stone toward the Product Goal.',
     why: 'The entire point of a Sprint is to produce something usable. Value is only real once it is in someone’s hands.',
-    who: 'The Developers create it; the Product Owner decides when it is released.',
+    who: 'The Developers create it. When it is released is the Product Owner\u2019s call, and it can be released before the Sprint Review.',
     when: 'An Increment is born the moment an item meets the Definition of Done. There may be several in one Sprint.',
     how: 'It must be usable and additive to every Increment before it. It can be released during the Sprint: the Sprint Review is not a gate to releasing value.',
   },
@@ -174,7 +182,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'A slice has everything it needs to be eaten: sponge, filling, icing. A layer is a part - you need the others before anyone gets anything. Work sliced the second way looks like progress for weeks and delivers nothing, because none of it can be used until all of it is finished.',
     who: 'The Developers slice the work; the Product Owner orders it by the value each slice would deliver.',
     when: 'Whenever the Product Backlog is refined, and again at Sprint Planning when the Developers decide what they can actually finish.',
-    how: 'In this park a zone is a slice: somewhere to see an animal, an animal to see, and a path to walk in on. Deliver those and the gates open. Deliver eight habitats across six zones and you have laid a layer - real work, and nobody can visit any of it. Slicing is not in the Scrum Guide: the Guide asks that an Increment be usable and leaves the how to the Developers. This is one of the ways.',
+    how: 'In this park an area is a slice: somewhere to see an animal, an animal to see, and a path to walk in on. Deliver those and the gates open. Deliver eight habitats across six areas and you have laid a layer - real work, and nobody can visit any of it. Slicing is not in the Scrum Guide: the Guide asks that an Increment be usable and leaves the how to the Developers. This is one of the ways.',
   },
   {
     id: 'sprint-review', kind: 'event', title: 'The Sprint Review',

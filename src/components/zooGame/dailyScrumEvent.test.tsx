@@ -143,6 +143,24 @@ describe('what the decision may claim', () => {
   });
 });
 
+describe('what the Guide actually says about a block', () => {
+  it('labels the block-versus-impediment split as a practice, not the Guide', () => {
+    // The game flags every other extra-Guide practice it teaches - user stories, velocity, slicing,
+    // a Definition of Ready. Telling a "block" from an "impediment" is a lens some coaches teach on
+    // top of the Guide, which has impediments and asks the Scrum Master to cause their removal, and
+    // it was the one taught as though it came from the Guide.
+    const s = scrum({
+      pendingImpediment: { id: 'imp', kind: 'block', title: 'The sign supplier changed the design',
+        detail: 'The new sign does not match the area.', itemId: undefined } as never,
+    });
+    const { container } = render(<MemoryRouter><DailyScrum state={s} onHold={() => {}} onSkip={() => {}} onDrop={() => {}} onAnswer={() => {}} /></MemoryRouter>);
+    expect(container.textContent, 'the block/impediment split is taught as the Guide’s')
+      .toMatch(/not the Guide/i);
+    expect(container.textContent, 'what the Guide does say is left out')
+      .toMatch(/cause their removal/i);
+  });
+});
+
 describe('holding the event when something has surfaced', () => {
   it('offers the Daily Scrum itself, not only answers to the impediment', () => {
     // Reported from playing it: "there is no option to perform a Daily Scrum on the takeover."

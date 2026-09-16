@@ -200,6 +200,15 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
       <div className="grid gap-3 sm:grid-cols-2">
         <Section title="Founded on" tone="founded" icon={Microscope}>
           {SCRUM_INTRO.foundations.map((f, i) => <Row key={f.name} name={f.name} text={f.text} icon={FOUND_ICON[i]} />)}
+          {/* Under the two, not beside them. Scrum is founded on empiricism and lean thinking; the
+              iterative, incremental approach is what it EMPLOYS on that footing, and listing it as
+              a third foundation is a small thing to get wrong on the page that exists to be right
+              about this. */}
+          <p className="mt-1.5 border-t border-border pt-1.5 text-[11px] leading-snug text-muted-foreground">
+            <strong className="font-semibold text-foreground">{SCRUM_INTRO.approach.name}</strong>{' '}
+            is not a third foundation: it is the approach Scrum employs on those two.{' '}
+            {SCRUM_INTRO.approach.text.replace(/^Scrum employs an iterative, incremental approach to optimise predictability and control risk\. /, '')}
+          </p>
         </Section>
         <Section title="Three accountabilities" tone="team" icon={Users}>
           {SCRUM_INTRO.accountabilities.map((a, i) => <Row key={a.name} name={a.name} text={a.text} icon={TEAM_ICON[i]} />)}

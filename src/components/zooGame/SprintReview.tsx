@@ -418,7 +418,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
             <ExplainButton cards={['slices', 'increment']} compact />
           </div>
           {openZones.length > 0 && (
-            <p className="mb-1"><strong>{openZones.join(' and ')}</strong> {openZones.length === 1 ? 'is a zone' : 'are zones'} anyone
+            <p className="mb-1"><strong>{openZones.join(' and ')}</strong> {openZones.length === 1 ? 'is an area' : 'are areas'} anyone
               can walk into - somewhere to see an animal, an animal to see, and a path to walk in on. A slice of the zoo
               rather than a layer of it.</p>
           )}
