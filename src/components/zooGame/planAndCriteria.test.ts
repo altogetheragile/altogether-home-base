@@ -109,7 +109,11 @@ describe('a plan with no work behind it', () => {
       const g = startItem({ ...s, backlog: s.backlog.map((it) => (it.id === item.id
         ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState, item.id, 'developer');
       const after = applyParkChecks(g).backlog.find((it) => it.id === item.id)!;
-      const ticked = (after.tasks ?? []).filter((t) => t.done).map((t) => t.label);
+      // The sign-off is not part of this. It is derived from the criteria rather than from the
+      // preset, so it ticks when the park can already answer everything an item asks - which is
+      // legitimate, and is what a facility standing in reach of the way in looks like. What this
+      // test is about is a plan that ticks itself off a drawing nobody has touched.
+      const ticked = (after.tasks ?? []).filter((t) => t.done && !isSignOffTask(t.label)).map((t) => t.label);
       expect(ticked, `${item.name}: the park ticked ${ticked.join(', ')} off a plan nobody had started`)
         .toEqual([]);
       expect(after.design, `${item.name} counted as built before anybody built it`).toBeFalsy();

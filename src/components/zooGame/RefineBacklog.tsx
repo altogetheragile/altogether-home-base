@@ -67,6 +67,8 @@ interface RefineBacklogProps {
   onMoveBefore: (id: string, beforeId: string) => void;
   onSetUseStories: (on: boolean) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
+  /** The Developers decide what will meet a need - the moment this screen exists for. */
+  onChooseSolution?: (id: string, pick: string) => void;
   onDeletePbi: (id: string) => void;
   onDuplicatePbi: (id: string) => void;
   /** Move on to Sprint Planning with the refined Backlog. */
@@ -94,7 +96,7 @@ interface RefineBacklogProps {
  *  worth ready at the top is enough, and the rest is built out through the Sprints - which
  *  is what actually happens, and what costs capacity you can see. You can still tidy the
  *  list here; the screen just stops telling you to finish it first. */
-export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPlan, onOpenGround, teachCard, onMarkTaught }: RefineBacklogProps) {
+export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onChooseSolution, onDeletePbi, onDuplicatePbi, onPlan, onOpenGround, teachCard, onMarkTaught }: RefineBacklogProps) {
   const [lengthOpen, setLengthOpen] = useState(true);
   // Which item is on the bench. Nothing, until you pick one.
   const [focus, setFocus] = useState<string | null>(null);
@@ -154,7 +156,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
             scrolled while the list on the left did not. Reported from playing it. */}
         <div className="pr-1">
         <ProductBacklogSidebar state={state} mode="refine" compact focus={focus} onFocus={setFocus} onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
-          onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+          onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
   
         </div>

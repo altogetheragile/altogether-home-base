@@ -1,7 +1,7 @@
 import {
   Cat, Dog, Bird, Fish, Squirrel, PawPrint, Fence, Layers, Trees, Shrub, Flower2, Droplet, Droplets,
   Waves, Mountain, Signpost, Spline, DoorOpen, Route, Coffee, IceCream, Store, Bath, Armchair,
-  Utensils, Package, type LucideIcon,
+  Utensils, Package, HelpCircle, type LucideIcon,
 } from 'lucide-react';
 
 // The icon for a Product Backlog item, picked from what the item actually is rather than from its category.
@@ -17,13 +17,16 @@ export type IconKey =
   | 'cat' | 'dog' | 'bird' | 'fish' | 'squirrel' | 'paw' | 'fence' | 'epic'
   | 'tree' | 'shrub' | 'flower' | 'pond' | 'fountain' | 'river' | 'bridge' | 'rocks'
   | 'signpost' | 'entrance' | 'path' | 'cafe' | 'kiosk' | 'shop' | 'toilets' | 'seating'
-  | 'food' | 'thing';
+  | 'food' | 'need' | 'thing';
 
 export const ICONS: Record<IconKey, LucideIcon> = {
   cat: Cat, dog: Dog, bird: Bird, fish: Fish, squirrel: Squirrel, paw: PawPrint, fence: Fence,
   epic: Layers, tree: Trees, shrub: Shrub, flower: Flower2, pond: Droplet, fountain: Droplets,
   river: Waves, bridge: Spline, rocks: Mountain, signpost: Signpost, entrance: DoorOpen, path: Route,
   cafe: Coffee, kiosk: IceCream, shop: Store, toilets: Bath, seating: Armchair, food: Utensils,
+  // A need has no picture of a thing, because nobody has chosen the thing yet. That is the point
+  // of it, so the icon says so rather than guessing at a building.
+  need: HelpCircle,
   thing: Package,
 };
 
@@ -80,7 +83,7 @@ const BY_WORD: [RegExp, IconKey][] = [
 
 /** Category -> icon, the last resort: an enclosure is a fence, an animal a paw print. */
 const BY_CATEGORY: Record<string, IconKey> = {
-  epic: 'epic', enclosure: 'fence', exhibit: 'paw', amenity: 'shop', flora: 'tree', path: 'path',
+  need: 'need', epic: 'epic', enclosure: 'fence', exhibit: 'paw', amenity: 'shop', flora: 'tree', path: 'path',
 };
 
 type IconItem = { name?: string; category?: string; template?: string; services?: 'food' | 'toilet' | 'rest' };
@@ -99,6 +102,9 @@ export function iconKey(item: IconItem): IconKey {
   // - the thing that makes it a tank is that it holds water. Not a fish, which would put it back in
   // the trap above.
   if (item.category === 'enclosure' && item.template === 'tank') return 'pond';
+  // A need is a need whatever its words are: "Somewhere to eat" must not pick up the cafe icon
+  // from the word "eat" and quietly answer the question the Developers have not answered yet.
+  if (item.category === 'need') return 'need';
   if (item.category === 'epic' || item.category === 'enclosure' || item.category === 'path') return BY_CATEGORY[item.category];
   const name = item.name ?? '';
   for (const [re, key] of BY_WORD) if (re.test(name)) return key;

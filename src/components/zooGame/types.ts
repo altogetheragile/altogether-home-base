@@ -160,7 +160,15 @@ export interface SignalCall {
  *  into smaller PBIs; enclosure = a habitat you build FIRST (its footprint and fences),
  *  then populate with animals; exhibit = an animal that lives inside an enclosure; amenity
  *  = a facility (cafe/toilets/seating); flora = scenery/planting. */
-export type ItemCategory = 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora' | 'path';
+/** What a Product Backlog item IS.
+ *
+ *  `need` is the one that is not a thing. Every other category names a solution - an enclosure, a
+ *  path - which is the Product Owner choosing how, and how is the Developers'. A need says what is
+ *  wanted and leaves the answer open until somebody whose job it is decides.
+ *
+ *  It is not a replacement. A bridge over the river is a bridge, and the difference between a need
+ *  and a specification is itself worth teaching, so both live on the same Product Backlog. */
+export type ItemCategory = 'need' | 'epic' | 'enclosure' | 'exhibit' | 'amenity' | 'flora' | 'path';
 
 /** One thing an epic contains, ready to be split out into its own PBI(s). An exhibit
  *  member becomes an enclosure PBI plus the animal PBI that lives in it (the dependency);
@@ -189,6 +197,12 @@ export interface EpicMember {
 export interface BacklogItem {
   id: string;
   name: string;
+  /** What this was asked for, when the Developers have since chosen how to meet it.
+   *
+   *  A need called "Somewhere to eat" becomes a Kiosk, and the name follows the choice because the
+   *  board is about work now. This keeps the question that was asked, so the Review can say what
+   *  was wanted rather than only what was built. */
+  needName?: string;
   /** Optional user story ("As a ... I want ... so that ...") - a richer way to
    *  express the item's value. The name stays as the short label. */
   story?: string;
@@ -696,6 +710,8 @@ export type ZooAction =
   | { type: 'SET_SCRUM_AT'; at: 'start' | 'end' }
   | { type: 'SET_ENCLOSURE'; id: string; size: 'small' | 'medium' | 'large' }
   | { type: 'SET_SERVICES'; id: string; services: 'food' | 'toilet' | 'rest' | null }
+  /** The Developers decide what will meet a need. `pick` is a toolbox item's name. */
+  | { type: 'CHOOSE_SOLUTION'; id: string; pick: string }
   | { type: 'SET_POS'; id: string; pos: { x: number; y: number } }
   | { type: 'SPLIT_EPIC'; id: string; memberIds: string[] }
   | { type: 'ADD_PBI'; draft: PbiDraft }
