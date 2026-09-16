@@ -12,7 +12,7 @@ import { whereItStands, groundSize } from './parkModel';
 import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
-import { TOOLBOX } from './toolboxItems';
+import { TOOLBOX, noOnePieceMeets } from './toolboxItems';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
@@ -2562,7 +2562,16 @@ export function notReady(item: BacklogItem, state?: ZooGameState): string | null
   // A need is not too big and it is not unsized through neglect: nobody has decided what the work
   // IS yet. Saying "not sized" would send the Developers to the planning poker, which is the wrong
   // conversation - what is missing is the decision, and sizing follows it.
-  if (item.category === 'need') return 'Nobody has decided what will meet this - the Developers choose, at Refinement';
+  //
+  // ...unless it is asking for more than one thing, and then it IS too big. Refinement breaks a
+  // composite item into fine-grained ones that are ready for a Sprint, and the game can tell which
+  // is which rather than taking anybody's word for it: if nothing in the catalogue could settle
+  // everything this asks, no choice the Developers make will do it, and the answer is to split.
+  if (item.category === 'need') {
+    return noOnePieceMeets(item.acceptance ?? []).length
+      ? 'This asks for more than one thing - split it into items that could each be built'
+      : 'Nobody has decided what will meet this - the Developers choose, at Refinement';
+  }
   if (item.unsized) return 'Not sized yet - the Developers size it in Refinement';
   if (!item.acceptance.length) return 'No acceptance criteria agreed';
   return null;
