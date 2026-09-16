@@ -170,6 +170,12 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   const [fixing, setFixing] = useState<string | null>(null); // refining an item mid-Sprint
   const [writing, setWriting] = useState(false);              // writing a new one, mid-Sprint
   const [showToolbox, setShowToolbox] = useState(false);
+  // The last day asks once before it ends the Sprint. Held as the day it was answered for rather
+  // than a flag an effect resets: a yes belongs to one day, and derived that way it cannot outlive
+  // it or cost a second render to clear.
+  const [confirmedOn, setConfirmedOn] = useState<string | null>(null);
+  const thisDay = `${state.sprintNumber}:${state.dayNumber}`;
+  const endingConfirmed = confirmedOn === thisDay;
   // In-progress design, kept here (the board stays mounted through the Daily Scrum)
   // so an unfinished animal survives the day ending and resumes the next day.
   const committed = state.backlog.filter((it) =>
@@ -555,7 +561,11 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                       onDragOver={(e) => { if (drag) e.preventDefault(); }}
                       onDrop={(e) => { e.preventDefault(); if (drag) { onDropFromSprint(drag.id); setDrag(null); setDropCol(null); } }}
                       className="mt-1 rounded-lg border-2 border-dashed border-amber-400/70 bg-amber-500/[0.06] px-2.5 py-2 text-[11px]">
-                      <span className="font-semibold text-amber-700 dark:text-amber-300">Hand it back</span>
+                      {/* Named for where it goes. Two amber refusals carried the word "back" and
+                          meant opposite things: this one takes an item OUT of the Sprint, and the
+                          Product Owner's takes built work back to Doing, inside it. One word, two
+                          destinations, and only the sub-line to tell them apart. */}
+                      <span className="font-semibold text-amber-700 dark:text-amber-300">Hand it back to the Product Backlog</span>
                       <span className="block text-muted-foreground">
                         Drop something here to return it to the Product Backlog. The Product Owner is told, and the points
                         come back out of the forecast.
@@ -620,7 +630,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                 </BoardColumn>
                 </div>
                 <div data-column="done" {...dropProps('done')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built, accepted and open">
+                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built and accepted. Opening it to visitors is the decision after.">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
                       or hold it. A whole column for "Done but not opened" said that badly: since the
@@ -793,13 +803,28 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           if (why === 'blocked') return 'Nothing in this Sprint can start: what is here is waiting on something that is not.';
           return undefined;
         })()}>
-          <Button onClick={onEndDay}>
-            {state.dayNumber === state.sprintDays
-              ? 'End day \u2192 Review'
-              : state.dailyScrumAt === 'start'
-                ? `End Day ${state.dayNumber} \u2192 Day ${state.dayNumber + 1} Scrum`
-                : `End Day ${state.dayNumber} \u2192 its Scrum`}
-          </Button>
+          {/* Ending a day gives back what is left of it, and the last day of a Sprint ends the
+              Sprint - the work still in Doing goes back to the Product Backlog at the Review. On
+              the last day that is worth saying before the press, not after it. It is said here
+              rather than in a dialog because a dialog over every day would be a dialog nobody
+              reads by Sprint 2. */}
+          {state.dayNumber === state.sprintDays && !endingConfirmed ? (
+            <Button data-part="end-sprint" variant="destructive"
+              onClick={() => setConfirmedOn(thisDay)}>
+              End the Sprint{doing.length > 0 ? ` \u00b7 ${doing.length} unfinished` : ''} &rarr;
+            </Button>
+          ) : (
+            <Button data-part={state.dayNumber === state.sprintDays ? 'end-sprint-confirm' : 'end-day'}
+              onClick={onEndDay}>
+              {state.dayNumber === state.sprintDays
+                ? doing.length > 0
+                  ? `Yes \u00b7 ${doing.length} go back to the Product Backlog`
+                  : 'Yes, go to the Review'
+                : state.dailyScrumAt === 'start'
+                  ? `End Day ${state.dayNumber} \u2192 Day ${state.dayNumber + 1} Scrum`
+                  : `End Day ${state.dayNumber} \u2192 its Scrum`}
+            </Button>
+          )}
         </ActionBar>
       )}
 

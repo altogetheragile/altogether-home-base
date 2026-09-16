@@ -37,7 +37,14 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
   const members = epic.epicMembers ?? [];
   const [picked, setPicked] = useState<Set<string>>(() => new Set(members.map((m) => m.id)));
   const toggle = (id: string) => setPicked((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const count = members.filter((m) => picked.has(m.id)).reduce((n, m) => n + (m.kind === 'exhibit' ? 2 : 1), 0);
+  const taken = members.filter((m) => picked.has(m.id));
+  // Two numbers, and they are not the same number. `count` is how many PBIs come out - an animal
+  // makes two, an enclosure and the animal that lives in it - and `taken.length` is how much of the
+  // epic is leaving. Comparing the PBI count against the member count said "fully split, so it
+  // leaves the Product Backlog" while a member was still ticked off, which is the panel telling the
+  // player the opposite of what the press does.
+  const count = taken.reduce((n, m) => n + (m.kind === 'exhibit' ? 2 : 1), 0);
+  const whole = taken.length === members.length;
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-muted-foreground">Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). Untick anything you don&rsquo;t want yet - the epic stays for the rest.</p>
@@ -56,6 +63,22 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
           </li>
         ))}
       </ul>
+      {/* What splitting DOES, before the press rather than after it.
+          
+          The review that asked for a confirm here said splitting "can delete the epic", and the
+          engine says otherwise: what you leave unticked stays ON the epic, which stays on the
+          Product Backlog, and the epic only goes when there is nothing left in it. So this is not a
+          warning, it is the sentence that was missing - the act was reversible all along and nothing
+          on the screen said so. A confirm dialog over a safe act teaches somebody to fear it. */}
+      {count > 0 && (
+        <p data-part="split-leaves" className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+          {whole
+            ? <>All {members.length} come out as {count} {count === 1 ? 'item' : 'items'}, and {epic.name} is fully split, so it leaves the Product Backlog.</>
+            : <>{count} {count === 1 ? 'item comes' : 'items come'} out. The other {members.length - taken.length}{' '}
+                {members.length - taken.length === 1 ? 'stays' : 'stay'} on {epic.name}, which is still on the
+                Product Backlog: {members.filter((m) => !picked.has(m.id)).map((m) => m.name).join(', ')}.</>}
+        </p>
+      )}
       <div className="flex flex-wrap items-center justify-end gap-2">
         {!!costSeconds && (
           <span className="text-[11px] text-amber-700 dark:text-amber-300">
@@ -400,7 +423,10 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                     <button type="button" data-part="send-back-ask"
                       onClick={(e) => { e.stopPropagation(); setRefusing(true); }}
                       className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-amber-400/70 px-2 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-500/10 dark:text-amber-300')}>
-                      <Undo2 className="h-3 w-3" /> Send it back &middot; {criteria.length - acMet} not met
+                      {/* "to Doing", because the other "back" on this screen means out of the
+                          Sprint altogether. Refused work does not leave the Sprint: it goes back to
+                          the Developers, inside it, and is asked again. */}
+                      <Undo2 className="h-3 w-3" /> Send it back to Doing &middot; {criteria.length - acMet} not met
                     </button>
                   )}
                 </div>

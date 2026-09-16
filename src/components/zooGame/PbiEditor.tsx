@@ -234,10 +234,10 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
         <div className="flex gap-2">
           <select value={zoneSel} onChange={(e) => setZoneSel(e.target.value)} className={cn(SURFACE.inset, 'px-2 py-1.5 text-sm')}>
             {zones.map((z) => <option key={z} value={z}>{z}</option>)}
-            <option value={NEW_ZONE}>+ New zone…</option>
+            <option value={NEW_ZONE}>+ New area…</option>
           </select>
           {zoneSel === NEW_ZONE && (
-            <input value={newZone} onChange={(e) => setNewZone(e.target.value)} placeholder="Zone name"
+            <input value={newZone} onChange={(e) => setNewZone(e.target.value)} placeholder="Area name"
               className={cn(SURFACE.inset, 'min-w-0 flex-1 px-2 py-1.5 text-sm outline-none focus:border-primary')} />
           )}
         </div>

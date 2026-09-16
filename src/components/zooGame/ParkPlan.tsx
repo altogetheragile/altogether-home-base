@@ -22,6 +22,14 @@ const APRON_H = 60;
 const WAY_IN_W = 86;
 /** Shorter than this and it is a slip of the hand rather than a path. About a pace on the park. */
 const MIN_RUN = 26;
+/** How far one press of an arrow key moves something, in park pixels. A pace, and ten at once with
+ *  Shift.
+ *
+ *  Sized against the things being moved rather than picked: a medium habitat is 132 across and the
+ *  park is 1760, so 16 is an eighth of a habitat - fine enough to slide one off the thing it is
+ *  standing on - and a Shift stride of 160 is about one habitat, so crossing the park is eleven of
+ *  them. At 8 it took 220 presses to cross, which is a keyboard path in name only. */
+const PACE = 16;
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
  *  through the picture's box, so widening the box does not move anything standing on the park. */
@@ -488,8 +496,47 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       {/* No selecting. Dragging across the park was painting the browser's own selection highlight
           over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
           there. Reported from playing it: "blue squares appear as trails." */}
-      <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view} role="img"
-        aria-label={`The zoo from above: ${boxes.length} things standing on it`}
+      <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view}
+        // Something waiting to be put down can be put down without a pointer: the park takes focus,
+        // the arrows walk the ghost about, and Enter sets it there. The verdict is the same one a
+        // click goes through, so what may stand where is one rule.
+        role={placing ? 'application' : 'img'}
+        tabIndex={placing ? 0 : undefined}
+        aria-label={placing
+          ? `Putting down ${state.backlog.find((it) => it.id === placing.id)?.name ?? 'it'}: arrow keys move it, Enter puts it down`
+          : `The zoo from above: ${boxes.length} things standing on it`}
+        onKeyDown={placing ? (e) => {
+          // Where the ghost starts, before any arrow has been pressed. A pointer starts it under
+          // the pointer, which is always somewhere the player chose; a keyboard has to be given a
+          // spot, and the middle of the item's OWN area is the one place it is certain to be
+          // allowed. Started at the item's resting place instead, a first Enter was refused as
+          // "outside the Big Cats area" from a corner nobody had aimed at, and there was nothing on
+          // screen to say which way to walk.
+          const item = state.backlog.find((it) => it.id === placing.id) ?? ({} as BacklogItem);
+          const plot = plotFor(state, item.zone);
+          const from = item.pos ?? (plot ? { x: (plot.x0 + plot.x1) / 2, y: (plot.y0 + plot.y1) / 2 } : null)
+            ?? restingPlace(item, placing, auto) ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
+          const at = ghost ?? verdict(placing.id, placing, from);
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (at.ok && onPlace) { onPlace(placing.id, { x: at.x, y: at.y }); setGhost(null); }
+            return;
+          }
+          const step = e.shiftKey ? PACE * 10 : PACE;
+          const by = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+          if (!by) return;
+          e.preventDefault();
+          setGhost(verdict(placing.id, placing, { x: at.x + by[0], y: at.y + by[1] }));
+        } : undefined}
+        // Taking focus shows where it would land. A pointer shows the ghost from the first move;
+        // by keyboard, without this, the first thing a player sees is the result of a press.
+        onFocus={placing ? () => {
+          const item = state.backlog.find((it) => it.id === placing.id) ?? ({} as BacklogItem);
+          const plot = plotFor(state, item.zone);
+          setGhost((g) => g ?? verdict(placing.id, placing, item.pos
+            ?? (plot ? { x: (plot.x0 + plot.x1) / 2, y: (plot.y0 + plot.y1) / 2 } : null)
+            ?? restingPlace(item, placing, auto) ?? { x: CANVAS_W / 2, y: PLAY_H / 2 }));
+        } : undefined}
         // Fitted to the room it is given rather than sized off its width, so the whole picture - the
         // promenade and the way in included - is always above the day's dock in the corner. Sized by
         // width, the park grew taller than its pane and the last band of it sat under the button:
@@ -757,6 +804,33 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           const x = b.at.x - b.size.w / 2, y = b.at.y - b.size.h / 2;
           return (
             <g key={b.item.id} data-plan-item={b.item.id}
+              // Reachable and movable without a pointer.
+              //
+              // Everything on the park was pointer-only: a thing could be picked up, dragged and
+              // dropped, and there was no other way to do any of it. The board's moves all have a
+              // keyboard path through the card - "Start it", "Move it to Done", "Hand it back" -
+              // and the park had none at all, which locks a keyboard user out of the half of the
+              // game where the building happens.
+              //
+              // Tab to it, Enter or Space opens it the way a press does, and the arrows move it a
+              // pace at a time - ten paces with Shift. It goes through the same verdict a drag
+              // does, so the rules about zones, water and standing on things are one rule, not two.
+              tabIndex={placing || tool === 'path' ? -1 : 0}
+              role="button"
+              aria-label={`${b.item.name}${on ? ', picked up' : ''}${onPlaceItem ? ' - arrow keys move it' : ''}`}
+              onKeyDown={placing || tool === 'path' ? undefined : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(b.item.id); return; }
+                const step = e.shiftKey ? PACE * 10 : PACE;
+                const by = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+                if (!by || !onPlaceItem) return;
+                e.preventDefault();
+                const v = verdict(b.item.id, b.size, { x: b.at.x + by[0], y: b.at.y + by[1] });
+                // Refused the same way a drag is refused, and for the same reasons: it simply does
+                // not go. The ghost says why for as long as the key is down.
+                setGhost(v);
+                if (v.ok) onPlaceItem(b.item.id, { x: v.x, y: v.y });
+              }}
+              onBlur={() => setGhost(null)}
               // While something is being put down, the things already standing keep out of the way:
               // the click that places a bridge over a river used to select the river first and open
               // it instead of the thing you had just placed.

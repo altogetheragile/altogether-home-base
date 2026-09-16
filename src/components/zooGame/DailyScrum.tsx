@@ -160,6 +160,14 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
                       : 'The Sprint Goal does not depend on it, and the Developers can clear their own blocks. Is this really yours?')
                     : 'It is beyond what the Developers can sort out between themselves, which is what makes it yours.'}
                 </div>
+                {/* Labelled the way slicing and velocity are. The Guide has impediments and says the
+                    Scrum Master causes their removal; the block-versus-impediment split is a lens
+                    some teach on top of that, and a game that flags every other extra-Guide practice
+                    should flag this one. */}
+                <div className="mt-1 text-[11px] italic text-muted-foreground/80">
+                  Telling a block from an impediment is a lens some coaches teach, not the Guide&rsquo;s.
+                  The Guide has impediments, and asks the Scrum Master to cause their removal.
+                </div>
               </div>
             </div>
           </div>

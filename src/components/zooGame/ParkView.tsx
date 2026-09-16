@@ -274,13 +274,13 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   const sites = standingOnPark(state).filter((st) => st.underWay).map((st) => st.item);
   const statsBar = (
     <div className={cn(SURFACE.card, PADDING.tight, 'flex flex-wrap items-center gap-x-5 gap-y-1.5')}>
-      <Stat icon={LayoutGrid} value={`${openSlices.length}/${slices.length}`} label="zones open"
+      <Stat icon={LayoutGrid} value={`${openSlices.length}/${slices.length}`} label="areas open"
         title={openSlices.length || started.length
           ? [
             openSlices.length ? `Open: ${openSlices.map((z) => z.zone).join(', ')}.` : '',
             started.length ? `Started but nobody can visit: ${started.map((z) => `${z.zone} (needs ${z.missing.join(' and ')})`).join('; ')}.` : '',
           ].filter(Boolean).join(' ')
-          : 'A zone opens when it has an animal to see and a path to walk in on.'} />
+          : 'An area opens when it has an animal to see and a path to walk in on.'} />
       <Stat icon={PawPrint} value={`${exhibits}`} label={exhibits === 1 ? 'exhibit' : 'exhibits'} />
       <Stat icon={Store} value={`${amenities}`} label={amenities === 1 ? 'amenity' : 'amenities'} />
       <Stat icon={Users} value={total ? total.toLocaleString() : '—'} label="visitors"

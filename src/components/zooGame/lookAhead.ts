@@ -77,7 +77,7 @@ export function lookAhead(state: ZooGameState): Proposal[] {
   const needs: { kind: 'path' | 'flora'; name: string; why: (z: string) => string; draft: (z: string) => PbiDraft }[] = [
     {
       kind: 'flora', name: 'Planting',
-      why: (z) => `${z} is coming up with nothing growing in it. Planting is what makes a zone feel like somewhere rather than a fenced field, and it is cheap next to a habitat.`,
+      why: (z) => `${z} is coming up with nothing growing in it. Planting is what makes an area feel like somewhere rather than a fenced field, and it is cheap next to a habitat.`,
       draft: (z) => ({ name: `${z} Planting`, category: 'flora', zone: z, template: 'tree', acceptance: floraAcceptance('tree') }),
     },
   ];

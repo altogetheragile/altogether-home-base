@@ -3180,7 +3180,7 @@ export function refinementTalk(state: ZooGameState, item: BacklogItem): {
   const built = state.backlog.filter((it) => it.category === item.category && (it.status === 'open' || it.status === 'done') && it.id !== item.id);
 
   // The Product Owner: why it is worth doing, and the trade-off they would accept.
-  const value = item.category === 'exhibit' ? `${item.name} is what visitors come for - it is the draw for this zone.`
+  const value = item.category === 'exhibit' ? `${item.name} is what visitors come for - it is the draw for its area.`
     : item.category === 'enclosure' ? `${item.name} is what makes its animals possible. On its own it is not a day out, so I want it small and sound rather than showy.`
     : item.category === 'amenity' ? `${item.name} is what keeps visitors here longer. It will not pull anyone in on its own, but without it they leave early.`
     : item.category === 'epic' ? `${item.name} is a whole area, and I would rather have one part of it open than all of it half-finished.`
