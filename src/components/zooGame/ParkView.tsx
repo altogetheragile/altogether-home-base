@@ -73,6 +73,8 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
 export interface EditApi {
   onDesign: (id: string, design: ItemDesign) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
+  /** What a facility offers the visitors, in the terms the simulation counts. */
+  onSetServices?: (id: string, services: 'food' | 'toilet' | 'rest' | null) => void;
   /** Put another thing inside a habitat. In the reducer, so pressing it twice puts two in. */
   onAddInside?: (id: string, kind: string) => void;
 }

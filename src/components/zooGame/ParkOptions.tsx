@@ -105,6 +105,8 @@ export interface ParkOptionsApi {
   onDesign: (id: string, design: ItemDesign) => void;
   onAddInside?: (id: string, kind: string) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
+  /** What a facility offers - the thing the visitors' needs are counted against. */
+  onSetServices?: (id: string, services: 'food' | 'toilet' | 'rest' | null) => void;
   onTurn?: (id: string, rot: number) => void;
   /** Take it off the park: it goes back into your hands to be put down again. */
   onUnplace?: (id: string) => void;
@@ -409,6 +411,29 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
           {BUILDING_TYPES.slice(0, 5).map((t) => (
             <Chip key={t} on={kind === t} onClick={() => set({ parts: { ...design.parts, type: t } })}>{t}</Chip>
           ))}
+        </Group>
+      )}
+      {/* What it OFFERS, which is a different question from what it looks like.
+          
+          The zoo counts three things a visitor needs: somewhere to eat, a toilet, somewhere to sit.
+          The simulation has always read this field and nothing in the game ever set it, so a
+          building could be designed, built, opened and meet nobody's need - and the criterion
+          asking whether you could get what you came for had nothing behind it to look at.
+          Reported from playing it: "how is this a criteria? How do we fulfil this? Should we select
+          the stock for the kiosk and giftshop?"
+          
+          One choice rather than a stock list: this is a game about Scrum, and a shop inventory is
+          an afternoon of dressing a building. What it buys is a consequence you read at the next
+          Review. */}
+      {!inside && isBuilding && api.onSetServices && (
+        <Group label="Offers">
+          {([['food', 'Food and drink'], ['toilet', 'Toilets'], ['rest', 'Somewhere to sit']] as const).map(([k, label]) => (
+            <Chip key={k} on={subject.services === k}
+              onClick={() => api.onSetServices?.(subject.id, subject.services === k ? null : k)}>{label}</Chip>
+          ))}
+          {!subject.services && (
+            <span className="text-[11px] text-muted-foreground">nothing visitors need, yet</span>
+          )}
         </Group>
       )}
       {/* Walls, roof, the board over the front - and the door, which is the part you aim at a path.

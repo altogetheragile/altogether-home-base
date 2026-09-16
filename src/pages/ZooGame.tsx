@@ -53,7 +53,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     away?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void }) {
-  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
+  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setServices, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -118,6 +118,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
       if (it?.status === 'committed') saveDraftDesign(id, design); else editBuild(id, design);
     },
     onSetEnclosure: setEnclosureSize,
+    onSetServices: setServices,
     onAddInside: addInside,
   };
 

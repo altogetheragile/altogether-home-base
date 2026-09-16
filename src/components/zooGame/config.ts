@@ -163,6 +163,13 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
  *    planting    what kind, what colour, and how many of them                               2
  *    a signpost  one post, one colour                                                       1
  */
+/** How many visitors one facility serves in a Sprint before it overflows.
+ *
+ *  One number for every facility: the game is not about sizing a kitchen, and a per-building
+ *  capacity table is a dial nobody would learn anything from turning. It was written as a bare 500
+ *  in four places, which is the same number four times until somebody changes one of them. */
+export const DEFAULT_SERVICE_CAPACITY = 500;
+
 export function effortOf(it: { category: string; enclosureSize?: string; template?: string; services?: string }): number {
   if (it.category === 'enclosure') return { small: 3, medium: 5, large: 8 }[it.enclosureSize ?? 'medium'] ?? 5;
   if (it.category === 'exhibit') return 2;
@@ -367,7 +374,7 @@ function am(id: string, name: string, zone: string, services: 'food' | 'toilet' 
   return {
     id, name, category: 'amenity', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: amenityAcceptance(name, services),
-    status: 'backlog', sprintNumber: null, accessible: true, services, serviceCapacity: 500,
+    status: 'backlog', sprintNumber: null, accessible: true, services, serviceCapacity: DEFAULT_SERVICE_CAPACITY,
   };
 }
 

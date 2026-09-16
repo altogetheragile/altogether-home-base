@@ -14,7 +14,7 @@ import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
-import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, zooCapacity } from './config';
+import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -571,7 +571,7 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
       });
     } else {
       created.push({
-        id: mem.id, name: mem.name, category: 'amenity', zone, services: mem.services, serviceCapacity: 500,
+        id: mem.id, name: mem.name, category: 'amenity', zone, services: mem.services, serviceCapacity: DEFAULT_SERVICE_CAPACITY,
         acceptance: amenityAcceptance(mem.name, mem.services),
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: effortOf({ category: 'amenity', services: mem.services }),
       });
@@ -1407,6 +1407,29 @@ export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' 
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
 }
 
+/** What a facility offers the people who come to it.
+ *
+ *  The zoo models three things a visitor needs: somewhere to eat, a toilet, somewhere to sit. A
+ *  building with none of them meets nobody's need - it is scenery with a roof - and the simulation
+ *  has always read this field while nothing in the game ever set it. So a Gift Shop was built,
+ *  opened, and did nothing for anybody, and the criterion asking whether you could get what you
+ *  came for had nothing behind it to look at. Reported from playing it: "how is this a criteria?
+ *  How do we fulfil this? Should we select the stock for the kiosk and giftshop?"
+ *
+ *  Not a stock list. One choice, in the terms the zoo already counts, with a consequence you can
+ *  read at the Review: the unmet-need rates fall, the quotes stop saying nobody could get lunch,
+ *  and the signals asking for a food outlet stop coming back.
+ *
+ *  Capacity comes with it, because an outlet that serves nobody is the same as no outlet, and
+ *  nothing else in the game would ever set it. */
+export function setServices(state: ZooGameState, id: string, services: 'food' | 'toilet' | 'rest' | null): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => (it.id !== id ? it : {
+    ...it,
+    services: services ?? undefined,
+    serviceCapacity: services ? (it.serviceCapacity ?? DEFAULT_SERVICE_CAPACITY) : undefined,
+  })) };
+}
+
 /** Decide, at Sprint Planning topic three, what KIND of thing an item will be: how big the habitat
  *  is, which habitat an animal lives in, what sort of building or planting it is.
  *
@@ -2164,9 +2187,9 @@ function escalateSignals(prevAge: Record<string, number>, fresh: Signal[]): { si
 function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   const id = 'sig-' + sig.drivenBy.replace(/[^a-z]/g, '') + '-' + state.backlog.length;
   const base = { id, status: 'backlog' as const, sprintNumber: null, accessible: true, zone: 'General', unsized: true, estimate: 0 };
-  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: amenityAcceptance('Food outlet', 'food'), services: 'food', serviceCapacity: 500 };
-  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('More toilets', 'toilet'), services: 'toilet', serviceCapacity: 500 };
-  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('Seating and shade', 'rest'), services: 'rest', serviceCapacity: 500 };
+  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: amenityAcceptance('Food outlet', 'food'), services: 'food', serviceCapacity: DEFAULT_SERVICE_CAPACITY };
+  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('More toilets', 'toilet'), services: 'toilet', serviceCapacity: DEFAULT_SERVICE_CAPACITY };
+  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('Seating and shade', 'rest'), services: 'rest', serviceCapacity: DEFAULT_SERVICE_CAPACITY };
   // Its own two, and then the one every facility is asked. It carried "Placed where visitors can
   // reach it", which is the same question in words nothing recognises - so the park could not answer
   // any of this item's criteria and the only route to Done was the Product Owner waiving all three.
