@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState } from './types';
 import { openZoo, productGoalProgress } from './engine';
 import { Button } from '@/components/ui/button';
-import { ActionBar } from './ActionBar';
+import { ActionBar, DOCK_GUTTER } from './ActionBar';
 import { PADDING, SURFACE, TEXT } from './ui/tokens';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +32,7 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
   const [starting, setStarting] = useState(false);
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center">
+    <div className={cn('mx-auto flex h-full w-full max-w-2xl flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-8 text-center', DOCK_GUTTER)}>
       <div className="space-y-2">
         <h1 className={TEXT.hero}>{met ? 'Your zoo is open' : 'You called it here'}</h1>
         <p className="text-muted-foreground">

@@ -76,11 +76,24 @@ export function useZooSessions(sessionId: string | null) {
     // fact about a live connection rather than a row somebody wrote when they joined last Tuesday.
     const ch = supabase.channel(`zoo_lobby_${sessionId}`, { config: { presence: { key: user.id } } })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'zoo_session_participants', filter: `session_id=eq.${sessionId}` }, () => void refresh(sessionId))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'zoo_game_seats' }, () => void refresh(sessionId))
-      .on('presence', { event: 'sync' }, () => setPresent(Object.keys(ch.presenceState())))
+      // A game being started by somebody else. This was covered by accident: the seats
+      // subscription had no filter, so the seats written for a new game woke every lobby in the
+      // world and this one happened to be among them. Watched on purpose now, and only this
+      // session's games.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zoo_games', filter: `session_id=eq.${sessionId}` }, () => void refresh(sessionId));
+    // Seats belong to a game rather than to a session, so this can only be filtered once the game
+    // is known. Unfiltered it woke this browser for a seat taken in any session anywhere - every
+    // other training room in the building refetching this one's rows.
+    if (gameId) {
+      ch.on('postgres_changes', { event: '*', schema: 'public', table: 'zoo_game_seats', filter: `game_id=eq.${gameId}` }, () => void refresh(sessionId));
+    }
+    ch.on('presence', { event: 'sync' }, () => setPresent(Object.keys(ch.presenceState())))
       .subscribe(async (status) => { if (status === 'SUBSCRIBED') await ch.track({ user: user.id }); });
     return () => { void supabase.removeChannel(ch); };
-  }, [sessionId, refresh, user]);
+    // gameId is a dependency because the seats filter is built from it: the channel is rebuilt once,
+    // when the game first appears. `refresh` sets it to the same string thereafter, which is not a
+    // change, so it does not churn.
+  }, [sessionId, refresh, user, gameId]);
 
   /** Open a session and take the host's own seat at the table. */
   const createSession = useCallback(async (name: string): Promise<string | null> => {

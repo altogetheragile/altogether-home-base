@@ -22,12 +22,17 @@ const ROLE_COLOR: Record<string, string> = {
  *  accountabilities, so nothing is outlined - there is nobody else to tell them apart from. */
 const isMine = (role: string, seat: SeatName | null | undefined): boolean => !!seat && role === seat;
 
-export function SeatBand({ state, seat, covering, observer, onWho, className }: {
+export function SeatBand({ state, seat, covering, away, observer, onWho, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   /** Seats nobody is holding and no AI is playing, so their work falls to whoever is here. Said on
    *  the band because a covered seat is work you did not think was yours. */
   covering?: SeatName[];
+  /** Seats whose holder is not connected right now. A subset of `covering` - the work falls to
+   *  whoever is here either way, and this is the difference between a chair nobody took and a
+   *  person who has gone. The lobby has always said it; in the game the seat just quietly became
+   *  yours to cover, which is the same news with the reason taken out. */
+  away?: SeatName[];
   /** Watching rather than playing. An observer holds nothing, and the band should not outline a
    *  seat as theirs. */
   observer?: boolean;
@@ -39,6 +44,9 @@ export function SeatBand({ state, seat, covering, observer, onWho, className }: 
   const sentence = whoDoesWhatNow(state, observer ? null : seat ?? null);
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
+  // An observer covers nothing, but they should still see who has dropped out: they are often the
+  // one running the room.
+  const gone = new Set(away ?? []);
 
   return (
     <div data-part="seat-band"
@@ -69,14 +77,17 @@ export function SeatBand({ state, seat, covering, observer, onWho, className }: 
             };
           const yours = isMine(s.role, mine);
           const cover = !yours && covered.has(s.role as SeatName);
+          const absent = gone.has(s.role as SeatName);
           return (
             <span key={s.id} {...drag} data-part="seat"
-              title={yours || cover
-                ? `${s.name} · ${s.doing}\n${cover ? 'Nobody is holding this seat, so its work falls to you. ' : ''}${YOURS[s.role][state.phase] ?? ''}`
+              title={yours || cover || absent
+                ? `${s.name} · ${s.doing}\n${absent ? 'Whoever holds this seat is not here, so its work falls to the rest of you. '
+                  : cover ? 'Nobody is holding this seat, so its work falls to you. ' : ''}${YOURS[s.role][state.phase] ?? ''}`
                 : `${s.name} · ${s.doing}`}
               className={cn('flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1',
                 yours && 'border-2 border-primary bg-primary/5',
-                cover && 'border-2 border-dashed border-primary/60',
+                cover && !absent && 'border-2 border-dashed border-primary/60',
+                absent && 'border-2 border-dashed border-amber-400/70 bg-amber-500/[0.04]',
                 !s.present && 'opacity-40')}>
               <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', ROLE_COLOR[s.role])}>
                 {s.initials}
@@ -85,7 +96,12 @@ export function SeatBand({ state, seat, covering, observer, onWho, className }: 
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}
                   {yours && <span className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
-                  {cover && <span className="ml-1 text-[10px] font-medium text-primary">covering</span>}
+                  {/* One word, because the band is one line and this is the whole news. Said in
+                      words as well as in colour: a faded chip is not a message, and dimming was all
+                      this had. */}
+                  {absent
+                    ? <span data-part="seat-away" className="ml-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">away</span>
+                    : cover && <span className="ml-1 text-[10px] font-medium text-primary">covering</span>}
                 </span>
                 <span className="block truncate text-[10px] text-muted-foreground">{s.doing}</span>
               </span>

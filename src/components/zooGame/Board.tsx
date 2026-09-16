@@ -15,7 +15,7 @@ import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
-import { FOCUS, PADDING, SURFACE, TONE, WIZARD } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TAP, TONE, WIZARD } from './ui/tokens';
 
 /** The icon that reads for what the item IS - a cat for a tiger, a route for a pathway - so a long
  *  Backlog can be scanned by shape as well as by name. See itemIcons.ts for the mapping. */
@@ -592,17 +592,23 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
             : undefined)}
           lead={<>
             {onReorder && (
-              <div className="flex shrink-0 flex-col items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
+              // Side by side, not stacked. A row on this list is 44 tall and two stacked 44s are
+              // 100, so the column overflowed its own row: measured in a browser, a row's "down"
+              // covered 38 of the 44 pixels of the next row's "up", and a tap near the boundary
+              // moved the wrong item the wrong way. A target you cannot aim at is worse than a
+              // small one. It also makes the two Backlogs one gesture: the Sprint board's pair has
+              // always been side by side.
+              <div className="flex shrink-0 items-center leading-none text-muted-foreground" title="Drag the card, or use the arrows, to reorder">
                 {/* Ordering the Product Backlog is the Product Owner's central act, and it was a
                     12px chevron - under a fingertip on the tablet this is taught on. The glyph is
-                    the same size; what it sits in is a target you can hit. */}
+                    the same size; what it sits in is a target you can hit. See TAP. */}
+                <GripVertical className="mr-0.5 h-3 w-3 shrink-0 cursor-grab opacity-50" />
                 <button type="button" title="Move up" aria-label={`Move ${it.name} up the Product Backlog`}
                   disabled={idx === 0} onClick={() => onReorder(it.id, 'up')}
-                  className={cn(FOCUS, "flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:opacity-30")}><ChevronUp className="h-3.5 w-3.5" /></button>
-                <GripVertical className="h-3 w-3 cursor-grab opacity-50" />
+                  className={cn(FOCUS, TAP, "flex items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:opacity-30")}><ChevronUp className="h-4 w-4" /></button>
                 <button type="button" title="Move down" aria-label={`Move ${it.name} down the Product Backlog`}
                   disabled={idx === items.length - 1} onClick={() => onReorder(it.id, 'down')}
-                  className={cn(FOCUS, "flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:opacity-30")}><ChevronDown className="h-3.5 w-3.5" /></button>
+                  className={cn(FOCUS, TAP, "flex items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:opacity-30")}><ChevronDown className="h-4 w-4" /></button>
               </div>
             )}
             <button type="button" onClick={() => toggleItem(it.id)} title={isOpen ? 'Collapse' : 'Expand'} aria-expanded={isOpen}

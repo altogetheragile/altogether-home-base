@@ -23,7 +23,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
-import { EYEBROW, FOCUS, TONE } from './ui/tokens';
+import { EYEBROW, FOCUS, TAP, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -537,15 +537,15 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                             onClick={() => onReorderSprint(it.id, 'up')}
                             aria-label={`Take ${it.name} up the Sprint Backlog`}
                             title="Pick this up sooner"
-                            className={cn(FOCUS, 'flex h-7 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
-                            <ChevronUp className="h-3.5 w-3.5" />
+                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
+                            <ChevronUp className="h-4 w-4" />
                           </button>
                           <button type="button" data-part="sprint-down" disabled={i === todo.length - 1}
                             onClick={() => onReorderSprint(it.id, 'down')}
                             aria-label={`Take ${it.name} down the Sprint Backlog`}
                             title="Pick this up later"
-                            className={cn(FOCUS, 'flex h-7 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
-                            <ChevronDown className="h-3.5 w-3.5" />
+                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
+                            <ChevronDown className="h-4 w-4" />
                           </button>
                         </div>
                       )}

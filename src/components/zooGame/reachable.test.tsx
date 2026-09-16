@@ -6,6 +6,7 @@ import { SprintReview } from './SprintReview';
 import { ProductBacklogSidebar } from './Board';
 import { ParkInspector } from './ParkInspector';
 import { initialZooState } from './config';
+import { TAP } from './ui/tokens';
 import type { ZooGameState } from './types';
 
 // Reachable without a pointer, and readable without eyes on a colour.
@@ -56,6 +57,8 @@ describe('moving work without a pointer', () => {
 describe('what a finger has to hit', () => {
   it('gives the Product Backlog’s ordering a target, not a glyph', () => {
     // Ordering the Product Backlog is the Product Owner's central act and it was a 12px chevron.
+    // Then 36, which is still under a fingertip on the tablet this is taught on. Asserted against
+    // the shared token rather than a number, so raising the rule raises the test with it.
     const s = initialZooState(3);
     const { container } = render(
       <MemoryRouter>
@@ -65,7 +68,9 @@ describe('what a finger has to hit', () => {
     );
     const up = [...container.querySelectorAll('button')].find((b) => /Move .* up/.test(b.getAttribute('aria-label') ?? ''));
     expect(up, 'nothing says what the chevron does').toBeTruthy();
-    expect(up!.className, 'the target is still the size of the glyph in it').toMatch(/h-9/);
+    for (const part of TAP.split(' ')) {
+      expect(up!.className, 'the target is still the size of the glyph in it').toContain(part);
+    }
   });
 });
 

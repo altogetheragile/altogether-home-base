@@ -82,8 +82,9 @@ export function SeatCard({ seat, holder, away, mine, canAct, canLeave, canCover,
   );
 }
 
-/** Opening a session, or joining one. */
-function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => void; onJoined: (id: string) => void }) {
+/** Opening a session, or joining one. Exported so the two fields can be tested for what they
+ *  announce themselves as: they are the first thing anybody meets in a shared game. */
+export function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => void; onJoined: (id: string) => void }) {
   const { createSession, joinByCode, busy, error } = useZooSessions(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -99,8 +100,14 @@ function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => void; onJ
 
       <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
         {/* A placeholder is not a label: it is gone the moment you type, and it is not announced as
-            the name of the field. The heading was doing a label's job without being one. */}
-        <label htmlFor="zoo-session-name" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start a session</label>
+            the name of the field. The heading was doing a label's job without being one.
+            
+            Two jobs, two elements. The heading says which card this is - start one, or join one -
+            and the label says what the field holds. They were one element doing both, so the field
+            announced itself as "Start a session", which is what the button does, not what you type
+            into the box. */}
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start a session</h3>
+        <label htmlFor="zoo-session-name" className="sr-only">Session name</label>
         <Input id="zoo-session-name" placeholder="What is this session called?" value={name}
           onChange={(e) => setName(e.target.value)} />
         <Button disabled={busy || !name.trim()} onClick={async () => { const id = await createSession(name.trim()); if (id) onCreated(id); }}>
@@ -110,7 +117,8 @@ function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => void; onJ
       </div>
 
       <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
-        <label htmlFor="zoo-join-code" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Join a session</label>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Join a session</h3>
+        <label htmlFor="zoo-join-code" className="sr-only">The six-letter code you were given</label>
         <Input id="zoo-join-code" placeholder="Six-letter code" value={code} maxLength={6}
           autoComplete="off" spellCheck={false}
           onChange={(e) => setCode(e.target.value.toUpperCase())} className="font-mono tracking-[0.2em]" />
