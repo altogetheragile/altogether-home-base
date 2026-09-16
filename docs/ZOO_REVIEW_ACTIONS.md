@@ -13,15 +13,16 @@ by other work. That is worth knowing about this document rather than about the
 game - it is a snapshot, and a snapshot of a moving thing is wrong by the time it
 is read.
 
-**Worked 2026-09-16** (the same day, straight after): the shortlist at the foot of
-this document, items 1 to 4. That closes P2-4's keyboard path, P2-8, P2-3, P2-2,
-P2-7's vocabulary, and P1-2 - and writes P1-6's migration, which still has to be
-applied by hand. **Seventeen of twenty-four done.** Two of those items were wrong as
-written, and are marked where they stand: Split Epic does not destroy the epic, and
-the wizard had already stopped saying "zone".
+**Worked 2026-09-16**, in two passes the same day. The first took the shortlist's
+items 1 to 4: P2-4's keyboard path, P2-8, P2-3, P2-2, P2-7's vocabulary and P1-2. The
+second took everything that was left: the dock gutter, the touch targets and the lobby
+labels, both multiplayer items, and write-ups for the five that are design decisions
+rather than defects (`docs/ZOO_PROPOSALS.md`).
 
-Four of the five P0s were done. What is left is the multiplayer pair, the dock
-gutter, the non-keyboard half of the accessibility pass, and the proposals.
+**Twenty-three of twenty-four are closed.** The twenty-fourth is a migration that has
+to be run by hand. Several items were wrong as written and are marked where they stand;
+one of them - the touch targets - was right about the problem and wrong about the fix,
+in a way only a browser could show. See What This Re-Run Taught, at the foot.
 
 **Status tags below**: **[done]** with where it was closed; **[stands]** still true
 at the cited anchor; **[partly]** one half closed; **[re-anchor]** the file or line
@@ -97,11 +98,19 @@ The DoR editor carries the caveat inline: "Your own agreement about what makes a
 item ready to forecast - Scrum does not require one. A conversation, not a gate."
 `ArtifactsPanel.tsx:132`.
 
-### P1-5. Dropped human seat-holders are invisible - **[re-anchor]**
-`ZooTogether.tsx` has moved from `components/zooGame/` to `src/pages/`. The
-substance may still stand, but it cannot be judged from the cited lines and it is a
-multiplayer behaviour that needs two browsers rather than a read. Re-find it, then
-confirm live.
+### P1-5. Dropped human seat-holders are invisible - **[done]**
+Re-found in `src/pages/ZooTogether.tsx`. Half of it was already closed and said so in
+its own comment: `unmannedSeats` treats a seat whose holder has gone as unmanned, so
+its work falls to the team rather than to nobody, and the lobby marks it with an amber
+"away".
+
+The half that stood was in the game rather than the lobby. `SeatBand` dimmed an absent
+member to 40% opacity and said nothing - and its own `present` flag means something
+else entirely (present in THIS event: the Product Owner is dimmed during the Daily
+Scrum). So a dropped seat-holder showed up as a seat that had quietly become yours to
+cover, which is the same news with the reason taken out. Away seats are now threaded
+from the lobby's presence through to the band and said in words, for players and for
+whoever is watching.
 
 ### P1-6. Any player can mutate another player's seat - **[written, NOT APPLIED]**
 The client half is closed: `leaveSeat` and `fillWithAi` both refuse a seat held by
@@ -139,7 +148,7 @@ state of the product. The Daily Scrum labels the block-versus-impediment split a
 lens some coaches teach, and says what the Guide does say - impediments, and the
 Scrum Master causing their removal.
 
-### P2-4. Accessibility pass - **[the keyboard half done]**
+### P2-4. Accessibility pass - **[done]**
 Done: `role="progressbar"` with `aria-valuenow` on the Review bars
 (`SprintReview.tsx:229,503`); `role="radiogroup"` and `aria-checked` on the Retro
 pick-one (`SprintRetro.tsx:267`).
@@ -160,22 +169,52 @@ refused with nothing on screen to say which way to walk - it now starts in the m
 of the item's own plot. And a pace of 8 against a 1760-wide park is 220 presses to
 cross it; a pace is 16 now, so a Shift stride is about one habitat.
 
-Still open: sub-44px touch targets on the reorder chevrons, and placeholder-only
-lobby inputs.
+The rest is now done too, and the touch targets were the sharpest lesson on this list.
+The Backlog's reorder chevrons were 36 square and the Sprint Backlog's 28 by 36, against
+the 44 a finger needs on a tablet. Raising them to 44 where they stood made it WORSE,
+which only the browser could say: a row on the Product Backlog is 44 tall, so two
+stacked 44s overflow it, and a row's "down" covered 38 of the 44 pixels of the next
+row's "up" - a tap near the boundary moved the wrong item the wrong way. They sit side
+by side now, the way the Sprint board's pair always has. Measured after: 44 square,
+zero overlap, rows the height they were.
 
-### P2-5. Reserve a gutter for the fixed dock - **[partly]**
+The lobby inputs had real labels already - but both were named by their card heading, so
+the session-name box announced itself as "Start a session", which is what the button
+does rather than what you type in the box. A heading and a label are two jobs and are
+two elements now.
+
+### P2-5. Reserve a gutter for the fixed dock - **[done]**
 The Sprint pane reserves it (`ZooShell.tsx:549`), and the below-`xl` half of this
 item was closed from the other end: the board and the park no longer share a grid
-cell at all, they stack and scroll (#624). **Refine, the Wizard, Planning, the
-Review, the Retro and Final all render `ActionBar` and reserve nothing**, so
-bottom-of-content controls on those screens can sit under the dock. Anchored, not
-re-verified live: the bar is portalled and fixed, so confirm in a browser at a
-short viewport before changing anything.
+cell at all, they stack and scroll (#624). Confirmed live, by measuring rather than looking: with the Product Backlog wizard
+scrolled to the bottom at an ordinary window size, the fourth area you can choose
+overlapped the dock's own box. Refine, Planning, the Review and the Retro turned out to
+be covered already (the shell's panes reserve 96, 96 and 80 - three numbers for one
+pill). The Wizard and Final reserved nothing.
 
-### P2-6. Multiplayer polish - **[re-anchor]**
-Same as P1-5: `ZooTogether` has moved. The sign-in gate, the "N here" count, the
-unfiltered seats subscription and the waiting-on-X beacon all need re-finding, and
-the behaviours need two browsers to judge.
+One token now, `DOCK_GUTTER`, used by all five. `DOCKED_BAR_PX` was 52 for a pill that
+measures 58 and sits 16 up from the window: it is 74. `withoutADock.test.tsx` fails if a
+pane that renders an ActionBar reserves nothing, or picks its own number.
+
+### P2-6. Multiplayer polish - **[done, except the two-browser judgement]**
+All four re-found. The "N here" count was already closed - `hereCount` counts who is
+connected rather than who has ever joined. The other three were real:
+
+* **The sign-in gate** explained why it needs you signed in and then offered nothing to
+  press, on a page that renders without the site header. Somebody following a link to
+  their trainer's session reached a closed door with no handle. Two ways out now, and
+  signing in returns to the session in the link (verified: the return-to carries
+  `?session=`) rather than to the home page.
+* **The seats subscription** had no filter, so a seat taken in any session anywhere woke
+  this browser. Filtered by game now - and the thing the unfiltered one was covering by
+  accident, somebody else starting a game, is watched on purpose, or joining a session
+  whose game does not exist yet would never resolve.
+* **The beacon** said "waiting on them", which in a room of five people is half the
+  news. It names the accountability.
+
+**Not done: judging it with two browsers.** That needs two signed-in accounts, and
+signing in is not something I do. The code changes are unit-tested; the behaviours want
+a real session before they are called finished.
 
 ### P2-7. Vocabulary and mechanism consistency - **[two of three done]**
 The wizard claim was stale - it already said "area". The live ones were the park's
@@ -204,7 +243,7 @@ Owner decides when it is released.
 
 ## P3 - Structure and Enrichment
 
-### P3-1. Close the visitor-sim micro cause-and-effect - **[stands]**
+### P3-1. Close the visitor-sim micro cause-and-effect - **[proposed]** - see `ZOO_PROPOSALS.md` §1
 The quote block keys on `q.cause` and the signal block on `sig.drivenBy`
 (`SprintReview.tsx:519,549`), so the data is carried - but they are still separate
 blocks and a player cannot trace a complaint to its fix in one movement. The Final
@@ -215,34 +254,56 @@ Unchanged, and still a hypothesis rather than a defect. The 2026-09-15 play-thro
 did not report Planning topic three or the Review as overwhelming; it reported the
 opposite problem, that the middle of a build day is thin. Worth testing both.
 
-### P3-3. Save-hook and migration de-duplication - **[stands, propose]**
-Unchanged.
+### P3-3. Save-hook and migration de-duplication - **[proposed]** - see `ZOO_PROPOSALS.md` §4
+Sharper than "unchanged": `readSave` defaults two fields by name and `LOAD_GAME` defaults
+every field by merging over a fresh state. The merge wins, so the ladder in `readSave`
+will look maintained while doing nothing - until the first migration that CHANGES a
+field's meaning, which the merge will silently overwrite.
 
 ### P3-4. `applyParkChecks` runs on every clock tick - **[done]**
 `CLOCK_ONLY` skips the park recompute for `TICK_DAY`, `TICK_SCRUM` and
 `SET_CLOCK_PAUSED`. `useZooGame.ts:29,40`.
 
-### P3-5. God-state / god-action union - **[stands, propose]**
-Unchanged, and still not urgent.
+### P3-5. God-state / god-action union - **[proposed]** - see `ZOO_PROPOSALS.md` §5
+70 state fields, 107 action members, a 3,717-line engine. Still not urgent, and the
+proposal argues the complaint is about reading rather than architecture: the single
+state is what makes saves and multiplayer replication as simple as they are.
 
 ---
 
 ## What Is Actually Left
 
-_Updated 2026-09-16 after working the shortlist. Items 1 to 4 of it are done; what
-follows is what remains._
+_Updated 2026-09-16, second pass. Every item on this list has now been worked or
+proposed. Twenty-three of the twenty-four are closed._
 
-1. **Apply P1-6's migration** in the Supabase dashboard SQL editor. It is written
-   and committed and does nothing until somebody runs it.
-2. **P2-5's dock gutter**, after confirming it live at a short viewport. Refine, the
-   Wizard, Planning, the Review, the Retro and Final all render `ActionBar` and
-   reserve nothing.
-3. **P1-5 and P2-6** - re-anchor (`ZooTogether.tsx` is in `src/pages/` now), then
-   judge with two browsers.
-4. **The rest of P2-4**: touch targets on the reorder chevrons, and the lobby's
-   placeholder-only inputs.
-5. **P3-1, P3-3, P3-5, the undo primitive, and P2-7's three primary-action
-   mechanisms** - propose before building.
+**Two things, and neither of them is code.**
+
+1. **Apply P1-6's migration** in the Supabase dashboard SQL editor:
+   `supabase/migrations/20260916090000_zoo_seats_own_seat_only.sql`. Not `db push` -
+   the remote migration history is out of sync. It is written, committed, and does
+   nothing at all until somebody runs it, which means the database still permits what
+   the client declines.
+2. **Judge the multiplayer changes with two browsers.** P1-5 and P2-6 are built and
+   unit-tested; presence, the away chip and the filtered subscription all want a real
+   session with two signed-in people before anybody calls them finished.
+
+**And five decisions**, written up with options and a recommendation in
+`docs/ZOO_PROPOSALS.md`: the complaint-to-fix loop, undo, the three ways the game tells
+you what to press, the save-migration duplication, and the god-state. Nothing is started
+on any of them. If only one gets built, the first.
+
+## What This Re-Run Taught
+
+Three of the items were stale - closed on the way past, by play-throughs and other work,
+and the list did not know. Two were wrong outright: Split Epic cannot destroy an epic,
+and the wizard had already stopped saying "zone".
+
+And one was worse than stale. The touch-target item was right that 36 was too small, and
+acting on it by raising the buttons where they stood made the game worse than leaving it
+alone - a 44-pixel target you cannot aim at is not an improvement on a 36-pixel one you
+can. Nothing in the suite could see it. The browser measured it in one line. That is the
+argument for the standing rule about rendering a change and looking at it, stated
+better than I could state it in the abstract.
 
 ## Do Not Blindly Change (Confirm in the App First)
 
