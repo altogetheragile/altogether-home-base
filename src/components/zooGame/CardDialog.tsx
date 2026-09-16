@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
-import { isSignOffTask, readyToOpen, enclosureReady, enclosureOf, activeWipLimit, acSettled } from './engine';
+import { isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, enclosureOf, activeWipLimit, acSettled } from './engine';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
 
@@ -47,7 +47,7 @@ function whyNotStart(state: ZooGameState, item: BacklogItem): string | null {
   return null;
 }
 
-export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, onAskToCheck, onHandBack, onToggleTask }: {
+export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish, onOpen, onAskToCheck, onHandBack, onToggleTask }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onClose: () => void;
@@ -55,6 +55,12 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   onStart?: (id: string) => void;
   /** Put it in your hands, which opens the park on it. */
   onBuilding?: (id: string) => void;
+  /** Move it to Done. The board's card has offered this since it was written and the dialog did
+   *  not, so an item with every step ticked and every criterion met opened on "Pick it up" - the
+   *  thing you do to work that is NOT finished. Reported from playing it: "why is this giving a
+   *  Pick it up option? All steps and ACs are met." The detail lives in the dialog, and so should
+   *  the move the detail says is next. */
+  onFinish?: (id: string) => void;
   /** Release Done work to visitors. */
   onOpen?: (id: string) => void;
   /** Ask the Product Owner to look at work that is built. Reported from playing it: "I still cannot
@@ -106,6 +112,9 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
   // from playing it: a low hedge round a lion could never be accepted, so the escape the barrier
   // decision exists for could never happen.
   const canAsk = doing && wantsSignOff && !signedOff && !!item.design && criteria.length > 0;
+  // Ready to be moved, and what is in the way when it is not. One rule, shared with the card.
+  const done = doing && readyToMove(item);
+  const left = doing ? whatIsLeft(state, item) : '';
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -198,12 +207,27 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onOpen, 
           )}
           {doing && onBuilding && (
             <span className="flex flex-wrap items-center gap-2.5">
-              <Button variant={canAsk ? 'outline' : 'default'} onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up &rarr;</Button>
+              {/* Whichever is actually next. Work that is finished is moved to Done; work that is
+                  not is picked up and carried on with. The two used to be one button, and it was
+                  the wrong one on anything finished. `whatIsLeft` decides, because the card behind
+                  this dialog reads the same function and the two must not disagree. */}
+              {done && onFinish ? (
+                <>
+                  <Button data-part="dialog-move-to-done"
+                    onClick={() => { onFinish(item.id); onClose(); }}>Move it to Done <Check className="ml-1 h-4 w-4" /></Button>
+                  <Button variant="outline" onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up again</Button>
+                </>
+              ) : (
+                <Button variant={canAsk ? 'outline' : 'default'} onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up &rarr;</Button>
+              )}
               {canAsk && onAskToCheck && (asked
                 ? <span className="text-xs text-muted-foreground">Waiting on {po} to look at it.</span>
                 : <Button data-part="ask-to-check" onClick={() => { onAskToCheck(item.id); onClose(); }}>
                     Ask {po} to check it
                   </Button>)}
+              {/* ...and when it is not ready, the one thing standing between here and Done. The
+                  card outside says this; opening it said nothing at all. */}
+              {!done && <span data-part="what-is-left" className="text-xs text-muted-foreground">{left}</span>}
             </span>
           )}
           {canOpen && onOpen && (

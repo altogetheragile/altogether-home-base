@@ -1855,11 +1855,19 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   const insidePen = (p: Pt) => pens.some((r) => p.x > r.x0 && p.x < r.x1 && p.y > r.y0 && p.y < r.y1);
   const nav = buildNav({ paths: walks.map(([a, z]) => [a, z]), water, crossings: dry, solid: pens });
   const routeTo = (target: Pt): Pt[] => [arrival, entry, ...(routeAcross(nav, entry, target) ?? [target])];
-  // Somewhere worth walking to: the habitats, or the middle of the park if none are open yet.
+  // Somewhere worth walking to: the habitats that are OPEN, or the promenade if none are yet.
+  //
+  // Every habitat standing on the park used to be a destination, so visitors walked to a building
+  // site with the hoardings still up - past the dashed line and the hazard posts the same picture
+  // draws to say nobody may go in there. What a visitor may walk up to is what has been opened to
+  // them, which is the distinction between Done and open the rest of the game is careful about.
+  // Reported from playing it: "people are walking erratically. Not near the build zone."
+  //
   // Where somebody stands to look at a habitat: on the walkway outside it, on the side they arrive
   // from. Not the middle of the pen, which is where the lions are.
-  const draws = encs.length
-    ? encs.map((e) => viewingSpot(posOf(e), groundSize(e)))
+  const visitable = encs.filter((e) => e.status === 'open');
+  const draws = visitable.length
+    ? visitable.map((e) => viewingSpot(posOf(e), groundSize(e)))
     : [{ x: CANVAS_W / 2, y: promY - 120 }];
   const routes = draws.map(routeTo);
 

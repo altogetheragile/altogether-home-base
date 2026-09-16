@@ -1022,6 +1022,36 @@ describe('people walk', () => {
     }
   });
 
+  it('walks them to what is open, not to a building site', () => {
+    // Every habitat standing on the park was a destination, so visitors walked to one with the
+    // hoardings still up - past the dashed line and the hazard posts the same picture draws to say
+    // nobody may go in there. What a visitor may walk up to is what has been opened to them, which
+    // is the distinction between Done and open the rest of the game is careful about.
+    //
+    // Asserted as an invariant rather than in coordinates: the picture rotates and is centred on
+    // its own box, so a point in the path is not a point in the park. What matters is that adding
+    // a building site changes nothing about where anybody goes.
+    const openOnly = {
+      ...openZoo(),
+      backlog: [
+        item({ id: 'open-enc', name: 'Lion Enclosure', category: 'enclosure', enclosureSize: 'medium',
+          status: 'open', pos: { x: 300, y: 700 } }),
+        item({ id: 'lion', name: 'Lion', category: 'exhibit', template: 'lion', enclosureId: 'open-enc' }),
+      ],
+    } as ZooGameState;
+    const alsoBuilding = {
+      ...openOnly,
+      backlog: [...openOnly.backlog,
+        item({ id: 'site-enc', name: 'Bear Enclosure', category: 'enclosure', enclosureSize: 'medium',
+          status: 'committed', started: true, sprintNumber: 1, pos: { x: 1400, y: 200 } })],
+    } as ZooGameState;
+    const ways = (s2: ZooGameState) => routes(render(<IsoZoo state={s2} height={460} />).container)
+      .map((w) => w.getAttribute('d'));
+    const before = ways(openOnly);
+    expect(before.length, 'nobody came to the open habitat').toBeGreaterThan(0);
+    expect(ways(alsoBuilding), 'a habitat still being built is being visited').toEqual(before);
+  });
+
   it('walks them there and back, with a stop to look at what they came for', () => {
     // It was one way with `repeatCount` on it, so everybody walked to the lions and then snapped
     // back to the car park to do it again: a loop of figures moving one way and vanishing. Reported

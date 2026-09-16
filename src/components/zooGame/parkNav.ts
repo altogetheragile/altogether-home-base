@@ -32,7 +32,20 @@ const LINK = 24;     // two path nodes this close are treated as a junction
 const GRASS = 48;    // ...and this close, people will step off one path onto the other over the grass
 const GRASS_COST = 1.8; // but they would rather stay on the path, so that step counts for more
 const HOPS = 6;      // how many network nodes a guest will consider joining/leaving at
-const DETOUR = 1.6;  // take the path unless it is more than this much longer than walking straight
+/** Take the path unless it is more than this much longer than walking straight.
+ *
+ *  It was 1.6, which is about right for a person crossing a real park and wrong for this one. A made
+ *  path round the edge of an area is easily twice the diagonal, so guests cut the corner and walked
+ *  the grass - and the picture then showed people wandering about the middle of a field while the
+ *  path the player had just built stood empty. Reported from playing it: "people are walking
+ *  erratically. Not near the build zone."
+ *
+ *  It matters more here than realism does, because "can I walk to it from the way in?" is one of the
+ *  acceptance criteria the player has to satisfy: a zoo where visitors ignore the paths is a zoo
+ *  where building one looks pointless. At 4 they will go a long way round rather than cut, and the
+ *  true fallback is untouched - with no made route at all they still walk, because a guest who
+ *  cannot get anywhere is a worse bug than a guest who clips a corner. */
+const DETOUR = 4;
 
 const dist = (a: Pt, b: Pt) => Math.hypot(b.x - a.x, b.y - a.y);
 /** Is this point inside the area? A turned area is tested by turning the point back the other way
