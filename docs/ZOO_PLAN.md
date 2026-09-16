@@ -271,11 +271,12 @@ Al's, answered:
 - **What a zoo is worth**, as proposed above.
 - **Six areas** is the right number for the plot.
 
+Answered since, and built:
+- **What refinement costs**: time, never points (#605). Sizing, splitting, adding and refining each
+  cost seconds of the day they are done on, and the day's spend is one line in the decision log. A
+  fixed point of a forecast is a number; a morning is a trade.
+
 Still open:
-- **What refinement costs.** The note says a point of the Sprint. My view: time, not points -
-  refinement pulls the Developers who attend out of building for a slice of the day, which is what it
-  actually costs and makes "we are slower this Sprint so the next one is possible" a decision you can
-  see. A fixed point of a forecast is a number; a morning is a trade.
 - The happiness threshold per area earned, and whether it rises each time.
 - Coin prices: entry per visitor, ground, a refund.
 - The Sprint 1 consequence numbers (the frames use happiness down 12, forty leaving early).
