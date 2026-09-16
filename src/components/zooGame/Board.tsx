@@ -7,7 +7,7 @@ import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
-import { toolboxDraft, TOOLBOX, meetsOf } from './toolboxItems';
+import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets } from './toolboxItems';
 import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -109,6 +109,9 @@ export function ChooseSolutionPanel({ item, onChoose }: {
   const [all, setAll] = useState(false);
   const wants = item.acceptance ?? [];
   const wanted = new Set(wants.map((a) => criterionFor(a)?.id).filter(Boolean) as string[]);
+  // Nothing here could answer all of it, so there is no choice to offer: this is two items wearing
+  // one card, and Refinement is where that gets taken apart.
+  const spans = noOnePieceMeets(wants);
   const pieces = TOOLBOX.flatMap((g) => g.items.map((t) => ({ t, group: g.group, meets: meetsOf(t) })));
   const hitsOf = (m: string[]) => m.filter((x) => wanted.has(x)).length;
   // Best answer first. Unsorted, a Large Tank sat above the Kiosk because a tank is also something
@@ -117,6 +120,25 @@ export function ChooseSolutionPanel({ item, onChoose }: {
   const sorted = [...pieces].sort((a, b) => hitsOf(b.meets) - hitsOf(a.meets));
   const serves = sorted.filter((p) => hitsOf(p.meets) > 0);
   const shown = all ? sorted : serves;
+  if (spans.length) {
+    return (
+      <div className="space-y-3" data-part="too-big-to-choose">
+        <p className="text-sm">
+          Nothing in the studio would meet all of this on its own, so there is no choice to make
+          here yet. It is asking for more than one thing.
+        </p>
+        <ul className="space-y-1">
+          {wants.map((a) => (
+            <li key={a} className="text-[11px] text-muted-foreground">&middot; {a}</li>
+          ))}
+        </ul>
+        <p className="text-[11px] text-muted-foreground">
+          Refinement breaks an item like this into ones that could each be built and each be
+          finished inside a Sprint. Split it, and the Developers choose what meets each piece.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-muted-foreground">

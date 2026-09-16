@@ -116,6 +116,33 @@ export function meetsOf(t: ToolboxItem): string[] {
   return [...new Set([...asked, ...(t.also ?? [])])];
 }
 
+/** The criteria on an item that no single piece could meet between them.
+ *
+ *  Refinement breaks a composite item into fine-grained ones that are ready for a Sprint, and this
+ *  is how the game can tell which is which rather than taking the Product Owner's word for it. If
+ *  one thing in the catalogue can settle everything an item asks, it is one piece of work. If
+ *  nothing can, the item is asking for more than one thing and splitting is the answer.
+ *
+ *  "Somewhere to see lions in a suitable enclosure" asks about a habitat AND about the animals in
+ *  it, and no single piece is both - so it is two items, and the Developers cannot choose their way
+ *  out of it.
+ *
+ *  Judgement criteria are left out of the sum. Nothing in a catalogue "meets" can I walk right
+ *  round it, because a person answers that, and counting it would make every item composite. */
+export function noOnePieceMeets(criteria: string[]): string[] {
+  const wanted = criteria
+    .map((a) => criterionFor(a))
+    .filter((d): d is NonNullable<typeof d> => !!d && !!d.answer)
+    .map((d) => d.id);
+  if (wanted.length < 2) return [];          // one thing to settle, or none: nothing to split over
+  const pieces = TOOLBOX.flatMap((g) => g.items);
+  const covered = pieces.some((t) => {
+    const can = new Set(meetsOf(t));
+    return wanted.every((id) => can.has(id));
+  });
+  return covered ? [] : wanted;
+}
+
 /** Everything the catalogue can settle between it. */
 export const CATALOGUE_MEETS = (): Set<string> =>
   new Set(TOOLBOX.flatMap((g) => g.items).flatMap(meetsOf));

@@ -163,10 +163,23 @@ leave the rest. The contrast is the teaching - a bridge over the river is a
 bridge, and the difference between a need and a specification is itself the
 lesson - and it makes the migration gradual rather than a cutover.
 
-**4. The studio places from the catalogue.**
-A need-shaped item owns a set of placed objects rather than one. This half
-exists: planting already has `copies`, paths have `connectors`, animals nest
-inside habitats. Generalise it. Solution-shaped items keep working unchanged.
+**4. ~~The studio places from the catalogue.~~ Refinement tells a composite item from a
+fine-grained one.** _Revised 2026-09-16, and done._
+
+The step as written was for a need that owns several placed objects. It is not
+needed, because the Product Owner's answer was that a composite item is **split at
+Refinement into fine-grained items that are ready for a Sprint** - which is what an
+epic already does, and the lion and its enclosure stay two decoupled items.
+
+What that leaves is the question the game could not previously answer: WHICH items
+are composite? It took the Product Owner's word for it, and a need could be written
+that no choice would ever satisfy.
+
+The catalogue answers it. If one piece can settle everything an item asks, it is one
+piece of work; if nothing can, it is asking for more than one thing and no decision
+the Developers make will change that. `noOnePieceMeets` is the rule, and a composite
+need is told to be split rather than offered a choice that cannot work. Criteria only
+a person can answer are left out of the sum, or every item in the zoo is composite.
 
 **5. Signals produce needs, not buildings.**
 `itemFromSignal` becomes `needFromSignal`. Today a signal reads "Add somewhere
@@ -186,10 +199,11 @@ right-sizing evidence already gathered in the Retro panel.
 
 ## Risks, named
 
-- **The save format.** Step 4 adds fields whose meaning differs from what is
-  there. The duplication in `readSave` / `LOAD_GAME` (proposal §4) should be
-  fixed **before** this, because the merge in `LOAD_GAME` will silently
-  overwrite any migration that changes a field's meaning.
+- ~~**The save format.**~~ _Done, and the mechanism was not what this said._ The
+  duplication in `readSave` / `LOAD_GAME` is gone. The merge could not overwrite a
+  migration - the save was spread second, so it won - but it refilled any key the save
+  did not have, so a migration that TOOK A FIELD AWAY could not. One place fills gaps
+  now, and two tests hold it there.
 - **Losing the relational checks.** If criteria become pure data, the escape
   mechanic dies and "suitable" degrades to "the dropdowns are filled in". Keep
   the third kind.
