@@ -424,22 +424,26 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         </Group>
       ))}
 
-      {/* ---- the pen: for a pathway, and for a habitat that needs joining to the way in ---- */}
-      {/* The same three controls for both, because it is the same work: the pen, how wide the path
-          is, and the runs already laid with a way to take one back up. A habitat was offered the pen
-          alone - so a player could draw its way in and then not say how wide it was, while the same
-          path drawn from a pathway item could be a track or a boulevard.
+      {/* ---- the pen: for a pathway, and for anything that has to be joined to the way in ---- */}
+      {/* The same three controls for all of them, because it is the same work: the pen, how wide the
+          path is, and the runs already laid with a way to take one back up. A habitat was offered the
+          pen alone - so a player could draw its way in and then not say how wide it was, while the
+          same path drawn from a pathway item could be a track or a boulevard.
+          A BUILDING was offered nothing. A kiosk is asked "can I walk to it from the way in?" like
+          everything else, and had no pen to answer it with, so the one criterion the park can settle
+          for a facility could only ever be waived. Reported from playing it: "all buildings need to
+          be connected by paths. Only the enclosures has this as part of the PBI."
           Not `placed`: that asks whether somebody has DRAGGED it, and a habitat the park seated
           itself is standing on the park just as much as one you moved. Gating on it meant a player
           who never dragged their pen was offered no pen to draw with, and the one criterion the park
           answers by looking for a path could not be met by hand at all. */}
-      {!inside && (isPath || isHabitat) && (
+      {!inside && (isPath || isHabitat || isBuilding) && (
         <>
           {onDrawing && (
-            <Group label={isHabitat ? 'Path to it' : 'Draw'}>
+            <Group label={isPath ? 'Draw' : 'Path to it'}>
               <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
                 {drawing ? 'Drawing - click where it starts, then where it ends'
-                  : isHabitat ? 'Draw a path to it' : 'Draw a run'}
+                  : isPath ? 'Draw a run' : 'Draw a path to it'}
               </Chip>
             </Group>
           )}
