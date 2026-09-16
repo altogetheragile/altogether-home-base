@@ -695,6 +695,7 @@ export type ZooAction =
   | { type: 'SET_LEARN_MODE'; on: boolean }
   | { type: 'SET_SCRUM_AT'; at: 'start' | 'end' }
   | { type: 'SET_ENCLOSURE'; id: string; size: 'small' | 'medium' | 'large' }
+  | { type: 'SET_SERVICES'; id: string; services: 'food' | 'toilet' | 'rest' | null }
   | { type: 'SET_POS'; id: string; pos: { x: number; y: number } }
   | { type: 'SPLIT_EPIC'; id: string; memberIds: string[] }
   | { type: 'ADD_PBI'; draft: PbiDraft }

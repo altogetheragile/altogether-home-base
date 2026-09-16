@@ -52,6 +52,8 @@ export function zooActions(send: (action: ZooAction) => void) {
     setLearnMode: (on: boolean) => send({ type: 'SET_LEARN_MODE', on }),
     setDailyScrumAt: (at: 'start' | 'end') => send({ type: 'SET_SCRUM_AT', at }),
     setEnclosureSize: (id: string, size: 'small' | 'medium' | 'large') => send({ type: 'SET_ENCLOSURE', id, size }),
+    /** What a facility offers the people who come to it, in the terms the zoo counts. */
+    setServices: (id: string, services: 'food' | 'toilet' | 'rest' | null) => send({ type: 'SET_SERVICES', id, services }),
     setItemPos: (id: string, pos: { x: number; y: number }) => send({ type: 'SET_POS', id, pos }),
     splitEpic: (id: string, memberIds: string[]) => send({ type: 'SPLIT_EPIC', id, memberIds }),
     createPbi: (draft: PbiDraft) => send({ type: 'ADD_PBI', draft }),

@@ -122,6 +122,10 @@ const PARK_ANSWERS = [
   'Can I walk to it from the way in?',
   'Can I cross the water on it?',
   'Can I tell what it is from outside?',
+  // What a facility offers, which the strip now sets and the simulation has always read.
+  'Can I buy food and a drink here?',
+  'Can I find a free cubicle at a busy time?',
+  'Can I sit down in the shade?',
 ];
 
 /** Criteria that have been reworded, and the words they were written in.
@@ -287,6 +291,31 @@ export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: st
     return { met: false, evidence: wet?.why === 'water'
       ? 'the water is in the way, and nothing crosses it - the Bridge would'
       : 'nothing reaches it yet - draw a path to it from the way in' };
+  }
+
+  // What a facility OFFERS, which is the whole of what it is for.
+  //
+  // The zoo counts three things a visitor needs. A building that offers none of them meets nobody's
+  // need however well it is built, and these three criteria were left to judgement because there
+  // was nothing on the item to look at - the field the simulation reads was never set by anything.
+  // Now that it is, they are facts: the strip says what it offers, and the park says whether that
+  // is what this item promised. Reported from playing it: "how is this a criteria? How do we
+  // fulfil this?"
+  //
+  // The capacity is named in the evidence, because "yes" and "yes, for five hundred people a
+  // Sprint" are different answers when four thousand come.
+  const OFFERS: Record<string, { need: 'food' | 'toilet' | 'rest'; miss: string }> = {
+    'Can I buy food and a drink here?': { need: 'food', miss: 'it offers nothing to eat - say so under Offers' },
+    'Can I find a free cubicle at a busy time?': { need: 'toilet', miss: 'it is not set up as a toilet - say so under Offers' },
+    'Can I sit down in the shade?': { need: 'rest', miss: 'there is nowhere to sit - say so under Offers' },
+  };
+  const offer = OFFERS[label];
+  if (offer) {
+    return item.services === offer.need
+      ? { met: true, evidence: `it serves ${item.serviceCapacity ?? 0} visitors a Sprint` }
+      : { met: false, evidence: item.services
+        ? `it offers ${item.services === 'food' ? 'food and drink' : item.services === 'toilet' ? 'toilets' : 'somewhere to sit'}, which is not what this asks for`
+        : offer.miss };
   }
 
   // A building says what it is, or it is a shed with a queue outside it. The board over the door is
