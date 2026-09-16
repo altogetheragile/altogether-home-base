@@ -103,248 +103,316 @@ export function pathReaches(state: ZooGameState, item: BacklogItem): Verdict | n
  *  it is standing, and the rest are about the object and are answered while it is built. */
 export const checkedAt = (label: string): 'object' | 'park' => (isDeployAcceptance(label) ? 'park' : 'object');
 
+// ============= The criteria, and the things that answer them =============
+//
+// One list. Every criterion the game can write is here, with the sentence a person reads and the
+// thing that answers it side by side - and a criterion nobody can answer is IN this list too, with
+// no `answer`, because "a person judges this" is a decision somebody made rather than a gap.
+//
+// This used to be three structures that had to be kept in step by hand: a list of sentences the
+// park could answer, a map of old spellings, and a two-hundred-line chain of `if (label === ...)`.
+// Nothing tied them together, so a criterion could be written that nothing recognised - and this
+// game shipped exactly that three times. "Can I find it from the entrance?" was a facility asking
+// the habitat's question in different words. "Placed where visitors can reach it" was the same
+// again. The Gift Shop's three were all judgements, so the only route to Done was the Product Owner
+// waiving every one of them, which teaches that Done is whatever they say it is.
+//
+// With the sentence and its answer in one place, that mistake is visible while you are making it,
+// and `everyCriterionIsKnown` in the tests makes it fail the build.
+
+export interface CriterionDef {
+  /** Stable identity, independent of the wording. Nothing user-facing uses it yet; the catalogue
+   *  will, so that an item can say which criteria it is able to meet. */
+  id: string;
+  /** The sentence a person reads. */
+  asks: string;
+  /** How to recognise it when the sentence is built from the item - a species name, mostly. */
+  is?: RegExp;
+  /** The sentences it used to be asked in.
+   *
+   *  The park matches by text, so rewording one orphans every item already carrying the old words:
+   *  a game in play, and every save ever taken. Deliberately a short list of dead spellings rather
+   *  than a second way of saying the rule. Delete one when no save could still hold it. */
+  was?: string[];
+  /** A few words for a catalogue row: "a way to walk to it". */
+  short: string;
+  /** The park's answer. Absent means only a person can say, which is not a gap: acceptance is a
+   *  conversation, and the park is never going to tick "can I walk right round it?" for anybody. */
+  answer?: (state: ZooGameState, item: BacklogItem) => Verdict;
+}
+
+/** What a facility offers, which is the whole of what it is for. Three needs, one shape of answer.
+ *
+ *  The capacity is named in the evidence, because "yes" and "yes, for five hundred people a Sprint"
+ *  are different answers when four thousand come. */
+const offers = (need: 'food' | 'toilet' | 'rest', miss: string) =>
+  (_state: ZooGameState, item: BacklogItem): Verdict => (item.services === need
+    ? { met: true, evidence: `it serves ${item.serviceCapacity ?? 0} visitors a Sprint` }
+    : { met: false, evidence: item.services
+      ? `it offers ${item.services === 'food' ? 'food and drink' : item.services === 'toilet' ? 'toilets' : 'somewhere to sit'}, which is not what this asks for`
+      : miss });
+
+export const CRITERIA: CriterionDef[] = [
+  // ---- a habitat, answered while it is being built ----
+  {
+    id: 'held', asks: 'Is it bordered safely, with no way out of it?', short: 'somewhere they cannot get out of',
+    // A tank is held in by glass and a paddock by a fence. Asking every habitat about its "fence"
+    // was asking about the one case.
+    was: ['Can I see a fence with no way out of it?'],
+    answer: (state, item) => {
+      // The only question in the game that can be answered wrongly on purpose. It used to say
+      // `met: true` always - "a habitat is fenced by construction" - so there was nothing to get
+      // wrong and Sprint 1 had no mistake in it to reflect on.
+      const design = currentDesign(item);
+      const living = state.backlog.filter((it) => it.enclosureId === item.id);
+      if (isTank(design, living, item)) return { met: true, evidence: 'Glass' };
+      const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
+      const v = barrierVerdict(design, living);
+      const where = shape ? `, ${shape.label.toLowerCase()}` : '';
+      // Said in the words of the thing that would get out, because "needs 3" is not a reason
+      // anybody can act on and "a leopard climbs a 2m fence" is.
+      if (!v.ok) return { met: false, evidence: `${v.barrier.note} - ${v.escapee} would be over it` };
+      return { met: true, evidence: `${v.barrier.note}${living.length ? ', holds them' : ''}${where}` };
+    },
+  },
+  {
+    id: 'roomy', asks: 'Can an animal move about in here?', short: 'room to move about',
+    answer: (state, item) => {
+      const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
+      const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
+      // Against the animals that will actually live here, where the Product Backlog says which.
+      const living = state.backlog.filter((it) => it.enclosureId === item.id);
+      const group = living.map((it) => currentDesign(it).group).find(Boolean);
+      if (!living.length) return { met: true, evidence: `${tiles}, room for a pair` };
+      // Said in the size a habitat comes in rather than in the arithmetic behind it: "a lion family
+      // needs a large one" is a sentence; "needs 3.85" is a number nobody can act on. Measured for
+      // the animal that actually lives here: a shoal of reef fish and a pride of lions do not take
+      // the same room, and the pen cannot answer for both with one number.
+      const species = living[0] ? (living[0].template ?? living[0].id) : undefined;
+      const fits = hasRoomToRoam(group ?? DEFAULT_GROUP, item.enclosureSize ?? 'medium', species);
+      const smallest = (['small', 'medium', 'large'] as const)
+        .find((k) => hasRoomToRoam(group ?? DEFAULT_GROUP, k, species)) ?? 'large';
+      const who = living[0].name.toLowerCase();
+      return fits
+        ? { met: true, evidence: `${tiles}, room for the ${who}` }
+        : { met: false, evidence: `${tiles}, the ${who} needs a ${smallest} one` };
+    },
+  },
+  {
+    id: 'a-home', asks: 'Can I tell an animal lives here, not a shed?', short: 'a home rather than a shed',
+    answer: (state, item) => {
+      // Ground under their feet, something growing or to shelter behind, and water. A hatched box
+      // with none of those is a pen, and the criterion exists to be failable by one - which it was
+      // not while the learner ticked it themselves. A tank IS water: asking it for a pond in the
+      // corner is asking a fish to build a pond.
+      const design = currentDesign(item);
+      const living = state.backlog.filter((it) => it.enclosureId === item.id);
+      const tank = isTank(design, living, item);
+      const water = tank || enclosureWater(design).length > 0;
+      const growing = enclosureFlora(design).length > 0;
+      const ground = tank ? !!(design.colors?.water ?? true) : !!design.colors?.ground;
+      const shelter = enclosureFlora(design).some((f) => /rock|shelter|hedge/i.test(f.type));
+      const has = [ground && 'ground', shelter ? 'shelter' : growing && 'planting', water && 'water']
+        .filter(Boolean) as string[];
+      const missing = [!ground && 'ground', !growing && 'shelter or planting', !water && 'water']
+        .filter(Boolean) as string[];
+      // ...and where the missing ones are put. The ground is a swatch on the strip, but planting
+      // and water are inside the habitat, behind "Look Inside" - which is the one place a player
+      // has to know about to finish a habitat and the one place nothing pointed at.
+      const indoors = !growing || !water;
+      return missing.length
+        ? { met: false, evidence: `no ${missing.join(' or ')} yet${indoors ? ' - Look Inside to add them' : ''}` }
+        : { met: true, evidence: `${has.join(', ')} in` };
+    },
+  },
+
+  // ---- the animals ----
+  {
+    id: 'recognisable', asks: 'Can I tell they are a lion without reading the sign?',
+    // Built from the species, so it is recognised by its shape rather than by its text.
+    is: /^Can I tell they are .+ without reading the sign\?$/, short: 'recognisable for what it is',
+  },
+  {
+    id: 'a-group', asks: 'Can I see a group rather than one animal on its own?', short: 'a group, not one on its own',
+    answer: (_state, item) => {
+      const n = groupSize(currentDesign(item).group);
+      return { met: n > 1, evidence: n > 1 ? `${n} of them` : 'one on its own' };
+    },
+  },
+  {
+    id: 'room-to-spare', asks: 'Can I fit them in the habitat with room to spare?', short: 'room to spare in their habitat',
+    answer: (state, item) => {
+      // The size of the habitat they actually live in, not a field on the animal. It read the
+      // animal's own copy, so making the pen bigger - the obvious fix - changed nothing at all.
+      const design = currentDesign(item);
+      const size = homeSizeOf(item, state.backlog);
+      const n = groupSize(design.group);
+      if (!design.group) return { met: false, evidence: 'not stocked yet' };
+      const named = (k?: string) => (k === 'large' ? 'a large' : k === 'small' ? 'a small' : 'a medium');
+      const species = item.template ?? item.id;
+      if (hasRoomToRoam(design.group, size, species)) return { met: true, evidence: `${n} in ${named(size)} habitat` };
+      // ...and what would fix it, in the words of the thing you would change: a bigger pen, or
+      // fewer animals. A criterion that only says no is a door with no handle.
+      const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k, species));
+      return {
+        met: false,
+        evidence: roomy
+          ? `${n} in ${named(size)} habitat - they need ${named(roomy)} one`
+          : `${n} is too many for any habitat - fewer of them`,
+      };
+    },
+  },
+  {
+    id: 'findable', asks: 'Can I find them in their habitat?', short: 'visible in their habitat',
+    answer: (state, item) => inHabitat(state, item),
+  },
+
+  // ---- getting about ----
+  {
+    id: 'joins-up', asks: 'Does it join every area to the way in?', short: 'every area joined to the way in',
+    // The main pathways serve every area, so they are judged on whether every area is joined up.
+    // Asked about "this zone" they were asked about the Grounds, which has no habitat in it and so
+    // could never answer yes - an item that could not be finished.
+    was: ['Can I get to this zone without crossing the grass?'],
+    answer: (state) => {
+      // The areas, not what is built in them, and only the areas that HAVE something in them. The
+      // spine joins up the zoo as it exists: in Sprint 1 that is one area, and requiring it to
+      // reach four before it could be finished would be the same un-finishable item by another
+      // route. It stops being adequate as the zoo grows, which is honest for infrastructure.
+      const lively = new Set(state.backlog
+        .filter((it) => it.status === 'open' && it.category !== 'path')
+        .map((it) => it.zone));
+      const areas = areasOnAPath(state).filter((a) => lively.has(a.zone));
+      if (!areas.length) return { met: true, evidence: 'nothing open for it to join up yet' };
+      const adrift = areas.filter((a) => !a.joined);
+      if (!adrift.length) return { met: true, evidence: `every area joined - ${areas.length} of them` };
+      return { met: false, evidence: `nothing runs to the ${adrift[0].zone}` };
+    },
+  },
+  {
+    id: 'walkable-to', asks: 'Can I walk to it from the way in?', short: 'a way to walk to it',
+    // A facility asked whether you could find it from the entrance, which is the habitat's question
+    // in different words - so the park recognised one and not the other, and a facility had nothing
+    // the player could do to satisfy any of its criteria.
+    was: ['Can I find it from the entrance?'],
+    answer: (state, item) => {
+      // Walked, not measured from nearby: this asks the routing the Sprint Review itself uses. Two
+      // definitions of "reachable" is how a park ends up telling a team they are fine and then
+      // charging them for it at the Review. On a path, not across the grass - visitors will cut
+      // over the grass rather than not come, and asking that question here made this criterion free
+      // everywhere except across water.
+      const route = pathTo(state, item);
+      if (route) return { met: true, evidence: 'a path from the way in' };
+      const wet = whatVisitorsCanReach(state).stranded.find((x) => x.item.id === item.id);
+      // It names the CONTROL, because "no path reaches it" is a fact and not an instruction.
+      return { met: false, evidence: wet?.why === 'water'
+        ? 'the water is in the way, and nothing crosses it - the Bridge would'
+        : 'nothing reaches it yet - draw a path to it from the way in' };
+    },
+  },
+  {
+    id: 'crosses-water', asks: 'Can I cross the water on it?', short: 'a way over the water',
+    answer: (state, item) => {
+      // A bridge is the one piece of work whose whole job is a fact about the park. It cannot be
+      // ticked by hand and does not need to be: a bridge snaps to the river when it is put down, so
+      // this goes green as it lands. What it leaves worth arguing about is WHERE.
+      const at = whereItStands(state, item);
+      if (!at) return { met: false, evidence: 'not on the park yet' };
+      const size = groundSize(item);
+      if (spansTheWater(size, at)) return { met: true, evidence: 'bank to bank' };
+      return { met: false, evidence: inWater(size, at)
+        ? 'it reaches the water and stops - it has to cross it'
+        : 'it is not over the water' };
+    },
+  },
+
+  // ---- the buildings ----
+  {
+    id: 'says-what-it-is', asks: 'Can I tell what it is from outside?', short: 'a name board over the door',
+    answer: (_state, item) => {
+      // A building says what it is, or it is a shed with a queue outside it. The board over the
+      // door is the control, it is on the strip, and it is a fact the park can see.
+      const signed = currentDesign(item).parts?.sign !== 'off' && !!currentDesign(item).colors?.sign;
+      return signed
+        ? { met: true, evidence: 'a name board over the door' }
+        : { met: false, evidence: 'no name board yet - put a sign on it and give it a colour' };
+    },
+  },
+  { id: 'sells-food', asks: 'Can I buy food and a drink here?', short: 'somewhere to eat',
+    answer: offers('food', 'it offers nothing to eat - say so under Offers') },
+  { id: 'has-cubicles', asks: 'Can I find a free cubicle at a busy time?', short: 'a toilet you can get into',
+    answer: offers('toilet', 'it is not set up as a toilet - say so under Offers') },
+  { id: 'somewhere-to-sit', asks: 'Can I sit down in the shade?', short: 'somewhere to sit',
+    answer: offers('rest', 'there is nowhere to sit - say so under Offers') },
+
+  // ---- and the ones only a person can answer ----
+  //
+  // Not gaps. Acceptance is a conversation, and these are what there is to talk about: whether the
+  // thing is any good, which no measurement of the park will ever settle.
+  { id: 'buy-a-souvenir', asks: 'Can I buy something to take home?', short: 'something to take home' },
+  { id: 'what-i-came-for', asks: 'Can I get what I came for?', short: 'what the visitor came for' },
+  { id: 'right-round-it', asks: 'Can I walk right round it?', short: 'a way round the outside' },
+  { id: 'still-get-past', asks: 'Can I still get past it?', short: 'not in the way' },
+  { id: 'still-get-round', asks: 'Can visitors still get round it?', short: 'not in the way' },
+  { id: 'side-by-side', asks: 'Can two people walk it side by side?', short: 'wide enough for two' },
+  { id: 'reads-at-a-distance', asks: 'Can I read it from a few steps away?', short: 'readable from a few steps' },
+  { id: 'which-way', asks: 'Can I tell which way to go from here?', short: 'which way to go' },
+  { id: 'greenery', asks: 'Can I see greenery from the path?', short: 'greenery from the path' },
+  { id: 'sense-of-place', asks: 'Can I tell what kind of place this is from the planting?', short: 'a sense of place' },
+  { id: 'seen-across-park', asks: 'Can I see it from across the park?', short: 'visible across the park' },
+  { id: 'water-at-a-glance', asks: 'Can I tell that is water at a glance?', short: 'reads as water' },
+  { id: 'rock-at-a-glance', asks: 'Can I tell that is rock at a glance?', short: 'reads as rock' },
+  { id: 'crossing-at-a-glance', asks: 'Can I see it is something you cross?', short: 'reads as a crossing' },
+  { id: 'this-is-the-way-in', asks: 'Can I tell this is the way in?', short: 'reads as the way in' },
+  { id: 'where-to-park', asks: 'Can I tell where to park?', short: 'somewhere to park' },
+  { id: 'find-from-car-park', asks: 'Can I find it from the car park?', short: 'findable from the car park' },
+  { id: 'walk-to-entrance', asks: 'Can I walk from it to the entrance?', short: 'a walk to the entrance' },
+
+  // An area, before it is broken up. These belong to an epic, and an epic is split rather than
+  // built - but they are criteria the game writes down, so they are criteria the game knows about.
+  // They are also the closest thing the Backlog has to a need today: nothing in them says paddock.
+  { id: 'animals-named', asks: 'Can I tell what every animal here is?', short: 'every animal named' },
+  { id: 'species-apart', asks: 'Can I see each species in a habitat of its own?', short: 'a habitat each' },
+  { id: 'served-here', asks: 'Can I eat, rest and find my way in this part of the park?', short: 'served in this part of the park' },
+
+  // ...and the two the visitors ask for when they complain about queues. Phrased as statements
+  // rather than as a visitor's question, unlike every other criterion in this list. Worth putting
+  // right, and not here: rewording is visible to anybody mid-Sprint and this change is meant to be
+  // invisible.
+  { id: 'eases-queues', asks: 'Eases the queues', short: 'shorter queues' },
+  { id: 'sightlines', asks: 'Good sightlines', short: 'a clear view' },
+];
+
+const BY_TEXT = new Map<string, CriterionDef>();
+for (const def of CRITERIA) {
+  BY_TEXT.set(def.asks, def);
+  for (const old of def.was ?? []) BY_TEXT.set(old, def);
+}
+
+/** The criterion this sentence is, however it was worded when it was written down. */
+export const criterionFor = (label: string): CriterionDef | undefined =>
+  BY_TEXT.get(label) ?? CRITERIA.find((d) => d.is?.test(label));
+
+/** The words this criterion is asked in now. A sentence built from the item - a species name - is
+ *  already current, so it is handed back as it stands. */
+export const asAsked = (label: string): string => {
+  const def = BY_TEXT.get(label);
+  return def ? def.asks : label;
+};
+
 /** Every criterion the park has an answer for, whether or not it can answer it yet.
  *
  *  Not the same question as "does it have a verdict right now": a criterion about a path reaching a
  *  zone has no answer until the thing is standing somewhere, and reading that silence as "somebody
- *  else's judgement" would offer half-built work for sign-off. The rest are judgements, and they are
- *  the reason acceptance is a conversation - the park is never going to tick "can I walk right round
- *  it?" for anybody. */
-const PARK_ANSWERS = [
-  'Is it bordered safely, with no way out of it?',
-  'Can an animal move about in here?',
-  'Can I tell an animal lives here, not a shed?',
-  'Can I see a group rather than one animal on its own?',
-  'Can I fit them in the habitat with room to spare?',
-  'Can I find them in their habitat?',
-  'Can I get to this zone without crossing the grass?',
-  'Does it join every area to the way in?',
-  'Can I walk to it from the way in?',
-  'Can I cross the water on it?',
-  'Can I tell what it is from outside?',
-  // What a facility offers, which the strip now sets and the simulation has always read.
-  'Can I buy food and a drink here?',
-  'Can I find a free cubicle at a busy time?',
-  'Can I sit down in the shade?',
-];
+ *  else's judgement" would offer half-built work for sign-off. */
+export const answerable = (label: string): boolean => !!criterionFor(label)?.answer;
 
-/** Criteria that have been reworded, and the words they were written in.
+/** The park's answer to one criterion, or null when it is a matter of judgement.
  *
- *  The park matches a criterion by its exact text, so rewording one orphans every item already
- *  carrying the old words - a game in play, and every save ever taken. This is the migration, and it
- *  is deliberately a short list of dead spellings rather than a second way of saying the rule: one
- *  question, and the sentence it used to be. Delete an entry when no save could still hold it. */
-const WAS_CALLED: Record<string, string> = {
-  // A tank is held in by glass and a paddock by a fence. Asking every habitat about its "fence" was
-  // asking about the one case. Reported from playing it: something more general that could mean
-  // walled, fenced or secure.
-  'Can I see a fence with no way out of it?': 'Is it bordered safely, with no way out of it?',
-  // The main pathways serve every area, so they are judged on whether every area is joined up. Asked
-  // about "this zone" they were asked about the Grounds, which has no habitat in it and so could
-  // never answer yes - an item that could not be finished.
-  'Can I get to this zone without crossing the grass?': 'Does it join every area to the way in?',
-  // A facility asked whether you could find it from the entrance, which is the habitat's question in
-  // different words - so the park recognised one and not the other, and a facility had nothing the
-  // player could do to satisfy any of its criteria.
-  'Can I find it from the entrance?': 'Can I walk to it from the way in?',
-};
-/** The words this criterion is asked in now. */
-export const asAsked = (label: string): string => WAS_CALLED[label] ?? label;
-
-export const answerable = (label: string): boolean => PARK_ANSWERS.includes(asAsked(label));
-
-/** The park's answer to one criterion, or null when it is a matter of judgement. */
+ *  A lookup now, not a chain: the answer lives with the sentence in CRITERIA above. */
 export function checkCriterion(state: ZooGameState, item: BacklogItem, asked: string): Verdict | null {
-  const design = currentDesign(item);
-  // A game in play, or a save taken before a question was reworded, still carries the old sentence.
-  const label = asAsked(asked);
-
-  // ---- Answered about the object itself, while it is being built ----
-  //
-  // These used to be judgement calls the learner ticked. They are facts about the thing in front of
-  // them: whether it is closed, whether the animals fit, whether it is a home rather than a shed.
-  // The park answers them, with its working shown, and the learner gets on with the fourth.
-
-  if (label === 'Is it bordered safely, with no way out of it?') {
-    // A real question now, and the only one in the game that can be answered wrongly on purpose.
-    //
-    // It used to say `met: true` always - "a habitat is fenced by construction" - so there was
-    // nothing to get wrong and Sprint 1 had no mistake in it to reflect on. What is round the
-    // habitat is a choice, and whether it holds what lives inside is a fact about that choice.
-    const living = state.backlog.filter((it) => it.enclosureId === item.id);
-    // A tank is glass by construction: the water is what needs holding, and it is.
-    if (isTank(design, living, item)) return { met: true, evidence: 'Glass' };
-    const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
-    const v = barrierVerdict(design, living);
-    const where = shape ? `, ${shape.label.toLowerCase()}` : '';
-    // Said in the words of the thing that would get out, because "needs 3" is not a reason anybody
-    // can act on and "a leopard climbs a 2m fence" is.
-    if (!v.ok) return { met: false, evidence: `${v.barrier.note} - ${v.escapee} would be over it` };
-    return { met: true, evidence: `${v.barrier.note}${living.length ? ', holds them' : ''}${where}` };
-  }
-
-  if (label === 'Can an animal move about in here?') {
-    const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
-    const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
-    // Against the animals that will actually live here, where the Product Backlog says which they are.
-    const living = state.backlog.filter((it) => it.enclosureId === item.id);
-    const group = living.map((it) => currentDesign(it).group).find(Boolean);
-    if (!living.length) return { met: true, evidence: `${tiles}, room for a pair` };
-    // Said in the size a habitat comes in rather than in the arithmetic behind it: "a lion family
-    // needs a large one" is a sentence; "needs 3.85" is a number nobody can act on.
-    // Measured for the animal that actually lives here: a shoal of reef fish and a pride of lions
-    // do not take the same room, and the pen cannot answer for both with one number.
-    const species = living[0] ? (living[0].template ?? living[0].id) : undefined;
-    const fits = hasRoomToRoam(group ?? DEFAULT_GROUP, item.enclosureSize ?? 'medium', species);
-    const smallest = (['small', 'medium', 'large'] as const)
-      .find((k) => hasRoomToRoam(group ?? DEFAULT_GROUP, k, species)) ?? 'large';
-    const who = living[0].name.toLowerCase();
-    return fits
-      ? { met: true, evidence: `${tiles}, room for the ${who}` }
-      : { met: false, evidence: `${tiles}, the ${who} needs a ${smallest} one` };
-  }
-
-  if (label === 'Can I tell an animal lives here, not a shed?') {
-    // Ground under their feet, something growing or to shelter behind, and water. A hatched box with
-    // none of those is a pen, and the criterion exists to be failable by one - which it was not
-    // while the learner ticked it themselves.
-    // A tank IS water: asking it for a pond in the corner is asking a fish to build a pond.
-    const living = state.backlog.filter((it) => it.enclosureId === item.id);
-    const tank = isTank(design, living, item);
-    const water = tank || enclosureWater(design).length > 0;
-    const growing = enclosureFlora(design).length > 0;
-    const ground = tank ? !!(design.colors?.water ?? true) : !!design.colors?.ground;
-    const shelter = enclosureFlora(design).some((f) => /rock|shelter|hedge/i.test(f.type));
-    const has = [ground && 'ground', shelter ? 'shelter' : growing && 'planting', water && 'water']
-      .filter(Boolean) as string[];
-    const missing = [!ground && 'ground', !growing && 'shelter or planting', !water && 'water']
-      .filter(Boolean) as string[];
-    // ...and where the missing ones are put. The ground is a swatch on the strip, but planting and
-    // water are inside the habitat, behind "Look Inside" - which is the one place a player has to
-    // know about to finish a habitat and the one place nothing pointed at.
-    const indoors = !growing || !water;
-    return missing.length
-      ? { met: false, evidence: `no ${missing.join(' or ')} yet${indoors ? ' - Look Inside to add them' : ''}` }
-      : { met: true, evidence: `${has.join(', ')} in` };
-  }
-
-  if (label === 'Can I see a group rather than one animal on its own?') {
-    const n = groupSize(design.group);
-    return { met: n > 1, evidence: n > 1 ? `${n} of them` : 'one on its own' };
-  }
-
-  if (label === 'Can I fit them in the habitat with room to spare?') {
-    // The size of the habitat they actually live in, not a field on the animal. It read the
-    // animal's own copy, so making the pen bigger - the obvious fix - changed nothing at all.
-    const size = homeSizeOf(item, state.backlog);
-    const n = groupSize(design.group);
-    if (!design.group) return { met: false, evidence: 'not stocked yet' };
-    const named = (k?: string) => (k === 'large' ? 'a large' : k === 'small' ? 'a small' : 'a medium');
-    const species = item.template ?? item.id;
-    if (hasRoomToRoam(design.group, size, species)) return { met: true, evidence: `${n} in ${named(size)} habitat` };
-    // ...and what would fix it, in the words of the thing you would change: a bigger pen, or fewer
-    // animals. A criterion that only says no is a door with no handle.
-    const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k, species));
-    return {
-      met: false,
-      evidence: roomy
-        ? `${n} in ${named(size)} habitat - they need ${named(roomy)} one`
-        : `${n} is too many for any habitat - fewer of them`,
-    };
-  }
-
-  if (label === 'Can I find them in their habitat?') return inHabitat(state, item);
-
-  if (label === 'Does it join every area to the way in?') {
-    // The areas, not what is built in them. The spine serves the place; judging it on open habitats
-    // would mean the main pathways could not be finished until a habitat was, which is the
-    // dependency this change exists to remove.
-    // ...and only the areas that HAVE something in them. The spine joins up the zoo as it exists: in
-    // Sprint 1 that is one area, and requiring it to reach four before it could be finished would be
-    // the same un-finishable item by another route. It stops being adequate as the zoo grows, which
-    // is the honest behaviour of infrastructure.
-    const lively = new Set(state.backlog
-      .filter((it) => it.status === 'open' && it.category !== 'path')
-      .map((it) => it.zone));
-    const areas = areasOnAPath(state).filter((a) => lively.has(a.zone));
-    if (!areas.length) return { met: true, evidence: 'nothing open for it to join up yet' };
-    const adrift = areas.filter((a) => !a.joined);
-    if (!adrift.length) return { met: true, evidence: `every area joined - ${areas.length} of them` };
-    return { met: false, evidence: `nothing runs to the ${adrift[0].zone}` };
-  }
-
-  // Walked, not measured from nearby. The zone-level question above counts a run that finishes close
-  // to something here; this one asks the routing that the Sprint Review itself uses - can a visitor
-  // actually get from the way in to this habitat. Two definitions of "reachable" is how a park ends
-  // up telling a team they are fine and then charging them for it at the Review.
-  if (label === 'Can I walk to it from the way in?') {
-    // On a path, not across the grass. Visitors will cut over the grass rather than not come - that
-    // is what `walkTo` allows for - and asking that question here made this criterion free
-    // everywhere except across water.
-    const route = pathTo(state, item);
-    if (route) return { met: true, evidence: 'a path from the way in' };
-    // Why not, in the words of the thing that would fix it.
-    const wet = whatVisitorsCanReach(state).stranded.find((x) => x.item.id === item.id);
-    // ...and it names the CONTROL, because "no path reaches it" is a fact and not an instruction:
-    // reported from playing it, "how can I get the Product Owner to review?" - the answer was to
-    // draw the way in, and nothing on the screen said so.
-    return { met: false, evidence: wet?.why === 'water'
-      ? 'the water is in the way, and nothing crosses it - the Bridge would'
-      : 'nothing reaches it yet - draw a path to it from the way in' };
-  }
-
-  // What a facility OFFERS, which is the whole of what it is for.
-  //
-  // The zoo counts three things a visitor needs. A building that offers none of them meets nobody's
-  // need however well it is built, and these three criteria were left to judgement because there
-  // was nothing on the item to look at - the field the simulation reads was never set by anything.
-  // Now that it is, they are facts: the strip says what it offers, and the park says whether that
-  // is what this item promised. Reported from playing it: "how is this a criteria? How do we
-  // fulfil this?"
-  //
-  // The capacity is named in the evidence, because "yes" and "yes, for five hundred people a
-  // Sprint" are different answers when four thousand come.
-  const OFFERS: Record<string, { need: 'food' | 'toilet' | 'rest'; miss: string }> = {
-    'Can I buy food and a drink here?': { need: 'food', miss: 'it offers nothing to eat - say so under Offers' },
-    'Can I find a free cubicle at a busy time?': { need: 'toilet', miss: 'it is not set up as a toilet - say so under Offers' },
-    'Can I sit down in the shade?': { need: 'rest', miss: 'there is nowhere to sit - say so under Offers' },
-  };
-  const offer = OFFERS[label];
-  if (offer) {
-    return item.services === offer.need
-      ? { met: true, evidence: `it serves ${item.serviceCapacity ?? 0} visitors a Sprint` }
-      : { met: false, evidence: item.services
-        ? `it offers ${item.services === 'food' ? 'food and drink' : item.services === 'toilet' ? 'toilets' : 'somewhere to sit'}, which is not what this asks for`
-        : offer.miss };
-  }
-
-  // A building says what it is, or it is a shed with a queue outside it. The board over the door is
-  // the control, it is on the strip, and it is a fact the park can see - so it is answered here
-  // rather than left for somebody to judge.
-  if (label === 'Can I tell what it is from outside?') {
-    const signed = design.parts?.sign !== 'off' && !!design.colors?.sign;
-    return signed
-      ? { met: true, evidence: 'a name board over the door' }
-      : { met: false, evidence: 'no name board yet - put a sign on it and give it a colour' };
-  }
-
-  // A bridge is the one piece of work whose whole job is a fact about the park, so the park says
-  // whether it has been done: does it lie across the water, bank to bank, all the way along itself.
-  // It cannot be ticked by hand, and it does not need to be - a bridge snaps to the river when it is
-  // put down, so this goes green as it lands. What it leaves worth arguing about is WHERE: a bridge
-  // is the only item in the game with no visitors of its own, and that is what makes it hard to
-  // order above the penguins.
-  if (label === 'Can I cross the water on it?') {
-    const at = whereItStands(state, item);
-    if (!at) return { met: false, evidence: 'not on the park yet' };
-    const size = groundSize(item);
-    if (spansTheWater(size, at)) return { met: true, evidence: 'bank to bank' };
-    return { met: false, evidence: inWater(size, at)
-      ? 'it reaches the water and stops - it has to cross it'
-      : 'it is not over the water' };
-  }
-
-  return null; // judgement: yours to make
+  const def = criterionFor(asked);
+  return def?.answer ? def.answer(state, item) : null;
 }
 
 /** Every criterion on an item, with the park's answer where it has one. */
