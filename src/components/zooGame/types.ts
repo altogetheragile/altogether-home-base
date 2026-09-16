@@ -140,6 +140,19 @@ export interface TeamDecision {
   cost?: string;
 }
 
+/** One call on one thing the visitors said. See `ZooGameState.signalLog`. */
+export interface SignalCall {
+  sprint: number;
+  /** The machine-readable driver the quotes and the signal share: `unmet:food`, `crowding`. */
+  cause: string;
+  call: 'took' | 'declined';
+  /** The words the Product Owner was answering, kept so a later Review can quote the decision
+   *  rather than reconstruct it from a cause code. */
+  suggestion: string;
+  /** The Product Backlog item taking it created, where it created one. */
+  itemId?: string;
+}
+
 /** A Product Backlog Item: an exhibit (animal) or an amenity (cafe, toilets,
  *  seating). Carries the attributes the visitor simulation reads, plus game fields
  *  (estimate, per-item acceptance criteria, status). */
@@ -505,6 +518,20 @@ export interface ZooGameState {
   signals: Signal[];
   /** How many consecutive Reviews each signal has recurred, for persist-and-worsen. */
   signalAge: Record<string, number>;
+  /** Every call the Product Owner has made on what the visitors said, in order.
+   *
+   *  The decision log already holds these as sentences, which the Retrospective reads back. This
+   *  holds them as facts, keyed by the same `cause` the quotes carry - and that is what lets the
+   *  next Review say "you turned this down in Sprint 2 and they are saying it again" rather than
+   *  presenting a recurring complaint as though it were news.
+   *
+   *  `itemId` is what the decision produced, where it produced anything, so the game can tell a
+   *  cause that was ignored from one that was taken into the Backlog and never built, from one
+   *  that was built and was not enough. Three different lessons behind the same repeated quote.
+   *
+   *  Optional: a game saved before the loop existed has no history, and reads as though nothing
+   *  has been decided yet, which is the truthful default. */
+  signalLog?: SignalCall[];
   /** Improvements carried from Retrospectives. */
   improvements: string[];
   /** Per-game seed: drives taste jitter and attendance drift (anti-scripting). */

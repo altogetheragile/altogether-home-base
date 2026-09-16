@@ -3,7 +3,7 @@ import type { ZooGameState } from './types';
 import type { SegmentId } from './simulation/types';
 import { whatVisitorsCanReach } from './parkNetwork';
 import { whatGotOut } from './engine';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
@@ -545,17 +545,54 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
                 You are the Product Owner: take it into the Product Backlog now, or turn it down. Both are decisions and both
                 are recorded. A cause you turn down is still there - if it holds, they say it again louder.
               </p>
-              {state.signals.map((sig, i) => (
-                <div key={sig.drivenBy} className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-background px-2.5 py-1.5 text-sm dark:border-amber-900/50">
-                  <span className="min-w-0 flex-1">{sig.suggestion}</span>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
-                  <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to the Product Backlog</Button>
-                  {onDeclineSignal && (
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground"
-                      onClick={() => { onDeclineSignal(i); setDeclined((n) => n + 1); }}>Decline</Button>
+              {state.signals.map((sig, i) => {
+                // The complaint this call is about. Quotes carry a `cause` and signals carry a
+                // `drivenBy`, drawn from the same vocabulary - so the join has always been in the
+                // data and the screen was the only place it was missing. The player read "we left
+                // at lunchtime, nowhere to eat" in one step and pressed "add somewhere to eat" in
+                // another, with nothing saying those were the same fact.
+                const because = (r?.quotes ?? []).filter((q) => q.cause === sig.drivenBy);
+                // ...and what was decided about it last time, if anything was.
+                const before = saidBefore(state, sig.drivenBy);
+                const times = state.signalAge[sig.drivenBy] ?? 1;
+                return (
+                <div key={sig.drivenBy} data-part="signal-call" data-cause={sig.drivenBy}
+                  className="space-y-1.5 rounded-md border border-amber-200 bg-background px-2.5 py-2 text-sm dark:border-amber-900/50">
+                  {because.map((q) => (
+                    <p key={q.text} data-part="signal-quote" className="border-l-2 border-amber-400 pl-2 text-[12px] italic text-muted-foreground">
+                      &ldquo;{q.text}&rdquo; <span className="not-italic">- {SEG_LABEL[q.segmentId]}</span>
+                    </p>
+                  ))}
+                  {/* What you already did about this, and what became of it. Five answers, and
+                      they teach five different things - see `saidBefore`. */}
+                  {before && (
+                    <p data-part="signal-before" className={cn(TONE.attention.text, 'text-[11px] font-medium')}>
+                      {before.said}
+                    </p>
                   )}
+                  {/* The decision on its own line. Sharing one with the chips and the buttons, it
+                      was the narrowest thing in the row - "Add somewhere to eat (a cafe or
+                      kiosk)" wrapped over three lines beside white space, which is the sentence
+                      the whole row exists for being the hardest part of it to read. */}
+                  <p className="font-medium">{sig.suggestion}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {times > 1 && (
+                      <span data-part="signal-age" className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-300">
+                        {times === 2 ? '2nd Review running' : `${times} Reviews running`}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
+                    <span className="ml-auto flex flex-wrap items-center gap-2">
+                      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to the Product Backlog</Button>
+                      {onDeclineSignal && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground"
+                          onClick={() => { onDeclineSignal(i); setDeclined((n) => n + 1); }}>Decline</Button>
+                      )}
+                    </span>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </section>
           )}
           {/* ...and what you decided, kept on the screen. A choice that vanishes the moment it is

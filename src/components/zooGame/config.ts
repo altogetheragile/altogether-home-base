@@ -425,6 +425,7 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     lastLedger: null,
     signals: [],
     signalAge: {},
+    signalLog: [],
     improvements: [],
     gameSeed,
     // What shape this game is, for anything that saves it and reads it back.
