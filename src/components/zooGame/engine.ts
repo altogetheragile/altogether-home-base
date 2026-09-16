@@ -2079,7 +2079,12 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
   if (!sig) return state;
   const item = itemFromSignal(sig, state);
   if (!item) return state;
-  const taken = { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index) };
+  const taken = { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index),
+    // Kept as a fact as well as a sentence. See `signalLog`: the decision log is prose for the
+    // Retrospective to read back, and this is what the NEXT Review reads to tell a complaint it
+    // has never heard from one it has already been given an answer to.
+    signalLog: [...(state.signalLog ?? []), { sprint: state.sprintNumber, cause: sig.drivenBy,
+      call: 'took' as const, suggestion: sig.suggestion, itemId: item.id }] };
   return note(taken, { kind: 'signal', by: by ?? 'product_owner',
     what: `Took what the visitors said into the Product Backlog: ${sig.suggestion}`,
     cost: `${item.name} joins the Product Backlog unsized - the Developers size it` });
@@ -2092,10 +2097,72 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
 export function declineSignal(state: ZooGameState, index: number, by?: string): ZooGameState {
   const sig = state.signals[index];
   if (!sig) return state;
-  const gone = { ...state, signals: state.signals.filter((_, i) => i !== index) };
+  const gone = { ...state, signals: state.signals.filter((_, i) => i !== index),
+    signalLog: [...(state.signalLog ?? []), { sprint: state.sprintNumber, cause: sig.drivenBy,
+      call: 'declined' as const, suggestion: sig.suggestion }] };
   return note(gone, { kind: 'signal', by: by ?? 'product_owner',
     what: `Turned down what the visitors said: ${sig.suggestion}`,
     cost: 'the cause is still there - if it holds it comes back louder next Review' });
+}
+
+/** What the team already did about this cause, and what became of it.
+ *
+ *  The Review shows visitors' complaints and the Product Owner's calls as two lists, and a player
+ *  has to hold the join in their head: the quote about queueing for a sandwich and the row saying
+ *  "add somewhere to eat" are the same fact, and so is the same quote arriving again next Sprint.
+ *  Both carry the same `cause`, so the game can say it instead.
+ *
+ *  Four different things "we already dealt with that" can mean, and they are four different
+ *  lessons:
+ *
+ *    declined  - you heard it and said no. It was still true, so they said it again.
+ *    backlog   - you took it in and have not forecast it. Agreeing it matters is not doing it.
+ *    committed - it is in this Sprint. They are complaining about a zoo that does not have it yet.
+ *    done      - you BUILT it and never opened it, so no visitor has been near it. The loudest
+ *                lesson in the game, and the one a player is least likely to spot alone.
+ *    open      - you built it and opened it, and they are still saying it. One was not enough.
+ *
+ *  Returns null when this is the first time the team has been asked about this cause, which is the
+ *  ordinary case and wants no commentary at all. */
+export interface SaidBefore {
+  call: 'took' | 'declined';
+  /** The Sprint the last call was made in. */
+  sprint: number;
+  /** How many times this cause has been answered before now. */
+  times: number;
+  /** What became of the work, where the answer made any. */
+  became: 'declined' | 'backlog' | 'committed' | 'done' | 'open' | null;
+  itemName?: string;
+  /** The line the Review shows. Written here beside the rules that decide it, the way
+   *  `valueMeasures` writes its own details. */
+  said: string;
+}
+
+export function saidBefore(state: ZooGameState, cause: string): SaidBefore | null {
+  const calls = (state.signalLog ?? []).filter((c) => c.cause === cause);
+  const last = calls[calls.length - 1];
+  if (!last) return null;
+  const again = calls.length > 1 ? ` They have raised it ${calls.length + 1} times.` : '';
+  if (last.call === 'declined') {
+    return { call: 'declined', sprint: last.sprint, times: calls.length, became: 'declined',
+      said: `You turned this down in Sprint ${last.sprint}. The cause was still there, so they are saying it again.${again}` };
+  }
+  const item = state.backlog.find((it) => it.id === last.itemId);
+  if (!item) {
+    return { call: 'took', sprint: last.sprint, times: calls.length, became: null,
+      said: `You took this into the Product Backlog in Sprint ${last.sprint}.${again}` };
+  }
+  const became = item.status === 'open' ? 'open'
+    : item.status === 'done' ? 'done'
+      : item.status === 'committed' ? 'committed' : 'backlog';
+  const said = became === 'open'
+    ? `You built ${item.name} in Sprint ${last.sprint} and opened it, and they are still saying this. One was not enough.${again}`
+    : became === 'done'
+      ? `${item.name} is built and accepted and has never been opened, so no visitor has been near it. That is why they are still saying this.${again}`
+      : became === 'committed'
+        ? `${item.name} is in this Sprint. They are describing a zoo that does not have it yet.${again}`
+        : `You took this into the Product Backlog in Sprint ${last.sprint} as ${item.name}, and it has not been forecast since. Agreeing that it matters is not the same as doing it.${again}`;
+  return { call: 'took', sprint: last.sprint, times: calls.length, became, itemName: item.name, said };
 }
 
 // ============= Product Goal, Sprint Goal and Definition of Done =============

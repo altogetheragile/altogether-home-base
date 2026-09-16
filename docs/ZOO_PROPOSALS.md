@@ -10,7 +10,7 @@ the one I would take. **None of them is started.**
 
 ---
 
-## 1. A complaint and its fix, in one movement
+## 1. A complaint and its fix, in one movement - **BUILT 2026-09-16, option (b)**
 
 ### What is there
 
@@ -57,6 +57,32 @@ also the largest piece of new design.
 **(b).** (a) alone is tidying; (c) is a screen redesign that should wait until somebody
 has played (b) and can say whether the Final screen still feels thin. (b) is the one
 that turns two lists into a loop, and its cost is mostly wiring.
+
+### What was built
+
+(b), as described, plus one thing the writing-up did not anticipate.
+
+Each decision row now carries the quotes that drove it, then what the team already did
+about that cause, then the call. `signalLog` on the state records every call as a fact -
+sprint, cause, took or declined, and the id of whatever the call created - beside the
+decision log, which stays as prose for the Retrospective to read back.
+
+The unanticipated part is that "we already dealt with that" turned out to mean **five
+different things**, and they are five different lessons. `saidBefore` tells them apart:
+
+* **declined** - you heard it and said no. It was still true, so they said it again.
+* **backlog** - you took it in and have not forecast it. Agreeing that something matters
+  is the cheapest thing a Product Owner can do.
+* **committed** - it is in this Sprint. They are describing a zoo that does not have it
+  yet, which is not a failure.
+* **done** - you BUILT it and never opened it, so no visitor has been near it. The
+  loudest one, and the one a player is least likely to work out alone.
+* **open** - built, opened, and they are still saying it. One was not enough.
+
+A cause nobody has been asked about before gets no commentary at all.
+
+`~/Desktop/zoo-shots/2026-09-16-complaint-to-fix-loop.jpg`. **(c), the Final screen, is
+still unbuilt** - and is now worth judging by playing this rather than by argument.
 
 ---
 
@@ -240,7 +266,9 @@ other reason.
 
 ---
 
-## If only one gets built
+## Where this stands
 
-**1(b)**, the complaint-to-fix loop. It is the only one of the five a player would
-notice, and it is the loop the game exists to teach.
+**1(b) is built.** Four left: undo, the three action mechanisms, the save-migration
+duplication, and the god-state. My order would be the mechanisms' seam first - it is a
+real defect and a small change - then the save duplication, before the next save-format
+change rather than after it.
