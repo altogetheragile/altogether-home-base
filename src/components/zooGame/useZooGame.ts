@@ -278,9 +278,17 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'END_GAME':
       return endGame(state);
     case 'LOAD_GAME':
-      // Resume a saved game: replace the whole state with the loaded snapshot. Merge over a
-      // fresh state so any fields added since the save get sensible defaults.
-      return { ...initialZooState(action.state.gameSeed ?? state.gameSeed), ...action.state };
+      // Resume a saved game: take the snapshot as it is.
+      //
+      // It used to merge over a fresh state, on the argument that anything added since the save
+      // would get a sensible default. It did - and it also meant the SAVE always won, so any
+      // migration that changed what a field MEANS would have been silently overwritten with the
+      // value it was migrating away from. Two places filled the gaps and only one of them could
+      // ever be right.
+      //
+      // `readSave` fills them now, once, where it knows which version wrote the file. Nothing
+      // reaches here that has not been through it.
+      return action.state;
     case 'PO_REFINE':
       return applyPoRefinements(state, action.decisions);
     case 'RESET':
