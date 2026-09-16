@@ -177,7 +177,7 @@ properly.
 
 ---
 
-## 4. Loading a save knows the answer twice
+## 4. Loading a save knows the answer twice - **BUILT 2026-09-16, option (a)**
 
 ### What is there
 
@@ -198,9 +198,15 @@ so the ladder will look maintained while doing nothing.
 ### What it costs
 
 Nothing today. It costs on the first save-format change that is not a new field with a
-sensible zero - a field that CHANGES meaning. Then the migration has to happen in
-`readSave`, and the merge in `LOAD_GAME` will quietly overwrite it with the old value,
-because the loaded state wins over the fresh one.
+sensible zero.
+
+**Corrected 2026-09-16, while building it.** I had the mechanism wrong here. The merge
+spreads the save SECOND, so a migrated value wins - the merge cannot overwrite a
+migration. What it does is refill any key the save does not have, from a fresh game. So
+the failure is narrower and quieter: a migration that TAKES A FIELD AWAY cannot, because
+the fresh default comes straight back and nothing says so. The redundancy is the same
+either way - two places filling gaps, only one of which can know which version wrote the
+file.
 
 ### Options
 
@@ -217,8 +223,13 @@ save can never be missing a field.
 ### What I would do
 
 **(a)**, and it is worth doing before the next save-format change rather than after.
-The merge is the trap: it makes every migration look like it worked. (b) keeps the trap
-and removes the ladder that was built to escape it.
+
+### What was built
+
+`fillDefaults` in `zooSaves.ts` is the one place a gap is filled, and it fills everything
+the old merge was quietly covering rather than the two fields it named. `LOAD_GAME` takes
+what it is given. The contract is a test: loading adds no key the save did not have, and a
+field the ladder drops stays dropped.
 
 ---
 
@@ -268,7 +279,5 @@ other reason.
 
 ## Where this stands
 
-**1(b) is built.** Four left: undo, the three action mechanisms, the save-migration
-duplication, and the god-state. My order would be the mechanisms' seam first - it is a
-real defect and a small change - then the save duplication, before the next save-format
-change rather than after it.
+**1(b), 3(a) and 4 are built.** Two left: undo and the god-state, and I recommended
+leaving both. The rest of the work is now the needs model - see `ZOO_NEEDS_MODEL.md`.

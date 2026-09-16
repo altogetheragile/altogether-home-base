@@ -55,31 +55,58 @@ export function readSave(raw: unknown): SaveRead {
     return { ok: false, why: 'That does not look like a Build A Zoo save.' };
   }
   const version = state.version;
-  if (version === undefined) {
-    // Saved before the game recorded a version. Readable, and said so - the merge over a fresh
-    // state fills anything added since, and anything that CHANGED meaning we cannot know about.
-    return {
-      ok: true,
-      state: { ...(state as ZooGameState), version: SAVE_VERSION },
-      note: 'Saved by an earlier version of the game. Anything added since has come in at its default.',
-    };
-  }
-  if (typeof version !== 'number' || !Number.isInteger(version) || version < 0) {
+  if (typeof version !== 'undefined' && (typeof version !== 'number' || !Number.isInteger(version) || version < 0)) {
     return { ok: false, why: 'That save does not say which version of the game wrote it.' };
   }
-  if (version > SAVE_VERSION) {
+  if (typeof version === 'number' && version > SAVE_VERSION) {
     return {
       ok: false,
       why: 'That game was saved by a newer version of Build A Zoo. Reload the page and try again.',
     };
   }
-  // Older, known versions are migrated up. There is nothing to do between 0 and 1 beyond the
-  // defaulting the reducer already does; the point of the ladder is that the next change has
-  // somewhere to go, rather than being discovered by a player.
-  // Anything added since a save was taken comes in at its default: a game resumed from before the
-  // zoo's value was counted starts at nothing rather than at NaN.
-  const read = state as ZooGameState;
-  return { ok: true, state: { ...read, value: read.value ?? 0, lastLedger: read.lastLedger ?? null, version: SAVE_VERSION } };
+  // Everything a save is missing is filled HERE, and nowhere else. See `fillDefaults`.
+  const filled = fillDefaults(state as ZooGameState);
+  return version === undefined
+    ? {
+      ok: true, state: filled,
+      note: 'Saved by an earlier version of the game. Anything added since has come in at its default.',
+    }
+    : { ok: true, state: filled };
+}
+
+/** Everything a save can be missing, in one place.
+ *
+ *  This used to be two places that both thought they were the one. `readSave` filled two fields by
+ *  name, and the reducer's LOAD_GAME merged the save over a fresh state - which fills EVERY field,
+ *  and wins, because the loaded state is spread second.
+ *
+ *  So the ladder here looked maintained while doing nothing, and the first migration that changed
+ *  what a field MEANS - rather than adding a new one - would have been silently overwritten by the
+ *  merge with the value it was migrating away from. Nothing would have failed; the game would just
+ *  have been wrong about an old save, which is the worst way for a save format to break.
+ *
+ *  One place, and it is this one. `LOAD_GAME` takes what it is given. New fields are added by
+ *  naming them; a field whose meaning changes is migrated by version, below. */
+function fillDefaults(read: ZooGameState): ZooGameState {
+  return {
+    ...read,
+    // Anything added since a save was taken comes in at its default: a game resumed from before the
+    // zoo's value was counted starts at nothing rather than at NaN.
+    value: read.value ?? 0,
+    lastLedger: read.lastLedger ?? null,
+    signalLog: read.signalLog ?? [],
+    decisions: read.decisions ?? [],
+    improvements: read.improvements ?? [],
+    signals: read.signals ?? [],
+    signalAge: read.signalAge ?? {},
+    happiness: read.happiness ?? [],
+    velocity: read.velocity ?? [],
+    burndown: read.burndown ?? [],
+    connectors: read.connectors ?? [],
+    questions: read.questions ?? [],
+    zones: read.zones ?? [...new Set(read.backlog.map((it) => it.zone))],
+    version: SAVE_VERSION,
+  };
 }
 
 /** What goes into the row: the game, stamped with the build that wrote it. */
