@@ -976,6 +976,36 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                         so we can point at a path." */}
                     <line data-part="front-door" x1={d0.x} y1={d0.y} x2={d1.x} y2={d1.y}
                       stroke={door} strokeWidth={6} strokeLinecap="round" />
+                    {/* ...and which way that is, from above.
+                        
+                        A door drawn on the wall it is in is a line among lines: the walls are a
+                        band, the sign is a line, the door is a line, and from straight above they
+                        are all the same thing at different lengths. Reported from playing it: "the
+                        front of a building should have an arrow or something pointing forward. It
+                        is hard to see the front from above."
+                        
+                        So the front says which way it faces, standing off the wall where nothing
+                        else is drawn. Outlined in the ground's own colour rather than tinted with
+                        the building, because a mark in the door's colour on a door-coloured wall is
+                        the thing that was already there. */}
+                    {(() => {
+                      const m = at(0.5);
+                      const ox = -inx, oy = -iny;                 // away from the building
+                      const px = Math.abs(oy), py = Math.abs(ox); // along its front
+                      const pt = (out: number, along: number) =>
+                        `${(m.x + ox * out + px * along).toFixed(1)},${(m.y + oy * out + py * along).toFixed(1)}`;
+                      // Sized against the building, not in fixed pixels: a kiosk and a restaurant
+                      // are very different boxes and a mark that reads on one is a speck on the
+                      // other.
+                      const reach = Math.max(13, Math.min(b.size.w, b.size.h) * 0.42);
+                      const wide = Math.max(7, Math.min(b.size.w, b.size.h) * 0.24);
+                      return (
+                        <polygon data-part="front-way"
+                          points={`${pt(reach, 0)} ${pt(2, wide)} ${pt(2, -wide)}`}
+                          fill={door} stroke="#ffffff" strokeWidth={2} strokeLinejoin="round"
+                          opacity={b.underWay ? 0.6 : 0.95} />
+                      );
+                    })()}
                   </>
                 );
               })()}

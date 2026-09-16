@@ -43,6 +43,53 @@ const doorAt = (c: HTMLElement) => {
   };
 };
 
+/** Where the arrow off the front points, as a point. */
+const wayOut = (c: HTMLElement) => {
+  const tri = c.querySelector('[data-part="front-way"]');
+  if (!tri) return null;
+  const pts = (tri.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number));
+  return { x: pts[0][0], y: pts[0][1] };   // the tip is the first point
+};
+
+describe('which way a building faces', () => {
+  // A door drawn on the wall it is in is a line among lines: from straight above the walls are a
+  // band, the sign is a line and the door is a line, and they are all the same thing at different
+  // lengths. Reported from playing it: "the front of a building should have an arrow or something
+  // pointing forward. It is hard to see the front from above."
+  it('stands a mark off the front, pointing out', () => {
+    const c = draw(shop());
+    const tip = wayOut(c);
+    expect(tip, 'nothing says which way it faces').toBeTruthy();
+    const door = doorAt(c);
+    // The tip is further from the middle of the building than the door is, in the same direction.
+    const mid = { x: 400, y: 300 };
+    expect(Math.hypot(tip!.x - mid.x, tip!.y - mid.y), 'the mark is inside the building')
+      .toBeGreaterThan(Math.hypot(door.x - mid.x, door.y - mid.y));
+  });
+
+  it('turns with the building, and agrees with the door', () => {
+    const seen: string[] = [];
+    for (const rot of [0, 90, 180, 270]) {
+      const c = draw(shop({ rot }));
+      const tip = wayOut(c)!, door = doorAt(c);
+      const mid = { x: 400, y: 300 };
+      // Same side of the building as the door, every turn of it.
+      expect(Math.sign(tip.x - mid.x), `at ${rot} the arrow is not on the door's side`)
+        .toBe(Math.sign(door.x - mid.x));
+      expect(Math.sign(tip.y - mid.y), `at ${rot} the arrow is not on the door's side`)
+        .toBe(Math.sign(door.y - mid.y));
+      seen.push(`${Math.sign(tip.x - mid.x)},${Math.sign(tip.y - mid.y)}`);
+    }
+    expect(new Set(seen).size, 'turning it points the arrow the same way every time').toBe(4);
+  });
+
+  it('is not drawn on things nobody goes into', () => {
+    const c = draw({ ...shop(), category: 'flora', template: 'tree',
+      design: { parts: { type: 'tree', piece: 'oak' }, colors: {} } } as BacklogItem);
+    expect(wayOut(c), 'a tree has a front door').toBeNull();
+  });
+});
+
 describe('a building on the plan', () => {
   it('is drawn in the colours it was given', () => {
     const c = draw(shop());
