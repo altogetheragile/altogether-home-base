@@ -70,10 +70,22 @@ const FILL: Record<string, { fill: string; stroke: string }> = {
  *  Flat from above, so shape is all there is to tell one kind from another: a canopy with its light
  *  side towards the sun, scrub as a low huddle, a bed of flowers as a scatter of heads, stone as a
  *  block with corners. */
-function Canopy({ x, y, r, kind, foliage, trunk }: {
-  x: number; y: number; r: number; kind?: string; foliage?: string; trunk?: string;
+function Canopy({ x, y, r, kind, piece, foliage, trunk }: {
+  x: number; y: number; r: number; kind?: string;
+  /** WHICH tree, not just that it is one.
+   *
+   *  Every call here passed `piece.type`, which is 'tree' for an oak, a pine, a palm, a blossom and
+   *  a bare one alike - so the choice was thrown away at the door and all five came out as the same
+   *  circle in a slightly different green. Reported from playing it: "the trees are all the same. I
+   *  select pine and it looks like an oak."
+   *
+   *  A plan is a drawing from above, so these are what the crowns actually look like from above: a
+   *  conifer is a tight spiky rosette, a palm is a splay of fronds, a bare tree is branches and no
+   *  canopy at all. Not decoration - it is the only place the park says which one you planted. */
+  piece?: string; foliage?: string; trunk?: string;
 }) {
   const leaf = foliage ?? '#3f8f43';
+  const bark = trunk ?? '#7a5228';
   if (/rock|shelter|stone/i.test(kind ?? '')) {
     return <rect x={x - r} y={y - r * 0.78} width={r * 2} height={r * 1.56} rx={r * 0.34}
       fill={leaf} stroke={shade(leaf, -28)} strokeWidth={Math.max(1, r * 0.12)} />;
@@ -99,6 +111,63 @@ function Canopy({ x, y, r, kind, foliage, trunk }: {
       </g>
     );
   }
+  // A conifer from above: a tight rosette of needled tiers, dark, with the spire at its middle.
+  if (piece === 'pine') {
+    const points = Array.from({ length: 16 }, (_, i) => {
+      const a = (Math.PI * i) / 8 - Math.PI / 2;
+      const rad = i % 2 ? r * 0.52 : r;
+      return `${(x + Math.cos(a) * rad).toFixed(1)},${(y + Math.sin(a) * rad).toFixed(1)}`;
+    }).join(' ');
+    return (
+      <g>
+        <polygon points={points} fill={shade(leaf, -18)} />
+        <circle cx={x} cy={y} r={r * 0.42} fill={leaf} />
+        <circle cx={x} cy={y} r={Math.max(0.8, r * 0.13)} fill={shade(leaf, -40)} />
+      </g>
+    );
+  }
+  // A palm from above: fronds off one crown, and daylight between them.
+  if (piece === 'palm') {
+    return (
+      <g>
+        {Array.from({ length: 7 }, (_, i) => {
+          const a = (Math.PI * 2 * i) / 7 + 0.3;
+          const ex = x + Math.cos(a) * r, ey = y + Math.sin(a) * r;
+          const cx = x + Math.cos(a + 0.55) * r * 0.75, cy = y + Math.sin(a + 0.55) * r * 0.75;
+          return <path key={i} d={`M${x},${y} Q${cx.toFixed(1)},${cy.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`}
+            stroke={i % 2 ? leaf : shade(leaf, -20)} strokeWidth={Math.max(1, r * 0.3)} strokeLinecap="round" fill="none" />;
+        })}
+        <circle cx={x} cy={y} r={Math.max(1, r * 0.2)} fill={shade(bark, 10)} />
+      </g>
+    );
+  }
+  // Nothing on it. From above a bare tree is its branches, which is why it is the one you can see
+  // the ground through.
+  if (piece === 'bare') {
+    return (
+      <g>
+        {Array.from({ length: 5 }, (_, i) => {
+          const a = (Math.PI * 2 * i) / 5 + 0.4;
+          return <line key={i} x1={x} y1={y} x2={(x + Math.cos(a) * r).toFixed(1)} y2={(y + Math.sin(a) * r).toFixed(1)}
+            stroke={shade(bark, i % 2 ? 0 : -18)} strokeWidth={Math.max(0.8, r * 0.16)} strokeLinecap="round" />;
+        })}
+        <circle cx={x} cy={y} r={Math.max(1, r * 0.22)} fill={shade(bark, -24)} />
+      </g>
+    );
+  }
+  // In flower: a crown with the blossom showing through it.
+  if (piece === 'blossom') {
+    const buds = [[-0.45, -0.3], [0.32, -0.45], [0.5, 0.18], [-0.12, 0.5], [-0.58, 0.16], [0.05, -0.05]];
+    return (
+      <g>
+        <circle cx={x} cy={y} r={r} fill={shade(leaf, -22)} />
+        {buds.map(([dx, dy], i) => (
+          <circle key={i} cx={x + dx * r} cy={y + dy * r} r={r * 0.24} fill={shade(leaf, i % 2 ? 26 : 14)} />
+        ))}
+      </g>
+    );
+  }
+  // An oak, and anything the catalogue has not named: a broad, lumpy crown.
   return (
     <g>
       <circle cx={x} cy={y} r={r} fill={shade(leaf, -26)} />
@@ -669,7 +738,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             const leaf = pieceByKey(piece)?.colors.foliage ?? '#3f6a31';
             return (
               <g key={`tree-${n}`} data-tree={piece}>
-                <Canopy x={x} y={y} r={r} kind={pieceByKey(piece)?.type} foliage={leaf} />
+                <Canopy x={x} y={y} r={r} kind={pieceByKey(piece)?.type} piece={piece} foliage={leaf} />
               </g>
             );
           })}
@@ -764,7 +833,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                     be moved to where somebody wants it. */}
                 <rect x={c.x - b.size.w / 2} y={c.y - b.size.h / 2} width={b.size.w} height={b.size.h}
                   fill="transparent" />
-                <Canopy x={c.x} y={c.y} r={r} kind={piece?.type ?? d.parts.type} foliage={fill} trunk={trunk} />
+                <Canopy x={c.x} y={c.y} r={r} kind={piece?.type ?? d.parts.type} piece={piece?.key ?? d.parts.piece} foliage={fill} trunk={trunk} />
               </g>
             );
           })
@@ -918,7 +987,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 const piece = pieceOf(d, b.item.template);
                 return (
                   <Canopy x={x + b.size.w / 2} y={y + b.size.h / 2} r={Math.min(b.size.w, b.size.h) * 0.48}
-                    kind={piece?.type ?? d.parts.type} foliage={d.colors?.foliage} trunk={d.colors?.trunk} />
+                    kind={piece?.type ?? d.parts.type} piece={piece?.key ?? d.parts.piece}
+                    foliage={d.colors?.foliage} trunk={d.colors?.trunk} />
                 );
               })()}
               {/* What is inside the fence: the pool, the rocks, the planting. Drawn here because

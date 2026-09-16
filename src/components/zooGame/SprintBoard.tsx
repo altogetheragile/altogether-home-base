@@ -2,8 +2,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
-import { isDesignDone, currentDesign, homeSizeOf } from './design';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, acSettled } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -190,6 +189,31 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   // Columns follow the item's real state: To Do (not started) -> Doing (started: being
   // built in the studio and its tasks ticked off) -> Done (built AND every task ticked,
   // or already open). Starting an item is what moves it into Doing and opens the studio.
+  // What is unanswered, and what pressing the dock's button would do to it.
+  //
+  // Two different things, and the difference is the whole point. A HOW - "rounded or square?" - is
+  // theirs to answer, so ending the day answers it: you lose the say, which is what an absent
+  // Product Owner costs. An ACCEPTANCE is nobody's but the Product Owner's, so ending the day does
+  // not settle it; it carries, and on the last day it reaches the Review unaccepted.
+  const pressing = (() => {
+    const open = openQuestions(state);
+    const named = (q: typeof open[number]) => (q.itemId
+      ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work');
+    const theirs = open.find(theirsToAnswer);
+    if (theirs) {
+      return { chip: `${theirs.from} is waiting`,
+        cost: `${theirs.from} asked about ${named(theirs)} and is waiting. End the day and the Developers decide it themselves.` };
+    }
+    const mine = open.find((q) => !theirsToAnswer(q));
+    if (mine) {
+      const last = state.dayNumber >= state.sprintDays;
+      return { chip: `${named(mine)} is waiting to be checked`,
+        cost: `${named(mine)} is built and waiting on the Product Owner. Ending the day does not accept it - ${last
+          ? 'the Sprint ends and it goes to the Review unaccepted.'
+          : `it carries into Day ${state.dayNumber + 1}.`}` };
+    }
+    return null;
+  })();
   const todo = committed.filter((it) => it.status === 'committed' && !it.started);
   const doing = committed.filter((it) => it.status === 'committed' && it.started);
   // Deploy = built to the Definition of Done, awaiting release; Done = deployed (live to visitors).
@@ -235,21 +259,9 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
   // Done." One rule, and the words on the card come out of the same function as the gate.
   const readyForDone = (it: BacklogItem) => readyToMove(it);
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
-  // tooltip nobody sees on a tablet.
-  const whyNotDone = (it: BacklogItem) => {
-    // ...and when there is nothing left, the card says so and waits to be moved. Done is the
-    // Developers' word: the card no longer walks into the column when the Product Owner accepts.
-    if (readyToMove(it)) return 'Ready · move it to Done';
-    if (!isDesignDone(it, currentDesign(it), homeSizeOf(it, state.backlog))) return 'Next: build it on the park';
-    const left = (it.acceptance ?? []).filter((_, i) => !acSettled(it, i)).length;
-    if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
-    const task = (it.tasks ?? []).find((t) => t.label.trim() && !t.done);
-    if (task) return `Next: ${task.label.toLowerCase()}`;
-    // A plan with nothing left in it said "Next: finish the plan", which is a door with no handle -
-    // and it was the only thing on screen while the real blocker was that nothing had been committed
-    // as built. If we ever get here again, say the true one.
-    return it.design ? 'Next: waiting on Priya' : 'Next: build it on the park';
-  };
+  // tooltip nobody sees on a tablet. In the engine, because the card dialog asks the same question
+  // and two copies of this rule is how the card and the column came to disagree.
+  const whyNotDone = (it: BacklogItem) => whatIsLeft(state, it);
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
     if (o === 'start') return canStart(id);
@@ -793,10 +805,28 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           // ...and when the forecast is finished with days still in the Sprint, the way on is not
           // the end of the day: it is a conversation with the Product Owner about what to take next.
           // So the answer is a button rather than a sentence somebody has to act on themselves.
-          left={whyNothingMoves(state) === 'empty' ? (
-            <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
+          left={(pressing || whyNothingMoves(state) === 'empty') ? (
+            <>
+              {/* The seam between the two things the game says at once. The rail says somebody is
+                  waiting on you; the dock beside it says press this to move on. Both were true and
+                  nothing joined them, so the game offered to move past a question it was asking.
+                  It does not block - a Product Owner who has wandered off cannot be allowed to stall
+                  a Sprint, and an unanswered question costing you the say is the lesson. It names
+                  the price instead. In `left` rather than only in the hint because the hint is
+                  hidden on a narrow screen and behind anything the game is saying. */}
+              {pressing && (
+                <span data-part="unanswered"
+                  className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                  {pressing.chip}
+                </span>
+              )}
+              {whyNothingMoves(state) === 'empty' && (
+                <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
+              )}
+            </>
           ) : undefined}
           hint={(() => {
+          if (pressing) return pressing.cost;
           const why = whyNothingMoves(state);
           const left = state.sprintDays - state.dayNumber + 1;
           if (why === 'empty') return `The forecast is finished, with ${left} day${left === 1 ? '' : 's'} of the Sprint left.`;
@@ -837,6 +867,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
         onClose={() => setCardId(null)}
         onStart={(id) => { onStartItem(id); setPulling(id); }}
         onBuilding={(id) => setDesigning(id)}
+        onFinish={(id) => { setRefusedMove(null); onFinishItem(id); }}
         onAskToCheck={onAskToCheck}
         onHandBack={onDropFromSprint}
         onToggleTask={onToggleTask}

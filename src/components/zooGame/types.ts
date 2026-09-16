@@ -376,6 +376,19 @@ export interface GameQuestion {
   askedAt: number;
   /** Which day it was asked on, so a question cannot outlive the day it belongs to. */
   day: number;
+  /** Whether the Developers may answer this themselves when nobody else does.
+   *
+   *  True of a how: "rounded or square" is how it gets built, and how it gets built is theirs - so
+   *  an unanswered one costs the Product Owner the say, which is the lesson.
+   *
+   *  False of an acceptance. Whether something is what was asked for is the Product Owner's and
+   *  nobody else's, and the game used to let it expire after twenty-five seconds and write "the
+   *  Developers chose for themselves" in the log - which they cannot do, and which teaches the
+   *  opposite of who decides Done. An acceptance waits.
+   *
+   *  Optional because a game saved before the distinction existed has neither; those are read by
+   *  their id, which is where the difference already lived. */
+  developersMayAnswer?: boolean;
 }
 /** The one Scrum Team: a single Product Owner (accountable for value), a single Scrum Master
  *  (a true leader who serves the team, causes impediments to be removed, coaches

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
-import { asksNow, openQuestions, readyToOpen, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES } from './engine';
+import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -60,9 +60,15 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
   for (const q of queue) {
     if (!onAnswerQuestion) break;
     const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
+    // The clock belongs to the questions that have one. An acceptance does not expire - nobody
+    // else may answer it - and counting it down to twenty-five was the rail saying something was
+    // about to happen when nothing was.
+    const theirs = theirsToAnswer(q);
     actions.push({
       id: q.id, actor: whoIs(q.of),
-      text: `${q.from}: ${q.text}  ·  waiting ${waited}s of ${QUESTION_PATIENCE}`,
+      text: `${q.from}: ${q.text}  ·  ${theirs
+        ? `waiting ${waited}s of ${QUESTION_PATIENCE}`
+        : 'this one waits for you - nobody else can answer it'}`,
       answers: q.choices.map((c) => ({
         // Accepting is the answer that moves the work on, so it is the one that looks like the
         // action. The refusal is a real choice and not a mistake to make quickly.

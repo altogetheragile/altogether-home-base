@@ -112,3 +112,35 @@ describe('parkNav: buildings are walked around, not through', () => {
     expect(routeAcross(n, { x: 100, y: 300 }, { x: 800, y: 300 })).not.toBeNull();
   });
 });
+
+describe('the paths people actually walk', () => {
+  // A made path round the edge of an area is easily twice the diagonal, so at the old threshold
+  // guests cut the corner and crossed the grass - and the picture showed people wandering about a
+  // field while the path the player had just built stood empty. "Can I walk to it from the way in?"
+  // is an acceptance criterion; a zoo where visitors ignore the paths is one where satisfying it
+  // looks pointless.
+  // A path that goes right round three sides to get somewhere 566 away in a straight line: 1,600
+  // of walking, which is 2.8 times the crow's flight. Under the old threshold they cut across.
+  const corner = () => buildNav({
+    paths: [[{ x: 0, y: 0 }, { x: 0, y: 800 }], [{ x: 0, y: 800 }, { x: 400, y: 800 }],
+      [{ x: 400, y: 800 }, { x: 400, y: 400 }]],
+    water: [], crossings: [], solid: [],
+  });
+
+  it('goes the long way round rather than cutting across', () => {
+    const route = routeAcross(corner(), { x: 0, y: 0 }, { x: 400, y: 400 })!;
+    expect(route, 'nobody could get there at all').toBeTruthy();
+    // Straight across is one leg. Round the two sides is several.
+    expect(route.length, 'they cut the corner instead of taking the path').toBeGreaterThan(1);
+    // ...and the way round passes the corner, which a straight line never does.
+    expect(route.some((p) => p.y > 700), 'the route never went round the long way').toBe(true);
+  });
+
+  it('still walks when there is no made route at all', () => {
+    // The fallback is deliberate: a guest who cannot get anywhere is a worse bug than one who
+    // clips a corner.
+    const route = routeAcross(buildNav({ paths: [], water: [], crossings: [], solid: [] }),
+      { x: 0, y: 0 }, { x: 300, y: 300 });
+    expect(route, 'a zoo with no paths yet strands everybody').toBeTruthy();
+  });
+});

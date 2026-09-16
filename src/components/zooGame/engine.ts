@@ -9,7 +9,7 @@ import { zonePlots, plotOrder } from './parkZones';
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
 import { whereItStands, groundSize } from './parkModel';
-import { appealFromDesign, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
+import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { makeRng, hashStr } from './simulation/rng';
@@ -132,6 +132,8 @@ export function askIfDue(state: ZooGameState): ZooGameState {
         { key: 'theirs', label: 'Your call', note: 'How it gets built is the Developers\u2019.' },
       ],
       askedAt: state.daySecondsLeft, day: state.dayNumber,
+      // How it gets built is theirs, so this is one they may answer for themselves.
+      developersMayAnswer: true,
     }],
   };
 }
@@ -247,6 +249,9 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
           note: 'It goes back to Doing with their build kept as a draft. They finish it and ask again, and that costs Sprint time.' },
       ],
       askedAt: state.daySecondsLeft, day: state.dayNumber,
+      // ...and this one they may not. Whether something is what was asked for is the Product
+      // Owner's and nobody else's: it waits rather than expiring.
+      developersMayAnswer: false,
     }],
   };
 }
@@ -308,17 +313,48 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
   });
 }
 
-/** Nobody answered in time, so the Developers answer it themselves and get on. The guess is
- *  recorded: an absent Product Owner is not free, and this is where the bill lands. */
-export function guessUnanswered(state: ZooGameState): ZooGameState {
-  const q = (state.questions ?? [])[0];
-  if (!q) return state;
-  if (q.askedAt - state.daySecondsLeft < QUESTION_PATIENCE) return state;
+/** Whether the Developers may answer this one themselves.
+ *
+ *  Read from the question where it says so, and inferred from its id where it does not - a game
+ *  saved before the distinction existed still has it, because the difference always lived in which
+ *  function asked. An acceptance is the only thing they may not answer. */
+export const theirsToAnswer = (q: GameQuestion): boolean =>
+  q.developersMayAnswer ?? !q.id.startsWith('check-');
+
+/** The Developers answer one themselves and get on, and the guess is recorded: an absent Product
+ *  Owner is not free, and this is where the bill lands.
+ *
+ *  Only ever a question that is theirs to answer. It used to take whichever question was first in
+ *  the list, so a request to come and look at finished work expired after twenty-five seconds and
+ *  was written down as "the Developers chose for themselves" - which they cannot do. Whether
+ *  something is what was asked for is the Product Owner's, and an acceptance waits however long it
+ *  has to. */
+function devsDecide(state: ZooGameState, q: GameQuestion, waited: string): ZooGameState {
   return note({ ...state, questions: (state.questions ?? []).filter((x) => x.id !== q.id) }, {
     kind: 'question', by: 'developer',
     what: `${q.from} asked about ${q.itemId ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work'} and nobody answered, so the Developers chose for themselves.`,
-    cost: `Waited ${QUESTION_PATIENCE}s. A question nobody answers is answered anyway - by whoever is holding the work.`,
+    cost: `${waited} A question nobody answers is answered anyway - by whoever is holding the work.`,
   });
+}
+
+export function guessUnanswered(state: ZooGameState): ZooGameState {
+  const q = (state.questions ?? []).find(theirsToAnswer);
+  if (!q) return state;
+  if (q.askedAt - state.daySecondsLeft < QUESTION_PATIENCE) return state;
+  return devsDecide(state, q, `Waited ${QUESTION_PATIENCE}s.`);
+}
+
+/** ...and the same thing when the day runs out rather than the patience.
+ *
+ *  A question belongs to the day it was asked on - `GameQuestion.day` has said so since the field
+ *  was written, and nothing read it. Carried into tomorrow, its clock restarted against a fresh
+ *  day's seconds and it sat on the rail reading "waiting 0s of 25" while nobody was waiting at all.
+ *  So the day closes it, the same way the clock would have.
+ *
+ *  An acceptance is not closed. It is not the day's to answer. */
+export function settleOpenQuestions(state: ZooGameState): ZooGameState {
+  return (state.questions ?? []).filter(theirsToAnswer)
+    .reduce((s, q) => devsDecide(s, q, 'The day ended with it unanswered.'), state);
 }
 
 /** Put a hand on the clock, or take it off. The Sprint's time is real, and stopping it is a
@@ -810,6 +846,31 @@ export function settleStatus(item: BacklogItem): BacklogItem {
  *  asks for is in, and nobody has said so yet. */
 export const readyToMove = (item: BacklogItem): boolean =>
   item.status === 'committed' && !!item.started && !!item.design && readyForDone(item);
+
+/** What is left before this can be moved to Done, in words, or that nothing is.
+ *
+ *  One sentence, one source. The board's card has said this since it was written; the card DIALOG -
+ *  which is where the game puts an item's detail, and the only path to it without a pointer - said
+ *  nothing and offered "Pick it up" as the thing to do next on work that was finished. Reported
+ *  from playing it: "why is this giving a Pick it up option? All steps and ACs are met."
+ *
+ *  Two places asking the same question is how the board and the column came to disagree about
+ *  whether a card could move at all, which is the bug this function was extracted to stop
+ *  happening twice. */
+export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
+  // Nothing left: the card says so and waits to be moved. Done is the Developers' word, so the
+  // card does not walk into the column by itself when the Product Owner accepts.
+  if (readyToMove(item)) return 'Ready \u00b7 move it to Done';
+  if (!isDesignDone(item, currentDesign(item), homeSizeOf(item, state.backlog))) return 'Next: build it on the park';
+  const left = (item.acceptance ?? []).filter((_, i) => !acSettled(item, i)).length;
+  if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
+  const task = (item.tasks ?? []).find((t) => t.label.trim() && !t.done);
+  if (task) return `Next: ${task.label.toLowerCase()}`;
+  // A plan with nothing left in it said "Next: finish the plan", which is a door with no handle -
+  // and it was the only thing on screen while the real blocker was that nothing had been committed
+  // as built. If we ever get here again, say the true one.
+  return item.design ? `Next: waiting on ${whoIs('product_owner').replace(/^The /, '')}` : 'Next: build it on the park';
+}
 
 /** The Developers move a card to Done. The one place a card becomes Done, so it cannot happen by
  *  accident somewhere else - and it is refused, with the reason, where the work is not ready. */
@@ -2472,8 +2533,10 @@ export function endDay(state: ZooGameState): ZooGameState {
   // The day's clock runs through the start-of-day breather and the build, so a day
   // can end from either stage (the pause uses real time).
   if (state.phase !== 'sprint' || (state.dayStage !== 'building' && state.dayStage !== 'dayStart')) return state;
+  // Anything still on the rail that was theirs to answer, they answer. The day is what runs out.
+  const closed = settleOpenQuestions(state);
   // Sample the burndown as the day closes: committed points still remaining.
-  const s = { ...state, burndown: [...state.burndown, sprintProgress(state).remaining] };
+  const s = { ...closed, burndown: [...closed.burndown, sprintProgress(closed).remaining] };
   // The last day ends straight to the Review: there is no next day to re-plan.
   if (s.dayNumber >= s.sprintDays) return reviewSprint(s);
   if (s.dailyScrumAt === 'start') {
