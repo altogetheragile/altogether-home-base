@@ -7,7 +7,8 @@ import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
-import { toolboxDraft } from './toolboxItems';
+import { toolboxDraft, TOOLBOX, meetsOf } from './toolboxItems';
+import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight, Undo2 } from 'lucide-react';
@@ -87,6 +88,71 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
         )}
         <Button size="sm" disabled={count === 0} onClick={() => onSplit(members.filter((m) => picked.has(m.id)).map((m) => m.id))}>Create {count} Product Backlog item{count === 1 ? '' : 's'}</Button>
       </div>
+    </div>
+  );
+}
+
+/** What will meet this need? The Developers' call, and the one the game used to make for them.
+ *
+ *  Offered against the criteria rather than as a catalogue to browse: a piece is here because it
+ *  can settle something this item is asking for, and the row says which. That is what `meets` on a
+ *  catalogue piece is for - the Product Owner asks for somewhere to eat, and the Developers know
+ *  that a kiosk, a cafe or a stall are the answers.
+ *
+ *  Nothing is refused. A piece that meets none of it is still on the list behind "everything",
+ *  because choosing the right thing is professional judgement and a game that will not let you be
+ *  wrong cannot teach you anything. */
+export function ChooseSolutionPanel({ item, onChoose }: {
+  item: BacklogItem;
+  onChoose: (pick: string) => void;
+}) {
+  const [all, setAll] = useState(false);
+  const wants = item.acceptance ?? [];
+  const wanted = new Set(wants.map((a) => criterionFor(a)?.id).filter(Boolean) as string[]);
+  const pieces = TOOLBOX.flatMap((g) => g.items.map((t) => ({ t, group: g.group, meets: meetsOf(t) })));
+  const hitsOf = (m: string[]) => m.filter((x) => wanted.has(x)).length;
+  // Best answer first. Unsorted, a Large Tank sat above the Kiosk because a tank is also something
+  // you can walk to - true, and no help at all to somebody deciding where lunch comes from. The
+  // whole list is still here: this orders it, it does not hide anything.
+  const sorted = [...pieces].sort((a, b) => hitsOf(b.meets) - hitsOf(a.meets));
+  const serves = sorted.filter((p) => hitsOf(p.meets) > 0);
+  const shown = all ? sorted : serves;
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-muted-foreground">
+        The Product Owner said what is needed. What meets it is yours: this is the difference between
+        what and how, and it is the whole of why the two accountabilities are separate.
+      </p>
+      <ul className="space-y-1">
+        {wants.map((a) => (
+          <li key={a} className="text-[11px] text-muted-foreground">&middot; {a}</li>
+        ))}
+      </ul>
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {shown.map(({ t, group, meets }) => {
+          const hits = meets.filter((m) => wanted.has(m));
+          return (
+            <button key={t.name} type="button" data-part="choose-solution" data-pick={t.name}
+              onClick={() => onChoose(t.name)}
+              className={cn(FOCUS, 'flex items-start gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-left hover:border-primary/70')}>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">{t.name}</span>
+                <span className="block text-[11px] text-muted-foreground">
+                  {hits.length
+                    ? `meets ${hits.length} of the ${wants.length}`
+                    : `${group} \u00b7 meets none of it`}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {!all && (
+        <button type="button" onClick={() => setAll(true)}
+          className={cn(FOCUS, 'text-[11px] font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground')}>
+          Show everything, not only what serves this
+        </button>
+      )}
     </div>
   );
 }
@@ -475,6 +541,8 @@ interface SidebarProps {
   onPull?: (id: string) => void;
   /** Refine an epic by splitting the chosen members into their own PBIs. */
   onSplitEpic?: (id: string, memberIds: string[]) => void;
+  /** The Developers decide what will meet a need, which is what makes it work they can size. */
+  onChooseSolution?: (id: string, pick: string) => void;
   /** Delete or duplicate a Product Backlog PBI. */
   onDeletePbi?: (id: string) => void;
   onDuplicatePbi?: (id: string) => void;
@@ -487,7 +555,7 @@ interface SidebarProps {
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onChooseSolution, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
   // Where the list has an item takeover beside it, every row action opens THAT - the takeover
   // already carries the conversation, the criteria, the cards and the commit. These panels are the
   // fallback for the places that have no takeover to open, and having both was the fault reported:
@@ -495,6 +563,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   const [editingPbi, setEditingPbi] = useState<BacklogItem | 'new' | null>(null);
   const [sizing, setSizing] = useState<string | null>(null);
   const [splitting, setSplitting] = useState<BacklogItem | null>(null);
+  const [choosing, setChoosing] = useState<BacklogItem | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [showToolbox, setShowToolbox] = useState(false);
   const [wide, setWide] = useState(false); // a narrow rail by default, widened to read comfortably
@@ -547,6 +616,12 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
       // withholding something and an absence teaches nothing at all - which is right, until they
       // have missed it.
       : !adopted(state, 'refinement') && (it.category === 'epic' || it.unsized) ? null
+      // A need is not too big, it is undecided. Nobody can size it and nobody can start it until the
+      // Developers say what they will build, and that is the button.
+      : it.category === 'need' && onChooseSolution ? (
+        <Button size="sm" className="h-7 shrink-0 px-2 text-xs"
+          onClick={() => setChoosing(it)}>What will meet this?</Button>
+      )
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.
@@ -728,6 +803,14 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
             onSave={(d) => { if (editingPbi === 'new') onAddPbi(d); else onRefinePbi(editingPbi.id, d); setEditingPbi(null); }}
             onEstimate={editingPbi !== 'new' ? (pts) => onEstimate?.(editingPbi.id, pts) : undefined}
             onCancel={() => setEditingPbi(null)} />
+        </Workspace>
+      )}
+      {choosing && onChooseSolution && (
+        <Workspace wide title={`What will meet "${choosing.name}"?`}
+          subtitle="The Product Owner said what is needed. What meets it is the Developers' call."
+          onClose={() => setChoosing(null)}>
+          <ChooseSolutionPanel item={choosing}
+            onChoose={(pick) => { onChooseSolution(choosing.id, pick); setChoosing(null); }} />
         </Workspace>
       )}
       {splitting && (

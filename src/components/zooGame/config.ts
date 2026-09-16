@@ -292,14 +292,31 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
   );
 
   // Facilities: a day out needs somewhere to eat, somewhere to go and somewhere to sit. Their own
-  // PBIs rather than something buried inside an animal epic. The audience decides which comes first.
+  // items rather than something buried inside an animal epic. The audience decides which comes
+  // first.
+  //
+  // ...and these three arrive as NEEDS rather than as buildings, because they are the clearest case
+  // in the zoo where the Product Owner has no business choosing. "Somewhere to eat" is met by a
+  // kiosk, a cafe or a stall, and which one is a decision about cost, room and how long people
+  // stay - which is the Developers'. Everything else on this Backlog still arrives specified, and
+  // the contrast is the point: a bridge over the river is a bridge.
   const facilities = [
     am('main-wc', 'Toilets', 'Facilities', 'toilet'),
-    am('gift-shop', 'Gift Shop', 'Facilities', 'food'),
+    // ONE of them arrives as a need rather than as a building, and the other two do not. That is
+    // the contrast, and it is on purpose: a Product Backlog with nothing but needs on it teaches
+    // that a Product Owner never specifies anything, which is not true either.
+    //
+    // Somewhere to eat is the clearest case in the zoo. A kiosk, a cafe, a stall and a shop all
+    // answer it, and which one is a decision about cost, room and how long people stay - which is
+    // the Developers'. "Gift Shop, 5 points" was the Product Owner making it for them.
+    need('somewhere-to-eat', 'Somewhere to eat', 'Facilities',
+      { as: 'a visitor', want: 'to buy food and a drink without leaving', soThat: 'lunchtime does not end our visit' },
+      ['Can I tell what it is from outside?', 'Can I buy food and a drink here?', 'Can I walk to it from the way in?']),
     am('benches', 'Seating Area', 'Facilities', 'rest'),
   ];
-  const wanted = brief.audience === 'families' ? 'food' : brief.audience === 'comfortSeekers' ? 'rest' : 'toilet';
-  items.push(...facilities.sort((a, b) => Number(b.services === wanted) - Number(a.services === wanted)));
+  const wanted = brief.audience === 'families' ? 'somewhere-to-eat'
+    : brief.audience === 'comfortSeekers' ? 'benches' : 'main-wc';
+  items.push(...facilities.sort((a, b) => Number(b.id === wanted) - Number(a.id === wanted)));
   return items;
 }
 
@@ -381,10 +398,33 @@ function am(id: string, name: string, zone: string, services: 'food' | 'toilet' 
   };
 }
 
-/** Copy just the fields the simulation reads from a backlog item. */
+/** A NEED: what is wanted, with the answer left open.
+ *
+ *  The Product Owner captures what is needed and the Developers decide how, so this carries a story
+ *  and the criteria that say when it has been met, and nothing about what to build. It arrives
+ *  unsized because nobody has decided what the work is yet - which is what Refinement is for, and
+ *  is a truer reason to be unsized than "somebody has not got round to it".
+ *
+ *  Only some items are written this way, on purpose. A bridge over the river is a bridge, and the
+ *  contrast between a need and a specification is the lesson. */
+function need(id: string, name: string, zone: string, story: { as: string; want: string; soThat: string }, criteria: string[]): BacklogItem {
+  return {
+    id, name, category: 'need', zone, estimate: 0, unsized: true,
+    story: `As ${story.as} I want ${story.want} so that ${story.soThat}`,
+    acceptance: criteria,
+    status: 'backlog', sprintNumber: null, accessible: true,
+  };
+}
+
+
+/** Copy just the fields the simulation reads from a backlog item.
+ *
+ *  A need never reaches here: the simulation reads what is OPEN, and a need is not a thing that can
+ *  be built, let alone opened. It is cast rather than mapped because the simulation's own category
+ *  list is the list of things visitors can experience, which is the right list for it to have. */
 export function toZooItem(it: BacklogItem): ZooItem {
   return {
-    id: it.id, name: it.name, category: it.category, accessible: it.accessible,
+    id: it.id, name: it.name, category: it.category as ZooItem['category'], accessible: it.accessible,
     appeal: it.appeal, capacity: it.capacity, services: it.services, serviceCapacity: it.serviceCapacity,
   };
 }

@@ -54,6 +54,8 @@ export function zooActions(send: (action: ZooAction) => void) {
     setEnclosureSize: (id: string, size: 'small' | 'medium' | 'large') => send({ type: 'SET_ENCLOSURE', id, size }),
     /** What a facility offers the people who come to it, in the terms the zoo counts. */
     setServices: (id: string, services: 'food' | 'toilet' | 'rest' | null) => send({ type: 'SET_SERVICES', id, services }),
+    /** The Developers decide what will meet a need. `pick` is a piece from the toolbox. */
+    chooseSolution: (id: string, pick: string) => send({ type: 'CHOOSE_SOLUTION', id, pick }),
     setItemPos: (id: string, pos: { x: number; y: number }) => send({ type: 'SET_POS', id, pos }),
     splitEpic: (id: string, memberIds: string[]) => send({ type: 'SPLIT_EPIC', id, memberIds }),
     createPbi: (draft: PbiDraft) => send({ type: 'ADD_PBI', draft }),

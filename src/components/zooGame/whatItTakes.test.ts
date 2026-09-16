@@ -53,10 +53,21 @@ describe('what an item is sized at', () => {
 
   it('is on the scale the Developers estimate in', () => {
     const FIB = [1, 2, 3, 5, 8, 13, 21];
-    for (const it of seed.filter((x) => x.category !== 'epic')) {
+    // A need is not sized, because nobody has decided what the work is. That is what Refinement is
+    // for, and it is a truer reason to be unsized than "somebody has not got round to it".
+    for (const it of seed.filter((x) => x.category !== 'epic' && x.category !== 'need')) {
       expect(FIB.includes(it.trueSize ?? 0), `${it.name} is sized at ${it.trueSize}, which is not a card in the hand`)
         .toBe(true);
     }
+  });
+});
+
+describe('a need has no size until the Developers choose', () => {
+  it('arrives unsized, and says so', () => {
+    const it0 = starterBacklog().find((x) => x.category === 'need')!;
+    expect(it0, 'nothing on the Backlog is written as a need').toBeTruthy();
+    expect(it0.unsized, 'a need arrives with a number nobody could have worked out').toBe(true);
+    expect(it0.trueSize, 'a need has a hidden true size, which is a size for undecided work').toBeUndefined();
   });
 });
 

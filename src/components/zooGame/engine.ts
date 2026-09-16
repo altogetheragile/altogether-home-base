@@ -12,6 +12,7 @@ import { whereItStands, groundSize } from './parkModel';
 import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
+import { TOOLBOX } from './toolboxItems';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
@@ -1407,6 +1408,47 @@ export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' 
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
 }
 
+/** The Developers choose what will meet a need.
+ *
+ *  This is the moment the game exists to teach, and until now the game made it for you: an item
+ *  arrived called "Lion Enclosure, large, 8 points" and there was nothing left to decide. The
+ *  Product Owner captures what is needed; the Developers decide how.
+ *
+ *  What the choice does NOT do is change what was asked for. The criteria are the Product Owner's
+ *  and they survive the decision untouched - a solution that rewrites the need is not a solution,
+ *  it is a different item. What it sets is everything about the how: what kind of thing it is, what
+ *  it is made of, how big, and what it offers.
+ *
+ *  ...and only then does it have a size. A need cannot be forecast because nobody has decided what
+ *  the work is yet, which is what Refinement is for and why an unchosen need arrives unsized. */
+export function chooseSolution(state: ZooGameState, id: string, pick: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  const choice = TOOLBOX.flatMap((g) => g.items).find((t) => t.name === pick);
+  if (!item || item.category !== 'need' || !choice) return state;
+  const size = effortOf({ category: choice.category, enclosureSize: choice.footprint, template: choice.template, services: choice.services });
+  const chosen: BacklogItem = {
+    ...item,
+    category: choice.category,
+    template: choice.template,
+    enclosureSize: choice.footprint,
+    services: choice.services ?? item.services,
+    serviceCapacity: choice.services ? DEFAULT_SERVICE_CAPACITY : item.serviceCapacity,
+    // Sized now that there is work to size. Unsized until the Developers say what they will build,
+    // because an estimate of an undecided thing is a guess about a guess.
+    unsized: false,
+    trueSize: size,
+    estimate: item.estimate || 0,
+    // The name says what was chosen, and the story still says what was wanted.
+    name: choice.name,
+    needName: item.name,
+  };
+  return note({ ...state, backlog: state.backlog.map((it) => (it.id === id ? chosen : it)) }, {
+    kind: 'refinement', by: 'developer',
+    what: `The Developers chose ${choice.name} to meet "${item.name}".`,
+    cost: 'How it gets built is theirs. What was asked for has not changed.',
+  });
+}
+
 /** What a facility offers the people who come to it.
  *
  *  The zoo models three things a visitor needs: somewhere to eat, a toilet, somewhere to sit. A
@@ -1776,15 +1818,26 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
 
   // The Developers sized what they took. Sizing is theirs and it happened before the learner
   // arrived, which is exactly what "it arrives planned" means.
+  //
+  // A NEED is not sized here, and neither is an epic, for the same reason: there is nothing to
+  // size. An epic is too big to be one piece of work and a need has not been decided yet, and
+  // putting a number on either is a guess about a guess. `it.trueSize ?? 5` would have given every
+  // need a five, which is how a decision nobody made turns into a forecast somebody trusts.
   for (const it of s.backlog) {
-    if (it.unsized && it.category !== 'epic') s = estimateItem(s, it.id, it.trueSize ?? 5);
+    if (it.unsized && it.category !== 'epic' && it.category !== 'need') s = estimateItem(s, it.id, it.trueSize ?? 5);
   }
 
   // What they took: off the top, in order, up to what a Sprint of this length holds - and out of the
   // one area the zoo has ground in. A first Sprint that reaches across the whole park is a first
   // Sprint with no slice in it, and the slice is the thing this game is for.
   const room = sprintCapacity(s).points;
-  const here = availableItems(s).filter((it) => isReady(it, s) && hasGround(s, it.zone) && it.zone !== 'Grounds');
+  // ...and the spine, which is not in any area and is what makes the area reachable. Every habitat
+  // is asked "can I walk to it from the way in?", so a first Sprint that opens an area and lays no
+  // path has delivered something nobody can get to. It was excluded with the rest of the Grounds
+  // when the whole of the Grounds was scenery; now that one item of it is the way in, it belongs.
+  const spine = (it: BacklogItem) => it.zone === 'Grounds' && it.category === 'path';
+  const here = availableItems(s).filter((it) => isReady(it, s)
+    && (spine(it) || (hasGround(s, it.zone) && it.zone !== 'Grounds')));
   // A Sprint's worth, not a handful. It used to stop at three cards - "a board somebody can read on
   // their first morning" - and three cards is about a third of what a Sprint holds, so anybody who
   // knew the controls ran out of work on the first day and had nothing to do but watch the clock.
@@ -2506,6 +2559,10 @@ export function notReady(item: BacklogItem, state?: ZooGameState): string | null
     return `The zoo has no ground in the ${item.zone} yet - the Product Owner opens it at refinement`;
   }
   if (item.category === 'epic') return 'Too big - split it into the pieces you could build';
+  // A need is not too big and it is not unsized through neglect: nobody has decided what the work
+  // IS yet. Saying "not sized" would send the Developers to the planning poker, which is the wrong
+  // conversation - what is missing is the decision, and sizing follows it.
+  if (item.category === 'need') return 'Nobody has decided what will meet this - the Developers choose, at Refinement';
   if (item.unsized) return 'Not sized yet - the Developers size it in Refinement';
   if (!item.acceptance.length) return 'No acceptance criteria agreed';
   return null;

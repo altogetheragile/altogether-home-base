@@ -2240,7 +2240,10 @@ describe('zoo game: the seeded Backlog reads correctly', () => {
     const want: Record<string, string> = {
       'Lion Enclosure': 'fence', Lion: 'cat', 'Main Pathways': 'path', Trees: 'tree', Flowerbed: 'flower',
       Rockery: 'rocks', Bridge: 'bridge', Signposts: 'signpost', Fountain: 'fountain',
-      Toilets: 'toilets', 'Gift Shop': 'shop', 'Seating Area': 'seating',
+      Toilets: 'toilets', 'Seating Area': 'seating',
+      // A need has no picture of a thing, because the Developers have not chosen the thing yet.
+      // It must not take the cafe icon off the word "eat" and answer the question for them.
+      'Somewhere to eat': 'need',
     };
     const s = initialZooState(1);
     for (const [name, key] of Object.entries(want)) {
