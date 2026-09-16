@@ -2127,7 +2127,14 @@ function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: amenityAcceptance('Food outlet', 'food'), services: 'food', serviceCapacity: 500 };
   if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('More toilets', 'toilet'), services: 'toilet', serviceCapacity: 500 };
   if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('Seating and shade', 'rest'), services: 'rest', serviceCapacity: 500 };
-  if (sig.drivenBy === 'crowding') return { ...base, name: 'Extra viewing area', category: 'amenity', trueSize: 5, acceptance: ['Eases the queues', 'Good sightlines', 'Placed where visitors can reach it'] };
+  // Its own two, and then the one every facility is asked. It carried "Placed where visitors can
+  // reach it", which is the same question in words nothing recognises - so the park could not answer
+  // any of this item's criteria and the only route to Done was the Product Owner waiving all three.
+  // The same trap facilities were in before their question was put in the park's own words.
+  if (sig.drivenBy === 'crowding') {
+    return { ...base, name: 'Extra viewing area', category: 'amenity', trueSize: 5,
+      acceptance: ['Eases the queues', 'Good sightlines', 'Can I walk to it from the way in?'] };
+  }
   return null;
 }
 

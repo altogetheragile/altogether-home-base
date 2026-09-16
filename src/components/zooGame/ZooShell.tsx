@@ -574,7 +574,14 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     // Whose run it is. A habitat holds the pen too, now that being walkable to is one
                     // of its own criteria: the run a player draws to their pen belongs to that pen,
                     // so it counts as its work and the Developers do not lay a second one beside it.
-                    runFor={inHand && (inHand.category === 'path' || inHand.category === 'enclosure') ? inHand.id : undefined}
+                    //
+                    // ...and so does a building, for exactly the same reason. A kiosk is asked "can I
+                    // walk to it from the way in?" like everything else and was given no pen to draw
+                    // one with, so the only criterion the park answers for it could not be met by
+                    // hand at all. Reported from playing it: "all buildings need to be connected by
+                    // paths. Only the enclosures has this as part of the PBI."
+                    runFor={inHand && (inHand.category === 'path' || inHand.category === 'enclosure'
+                      || inHand.category === 'amenity') ? inHand.id : undefined}
                     onAddConnector={onAddConnector}
                     onAskToCheck={onAskToCheck} />
                 </div>
