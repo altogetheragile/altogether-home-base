@@ -241,7 +241,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       </div>
       {benchItem && (
         <ItemTakeover state={state} item={benchItem} onEstimate={onEstimate} onRefinePbi={onRefinePbi}
-          onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} onClose={() => setFocus(null)} />
+          onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution} onSetUseStories={onSetUseStories}
+          onClose={() => setFocus(null)} />
       )}
 
       <ActionBar hint={!canPlan ? 'Size at least one item so it is Ready to plan'

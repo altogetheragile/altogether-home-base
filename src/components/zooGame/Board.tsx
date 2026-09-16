@@ -102,9 +102,12 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
  *  Nothing is refused. A piece that meets none of it is still on the list behind "everything",
  *  because choosing the right thing is professional judgement and a game that will not let you be
  *  wrong cannot teach you anything. */
-export function ChooseSolutionPanel({ item, onChoose }: {
+export function ChooseSolutionPanel({ item, onChoose, wanted: showWanted = true }: {
   item: BacklogItem;
   onChoose: (pick: string) => void;
+  /** Whether to list what was asked for. The refinement takeover has the criteria on the card
+   *  already, and the same three lines twice in one dialog reads as two different lists. */
+  wanted?: boolean;
 }) {
   const [all, setAll] = useState(false);
   const wants = item.acceptance ?? [];
@@ -145,11 +148,13 @@ export function ChooseSolutionPanel({ item, onChoose }: {
         The Product Owner said what is needed. What meets it is yours: this is the difference between
         what and how, and it is the whole of why the two accountabilities are separate.
       </p>
-      <ul className="space-y-1">
-        {wants.map((a) => (
-          <li key={a} className="text-[11px] text-muted-foreground">&middot; {a}</li>
-        ))}
-      </ul>
+      {showWanted && (
+        <ul className="space-y-1">
+          {wants.map((a) => (
+            <li key={a} className="text-[11px] text-muted-foreground">&middot; {a}</li>
+          ))}
+        </ul>
+      )}
       <div className="grid gap-1.5 sm:grid-cols-2">
         {shown.map(({ t, group, meets }) => {
           const hits = meets.filter((m) => wanted.has(m));

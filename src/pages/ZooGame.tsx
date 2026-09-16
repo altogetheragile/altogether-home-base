@@ -312,7 +312,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   const backlogTab = (
     <BacklogTab state={state} onEstimate={estimate} onAddPbi={createPbi} onRefinePbi={refinePbi}
       onReorder={reorder} onMoveZone={moveZoneOrder} onMoveBefore={moveBefore} onSetUseStories={setUserStories}
-      onSplitEpic={splitEpic} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi}
+      onSplitEpic={splitEpic} onChooseSolution={chooseSolution} onDeletePbi={deletePbi} onDuplicatePbi={duplicatePbi}
       onPull={state.phase === 'sprint' ? pull : undefined} />
   );
 

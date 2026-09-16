@@ -12,6 +12,7 @@ import type { BacklogItem, PbiDraft } from './types';
 //
 // Six kinds, each with something true about it that none of the others has:
 //
+//   Need            what is wanted, before anybody has decided what would meet it
 //   Habitat         a footprint you size, that contains other things
 //   Fauna           blocked on its habitat; what visitors come for
 //   Flora           plantable inside a habitat, and put down many times over
@@ -22,7 +23,7 @@ import type { BacklogItem, PbiDraft } from './types';
 // "Utilities" is not a seventh: a bridge and a signpost ARE the utilities of a park, and they
 // belong beside the paths they serve.
 
-export type ItemKind = 'epic' | 'habitat' | 'fauna' | 'flora' | 'landscape' | 'facility' | 'infrastructure';
+export type ItemKind = 'need' | 'epic' | 'habitat' | 'fauna' | 'flora' | 'landscape' | 'facility' | 'infrastructure';
 
 /** Scenery types by the kind they really are. Everything not named here is planting. */
 const LANDSCAPE_SCENERY = ['river', 'pond', 'rocks', 'fountain'];
@@ -30,6 +31,10 @@ const INFRASTRUCTURE_SCENERY = ['bridge', 'signpost', 'entrance', 'carpark'];
 
 /** What the player calls it. */
 export const KIND_LABEL: Record<ItemKind, string> = {
+  // Not a kind of thing: the kind of item that has not been decided into a thing yet. It fell
+  // through to "Planting", because everything unrecognised does, so a need to feed the visitors
+  // was labelled on the board as greenery.
+  need: 'Need',
   epic: 'Epic',
   habitat: 'Habitat',
   fauna: 'Animal',
@@ -46,6 +51,7 @@ export function sceneryType(item: Pick<BacklogItem, 'template' | 'design'> & { d
 
 export function itemKind(item: Pick<BacklogItem, 'category' | 'template' | 'design'> & { draftDesign?: BacklogItem['draftDesign'] }): ItemKind {
   switch (item.category) {
+    case 'need': return 'need';
     case 'epic': return 'epic';
     case 'enclosure': return 'habitat';
     case 'exhibit': return 'fauna';

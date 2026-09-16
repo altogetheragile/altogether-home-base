@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
 import { availableItems, notReady, refinementTalk, readyHorizon, sprintCapacity } from './engine';
 import { REFINE_COSTS } from './config';
-import { ProductBacklogSidebar, SplitEpicPanel } from './Board';
+import { ProductBacklogSidebar, SplitEpicPanel, ChooseSolutionPanel } from './Board';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { CategoryChip } from './PbiCard';
@@ -61,12 +61,14 @@ export function ItemTakeover({ item, onClose, ...rest }: Parameters<typeof ItemB
   );
 }
 
-export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, onSetUseStories, onClose, onDone, className }: {
+export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, onChooseSolution, onSetUseStories, onClose, onDone, className }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onEstimate: (id: string, points: number) => void;
   onRefinePbi: (id: string, draft: PbiDraft) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
+  /** The Developers decide what will meet a need, which is the one act a need is waiting on. */
+  onChooseSolution?: (id: string, pick: string) => void;
   onSetUseStories: (on: boolean) => void;
   /** Put the bench away, where the card it shares has something else to show. */
   onClose?: () => void;
@@ -77,8 +79,16 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
 }) {
   // An unsized item opens with its cards out. The takeover is here to view it, size it and commit -
   // pressing "Size it" first was a screen in the way of the only thing the screen is for.
-  const [doing, setDoing] = useState<'size' | 'split' | 'word' | null>(
-    !item ? null : item.category === 'epic' ? 'split' : item.unsized ? 'size' : null);
+  // ...and a NEED opens with the catalogue out, for the same reason: the one thing that has to
+  // happen to it is the decision about what would meet it. It used to open with the planning poker,
+  // directly under a line saying nobody had decided what the work was - the game asking for a
+  // number about an undecided thing, which is the conversation this whole model exists to stop.
+  //
+  // Only if there is somewhere for the choice to go. Opening on an act nobody can perform renders
+  // neither the panel NOR the button that offers it, and the card reads as a dead end.
+  const [doing, setDoing] = useState<'size' | 'split' | 'choose' | 'word' | null>(
+    !item ? null : item.category === 'need' ? (onChooseSolution ? 'choose' : null)
+      : item.category === 'epic' ? 'split' : item.unsized ? 'size' : null);
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
   if (!item) {
@@ -154,7 +164,11 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
       {/* The acts, each with what it costs the day - and never the one already open: an item that
           opens with its cards out does not also need a button offering to deal them. */}
       <div className="flex flex-wrap gap-1.5">
-        {doing === 'size' || doing === 'split' ? null : item.category === 'epic' ? (
+        {doing === 'size' || doing === 'split' || doing === 'choose' ? null : item.category === 'need' ? (
+          onChooseSolution && <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setDoing('choose')}>
+            <HelpCircle className="mr-1 h-3.5 w-3.5" /> What will meet this?
+          </Button>
+        ) : item.category === 'epic' ? (
           <Button size="sm" className={cn(TONE.reflect.solid, 'h-7 px-2 text-xs text-white hover:bg-rose-700')}
             onClick={() => setDoing('split')}>
             <Scissors className="mr-1 h-3.5 w-3.5" /> Split it up<Cost state={state} seconds={REFINE_COSTS.split} />
@@ -176,6 +190,12 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
         <div className="rounded-lg border border-border p-2">
           <PlanningPoker item={item} state={state} seed={state.gameSeed} talk={false}
             onCommit={(pts) => { onEstimate(item.id, pts); setDoing(null); onDone?.(); }} />
+        </div>
+      )}
+      {doing === 'choose' && onChooseSolution && (
+        <div className="rounded-lg border border-border p-2">
+          <ChooseSolutionPanel item={item} wanted={false}
+            onChoose={(pick) => { onChooseSolution(item.id, pick); setDoing(null); onDone?.(); }} />
         </div>
       )}
       {doing === 'split' && (
@@ -200,7 +220,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
 }
 
 /** The Product Backlog tab: the artifact, its commitment, and the bench that works on it. */
-export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onDeletePbi, onDuplicatePbi, onPull }: {
+export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onChooseSolution, onDeletePbi, onDuplicatePbi, onPull }: {
   state: ZooGameState;
   onEstimate: (id: string, points: number) => void;
   onAddPbi: (draft: PbiDraft) => void;
@@ -210,6 +230,9 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
   onMoveBefore: (id: string, beforeId: string) => void;
   onSetUseStories: (on: boolean) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
+  /** Deciding what will meet a need. It belongs on this tab and not only at the Refinement event:
+   *  refinement is ongoing work, and this is the screen it is ongoing on. */
+  onChooseSolution?: (id: string, pick: string) => void;
   onDeletePbi: (id: string) => void;
   onDuplicatePbi: (id: string) => void;
   /** Pulling a Ready item into a running Sprint - by agreement, and only during one. */
@@ -262,12 +285,14 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
             focus={focus} onFocus={setFocus}
             onAddPbi={onAddPbi} onRefinePbi={onRefinePbi} onSetUseStories={onSetUseStories}
             onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore}
-            onPull={onPull} onSplitEpic={onSplitEpic} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
+            onPull={onPull} onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution}
+            onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
       </div>
       {item && (
         <ItemTakeover state={state} item={item} onEstimate={onEstimate} onClose={() => setFocus(null)}
-          onRefinePbi={onRefinePbi} onSplitEpic={onSplitEpic} onSetUseStories={onSetUseStories} />
+          onRefinePbi={onRefinePbi} onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution}
+          onSetUseStories={onSetUseStories} />
       )}
       {/* Capacity, so ordering the list is a decision with a size beside it rather than a preference. */}
       <p className="text-[11px] text-muted-foreground">

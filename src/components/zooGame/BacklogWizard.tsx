@@ -128,7 +128,10 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
             <Choice key={a.zone} on={zones.includes(a.zone)} onClick={() => toggleZone(a.zone)}>
               <span className="block text-sm font-semibold">{a.zone}</span>
               <span className="block text-[11px] text-muted-foreground">
-                {a.members.filter((m) => m.kind === 'exhibit').map((m) => m.name).join(', ')}, and its own paths and planting
+                {/* No longer "and its own paths and planting". Both are criteria of the habitat
+                    they serve now rather than items of their own, and an area that promises them
+                    is promising work the Backlog will not contain. */}
+                {a.members.filter((m) => m.kind === 'exhibit').map((m) => m.name).join(', ')}, and somewhere to eat
               </span>
             </Choice>
           ))}
@@ -156,7 +159,7 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
           {ZOO_AREAS.filter((a) => zones.includes(a.zone)).map((a) => (
             <Choice key={a.zone} on={firstZone === a.zone} onClick={() => setFirstZone(a.zone)}>
               <span className="block text-sm font-semibold">{a.zone}</span>
-              <span className="block text-[11px] text-muted-foreground">Its first habitat, its animal, its paths and its planting - ready to forecast</span>
+              <span className="block text-[11px] text-muted-foreground">Its first habitat and its animal - ready to forecast</span>
             </Choice>
           ))}
           {!zones.length && (

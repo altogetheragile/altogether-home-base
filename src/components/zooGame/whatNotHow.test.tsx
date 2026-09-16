@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ChooseSolutionPanel, ProductBacklogSidebar } from './Board';
+import { BacklogTab } from './BacklogBench';
 import { initialZooState } from './config';
 import { chooseSolution, notReady, adopted } from './engine';
 import { checkCriterion } from './parkChecks';
@@ -45,10 +46,12 @@ describe('a need on the Product Backlog', () => {
     const s = seeded();
     const after = chooseSolution(s, theNeed(s).id, 'Kiosk');
     const item = after.backlog.find((it) => it.id === theNeed(s).id)!;
-    // Sized is a separate question, and the Developers answer it next. What has gone is the reason
-    // that was about the decision.
+    // Sized is a separate question, and the Developers answer it next - so it is still not ready,
+    // for the honest reason now rather than the one about the decision.
     expect(notReady(item, after) ?? '', 'the choice did not settle what the choice was about')
       .not.toMatch(/decided what will meet this/i);
+    expect(notReady(item, after), 'it went straight to ready without anybody sizing it')
+      .toMatch(/Not sized yet/i);
   });
 
   it('asks for the same things the building it becomes would be asked', () => {
@@ -83,11 +86,15 @@ describe('the Developers choosing', () => {
     expect(item.needName, 'what was asked for is not kept anywhere').toBe('Somewhere to eat');
   });
 
-  it('sizes it, because now there is work to size', () => {
+  it('makes it sizable, which is not the same as sized', () => {
+    // The choice is what makes an estimate possible: there is work to look at now. The Developers
+    // still have to make one. Marking it sized here put a Cafe on the board reading "Ready, 0
+    // points" - sized at nothing, and claiming to be ready to forecast on the strength of it.
     const { before, item } = chosen('Kiosk');
     expect(before.unsized).toBe(true);
-    expect(item.unsized).toBe(false);
-    expect(item.trueSize, 'the chosen work has no size').toBeGreaterThan(0);
+    expect(item.unsized, 'choosing sized it, at nothing').toBe(true);
+    expect(item.estimate).toBe(0);
+    expect(item.trueSize, 'there is nothing for the cards to cluster around').toBeGreaterThan(0);
   });
 
   it('lets a different choice make a different amount of work', () => {
@@ -169,6 +176,26 @@ describe('the panel that offers the choice', () => {
 });
 
 describe('the Product Backlog screen', () => {
+  it('offers the decision on the tab as well as at the event', () => {
+    // Refinement is ongoing work, and the game says so on this very screen: "it happens while the
+    // Sprint runs". The tab already offered the other two acts - size it, split it up - and cost the
+    // day's build time for them. The one act a need is waiting on was missing, so a need opened
+    // during a Sprint said "nobody has decided what will meet this" and then offered no way to
+    // decide it. A screen that names the blockage and withholds the remedy is worse than one that
+    // says nothing.
+    const s = { ...seeded(), phase: 'sprint', adopted: ['refinement'] } as unknown as ZooGameState;
+    if (!adopted(s, 'refinement')) return;
+    render(
+      <MemoryRouter>
+        <BacklogTab state={s} onEstimate={() => {}} onAddPbi={() => {}} onRefinePbi={() => {}}
+          onReorder={() => {}} onMoveZone={() => {}} onMoveBefore={() => {}} onSetUseStories={() => {}}
+          onSplitEpic={() => {}} onChooseSolution={() => {}} onDeletePbi={() => {}} onDuplicatePbi={() => {}} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('button', { name: /What will meet this/i }),
+      'the Product Backlog tab names the undecided need and offers nothing to decide it with').toBeTruthy();
+  });
+
   it('asks the Developers to decide, where an epic is asked to be split', () => {
     const s = { ...seeded(), adopted: ['refinement'] } as unknown as ZooGameState;
     if (!adopted(s, 'refinement')) return;   // the practice has to be in play for any of this to show
