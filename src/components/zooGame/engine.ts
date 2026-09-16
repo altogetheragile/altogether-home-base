@@ -1433,11 +1433,13 @@ export function chooseSolution(state: ZooGameState, id: string, pick: string): Z
     enclosureSize: choice.footprint,
     services: choice.services ?? item.services,
     serviceCapacity: choice.services ? DEFAULT_SERVICE_CAPACITY : item.serviceCapacity,
-    // Sized now that there is work to size. Unsized until the Developers say what they will build,
-    // because an estimate of an undecided thing is a guess about a guess.
-    unsized: false,
+    // NOW it can be sized, which is not the same as being sized. The choice is what makes an
+    // estimate possible - there is work to look at - and the Developers still have to make one.
+    // Setting `unsized: false` here put a Cafe on the board reading "Ready, 0 points": sized at
+    // nothing, and claiming to be ready to forecast on the strength of it.
+    unsized: true,
     trueSize: size,
-    estimate: item.estimate || 0,
+    estimate: 0,
     // The name says what was chosen, and the story still says what was wanted.
     name: choice.name,
     needName: item.name,
@@ -1445,7 +1447,7 @@ export function chooseSolution(state: ZooGameState, id: string, pick: string): Z
   return note({ ...state, backlog: state.backlog.map((it) => (it.id === id ? chosen : it)) }, {
     kind: 'refinement', by: 'developer',
     what: `The Developers chose ${choice.name} to meet "${item.name}".`,
-    cost: 'How it gets built is theirs. What was asked for has not changed.',
+    cost: 'How it gets built is theirs. What was asked for has not changed, and now it can be sized.',
   });
 }
 
