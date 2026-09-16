@@ -229,27 +229,30 @@ const FLAGSHIP: Record<string, { id: string; name: string; appeal: [number, numb
 const ZONE_ID: Record<string, string> = { 'Big Cats': 'bigcats', Waterside: 'waterside', Savanna: 'savanna', Forest: 'forest' };
 const slug = (zone: string) => ZONE_ID[zone] ?? zone.toLowerCase().replace(/[^a-z]+/g, '-');
 
-/** A zone's own paths and planting, as epic members. Every area needs them, and they belong to the
- *  area: you lay the Big Cats paths when you open Big Cats, not in some park-wide tidy-up later.
- *  That is what makes an area a slice you can actually deliver. */
-function sceneryFor(zone: string): EpicMember[] {
-  // No "<zone> Paths" any more. A path that serves one habitat is part of making that habitat
-  // usable, so it is one of the habitat's own acceptance criteria - "can I walk to it from the way
-  // in?" - rather than a second item somebody has to finish before the first is worth anything.
-  // That was a layer wearing a slice's clothes, in a game whose central lesson is the difference.
-  //
-  // What stays an item is infrastructure that serves MANY: the main pathways, and the bridge.
-  return [
-    { id: `${slug(zone)}-planting`, name: `${zone} Planting`, kind: 'flora', flora: 'tree' },
-  ];
-}
+// An area used to arrive with its own paths and its own planting as extra items, on the argument
+// that you lay the Big Cats paths when you open Big Cats rather than in a park-wide tidy-up later.
+// Both have now gone the same way, for the same reason, a year apart:
+//
+// "<zone> Paths" went first. A path that serves one habitat is part of making that habitat usable,
+// so it is one of the habitat's own acceptance criteria - "can I walk to it from the way in?" -
+// rather than a second item somebody has to finish before the first is worth anything. That was a
+// layer wearing a slice's clothes, in a game whose central lesson is the difference.
+//
+// "<zone> Planting" has now gone too, and it is the same sentence with a different noun. A habitat
+// is asked "can I tell an animal lives here, not a shed?", and the answer is ground, shelter,
+// planting and water INSIDE it. Having a separate planting item meant the same work was asked for
+// twice: once as a criterion the habitat could not meet without it, and once as an item of its own.
+//
+// What stays an item is infrastructure that serves MANY: the main pathways, and the bridge. And
+// the park's own greenery in the Grounds, which belongs to no habitat and answers nothing else's
+// criterion.
 
 /** Write a Product Backlog for the brief. Rough and partial on purpose: it grows and changes from
  *  play, because signals from the Sprint Review add to it.
  *
  *  Granularity is mixed deliberately. The area the Scrum Team opens first arrives REFINED - its
- *  habitat, its animal, its paths and its planting, all ready - which is enough to deliver a whole
- *  slice of zoo in Sprint 1. Every other area arrives as an EPIC: one themed item too big to build,
+ *  habitat and its animal, ready to build - which is enough to deliver a whole slice of zoo in
+ *  Sprint 1. Every other area arrives as an EPIC: one themed item too big to build,
  *  which has to be split into the pieces that open it. */
 export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
   const zones = ZOO_AREAS.filter((a) => brief.zones.includes(a.zone));
@@ -257,11 +260,11 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
   const items: BacklogItem[] = [];
 
   if (first) {
-    // The opening area, already refined: a habitat, its animal, and the ground around them.
+    // The opening area, already refined: a habitat and its animal. The planting that makes the
+    // habitat a home rather than a shed goes IN the habitat, which is where its criterion looks.
     const flag = FLAGSHIP[first.zone] ?? FLAGSHIP['Big Cats'];
     items.push(enc(`${flag.id}-enc`, `${flag.name} Enclosure`, first.zone, flag.footprint));
     items.push(ex(flag.id, flag.name, first.zone, flag.appeal, `${flag.id}-enc`));
-    items.push(flr(`${slug(first.zone)}-planting`, `${first.zone} Planting`, first.zone, 'tree'));
     // What is left of the opening area is still an epic - opening it is not finishing it.
     const rest = first.members.filter((mem) => mem.id !== flag.id);
     if (rest.length) items.push(epic(slug(first.zone), first.zone, first.zone, rest));
@@ -269,7 +272,7 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
 
   for (const area of zones) {
     if (area === first) continue;
-    items.push(epic(slug(area.zone), area.zone, area.zone, [...area.members, ...sceneryFor(area.zone)]));
+    items.push(epic(slug(area.zone), area.zone, area.zone, area.members));
   }
 
   // The park's own fabric: the spine everyone walks, the way over the water, and the greenery that

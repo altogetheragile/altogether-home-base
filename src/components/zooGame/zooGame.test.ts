@@ -1133,15 +1133,12 @@ describe('zoo game: enclosures are built before their animals', () => {
   it('splitting an epic creates an enclosure + animal per species (and facilities), removing the epic', () => {
     let s = initialZooState(1);
     expect(find(s, 'waterside').category).toBe('epic');
-    // An area carries its own paths and planting, so opening it is a whole slice of zoo - splitting
-    // out only the animals and the facility leaves the ground they stand on behind.
-    s = splitEpic(s, 'waterside', ['penguins', 'reef', 'wc']);
-    expect(find(s, 'waterside').category).toBe('epic');
-    expect(find(s, 'waterside').epicMembers?.map((m) => m.id)).toEqual(['waterside-planting']);
-    s = splitEpic(s, 'waterside', ['waterside-planting']);
-    expect(find(s, 'waterside-planting').category).toBe('flora');
-    expect(find(s, 'waterside-planting').zone).toBe('Waterside');
-    expect(find(s, 'waterside-planting').category).toBe('flora');
+    // An area carries its animals and its facility. Its paths and its planting are not members:
+    // both are criteria of the habitat they serve, and asking for the same work twice is what a
+    // layer looks like from close up.
+    s = splitEpic(s, 'waterside', ['penguins']);
+    expect(find(s, 'waterside').category).toBe('epic');   // the reef and the facility are still in it
+    s = splitEpic(s, 'waterside', ['reef', 'wc']);
     expect(s.backlog.some((i) => i.id === 'waterside')).toBe(false); // fully split -> epic gone
     expect(find(s, 'penguin-enc').category).toBe('enclosure');
     expect(find(s, 'penguin-enc').name).toBe('Penguin Habitat'); // bespoke habitat name, not "Penguins Enclosure"
@@ -2589,25 +2586,28 @@ describe('zoo game: the Product Backlog is written, not handed over', () => {
     expect(s.phase).toBe('refine');
   });
 
-  it('gives every area its own planting, and the way in as the habitat’s own criterion', () => {
+  it('gives an area its habitat and its animal, and nothing that repeats their criteria', () => {
+    // Paths went first: a path that serves one habitat is part of making that habitat usable, so it
+    // is the habitat's own criterion rather than a second item to finish. Planting has now gone the
+    // same way, and it is the same sentence with a different noun - a habitat is asked "can I tell
+    // an animal lives here, not a shed?", and the answer is ground, shelter, planting and water
+    // INSIDE it. Asking for the same work twice is what a layer looks like from close up.
     const s = writeBacklog(blank, { zones: ['Big Cats', 'Forest'], audience: 'families', firstZone: 'Big Cats' });
-    // The area you open first arrives refined: habitat, animal, and the ground around them.
-    expect(s.backlog.find((i) => i.id === 'bigcats-planting')?.category).toBe('flora');
-    expect(s.backlog.find((i) => i.id === 'bigcats-planting')?.zone).toBe('Big Cats');
-    // The others carry theirs inside the epic, so refining an area yields them.
+    expect(s.backlog.find((i) => i.id === 'lion-enc')?.category).toBe('enclosure');
+    expect(s.backlog.find((i) => i.id === 'bigcats-planting'), 'the area still carries a planting item').toBeUndefined();
     const forest = s.backlog.find((i) => i.id === 'forest');
-    // ...and not a path: the way in is the habitat's own criterion, not a second item to finish.
-    expect(forest?.epicMembers?.map((m) => m.id)).toContain('forest-planting');
+    expect(forest?.epicMembers?.map((m) => m.id)).not.toContain('forest-planting');
     expect(forest?.epicMembers?.map((m) => m.id)).not.toContain('forest-paths');
+    // What the epic DOES carry is what the area is for: its animals.
+    expect(forest?.epicMembers?.length, 'the epic has nothing in it').toBeGreaterThan(0);
   });
 
   it('opens whichever area the Scrum Team chose, not always the same one', () => {
     const s = writeBacklog(blank, { zones: ['Big Cats', 'Savanna'], audience: 'enthusiasts', firstZone: 'Savanna' });
     expect(s.backlog.find((i) => i.id === 'giraffe')?.unsized).toBeFalsy();
-    expect(s.backlog.find((i) => i.id === 'savanna-planting')?.category).toBe('flora');
-    // Big Cats is now the epic, and it carries its own scenery.
+    // Big Cats is now the epic, and it carries its animals.
     expect(s.backlog.find((i) => i.id === 'bigcats')?.category).toBe('epic');
-    expect(s.backlog.find((i) => i.id === 'bigcats')?.epicMembers?.map((m) => m.id)).toContain('bigcats-planting');
+    expect(s.backlog.find((i) => i.id === 'bigcats')?.epicMembers?.map((m) => m.id)).toContain('tiger');
   });
 
   it('orders it by what the chosen visitors value, which is the Product Owner\'s job', () => {
@@ -3306,15 +3306,19 @@ describe('zoo game: the Product Owner looks ahead', () => {
   });
 
   it('offers to SPLIT rather than duplicate when the thing is buried in an epic', () => {
-    // Forecast a Waterside habitat. The Waterside's paths exist - as a member of the Waterside epic,
-    // where nobody can size them or pull them into a Sprint. Adding a second one is not help.
+    // Forecast a Waterside habitat. The Waterside's facility exists - as a member of the Waterside
+    // epic, where nobody can size it or pull it into a Sprint. Writing a second one is not help.
+    //
+    // This used to be about the area's planting. Planting stopped being an item of its own when a
+    // habitat's "can I tell an animal lives here, not a shed?" turned out to be asking for exactly
+    // that work, and a facility is the thing genuinely left hiding in an epic.
     const base = initialZooState(1);
     const s: ZooGameState = { ...base, backlog: [...base.backlog, {
       id: 'penguin-enc', name: 'Penguin Habitat', category: 'enclosure', zone: 'Waterside', estimate: 5,
       acceptance: [], status: 'committed', sprintNumber: base.sprintNumber, accessible: true,
     }] };
     const p = lookAhead(s).find((x) => x.kind === 'split');
-    expect(p).toBeTruthy();
+    expect(p, 'nothing noticed a facility nobody can pull into a Sprint').toBeTruthy();
     expect(p!.why).toMatch(/epic, where nobody can size it/);
     if (p!.kind === 'split') expect(p!.memberIds.length).toBeGreaterThan(0);
   });
@@ -3339,11 +3343,11 @@ describe('zoo game: the Product Owner looks ahead', () => {
   });
 
   it('does not put the same suggestion twice once it has been turned down', () => {
-    // On planting, since the way in stopped being a proposal at all.
+    // On a facility, since the way in and the planting both stopped being proposals at all.
     const s = commit(bigCatsSplit(1), 'lion-enc', 'lion');
-    const bare: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.category !== 'epic' && it.category !== 'flora') };
-    const one = lookAhead(bare).find((p) => p.id.endsWith(':Big Cats') || p.id.includes('Big Cats'));
-    expect(one, 'the Product Owner is told nothing about an area with nothing growing in it').toBeTruthy();
+    const bare: ZooGameState = { ...s, backlog: s.backlog.filter((it) => it.category !== 'amenity') };
+    const one = lookAhead(bare).find((p) => p.kind === 'add');
+    expect(one, 'the Product Owner is told nothing about a zoo with nowhere to eat').toBeTruthy();
     const declined = { ...bare, declinedProposals: [one!.id] };
     expect(lookAhead(declined).some((p) => p.id === one!.id),
       'a suggestion turned down came straight back').toBe(false);
