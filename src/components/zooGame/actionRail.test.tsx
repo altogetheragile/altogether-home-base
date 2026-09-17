@@ -58,7 +58,8 @@ describe('the rail', () => {
     const s = sprint({}, {
       // Every criterion, however many there are: a fixture that counts them by hand breaks the day
       // one is added, which is what happened when a habitat gained "can I walk to it".
-      design, status: 'done', acConfirmed: enclosureAcceptance().map(() => true),
+      // Accepted by the Product Owner, which is what Done waits for now.
+      design, status: 'done', signedOff: true, acConfirmed: enclosureAcceptance().map(() => true),
       tasks: [{ id: 't', label: 'Get the PO’s sign-off', done: true }],
     } as Partial<BacklogItem>);
     const { container } = rail(s, { onOpen });
@@ -74,7 +75,7 @@ describe('the rail', () => {
       ...s,
       pendingPlacement: { itemId: item.id, askedAt: 80 },
       backlog: s.backlog.map((it) => (it.id === item.id ? it : (it.status === 'backlog' && it.category === 'path'
-        ? { ...it, status: 'done' as const, sprintNumber: 1, design, acConfirmed: it.acceptance.map(() => true),
+        ? { ...it, status: 'done' as const, sprintNumber: 1, design, signedOff: true, acConfirmed: it.acceptance.map(() => true),
           tasks: [{ id: 't', label: 'Get the PO’s sign-off', done: true }] }
         : it))),
     } as unknown as ZooGameState;

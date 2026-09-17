@@ -5,7 +5,7 @@ import {
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
-import { setServices, zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
+import { askToCheck, answerQuestion, setServices, zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion, wantedServices } from './parkChecks';
 import { lookAhead } from './lookAhead';
 import { standingOnPark, parkPositions, restingPlace } from './parkModel';
@@ -51,6 +51,11 @@ function accept(state: ZooGameState, id: string): ZooGameState {
   let s = withPaths(placeOnPark(state, id));
   const it = s.backlog.find((x) => x.id === id);
   (it?.acceptance ?? []).forEach((_, i) => { s = confirmAcceptance(s, id, i, true); });
+  // ...and the Product Owner looks at it. Meeting the criteria is what makes the asking possible;
+  // it is not the answer, and an item whose criteria are all facts used to reach Done without
+  // anybody being asked anything.
+  s = askToCheck(s, id, 'developer');
+  s = answerQuestion(s, `check-${id}`, 'accept', 'product_owner');
   return finishItem(s, id, 'developer');
 }
 
@@ -2355,12 +2360,15 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     s = applyParkChecks(s);
     expect(path().status, 'the park has not answered its criterion yet').toBe('committed');
 
-    // Run the path to the zone. The park sees it, ticks its own criterion - and that is the last
-    // one, so the card is ready for the Developers to move. Moving it is theirs: Done is a word
-    // somebody says, not something the park does to the work while nobody is looking.
+    // Run the path to the zone. The park sees it and ticks its own criterion - and that is the last
+    // one, so there is nothing left for anybody to measure. What is left is somebody looking at it,
+    // which is the Product Owner's, and then the Developers move it: Done is a word somebody says,
+    // not something the park does to the work while nobody is looking.
     const home = s.backlog.find((i) => i.id === 'lion-enc')!;
     s = applyParkChecks(addConnector(s, { id: 'run-1', itemId: 'paths', bends: [], thickness: 14, color: '#b9a888',
       a: { x: 200, y: 500 }, b: { x: home.pos?.x ?? 200, y: home.pos?.y ?? 200, featureId: 'lion-enc' } }));
+    expect(readyToMove(path()), 'the park answered the last one and the Product Owner was skipped').toBe(false);
+    s = answerQuestion(askToCheck(s, 'paths', 'developer'), 'check-paths', 'accept', 'product_owner');
     expect(readyToMove(path()), 'the park answered the last criterion and the card was still not ready').toBe(true);
     s = finishItem(s, 'paths', 'developer');
     expect(path().status, 'the Developers moved it and it did not go to Done').toBe('done');
@@ -2378,6 +2386,8 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     }
     (s.backlog.find((i) => i.id === 'lion')!.acceptance ?? [])
       .forEach((_, i) => { s = confirmAcceptance(s, 'lion', i, true); });
+    // ...and the Product Owner comes and looks, which is what the sign-off waits for.
+    s = answerQuestion(askToCheck(s, 'lion', 'developer'), 'check-lion', 'accept', 'product_owner');
     const it = s.backlog.find((i) => i.id === 'lion')!;
     expect(it.placed, 'nothing in this test ever pressed it').toBeFalsy();
     expect(readyToOpen(it), 'finished work could not be released without a button about looking at it').toBe(true);
@@ -2471,6 +2481,10 @@ describe("zoo game: the Product Owner's sign-off follows the acceptance criteria
     acs.forEach((_, i) => { if (i < acs.length - 1) s = confirmAcceptance(s, id, i, true); });
     expect(signOff(s, id).done).toBe(false); // all but one
     s = confirmAcceptance(s, id, acs.length - 1, true);
+    // ...and still not, because meeting the criteria is what makes the ASKING possible. The sign-off
+    // is the Product Owner's answer, and nobody has asked them anything yet.
+    expect(signOff(s, id).done, 'it signed itself off').toBe(false);
+    s = answerQuestion(askToCheck(s, id, 'developer'), `check-${id}`, 'accept', 'product_owner');
     expect(signOff(s, id).done).toBe(true);
     // ...and comes back off if a criterion is withdrawn, taking the release with it.
     const back = confirmAcceptance(s, id, 0, false);
@@ -3190,6 +3204,7 @@ describe('zoo game: the park answers the criteria it can answer', () => {
     }
     // Accepted where it stands, which is the route that never goes near placeOnPark - and then
     // moved to Done by the Developers, because that is the only way a card gets there.
+    s = { ...s, backlog: s.backlog.map((it) => (it.id === 'leopard-enc' ? { ...it, signedOff: true } : it)) };
     (s.backlog.find((x) => x.id === 'leopard-enc')!.acceptance ?? [])
       .forEach((_, i) => { s = confirmAcceptance(s, 'leopard-enc', i, true); });
     s = finishItem(s, 'leopard-enc', 'developer');
@@ -3438,6 +3453,10 @@ describe("zoo game: the Product Owner's sign-off follows the park's answers too"
       connectors: [{ id: 'r1', itemId: 'lion-enc', a: { x: 300, y: FRONT_Y }, b: { x: 300, y: 871 }, bends: [], thickness: 14, color: '#c9a86a' }],
     });
     expect(item().acceptance.every((_, i) => item().acConfirmed?.[i]), 'every criterion met').toBe(true);
+    // ...which makes the asking possible, and is not the answer: the sign-off is the Product
+    // Owner's, and nobody has asked them anything yet.
+    expect(signOff().done, 'it signed itself off').toBe(false);
+    s = answerQuestion(askToCheck(s, 'lion-enc', 'developer'), 'check-lion-enc', 'accept', 'product_owner');
     expect(signOff().done, 'and the sign-off follows').toBe(true);
 
     // Take the run back up and it all comes undone again, which is the point of deriving it.

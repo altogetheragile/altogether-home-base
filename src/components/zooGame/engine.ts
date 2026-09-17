@@ -318,6 +318,7 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
         // three times, which is what a Product Owner going round the loop looks like in the data.
         backlog: state.backlog.map((it) => (it.id === q.itemId
           ? settleStatus({ ...it,
+            signedOff: true,
             acceptedAsIs: [...new Set([...(it.acceptedAsIs ?? []), ...waived])],
             acConfirmed: it.acceptance.map((label, i) => (judged.includes(label) ? true : (it.acConfirmed ?? [])[i])),
           }) : it)),
@@ -330,7 +331,7 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
       const accepted = {
         ...state, questions: rest,
         backlog: state.backlog.map((it) => (it.id === q.itemId
-          ? settleStatus({ ...it, acConfirmed: it.acceptance.map(() => true) }) : it)),
+          ? settleStatus({ ...it, signedOff: true, acConfirmed: it.acceptance.map(() => true) }) : it)),
       };
       return note(accepted, { kind: 'question', by: by ?? 'product_owner',
         what: `The Product Owner accepted ${item.name}.`,
@@ -891,6 +892,14 @@ export function signOffReady(item: BacklogItem): boolean {
   // by way of the sign-off, so requiring Done first meant the sign-off could never tick and you
   // could move a card to Done with the Product Owner's approval still outstanding.
   if (item.status === 'backlog') return false;
+  // Somebody has to have LOOKED. The sign-off followed the criteria alone, which works while one of
+  // them is a judgement - a habitat is asked whether you can walk right round it, and only a person
+  // can say. Where every criterion is a fact the park settles, nothing was ever asked of anybody
+  // and the card walked into Done without the Product Owner appearing at all. Reported from playing
+  // it: "there was no PO check on toilets needed to move it to Done."
+  //
+  // The criteria being met is what makes the asking possible. It is not the answer.
+  if (!item.signedOff) return false;
   // ...or accepted as it is. The Product Owner looked at what the park said, and shipped it anyway:
   // that is a decision they are allowed to make, and the consequence of making it is the lesson.
   return item.acceptance.length > 0 && item.acceptance.every((_, i) => acSettled(item, i));

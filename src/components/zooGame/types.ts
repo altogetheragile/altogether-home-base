@@ -241,6 +241,16 @@ export interface BacklogItem {
    *  is left" rather than quietly showing a different number. */
   wasEstimate?: number;
   /** Hidden intended size; what planning poker clusters the cards around. */
+  /** The Product Owner looked at it and accepted it.
+   *
+   *  Not the same thing as its criteria being met, which is what the sign-off used to follow on its
+   *  own. Where every criterion is a fact the park settles - a toilet block is asked three
+   *  questions and the park can answer all three - nothing was ever asked of anybody, and the card
+   *  walked into Done without the Product Owner appearing. Reported from playing it: "there was no
+   *  PO check on toilets needed to move it to Done."
+   *
+   *  The criteria being met is what makes the asking POSSIBLE. It is not the answer. */
+  signedOff?: boolean;
   trueSize?: number;
   /** What this item was WORTH when the Developers sized it, by the game's own reckoning.
    *

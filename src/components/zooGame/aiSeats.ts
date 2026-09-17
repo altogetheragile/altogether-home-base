@@ -3,7 +3,7 @@ import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, buildingTypeFor, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
-import { isChecked } from './parkChecks';
+import { isChecked, readyToAsk } from './parkChecks';
 import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
 import { whereItStands } from './parkModel';
 import { plotOrder } from './parkZones';
@@ -320,6 +320,18 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
         }
       }
 
+      // ...and ask the Product Owner to come and look, which is what the sign-off waits for now.
+      // Meeting every criterion the park can measure is what makes the asking possible; it is not
+      // the answer, and work whose criteria are all facts used to reach Done without anybody being
+      // asked anything at all.
+      const toShow = state.backlog.find((it) => it.sprintNumber === state.sprintNumber
+        && it.status === 'committed' && !it.signedOff && readyToAsk(state, it)
+        && !(state.questions ?? []).some((q) => q.id === `check-${it.id}`));
+      if (toShow) {
+        return { action: { type: 'ASK_TO_CHECK', id: toShow.id, by: 'developer' },
+                 says: `${toShow.name} is built. Asking Priya to come and look at it.` };
+      }
+
       // ...and move to Done what is ready. After the second pair of eyes, not before: the
       // Definition of Done asks for a review, and a team that moves the card first has reviewed
       // nothing. Done is the Developers' word - the card no longer walks into the column when the
@@ -458,6 +470,16 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       return { action: { type: 'ANSWER_PLACEMENT', id: item.id, choice: choice.key },
                says: `${choice.label} for ${item.name} - that is where I want people to meet it.` };
     }
+  }
+
+  // Coming to look at finished work. The sign-off is this seat's answer now, not something that
+  // follows from the criteria on its own - so with nobody sitting here, work whose every criterion
+  // is a fact would build itself and then wait for ever.
+  const asked = (state.questions ?? []).find((q) => q.id.startsWith('check-'));
+  if (asked?.itemId) {
+    const name = state.backlog.find((it) => it.id === asked.itemId)?.name ?? 'it';
+    return { action: { type: 'ANSWER_QUESTION', id: asked.id, choice: 'accept', by: 'product_owner' },
+             says: `I have looked at ${name}. That is what I asked for.` };
   }
 
   // Accepting the work. Done waits for the Product Owner's sign-off, and the sign-off follows the
