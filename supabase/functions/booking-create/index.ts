@@ -92,10 +92,23 @@ async function abandon(
   bookingId: string,
   reason: 'zoom' | 'calendar',
 ): Promise<void> {
-  await supabase
+  // The error is checked rather than ignored. supabase-js returns it instead of
+  // throwing, so an update that PostgREST rejects looks exactly like one that
+  // worked - and the row stays pending, holding a slot nobody can book while
+  // the logs say only that Zoom failed. That cost an afternoon once.
+  const { error } = await supabase
     .from('bookings')
     .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), failure_reason: reason })
     .eq('id', bookingId);
+
+  if (error) {
+    console.error(
+      `[booking-create] COULD NOT ABANDON booking ${bookingId} (${reason}). ` +
+        'It is still pending and is holding its slot. ' +
+        `If this says the column is not in the schema cache, run: notify pgrst, 'reload schema'. ` +
+        `Error: ${JSON.stringify(error)}`,
+    );
+  }
 }
 
 /**
@@ -109,13 +122,17 @@ async function abandon(
  */
 async function sweepStalePending(supabase: ReturnType<typeof createClient>): Promise<void> {
   try {
-    await supabase
+    const { error } = await supabase
       .from('bookings')
       .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), failure_reason: 'timeout' })
       .eq('status', 'pending')
       .lt('created_at', new Date(Date.now() - 15 * 60_000).toISOString());
+
+    // Logged, not thrown: housekeeping must never stop a booking being taken.
+    // But a sweep that silently does nothing leaves stale rows holding slots,
+    // which looks to a guest exactly like a full diary.
+    if (error) console.error('[booking-create] stale sweep rejected:', JSON.stringify(error));
   } catch (e) {
-    // Housekeeping must never stop a booking being taken.
     console.error('[booking-create] stale sweep failed:', e);
   }
 }
@@ -282,7 +299,7 @@ serve(async (req) => {
     // Written before the calendar call so that an invocation killed between the
     // two still leaves a record of the meeting. Every failure we can see deletes
     // it instead; this covers the one we cannot.
-    await supabase
+    const { error: meetingWriteError } = await supabase
       .from('bookings')
       .update({
         meeting_id: meeting.meetingId,
@@ -290,6 +307,13 @@ serve(async (req) => {
         meeting_passcode: meeting.passcode,
       })
       .eq('id', booking.id);
+
+    if (meetingWriteError) {
+      console.error(
+        `[booking-create] could not store the Zoom meeting for booking ${booking.id}. ` +
+          `The meeting EXISTS in Zoom but nothing records it: ${JSON.stringify(meetingWriteError)}`,
+      );
+    }
 
     // ── 4. Calendar ──
     const passcodeLine = meeting.passcode ? `\nPasscode: ${meeting.passcode}` : '';
@@ -322,10 +346,21 @@ serve(async (req) => {
     }
 
     // ── 5. Confirm ──
-    await supabase
+    const { error: confirmError } = await supabase
       .from('bookings')
       .update({ status: 'confirmed', calendar_event_id: calendarEventId })
       .eq('id', booking.id);
+
+    // Everything worked and only the bookkeeping failed, so the guest keeps
+    // their meeting and their invite. But the row is still pending, so admin
+    // will show it as stuck and the sweep will eventually cancel a booking that
+    // is real. Loud, because it needs a person.
+    if (confirmError) {
+      console.error(
+        `[booking-create] COULD NOT CONFIRM booking ${booking.id}. The guest HAS a Zoom meeting ` +
+          `and a calendar invite, but the row is still pending: ${JSON.stringify(confirmError)}`,
+      );
+    }
 
     // Recorded here, not at the insert: this is the first moment the booking
     // actually exists, and 'ok' is what the per-email daily cap counts.
