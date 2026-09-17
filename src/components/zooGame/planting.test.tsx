@@ -41,13 +41,16 @@ const mount = (state: ZooGameState, item: BacklogItem, api: Record<string, unkno
     api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {}, ...api }} />,
 );
 
-/** What the Planting menu holds once it is open. The controls used to be laid out flat on the
- *  strip; they are one part of the work now, and a player presses Planting to reach them. */
+/** What the How many menu holds once it is open - the clump, and the way to add to it.
+ *
+ *  The controls used to be laid out flat on the strip, then all together under Planting. They are
+ *  split by the question they answer now: Planting is what KIND of thing this is, Size is how big
+ *  it grew, How many is the clump. */
 const strip = (state: ZooGameState, item: BacklogItem, api: Record<string, unknown> = {}) => {
   cleanup();                 // one strip at a time: the panels are portalled to a shared body
   mount(state, item, api);
   showEverything();
-  return openGroup('planting').querySelector('[data-part="panel-planting"]')!;
+  return openGroup('clump').querySelector('[data-part="panel-clump"]')!;
 };
 
 describe('planting more than one thing', () => {
@@ -83,9 +86,14 @@ describe('planting more than one thing', () => {
   });
 
   it('says nothing about plants for a river, which is not a clump', () => {
+    // Not even a menu: there is one river and it is the item. It used to be an empty section of a
+    // menu about something else.
     const { state, item } = planting({ template: 'river', design: { parts: { type: 'river' }, colors: {} } } as Partial<BacklogItem>);
-    expect(strip(state, item, { onAddCopy: () => {} }).textContent,
-      'a river was offered a second river beside it').not.toMatch(/Plant another/i);
+    cleanup();
+    mount(state, item, { onAddCopy: () => {} });
+    showEverything();
+    expect(document.querySelector('[data-part="group-clump"]'),
+      'a river was offered a second river beside it').toBeNull();
   });
 });
 
@@ -210,8 +218,13 @@ describe('the colours offered', () => {
   });
 
   it('offers them where the choice is made', () => {
+    // On Planting, which is what the thing IS and what colour it is. How big it grew and how many
+    // there are are menus of their own.
     const { state, item } = planting();
-    const said = strip(state, item);
+    cleanup();
+    mount(state, item);
+    showEverything();
+    const said = openGroup('planting').querySelector('[data-part="panel-planting"]')!;
     const swatches = [...said.querySelectorAll('button[title], button[aria-label]')]
       .map((b) => b.getAttribute('aria-label') ?? b.getAttribute('title') ?? '');
     expect(swatches.some((s) => /leaves|foliage/i.test(s)), 'the leaves cannot be coloured at all').toBe(true);
