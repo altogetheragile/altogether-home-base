@@ -1,6 +1,8 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { CRITERIA, criterionFor, answerable, inspect } from './parkChecks';
 import { LANDSCAPE_TYPES, currentDesign } from './design';
+import { picksAStructure } from './toolboxItems';
+import { structureChosen } from './engine';
 
 // ============= What the strip offers, and what each part of it would settle =============
 //
@@ -19,7 +21,8 @@ import { LANDSCAPE_TYPES, currentDesign } from './design';
 // and the player follows the lights.
 
 export type GroupId =
-  | 'footprint' | 'shape' | 'holds' | 'ground' | 'barrier' | 'fence' | 'inside'
+  | 'structure'
+  | 'footprint' | 'shape' | 'ground' | 'barrier' | 'fence' | 'inside'
   | 'stock' | 'look' | 'lives-in'
   | 'type' | 'offers' | 'colours'
   | 'planting'
@@ -51,19 +54,22 @@ const flora = (it: BacklogItem) => it.category === 'flora';
 const path = (it: BacklogItem) => it.category === 'path';
 
 export const GROUPS: GroupDef[] = [
-  // What KIND of thing this is has a toolbar of its own, on the park - see BuildToolbar. It is a
-  // different kind of act from everything here: this strip decides what a thing is LIKE, and that
-  // decides what it is. On the strip it looked like the sixth setting of a thing somebody had
-  // already decided to build.
+  // ---- what kind of thing this is: the first decision, and the one that makes the rest possible ----
+  //
+  // It settles no criterion of its own - the criteria are about what a thing holds and offers, not
+  // about what KIND it is - so it is never lit by `wouldSettle`. It is lit by being unanswered,
+  // which is what `litFor` is for.
+  { id: 'structure', label: 'Structure', meets: [],
+    applies: (it) => picksAStructure(it.category),
+    litFor: (it) => !structureChosen(it) },
 
   // ---- a habitat ----
   { id: 'footprint', label: 'Footprint', meets: ['roomy', 'room-to-spare'], applies: habitat },
   { id: 'shape', label: 'Shape', meets: [], applies: habitat },
-  // Land or a tank. A tank IS water, which is one of the three things that make a habitat a home
-  // rather than a pen, so this settles part of the same question the inside does.
-  { id: 'holds', label: 'Holds', meets: ['a-home'], applies: habitat },
-  { id: 'ground', label: 'Ground', meets: ['a-home'], applies: habitat },
-  { id: 'barrier', label: 'Holds them', meets: ['held'], applies: habitat },
+  // "Holds: land or a tank" was this question asked twice - a paddock holds land and a tank holds
+  // water, and Structure is where that is decided now.
+  { id: 'ground', label: 'Surface', meets: ['a-home'], applies: habitat },
+  { id: 'barrier', label: 'Barrier', meets: ['held'], applies: habitat },
   { id: 'fence', label: 'Fence', meets: [], applies: habitat },
   { id: 'inside', label: 'Inside', meets: ['a-home'], applies: habitat },
 

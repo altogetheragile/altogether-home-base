@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { Plus, Trash2, Check, ChevronDown } from 'lucide-react';
+import { Plus, Minus, Trash2, Check, ChevronDown } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize, piecesFor, pieceByKey, applyPiece, floraPalette,
   hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, chosenBarrier,
+  enclosureWater, enclosureFlora,
   type ItemDesign,
 } from './design';
 import { groupsFor, openCriteria, wouldSettle, isAbout, labelOf, type GroupDef, type GroupId } from './buildGroups';
 import { inspect } from './parkChecks';
+import { structuresFor } from './toolboxItems';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
@@ -151,6 +153,11 @@ function MoreColours({ label, current, options, onPick }: {
 export interface ParkOptionsApi {
   onDesign: (id: string, design: ItemDesign) => void;
   onAddInside?: (id: string, kind: string) => void;
+  /** Take one back out again. A habitat's inside was add-only, so a pond dug by mistake stayed. */
+  onRemoveInside?: (id: string, kind: string) => void;
+  /** What kind of thing the Developers are building: the first act, and until it is made there is
+   *  nothing to place. */
+  onChooseStructure?: (id: string, key: string) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
   /** What a facility offers - the thing the visitors' needs are counted against. */
   onSetServices?: (id: string, services: 'food' | 'toilet' | 'rest' | null) => void;
@@ -229,6 +236,30 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
     /** A row keeps its label only where it says something the menu did not. */
     const L = (label: string) => (label.toLowerCase() === menu.toLowerCase() ? '' : label);
     switch (id) {
+      // What kind of thing to build: the first decision and the Developers'. Picking the card used
+      // to put a ghost under the cursor with the shape already settled, so the first act of
+      // building was dropping somebody else's decision on the grass.
+      case 'structure': {
+        const kinds = structuresFor(subject.category);
+        const picked = design.parts.structure;
+        return (
+          <div className="space-y-1">
+            <p className="px-1 pb-1 text-[11px] text-muted-foreground">
+              {picked ? 'What this is being built as.'
+                : 'What are you building? Nothing goes on the park until you say.'}
+            </p>
+            {kinds.map((k) => (
+              <button key={k.key} type="button" data-part={`structure-${k.key}`} aria-pressed={picked === k.key}
+                onClick={() => api.onChooseStructure?.(subject.id, k.key)}
+                className={cn(FOCUS, 'flex w-full items-baseline gap-2 rounded-md border-2 px-2 py-1.5 text-left',
+                  picked === k.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
+                <span className="text-xs font-semibold">{k.name}</span>
+                <span className="text-[11px] text-muted-foreground">{k.what}</span>
+              </button>
+            ))}
+          </div>
+        );
+      }
       case 'footprint':
         return (
           <Row label={L('Size')}>
@@ -253,16 +284,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             ))}
           </Row>
         );
-      // Land or water. A reef is not kept in a field with a pond in the corner: it is kept in a
-      // tank, glass on every side and water to the top. Everything that swims gets one without
-      // being asked; everything else can be given one.
-      case 'holds':
-        return (
-          <Row label={L('Holds')}>
-            <Chip on={!tank} onClick={() => set({ parts: { ...design.parts, ground: 'land' } })}>Land</Chip>
-            <Chip on={tank} onClick={() => set({ parts: { ...design.parts, ground: 'water' } })}>A tank</Chip>
-          </Row>
-        );
       case 'ground':
         return (
           <Row label={L(tank ? 'Water' : 'Ground')}>
@@ -283,12 +304,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       case 'barrier':
         return (
           <Row label={L('Barrier')}>
-            {!chosenBarrier(design) && (
-              <span className="w-full pb-1 text-[11px] text-amber-700 dark:text-amber-300">
-                Nothing borders it yet. A hedge shows them beautifully and holds almost nothing; a
-                wall holds anything and hides what people came to see.
-              </span>
-            )}
             {/* Asked WITH the animals in it, which is how the criterion asks. Without them, an
                 unchosen barrier shows as a low hedge while the card says "a 4m fence, holds them" -
                 two answers to one question, and the strip's one is the one that looks like a choice
@@ -319,15 +334,53 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             ))}
           </Row>
         );
-      case 'inside':
+      case 'inside': {
+        // What is actually in there, how many of each, and a way to put one in or take one out.
+        // It used to be one button that zoomed the park - which is still here, because arranging
+        // them is done in there - but "add shelter" was a press you had to go somewhere else to
+        // make, and nothing said what was already in.
+        const water = enclosureWater(design).length;
+        const flora = enclosureFlora(design);
+        const countOf = (k: string) => (k === 'water' ? water : flora.filter((f) => f.type === k).length);
         return (
-          <Row label={L('Inside')}>
-            <Chip onClick={() => api.onInside?.(subject.id)} title="Zoom the park to this habitat">Look inside</Chip>
-            <span className="w-full pt-1 text-[11px] text-muted-foreground">
-              The ground, the planting and the water are in here. A hatched box with none of them is a pen.
-            </span>
-          </Row>
+          <div className="space-y-0.5">
+            {INSIDE_KINDS.map((k) => {
+              const n = countOf(k);
+              return (
+                <div key={k} data-part={`inside-${k}`} className="flex items-center gap-1.5">
+                  <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5">
+                    <input type="checkbox" className="h-3.5 w-3.5 shrink-0 accent-primary" checked={n > 0}
+                      aria-label={k}
+                      onChange={(e) => (e.target.checked
+                        ? api.onAddInside?.(subject.id, k)
+                        : Array.from({ length: n }, () => api.onRemoveInside?.(subject.id, k)))} />
+                    <span className="truncate text-xs capitalize">{k}</span>
+                  </label>
+                  <span className="flex shrink-0 items-center gap-0.5">
+                    <button type="button" data-part={`fewer-${k}`} disabled={!n}
+                      aria-label={`One fewer ${k}`} title={`One fewer ${k}`}
+                      onClick={() => api.onRemoveInside?.(subject.id, k)}
+                      className={cn(FOCUS, 'flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted disabled:opacity-30')}>
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-4 text-center text-xs tabular-nums">{n}</span>
+                    <button type="button" data-part={`more-${k}`}
+                      aria-label={`One more ${k}`} title={`One more ${k}`}
+                      onClick={() => api.onAddInside?.(subject.id, k)}
+                      className={cn(FOCUS, 'flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted')}>
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </span>
+                </div>
+              );
+            })}
+            <button type="button" onClick={() => api.onInside?.(subject.id)}
+              className={cn(FOCUS, 'mt-1 w-full rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted')}>
+              Look inside, to move them about
+            </button>
+          </div>
         );
+      }
 
       // ---- an animal ----
       case 'stock':
