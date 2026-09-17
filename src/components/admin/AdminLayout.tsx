@@ -2,7 +2,7 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
   FolderOpen, BarChart3, Upload, Layers, LayoutDashboard,
-  Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList,
+  Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList, CalendarClock,
   ChevronRight, Search, Inbox, Flag,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -83,6 +83,7 @@ const navigation: NavGroup[] = [
           { label: 'Certification Bodies', href: '/admin/certification-bodies', icon: Shield },
         ],
       },
+      { label: 'Bookings', icon: CalendarClock, href: '/admin/bookings' },
       { label: 'Exams', icon: ClipboardList, href: '/admin/exams' },
       { label: 'Self-paced Courses', icon: Layers, href: '/admin/self-paced-courses' },
     ],
