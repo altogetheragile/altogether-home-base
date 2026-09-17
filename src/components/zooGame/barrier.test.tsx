@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
@@ -50,10 +50,20 @@ describe('what holds them in', () => {
     expect(needsHolding('wombat')).toBe(2);
   });
 
-  it('is adequate when nobody has chosen, so an escape is somebody’s decision', () => {
+  it('is nothing until somebody chooses, so an escape is still somebody’s decision', () => {
+    // This used to say the opposite: an unchosen habitat was given the barrier that would hold what
+    // lived in it, so the criterion went green before anybody had decided anything. The reason was
+    // sound - an escape should be a decision rather than neglect - but the game was making the
+    // decision and then marking its own homework. Reported from playing it: "I'm still not picking
+    // the enclosure from scratch as a Dev."
+    //
+    // The intent survives, by the other route: nothing borders it until they say so, and a habitat
+    // that nothing borders cannot be finished. An escape still takes a choice.
+    expect(asked(zoo()).met, 'the game chose a fence and ticked it off').toBe(false);
+    expect(asked(zoo()).evidence).toMatch(/nothing borders it yet/i);
+    // What it WOULD take is still worked out, because that is the advice the Developers act on.
     const held = barrierOf({ parts: {}, colors: {} } as ItemDesign, [{ template: 'lion' }]);
-    expect(held.holds, 'the default would not hold a lion').toBeGreaterThanOrEqual(needsHolding('lion'));
-    expect(asked(zoo()).met, 'a habitat built without a choice failed its own safety criterion').toBe(true);
+    expect(held.holds, 'the advice would not hold a lion').toBeGreaterThanOrEqual(needsHolding('lion'));
   });
 
   it('fails, and says which animal would be over it, when it is too little', () => {
@@ -193,21 +203,32 @@ describe('the strip and the card agree about what is round the pen', () => {
     // one question - the strip asked what holds them with the pen EMPTY, which is a low hedge, while
     // the criterion asked with the lion in it, which is a 4m fence. Nobody chose either, and the one
     // that looked like a choice was the wrong one.
-    const s = zoo();
-    const pen = s.backlog.find((it) => it.category === 'enclosure')!;
-    render(
-      <ParkOptions state={s} item={pen} inside={null}
-        api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
-    );
-    const pressed = [...openGroup('barrier').querySelectorAll('[data-part^="barrier-"]')]
-      .find((b) => b.getAttribute('aria-pressed') === 'true')!;
-    expect(pressed, 'nothing at all is shown as what holds them').toBeTruthy();
-    // What the card says, in the same breath. Compared by the barrier itself rather than by its
-    // words: the strip calls it "High fence" and the card calls it "a 4m fence", which are one
-    // thing said two ways on purpose.
-    const key = pressed.getAttribute('data-part')!.replace('barrier-', '');
-    const said = checkCriterion(s, pen, 'Is it bordered safely, with no way out of it?')!;
-    expect(said.evidence, 'the card and the strip disagree about what is round the pen')
+    //
+    // They agree in BOTH states now, which is the stronger version of the same rule: nothing
+    // pressed and nothing claimed while it is unchosen, and the same barrier either side once it
+    // has been chosen.
+    const strip = (s: ZooGameState) => {
+      cleanup();
+      const pen = s.backlog.find((it) => it.category === 'enclosure')!;
+      render(
+        <ParkOptions state={s} item={pen} inside={null}
+          api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
+      );
+      const pressed = [...openGroup('barrier').querySelectorAll('[data-part^="barrier-"]')]
+        .find((b) => b.getAttribute('aria-pressed') === 'true');
+      return { pen, pressed, said: checkCriterion(s, pen, 'Is it bordered safely, with no way out of it?')! };
+    };
+
+    const none = strip(zoo());
+    expect(none.pressed, 'the strip pressed a barrier nobody chose').toBeUndefined();
+    expect(none.said.evidence, 'the card claimed a barrier nobody chose').toMatch(/nothing borders it yet/i);
+
+    // Chosen: the strip calls it "High fence" and the card calls it "a 4m fence", which are one
+    // thing said two ways on purpose - so they are compared by the barrier, not by its words.
+    const one = strip(zoo('fence'));
+    expect(one.pressed, 'nothing at all is shown as what holds them').toBeTruthy();
+    const key = one.pressed!.getAttribute('data-part')!.replace('barrier-', '');
+    expect(one.said.evidence, 'the card and the strip disagree about what is round the pen')
       .toContain(BARRIERS.find((b) => b.key === key)!.note);
   });
 

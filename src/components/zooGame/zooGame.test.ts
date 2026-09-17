@@ -3404,7 +3404,7 @@ describe("zoo game: the Product Owner's sign-off follows the park's answers too"
     // A home, not a shed: ground, shelter and water in, so the only fact left outstanding is the
     // one this test is about.
     const bare = presetFor(s.backlog.find((x) => x.id === 'lion-enc')!);
-    s = buildItem(s, 'lion-enc', { ...bare, colors: { ...bare.colors, ground: '#c8a06a' },
+    s = buildItem(s, 'lion-enc', { ...bare, parts: { ...bare.parts, barrier: 'high' }, colors: { ...bare.colors, ground: '#c8a06a' },
       flora: addFloraTo({ ...bare, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...bare, water: [] }) });
     s = { ...s, backlog: s.backlog.map((it) => (it.id === 'lion-enc' ? { ...it, pos: { x: 300, y: 800 } } : it)) };
     const item = () => s.backlog.find((x) => x.id === 'lion-enc')!;
