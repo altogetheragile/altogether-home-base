@@ -61,7 +61,7 @@ describe('what the park can already answer about a habitat', () => {
     const s = game();
     const h = itemOf(s, 'enclosure');
     const preset = presetFor(h);
-    const item = { ...h, draftDesign: {
+    const item = { ...h, enclosureSize: 'large' as const, draftDesign: {
       ...preset, ...design,
       parts: { ...preset.parts, barrier: 'high', ...(design?.parts ?? {}) },
     } } as BacklogItem;
@@ -111,7 +111,7 @@ describe('the inspector on the park', () => {
     const p = presetFor(h);
     // In hand, so it is standing on the park while it is built: the park cannot answer where
     // something is until it is somewhere.
-    const built = { ...h, status: 'committed' as const, started: true,
+    const built = { ...h, status: 'committed' as const, started: true, enclosureSize: 'large' as const,
       design: { ...p, parts: { ...p.parts, barrier: 'high' }, colors: { ...p.colors, ground: '#c8a06a' },
         flora: addFloraTo({ ...p, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...p, water: [] }) },
     } as BacklogItem;

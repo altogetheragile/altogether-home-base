@@ -121,11 +121,16 @@ describe('the Product Backlog a player actually meets', () => {
     // Most of the Backlog arrives already sized - seeded, or sized off-screen by a team that has
     // not taken refinement on. Reading only what was sized in front of the player meant this said
     // nothing about any of the items in a new game.
-    const s = seeded();
-    const pen = s.backlog.find((it) => it.category === 'enclosure' && !it.unsized)!;
-    expect(outgrown(pen), 'it complained about an item nobody had touched').toBeNull();
-    const bigger = pen.enclosureSize === 'large' ? 'small' : 'large';
-    const grown = setEnclosureSize(s, pen.id, bigger).backlog.find((it) => it.id === pen.id)!;
+    const s0 = seeded();
+    const found = s0.backlog.find((it) => it.category === 'enclosure' && !it.unsized)!;
+    // Nothing to say while the footprint is undecided: the size the Product Owner had in mind is an
+    // intention, and comparing it with a default is comparing it with nobody's decision.
+    expect(outgrown(found), 'it read an undecided habitat as one that had changed').toBeNull();
+    // The Developers size it as the Product Owner reckoned, and then change their minds.
+    const s = setEnclosureSize(s0, found.id, 'large');
+    expect(outgrown(s.backlog.find((it) => it.id === found.id)!),
+      'it complained about an item nobody had changed').toBeNull();
+    const grown = setEnclosureSize(s, found.id, 'small').backlog.find((it) => it.id === found.id)!;
     expect(outgrown(grown), 'a seeded habitat changed size and nothing said so').toBeTruthy();
   });
 });

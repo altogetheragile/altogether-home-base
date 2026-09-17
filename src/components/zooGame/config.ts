@@ -360,9 +360,13 @@ function ex(id: string, name: string, zone: string, appeal: [number, number, num
 /** An enclosure (habitat) - infrastructure built first, then populated with animals. Its
  *  `enclosureSize` footprint (chosen in the studio) sizes the habitat in the park. */
 function enc(id: string, name: string, zone: string, footprint: 'small' | 'medium' | 'large', unsized = false): BacklogItem {
+  // The footprint the Product Owner had in mind is what the work is SIZED against, and nothing
+  // more. How big it actually gets built is the Developers' decision, taken at the park with the
+  // animals in front of them - so it is not written onto the item. Reported from playing it: "I want
+  // to select enclosure type, set the size, ground type. Dev's have more to think about."
   const size = effortOf({ category: 'enclosure', enclosureSize: footprint });
   return {
-    id, name, category: 'enclosure', zone, enclosureSize: footprint, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    id, name, category: 'enclosure', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
     acceptance: enclosureAcceptance(),
     status: 'backlog', sprintNumber: null, accessible: true,
   };

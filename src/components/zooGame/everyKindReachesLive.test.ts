@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import {
-  suggestTasks, startItem, buildItem, placeOnPark, addConnector, planItemShape,
+  suggestTasks, startItem, buildItem, placeOnPark, addConnector, planItemShape, chooseStructure, setEnclosureSize,
   askToCheck, answerQuestion, toggleItemTask, isSignOffTask, openItem, setDraftDesign, finishItem, readyToMove,
 } from './engine';
 import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, HABITAT_FEATURE_TYPES } from './design';
@@ -61,7 +61,12 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
   s = startItem(s, id, 'developer');
   expect(item().started, `${item().name}: nobody could start it`).toBe(true);
 
-  // 2. The object is built in the takeover.
+  // 2. The Developers say what kind of thing it is and how big, which is where building starts
+  //    now: nothing is in their hands until they have. Then the object is built.
+  if (item().category === 'enclosure') {
+    s = chooseStructure(s, id, 'paddock');
+    s = setEnclosureSize(s, id, 'large');
+  }
   const design = built(item());
   s = setDraftDesign(s, id, design);
 

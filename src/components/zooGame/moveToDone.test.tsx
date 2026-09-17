@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { initialZooState, DAY_SECONDS } from './config';
-import { readyToMove, startItem, setDraftDesign, suggestTasks } from './engine';
+import { readyToMove, startItem, setDraftDesign, setEnclosureSize, suggestTasks } from './engine';
 import { applyParkChecks } from './parkChecks';
 import { isDesignDone, currentDesign, homeSizeOf, presetFor } from './design';
 import type { ZooGameState, BacklogItem } from './types';
@@ -119,10 +119,13 @@ describe('a plan the park ticks off by itself', () => {
         ? { ...it, status: 'committed' as const, sprintNumber: 1, tasks: suggestTasks(it) } : it)),
     } as ZooGameState;
     g = startItem(g, habitat.id, 'developer');
-    // A habitat with ground under their feet, somewhere to shelter and water in it: everything the
-    // plan asks for, drawn on the park and never once ticked by hand.
+    // Sized by the Developers, because nothing defaults to a footprint: the step asking for one is
+    // part of the plan this test is about.
+    g = setEnclosureSize(g, habitat.id, 'large');
+    // A habitat with something round it, ground under their feet, somewhere to shelter and water in
+    // it: everything the plan asks for, drawn on the park and never once ticked by hand.
     g = setDraftDesign(g, habitat.id, {
-      parts: {}, colors: { ground: '#c8a06a', fence: '#8a6a3b' },
+      parts: { barrier: 'high' }, colors: { ground: '#c8a06a', fence: '#8a6a3b' },
       water: [{ x: 0.2, y: 0.2, w: 0.3, h: 0.2 }], flora: [{ type: 'rock', x: 0.6, y: 0.6, s: 1 }],
     });
     const before = g.backlog.find((it) => it.id === habitat.id)!;

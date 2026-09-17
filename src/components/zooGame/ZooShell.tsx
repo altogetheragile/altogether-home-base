@@ -5,7 +5,7 @@ import { DoneGate } from './DoneGate';
 import { DayClock } from './DayClock';
 import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
-import { inHandItem } from './engine';
+import { inHandItem, structureChosen } from './engine';
 import { ParkOptions } from './ParkOptions';
 import { ParkInspector } from './ParkInspector';
 import { footprintFor } from './design';
@@ -298,7 +298,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Derived, not stored: something is in your hands when it has been picked up and is not standing
   // anywhere yet, or when you have said Move. Keeping it in state meant an effect that corrected
   // itself after every render.
-  const placingId = moving ?? (inHand && edit && inHand.category !== 'path' && !inHand.pos ? inHand.id : null);
+  // ...and not before the Developers have said WHAT they are building. Picking the card used to put
+  // the thing in your hands with its kind already decided, so the first act of building was dropping
+  // somebody else's decision on the grass. Reported from playing it: "as soon as I pick the card the
+  // studio has me placing an enclosure. I want to start the action myself from the toolbar."
+  const placingId = moving ?? (inHand && edit && inHand.category !== 'path' && !inHand.pos
+    && structureChosen(inHand) ? inHand.id : null);
   /** Which corner to dock the inspector in: the one furthest from the thing you are working on, so
    *  what it is telling you about is never underneath it. */
   const farthestCorner = (it: { pos?: { x: number; y: number } }): 'tl' | 'tr' | 'bl' | 'br' => {
@@ -533,6 +538,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onTurn,
                       onUnplace: (id) => setMoving(id),
                       onPutIn,
+                      // The first act of building, and the Developers': what kind of thing this is.
+                      onChooseStructure: edit.onChooseStructure,
                       // The chip names what is selected and says how far off it is. Ready, it is the
                       // offer to the Product Owner - which used to be a pill floating under the
                       // object on the park, at the other end of the screen from the controls that
