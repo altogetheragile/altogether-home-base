@@ -12,9 +12,11 @@ import { whereItStands, groundSize } from './parkModel';
 import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
-import { TOOLBOX, noOnePieceMeets } from './toolboxItems';
+import { TOOLBOX, noOnePieceMeets, bestFor } from './toolboxItems';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
+import { SIGNAL_NEEDS } from './signalNeeds';
+export { SIGNAL_NEEDS };
 import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
@@ -469,6 +471,27 @@ const DEFAULT_SIZE: Record<string, number> = { exhibit: 8, amenity: 5, flora: 3 
 /** Add a Product Backlog Item the Product Owner has written (name + acceptance
  *  criteria + kind + zone). It arrives UNSIZED - it must be estimated before it can
  *  be planned - so the PO can grow the Product Backlog before Sprint 1 or during a Sprint. */
+/** What the Developers do to a new item before a team has taken refinement on.
+ *
+ *  They size it - the same as they sized the Product Backlog before the learner arrived - and, if it
+ *  is a need, they decide what will meet it, because a need nobody has answered cannot be sized and
+ *  deciding is a refinement act too. The rule is worth saying plainly: before you take refinement
+ *  on, refinement still happens. You just do not see it, and you have no say in it.
+ *
+ *  Once the team HAS taken it on, none of this runs: new work arrives waiting for them. */
+function refinedOffScreen(state: ZooGameState, item: BacklogItem, fallbackSize: number): BacklogItem {
+  if (adopted(state, 'refinement')) return item;
+  let out = item;
+  if (out.category === 'need') {
+    const picked = bestFor(out.acceptance ?? []);
+    if (picked) {
+      out = chooseSolution({ ...state, backlog: [...state.backlog, out] }, out.id, picked)
+        .backlog.find((it) => it.id === out.id) ?? out;
+    }
+  }
+  return out.unsized ? { ...out, unsized: false, estimate: out.trueSize ?? fallbackSize } : out;
+}
+
 export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   const name = draft.name.trim();
   if (!name) return state;
@@ -496,9 +519,12 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
   // would be an item they could never plan. The Developers size it off-screen, the same as they
   // sized the Product Backlog before the learner arrived - and when the team DOES take refinement
   // on, sizing becomes theirs and new work arrives waiting for them.
-  if (!adopted(state, 'refinement') && item.unsized) {
-    item = { ...item, unsized: false, estimate: item.trueSize ?? DEFAULT_SIZE[draft.category] ?? 5 };
-  }
+  //
+  // A NEED is stuck twice over: nobody can size it until somebody has decided what will meet it,
+  // and deciding is a refinement act too. So the Developers decide that off-screen as well. The
+  // rule is the same one and it is worth saying plainly: before you take refinement on, refinement
+  // still happens - you just do not see it, and you do not get a say in it.
+  item = refinedOffScreen(state, item, DEFAULT_SIZE[draft.category] ?? 5);
   const zones = state.zones.includes(zone) ? state.zones : [...state.zones, zone];
   return chargeRefine(state, { ...state, backlog: [...state.backlog, item], zones }, REFINE_COSTS.addPbi);
 }
@@ -2236,24 +2262,24 @@ function escalateSignals(prevAge: Record<string, number>, fresh: Signal[]): { si
   return { signals, signalAge };
 }
 
-/** Turn a signal into a candidate Backlog item (the Product Owner's call). Emergent
- *  work arrives UNSIZED - it must be refined (estimated) before it can be planned.
- *  `trueSize` is the hidden intended size the planning poker clusters around. */
-function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
+/** Turn a signal into a candidate Backlog item: a NEED, which is what the visitors actually gave
+ *  you. What would meet it is the Developers' decision, taken at Refinement.
+ *
+ *  It used to build the answer as well as the question - "Food outlet", category amenity, services
+ *  food, five points - so a complaint arrived on the Product Backlog with nothing left to decide.
+ *  Emergent work still arrives UNSIZED: `trueSize` is the hidden size the planning poker clusters
+ *  around once there is something to size. */
+function needFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
+  const need = SIGNAL_NEEDS[sig.drivenBy];
+  if (!need) return null;
   const id = 'sig-' + sig.drivenBy.replace(/[^a-z]/g, '') + '-' + state.backlog.length;
-  const base = { id, status: 'backlog' as const, sprintNumber: null, accessible: true, zone: 'General', unsized: true, estimate: 0 };
-  if (sig.drivenBy === 'unmet:food') return { ...base, name: 'Food outlet', category: 'amenity', trueSize: 5, acceptance: amenityAcceptance('Food outlet', 'food'), services: 'food', serviceCapacity: DEFAULT_SERVICE_CAPACITY };
-  if (sig.drivenBy === 'unmet:toilet') return { ...base, name: 'More toilets', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('More toilets', 'toilet'), services: 'toilet', serviceCapacity: DEFAULT_SERVICE_CAPACITY };
-  if (sig.drivenBy === 'unmet:rest') return { ...base, name: 'Seating and shade', category: 'amenity', trueSize: 3, acceptance: amenityAcceptance('Seating and shade', 'rest'), services: 'rest', serviceCapacity: DEFAULT_SERVICE_CAPACITY };
-  // Its own two, and then the one every facility is asked. It carried "Placed where visitors can
-  // reach it", which is the same question in words nothing recognises - so the park could not answer
-  // any of this item's criteria and the only route to Done was the Product Owner waiving all three.
-  // The same trap facilities were in before their question was put in the park's own words.
-  if (sig.drivenBy === 'crowding') {
-    return { ...base, name: 'Extra viewing area', category: 'amenity', trueSize: 5,
-      acceptance: ['Eases the queues', 'Good sightlines', 'Can I walk to it from the way in?'] };
-  }
-  return null;
+  return {
+    id, name: need.name, category: 'need',
+    story: `As ${need.story.as} I want ${need.story.want} so that ${need.story.soThat}`,
+    acceptance: need.criteria,
+    trueSize: need.trueSize,
+    status: 'backlog', sprintNumber: null, accessible: true, zone: 'General', unsized: true, estimate: 0,
+  };
 }
 
 /** Accept a signal: add the candidate item to the Product Backlog and clear the signal.
@@ -2263,8 +2289,9 @@ function itemFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
 export function acceptSignal(state: ZooGameState, index: number, by?: string): ZooGameState {
   const sig = state.signals[index];
   if (!sig) return state;
-  const item = itemFromSignal(sig, state);
-  if (!item) return state;
+  const raised = needFromSignal(sig, state);
+  if (!raised) return state;
+  const item = refinedOffScreen(state, raised, raised.trueSize ?? 5);
   const taken = { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index),
     // Kept as a fact as well as a sentence. See `signalLog`: the decision log is prose for the
     // Retrospective to read back, and this is what the NEXT Review reads to tell a complaint it
@@ -2273,7 +2300,9 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
       call: 'took' as const, suggestion: sig.suggestion, itemId: item.id }] };
   return note(taken, { kind: 'signal', by: by ?? 'product_owner',
     what: `Took what the visitors said into the Product Backlog: ${sig.suggestion}`,
-    cost: `${item.name} joins the Product Backlog unsized - the Developers size it` });
+    // What arrives is a need, and saying so is the point: the visitors told you what was missing,
+    // not what to build. The Developers decide that at Refinement, and the size follows the choice.
+    cost: `${item.name} joins the Product Backlog as a need - the Developers decide what will meet it` });
 }
 
 /** Turn a signal down. The other half of the same decision, and the half the game used to make for

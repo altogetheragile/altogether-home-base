@@ -3336,12 +3336,21 @@ describe('zoo game: the Product Owner looks ahead', () => {
     // Three exhibits open or forecast and nowhere to buy anything. The visitor signals already
     // handle "after", and by then it has cost you a Sprint of unhappy visitors.
     let s = bigCatsSplit(1);
-    s = { ...s, backlog: s.backlog.filter((it) => !(it.category === 'amenity')) };
+    // Nothing that feeds anybody, and nothing already ASKING to: the seeded Backlog carries
+    // "Somewhere to eat" as a need, and proposing what is already on the Backlog under another
+    // name is proposing to write it twice.
+    s = { ...s, backlog: s.backlog.filter((it) => it.category !== 'amenity' && it.category !== 'need') };
     s = { ...s, backlog: s.backlog.map((it) => (['lion', 'tiger', 'leopard'].includes(it.id) ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber } : it)) };
     const food = lookAhead(s).find((p) => p.id === 'amenity:food');
     expect(food).toBeTruthy();
     expect(food!.kind).toBe('add');
-    if (food!.kind === 'add') expect(food!.draft.services).toBe('food');
+    // A need, not a kiosk. The Product Owner says what is wanted; what meets it is the Developers'
+    // decision, whether the item arrived from a complaint or from looking ahead.
+    if (food!.kind === 'add') {
+      expect(food!.draft.category, 'the Product Owner proposed the building as well').toBe('need');
+      expect(food!.draft.services, 'it decided what the thing would offer').toBeUndefined();
+      expect(food!.draft.story, 'a need with no story is a title').toMatch(/^As a .* so that /);
+    }
     expect(food!.why).toMatch(/3 exhibits/);
   });
 

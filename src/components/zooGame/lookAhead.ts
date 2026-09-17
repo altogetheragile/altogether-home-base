@@ -1,5 +1,5 @@
 import type { ZooGameState, PbiDraft, BacklogItem } from './types';
-import { amenityAcceptance } from './design';
+import { SIGNAL_NEEDS } from './signalNeeds';
 
 // ============= The Product Owner looking ahead =============
 //
@@ -97,17 +97,32 @@ export function lookAhead(state: ZooGameState): Proposal[] {
   // visitors complain than after - the signals already handle "after", and by then it has cost you.
   const exhibitsSoon = state.backlog.filter((it) => it.category === 'exhibit' && (it.status === 'open' || soon.includes(it))).length;
 
-  const wants: { services: 'food' | 'toilet'; name: string; why: string }[] = [
-    { services: 'food', name: 'Kiosk', why: 'people who have walked round three exhibits want feeding, and there is nowhere to buy anything' },
-    { services: 'toilet', name: 'Toilets', why: 'a family will cut a day short over this one, and there is nowhere to go' },
+  // The needs, not the buildings. This used to propose a Kiosk and a Toilets block with their
+  // services already set, which is the Product Owner writing the Developers' answer into their own
+  // item - the same fault the Review's signals had, on the route the Product Owner drives.
+  //
+  // The same two needs the visitors would raise after the event, read from the same table. The only
+  // difference is WHEN: raised here, nobody has had to queue for a sandwich first, and that is the
+  // whole argument for a Product Owner who looks ahead.
+  const wants: { services: 'food' | 'toilet'; cause: string; why: string }[] = [
+    { services: 'food', cause: 'unmet:food', why: 'people who have walked round three exhibits want feeding, and there is nowhere to buy anything' },
+    { services: 'toilet', cause: 'unmet:toilet', why: 'a family will cut a day short over this one, and there is nowhere to go' },
   ];
   if (exhibitsSoon >= 3) {
     for (const w of wants) {
+      // Already served, or already asked for: a proposal for something that is on the Backlog under
+      // another name is a proposal to write it twice.
+      const need = SIGNAL_NEEDS[w.cause];
       if (hasItem(state, (it) => it.category === 'amenity' && it.services === w.services)) continue;
+      if (hasItem(state, (it) => it.category === 'need' && it.name === need.name)) continue;
       out.push({
-        id: `amenity:${w.services}`, kind: 'add', label: w.name,
+        id: `amenity:${w.services}`, kind: 'add', label: need.name,
         why: `The zoo will have ${exhibitsSoon} exhibits open - ${w.why}.`,
-        draft: { name: w.name, category: 'amenity', zone: 'Facilities', services: w.services, acceptance: amenityAcceptance(w.name, w.services) },
+        draft: {
+          name: need.name, category: 'need', zone: 'Facilities',
+          story: `As ${need.story.as} I want ${need.story.want} so that ${need.story.soThat}`,
+          acceptance: need.criteria,
+        },
       });
     }
   }

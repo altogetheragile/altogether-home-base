@@ -390,8 +390,14 @@ export const CRITERIA: CriterionDef[] = [
   // rather than as a visitor's question, unlike every other criterion in this list. Worth putting
   // right, and not here: rewording is visible to anybody mid-Sprint and this change is meant to be
   // invisible.
-  { id: 'eases-queues', asks: 'Eases the queues', short: 'shorter queues' },
-  { id: 'sightlines', asks: 'Good sightlines', short: 'a clear view' },
+  // Questions, like every other criterion. These two arrived as statements from the crowding
+  // signal, and a statement can be waved through where a question has to be answered - which is
+  // the whole reason the house style is a question. `was` carries the saves that hold the old
+  // wording.
+  { id: 'eases-queues', asks: 'Can I see the animals without queueing?', short: 'shorter queues',
+    was: ['Eases the queues'] },
+  { id: 'sightlines', asks: 'Can I get a clear view of them?', short: 'a clear view',
+    was: ['Good sightlines'] },
 ];
 
 const BY_TEXT = new Map<string, CriterionDef>();
