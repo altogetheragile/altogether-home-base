@@ -292,6 +292,8 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             ))}
           </Row>
         );
+      // No row label: the menu is called Ground or Water already, and a row repeating its own
+      // menu's name is a word doing no work.
       case 'ground':
         return (
           <Row label={L(tank ? 'Water' : 'Ground')}>

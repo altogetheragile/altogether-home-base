@@ -87,6 +87,18 @@ describe('the same act is called the same thing', () => {
     }
   });
 
+  it('names the floor of a habitat after what it actually is', () => {
+    // It was a menu called Surface with a row inside it called Ground - the menu's own name said
+    // again, in a word that is wrong as soon as the habitat is a tank: "having ground in the
+    // surface menu does not make sense. What if it is water?"
+    const pen = real('enclosure');
+    const floor = (it: BacklogItem) => labelOf(groupsFor(it).find((g) => g.id === 'ground')!, it);
+    expect(floor({ ...pen, draftDesign: { parts: { structure: 'paddock', ground: 'land' }, colors: {} } }))
+      .toBe('Ground');
+    expect(floor({ ...pen, draftDesign: { parts: { structure: 'tank', ground: 'water' }, colors: {} } }),
+      'a tank was offered a ground colour').toBe('Water');
+  });
+
   it('puts what it IS first, for everything that is placed', () => {
     for (const category of ['enclosure', 'exhibit', 'amenity', 'flora'] as ItemCategory[]) {
       const groups = groupsFor(real(category));
