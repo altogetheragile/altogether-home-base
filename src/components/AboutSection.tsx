@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BOOKING_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { colors as p } from '@/theme/colors';
 
 const credentials = [
@@ -12,6 +12,7 @@ const credentials = [
 ];
 
 export default function AboutSection() {
+  const bookingHref = useBookingHref();
   return (
     <>
       <style>{`
@@ -217,7 +218,7 @@ export default function AboutSection() {
 
             {/* CTAs */}
             <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-              <a href={BOOKING_URL} className="aa-cta-primary" style={{
+              <a href={bookingHref} className="aa-cta-primary" style={{
                 background: p.orange,
                 color: p.deepTeal,
                 border: "none",

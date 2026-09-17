@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { SITE_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { useKnowledgeItems, KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -122,6 +123,7 @@ const FILTERS = ['All', 'Analysis', 'Planning', 'Delivery', 'Facilitation', 'Str
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Knowledge: React.FC = () => {
+  const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const [activeFilter, setActiveFilter] = useState('All');
   const [search, setSearch] = useState('');
@@ -344,7 +346,7 @@ const Knowledge: React.FC = () => {
             <Link to="/events" style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', textDecoration: 'none' }}>
               Browse Events <Icons.ArrowRight />
             </Link>
-            <a href={BOOKING_URL} style={{ background: 'none', border: 'none', padding: 0, color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', textDecoration: 'none' }}>
+            <a href={bookingHref} style={{ background: 'none', border: 'none', padding: 0, color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', textDecoration: 'none' }}>
               <Icons.Chat />Book a Chemistry Session
             </a>
           </div>

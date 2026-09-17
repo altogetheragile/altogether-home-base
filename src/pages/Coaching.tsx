@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { SITE_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { supabase } from '@/integrations/supabase/client';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
 import Navigation from '@/components/Navigation';
@@ -152,6 +153,7 @@ const credentials = [
 
 // ─── Component ──────────────────────────────────────────────────────────────
 const Coaching: React.FC = () => {
+  const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const [formData, setFormData] = useState({ name: '', email: '', service: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
@@ -263,7 +265,7 @@ const Coaching: React.FC = () => {
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
             <a
-              href={BOOKING_URL}
+              href={bookingHref}
                             style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
             >
               <Icons.Chat />Book a free chemistry session
@@ -382,7 +384,7 @@ const Coaching: React.FC = () => {
             <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>Book your chemistry session</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <a
-                href={BOOKING_URL}
+                href={bookingHref}
                                 style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
               >
                 <Icons.Calendar />Book a time slot

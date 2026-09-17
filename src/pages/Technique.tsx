@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { SITE_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { useKnowledgeItemBySlug, useKnowledgeItems, KnowledgeItem } from '@/hooks/useKnowledgeItems';
 import { useKnowledgeItemSteps } from '@/hooks/useKnowledgeItemSteps';
 import { useKnowledgeUseCases } from '@/hooks/useKnowledgeUseCases';
@@ -119,6 +120,7 @@ function getDomains(item: KnowledgeItem): string[] {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Technique: React.FC = () => {
+  const bookingHref = useBookingHref();
   const { slug } = useParams<{ slug: string }>();
   const isMobile = useIsMobile();
 
@@ -432,7 +434,7 @@ const Technique: React.FC = () => {
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>
                 Want to practise this technique with your team? Book a free chemistry session to talk through how it applies to your context.
               </p>
-              <a href={BOOKING_URL} style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}>
+              <a href={bookingHref} style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}>
                 <Icons.Chat />Book a Chemistry Session
               </a>
             </div>
