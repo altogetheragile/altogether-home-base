@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
+import { wantedServices } from './parkChecks';
 import {
-  suggestTasks, startItem, buildItem, placeOnPark, addConnector, planItemShape, chooseStructure, setEnclosureSize,
+  suggestTasks, startItem, buildItem, placeOnPark, addConnector, planItemShape, chooseStructure, setEnclosureSize, setServices,
   askToCheck, answerQuestion, toggleItemTask, isSignOffTask, openItem, setDraftDesign, finishItem, readyToMove,
 } from './engine';
 import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, HABITAT_FEATURE_TYPES } from './design';
@@ -31,6 +32,11 @@ const built = (item: BacklogItem): ItemDesign => {
       return { ...p, group: { males: 1, females: 1, juveniles: 0, cubs: 0 }, colors: { ...p.colors, coat: '#c8761f' } };
     case 'path':
       return { ...p, parts: { ...p.parts, thickness: 'medium' }, colors: { ...p.colors, path: '#c9a86a' } };
+    // A building is what the Developers chose it to be, with a name board over the door. Neither is
+    // a default any more: the preset is walls and a roof, and the rest is decisions.
+    case 'amenity':
+      return { ...p, parts: { ...p.parts, type: 'toilets', structure: 'toilets', sign: 'on' },
+        colors: { ...p.colors, sign: '#3f6f4f' } };
     default:
       return p;
   }
@@ -66,6 +72,12 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
   if (item().category === 'enclosure') {
     s = chooseStructure(s, id, 'paddock');
     s = setEnclosureSize(s, id, 'large');
+  }
+  // A facility is chosen the same way, and saying what it offers is part of building one: the item
+  // is written with the question - "can I find a free cubicle at a busy time?" - and the Developers
+  // give the answer.
+  if (item().category === 'amenity') {
+    s = setServices(s, id, wantedServices(item()) ?? 'food');
   }
   const design = built(item());
   s = setDraftDesign(s, id, design);

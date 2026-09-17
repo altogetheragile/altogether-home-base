@@ -4,7 +4,9 @@ import { ParkOptions } from './ParkOptions';
 import { openGroup } from './openGroup';
 import { structuresFor, picksAStructure, structureWord } from './toolboxItems';
 import { chooseStructure, structureChosen } from './engine';
+import { applyParkChecks } from './parkChecks';
 import { initialZooState } from './config';
+import { presetFor, buildingTypeFor } from './design';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The Developers start the work, rather than being handed it half-done.
@@ -72,6 +74,44 @@ describe('until they have chosen', () => {
   it('nothing has been chosen on a habitat that has just been started', () => {
     const s = seeded();
     expect(structureChosen(pen(s)), 'the game had already decided what to build').toBe(false);
+  });
+
+  it('draws no building for a facility nobody has decided the shape of', () => {
+    // A Toilets item was drawn as a toilet block from the moment it was written: the name and what
+    // it offers were enough for the game to guess, so the one decision the toolbar opens with had
+    // been made and drawn already. Reported from playing it: "the toilets already appears as a
+    // toilet structure. It should be like any other structure - the devs decide."
+    const s = seeded();
+    const loo = s.backlog.find((it) => it.category === 'amenity')!;
+    expect(structureChosen(loo), 'the game had already decided what to build').toBe(false);
+    expect(presetFor(loo).parts.type, 'it is drawn as something before anybody chose').toBeUndefined();
+    // The guess is still right and still made - it is the advice the Developers act on, and what
+    // the game picks when it is playing them.
+    expect(buildingTypeFor(loo.name, loo.services)).toBe('toilets');
+  });
+
+  it('answers nothing about work nobody has started', () => {
+    // The park answered for everything on the Product Backlog, so a Toilets card read "3 of 3,
+    // ready for Priya" while its own card said "Next: design the toilets" - it was written with
+    // what it offers, and the park counted that as work done. A preset is not work, and neither is
+    // a field the item was born with.
+    const s = seeded();
+    const loo = s.backlog.find((it) => it.category === 'amenity')!;
+    const before = applyParkChecks(s).backlog.find((it) => it.id === loo.id)!;
+    expect((before.acConfirmed ?? []).some(Boolean),
+      'the park ticked a criterion on work nobody had started').toBe(false);
+    // Once it IS being built, the park answers as it always did.
+    const after = applyParkChecks(building(s, loo)).backlog.find((it) => it.id === loo.id)!;
+    expect((after.acConfirmed ?? []).some(Boolean),
+      'the park stopped answering for work in hand').toBe(true);
+  });
+
+  it('draws it as what they chose, once they have', () => {
+    const s = seeded();
+    const loo = s.backlog.find((it) => it.category === 'amenity')!;
+    const after = chooseStructure(building(s, loo), loo.id, 'cafe');
+    const built = after.backlog.find((it) => it.id === loo.id)!;
+    expect(built.draftDesign?.parts.type, 'a toilet block, whatever they picked').toBe('cafe');
   });
 
   it('is the first thing on the toolbar, and lit until it is answered', () => {

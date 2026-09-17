@@ -397,8 +397,13 @@ function am(id: string, name: string, zone: string, services: 'food' | 'toilet' 
   const size = effortOf({ category: 'amenity', services });
   return {
     id, name, category: 'amenity', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    // What is WANTED shapes the criteria - a toilet block is asked whether you can find a free
+    // cubicle - and that is the Product Owner's. What it actually OFFERS is the answer, and the
+    // answer is the Developers': they say so under Offers. Written onto the item, it was the
+    // question and its own answer, so a Toilets card read "3 of 3, ready for Priya" while its own
+    // card said "Next: design the toilets".
     acceptance: amenityAcceptance(name, services),
-    status: 'backlog', sprintNumber: null, accessible: true, services, serviceCapacity: DEFAULT_SERVICE_CAPACITY,
+    status: 'backlog', sprintNumber: null, accessible: true,
   };
 }
 
