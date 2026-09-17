@@ -70,13 +70,18 @@ describe('a habitat is not finished until you can walk to it', () => {
     // Reported by playing it, three questions running: "should I see a PO option now?" - no, because
     // one fact was outstanding, and the two parts of it a player could not find are inside the
     // habitat. The evidence names the control, the same as the way in does.
+    //
+    // It named "Look Inside", which was the only way in when the way in was zooming the park. The
+    // ground is a colour under Surface and what grows and swims in it is under Interior, and a
+    // criterion that names a control has to be told when the control moves.
     const { state, item } = habitatInHand();
     // A pen with nothing in it, which is what one looks like when it is first stood up.
     const p = presetFor(item);
     const bare = { ...item, design: { ...p, colors: {}, flora: [], water: [] } } as BacklogItem;
     const v = checkCriterion(state, bare, 'Can I tell an animal lives here, not a shed?')!;
     expect(v.met).toBe(false);
-    expect(v.evidence, 'nothing says where planting and water are added').toMatch(/Look Inside/i);
+    expect(v.evidence, 'nothing says where planting and water are added').toMatch(/Interior/);
+    expect(v.evidence, 'nothing says where the ground is chosen').toMatch(/Surface/);
   });
 
   it('says no while it is a pen in a field, and says what is missing', () => {
