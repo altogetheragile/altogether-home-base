@@ -9,7 +9,7 @@ import { zonePlots, plotOrder } from './parkZones';
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
 import { whereItStands, groundSize } from './parkModel';
-import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, DEFAULT_GROUP, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
+import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, DEFAULT_GROUP, floraDefaultColors, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { TOOLBOX, noOnePieceMeets, bestFor, structuresFor, picksAStructure } from './toolboxItems';
@@ -1495,10 +1495,18 @@ export function chooseStructure(state: ZooGameState, id: string, key: string): Z
   const kind = structuresFor(item.category).find((k) => k.key === key);
   if (!kind) return state;
   const design = currentDesign(item);
+  // A plant chosen is a plant in its own colours, and made of its own pieces. The kind used to be
+  // picked on a second control that set all three; picking it here has to do the same, or a bush
+  // comes out drawn as a tree.
+  const planted = item.category === 'flora' && kind.template
+    ? { piece: kind.template, colors: floraDefaultColors(kind.template) }
+    : null;
   const chosen = {
     ...design,
+    colors: { ...design.colors, ...(planted?.colors ?? {}) },
     parts: {
       ...design.parts, structure: kind.key,
+      ...(planted ? { piece: planted.piece } : {}),
       ...(kind.template ? { type: kind.template } : {}),
       // Said outright rather than inferred. A paddock holds land and a tank holds water, and with
       // this written down the strip does not have to ask the same question a second time.

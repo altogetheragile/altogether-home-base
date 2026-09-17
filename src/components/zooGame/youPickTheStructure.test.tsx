@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
 import { openGroup } from './openGroup';
-import { structuresFor, picksAStructure } from './toolboxItems';
+import { structuresFor, picksAStructure, structureWord } from './toolboxItems';
 import { chooseStructure, structureChosen } from './engine';
 import { initialZooState } from './config';
 import type { ZooGameState, BacklogItem } from './types';
@@ -37,11 +37,34 @@ describe('what the Developers choose first', () => {
   });
 
   it('knows which items are built by choosing something and which are not', () => {
+    // Everything that gets PUT somewhere is chosen first: "the same with an animal or a plant. I
+    // should have to pick from a list of fauna or flora."
     expect(picksAStructure('enclosure')).toBe(true);
     expect(picksAStructure('amenity')).toBe(true);
-    // A path is drawn, not placed, and an animal goes into a habitat rather than onto the park.
+    expect(picksAStructure('exhibit')).toBe(true);
+    expect(picksAStructure('flora')).toBe(true);
+    // A path is drawn rather than placed: the run IS the choice.
     expect(picksAStructure('path')).toBe(false);
-    expect(picksAStructure('exhibit')).toBe(false);
+  });
+
+  it('calls it what the thing being built would call it', () => {
+    expect(structureWord('exhibit')).toBe('Species');
+    expect(structureWord('flora')).toBe('Planting');
+    expect(structureWord('enclosure')).toBe('Structure');
+  });
+
+  it('shelves the animals by the part of the zoo they belong to', () => {
+    // A zoo has thirty-odd animals in it, and a flat list of thirty is not a list anybody reads.
+    const fauna = structuresFor('exhibit');
+    expect(fauna.length, 'there is barely a zoo to choose from').toBeGreaterThan(20);
+    expect(new Set(fauna.map((f) => f.group)).size, 'they are all on one shelf').toBeGreaterThan(3);
+    expect(fauna.map((f) => f.name)).toEqual(expect.arrayContaining(['Lion', 'Penguins']));
+  });
+
+  it('offers the things that grow, and the landscape among them', () => {
+    const flora = structuresFor('flora').map((f) => f.name);
+    expect(flora).toEqual(expect.arrayContaining(['Trees', 'Bushes', 'Pond', 'Bridge']));
+    expect(flora, 'a pathway is drawn, not planted').not.toContain('Pathway');
   });
 });
 
@@ -97,6 +120,19 @@ describe('choosing one', () => {
     expect(built.enclosureSize, 'choosing a paddock decided how big it is').toBeFalsy();
     expect(built.draftDesign?.parts.barrier, 'choosing a paddock decided what borders it').toBeFalsy();
     expect(built.draftDesign?.colors.ground, 'choosing a paddock decided what it is surfaced in').toBeFalsy();
+  });
+
+  it('plants a bush as a bush, in its own colours', () => {
+    // The kind used to be picked on a second control that also set the piece and the default
+    // colours. Picking it here has to do the same, or a bush comes out drawn as a tree.
+    const s = seeded();
+    const tree = s.backlog.find((it) => it.category === 'flora' && it.template === 'tree')!;
+    const after = chooseStructure(building(s, tree), tree.id, 'bush');
+    const built = after.backlog.find((it) => it.id === tree.id)!;
+    expect(built.draftDesign?.parts.type, 'it is still a tree').toBe('bush');
+    expect(built.draftDesign?.parts.piece, 'it is made of the wrong pieces').toBe('bush');
+    expect(Object.keys(built.draftDesign?.colors ?? {}).length,
+      'a bush in no colours at all').toBeGreaterThan(0);
   });
 
   it('refuses a kind this item cannot be', () => {

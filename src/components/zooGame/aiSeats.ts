@@ -69,6 +69,9 @@ export function aiDesign(item: BacklogItem, living: { template?: string; id?: st
   const paint = (key: string, fallback: string) => { if (!colors[key]) colors[key] = fallback; };
 
   if (item.category === 'exhibit') {
+    // Which animal, which is the Developers' first decision and nothing defaults to it. The card
+    // says what was asked for, and that is what these Developers build.
+    if (!parts.structure) parts.structure = item.template ?? item.id;
     // Stocked rather than painted: a pair, which fits any habitat the game offers.
     return { ...base, colors, parts, group: base.group ?? { males: 1, females: 1, juveniles: 0, cubs: 0 } };
   }
@@ -100,6 +103,7 @@ export function aiDesign(item: BacklogItem, living: { template?: string; id?: st
       ? withWater
       : { ...withWater, flora: addFloraTo(withWater, 'oak') }) as ItemDesign;
   }
+  if (item.category === 'flora' && !parts.structure) parts.structure = item.template ?? 'tree';
   if (item.category === 'amenity') {
     paint('walls', '#cfd4d8'); paint('roof', '#9aa3ab'); paint('sign', '#e6842a');
     if (parts.sign === 'off') delete parts.sign;      // a building visitors cannot find is not Done

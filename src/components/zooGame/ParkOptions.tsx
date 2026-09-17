@@ -242,20 +242,28 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       case 'structure': {
         const kinds = structuresFor(subject.category);
         const picked = design.parts.structure;
+        // Shelved where there are enough of them to need it - thirty animals in one list is not a
+        // list. A scroll rather than a second menu: what is being chosen is one thing.
+        const shelves = [...new Set(kinds.map((k) => k.group ?? ''))];
         return (
-          <div className="space-y-1">
+          <div className="max-h-[17rem] space-y-1 overflow-y-auto">
             <p className="px-1 pb-1 text-[11px] text-muted-foreground">
-              {picked ? 'What this is being built as.'
-                : 'What are you building? Nothing goes on the park until you say.'}
+              {picked ? `What this is being built as. ${menu === 'Species' ? 'The card says what was asked for.' : ''}`.trim()
+                : `What are you building? Nothing goes on the park until you say.`}
             </p>
-            {kinds.map((k) => (
-              <button key={k.key} type="button" data-part={`structure-${k.key}`} aria-pressed={picked === k.key}
-                onClick={() => api.onChooseStructure?.(subject.id, k.key)}
-                className={cn(FOCUS, 'flex w-full items-baseline gap-2 rounded-md border-2 px-2 py-1.5 text-left',
-                  picked === k.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
-                <span className="text-xs font-semibold">{k.name}</span>
-                <span className="text-[11px] text-muted-foreground">{k.what}</span>
-              </button>
+            {shelves.map((shelf) => (
+              <div key={shelf} className="space-y-1">
+                {shelf && <div className={cn(EYEBROW, 'px-1 pt-1 text-muted-foreground')}>{shelf}</div>}
+                {kinds.filter((k) => (k.group ?? '') === shelf).map((k) => (
+                  <button key={k.key} type="button" data-part={`structure-${k.key}`} aria-pressed={picked === k.key}
+                    onClick={() => api.onChooseStructure?.(subject.id, k.key)}
+                    className={cn(FOCUS, 'flex w-full items-baseline gap-2 rounded-md border-2 px-2 py-1.5 text-left',
+                      picked === k.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
+                    <span className="text-xs font-semibold">{k.name}</span>
+                    {k.what && <span className="text-[11px] text-muted-foreground">{k.what}</span>}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         );

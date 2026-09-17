@@ -202,6 +202,9 @@ export interface Structure {
   /** What it is on the park, once placed. */
   template?: string;
   category: ItemCategory;
+  /** Which shelf of the list it sits on. A zoo has thirty-odd animals in it and a flat list of
+   *  thirty is not a list anybody reads. */
+  group?: string;
 }
 
 /** The kinds of thing that can be built for an item, in the order a Developer meets them.
@@ -220,8 +223,30 @@ export function structuresFor(category: ItemCategory): Structure[] {
       .map((t) => ({ key: t.template ?? t.name, name: t.name, what: t.services === 'food' ? 'food and drink'
         : t.services === 'toilet' ? 'toilets' : 'somewhere to sit', template: t.template, category: 'amenity' as const }));
   }
+  // The animals, by the part of the zoo they belong to. Which one goes in a habitat is the
+  // Developers' to choose, the same as everything else they build - the card says a lion is wanted,
+  // and a zoo that cannot be given the wrong animal cannot teach anybody to notice.
+  if (category === 'exhibit') {
+    return TOOLBOX.filter((g) => g.items.some((t) => t.category === 'exhibit'))
+      .flatMap((g) => g.items.filter((t) => t.category === 'exhibit').map((t) => ({
+        key: t.template ?? t.name, name: t.name, what: '', template: t.template,
+        category: 'exhibit' as const, group: g.group,
+      })));
+  }
+  // Things that grow, and the landscape they grow among.
+  if (category === 'flora') {
+    return TOOLBOX.filter((g) => ['Flora', 'Landscape', 'Infrastructure'].includes(g.group))
+      .flatMap((g) => g.items.filter((t) => t.category === 'flora').map((t) => ({
+        key: t.template ?? t.name, name: t.name, what: '', template: t.template,
+        category: 'flora' as const, group: g.group,
+      })));
+  }
   return [];
 }
+
+/** What this kind of item's first decision is called, in the words of the thing being built. */
+export const structureWord = (category: ItemCategory): string =>
+  (category === 'exhibit' ? 'Species' : category === 'flora' ? 'Planting' : 'Structure');
 
 /** Whether this kind of item is one the Developers choose a structure for before building it. */
 export const picksAStructure = (category: ItemCategory): boolean => structuresFor(category).length > 0;
