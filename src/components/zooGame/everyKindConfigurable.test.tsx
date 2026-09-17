@@ -82,7 +82,7 @@ describe('what you can change about each kind of thing', () => {
     const text = container.textContent ?? '';
     expect(text, 'sizing is not called Size').toMatch(/Size/);
     expect(text).toMatch(/Shape/);
-    expect(swatches(openGroup('ground')).some((l) => /^Ground /.test(l)), 'a habitat has no ground colour').toBe(true);
+    expect(swatches(openGroup('ground')).some((l) => /^Surface /.test(l)), 'a habitat has no surface colour').toBe(true);
     expect(swatches(openGroup('fence')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
     expect(openGroup('inside').body.textContent, 'there is no way in').toMatch(/Look inside/);
   });

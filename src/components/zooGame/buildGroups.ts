@@ -1,6 +1,6 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { CRITERIA, criterionFor, answerable, inspect } from './parkChecks';
-import { LANDSCAPE_TYPES, currentDesign, isTank } from './design';
+import { LANDSCAPE_TYPES, currentDesign } from './design';
 import { picksAStructure, structureWord } from './toolboxItems';
 import { structureChosen } from './engine';
 
@@ -91,18 +91,18 @@ export const GROUPS: GroupDef[] = [
   { id: 'shape', writes: ['parts.shape'], label: 'Shape', meets: [], applies: habitat },
   // "Holds: land or a tank" was this question asked twice - a paddock holds land and a tank holds
   // water, and Structure is where that is decided now.
-  // What the floor of it is. A paddock has ground and a tank has water, and the menu says which -
-  // "having ground in the surface menu does not make sense. What if it is water?" It was a menu
-  // called Surface with a row inside it called Ground, which is the menu's own name said again in
-  // the wrong word.
+  // What the floor of it is, in the one word that is true either way: a paddock's surface is ground
+  // and a tank's is water, and Surface covers both. It was a menu called Surface with a row inside
+  // it called GROUND - the menu's own name said again, in a word that is wrong the moment the
+  // habitat is a tank - and then briefly a menu called Ground, which is the same wrongness moved up
+  // a level. The swatches change with the structure; the word does not need to.
   { id: 'ground', writes: ['colors.ground', 'colors.water'], label: 'Surface', meets: ['a-home'],
-    labelFor: (it) => (isTank(currentDesign(it), [], it) ? 'Water' : 'Ground'),
     applies: habitat },
-  { id: 'barrier', writes: ['parts.barrier'], label: 'Barrier', meets: ['held'], applies: habitat },
+  { id: 'barrier', writes: ['parts.barrier'], label: 'Perimeter', meets: ['held'], applies: habitat },
   // What it looks like. Called Look wherever it happens - a habitat's fence, a building's walls
   // and sign, an animal's coat, a plant's foliage - because it is one act, and it was three words.
   { id: 'fence', writes: ['colors.fence'], label: 'Look', meets: [], applies: habitat },
-  { id: 'inside', writes: ['design.water', 'design.flora'], label: 'Inside', meets: ['a-home'], applies: habitat },
+  { id: 'inside', writes: ['design.water', 'design.flora'], label: 'Interior', meets: ['a-home'], applies: habitat },
 
   // ---- an animal ----
   { id: 'stock', writes: ['design.group'], label: 'How many', meets: ['a-group', 'room-to-spare'], applies: animal },

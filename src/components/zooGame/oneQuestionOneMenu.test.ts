@@ -87,16 +87,18 @@ describe('the same act is called the same thing', () => {
     }
   });
 
-  it('names the floor of a habitat after what it actually is', () => {
-    // It was a menu called Surface with a row inside it called Ground - the menu's own name said
-    // again, in a word that is wrong as soon as the habitat is a tank: "having ground in the
-    // surface menu does not make sense. What if it is water?"
+  it('names the floor of a habitat in the one word that is true either way', () => {
+    // It was a menu called Surface with a row inside it called GROUND - the menu's own name said
+    // again, in a word that is wrong the moment the habitat is a tank: "having ground in the
+    // surface menu does not make sense. What if it is water?" Naming the menu Ground or Water was
+    // the same wrongness moved up a level. Surface is true of both, and what changes with the
+    // structure is the swatches.
     const pen = real('enclosure');
     const floor = (it: BacklogItem) => labelOf(groupsFor(it).find((g) => g.id === 'ground')!, it);
     expect(floor({ ...pen, draftDesign: { parts: { structure: 'paddock', ground: 'land' }, colors: {} } }))
-      .toBe('Ground');
+      .toBe('Surface');
     expect(floor({ ...pen, draftDesign: { parts: { structure: 'tank', ground: 'water' }, colors: {} } }),
-      'a tank was offered a ground colour').toBe('Water');
+      'a tank and a paddock are asked in different words').toBe('Surface');
   });
 
   it('keeps the control that answers a judgement, though it can never be lit', () => {

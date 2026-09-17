@@ -66,8 +66,12 @@ function Row({ label, part, children }: { label: string; part?: string; children
  *  Lit when it holds the answer to something this object is failing. The light is a dot rather than
  *  a colour change on the button: a row of buttons that change colour is a row where nothing stands
  *  out, and the dot is the only thing on the strip moving. */
-function Menu({ group, label, lit, busy, onClosed, children }: {
+function Menu({ group, label, lit, busy, open, onOpenChange, onClosed, children }: {
   group: GroupDef; label: string; lit: boolean;
+  /** Which menu is open is held by the strip, not by each menu: they are one row of one control, and
+   *  three panels stacked over the park is three answers to "what am I doing". */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   /** A mode this menu turned on is still running - the pen is out. Said on the button, because the
    *  menu is shut and the mode is not. */
   busy?: boolean;
@@ -75,9 +79,8 @@ function Menu({ group, label, lit, busy, onClosed, children }: {
   onClosed?: () => void;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClosed?.(); }}>
+    <Popover open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) onClosed?.(); }}>
       <PopoverTrigger asChild>
         <button type="button" data-part={`group-${group.id}`} data-lit={lit ? 'yes' : 'no'}
           data-drawing={busy ? 'yes' : undefined}
@@ -145,6 +148,18 @@ function MoreColours({ label, current, options, onPick }: {
               style={{ background: c }} />
           ))}
         </div>
+        {/* ...and any colour at all. The grid is a palette somebody chose, which is the right thing
+            to offer first - "#8e6bbf" is not a decision anybody makes - but a palette is a fence as
+            well as a shortcut, and there was no way over it. Asked for after a play-through: "for
+            all the colour pickers can there be a wider more customisable colour picker?" */}
+        <label className="mt-2 flex items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground">
+          <input type="color" data-part="any-colour" value={current ?? '#c8a06a'}
+            aria-label={`Any ${label.toLowerCase()} colour`}
+            onChange={(e) => onPick(e.target.value)}
+            className={cn(FOCUS, 'h-7 w-9 cursor-pointer rounded-md border border-border bg-transparent p-0.5')} />
+          Any colour
+          <span className="ml-auto font-mono uppercase tabular-nums">{current ?? ''}</span>
+        </label>
       </PopoverContent>
     </Popover>
   );
@@ -201,6 +216,9 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
   // On by default. The strip opens showing the work rather than the styling, and the styling is one
   // press away - which is the right way round for a team with a Sprint Goal.
   const [needsOnly, setNeedsOnly] = useState(true);
+  // One menu at a time. Each used to hold its own, so opening a second left the first standing and
+  // three could be stacked over the park at once.
+  const [openMenu, setOpenMenu] = useState<GroupId | null>(null);
   const subject = inside ?? item;
   if (!subject) {
     return (
@@ -292,17 +310,17 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             ))}
           </Row>
         );
-      // No row label: the menu is called Ground or Water already, and a row repeating its own
-      // menu's name is a word doing no work.
+      // No row label: the menu is called Surface already, and a row repeating its own menu's name
+      // is a word doing no work.
       case 'ground':
         return (
-          <Row label={L(tank ? 'Water' : 'Ground')}>
+          <Row label={L('Surface')}>
             {(tank ? WATER_COLOURS : GROUND_COLOURS).map((c) => (
-              <Swatch key={c} hex={c} label={tank ? 'Water' : 'Ground'}
+              <Swatch key={c} hex={c} label="Surface"
                 on={(tank ? design.colors?.water : design.colors?.ground) === c}
                 onClick={() => set({ colors: { ...design.colors, [tank ? 'water' : 'ground']: c } })} />
             ))}
-            <MoreColours label={tank ? 'Water' : 'Ground'}
+            <MoreColours label="Surface"
               current={tank ? design.colors?.water : design.colors?.ground} options={ALL_COLOURS}
               onPick={(c) => set({ colors: { ...design.colors, [tank ? 'water' : 'ground']: c } })} />
           </Row>
@@ -313,7 +331,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       // criterion says so in the words of the animal that would get out.
       case 'barrier':
         return (
-          <Row label={L('Barrier')}>
+          <Row label={L('Perimeter')}>
             {/* Asked WITH the animals in it, which is how the criterion asks. Without them, an
                 unchosen barrier shows as a low hedge while the card says "a 4m fence, holds them" -
                 two answers to one question, and the strip's one is the one that looks like a choice
@@ -716,6 +734,8 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         <>
           {shown.map((g) => (
             <Menu key={g.id} group={g} label={labelOf(g, subject)} lit={lit(g)}
+              open={openMenu === g.id}
+              onOpenChange={(o) => setOpenMenu(o ? g.id : null)}
               // The pen is a mode, and a mode you cannot see is a mode that surprises you. It used
               // to be a chip on a flat strip that was always on screen; behind a menu, closing the
               // menu left it out invisibly and every press on the park drew instead of selecting.
