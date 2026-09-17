@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -18,10 +18,10 @@ import { CalendarDays, Clock, Video, AlertTriangle, Check } from 'lucide-react';
  * Public booking page, /book/:slug.
  *
  * The booking type comes straight from Postgres under the "public read active
- * booking types" policy. Slots come from the booking-slots edge function, which
- * is not deployed yet - it needs the Zoom and Google secrets - so the slot
- * column shows an honest unavailable state rather than an empty calendar that
- * looks like a fully booked diary.
+ * booking types" policy. Slots come from booking-slots, and booking-create takes
+ * the booking. If either is unreachable the page says so and points at the
+ * contact form, rather than showing an empty calendar that reads as a fully
+ * booked diary.
  *
  * Every instant crossing the wire is UTC. This page only formats.
  */
@@ -37,6 +37,13 @@ type BookingType = {
 };
 
 type Slot = { startsAt: string; endsAt: string };
+
+type Confirmed = {
+  startsAt: string;
+  meetingUrl: string;
+  passcode: string | null;
+  timezone: string;
+};
 
 /** The visitor's own zone, which is what every time on this page is shown in. */
 const guestTimezone = () => {
@@ -76,6 +83,8 @@ const BookingPage = () => {
   const [notes, setNotes] = useState('');
   // Bots fill every field they find. A real person never sees this one.
   const [honeypot, setHoneypot] = useState('');
+  const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: type, isLoading: typeLoading, error: typeError } = useQuery({
     queryKey: ['booking-type', slug],
@@ -112,6 +121,43 @@ const BookingPage = () => {
       });
       if (error) throw error;
       return (data?.slots ?? []) as Slot[];
+    },
+  });
+
+  const book = useMutation({
+    mutationFn: async (): Promise<Confirmed> => {
+      const { data, error } = await supabase.functions.invoke('booking-create', {
+        body: {
+          type: slug,
+          starts_at: selectedSlot!.startsAt,
+          name,
+          email,
+          notes: notes || null,
+          timezone: tz,
+          company: honeypot, // honeypot; the server refuses anything non-empty
+        },
+      });
+
+      // A non-2xx from the function arrives as an error with the body attached.
+      // Surfacing the server's own wording matters here: "that time was just
+      // taken" is far more useful than "request failed".
+      if (error) {
+        let message = 'Could not complete the booking. Please try again.';
+        try {
+          const body = await (error as { context?: Response }).context?.json();
+          if (body?.error) message = body.error;
+        } catch {
+          // Keep the generic message.
+        }
+        throw new Error(message);
+      }
+
+      return data.booking as Confirmed;
+    },
+    onSuccess: (result) => {
+      setConfirmed(result);
+      // The slot is gone now, so anyone else looking should stop being offered it.
+      queryClient.invalidateQueries({ queryKey: ['booking-slots', slug] });
     },
   });
 
@@ -252,7 +298,41 @@ const BookingPage = () => {
         </div>
 
         {/* The form appears once a time is chosen, so the page stays one decision at a time. */}
-        {selectedSlot && (
+        {/* Done. One screen, everything they need, nothing they must remember. */}
+        {confirmed && (
+          <Card className="mt-10">
+            <CardContent className="pt-6">
+              <h2 className="mb-3 flex items-center gap-2 text-xl font-bold">
+                <Check className="h-5 w-5" /> You are booked in
+              </h2>
+              <p className="mb-1">
+                {dateIn(confirmed.startsAt, confirmed.timezone)} at{' '}
+                {timeIn(confirmed.startsAt, confirmed.timezone)}
+              </p>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Times shown in {confirmed.timezone}
+              </p>
+              <p className="mb-2">
+                <a
+                  href={confirmed.meetingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Join the Zoom meeting
+                </a>
+                {confirmed.passcode && (
+                  <span className="text-muted-foreground"> - passcode {confirmed.passcode}</span>
+                )}
+              </p>
+              <p className="text-muted-foreground">
+                A calendar invite is on its way to {email}, with the link attached.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedSlot && !confirmed && (
           <Card className="mt-10">
             <CardContent className="pt-6">
               <p className="mb-4 flex items-center gap-2 font-medium">
@@ -265,9 +345,7 @@ const BookingPage = () => {
                 className="grid max-w-xl gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  // booking-create is not deployed, so there is nothing to post
-                  // to yet. Wiring this up is the next commit, once the Zoom and
-                  // Google secrets exist.
+                  book.mutate();
                 }}
               >
                 <div>
@@ -277,6 +355,7 @@ const BookingPage = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    maxLength={120}
                     autoComplete="name"
                   />
                 </div>
@@ -298,6 +377,7 @@ const BookingPage = () => {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
+                    maxLength={2000}
                   />
                 </div>
 
@@ -314,16 +394,38 @@ const BookingPage = () => {
                   />
                 </div>
 
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Booking cannot be completed yet. The confirmation step goes live with the
-                    booking-create edge function.
-                  </AlertDescription>
-                </Alert>
+                {book.isError && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {(book.error as Error).message}
+                      {/* A taken slot is the common case, and the fix is to pick
+                          again - so say that rather than leaving them stuck. */}
+                      {(book.error as Error).message.toLowerCase().includes('taken') && (
+                        <>
+                          {' '}
+                          <button
+                            type="button"
+                            className="underline"
+                            onClick={() => {
+                              setSelectedSlot(null);
+                              book.reset();
+                            }}
+                          >
+                            Pick another time
+                          </button>
+                        </>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-                <Button type="submit" disabled className="justify-self-start">
-                  Confirm booking
+                <Button
+                  type="submit"
+                  disabled={book.isPending}
+                  className="justify-self-start"
+                >
+                  {book.isPending ? 'Booking...' : 'Confirm booking'}
                 </Button>
               </form>
             </CardContent>
