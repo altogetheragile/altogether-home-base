@@ -184,3 +184,44 @@ export function bestFor(criteria: string[]): string | null {
   const top = ranked(criteria)[0];
   return top && top.meets > 0 ? top.item.name : null;
 }
+
+// ============= What the Developers place =============
+//
+// The catalogue lists habitats by kind AND size in one row - "Large Enclosure", "Small Tank" -
+// because that is how a Product Owner writes one down. A Developer standing at the park is asking a
+// different question in a different order: what KIND of thing is this, and then how big.
+//
+// Reported from playing it: "as soon as I pick the card the studio has me placing an enclosure. I
+// want to start the action myself from the toolbar. Structures, pick a structure, place it on the
+// park, set size, set surface colour, set barrier type, add interior features, add paths."
+
+export interface Structure {
+  key: string;
+  name: string;
+  what: string;
+  /** What it is on the park, once placed. */
+  template?: string;
+  category: ItemCategory;
+}
+
+/** The kinds of thing that can be built for an item, in the order a Developer meets them.
+ *
+ *  One row per kind rather than one per catalogue entry: how big it is comes next, on its own
+ *  control, which is the order the work actually happens in. */
+export function structuresFor(category: ItemCategory): Structure[] {
+  if (category === 'enclosure') {
+    return [
+      { key: 'paddock', name: 'Paddock', what: 'ground, and something round it', category: 'enclosure' },
+      { key: 'tank', name: 'Tank', what: 'water, glass on every side', template: 'tank', category: 'enclosure' },
+    ];
+  }
+  if (category === 'amenity') {
+    return TOOLBOX.flatMap((g) => g.items).filter((t) => t.category === 'amenity')
+      .map((t) => ({ key: t.template ?? t.name, name: t.name, what: t.services === 'food' ? 'food and drink'
+        : t.services === 'toilet' ? 'toilets' : 'somewhere to sit', template: t.template, category: 'amenity' as const }));
+  }
+  return [];
+}
+
+/** Whether this kind of item is one the Developers choose a structure for before building it. */
+export const picksAStructure = (category: ItemCategory): boolean => structuresFor(category).length > 0;

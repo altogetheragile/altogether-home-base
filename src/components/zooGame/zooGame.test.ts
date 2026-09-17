@@ -1166,8 +1166,11 @@ describe('zoo game: enclosures are built before their animals', () => {
   });
 
   it('setting an enclosure footprint is targeted (other enclosures untouched)', () => {
+    // A habitat arrives with no footprint at all: how big it is is the Developers' decision, taken
+    // at the park. What this is about is that the decision lands on the one they made it about.
     let s = bigCatsSplit(1);
-    expect(find(s, 'lion-enc').enclosureSize).toBe('large'); // its starter footprint
+    expect(find(s, 'lion-enc').enclosureSize, 'the Product Owner decided how big it is').toBeUndefined();
+    s = setEnclosureSize(s, 'tiger-enc', 'large');
     s = setEnclosureSize(s, 'lion-enc', 'small');
     expect(find(s, 'lion-enc').enclosureSize).toBe('small');
     expect(find(s, 'tiger-enc').enclosureSize).toBe('large'); // unaffected
@@ -3401,6 +3404,8 @@ describe("zoo game: the Product Owner's sign-off follows the park's answers too"
     let s = planSprint(bigCatsSplit(1), ['lion-enc']);
     s = setItemTasks(s, 'lion-enc', suggestTasks(s.backlog.find((x) => x.id === 'lion-enc')!));
     s = startItem(s, 'lion-enc');
+    // Sized, because nothing defaults to a footprint: how big a habitat is is the Developers'.
+    s = setEnclosureSize(s, 'lion-enc', 'large');
     // A home, not a shed: ground, shelter and water in, so the only fact left outstanding is the
     // one this test is about.
     const bare = presetFor(s.backlog.find((x) => x.id === 'lion-enc')!);

@@ -81,6 +81,12 @@ export function aiDesign(item: BacklogItem, living: { template?: string; id?: st
     if (!parts.barrier) {
       parts.barrier = barrierOf(base, living).key;
     }
+    // ...and what KIND of habitat it is, which is the first decision and nothing defaults to it:
+    // until it is made there is nothing on the park at all. A tank where the card already says so,
+    // a paddock otherwise.
+    if (!parts.structure) {
+      parts.structure = item.template === 'tank' ? 'tank' : 'paddock';
+    }
     // ...and the shelter and water the plan says they laid. They used to paint the ground and
     // tick "Lay the ground, shelter and water", which is three things promised and one done -
     // and it left a hatched box that no Product Owner could look at and say an animal lives

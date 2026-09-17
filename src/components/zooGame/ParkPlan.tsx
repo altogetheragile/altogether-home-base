@@ -7,7 +7,7 @@ import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { ENTRANCE } from './parkNetwork';
 
-import { hasGround, groundPrice } from './engine';
+import { hasGround, groundPrice, structureChosen } from './engine';
 import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -1148,7 +1148,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   habitat, and the inspector's pill already says which. */}
               {!inside && (
                 <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={ch(13)} fontWeight={700} fill="#20351f">
-                  {b.item.name}{b.underWay ? ' · built, not Done' : ''}
+                  {/* "Built, not Done" is a claim about work that has been done. A plot whose
+                      Developers have not yet said what they are building is a plot: the ground is
+                      taken and nothing else is true yet. */}
+                  {b.item.name}{!b.underWay ? '' : structureChosen(b.item) ? ' · built, not Done' : ' · nothing chosen yet'}
                 </text>
               )}
               {/* The count and the offer to Priya used to be a pill under every built object out here,

@@ -1,6 +1,8 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { CRITERIA, criterionFor, answerable, inspect } from './parkChecks';
 import { LANDSCAPE_TYPES, currentDesign } from './design';
+import { picksAStructure } from './toolboxItems';
+import { structureChosen } from './engine';
 
 // ============= What the strip offers, and what each part of it would settle =============
 //
@@ -19,6 +21,7 @@ import { LANDSCAPE_TYPES, currentDesign } from './design';
 // and the player follows the lights.
 
 export type GroupId =
+  | 'structure'
   | 'footprint' | 'shape' | 'holds' | 'ground' | 'barrier' | 'fence' | 'inside'
   | 'stock' | 'look' | 'lives-in'
   | 'type' | 'offers' | 'colours'
@@ -39,6 +42,9 @@ export interface GroupDef {
   meets: string[];
   /** Whether this item has these controls at all. A river has no fence; an animal has no footprint. */
   applies: (item: BacklogItem) => boolean;
+  /** Lit for a reason of its own, rather than because it would settle an open criterion. The one
+   *  group this is true of is the first decision: what kind of thing to build at all. */
+  litFor?: (item: BacklogItem) => boolean;
 }
 
 const habitat = (it: BacklogItem) => it.category === 'enclosure';
@@ -48,6 +54,16 @@ const flora = (it: BacklogItem) => it.category === 'flora';
 const path = (it: BacklogItem) => it.category === 'path';
 
 export const GROUPS: GroupDef[] = [
+  // ---- what kind of thing this is, which is the first thing there is to decide ----
+  //
+  // It settles nothing on its own - no criterion is about the KIND of thing, they are about what it
+  // holds and what it offers - so it is never lit by `wouldSettle`. It is lit by being unanswered,
+  // which is what `litFor` is for: until it has been answered there is nothing to place and nothing
+  // else on the strip can be acted on.
+  { id: 'structure', label: 'Structure', meets: [],
+    applies: (it) => picksAStructure(it.category),
+    litFor: (it) => !structureChosen(it) },
+
   // ---- a habitat ----
   { id: 'footprint', label: 'Footprint', meets: ['roomy', 'room-to-spare'], applies: habitat },
   { id: 'shape', label: 'Shape', meets: [], applies: habitat },
@@ -108,8 +124,8 @@ export function openCriteria(state: ZooGameState, item: BacklogItem): string[] {
 }
 
 /** Whether this group holds a control that would settle something still open. */
-export const wouldSettle = (group: GroupDef, open: string[]): boolean =>
-  group.meets.some((id) => open.includes(id));
+export const wouldSettle = (group: GroupDef, open: string[], item?: BacklogItem): boolean =>
+  (!!item && !!group.litFor?.(item)) || group.meets.some((id) => open.includes(id));
 
 /** Every criterion this item is asked, whether it is met or not. */
 export const criteriaOf = (item: BacklogItem): string[] => (item.acceptance ?? [])
@@ -122,6 +138,7 @@ export const criteriaOf = (item: BacklogItem): string[] => (item.acceptance ?? [
  *  disappears the moment you press it is worse than one that never moved. The dot goes out; the
  *  button stays. */
 export const isAbout = (group: GroupDef, item: BacklogItem): boolean => {
+  if (group.litFor) return true;   // the first decision is always about the item in hand
   const asked = criteriaOf(item);
   return group.meets.some((id) => asked.includes(id));
 };

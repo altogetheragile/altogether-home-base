@@ -9,10 +9,10 @@ import { zonePlots, plotOrder } from './parkZones';
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
 import { whereItStands, groundSize } from './parkModel';
-import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
+import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, DEFAULT_GROUP, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
-import { TOOLBOX, noOnePieceMeets, bestFor } from './toolboxItems';
+import { TOOLBOX, noOnePieceMeets, bestFor, structuresFor, picksAStructure } from './toolboxItems';
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
@@ -571,7 +571,6 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
     if (mem.kind === 'exhibit') {
       created.push({
         id: mem.enclosureId ?? `${mem.id}-enc`, name: mem.habitat ?? `${mem.name} Enclosure`, category: 'enclosure', zone,
-        enclosureSize: mem.footprint ?? 'medium',
         acceptance: enclosureAcceptance(),
         // A habitat is sized by the work of building one, not as a fraction of its animal. It used
         // to be `max(3, mem.size / 2)` - half a number that measured how much visitors like a lion.
@@ -681,6 +680,10 @@ export function outgrown(item: BacklogItem): { was: number; now: number } | null
   // fallback this said nothing at all about the items a player actually meets.
   const was = item.sizedAs ?? item.trueSize;
   if (item.unsized || was == null) return null;
+  // Nothing to compare with while the thing itself is undecided. A habitat carries the size the
+  // Product Owner had in mind as `trueSize` and no footprint of its own until the Developers choose
+  // one, so reading it before they have is comparing an intention with a default.
+  if (item.category === 'enclosure' && !item.enclosureSize) return null;
   const now = effortOf(item);
   return now === was ? null : { was, now };
 }
@@ -1457,6 +1460,53 @@ export function setDailyScrumAt(state: ZooGameState, at: 'start' | 'end'): ZooGa
 /** Set an enclosure's footprint size (chosen while building the habitat in the studio). */
 export function setEnclosureSize(state: ZooGameState, id: string, size: 'small' | 'medium' | 'large'): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, enclosureSize: size } : it)) };
+}
+
+/** The smallest footprint with room for what lives here, which is what a Developer would pick.
+ *
+ *  Used where the game is playing the Developers rather than a person: nothing defaults to a size
+ *  any more, so somebody has to choose one, and when nobody is sitting in the seat that somebody is
+ *  the AI. What it picks is the advice the criterion would give. */
+export function sizeForTheAnimals(item: BacklogItem, backlog: BacklogItem[]): 'small' | 'medium' | 'large' {
+  const living = backlog.filter((it) => it.enclosureId === item.id);
+  const group = living.map((it) => currentDesign(it).group).find(Boolean) ?? DEFAULT_GROUP;
+  const species = living[0]?.template ?? living[0]?.id;
+  return (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(group, k, species)) ?? 'large';
+}
+
+/** Whether the Developers have said what kind of thing they are building.
+ *
+ *  Until they have, there is nothing to place: picking the card used to put a ghost under the
+ *  cursor with the shape already decided, so the first act of building was dropping somebody else's
+ *  decision on the grass. Reported from playing it: "I want to start the action myself." */
+export function structureChosen(item: BacklogItem): boolean {
+  if (!picksAStructure(item.category)) return true;   // drawn or stocked, not placed
+  return !!currentDesign(item).parts.structure;
+}
+
+/** The Developers choose what kind of thing to build. The first act of building, and theirs.
+ *
+ *  It sets the KIND and nothing else. How big it is, what it is surfaced in, what borders it and
+ *  what goes inside are the steps that follow, each on its own control - which is the order the
+ *  work actually happens in. */
+export function chooseStructure(state: ZooGameState, id: string, key: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === id);
+  if (!item) return state;
+  const kind = structuresFor(item.category).find((k) => k.key === key);
+  if (!kind) return state;
+  const design = currentDesign(item);
+  const chosen = {
+    ...design,
+    parts: { ...design.parts, structure: kind.key, ...(kind.template ? { type: kind.template } : {}) },
+  };
+  return note({
+    ...state,
+    backlog: state.backlog.map((it) => (it.id === id
+      ? { ...it, template: kind.template ?? it.template, draftDesign: chosen } : it)),
+  }, {
+    kind: 'placement', by: 'developer',
+    what: `The Developers are building ${item.name} as a ${kind.name.toLowerCase()}`,
+  });
 }
 
 /** The Developers choose what will meet a need.

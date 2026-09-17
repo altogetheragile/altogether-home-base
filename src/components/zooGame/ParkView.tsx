@@ -73,6 +73,9 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
 export interface EditApi {
   onDesign: (id: string, design: ItemDesign) => void;
   onSetEnclosure: (id: string, size: 'small' | 'medium' | 'large') => void;
+  /** What kind of thing the Developers are building. The first act, and until it is made there is
+   *  nothing to place. */
+  onChooseStructure?: (id: string, key: string) => void;
   /** What a facility offers the visitors, in the terms the simulation counts. */
   onSetServices?: (id: string, services: 'food' | 'toilet' | 'rest' | null) => void;
   /** Put another thing inside a habitat. In the reducer, so pressing it twice puts two in. */

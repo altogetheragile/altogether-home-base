@@ -31,7 +31,8 @@ const built = (): { s: ZooGameState; item: BacklogItem } => {
     water: addWaterTo({ ...preset, water: [] }),
   };
   const item = {
-    ...h, status: 'committed' as const, sprintNumber: 1, started: true, design,
+    // Sized by the Developers, as a built habitat is: nothing defaults to a footprint.
+    ...h, enclosureSize: 'large' as const, status: 'committed' as const, sprintNumber: 1, started: true, design,
     // On the near bank, where the zoo opens first - the far side needs a bridge, which is a
     // different lesson and not this test's.
     pos: { x: 300, y: 800 }, assignedDevs: [base.team.developers[0].id],
