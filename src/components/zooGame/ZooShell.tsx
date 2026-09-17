@@ -8,6 +8,7 @@ import { eventPill, goalLine } from './header';
 import { inHandItem, structureChosen } from './engine';
 import { ParkOptions } from './ParkOptions';
 import { ParkInspector } from './ParkInspector';
+import { BuildToolbar } from './BuildToolbar';
 import { footprintFor } from './design';
 import { CANVAS_W, PLAY_H } from './parkLayout';
 import { ParkPlan } from './ParkPlan';
@@ -538,8 +539,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onTurn,
                       onUnplace: (id) => setMoving(id),
                       onPutIn,
-                      // The first act of building, and the Developers': what kind of thing this is.
-                      onChooseStructure: edit.onChooseStructure,
                       // The chip names what is selected and says how far off it is. Ready, it is the
                       // offer to the Product Owner - which used to be a pill floating under the
                       // object on the park, at the other end of the screen from the controls that
@@ -567,6 +566,11 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                     measure every other pane leaves for it. */}
                 <div className="relative min-h-0 flex-1 overflow-hidden"
                   style={{ paddingBottom: DOCKED_BAR_H }}>
+                  {/* Where the Developers start: a toolbar of its own, on the park, that you go to
+                      and pick from. The strip beside it is every step AFTER the first. */}
+                  {inHand && !insideItem && edit?.onChooseStructure && (
+                    <BuildToolbar item={inHand} onChoose={edit.onChooseStructure} />
+                  )}
                   {/* What it has to be, docked on the park rather than in a window over it. Inside a
                       habitat it collapses to a pill, because in there the whole picture is the pen. */}
                   {inHand && (inHand.acceptance ?? []).length > 0 && (
