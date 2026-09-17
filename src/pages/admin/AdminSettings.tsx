@@ -24,6 +24,7 @@ export default function AdminSettings() {
     show_resources: settings?.show_resources ?? true,
     show_flow_game: settings?.show_flow_game ?? true,
     show_exams: settings?.show_exams ?? true,
+    show_bookings: settings?.show_bookings ?? false,
     show_admin_routes: settings?.show_admin_routes ?? true,
     show_protected_projects: settings?.show_protected_projects ?? true,
     show_dynamic_pages: settings?.show_dynamic_pages ?? true,
@@ -46,6 +47,7 @@ export default function AdminSettings() {
         show_resources: settings.show_resources ?? true,
         show_flow_game: settings.show_flow_game ?? true,
         show_exams: settings.show_exams ?? true,
+        show_bookings: settings.show_bookings ?? false,
         show_admin_routes: settings.show_admin_routes ?? true,
         show_protected_projects: settings.show_protected_projects ?? true,
         show_dynamic_pages: settings.show_dynamic_pages ?? true,
@@ -263,6 +265,24 @@ export default function AdminSettings() {
               id="show_exams"
               checked={localSettings.show_exams}
               onCheckedChange={() => handleToggle('show_exams')}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="show_bookings" className="text-base font-medium">Bookings</Label>
+              <p className="text-sm text-muted-foreground">
+                Enable the public booking page at /book/chemistry-session. With this off the route
+                returns Not Found and the "Book a chemistry session" buttons fall back to the contact
+                page.
+              </p>
+            </div>
+            <Switch
+              id="show_bookings"
+              checked={localSettings.show_bookings}
+              onCheckedChange={() => handleToggle('show_bookings')}
             />
           </div>
         </CardContent>
