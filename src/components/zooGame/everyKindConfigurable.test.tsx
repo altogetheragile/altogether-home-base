@@ -5,6 +5,7 @@ import { ParkOptions } from './ParkOptions';
 import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
 import { presetFor, addFloraTo, addWaterTo, HABITAT_FEATURE_TYPES } from './design';
+import { openGroup, showEverything } from './openGroup';
 import type { ZooGameState, BacklogItem } from './types';
 
 // Everything you can build can be changed, and this says what "changed" means.
@@ -31,8 +32,9 @@ const of = (s: ZooGameState, category: string): BacklogItem =>
 const open = (state: ZooGameState, item: BacklogItem, props: Record<string, unknown> = {}) => render(
   <MemoryRouter><ParkOptions state={state} item={item} api={api} {...props} /></MemoryRouter>,
 );
-/** Every colour swatch the takeover offers, by what it is a colour OF. */
-const swatches = (container: HTMLElement) => [...container.querySelectorAll('button[aria-label]')]
+/** Every colour swatch an open panel offers, by what it is a colour OF. Panels are portalled, so
+ *  this looks at the document rather than at the render container. */
+const swatches = (root: ParentNode = document) => [...root.querySelectorAll('button[aria-label]')]
   .map((b) => b.getAttribute('aria-label') ?? '')
   .filter((l) => /#([0-9a-f]{6})/i.test(l));
 
@@ -43,23 +45,31 @@ const swatches = (container: HTMLElement) => [...container.querySelectorAll('but
 // see could not be given a coat or a family. This sweeps every kind, so a category with no branch
 // fails here rather than in somebody's hands.
 describe('every kind of thing has controls', () => {
-  const wanted: Record<string, RegExp> = {
-    enclosure: /Footprint/,
-    exhibit: /How many/,
-    flora: /Size|Kind|Bank|Deck/,
-    amenity: /Type/,
-    path: /Width/,
+  // The part of the strip each kind must offer, and what has to be inside it when you press it. A
+  // button that opens an empty panel is the same nothing the lion had, one press further in.
+  const wanted: Record<string, { group: Parameters<typeof openGroup>[0]; holds: RegExp }> = {
+    enclosure: { group: 'footprint', holds: /Size/ },
+    exhibit: { group: 'stock', holds: /A pair|A family/ },
+    flora: { group: 'planting', holds: /Size|Kind|Bank|Deck|Leaves|Trunk/ },
+    amenity: { group: 'type', holds: /kiosk|cafe|shop/ },
+    path: { group: 'path', holds: /Width/ },
   };
-  for (const [category, expected] of Object.entries(wanted)) {
+  for (const [category, { group, holds }] of Object.entries(wanted)) {
     it(`a ${category} can be worked on`, () => {
       const s = game();
       const item = of(s, category);
       expect(item, `there is no ${category} in the starting Backlog to try`).toBeTruthy();
       const { container } = open(s, item);
-      const text = container.textContent ?? '';
-      expect(text, `a ${category} has nothing but its name`).toMatch(expected);
-      // A strip with one lonely group is the shape the lion was in: worth failing on.
-      expect(container.querySelectorAll('button').length, `a ${category} offers almost nothing`).toBeGreaterThan(2);
+      showEverything();
+      expect(container.querySelectorAll('[data-part^="group-"]').length,
+        `a ${category} has no part of the strip at all`).toBeGreaterThan(0);
+      // The lion had exactly one control - "Turn" - which is the shape this is here to catch. A
+      // pathway legitimately has ONE menu (the pen, the width, the surface and its runs are all one
+      // piece of work), so the count that matters is of controls, not of menus.
+      const panel = openGroup(group).querySelector(`[data-part="panel-${group}"]`)!;
+      expect(panel.textContent, `a ${category} opens ${group} onto nothing`).toMatch(holds);
+      expect(panel.querySelectorAll('button, select').length,
+        `a ${category} offers almost nothing`).toBeGreaterThan(2);
     });
   }
 });
@@ -68,11 +78,13 @@ describe('what you can change about each kind of thing', () => {
   it('a habitat: its footprint, its shape, its ground, its fence and the way inside', () => {
     const s = game();
     const { container } = open(s, of(s, 'enclosure'));
-    expect(container.textContent).toMatch(/Footprint/);
-    expect(container.textContent).toMatch(/Shape/);
-    expect(swatches(container).some((l) => /^Ground /.test(l)), 'a habitat has no ground colour').toBe(true);
-    expect(swatches(container).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
-    expect(container.textContent, 'there is no way in').toMatch(/Look inside/);
+    showEverything();
+    const text = container.textContent ?? '';
+    expect(text).toMatch(/Footprint/);
+    expect(text).toMatch(/Shape/);
+    expect(swatches(openGroup('ground')).some((l) => /^Ground /.test(l)), 'a habitat has no ground colour').toBe(true);
+    expect(swatches(openGroup('fence')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
+    expect(openGroup('inside').body.textContent, 'there is no way in').toMatch(/Look inside/);
   });
 
   it('inside a habitat: everything that goes in it, named for what it is', () => {
@@ -93,11 +105,13 @@ describe('what you can change about each kind of thing', () => {
   it('an animal: how many of them, the coat they wear, and where they live', () => {
     const s = game();
     const { container } = open(s, of(s, 'exhibit'));
-    expect(container.textContent).toMatch(/How many/);
+    showEverything();
+    expect(openGroup('stock').body.textContent).toMatch(/A pair|A family/);
     // A few named looks rather than a palette: "White" is a white lion, which is a decision with an
     // opinion in it and a consequence at the Review. "#f0efe9" is neither.
-    expect(container.querySelector('[data-part="look-white"]'), 'an animal cannot be given a look').toBeTruthy();
-    expect(container.textContent, 'the looks are unnamed swatches again').toMatch(/Natural/);
+    const look = openGroup('look');
+    expect(look.querySelector('[data-part="look-white"]'), 'an animal cannot be given a look').toBeTruthy();
+    expect(look.body.textContent, 'the looks are unnamed swatches again').toMatch(/Natural/);
     expect(container.textContent, 'an animal cannot be moved to another habitat').toMatch(/Lives in/);
     // An animal has no ground of its own: it lives inside a habitat, so it is not turned or moved
     // about the park like a kiosk.
@@ -107,19 +121,22 @@ describe('what you can change about each kind of thing', () => {
   it('a facility: its walls, roof and sign', () => {
     const s = game();
     const { container } = open(s, of(s, 'amenity'));
+    showEverything();
+    const colours = swatches(openGroup('colours'));
     for (const part of ['Walls', 'Roof', 'Sign']) {
-      expect(swatches(container).some((l) => l.startsWith(`${part} `)), `a building has no ${part.toLowerCase()} colour`).toBe(true);
+      expect(colours.some((l) => l.startsWith(`${part} `)), `a building has no ${part.toLowerCase()} colour`).toBe(true);
     }
-    expect(container.textContent, 'a building cannot be turned or moved').toMatch(/Turn|Move/);
+    expect(container.textContent, 'a building cannot be turned or moved').toMatch(/On the park/);
   });
 
   it('scenery: the colours that kind of thing has', () => {
     // No "what kind" for something that came from a card: the card already said what it is.
     const s = game();
     const { container } = open(s, of(s, 'flora'));
+    showEverything();
     expect(container.textContent, 'a card-driven object was asked what kind of thing it is').not.toMatch(/What kind/);
-    expect(swatches(container).length, 'a piece of scenery has no colours').toBeGreaterThan(0);
-    expect(container.textContent, 'scenery cannot be turned or moved').toMatch(/Turn|Move/);
+    expect(swatches(openGroup('planting')).length, 'a piece of scenery has no colours').toBeGreaterThan(0);
+    expect(container.textContent, 'scenery cannot be turned or moved').toMatch(/On the park/);
   });
 });
 

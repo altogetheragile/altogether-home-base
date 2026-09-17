@@ -5,6 +5,7 @@ import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
 import { barrierOf, barrierVerdict, needsHolding, BARRIERS, currentDesign, type ItemDesign } from './design';
 import { checkCriterion } from './parkChecks';
+import { openGroup } from './openGroup';
 import { reviewSprint } from './engine';
 import type { ZooGameState, BacklogItem } from './types';
 
@@ -102,24 +103,25 @@ describe('choosing it', () => {
   it('is offered on the habitat, and what is chosen sticks', () => {
     const s = zoo();
     const chosen: ItemDesign[] = [];
-    const { container } = render(
+    render(
       <ParkOptions state={s} item={s.backlog[0]} inside={null}
         api={{ onDesign: (_id, d) => chosen.push(d), onSetEnclosure: () => {}, onAddInside: () => {} }} />,
     );
+    const doc = openGroup('barrier');
     for (const b of BARRIERS) {
-      expect(container.querySelector(`[data-part="barrier-${b.key}"]`), `no way to choose ${b.label}`).toBeTruthy();
+      expect(doc.querySelector(`[data-part="barrier-${b.key}"]`), `no way to choose ${b.label}`).toBeTruthy();
     }
-    fireEvent.click(container.querySelector('[data-part="barrier-hedge"]')!);
+    fireEvent.click(doc.querySelector('[data-part="barrier-hedge"]')!);
     expect(barrierOf(chosen[0], []).key, 'choosing a hedge wrote something else').toBe('hedge');
   });
 
   it('reads back what the habitat already has', () => {
     const s = zoo('wall');
-    const { container } = render(
+    render(
       <ParkOptions state={s} item={s.backlog[0]} inside={null}
         api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
     );
-    expect(container.querySelector('[data-part="barrier-wall"]')?.getAttribute('aria-pressed'),
+    expect(openGroup('barrier').querySelector('[data-part="barrier-wall"]')?.getAttribute('aria-pressed'),
       'the habitat has a wall and the strip does not say so').toBe('true');
   });
 });
@@ -193,11 +195,11 @@ describe('the strip and the card agree about what is round the pen', () => {
     // that looked like a choice was the wrong one.
     const s = zoo();
     const pen = s.backlog.find((it) => it.category === 'enclosure')!;
-    const { container } = render(
+    render(
       <ParkOptions state={s} item={pen} inside={null}
         api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
     );
-    const pressed = [...container.querySelectorAll('[data-part^="barrier-"]')]
+    const pressed = [...openGroup('barrier').querySelectorAll('[data-part^="barrier-"]')]
       .find((b) => b.getAttribute('aria-pressed') === 'true')!;
     expect(pressed, 'nothing at all is shown as what holds them').toBeTruthy();
     // What the card says, in the same breath. Compared by the barrier itself rather than by its
@@ -212,11 +214,11 @@ describe('the strip and the card agree about what is round the pen', () => {
   it('keeps a barrier somebody chose, even a bad one', () => {
     const s = zoo('hedge');
     const pen = s.backlog.find((it) => it.category === 'enclosure')!;
-    const { container } = render(
+    render(
       <ParkOptions state={s} item={pen} inside={null}
         api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
     );
-    expect(container.querySelector('[data-part="barrier-hedge"]')!.getAttribute('aria-pressed'),
+    expect(openGroup('barrier').querySelector('[data-part="barrier-hedge"]')!.getAttribute('aria-pressed'),
       'a low hedge chosen on purpose was shown as something else').toBe('true');
   });
 });

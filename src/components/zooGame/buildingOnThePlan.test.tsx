@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ParkPlan } from './ParkPlan';
 import { ParkOptions } from './ParkOptions';
+import { openGroup } from './openGroup';
 import { initialZooState } from './config';
 import { PLAY_H } from './parkLayout';
 import type { ZooGameState, BacklogItem, ZooConnector } from './types';
@@ -165,11 +166,11 @@ describe('a run of path', () => {
       ...park(path),
       connectors: [{ id: 'run-1', itemId: 'paths', a: { x: 10, y: 10 }, b: { x: 90, y: 90 }, bends: [], thickness: 14, color: '#c9a86a' }],
     } as ZooGameState;
-    const { container } = render(
+    render(
       <ParkOptions state={s} item={path} inside={null}
         api={{ onDesign: () => {}, onSetEnclosure: () => {}, onRemoveRun: (id) => removed.push(id) }} />,
     );
-    const lift = container.querySelector('[data-part="remove-run"]') as HTMLButtonElement | null;
+    const lift = openGroup('path').querySelector('[data-part="remove-run"]') as HTMLButtonElement | null;
     expect(lift, 'a run laid in the wrong place cannot be picked up').toBeTruthy();
     fireEvent.click(lift!);
     expect(removed, 'pressing it took nothing up').toEqual(['run-1']);

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ParkPlan } from './ParkPlan';
+import { ParkOptions } from './ParkOptions';
 import { CardDialog } from './CardDialog';
 import { askToCheck, answerQuestion, toggleItemTask, isSignOffTask, finishItem, readyToMove } from './engine';
 import { aiTurn } from './aiSeats';
@@ -49,8 +49,10 @@ const built = (): { s: ZooGameState; item: BacklogItem } => {
   };
 };
 
-const plan = (s: ZooGameState, props: Record<string, unknown> = {}) => render(
-  <ParkPlan state={s} {...props} />,
+/** The build strip, which is where a built thing is now offered to the Product Owner. */
+const strip = (s: ZooGameState, item: BacklogItem, api: Record<string, unknown> = {}) => render(
+  <ParkOptions state={s} item={item} inside={null}
+    api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {}, ...api }} />,
 );
 
 describe('a habitat with nothing left but somebody else’s judgement', () => {
@@ -61,27 +63,34 @@ describe('a habitat with nothing left but somebody else’s judgement', () => {
   });
 
   it('is offered to the Product Owner anyway', () => {
+    // From the build strip's chip. It used to be a pill floating under the object on the park,
+    // which is 180px of text over the thing you are trying to look at and a long way from the
+    // controls that got it there.
     const onAskToCheck = vi.fn();
     const { s, item } = built();
-    const { container } = plan(s, { onAskToCheck });
-    const pill = container.querySelector('[data-part="built-pill"]')!;
-    expect(pill.getAttribute('data-ready'), 'finished work could not be offered to anybody').toBe('yes');
-    expect(pill.textContent, 'the pill does not say who the last word belongs to').toMatch(/judges the rest/);
-    fireEvent.pointerDown(pill);
-    expect(onAskToCheck, 'pressing the pill asked nobody anything').toHaveBeenCalledWith(item.id);
+    const { container } = strip(s, item, { onAskToCheck });
+    const chip = container.querySelector('[data-part="pbi-chip"]') as HTMLButtonElement;
+    expect(chip.getAttribute('data-ready'), 'finished work could not be offered to anybody').toBe('yes');
+    expect(container.textContent, 'the strip does not say who the last word belongs to').toMatch(/judges the rest/);
+    fireEvent.click(chip);
+    expect(onAskToCheck, 'pressing the chip asked nobody anything').toHaveBeenCalledWith(item.id);
   });
 
-  it('still waits while a fact is missing, and says which', () => {
+  it('still waits while a fact is missing, and lights what would fix it', () => {
     const { s, item } = built();
     const bare = {
       ...s,
       backlog: s.backlog.map((it) => (it.id === item.id
         ? { ...it, design: { ...item.design!, water: [] } } : it)),
     } as ZooGameState;
-    const { container } = plan(bare);
-    const pill = container.querySelector('[data-part="built-pill"]')!;
-    expect(pill.getAttribute('data-ready'), 'a habitat with no water was ready for sign-off').toBe('no');
-    expect(pill.textContent).toMatch(/no water yet/);
+    const dry = bare.backlog.find((it) => it.id === item.id)!;
+    const { container } = strip(bare, dry, { onAskToCheck: () => {} });
+    expect(container.querySelector('[data-part="pbi-chip"]')!.getAttribute('data-ready'),
+      'a habitat with no water was ready for sign-off').toBe('no');
+    // ...and the part of the strip that would put it right is the one that is lit. Water goes in
+    // through Look Inside, which is the one place a player has to know about to finish a habitat.
+    expect(container.querySelector('[data-part="group-inside"]')!.getAttribute('data-lit'),
+      'nothing on the strip points at the missing water').toBe('yes');
   });
 });
 

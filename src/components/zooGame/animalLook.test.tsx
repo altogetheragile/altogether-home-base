@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
+import { openGroup, showEverything } from './openGroup';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
 import { currentDesign } from './design';
@@ -48,11 +49,14 @@ describe('choosing a look', () => {
     const s = zoo(pride);
     const lion = s.backlog[1];
     const onDesign = vi.fn();
-    const { container } = render(
+    render(
       <ParkOptions state={s} item={lion} inside={null}
         api={{ onDesign, onSetEnclosure: () => {}, onAddInside: () => {} }} />,
     );
-    const white = container.querySelector('[data-part="look-white"]') as HTMLButtonElement | null;
+    // What a lion looks like settles nothing the park can measure, so it is behind the filter: a
+    // white lion is a decision about the zoo, not about whether the item is Done.
+    showEverything();
+    const white = openGroup('look').querySelector('[data-part="look-white"]') as HTMLButtonElement | null;
     expect(white, 'there is no White to choose').toBeTruthy();
     fireEvent.click(white!);
 

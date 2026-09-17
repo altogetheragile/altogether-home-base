@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
+import { openGroup, showEverything } from './openGroup';
 import { initialZooState } from './config';
 import { writeBacklog, acceptSignal } from './engine';
 import { answerable } from './parkChecks';
@@ -50,10 +51,17 @@ describe('what every facility is asked', () => {
 
 describe('the pen that answers it', () => {
   const penFor = (category: BacklogItem['category']) => {
+    // One strip at a time. The panels are portalled to the same body, so a strip left mounted from
+    // the last call answers for this one.
+    cleanup();
     const s = zoo();
     const it = s.backlog.find((x) => x.category === category)!;
-    const { container } = strip(s, it);
-    return container.textContent ?? '';
+    strip(s, it);
+    showEverything();
+    // The pen lives in the Paths menu now: the pen, the width, the surface and the runs already
+    // laid are one piece of work rather than four rows that happened to sit beside each other.
+    return document.querySelector('[data-part="group-path"]')
+      ? openGroup('path').body.textContent ?? '' : '';
   };
 
   it('is offered to a building', () => {
