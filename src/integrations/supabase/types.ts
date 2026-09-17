@@ -447,6 +447,204 @@ export type Database = {
           },
         ]
       }
+      booking_availability: {
+        Row: {
+          booking_type_id: string
+          end_local: string
+          id: string
+          start_local: string
+          weekday: number
+        }
+        Insert: {
+          booking_type_id: string
+          end_local: string
+          id?: string
+          start_local: string
+          weekday: number
+        }
+        Update: {
+          booking_type_id?: string
+          end_local?: string
+          id?: string
+          start_local?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_availability_booking_type_id_fkey"
+            columns: ["booking_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_overrides: {
+        Row: {
+          booking_type_id: string
+          closed: boolean
+          end_local: string | null
+          id: string
+          note: string | null
+          on_date: string
+          start_local: string | null
+        }
+        Insert: {
+          booking_type_id: string
+          closed?: boolean
+          end_local?: string | null
+          id?: string
+          note?: string | null
+          on_date: string
+          start_local?: string | null
+        }
+        Update: {
+          booking_type_id?: string
+          closed?: boolean
+          end_local?: string | null
+          id?: string
+          note?: string | null
+          on_date?: string
+          start_local?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_overrides_booking_type_id_fkey"
+            columns: ["booking_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_types: {
+        Row: {
+          active: boolean
+          buffer_after: number
+          buffer_before: number
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          max_days_ahead: number
+          min_notice_minutes: number
+          name: string
+          price_pence: number
+          slug: string
+          timezone: string
+          video_provider: string
+        }
+        Insert: {
+          active?: boolean
+          buffer_after?: number
+          buffer_before?: number
+          created_at?: string
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          max_days_ahead?: number
+          min_notice_minutes?: number
+          name: string
+          price_pence?: number
+          slug: string
+          timezone?: string
+          video_provider?: string
+        }
+        Update: {
+          active?: boolean
+          buffer_after?: number
+          buffer_before?: number
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          max_days_ahead?: number
+          min_notice_minutes?: number
+          name?: string
+          price_pence?: number
+          slug?: string
+          timezone?: string
+          video_provider?: string
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          blocks_from: string
+          blocks_until: string
+          booking_type_id: string
+          calendar_event_id: string | null
+          cancelled_at: string | null
+          created_at: string
+          ends_at: string
+          guest_email: string
+          guest_name: string
+          guest_timezone: string
+          id: string
+          manage_token: string
+          meeting_id: string | null
+          meeting_passcode: string | null
+          meeting_url: string | null
+          notes: string | null
+          payment_ref: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["booking_status"]
+          user_id: string | null
+        }
+        Insert: {
+          blocks_from: string
+          blocks_until: string
+          booking_type_id: string
+          calendar_event_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          ends_at: string
+          guest_email: string
+          guest_name: string
+          guest_timezone: string
+          id?: string
+          manage_token?: string
+          meeting_id?: string | null
+          meeting_passcode?: string | null
+          meeting_url?: string | null
+          notes?: string | null
+          payment_ref?: string | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          user_id?: string | null
+        }
+        Update: {
+          blocks_from?: string
+          blocks_until?: string
+          booking_type_id?: string
+          calendar_event_id?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          ends_at?: string
+          guest_email?: string
+          guest_name?: string
+          guest_timezone?: string
+          id?: string
+          manage_token?: string
+          meeting_id?: string | null
+          meeting_passcode?: string | null
+          meeting_url?: string | null
+          notes?: string | null
+          payment_ref?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_booking_type_id_fkey"
+            columns: ["booking_type_id"]
+            isOneToOne: false
+            referencedRelation: "booking_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -3664,6 +3862,7 @@ export type Database = {
           show_dashboard: boolean | null
           show_dynamic_pages: boolean | null
           show_events: boolean | null
+          show_bookings: boolean | null
           show_exams: boolean | null
           show_flow_game: boolean | null
           show_knowledge: boolean | null
@@ -3702,6 +3901,7 @@ export type Database = {
           show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
           show_events?: boolean | null
+          show_bookings?: boolean | null
           show_exams?: boolean | null
           show_flow_game?: boolean | null
           show_knowledge?: boolean | null
@@ -3740,6 +3940,7 @@ export type Database = {
           show_dashboard?: boolean | null
           show_dynamic_pages?: boolean | null
           show_events?: boolean | null
+          show_bookings?: boolean | null
           show_exams?: boolean | null
           show_flow_game?: boolean | null
           show_knowledge?: boolean | null
@@ -4751,6 +4952,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      booking_status: "pending" | "confirmed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4882,6 +5084,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      booking_status: ["pending", "confirmed", "cancelled"],
     },
   },
 } as const
