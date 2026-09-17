@@ -181,12 +181,32 @@ the Developers make will change that. `noOnePieceMeets` is the rule, and a compo
 need is told to be split rather than offered a choice that cannot work. Criteria only
 a person can answer are left out of the sum, or every item in the zoo is composite.
 
-**5. Signals produce needs, not buildings.**
-`itemFromSignal` becomes `needFromSignal`. Today a signal reads "Add somewhere
-to eat (a cafe or kiosk)" - the parenthetical is the simulation choosing the
-building. The quote that drove it is already need-shaped: "Lovely morning, but
-we left at lunchtime. Nowhere to eat." The signal should say the need and let
-the Developers choose the kiosk, the cafe or the stall, and set what it offers.
+**5. ~~Signals produce needs, not buildings.~~** _Done._
+
+`itemFromSignal` is `needFromSignal`. A signal read "Add somewhere to eat (a cafe or
+kiosk)" - the parenthetical is the simulation choosing the building - and taking it
+put a "Food outlet" on the Backlog with its services set and its size decided. The
+quote that drove it was need-shaped all along: "Lovely morning, but we left at
+lunchtime. Nowhere to eat."
+
+`signalNeeds.ts` is the table, and the Review's words come out of the same entry as
+the item, so what the Product Owner is offered and what they get cannot drift.
+
+Two things fell out of it that were not in the plan:
+
+- **The Product Owner's look-ahead had the same fault**, on the route the Product
+  Owner drives: it proposed a Kiosk and a Toilets block with their services already
+  set. It proposes the same two needs now, from the same table. The only difference
+  between the two routes is WHEN, which is the argument for looking ahead.
+- **A team that has not adopted refinement cannot choose**, so a need raised for
+  them would be stuck twice over - unsizable until somebody decides, and nobody able
+  to decide. The Developers decide it off-screen, which is the rule that already
+  sized new work for them. Before you take refinement on, refinement still happens:
+  you just do not see it, and you have no say in it.
+
+The two crowding criteria were statements - "Eases the queues", "Good sightlines" -
+and are questions now, which is the house style for a reason: a statement can be
+waved through where a question has to be answered.
 
 **6. Sizing follows the choice.**
 `effortOf` currently reads the category and the footprint, which is only

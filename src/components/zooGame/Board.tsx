@@ -7,7 +7,7 @@ import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
-import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets } from './toolboxItems';
+import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets, ranked } from './toolboxItems';
 import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -115,13 +115,12 @@ export function ChooseSolutionPanel({ item, onChoose, wanted: showWanted = true 
   // Nothing here could answer all of it, so there is no choice to offer: this is two items wearing
   // one card, and Refinement is where that gets taken apart.
   const spans = noOnePieceMeets(wants);
-  const pieces = TOOLBOX.flatMap((g) => g.items.map((t) => ({ t, group: g.group, meets: meetsOf(t) })));
-  const hitsOf = (m: string[]) => m.filter((x) => wanted.has(x)).length;
-  // Best answer first. Unsorted, a Large Tank sat above the Kiosk because a tank is also something
-  // you can walk to - true, and no help at all to somebody deciding where lunch comes from. The
-  // whole list is still here: this orders it, it does not hide anything.
-  const sorted = [...pieces].sort((a, b) => hitsOf(b.meets) - hitsOf(a.meets));
-  const serves = sorted.filter((p) => hitsOf(p.meets) > 0);
+  // Best answer first, ranked by how much of what was asked each piece can settle. The whole list
+  // is still here: this orders it, it does not hide anything. Shared with the choice the
+  // Developers make off-screen before a team takes refinement on, so the two cannot disagree.
+  const byName = new Map(TOOLBOX.flatMap((g) => g.items.map((t) => [t.name, g.group] as const)));
+  const sorted = ranked(wants).map((r) => ({ t: r.item, group: byName.get(r.item.name) ?? '', meets: meetsOf(r.item), hits: r.meets }));
+  const serves = sorted.filter((p) => p.hits > 0);
   const shown = all ? sorted : serves;
   if (spans.length) {
     return (

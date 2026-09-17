@@ -160,3 +160,27 @@ export function toolboxDraft(t: ToolboxItem): PbiDraft {
       : floraAcceptance(t.template);
   return { name: t.name, template: t.template, category: t.category, zone: t.zone, services: t.services, enclosureSize: t.footprint, acceptance };
 }
+
+/** What the catalogue offers for a set of criteria, best answer first.
+ *
+ *  "Best" is simply how many of the things asked for it can settle. Unsorted, a Large Tank sits
+ *  above the Kiosk because a tank is also something you can walk to: true, and no help at all to
+ *  somebody deciding where lunch comes from.
+ *
+ *  Shared, because the panel that offers the choice and the choice the Developers make off-screen
+ *  have to agree about what a sensible answer is. Before a team takes refinement on, the Developers
+ *  still refine - the learner just does not see it happen - and a different opinion there would
+ *  mean the game quietly chose something the panel would have ranked last. */
+export function ranked(criteria: string[]): { item: ToolboxItem; meets: number }[] {
+  const wanted = new Set(criteria.map((a) => criterionFor(a)?.id).filter(Boolean) as string[]);
+  return TOOLBOX.flatMap((g) => g.items)
+    .map((t) => ({ item: t, meets: meetsOf(t).filter((m) => wanted.has(m)).length }))
+    .sort((a, b) => b.meets - a.meets);
+}
+
+/** What the Developers would pick for a need if nobody watched them do it. Null where nothing in
+ *  the catalogue answers any of it, which is a need that should never have been written. */
+export function bestFor(criteria: string[]): string | null {
+  const top = ranked(criteria)[0];
+  return top && top.meets > 0 ? top.item.name : null;
+}

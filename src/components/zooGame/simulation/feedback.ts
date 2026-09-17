@@ -1,3 +1,4 @@
+import { SIGNAL_NEEDS } from '../signalNeeds';
 import type { SegmentResult, FeedbackQuote, Signal, SimulationConfig, NeedType } from './types';
 import type { SeededRng } from './rng';
 
@@ -72,10 +73,13 @@ export function generateQuotes(segResults: SegmentResult[], exhibitCount: number
   return chosen.map((c) => ({ segmentId: c.segmentId, cause: c.cause, severity: c.severity, text: pick(rng, c.phrasings) }));
 }
 
+// What the Review says, taken from the need itself rather than written out again here. The two
+// used to be separate strings and they said different things: the Review offered "Add somewhere to
+// eat (a cafe or kiosk)" and the Product Backlog got "Food outlet".
 const NEED_SIGNAL: Record<NeedType, { suggestion: string; driver: string }> = {
-  food: { suggestion: 'Add somewhere to eat (a cafe or kiosk)', driver: 'unmet:food' },
-  toilet: { suggestion: 'Build more toilets', driver: 'unmet:toilet' },
-  rest: { suggestion: 'Add seating and shade', driver: 'unmet:rest' },
+  food: { suggestion: SIGNAL_NEEDS['unmet:food'].suggestion, driver: 'unmet:food' },
+  toilet: { suggestion: SIGNAL_NEEDS['unmet:toilet'].suggestion, driver: 'unmet:toilet' },
+  rest: { suggestion: SIGNAL_NEEDS['unmet:rest'].suggestion, driver: 'unmet:rest' },
 };
 
 /** At most 2 signals, from the two largest unmet-need or crowding stats. */
@@ -87,7 +91,7 @@ export function generateSignals(segResults: SegmentResult[], _config: Simulation
     if (total > 0) scored.push({ magnitude: rate, suggestion: NEED_SIGNAL[need].suggestion, driver: NEED_SIGNAL[need].driver });
   });
   const crowd = segResults.reduce((s, r) => Math.max(s, r.crowdingLoss), 0);
-  if (crowd > 0.2) scored.push({ magnitude: crowd, suggestion: 'Ease crowding (more capacity, or a second viewing area)', driver: 'crowding' });
+  if (crowd > 0.2) scored.push({ magnitude: crowd, suggestion: SIGNAL_NEEDS.crowding.suggestion, driver: 'crowding' });
 
   scored.sort((a, b) => b.magnitude - a.magnitude);
   return scored.slice(0, 2).map((s) => ({
