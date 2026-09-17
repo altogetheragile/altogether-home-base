@@ -85,7 +85,7 @@ const AdminBookings = () => {
   const [filter, setFilter] = useState<Filter>('upcoming');
   const [cancelling, setCancelling] = useState<BookingRow | null>(null);
 
-  const { data: bookings, isLoading } = useQuery({
+  const { data: bookings, isLoading, dataUpdatedAt } = useQuery({
     queryKey: ['admin-bookings'],
     queryFn: async (): Promise<BookingRow[]> => {
       const { data, error } = await supabase
@@ -119,9 +119,12 @@ const AdminBookings = () => {
     onError: (e: Error) => toast.error('Could not cancel', { description: e.message }),
   });
 
+  // The split between upcoming and past is taken at the moment the data was
+  // fetched, not at render. That keeps it consistent with the rows on screen and
+  // keeps render pure - Date.now() during render is unstable across re-renders.
   const filtered = useMemo(() => {
     if (!bookings) return [];
-    const now = Date.now();
+    const now = dataUpdatedAt;
 
     switch (filter) {
       case 'upcoming':
@@ -139,15 +142,20 @@ const AdminBookings = () => {
       default:
         return bookings;
     }
-  }, [bookings, filter]);
+  }, [bookings, filter, dataUpdatedAt]);
 
   /**
    * A confirmed booking with no meeting URL means booking-create got part way
    * and stopped. The spec says never to drop those silently, so surface them.
    */
   const stuck = useMemo(
-    () => (bookings ?? []).filter((b) => b.status === 'pending' && new Date(b.created_at).getTime() < Date.now() - 5 * 60_000),
-    [bookings],
+    () =>
+      (bookings ?? []).filter(
+        (b) =>
+          b.status === 'pending' &&
+          new Date(b.created_at).getTime() < dataUpdatedAt - 5 * 60_000,
+      ),
+    [bookings, dataUpdatedAt],
   );
 
   const columns: DataTableColumn<BookingRow>[] = [
