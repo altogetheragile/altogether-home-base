@@ -2448,27 +2448,50 @@ export function goalCandidates(state: ZooGameState): BacklogItem[] {
 }
 
 /** Coach an outcome-shaped Sprint Goal from the items being selected, in the house shape the
- *  /scrum-game uses too: "Our goal is to deliver [capability] so that [value]". The capability is
- *  what this Sprint would put in front of visitors; the value is what they get out of it. A
- *  starting point the team then shapes - the Goal is a single objective, not a list of PBIs. */
+ *  /scrum-game uses too: "Our goal is to [do something] so that [value]".
+ *
+ *  A Sprint Goal is ONE objective for ONE Sprint, and the thing to say is what visitors would get
+ *  out of this Sprint that they could not get before. This used to scale UP as the Sprint filled:
+ *  three items in one zone and it proposed "deliver the Big Cats zone", which is a quarter of the
+ *  zoo and a season's work. Reported from playing it: "that is more like a Product Goal. A Sprint
+ *  Goal would better focus on getting lions open or similar."
+ *
+ *  So it names the ANIMALS. They are what anybody came for; the habitat, the paths and the toilets
+ *  are what it takes to put them in front of somebody, which is the work rather than the objective.
+ *  A Sprint with no animals in it is named for what it does to the park instead. */
 export function suggestSprintGoal(items: BacklogItem[]): string {
-  if (!items.length) return 'Our goal is to deliver a reason to come back so that visitors return';
-  const counts: Record<string, number> = {};
-  for (const it of items) counts[it.zone] = (counts[it.zone] ?? 0) + 1;
-  const [zone, inZone] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (!items.length) return 'Our goal is to give visitors a reason to come back so that they do';
+  const list = (names: string[]): string => (names.length === 1 ? names[0]
+    : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+  // A zoo opens the lions, not the lion. The species is the exhibit's name and it is written
+  // singular - except where it already is not, which is most of the birds and the fish.
+  const many = (name: string): string => {
+    const n = name.toLowerCase();
+    return /s$/.test(n) ? n : `${n}s`;
+  };
   const exhibits = items.filter((i) => i.category === 'exhibit');
+  if (exhibits.length) {
+    // Named, up to three of them. Past that the names are a list rather than an objective, and the
+    // area they are in is the honest way to say "these animals".
+    const zone = exhibits[0].zone;
+    const who = exhibits.length <= 3
+      ? `the ${list(exhibits.map((i) => many(i.name)))}`
+      : `the ${zone} animals`;
+    return `Our goal is to open ${who} to visitors so that there is something worth coming for`;
+  }
   const amenities = items.filter((i) => i.category === 'amenity');
-  // Name the pieces while there are few enough to say; once it is most of a zone, name the zone.
-  const names = items.slice(0, 3).map((i) => i.name.toLowerCase());
-  const capability = inZone >= 3 || items.length > 3
-    ? `the ${zone} zone`
-    : names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-  const value = exhibits.length && amenities.length
-    ? 'visitors have something to see and somewhere to stop, and stay longer'
-    : amenities.length ? 'visitors can eat, rest and stay longer'
-    : exhibits.length ? 'visitors have more to enjoy'
-    : 'the park is easier and pleasanter to get around';
-  return `Our goal is to deliver ${capability} so that ${value}`;
+  const paths = items.filter((i) => i.category === 'path');
+  if (amenities.length && paths.length) {
+    return 'Our goal is to make the park easy to get round and stop in so that visitors stay longer';
+  }
+  if (amenities.length) {
+    const what = list(amenities.map((i) => i.name.toLowerCase()));
+    return `Our goal is to open ${what} so that visitors can eat, rest and stay longer`;
+  }
+  if (paths.length) {
+    return 'Our goal is to join the zoo up so that visitors can walk to everything that is open';
+  }
+  return 'Our goal is to make the park pleasanter to be in so that visitors stay longer';
 }
 
 /** The steps a learner has not thought of, given the ones they have.

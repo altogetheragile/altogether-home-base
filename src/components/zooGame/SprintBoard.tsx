@@ -98,7 +98,7 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  It used to carry the plan, the criteria, the reasons, and two buttons. Four of those in a column
  *  is a wall, and you cannot watch work move through a wall. Everything else is one click away in
  *  the card dialog, which is the only place an item's detail lives now. */
-function BoardCard({ item, state, tone, note, waiting, onOpen }: {
+function BoardCard({ item, state, tone, note, waiting, roomToReorder, onOpen }: {
   item: BacklogItem;
   state: ZooGameState;
   tone?: 'doing' | 'done' | 'live';
@@ -106,6 +106,10 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   note?: string;
   /** Whose answer this card is waiting on, where one is outstanding. */
   waiting?: string | null;
+  /** Leaves a band at the foot for the reorder arrows, which are laid over the card rather than
+   *  put in a row under it. The band is cheaper than the row it replaces: a row cost its own height
+   *  AND the column's gap either side of it. */
+  roomToReorder?: boolean;
   onOpen: () => void;
 }) {
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
@@ -113,6 +117,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   return (
     <button type="button" onClick={onOpen} data-part="board-card"
       title={`${item.name} - open it`}
+      style={roomToReorder ? { paddingBottom: '2.25rem' } : undefined}
       className={cn(FOCUS, 'w-full rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors hover:border-primary/70',
         tone === 'doing' ? 'border-primary/70'
           : tone === 'done' ? 'border-emerald-500/60'
@@ -426,25 +431,28 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           screen is saying it in two weights. */}
       {state.phase === 'sprint' && (
         <div data-part="sprint-goal"
-          className="shrink-0 rounded-lg border-2 border-primary/40 bg-primary/[0.07] px-4 py-3">
-          <div className={cn(EYEBROW, 'flex flex-wrap items-center gap-x-2 text-primary')}>
+          className="shrink-0 rounded-lg border-2 border-primary/40 bg-primary/[0.07] px-3 py-2">
+          {/* The label and the verdict share a line. They were a row each, which with the Goal
+              itself made three rows above the board - and the board is what the screen is for:
+              "do we need to push down the PBIs in To Do?" */}
+          <div data-part="goal-head" className={cn(EYEBROW, 'flex flex-wrap items-center gap-x-2 text-primary')}>
             <Target className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Sprint Goal
             <span className="font-normal normal-case tracking-normal text-muted-foreground">
               commitment of the Sprint Backlog
             </span>
+            <span data-part="goal-verdict"
+              className={cn('ml-auto font-normal normal-case tracking-normal',
+                goalSafe.risk ? TONE.attention.text : 'text-muted-foreground')}>
+              {goalSafe.line}
+            </span>
           </div>
           {/* Big enough to read at a glance and wrapping rather than truncating: the whole fault
               was that it could not be read. */}
           <p data-part="sprint-goal-text"
-            className={cn('mt-1 text-lg font-bold leading-snug',
-              !state.sprintGoal.trim() && 'font-semibold text-muted-foreground')}>
+            className={cn('mt-0.5 text-base font-bold leading-snug',
+              !state.sprintGoal.trim() && 'text-muted-foreground')}>
             {state.sprintGoal.trim() || 'No Sprint Goal yet - the Scrum Team agrees one at Sprint Planning.'}
-          </p>
-          {/* Whether it is safe, from the Sprint's own arithmetic rather than a second opinion. */}
-          <p data-part="goal-verdict"
-            className={cn('mt-1 text-xs font-medium', goalSafe.risk ? TONE.attention.text : 'text-muted-foreground')}>
-            {goalSafe.line}
           </p>
         </div>
       )}
@@ -571,35 +579,47 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                     const why = needsEnc ? `Build ${encName} first - animals go in once their habitat is ready`
                       : atWipLimit ? `WIP limit ${activeWipLimit(state)} reached - finish something in Doing first` : undefined;
                     return (
-                      <div key={it.id} {...carryProps(it.id, 'todo')} {...takeProps(it.id)} className="cursor-grab touch-none active:cursor-grabbing">
+                      <div key={it.id} {...carryProps(it.id, 'todo')} {...takeProps(it.id)}
+                        data-part="card-slot"
+                        className="relative cursor-grab touch-none active:cursor-grabbing">
                       {cameBack(it.id)}
                       <BoardCard item={it} state={state} note={needsEnc ? `Needs ${encName} built first` : blocked ? why : undefined}
+                        roomToReorder={!!onReorderSprint && todo.length > 1}
                         onOpen={() => setCardId(it.id)} />
                       {/* What to pick up next, in the Developers' own order.
                           The Sprint Backlog is the Developers' plan, and the order of what is not
                           started yet is the part they change most often - "the fence before the
-                          animals" is a Daily Scrum conversation. The board has taken this callback
-                          since the day it was written and never rendered anything that calls it, so
-                          the order could not be changed at all.
-                          Under the card, not beside it: a column of arrows down the side took the
-                          width the item's name needs, and a Sprint Backlog reading "Lion Enclos..."
-                          is a board nobody can read across a room. And outside the card rather than
-                          in it, because the card is a button and a button inside a button is a thing
-                          browsers are left to guess about. */}
+                          animals" is a Daily Scrum conversation.
+                          
+                          ON the card, not under it. They had a row of their own, which is a card's
+                          worth of height for two chevrons: four items filled the column and you
+                          could see two of them. Reported from playing it - "can the move arrows be
+                          part of a PBI card rather than spacing them out so much?"
+                          
+                          Still not INSIDE it: the card is a button, and a button inside a button is
+                          a thing browsers are left to guess about. They are a sibling laid over the
+                          card, which is why the slot is `relative`.
+                          
+                          Full-sized targets, side by side, in a band the card leaves for them at its
+                          foot. They stay 44 square - that number has been raised twice and stopped
+                          short both times - and side by side rather than stacked, because a stacked
+                          pair each cover part of the other's target. What is saved is the ROW they
+                          used to sit in, which cost its own height and the column's gap either side
+                          of it: three times the band they take now. */}
                       {onReorderSprint && todo.length > 1 && (
-                        <div className="mt-0.5 flex justify-end gap-0.5">
+                        <div className="absolute bottom-0 right-1 flex">
                           <button type="button" data-part="sprint-up" disabled={i === 0}
                             onClick={() => onReorderSprint(it.id, 'up')}
                             aria-label={`Take ${it.name} up the Sprint Backlog`}
                             title="Pick this up sooner"
-                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
+                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-25')}>
                             <ChevronUp className="h-4 w-4" />
                           </button>
                           <button type="button" data-part="sprint-down" disabled={i === todo.length - 1}
                             onClick={() => onReorderSprint(it.id, 'down')}
                             aria-label={`Take ${it.name} down the Sprint Backlog`}
                             title="Pick this up later"
-                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30')}>
+                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-25')}>
                             <ChevronDown className="h-4 w-4" />
                           </button>
                         </div>
