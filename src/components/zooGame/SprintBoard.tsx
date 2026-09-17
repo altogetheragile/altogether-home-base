@@ -98,7 +98,11 @@ function DayStart({ state, onStart }: { state: ZooGameState; onStart: () => void
  *  It used to carry the plan, the criteria, the reasons, and two buttons. Four of those in a column
  *  is a wall, and you cannot watch work move through a wall. Everything else is one click away in
  *  the card dialog, which is the only place an item's detail lives now. */
-function BoardCard({ item, state, tone, note, waiting, roomToReorder, onOpen }: {
+/** The visible part of a reorder arrow: a small tinted square in the middle of a 44-square target.
+ *  Coloured, because a grey chevron on a white card is a thing you have to go looking for. */
+const ARROW = 'flex h-7 w-9 items-center justify-center rounded-md bg-primary/10 text-primary transition-colors group-hover:bg-primary/20';
+
+function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   item: BacklogItem;
   state: ZooGameState;
   tone?: 'doing' | 'done' | 'live';
@@ -106,10 +110,6 @@ function BoardCard({ item, state, tone, note, waiting, roomToReorder, onOpen }: 
   note?: string;
   /** Whose answer this card is waiting on, where one is outstanding. */
   waiting?: string | null;
-  /** Leaves a band at the foot for the reorder arrows, which are laid over the card rather than
-   *  put in a row under it. The band is cheaper than the row it replaces: a row cost its own height
-   *  AND the column's gap either side of it. */
-  roomToReorder?: boolean;
   onOpen: () => void;
 }) {
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
@@ -117,7 +117,6 @@ function BoardCard({ item, state, tone, note, waiting, roomToReorder, onOpen }: 
   return (
     <button type="button" onClick={onOpen} data-part="board-card"
       title={`${item.name} - open it`}
-      style={roomToReorder ? { paddingBottom: '2.25rem' } : undefined}
       className={cn(FOCUS, 'w-full rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors hover:border-primary/70',
         tone === 'doing' ? 'border-primary/70'
           : tone === 'done' ? 'border-emerald-500/60'
@@ -152,7 +151,9 @@ function BoardCard({ item, state, tone, note, waiting, roomToReorder, onOpen }: 
           <Clock className="h-3 w-3" /> waiting on {waiting}
         </p>
       )}
-      {note && <p className={cn(TONE.attention.text, 'mt-1 text-[11px] leading-snug')}>{note}</p>}
+      {/* Clear of the corner the reorder arrows are laid over. Room across, not room down: the
+          card's height is what it would be without them, which is the point of putting them there. */}
+      {note && <p className={cn(TONE.attention.text, 'mt-1 pr-[5.5rem] text-[11px] leading-snug')}>{note}</p>}
     </button>
   );
 }
@@ -584,7 +585,6 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                         className="relative cursor-grab touch-none active:cursor-grabbing">
                       {cameBack(it.id)}
                       <BoardCard item={it} state={state} note={needsEnc ? `Needs ${encName} built first` : blocked ? why : undefined}
-                        roomToReorder={!!onReorderSprint && todo.length > 1}
                         onOpen={() => setCardId(it.id)} />
                       {/* What to pick up next, in the Developers' own order.
                           The Sprint Backlog is the Developers' plan, and the order of what is not
@@ -600,27 +600,32 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                           a thing browsers are left to guess about. They are a sibling laid over the
                           card, which is why the slot is `relative`.
                           
-                          Full-sized targets, side by side, in a band the card leaves for them at its
-                          foot. They stay 44 square - that number has been raised twice and stopped
-                          short both times - and side by side rather than stacked, because a stacked
-                          pair each cover part of the other's target. What is saved is the ROW they
-                          used to sit in, which cost its own height and the column's gap either side
-                          of it: three times the band they take now. */}
+                          They reserve NOTHING: no row under the card, and no band inside it either.
+                          The card is the size it would be without them, and the column stacks the
+                          same - "can we have nice coloured up and down buttons that don't impact the
+                          size of the card or how the cards are stacked?"
+                          
+                          The targets are still 44 square. That number has been raised twice and
+                          stopped short both times, and the token that carries it is explicit that an
+                          invisible halo round a small button is not the same thing - two of those
+                          overlap where two real ones do not. So these are real 44s, side by side, in
+                          the corner of the card where nothing else is: what is small is the coloured
+                          glyph inside them, which is all there is to see. */}
                       {onReorderSprint && todo.length > 1 && (
-                        <div className="absolute bottom-0 right-1 flex">
+                        <div className="absolute bottom-0 right-0 flex">
                           <button type="button" data-part="sprint-up" disabled={i === 0}
                             onClick={() => onReorderSprint(it.id, 'up')}
                             aria-label={`Take ${it.name} up the Sprint Backlog`}
                             title="Pick this up sooner"
-                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-25')}>
-                            <ChevronUp className="h-4 w-4" />
+                            className={cn(FOCUS, TAP, 'group flex items-center justify-center disabled:pointer-events-none')}>
+                            <span className={cn(ARROW, 'group-disabled:opacity-25')}><ChevronUp className="h-4 w-4" /></span>
                           </button>
                           <button type="button" data-part="sprint-down" disabled={i === todo.length - 1}
                             onClick={() => onReorderSprint(it.id, 'down')}
                             aria-label={`Take ${it.name} down the Sprint Backlog`}
                             title="Pick this up later"
-                            className={cn(FOCUS, TAP, 'flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-25')}>
-                            <ChevronDown className="h-4 w-4" />
+                            className={cn(FOCUS, TAP, 'group flex items-center justify-center disabled:pointer-events-none')}>
+                            <span className={cn(ARROW, 'group-disabled:opacity-25')}><ChevronDown className="h-4 w-4" /></span>
                           </button>
                         </div>
                       )}
