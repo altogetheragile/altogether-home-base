@@ -217,7 +217,7 @@ export default function AboutSection() {
 
             {/* CTAs */}
             <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-cta-primary" style={{
+              <a href={BOOKING_URL} className="aa-cta-primary" style={{
                 background: p.orange,
                 color: p.deepTeal,
                 border: "none",

@@ -344,7 +344,7 @@ const Knowledge: React.FC = () => {
             <Link to="/events" style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', textDecoration: 'none' }}>
               Browse Events <Icons.ArrowRight />
             </Link>
-            <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: 'none', padding: 0, color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', textDecoration: 'none' }}>
+            <a href={BOOKING_URL} style={{ background: 'none', border: 'none', padding: 0, color: p.lightTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', textDecoration: 'none' }}>
               <Icons.Chat />Book a Chemistry Session
             </a>
           </div>

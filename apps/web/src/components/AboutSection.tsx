@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 const p = { white: '#FFFFFF', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151' };
-const BOOKING_URL = 'https://calendly.com/alundaviesbaker/30min';
 
 const credentials = [
   'Lead Author, AgilePM3',
@@ -18,7 +17,12 @@ const ArrowRight = () => (
   </svg>
 );
 
-export default function AboutSection() {
+/**
+ * The booking href comes from the page rather than being resolved here: this is a
+ * client-side component with no access to site settings, and the parent already
+ * has them.
+ */
+export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
   return (
     <>
       <style>{`
@@ -84,7 +88,7 @@ export default function AboutSection() {
               </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-cta-primary" style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <a href={bookingUrl} className="aa-cta-primary" style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 Book a Chemistry Session <ArrowRight />
               </a>
               <Link href="/about" className="aa-cta-secondary" style={{ background: 'none', border: 'none', color: p.midTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease', padding: 0, textDecoration: 'none' }}>

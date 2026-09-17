@@ -59,7 +59,8 @@ const Privacy = () => (
         <li style={liStyle}><strong>Supabase:</strong> database hosting and authentication.</li>
         <li style={liStyle}><strong>Resend:</strong> transactional email delivery.</li>
         <li style={liStyle}><strong>Vercel:</strong> website hosting.</li>
-        <li style={liStyle}><strong>Calendly:</strong> booking and scheduling.</li>
+        <li style={liStyle}><strong>Zoom:</strong> video meetings for booked sessions.</li>
+        <li style={liStyle}><strong>Google Calendar:</strong> scheduling and calendar invitations for booked sessions.</li>
         <li style={liStyle}><strong>Certification bodies</strong> (e.g. APMG, Scrum Alliance) where required for course registration or examination.</li>
       </ul>
 

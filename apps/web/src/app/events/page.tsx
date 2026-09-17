@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { getEventTemplates, getApprovedFeedback, toCardModel, type CourseCardModel } from '@/lib/events';
 import { getSiteSettings } from '@/lib/site-settings';
+import { bookingHref } from '@/lib/booking';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseListJsonLd } from '@/lib/seo';
 import { EventsList } from './EventsList';
 
 export const dynamic = 'force-dynamic';
 
 const c = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
-const BOOKING_URL = 'https://calendly.com/alundaviesbaker/30min';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Agile Training Courses in London & the UK',
@@ -27,6 +27,7 @@ export default async function EventsPage() {
   const now = Date.now();
   const courses: CourseCardModel[] = templates.map((t) => toCardModel(t, feedback, now));
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const bookingUrl = bookingHref(settings.show_bookings);
   const scheduledCount = courses.filter((m) => m.scheduledDates.length > 0).length;
   const stats = [
     { n: String(courses.length), label: 'Courses offered' },
@@ -71,7 +72,7 @@ export default async function EventsPage() {
             <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px' }}>
               <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Not sure where to start?</div>
               <p style={{ color: c.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>Book a free 30-minute chemistry session and we&apos;ll work out the best fit together.</p>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ background: c.orange, color: '#fff', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', width: 'fit-content', display: 'inline-block' }}>
+              <a href={bookingUrl} style={{ background: c.orange, color: '#fff', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', width: 'fit-content', display: 'inline-block' }}>
                 Book a chemistry session
               </a>
             </div>

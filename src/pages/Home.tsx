@@ -351,7 +351,7 @@ const Home: React.FC = () => {
               <Link to="/events" className="aa-btn aa-btn--deep">
                 Browse Events <Icons.ArrowRight />
               </Link>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-btn aa-btn--ghost-light">
+              <a href={BOOKING_URL} className="aa-btn aa-btn--ghost-light">
                 <Icons.Chat />Book a Chemistry Session
               </a>
             </div>

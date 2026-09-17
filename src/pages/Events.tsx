@@ -115,7 +115,7 @@ const FALLBACK_COURSES: CourseItem[] = [
   {
     id: 'fallback-4', type: 'Course', title: 'Scrum Master', cert: null,
     forWho: 'New and aspiring Scrum Masters, team leads, delivery managers', duration: '2 days', format: 'Both', groupSize: 'Up to 16',
-    objectives: ['Understand the Scrum framework and the Scrum Master role', 'Facilitate Scrum ceremonies with confidence', 'Coach teams through common agile adoption challenges'],
+    objectives: ['Understand the Scrum framework and the Scrum Master role', 'Facilitate Scrum events with confidence', 'Coach teams through common agile adoption challenges'],
     scheduledDates: [], description: 'A practical, scenario-led introduction to Scrum and the Scrum Master role. Less about memorising the framework, more about what to do when the team gets stuck.',
   },
   {
@@ -412,9 +412,7 @@ const Events: React.FC = () => {
               <p style={{ color: p.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>Book a free 30-minute chemistry session and we'll work out the best fit together.</p>
               <a
                 href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ background: p.orange, color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', width: 'fit-content' }}
+                                style={{ background: p.orange, color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', width: 'fit-content' }}
               >
                 <Icons.Chat />Book a chemistry session
               </a>
