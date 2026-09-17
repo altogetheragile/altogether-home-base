@@ -55,6 +55,23 @@ describe('the reorder arrows', () => {
       'the arrows are in the flow, pushing the next card down').toMatch(/\babsolute\b/);
   });
 
+  it('costs the card no height at all, and the column no change in how it stacks', () => {
+    // "Can we have nice coloured up and down buttons that don't impact the size of the card or how
+    // the cards are stacked?" They had a row of their own first, then a band inside the card - both
+    // of which are the card paying for them. They pay for nothing now: the target is laid over the
+    // corner, and what is small is the glyph inside it.
+    const { container } = board(sprint());
+    const card = container.querySelector('[data-part="board-card"]') as HTMLElement;
+    expect(card.style.paddingBottom, 'the card is holding a band open for them').toBeFalsy();
+    expect(card.className, 'the card is padded to make room for them').not.toMatch(/\bpb-\d/);
+  });
+
+  it('is coloured, rather than a grey chevron to go looking for', () => {
+    const { container } = board(sprint());
+    const glyph = container.querySelector('[data-part="sprint-up"] span')!;
+    expect(glyph.className, 'the arrows are the colour of everything else').toMatch(/bg-primary|text-primary/);
+  });
+
   it('still says which item each one moves', () => {
     const { container } = board(sprint());
     const up = container.querySelector('[data-part="sprint-up"]')!;
