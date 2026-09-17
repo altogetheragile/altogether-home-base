@@ -99,7 +99,8 @@ See `booking_layer1.sql`. Four tables, all under RLS.
 
 - `booking_types`: what can be booked (name, slug, duration, buffers, notice,
   horizon, price, provider, timezone).
-- `booking_availability`: weekly windows per type, in the type's timezone.
+- `booking_availability`: weekly windows per type, in the type's timezone. Seeded
+  Mon to Fri, 09:00 to 17:00.
 - `booking_overrides`: date-level exceptions (closed days, extra hours).
 - `bookings`: the record. Start and end in UTC. Status: `pending`, `confirmed`,
   `cancelled`. A secret `manage_token` for Layer 2 links. Zoom meeting id, join
@@ -394,9 +395,7 @@ npx supabase functions deploy booking-create --project-ref wqaplkypnetifpqrungv
 1. Should the chemistry session also be bookable by logged-in users from their
    dashboard, or public only?
 2. Which calendars count as busy? Personal as well as work?
-3. Working hours to seed: the migration assumes Mon to Fri, 09:00 to 17:00,
-   Europe/London. Change before running.
-4. **Which Zoom user hosts?** The API's `me` resolves to whoever owns the
+3. **Which Zoom user hosts?** The API's `me` resolves to whoever owns the
    Server-to-Server app credentials. If the Altogether Agile Zoom account ever
    grows past one user, name Al's address explicitly in `ZOOM_HOST_EMAIL` rather
    than relying on `me`.
@@ -405,3 +404,5 @@ Settled on 17 September 2026:
 
 - The Zoom account is paid. No 40-minute cap.
 - The overlap constraint is scoped to the whole diary, not to the booking type.
+- Seeded working hours: Mon to Fri, 09:00 to 17:00, Europe/London. The migration
+  is correct as written and needs no edit before running.

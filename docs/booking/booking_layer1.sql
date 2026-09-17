@@ -1,10 +1,11 @@
 -- Booking tool, Layer 1
 -- Revision 2: Zoom replaces Google Meet for conferencing.
 --
--- DRAFT. Not yet a migration. When the open questions in booking-tool-spec.md
--- are settled, copy this to:
+-- DRAFT. Not yet a migration. The schema questions are settled, so this is ready
+-- to move to:
 --   supabase/migrations/20260917100000_booking_layer1.sql
--- Check the seeded working hours at the bottom BEFORE running it.
+-- It is held here only so it does not create tables on the next deploy before
+-- there is any code to use them. Move it when the build starts.
 --
 -- Assumes is_admin() already exists (it does, June 2025 migrations).
 
@@ -172,7 +173,9 @@ create policy "guest reads own bookings"
 -- src/components/Navigation.tsx.
 alter table site_settings add column if not exists show_bookings boolean default false;
 
--- Seed: chemistry session, Mon to Fri 09:00 to 17:00 (CHANGE BEFORE RUNNING)
+-- Seed: chemistry session, Mon to Fri 09:00 to 17:00 Europe/London.
+-- Confirmed by Al, 17 September 2026. weekday 0 = Sunday, so 1-5 is Mon-Fri,
+-- matching both Postgres extract(dow) and JavaScript Date.getDay().
 insert into booking_types (slug, name, description, duration_minutes)
 values ('chemistry-session', 'Chemistry Session',
         'A free 30-minute conversation. No agenda, no commitment.', 30);
