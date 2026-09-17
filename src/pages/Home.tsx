@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { BOOKING_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { OrganizationSchema } from '@/components/seo/JsonLd';
 import { useCourseCards } from '@/hooks/useCourseCards';
 import { HomepageStrip } from '@/components/testimonials/TestimonialComponents';
@@ -89,6 +89,7 @@ const Icons = {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Home: React.FC = () => {
+  const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const { settings } = useSiteSettings();
   const { data: courseCards, isLoading: coursesLoading, error: coursesError } = useCourseCards();
@@ -351,7 +352,7 @@ const Home: React.FC = () => {
               <Link to="/events" className="aa-btn aa-btn--deep">
                 Browse Events <Icons.ArrowRight />
               </Link>
-              <a href={BOOKING_URL} className="aa-btn aa-btn--ghost-light">
+              <a href={bookingHref} className="aa-btn aa-btn--ghost-light">
                 <Icons.Chat />Book a Chemistry Session
               </a>
             </div>

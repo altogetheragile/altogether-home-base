@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { SITE_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { EventCardQuote } from '@/components/testimonials/TestimonialComponents';
@@ -299,6 +300,7 @@ const FILTERS = ['All', 'Course', 'Workshop', 'Masterclass'];
 
 // ─── Main component ─────────────────────────────────────────────────────────
 const Events: React.FC = () => {
+  const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const [activeFilter, setActiveFilter] = useState('All');
 
@@ -411,7 +413,7 @@ const Events: React.FC = () => {
               <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Not sure where to start?</div>
               <p style={{ color: p.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>Book a free 30-minute chemistry session and we'll work out the best fit together.</p>
               <a
-                href={BOOKING_URL}
+                href={bookingHref}
                                 style={{ background: p.orange, color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', width: 'fit-content' }}
               >
                 <Icons.Chat />Book a chemistry session

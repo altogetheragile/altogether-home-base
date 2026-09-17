@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { SEOHead } from '@/components/seo/SEOHead';
-import { SITE_URL, BOOKING_URL } from '@/config/featureFlags';
+import { SITE_URL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { AboutSidebarQuotes } from '@/components/testimonials/TestimonialComponents';
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 import Navigation from '@/components/Navigation';
@@ -122,6 +123,7 @@ const credentials = [
 
 // ─── Component ──────────────────────────────────────────────────────────────
 const About: React.FC = () => {
+  const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const { settings } = useSiteSettings();
 
@@ -262,7 +264,7 @@ const About: React.FC = () => {
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Work with me</div>
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.</p>
               <a
-                href={BOOKING_URL}
+                href={bookingHref}
                                 style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}
               >
                 <Icons.Chat />Book a chemistry session
@@ -355,7 +357,7 @@ const About: React.FC = () => {
             <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>Browse upcoming courses, explore the knowledge base, or book a free chemistry session to talk through what you need.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <a
-                href={BOOKING_URL}
+                href={bookingHref}
                                 style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
               >
                 <Icons.Chat />Book a chemistry session

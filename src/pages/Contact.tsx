@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { SITE_URL, CONTACT_EMAIL, BOOKING_URL } from '@/config/featureFlags';
+import { SITE_URL, CONTACT_EMAIL } from '@/config/featureFlags';
+import { useBookingHref } from '@/hooks/useBookingHref';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { contactFormSchema, ContactFormData } from '@/schemas/contactForm';
@@ -49,6 +50,7 @@ const Icons = {
 };
 
 const Contact: React.FC = () => {
+  const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const [submitted, setSubmitted] = useState(false);
   const [formLoadedAt] = useState(() => Date.now());
@@ -106,7 +108,7 @@ const Contact: React.FC = () => {
           {[
             { icon: <Icons.Mail />, title: 'Email', detail: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
             { icon: <Icons.MapPin />, title: 'Location', detail: 'London, England', href: undefined },
-            { icon: <Icons.Calendar />, title: 'Book a Call', detail: 'Free 30-min chemistry session', href: BOOKING_URL },
+            { icon: <Icons.Calendar />, title: 'Book a Call', detail: 'Free 30-min chemistry session', href: bookingHref },
           ].map((card) => (
             <div key={card.title} style={{ background: p.paleTeal, borderRadius: 12, padding: '28px 32px', textAlign: 'center', flex: '1 1 200px', maxWidth: 280 }}>
               <div style={{ color: p.midTeal, marginBottom: 12, display: 'flex', justifyContent: 'center' }}>{card.icon}</div>
