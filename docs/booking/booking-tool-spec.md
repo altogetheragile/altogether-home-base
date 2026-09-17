@@ -383,7 +383,24 @@ Supabase secrets:
 - `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`
 - `ZOOM_HOST_EMAIL` (see Open Questions)
 - `BOOKING_GOOGLE_REFRESH_TOKEN`, `BOOKING_BUSY_CALENDARS`
-- `GSC_CLIENT_ID` and `GSC_CLIENT_SECRET` (already set, reused)
+- `BOOKING_GOOGLE_CLIENT_ID` and `BOOKING_GOOGLE_CLIENT_SECRET`, or nothing here
+  and `GSC_CLIENT_ID` / `GSC_CLIENT_SECRET` are used instead
+
+A refresh token is bound to the OAuth client that minted it, so the client
+credentials and the refresh token must be the same pair. There are two ways to
+mint it, and they need different client types:
+
+- **Terminal.** `node scripts/booking-google-auth.mjs` reuses the **Desktop**
+  client Search Console already has, so `GSC_CLIENT_ID` / `GSC_CLIENT_SECRET`
+  serve and nothing else is needed.
+- **Browser.** Google's OAuth Playground needs a **Web application** client with
+  `https://developers.google.com/oauthplayground` registered as a redirect URI,
+  which a Desktop client cannot have. Create a second client and set
+  `BOOKING_GOOGLE_CLIENT_ID` / `BOOKING_GOOGLE_CLIENT_SECRET` to it.
+
+Mixing the two gives `invalid_grant` or `invalid_client` from Google, which reads
+like a typo rather than a mismatch; `googleCalendar.ts` adds that hint to the
+error.
 - `RESEND_API_KEY` (already set)
 
 Deploy:
