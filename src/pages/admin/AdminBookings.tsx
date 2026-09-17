@@ -36,6 +36,12 @@ type BookingRow = {
   guest_timezone: string;
   notes: string | null;
   status: 'pending' | 'confirmed' | 'cancelled';
+  /**
+   * Why booking-create gave up: zoom, calendar or timeout. Null means a person
+   * cancelled it. Both land on status 'cancelled', because that is what frees
+   * the slot, so this is the only thing telling the two apart.
+   */
+  failure_reason: string | null;
   meeting_url: string | null;
   meeting_id: string | null;
   calendar_event_id: string | null;
@@ -57,7 +63,20 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'o
   confirmed: 'default',
   pending: 'secondary',
   cancelled: 'outline',
+  failed: 'destructive',
 };
+
+/**
+ * What to call a row in the status column.
+ *
+ * A booking the system abandoned is stored as cancelled so it stops blocking
+ * the slot, but calling it "cancelled" next to the ones Al cancelled himself
+ * hides the thing worth knowing: something broke, and the guest got nothing.
+ */
+function statusLabel(b: BookingRow): string {
+  if (b.failure_reason) return `failed (${b.failure_reason})`;
+  return b.status;
+}
 
 /** Office time, so Al reads every booking in the zone he works in. */
 const londonFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -145,16 +164,23 @@ const AdminBookings = () => {
   }, [bookings, filter, dataUpdatedAt]);
 
   /**
-   * A confirmed booking with no meeting URL means booking-create got part way
-   * and stopped. The spec says never to drop those silently, so surface them.
+   * Bookings where the guest got nothing, and nobody would otherwise look.
+   *
+   * Two shapes. A row still pending after five minutes means the invocation
+   * died before it could even record a failure. A row carrying a
+   * failure_reason means Zoom or Google refused and we gave up on purpose.
+   * Both mean somebody tried to book and has no meeting.
+   *
+   * Only the last day: an old failure is history, not a thing to act on.
    */
   const stuck = useMemo(
     () =>
-      (bookings ?? []).filter(
-        (b) =>
-          b.status === 'pending' &&
-          new Date(b.created_at).getTime() < dataUpdatedAt - 5 * 60_000,
-      ),
+      (bookings ?? []).filter((b) => {
+        const age = dataUpdatedAt - new Date(b.created_at).getTime();
+        if (age > 24 * 60 * 60_000) return false;
+        if (b.failure_reason) return true;
+        return b.status === 'pending' && age > 5 * 60_000;
+      }),
     [bookings, dataUpdatedAt],
   );
 
@@ -196,8 +222,12 @@ const AdminBookings = () => {
       id: 'status',
       header: 'Status',
       sortable: true,
-      sortValue: (b) => b.status,
-      cell: (b) => <Badge variant={statusVariant[b.status] ?? 'default'}>{b.status}</Badge>,
+      sortValue: (b) => statusLabel(b),
+      cell: (b) => (
+        <Badge variant={statusVariant[b.failure_reason ? 'failed' : b.status] ?? 'default'}>
+          {statusLabel(b)}
+        </Badge>
+      ),
     },
     {
       id: 'links',
@@ -273,9 +303,10 @@ const AdminBookings = () => {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {stuck.length} booking{stuck.length === 1 ? ' has' : 's have'} been pending for more than
-            five minutes. That usually means Zoom or Google failed part way through and the guest
-            has no meeting. Check the edge function logs.
+            {stuck.length} booking{stuck.length === 1 ? '' : 's'} in the last day
+            {stuck.length === 1 ? ' has' : ' have'} failed part way through, so the guest has no
+            meeting. The slot has been put back on sale. Check the edge function logs, and email
+            them if they left an address.
           </AlertDescription>
         </Alert>
       )}

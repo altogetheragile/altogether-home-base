@@ -88,12 +88,24 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, '&#039;');
 }
 
-/** Records the attempt. Never throws: a broken log must not take booking down. */
+/**
+ * Records the attempt. Never throws: a broken log must not take booking down.
+ *
+ * The three outcomes are counted differently on purpose:
+ *   'ok'      a booking was made. The only one the per-email daily cap counts.
+ *   'blocked' a guard turned it away. Probing must not be free.
+ *   'failed'  Zoom or Google let us down. Our fault, so it must not count
+ *             towards the guest's daily cap - they would be locked out for a
+ *             day over a booking they never got.
+ *
+ * All three count towards the per-IP hourly limit, which is what actually
+ * stops someone hammering the endpoint.
+ */
 export async function recordAttempt(
   supabase: SupabaseClient,
   ipHash: string,
   email: string,
-  outcome: 'ok' | 'blocked',
+  outcome: 'ok' | 'blocked' | 'failed',
 ): Promise<void> {
   try {
     await supabase.from('booking_attempts').insert({ ip_hash: ipHash, email, outcome });
@@ -150,6 +162,8 @@ export async function checkBookingGuards(
       return { ok: false, reason: 'ip-limit', message: 'Too many attempts. Please try again later.' };
     }
 
+    // Only 'ok' counts here: a booking we failed to complete is not one the
+    // guest made, and must not be held against them.
     const { count: emailCount, error: emailError } = await supabase
       .from('booking_attempts')
       .select('id', { count: 'exact', head: true })

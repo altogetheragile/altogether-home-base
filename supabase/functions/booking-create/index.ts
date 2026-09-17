@@ -9,21 +9,28 @@
 //   4. create the calendar event
 //   5. confirm, then email
 //
-// Step 3's write is the part that is easy to get wrong. Zoom has no idempotency
-// key on meeting creation, so if Zoom succeeds and Google then fails, an
-// unwritten meeting id means a retry creates a second meeting and orphans the
-// first. Writing it first makes the retry safe.
+// Step 3's write is not for a retry - a failure at step 4 deletes the meeting
+// rather than retrying. It is there for the case nothing can catch: the
+// invocation being killed between Zoom and the calendar. Then the meeting id is
+// the only record that a meeting exists, and an admin can go and remove it.
 //
-// Anything after step 2 that fails leaves the row at pending rather than
-// deleting it. Admin surfaces those; a booking that half happened must never
-// vanish silently.
+// Anything after step 2 that fails is ABANDONED rather than left pending: the
+// row is cancelled with a failure_reason, and any Zoom meeting already made is
+// deleted. A booking that half happened must never vanish silently, but it must
+// not squat on the slot either - every non-cancelled row blocks that time in the
+// edge function and in the bookings_no_overlap constraint, so a row left pending
+// took the slot out of circulation for good.
+//
+// The attempt is only recorded as 'ok' once step 5 has run. Recording it at
+// step 2 counted a booking that never happened against the guest's daily limit,
+// which locked them out for a day over our own failure.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@2.0.0';
 import { isSlotAvailable, type DateOverride, type WeeklyWindow } from '../_shared/bookingSlots.ts';
 import { fetchBusy, createCalendarEvent } from '../_shared/googleCalendar.ts';
-import { createZoomMeeting } from '../_shared/zoom.ts';
+import { createZoomMeeting, deleteZoomMeeting } from '../_shared/zoom.ts';
 import {
   callerIp, hashIp, checkBookingGuards, recordAttempt, escapeHtml,
 } from '../_shared/bookingGuards.ts';
@@ -73,6 +80,46 @@ function safeTimezone(value: unknown): string {
   }
 }
 
+/**
+ * Gives up on a booking that got part way.
+ *
+ * Cancelling rather than deleting keeps it visible in admin; failure_reason is
+ * what tells a person the system gave up rather than someone changing their
+ * mind. Cancelled rows do not block the slot, so the time goes back on sale.
+ */
+async function abandon(
+  supabase: ReturnType<typeof createClient>,
+  bookingId: string,
+  reason: 'zoom' | 'calendar',
+): Promise<void> {
+  await supabase
+    .from('bookings')
+    .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), failure_reason: reason })
+    .eq('id', bookingId);
+}
+
+/**
+ * Abandons bookings stuck at pending.
+ *
+ * The failure paths below cover the cases we can see. They cannot cover the
+ * function being killed between the insert and the Zoom call - a timeout, or a
+ * cold start giving up - which leaves a row nothing will ever revisit. Fifteen
+ * minutes is far longer than a successful call takes and far shorter than a
+ * slot anyone would wait for.
+ */
+async function sweepStalePending(supabase: ReturnType<typeof createClient>): Promise<void> {
+  try {
+    await supabase
+      .from('bookings')
+      .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), failure_reason: 'timeout' })
+      .eq('status', 'pending')
+      .lt('created_at', new Date(Date.now() - 15 * 60_000).toISOString());
+  } catch (e) {
+    // Housekeeping must never stop a booking being taken.
+    console.error('[booking-create] stale sweep failed:', e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -110,6 +157,10 @@ serve(async (req) => {
     if (!slug) return json({ error: 'Missing booking type' }, 400);
     const startsAt = new Date(startsAtRaw);
     if (Number.isNaN(startsAt.getTime())) return json({ error: 'Invalid start time' }, 400);
+
+    // Before the slot re-check: a row abandoned by a killed invocation would
+    // otherwise make a free slot look taken.
+    await sweepStalePending(supabase);
 
     // ── 1. Re-check the slot ourselves ──
     const { data: type, error: typeError } = await supabase
@@ -209,8 +260,6 @@ serve(async (req) => {
       throw insertError;
     }
 
-    await recordAttempt(supabase, ipHash, email, 'ok');
-
     // ── 3. Zoom, then write the id straight away ──
     let meeting;
     try {
@@ -222,14 +271,17 @@ serve(async (req) => {
       });
     } catch (e) {
       console.error(`[booking-create] Zoom failed for booking ${booking.id}:`, e);
+      await abandon(supabase, booking.id, 'zoom');
+      await recordAttempt(supabase, ipHash, email, 'failed');
       return json({
-        error: 'Your slot is held but the video link could not be created. We will be in touch.',
+        error: 'Sorry, the video link could not be created. Please try again, or use the contact form.',
         bookingId: booking.id,
       }, 502);
     }
 
-    // Before the calendar call, so a retry reuses this meeting rather than
-    // creating a second one.
+    // Written before the calendar call so that an invocation killed between the
+    // two still leaves a record of the meeting. Every failure we can see deletes
+    // it instead; this covers the one we cannot.
     await supabase
       .from('bookings')
       .update({
@@ -257,12 +309,15 @@ serve(async (req) => {
       });
       calendarEventId = event.eventId;
     } catch (e) {
-      // The meeting exists and the slot is held. Leave it pending for admin.
+      // Roll the Zoom meeting back. Without this the slot goes back on sale
+      // while an orphaned meeting nobody knows about sits in the Zoom account.
       console.error(`[booking-create] calendar failed for booking ${booking.id}:`, e);
+      await deleteZoomMeeting(meeting.meetingId);
+      await abandon(supabase, booking.id, 'calendar');
+      await recordAttempt(supabase, ipHash, email, 'failed');
       return json({
-        error: 'Your slot is held but the calendar invite could not be sent. We will be in touch.',
+        error: 'Sorry, the calendar invite could not be created. Please try again, or use the contact form.',
         bookingId: booking.id,
-        meetingUrl: meeting.joinUrl,
       }, 502);
     }
 
@@ -271,6 +326,10 @@ serve(async (req) => {
       .from('bookings')
       .update({ status: 'confirmed', calendar_event_id: calendarEventId })
       .eq('id', booking.id);
+
+    // Recorded here, not at the insert: this is the first moment the booking
+    // actually exists, and 'ok' is what the per-email daily cap counts.
+    await recordAttempt(supabase, ipHash, email, 'ok');
 
     // ── Emails. Failing here does not un-book anything, so it must not fail
     // the request - the guest already has the calendar invite from Google. ──
