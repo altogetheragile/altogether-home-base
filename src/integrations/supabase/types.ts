@@ -574,6 +574,7 @@ export type Database = {
           blocks_until: string
           booking_type_id: string
           calendar_event_id: string | null
+          failure_reason: string | null
           cancelled_at: string | null
           created_at: string
           ends_at: string
@@ -596,6 +597,7 @@ export type Database = {
           blocks_until: string
           booking_type_id: string
           calendar_event_id?: string | null
+          failure_reason?: string | null
           cancelled_at?: string | null
           created_at?: string
           ends_at: string
@@ -618,6 +620,7 @@ export type Database = {
           blocks_until?: string
           booking_type_id?: string
           calendar_event_id?: string | null
+          failure_reason?: string | null
           cancelled_at?: string | null
           created_at?: string
           ends_at?: string
