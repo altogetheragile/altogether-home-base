@@ -405,20 +405,27 @@ describe('zoo game: the Sprint Goal', () => {
     expect(s.sprintGoalMet).toBe(false);
   });
 
-  it('drafts the Goal in the house shape: deliver [capability] so that [value]', () => {
+  it('drafts the Goal in the house shape: one objective, and the reason for it', () => {
+    // It used to scale UP as the Sprint filled: three items in one zone and it proposed delivering
+    // the zone. Reported from playing it - "that is more like a Product Goal. A Sprint Goal would
+    // better focus on getting lions open or similar." A Sprint Goal is one objective for one
+    // Sprint, and the thing to say is what visitors would get that they could not get before.
     const s = bigCatsSplit(1);
-    // A couple of items: name them - that is the capability this Sprint would put in front of visitors.
     const pair = s.backlog.filter((i) => ['lion', 'tiger'].includes(i.id));
-    expect(suggestSprintGoal(pair)).toBe('Our goal is to deliver lion and tiger so that visitors have more to enjoy');
-    // Most of a zone: name the zone rather than listing it out.
+    expect(suggestSprintGoal(pair)).toBe('Our goal is to open the lions and tigers to visitors so that there is something worth coming for');
+    // Most of a zone is still about the animals in it, not about delivering the zone.
     const zone = s.backlog.filter((i) => i.zone === 'Big Cats' && i.status === 'backlog');
     expect(zone.length).toBeGreaterThan(3);
-    expect(suggestSprintGoal(zone)).toMatch(/^Our goal is to deliver the Big Cats zone so that /);
-    // Exhibits and somewhere to stop: the value says both.
+    expect(suggestSprintGoal(zone), 'a Sprint Goal the size of a season').not.toMatch(/the Big Cats zone/);
+    expect(suggestSprintGoal(zone)).toMatch(/^Our goal is to open /);
+    // The habitat and the kiosk are what it TAKES; the lion is what anybody came for.
     const mixed = s.backlog.filter((i) => ['lion', 'kiosk'].includes(i.id));
-    expect(suggestSprintGoal(mixed)).toMatch(/something to see and somewhere to stop/);
+    expect(suggestSprintGoal(mixed)).toMatch(/lion/i);
+    // A Sprint with no animals in it is named for what it does to the park instead.
+    const facilities = s.backlog.filter((i) => ['kiosk'].includes(i.id));
+    expect(suggestSprintGoal(facilities)).toMatch(/eat, rest and stay longer/);
     // Every draft is a real Goal, so Planning will accept it.
-    for (const sel of [pair, zone, mixed, []]) expect(isDraftedGoal(suggestSprintGoal(sel))).toBe(true);
+    for (const sel of [pair, zone, mixed, facilities, []]) expect(isDraftedGoal(suggestSprintGoal(sel))).toBe(true);
   });
 });
 
@@ -2487,7 +2494,13 @@ describe('zoo game: a suggested Sprint Goal comes off the top of the Product Bac
     expect(top.length).toBeGreaterThan(0);
     expect(top[0].id).toBe(availableItems(s).find((it) => isReady(it))!.id);   // starts at the top
     expect(top.every((it) => isReady(it))).toBe(true);                          // and only what could be forecast
-    expect(suggestSprintGoal(top)).toMatch(/Big Cats/i);
+    // ...and the Goal drafted from them is about them. Named for the animals rather than the zone -
+    // a Sprint Goal is one objective, not a quarter of the zoo - so what it must not be is a Goal
+    // about the Grounds, which is what reading the whole list produced.
+    const drafted = suggestSprintGoal(top);
+    expect(drafted).not.toMatch(/Grounds/i);
+    expect(top.some((it) => drafted.toLowerCase().includes(it.name.toLowerCase()))
+      || /the Big Cats animals/i.test(drafted), `nothing at the top is named: ${drafted}`).toBe(true);
   });
 
   it('stops at about a Sprint of work, so the Goal is reachable', () => {
