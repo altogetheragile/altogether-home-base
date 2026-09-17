@@ -325,3 +325,87 @@ export function whereItStands(state: ZooGameState, item: BacklogItem): { x: numb
   if (!mine) return null;
   return restingPlace(mine.item, mine.size, parkPositions(standing, zonePlots(state)));
 }
+
+// ============= A run of path, as the points it actually goes through =============
+//
+// A run is two ends and any number of joints between them, and an end can be ATTACHED to something
+// standing on the park so the path follows when the thing moves.
+//
+// Resolving that was written out three times - in the plan, in the isometric view and in the
+// visitors' routing - and all three did the same two things wrong. They ignored the joints, so a
+// path with a corner in it was drawn, and walked, as a straight line through whatever was in the
+// way. And they resolved an attached end to the middle of the thing it was attached to, so every
+// path ran under the building it served and came out the other side. Reported from playing it:
+// paths did not look joined to anything.
+//
+// One resolver now, and the flag says which question is being asked: a drawing wants the path to
+// stop at the wall, and the routing wants to know that the path reaches the thing.
+
+/** The box a path should stop at when it reaches this thing.
+ *
+ *  A building is walked up to: the path meets its wall, at the door. A HABITAT is not - it has a
+ *  walkway round it, and a path that carried on to the fence would be a path through it. Visitors
+ *  stand on the apron to look in, which is where the run should arrive.
+ *
+ *  Shared, because both drawings ask it and they must give the same answer. */
+export function pathTarget(item: BacklogItem | undefined, size: { w: number; h: number }): { w: number; h: number } {
+  if (item?.category !== 'enclosure') return size;
+  const out = (APRON_GAP + APRON_WIDTH / 2) * 2;
+  return { w: size.w + out, h: size.h + out };
+}
+
+/** Where an attached end sits: the middle of what it is attached to, or the point as drawn. */
+const anchor = (
+  end: { featureId?: string; x: number; y: number },
+  whereIs: (id: string) => { at: { x: number; y: number }; size: { w: number; h: number } } | undefined,
+): { x: number; y: number } => {
+  const on = end.featureId ? whereIs(end.featureId) : undefined;
+  return on ? on.at : { x: end.x, y: end.y };
+};
+
+/** Where a line coming from `from` should stop when it meets a box: on the box's edge, a little
+ *  way in so the path and the wall overlap rather than leaving a hairline of grass between them. */
+function meetsEdge(
+  at: { x: number; y: number }, size: { w: number; h: number },
+  from: { x: number; y: number },
+): { x: number; y: number } {
+  const dx = from.x - at.x, dy = from.y - at.y;
+  if (!dx && !dy) return at;
+  // How far along the line to the box's own half-width and half-height, whichever it reaches first:
+  // the point where the line crosses the rectangle.
+  const tx = dx ? (size.w / 2) / Math.abs(dx) : Infinity;
+  const ty = dy ? (size.h / 2) / Math.abs(dy) : Infinity;
+  const t = Math.min(tx, ty, 1);
+  // A shade short of the wall, so the path runs up to the building and under its first few pixels.
+  const bite = 0.88;
+  return { x: at.x + dx * t * bite, y: at.y + dy * t * bite };
+}
+
+/** Every point a run goes through, in order: one end, its joints, the other end.
+ *
+ *  `clip` trims the two ends back to the edge of whatever they are attached to. Drawings want it -
+ *  a path should meet the front of a kiosk, not run to the middle of it and out the far side. The
+ *  routing does not: reaching a thing is reaching it, and moving the point the visitors walk to
+ *  off the thing itself would be a second opinion about where a thing is. */
+export function runPoints(
+  run: { a: { featureId?: string; x: number; y: number }; b: { featureId?: string; x: number; y: number }; bends?: { x: number; y: number }[] },
+  whereIs: (id: string) => { at: { x: number; y: number }; size: { w: number; h: number } } | undefined,
+  clip = false,
+): { x: number; y: number }[] {
+  const bends = run.bends ?? [];
+  let a = anchor(run.a, whereIs);
+  let b = anchor(run.b, whereIs);
+  if (clip) {
+    const onA = run.a.featureId ? whereIs(run.a.featureId) : undefined;
+    const onB = run.b.featureId ? whereIs(run.b.featureId) : undefined;
+    // Towards the next point along the run, which is the first joint where there is one - a run
+    // that bends away from a building has to leave it in the direction it actually goes.
+    if (onA) a = meetsEdge(onA.at, onA.size, bends[0] ?? b);
+    if (onB) b = meetsEdge(onB.at, onB.size, bends[bends.length - 1] ?? a);
+  }
+  return [a, ...bends, b];
+}
+
+/** A run as an SVG points string. */
+export const runPath = (pts: { x: number; y: number }[]): string =>
+  pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');

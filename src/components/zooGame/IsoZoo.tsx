@@ -7,7 +7,7 @@ import { zonePlots } from './parkZones';
 import { riverOutline } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { TRAVEL_MS } from './walkThrough';
-import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, workingDesign as working, parkType as landType } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, groundSize, habitatSpot, quarterOf, apronRing, APRON_GAP, APRON_WIDTH, viewingSpot, runPoints, pathTarget, workingDesign as working, parkType as landType } from './parkModel';
 import { FACILITY } from './facilities';
 import { themeFor } from './zoneTheme';
 import { cn } from '@/lib/utils';
@@ -993,25 +993,38 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
 
   // ---- paths the player drew -------------------------------------------------------------
   for (const c of state.connectors ?? []) {
-    const a = c.a.featureId ? posOf(state.backlog.find((i) => i.id === c.a.featureId) ?? ({} as BacklogItem)) : { x: c.a.x, y: c.a.y };
-    const z = c.b.featureId ? posOf(state.backlog.find((i) => i.id === c.b.featureId) ?? ({} as BacklogItem)) : { x: c.b.x, y: c.b.y };
-    if (!Number.isFinite(a.x) || !Number.isFinite(z.x)) continue;
+    // The points the run actually goes through, joints and all, resolved the same way the plan
+    // resolves them. This used to read the two ends and draw one quad between them, so a run with a
+    // corner in it was a straight bar through whatever stood in the way - and an end attached to a
+    // building ran to the middle of it.
+    const whereIs = (id: string) => {
+      const item = state.backlog.find((i) => i.id === id);
+      if (!item) return undefined;
+      const at = posOf(item);
+      return Number.isFinite(at?.x) ? { at, size: pathTarget(item, sizeOf(item)) } : undefined;
+    };
+    const pts = runPoints(c, whereIs, true);
+    if (pts.some((q) => !Number.isFinite(q.x) || !Number.isFinite(q.y))) continue;
     // The width and the colour the path was actually laid with. This drew every route sixteen wide
     // in one fixed tan, so changing a pathway's width or its surface on the bench changed the plan
     // and nothing here - and the Increment is where a path is meant to look like a path.
     const wdt = Math.max(4, (c.thickness || 14) * 1.15);
-    const dx = z.x - a.x, dy = z.y - a.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = (-dy / len) * wdt, ny = (dx / len) * wdt;
-    // Run each path half its own width past both ends, so where two meet they overlap into the
-    // corner instead of leaving a notch. They are all one colour, so the overlap cannot be seen -
-    // which is the whole trick: a junction should look like a junction, not like two paths.
-    const ex = (dx / len) * wdt, ey = (dy / len) * wdt;
-    const a2 = { x: a.x - ex, y: a.y - ey }, z2 = { x: z.x + ex, y: z.y + ey };
-    const corners = [P(a2.x + nx, a2.y + ny), P(z2.x + nx, z2.y + ny), P(z2.x - nx, z2.y - ny), P(a2.x - nx, a2.y - ny)];
-    nodes.push(<polygon key={`path-${c.id}`} data-conn={c.id}
-      points={corners.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')} fill={c.color || '#ddc79a'} />);
-    walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
+    for (let i = 0; i < pts.length - 1; i += 1) {
+      const a = pts[i], z = pts[i + 1];
+      const dx = z.x - a.x, dy = z.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = (-dy / len) * wdt, ny = (dx / len) * wdt;
+      // Run each leg half its own width past both ends, so where two meet they overlap into the
+      // corner instead of leaving a notch. They are all one colour, so the overlap cannot be seen -
+      // which is the whole trick: a junction should look like a junction, not like two paths. It is
+      // what carries a joint too: the two legs either side of a corner overlap into it.
+      const ex = (dx / len) * wdt, ey = (dy / len) * wdt;
+      const a2 = { x: a.x - ex, y: a.y - ey }, z2 = { x: z.x + ex, y: z.y + ey };
+      const corners = [P(a2.x + nx, a2.y + ny), P(z2.x + nx, z2.y + ny), P(z2.x - nx, z2.y - ny), P(a2.x - nx, a2.y - ny)];
+      nodes.push(<polygon key={`path-${c.id}-${i}`} data-conn={c.id}
+        points={corners.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')} fill={c.color || '#ddc79a'} />);
+      walks.push([{ x: a.x, y: a.y }, { x: z.x, y: z.y }]);
+    }
   }
 
   // ---- the apron round each habitat ------------------------------------------------------
