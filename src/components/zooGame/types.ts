@@ -242,6 +242,13 @@ export interface BacklogItem {
   wasEstimate?: number;
   /** Hidden intended size; what planning poker clusters the cards around. */
   trueSize?: number;
+  /** What this item was WORTH when the Developers sized it, by the game's own reckoning.
+   *
+   *  Not the estimate - that is theirs and the game never touches it. This is the yardstick beside
+   *  it, so the game can notice when the thing they sized stops being the thing being built: a
+   *  habitat sized as a small one and then made large leaves its points standing as a claim about
+   *  work nobody is doing. */
+  sizedAs?: number;
   /** The Sprint this item was RELEASED in (opened to visitors). Usually the Sprint it was built
    *  in, but Done work can be released later - releasing is not gated by the Sprint Review - so
    *  the two can differ, and the board needs this to know what went live during this Sprint. */

@@ -20,9 +20,11 @@ export interface SignalNeed {
   name: string;
   story: { as: string; want: string; soThat: string };
   criteria: string[];
-  /** The hidden size the planning poker clusters around, once the Developers have chosen. */
-  trueSize: number;
 }
+
+// No size. A need is not sizable, and a number here would be a guess about work nobody has chosen
+// yet - which the choice then overwrote with a different one: "somewhere to eat" was five points
+// until somebody picked a kiosk, which is three. The size follows the choice, and nothing else.
 
 export const SIGNAL_NEEDS: Record<string, SignalNeed> = {
   'unmet:food': {
@@ -30,21 +32,18 @@ export const SIGNAL_NEEDS: Record<string, SignalNeed> = {
     name: 'Somewhere to eat',
     story: { as: 'a visitor', want: 'to buy food and a drink without leaving', soThat: 'lunchtime does not end our visit' },
     criteria: ['Can I tell what it is from outside?', 'Can I buy food and a drink here?', 'Can I walk to it from the way in?'],
-    trueSize: 5,
   },
   'unmet:toilet': {
     suggestion: 'Somewhere to go, without a queue for it',
     name: 'Somewhere to go',
     story: { as: 'a visitor with children', want: 'to find a free cubicle when we need one', soThat: 'a long day out stays a good one' },
     criteria: ['Can I tell what it is from outside?', 'Can I find a free cubicle at a busy time?', 'Can I walk to it from the way in?'],
-    trueSize: 3,
   },
   'unmet:rest': {
     suggestion: 'Somewhere to sit down, out of the sun',
     name: 'Somewhere to sit',
     story: { as: 'a visitor', want: 'to sit down in the shade partway round', soThat: 'we can stay all day rather than half of it' },
     criteria: ['Can I sit down in the shade?', 'Can I walk to it from the way in?'],
-    trueSize: 3,
   },
   crowding: {
     suggestion: 'Room to see the animals when it is busy',
@@ -54,6 +53,5 @@ export const SIGNAL_NEEDS: Record<string, SignalNeed> = {
     // one fact here is whether people can get to the new place at all. A need the park could settle
     // entirely would not need a Product Owner.
     criteria: ['Can I see the animals without queueing?', 'Can I get a clear view of them?', 'Can I walk to it from the way in?'],
-    trueSize: 5,
   },
 };

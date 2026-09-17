@@ -208,12 +208,36 @@ The two crowding criteria were statements - "Eases the queues", "Good sightlines
 and are questions now, which is the house style for a reason: a statement can be
 waved through where a question has to be answered.
 
-**6. Sizing follows the choice.**
-`effortOf` currently reads the category and the footprint, which is only
-possible because the item already decided what it is. When the Developers
-choose, the estimate has to follow what they chose. This is **more** correct
-Scrum, not less: you size the work you intend to do. It also connects to the
-right-sizing evidence already gathered in the Retro panel.
+**6. ~~Sizing follows the choice.~~** _Done._
+
+Most of it shipped with the choice itself: `chooseSolution` reads `effortOf` for what
+was picked, so a Kiosk and a Cafe are different amounts of work and the number follows
+which one the Developers chose. This is **more** correct Scrum, not less: you size the
+work you intend to do.
+
+What was left was the two places a number could still contradict the choice behind it.
+
+- **A need carried a size of its own**, before anybody had decided anything, which the
+  choice then overwrote with a different one: "somewhere to eat" was five points until
+  somebody picked a kiosk, which is three. A need has no size now. It is not sizable,
+  and that is the point of it.
+- **An item could be sized and then changed.** A habitat sized as a medium one can be
+  made large on the strip in two presses, leaving its points standing as a claim about
+  work nobody is doing. `sizedAs` records what the game reckoned the work was worth at
+  the moment they sized it, and `outgrown` compares that with what it is now.
+
+It SAYS so and stops there. Re-sizing on their behalf would take the estimate off the
+people whose estimate it is - which is the same rule the Retrospective already keeps
+from the other end: nothing in this game reads a cost back into a size, because a size
+derived from what happened makes velocity a tautology.
+
+---
+
+## All six are built
+
+The model is complete. What is left is what the game does with it, which is play rather
+than plumbing: how many of the seeded items should be needs rather than one, and whether
+a Product Goal should push needs the way the Review does.
 
 ---
 

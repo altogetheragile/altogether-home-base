@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
-import { isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, enclosureOf, activeWipLimit, acSettled } from './engine';
-import { EYEBROW, FOCUS } from './ui/tokens';
-import { Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
+import { isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, enclosureOf, activeWipLimit, acSettled, outgrown } from './engine';
+import { EYEBROW, FOCUS, TONE } from './ui/tokens';
+import { AlertCircle, Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
 
 // One item, in the one place its detail lives.
 //
@@ -130,6 +130,21 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
             <Users className="h-3.5 w-3.5" />
             {devs.length ? devs.map((d) => d.name).join(' · ') : 'nobody yet'}
           </p>
+          {/* The work has changed since they sized it - which mostly happens HERE rather than at the
+              bench, because the control that changes it is the footprint on the build strip and the
+              item is mid-Sprint by then. Said, and nothing more: the size is the Developers'. */}
+          {(() => {
+            const moved = outgrown(item);
+            if (!moved) return null;
+            return (
+              <p data-part="outgrown" className={cn(TONE.attention.text, 'mt-1.5 flex items-start gap-1.5 text-xs font-medium')}>
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  Sized as {moved.was} points of work; it is {moved.now} now &middot; worth raising at the Daily Scrum
+                </span>
+              </p>
+            );
+          })()}
         </div>
 
         <div className="grid gap-6 px-5 py-4 sm:grid-cols-2">
