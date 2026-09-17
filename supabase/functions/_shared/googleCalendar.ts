@@ -15,11 +15,46 @@ export interface BusyPeriod {
   end: string;
 }
 
+/**
+ * The OAuth client that issued the refresh token.
+ *
+ * A refresh token is bound to the client that minted it, so these two must be
+ * the pair used at consent. BOOKING_GOOGLE_CLIENT_ID / _SECRET win when set,
+ * falling back to the Search Console client.
+ *
+ * Both exist because the two ways of minting the token need different client
+ * types. scripts/booking-google-auth.mjs uses the Desktop client Search Console
+ * already has; Google's OAuth Playground needs a Web client with the Playground
+ * registered as a redirect URI, which a Desktop client cannot have. Whichever
+ * route was taken, set the matching pair.
+ */
+function oauthClient(): { id: string; secret: string } {
+  return {
+    id: Deno.env.get('BOOKING_GOOGLE_CLIENT_ID') || Deno.env.get('GSC_CLIENT_ID') || '',
+    secret: Deno.env.get('BOOKING_GOOGLE_CLIENT_SECRET') || Deno.env.get('GSC_CLIENT_SECRET') || '',
+  };
+}
+
 async function getAccessToken(): Promise<string> {
+  const client = oauthClient();
+  const refreshToken = Deno.env.get('BOOKING_GOOGLE_REFRESH_TOKEN') ?? '';
+
+  // Naming the missing piece saves a confusing 400 from Google that says only
+  // "invalid_client" or "invalid_grant".
+  if (!client.id || !client.secret) {
+    throw new Error(
+      'Google is not configured: set BOOKING_GOOGLE_CLIENT_ID and BOOKING_GOOGLE_CLIENT_SECRET ' +
+        '(or rely on GSC_CLIENT_ID and GSC_CLIENT_SECRET).',
+    );
+  }
+  if (!refreshToken) {
+    throw new Error('Google is not configured: set BOOKING_GOOGLE_REFRESH_TOKEN.');
+  }
+
   const params = new URLSearchParams({
-    client_id: Deno.env.get('GSC_CLIENT_ID') ?? '',
-    client_secret: Deno.env.get('GSC_CLIENT_SECRET') ?? '',
-    refresh_token: Deno.env.get('BOOKING_GOOGLE_REFRESH_TOKEN') ?? '',
+    client_id: client.id,
+    client_secret: client.secret,
+    refresh_token: refreshToken,
     grant_type: 'refresh_token',
   });
 
@@ -30,7 +65,15 @@ async function getAccessToken(): Promise<string> {
   });
 
   if (!res.ok) {
-    throw new Error(`Google token error ${res.status}: ${await res.text()}`);
+    const body = await res.text();
+    // The commonest cause is a refresh token minted by one OAuth client and
+    // presented with another's credentials. Google's reply says only
+    // "invalid_grant" or "invalid_client", which sends people hunting for a
+    // typo instead.
+    const hint = /invalid_grant|invalid_client/.test(body)
+      ? ' (the refresh token and the client id/secret must come from the SAME OAuth client)'
+      : '';
+    throw new Error(`Google token error ${res.status}${hint}: ${body}`);
   }
 
   const data = await res.json();
