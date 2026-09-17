@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft } from './types';
-import { availableItems, notReady, refinementTalk, readyHorizon, sprintCapacity } from './engine';
+import { availableItems, notReady, outgrown, refinementTalk, readyHorizon, sprintCapacity } from './engine';
 import { REFINE_COSTS } from './config';
 import { ProductBacklogSidebar, SplitEpicPanel, ChooseSolutionPanel } from './Board';
 import { PlanningPoker } from './PlanningPoker';
@@ -145,6 +145,23 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
           <p key={i} className="text-xs"><span className="font-semibold">{d.name}</span>: {d.line}</p>
         ))}
       </div>
+
+      {/* The work has changed since they sized it. Said, and nothing more: re-sizing on their
+          behalf would take the estimate off the people whose estimate it is. The button that does
+          something about it is already on this card. */}
+      {(() => {
+        const moved = outgrown(item);
+        if (!moved) return null;
+        return (
+          <p data-part="outgrown" className={cn(TONE.attention.text, 'flex items-start gap-1.5 text-[11px] font-medium')}>
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>
+              Sized when this was {moved.was} points of work; it is {moved.now} now.
+              The size is the Developers' - size it again if it should change.
+            </span>
+          </p>
+        );
+      })()}
 
       {item.story && <p className="text-xs italic text-muted-foreground">{item.story}</p>}
 

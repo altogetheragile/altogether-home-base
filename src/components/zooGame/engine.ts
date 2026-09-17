@@ -656,8 +656,33 @@ export function applyPoRefinements(state: ZooGameState, d: PoDecisions): ZooGame
 /** Commit an estimate to a Product Backlog item (refinement): it becomes sized and can now
  *  be planned. */
 export function estimateItem(state: ZooGameState, id: string, points: number): ZooGameState {
-  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog' ? { ...it, estimate: points, unsized: false, carriedOver: false } : it));
+  // `sizedAs` records what the item was worth at the moment they sized it, by the game's own
+  // reckoning. It is not the estimate and it never becomes one: it is the yardstick that lets the
+  // game notice later that the work has changed out from under the number. See `outgrown`.
+  const backlog = state.backlog.map((it) => (it.id === id && it.status === 'backlog'
+    ? { ...it, estimate: points, unsized: false, carriedOver: false, sizedAs: effortOf(it) } : it));
   return chargeRefine(state, { ...state, backlog }, REFINE_COSTS.estimate);
+}
+
+/** Whether this item has stopped being the thing that was sized, and what it is now.
+ *
+ *  You size the work you intend to do. Nothing stops the Developers changing their minds about the
+ *  work afterwards - a habitat sized as a small one can be made large on the strip in two presses -
+ *  and when they do, the points standing beside it are a claim about work nobody is doing.
+ *
+ *  It SAYS so and stops there. Re-sizing on their behalf would take the estimate off the people
+ *  whose estimate it is, and the Retrospective is emphatic about the same rule from the other end:
+ *  nothing in this game reads a cost back into a size, because an estimate derived from what
+ *  happened makes velocity a tautology. */
+export function outgrown(item: BacklogItem): { was: number; now: number } | null {
+  // `trueSize` stands in where nobody sized it in front of us. Most of the Product Backlog arrives
+  // already sized - seeded, or sized off-screen by a team that has not taken refinement on - and
+  // `trueSize` is the same reckoning of the same work, made when the item was written. Without the
+  // fallback this said nothing at all about the items a player actually meets.
+  const was = item.sizedAs ?? item.trueSize;
+  if (item.unsized || was == null) return null;
+  const now = effortOf(item);
+  return now === was ? null : { was, now };
 }
 
 // ============= The plan: decomposing a PBI into tasks (Planning's "how") =============
@@ -2267,8 +2292,8 @@ function escalateSignals(prevAge: Record<string, number>, fresh: Signal[]): { si
  *
  *  It used to build the answer as well as the question - "Food outlet", category amenity, services
  *  food, five points - so a complaint arrived on the Product Backlog with nothing left to decide.
- *  Emergent work still arrives UNSIZED: `trueSize` is the hidden size the planning poker clusters
- *  around once there is something to size. */
+ *  Emergent work arrives UNSIZED and unsizable: a need has no size at all until the Developers have
+ *  chosen what will meet it, and the choice is what gives it one. */
 function needFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
   const need = SIGNAL_NEEDS[sig.drivenBy];
   if (!need) return null;
@@ -2277,7 +2302,8 @@ function needFromSignal(sig: Signal, state: ZooGameState): BacklogItem | null {
     id, name: need.name, category: 'need',
     story: `As ${need.story.as} I want ${need.story.want} so that ${need.story.soThat}`,
     acceptance: need.criteria,
-    trueSize: need.trueSize,
+    // No size. Nobody has decided what the work is, so there is nothing to size - and a number here
+    // would be a guess the choice then overwrote with a different one.
     status: 'backlog', sprintNumber: null, accessible: true, zone: 'General', unsized: true, estimate: 0,
   };
 }
@@ -2291,7 +2317,7 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
   if (!sig) return state;
   const raised = needFromSignal(sig, state);
   if (!raised) return state;
-  const item = refinedOffScreen(state, raised, raised.trueSize ?? 5);
+  const item = refinedOffScreen(state, raised, 5);
   const taken = { ...state, backlog: [...state.backlog, item], signals: state.signals.filter((_, i) => i !== index),
     // Kept as a fact as well as a sentence. See `signalLog`: the decision log is prose for the
     // Retrospective to read back, and this is what the NEXT Review reads to tell a complaint it
