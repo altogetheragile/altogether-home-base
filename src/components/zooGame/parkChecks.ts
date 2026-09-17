@@ -446,6 +446,21 @@ export function verdicts(state: ZooGameState, item: BacklogItem): (Verdict | nul
   return (item.acceptance ?? []).map((label) => checkCriterion(state, item, label));
 }
 
+/** What a facility was ASKED to offer, read from the criteria it carries.
+ *
+ *  The item used to carry it as a field, which made it the question and its own answer: a Toilets
+ *  card was written offering toilets, so the criterion asking whether you could find a cubicle was
+ *  met before anybody built anything. The criterion is the question now, and what it offers is the
+ *  Developers' answer, given under Offers - so where the game needs to know what was WANTED (the AI
+ *  seats, playing the Developers), it reads the question. */
+export function wantedServices(item: BacklogItem): 'food' | 'toilet' | 'rest' | undefined {
+  const ids = new Set((item.acceptance ?? []).map((a) => criterionFor(a)?.id));
+  if (ids.has('sells-food')) return 'food';
+  if (ids.has('has-cubicles')) return 'toilet';
+  if (ids.has('somewhere-to-sit')) return 'rest';
+  return undefined;
+}
+
 /** Whether the park is the one answering this criterion. */
 export const isChecked = (state: ZooGameState, item: BacklogItem, label: string): boolean =>
   checkCriterion(state, item, label) !== null;
@@ -504,6 +519,13 @@ export function applyParkChecks(state: ZooGameState): ZooGameState {
   const backlog = state.backlog.map((item) => {
     const acs = item.acceptance ?? [];
     if (!acs.length) return item;
+    // Only for work somebody has actually started. The park answered for everything on the Product
+    // Backlog, so an item was green before anybody touched it: a Toilets card read "3 of 3, ready
+    // for Priya" while its own card said "Next: design the toilets". It is the same fault the plan
+    // ticking below was fixed for - "tasks are ticked off as complete before I pull the card to
+    // Doing" - and for the same reason: a preset is not work, and neither is a field the item was
+    // written with.
+    if (item.status !== 'committed' || !item.started) return item;
     let touched = false;
     const next = [...(item.acConfirmed ?? [])];
     acs.forEach((label, i) => {

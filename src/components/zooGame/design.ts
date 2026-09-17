@@ -1191,9 +1191,20 @@ export function presetFor(item: BacklogItem): ItemDesign {
   // fence and the coat: the control went and the step was left waiting for it.
   if (item.category === 'flora') return { parts: { type: item.template ?? 'tree' }, colors: floraDefaultColors(item.template ?? 'tree') };
   if (item.category === 'amenity') {
-    const kind = item.template ?? buildingTypeFor(item.name, item.services);
+    // What KIND of building it is is the Developers', and nothing guesses it for them any more: a
+    // Toilets item was drawn as a toilet block from the moment it was written, so the one decision
+    // the toolbar opens with had already been made and drawn. Reported from playing it: "the
+    // toilets already appears as a toilet structure. It should be like any other structure - the
+    // devs decide."
+    //
+    // `buildingTypeFor` still exists and is still right: it is the ADVICE, and it is what the
+    // Developers pick when the game is playing them. See `aiDesign`.
+    const kind = item.template;
     // ...and a building comes with walls, a roof and a sign it can actually be seen to have.
-    return { parts: { type: kind, sign: 'on' }, colors: { walls: '#e6ddcf', roof: '#a4623a', sign: '#3f6f4f' } };
+    // Walls and a roof, and NO name board. "Can I tell what it is from outside?" is answered by
+    // putting a sign on it and giving it a colour, which is a decision - and a building born with
+    // one had that decision made for it before anybody opened the card.
+    return { parts: { ...(kind ? { type: kind } : {}), sign: 'on' }, colors: { walls: '#e6ddcf', roof: '#a4623a' } };
   }
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: speciesColors(item) };
 }

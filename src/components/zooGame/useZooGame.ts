@@ -3,7 +3,7 @@ import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
 import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
-import { applyParkChecks } from './parkChecks';
+import { applyParkChecks, wantedServices } from './parkChecks';
 import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail } from './trail';
 import { aiDesign } from './aiSeats';
@@ -218,7 +218,12 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       const sized = action.byTheGame && now?.category === 'enclosure' && !now.enclosureSize
         ? setEnclosureSize(state, action.id, sizeForTheAnimals(now, state.backlog))
         : state;
-      return buildItem(sized, action.id, design);
+      // ...and what a building offers, which is a field on the item too, and is nobody's default
+      // any more. What it was ASKED for is in its criteria, and that is what these Developers build.
+      const serving = action.byTheGame && now?.category === 'amenity' && !now.services
+        ? setServices(sized, action.id, wantedServices(now) ?? null)
+        : sized;
+      return buildItem(serving, action.id, design);
     }
     case 'EDIT_ITEM':
       return editItem(state, action.id, action.design);

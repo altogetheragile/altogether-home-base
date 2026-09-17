@@ -1,7 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
-import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, type ItemDesign } from './design';
+import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, buildingTypeFor, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
 import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
@@ -105,6 +105,13 @@ export function aiDesign(item: BacklogItem, living: { template?: string; id?: st
   }
   if (item.category === 'flora' && !parts.structure) parts.structure = item.template ?? 'tree';
   if (item.category === 'amenity') {
+    // Which building, which nothing guesses any more. When the game is playing the Developers it
+    // builds what the card suggests, which is what the advice says.
+    if (!parts.type) parts.type = buildingTypeFor(item.name, item.services);
+    if (!parts.structure) parts.structure = parts.type;
+    // A name board over the door, which a building is no longer born with: "can I tell what it is
+    // from outside?" is answered by putting one on, and that is a decision somebody makes.
+    paint('sign', '#3f6f4f');
     paint('walls', '#cfd4d8'); paint('roof', '#9aa3ab'); paint('sign', '#e6842a');
     if (parts.sign === 'off') delete parts.sign;      // a building visitors cannot find is not Done
   }

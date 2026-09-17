@@ -597,7 +597,8 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
       });
     } else {
       created.push({
-        id: mem.id, name: mem.name, category: 'amenity', zone, services: mem.services, serviceCapacity: DEFAULT_SERVICE_CAPACITY,
+        // ...and not what it offers: that is the Developers' answer, given under Offers.
+        id: mem.id, name: mem.name, category: 'amenity', zone,
         acceptance: amenityAcceptance(mem.name, mem.services),
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0, trueSize: effortOf({ category: 'amenity', services: mem.services }),
       });

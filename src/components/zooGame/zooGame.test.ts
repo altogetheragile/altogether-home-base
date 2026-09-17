@@ -5,8 +5,8 @@ import {
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
-import { zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
-import { applyParkChecks, checkCriterion } from './parkChecks';
+import { setServices, zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
+import { applyParkChecks, checkCriterion, wantedServices } from './parkChecks';
 import { lookAhead } from './lookAhead';
 import { standingOnPark, parkPositions, restingPlace } from './parkModel';
 import { whereItStands } from './parkModel';
@@ -33,7 +33,12 @@ const FULL_DESIGN: ItemDesign = { parts: {}, colors: { body: '#c8873b', head: '#
  *  and confirm its placement criteria - which is what earns the Product Owner's sign-off and lets
  *  it be released. */
 function finish(state: ZooGameState, id: string, design: ItemDesign = FULL_DESIGN): ZooGameState {
-  let s = buildItem(state, id, design);
+  // Building a facility includes saying what it offers: that is a field on the item rather than on
+  // its design, and nothing defaults to it - what it was ASKED for is in its criteria.
+  const asked = state.backlog.find((x) => x.id === id);
+  let s = asked?.category === 'amenity' && !asked.services
+    ? setServices(state, id, wantedServices(asked) ?? 'food') : state;
+  s = buildItem(s, id, design);
   const it = s.backlog.find((x) => x.id === id);
   for (const t of it?.tasks ?? []) if (!t.done) s = toggleItemTask(s, id, t.id);
   return accept(s, id);
@@ -3107,8 +3112,13 @@ describe('zoo game: an exhibit is stocked, not built', () => {
 
 describe('zoo game: the park answers the criteria it can answer', () => {
   const lion = (s: ZooGameState) => s.backlog.find((i) => i.id === 'lion')!;
+  // Work in hand: the park answers for what somebody is building, not for everything on the
+  // Product Backlog. Stocking an animal IS the work, so the fixture says so.
   const stock = (s: ZooGameState, group: AnimalGroup): ZooGameState =>
-    applyParkChecks({ ...s, backlog: s.backlog.map((it) => (it.id === 'lion' ? { ...it, draftDesign: { parts: {}, colors: {}, group } } : it)) });
+    applyParkChecks({ ...s, backlog: s.backlog.map((it) => (it.id === 'lion'
+      ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, started: true,
+        draftDesign: { parts: {}, colors: {}, group } }
+      : it)) });
 
   it('leaves judgement alone and takes the measurements', () => {
     const s = initialZooState(1);
