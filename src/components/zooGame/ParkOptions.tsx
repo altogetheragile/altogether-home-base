@@ -686,9 +686,13 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             onClick={press} disabled={!ask && !api.onOpenCard}
             title={ask ? `Offer it to ${how.po}` : api.onOpenCard ? 'Open the card and read its criteria' : undefined}
             className={cn(FOCUS, 'flex h-9 min-w-0 shrink items-center gap-1.5 rounded-md border px-2.5 text-xs',
-              how.ready ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-border bg-card',
+              how.accepted ? 'border-emerald-500/60 bg-emerald-500/10'
+                : ask ? 'border-primary/60 bg-primary/10' : 'border-border bg-card',
               (ask || api.onOpenCard) && 'hover:bg-muted/60')}>
-            {how.ready && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />}
+            {/* The tick means the Product Owner has accepted it, and nothing else. It used to mean
+                "every fact is in", which is a different thing and sat on the chip beside a button
+                asking her to come and look - a finished tick over an unanswered question. */}
+            {how.accepted && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />}
             <span className="truncate font-bold">{inside ? `Inside ${inside.name}` : subject.name}</span>
             {how.criteria.length > 0 && (
               <span className="shrink-0 tabular-nums text-muted-foreground">{how.count}</span>

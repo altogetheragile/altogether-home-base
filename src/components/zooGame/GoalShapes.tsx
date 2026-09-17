@@ -62,7 +62,9 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
   measures?: GoalMeasure[];
   onSet: (shape: GoalShape, goal: string, measures: GoalMeasure[]) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  // Open. The shapes are the help this panel exists to give, and a closed drawer on the one screen
+  // that asks you to write something is help nobody finds.
+  const [open, setOpen] = useState(true);
   const [pick, setPick] = useState<GoalShape>(shape ?? 'outcome');
   const [draft, setDraft] = useState(goal);
   const [rows, setRows] = useState<GoalMeasure[]>(measures?.length ? measures : [{ metric: 'happiness', target: 70 }]);
