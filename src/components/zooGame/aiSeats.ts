@@ -1,7 +1,7 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
 import type { SeatName } from './useZooSessions';
 import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
-import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, type ItemDesign } from './design';
+import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
 import { CANVAS_W, PLAY_H, FRONT_Y } from './parkLayout';
@@ -54,7 +54,7 @@ const topUnsized = (s: ZooGameState): BacklogItem | undefined =>
  *  Built from the same lists the studio's controls are built from, rather than a fixed palette,
  *  so it can only ever satisfy criteria the game actually asks for. A car park has tarmac and
  *  markings and no foliage; asking for foliage would leave it unbuildable forever. */
-export function aiDesign(item: BacklogItem): ItemDesign {
+export function aiDesign(item: BacklogItem, living: { template?: string; id?: string }[] = []): ItemDesign {
   // What is already there, not a blank one. The Developers take over a card somebody is working on
   // and build it, and building used to mean "a preset, painted" - so a ground colour, a barrier, a
   // pool and a tree chosen by the player were thrown away the moment a Developer touched the same
@@ -74,6 +74,13 @@ export function aiDesign(item: BacklogItem): ItemDesign {
   }
   if (item.category === 'enclosure') {
     paint('ground', '#8c7a5b'); paint('fence', '#6b5b45');
+    // What borders it, which nothing defaults to any more: an unchosen habitat is unchosen, so the
+    // criterion asking whether anything holds them fails until somebody decides. That somebody is
+    // these Developers when nobody else is playing them, and what they pick is the advice the strip
+    // would give - the smallest thing that holds what lives here.
+    if (!parts.barrier) {
+      parts.barrier = barrierOf(base, living).key;
+    }
     // ...and the shelter and water the plan says they laid. They used to paint the ground and
     // tick "Lay the ground, shelter and water", which is three things promised and one done -
     // and it left a hatched box that no Product Owner could look at and say an animal lives

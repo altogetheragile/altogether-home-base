@@ -205,7 +205,9 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       // Reported from playing it twice - "I still lose the ground colour", "the hedge I picked
       // defaults to high fence".
       const now = state.backlog.find((it) => it.id === action.id);
-      const design = action.byTheGame && now ? aiDesign(now) : action.design;
+      // ...and what lives in it, because what borders a habitat depends on what it has to hold.
+      const living = now ? state.backlog.filter((it) => it.enclosureId === now.id) : [];
+      const design = action.byTheGame && now ? aiDesign(now, living) : action.design;
       return buildItem(state, action.id, design);
     }
     case 'EDIT_ITEM':

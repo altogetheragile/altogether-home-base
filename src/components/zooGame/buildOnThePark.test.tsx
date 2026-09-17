@@ -55,10 +55,16 @@ describe('where each criterion is answered', () => {
 });
 
 describe('what the park can already answer about a habitat', () => {
+  /** A habitat the Developers have worked on. Something borders it, because nothing defaults to a
+   *  barrier any more: an unchosen habitat is unchosen, and the criterion says so. */
   const habitat = (design?: Partial<ItemDesign>) => {
     const s = game();
     const h = itemOf(s, 'enclosure');
-    const item = { ...h, draftDesign: { ...presetFor(h), ...design } } as BacklogItem;
+    const preset = presetFor(h);
+    const item = { ...h, draftDesign: {
+      ...preset, ...design,
+      parts: { ...preset.parts, barrier: 'high', ...(design?.parts ?? {}) },
+    } } as BacklogItem;
     return { s: { ...s, backlog: s.backlog.map((it) => (it.id === h.id ? item : it)) } as ZooGameState, item };
   };
 
@@ -106,7 +112,7 @@ describe('the inspector on the park', () => {
     // In hand, so it is standing on the park while it is built: the park cannot answer where
     // something is until it is somewhere.
     const built = { ...h, status: 'committed' as const, started: true,
-      design: { ...p, colors: { ...p.colors, ground: '#c8a06a' },
+      design: { ...p, parts: { ...p.parts, barrier: 'high' }, colors: { ...p.colors, ground: '#c8a06a' },
         flora: addFloraTo({ ...p, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...p, water: [] }) },
     } as BacklogItem;
     const seated = { ...s, backlog: s.backlog.map((it) => (it.id === h.id ? built : it)) } as ZooGameState;

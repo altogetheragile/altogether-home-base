@@ -1500,6 +1500,17 @@ export const needsHolding = (species?: string): number =>
  *  have built something adequate rather than something negligent. That matters for what the choice
  *  MEANS: an escape should be a decision somebody made, not a default nobody saw. Choosing worse than
  *  the animals need is the mistake this exists to allow; choosing a wall is the other one. */
+/** What the Developers actually chose to border this habitat with, or nothing.
+ *
+ *  `barrierOf` answers a different question - what WOULD hold these animals - and answering it for
+ *  an unchosen habitat is the game making the decision and then marking its own homework: the
+ *  criterion asking whether anything holds them went green before anybody had chosen anything.
+ *  Reported from playing it: "I'm still not picking the enclosure from scratch as a Dev."
+ *
+ *  So the criterion and the strip ask THIS, and `barrierOf` stays what it was: the advice. */
+export const chosenBarrier = (design: ItemDesign): Barrier | undefined =>
+  BARRIERS.find((b) => b.key === design.parts.barrier);
+
 export const barrierOf = (design: ItemDesign, living: { template?: string; id?: string }[] = []): Barrier => {
   const chosen = BARRIERS.find((b) => b.key === design.parts.barrier);
   if (chosen) return chosen;

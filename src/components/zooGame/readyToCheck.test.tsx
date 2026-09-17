@@ -23,6 +23,9 @@ const built = (): { s: ZooGameState; item: BacklogItem } => {
   const preset = presetFor(h);
   const design = {
     ...preset,
+    // What borders it, chosen. Nothing defaults to a barrier now, and a habitat nothing borders
+    // is not a finished habitat.
+    parts: { ...preset.parts, barrier: 'high' },
     colors: { ...preset.colors, ground: '#c8a06a' },
     flora: addFloraTo({ ...preset, flora: [] }, 'rocks'),
     water: addWaterTo({ ...preset, water: [] }),

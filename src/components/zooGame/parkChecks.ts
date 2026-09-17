@@ -1,5 +1,5 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, PATH_WIDTHS, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, PATH_WIDTHS, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict, chosenBarrier } from './design';
 import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled, acTally } from './engine';
 import { whereItStands, groundSize } from './parkModel';
 import { spansTheWater, inWater } from './parkWater';
@@ -166,6 +166,12 @@ export const CRITERIA: CriterionDef[] = [
       const design = currentDesign(item);
       const living = state.backlog.filter((it) => it.enclosureId === item.id);
       if (isTank(design, living, item)) return { met: true, evidence: 'Glass' };
+      // Nothing chosen is not "the fence that would have done". The game used to answer this by
+      // working out what WOULD hold the animals and then marking that as met, which is the game
+      // making the Developers' decision and then ticking it off for them.
+      if (!chosenBarrier(design)) {
+        return { met: false, evidence: 'nothing borders it yet - choose what holds them' };
+      }
       const shape = ENCLOSURE_SHAPES.find((sh) => sh.key === (design.parts.shape ?? 'rect'));
       const v = barrierVerdict(design, living);
       const where = shape ? `, ${shape.label.toLowerCase()}` : '';
@@ -178,6 +184,9 @@ export const CRITERIA: CriterionDef[] = [
   {
     id: 'roomy', asks: 'Can an animal move about in here?', short: 'room to move about',
     answer: (state, item) => {
+      // ...and how big it is, which is the Developers' decision too. An unchosen footprint used to
+      // read as a medium one, so a habitat nobody had sized had room to move about in it.
+      if (!item.enclosureSize) return { met: false, evidence: 'no footprint chosen yet - how big is it?' };
       const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
       const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
       // Against the animals that will actually live here, where the Product Backlog says which.

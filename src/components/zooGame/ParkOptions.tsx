@@ -4,7 +4,7 @@ import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
   PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize, piecesFor, pieceByKey, applyPiece, floraPalette,
-  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, barrierOf,
+  hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, chosenBarrier,
   type ItemDesign,
 } from './design';
 import { groupsFor, openCriteria, wouldSettle, isAbout, labelOf, type GroupDef, type GroupId } from './buildGroups';
@@ -280,13 +280,22 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       case 'barrier':
         return (
           <Row label={L('Barrier')}>
+            {!chosenBarrier(design) && (
+              <span className="w-full pb-1 text-[11px] text-amber-700 dark:text-amber-300">
+                Nothing borders it yet. A hedge shows them beautifully and holds almost nothing; a
+                wall holds anything and hides what people came to see.
+              </span>
+            )}
             {/* Asked WITH the animals in it, which is how the criterion asks. Without them, an
                 unchosen barrier shows as a low hedge while the card says "a 4m fence, holds them" -
                 two answers to one question, and the strip's one is the one that looks like a choice
                 somebody made. Reported from playing it: "the hedge setting I picked defaults to high
                 fence." */}
             {BARRIERS.map((b) => {
-              const on = barrierOf(design, living).key === b.key;
+              // What was CHOSEN, not what would do. Showing the adequate default as pressed was the
+              // strip answering the question on the Developers' behalf and then looking like they
+              // had answered it: "I'm still not picking the enclosure from scratch as a Dev."
+              const on = chosenBarrier(design)?.key === b.key;
               return (
                 <button key={b.key} type="button" data-part={`barrier-${b.key}`} aria-pressed={on}
                   title={b.note} onClick={() => set({ parts: { ...design.parts, barrier: b.key } })}
