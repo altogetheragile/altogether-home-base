@@ -16,12 +16,13 @@ import { PickCard } from './PickCard';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
+import { goalLine } from './header';
 import type { EditApi } from './ParkView';
 import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
+import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, Target, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import { EYEBROW, FOCUS, TAP, TONE } from './ui/tokens';
 
 interface SprintBoardProps {
@@ -158,6 +159,10 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
 export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
+  // Whether the Sprint Goal is safe - the strip's own arithmetic, read here rather than worked out
+  // a second time. Two opinions about one Sprint is how a board tells you something the strip does
+  // not.
+  const goalSafe = goalLine(state);
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
   // ...and which item has just been pulled into Doing and is waiting for somebody to take it.
@@ -405,6 +410,44 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col gap-3">
+      {/* The commitment of the Sprint Backlog, on the Sprint Backlog.
+          
+          It was in the top strip and nowhere else: one line, small, truncated where it ran out of
+          room, hidden below a large screen, and behind a popover if you wanted the rest of it. "Our
+          goal is to deliver the Big Cats zone so that visitors have something to se..." is not a
+          commitment anybody can hold in mind while they choose what to pull.
+          
+          The strip keeps its version, and the two are not a duplicate: the strip is always on
+          screen and says whether the Goal is SAFE, with the Goal under it in small type; this says
+          the Goal itself, in full, where the work is chosen. Both read `goalLine`, so they cannot
+          disagree about the same Sprint.
+          
+          Not at Planning: that whole screen is about agreeing this, and saying it twice on one
+          screen is saying it in two weights. */}
+      {state.phase === 'sprint' && (
+        <div data-part="sprint-goal"
+          className="shrink-0 rounded-lg border-2 border-primary/40 bg-primary/[0.07] px-4 py-3">
+          <div className={cn(EYEBROW, 'flex flex-wrap items-center gap-x-2 text-primary')}>
+            <Target className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Sprint Goal
+            <span className="font-normal normal-case tracking-normal text-muted-foreground">
+              commitment of the Sprint Backlog
+            </span>
+          </div>
+          {/* Big enough to read at a glance and wrapping rather than truncating: the whole fault
+              was that it could not be read. */}
+          <p data-part="sprint-goal-text"
+            className={cn('mt-1 text-lg font-bold leading-snug',
+              !state.sprintGoal.trim() && 'font-semibold text-muted-foreground')}>
+            {state.sprintGoal.trim() || 'No Sprint Goal yet - the Scrum Team agrees one at Sprint Planning.'}
+          </p>
+          {/* Whether it is safe, from the Sprint's own arithmetic rather than a second opinion. */}
+          <p data-part="goal-verdict"
+            className={cn('mt-1 text-xs font-medium', goalSafe.risk ? TONE.attention.text : 'text-muted-foreground')}>
+            {goalSafe.line}
+          </p>
+        </div>
+      )}
       {/* The board starts at the top of its pane. The help button, the burndown and the settings
           used to sit here in two rows of their own, above the columns: a band of empty space
           between the tabs and the work. They are the game's tools rather than the board's, so they

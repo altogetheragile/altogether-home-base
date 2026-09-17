@@ -250,8 +250,9 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
   return (
     <div className="space-y-3">
       {/* The commitment of the Product Backlog, on the Product Backlog. An artifact and its
-          commitment belong together - the Sprint Backlog has its Goal above the board, and this is
-          the same rule applied to the artifact that had none. */}
+          commitment belong together, and this said the Sprint Backlog already worked that way. It
+          did not: the Sprint Goal was in the top strip, truncated, and nowhere near the board. It
+          is above the board now, so the claim is true and the two artifacts match. */}
       <div className="rounded-lg border border-primary/25 bg-primary/[0.04] px-3 py-2">
         <div className={cn(EYEBROW, 'flex items-center gap-1.5 text-primary')}>
           <Target className="h-3.5 w-3.5" /> Product Goal <span className="font-normal normal-case tracking-normal text-muted-foreground">commitment of the Product Backlog</span>
