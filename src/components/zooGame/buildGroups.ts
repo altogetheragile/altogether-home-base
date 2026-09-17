@@ -1,8 +1,6 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { CRITERIA, criterionFor, answerable, inspect } from './parkChecks';
 import { LANDSCAPE_TYPES, currentDesign } from './design';
-import { picksAStructure } from './toolboxItems';
-import { structureChosen } from './engine';
 
 // ============= What the strip offers, and what each part of it would settle =============
 //
@@ -21,7 +19,6 @@ import { structureChosen } from './engine';
 // and the player follows the lights.
 
 export type GroupId =
-  | 'structure'
   | 'footprint' | 'shape' | 'holds' | 'ground' | 'barrier' | 'fence' | 'inside'
   | 'stock' | 'look' | 'lives-in'
   | 'type' | 'offers' | 'colours'
@@ -54,15 +51,10 @@ const flora = (it: BacklogItem) => it.category === 'flora';
 const path = (it: BacklogItem) => it.category === 'path';
 
 export const GROUPS: GroupDef[] = [
-  // ---- what kind of thing this is, which is the first thing there is to decide ----
-  //
-  // It settles nothing on its own - no criterion is about the KIND of thing, they are about what it
-  // holds and what it offers - so it is never lit by `wouldSettle`. It is lit by being unanswered,
-  // which is what `litFor` is for: until it has been answered there is nothing to place and nothing
-  // else on the strip can be acted on.
-  { id: 'structure', label: 'Structure', meets: [],
-    applies: (it) => picksAStructure(it.category),
-    litFor: (it) => !structureChosen(it) },
+  // What KIND of thing this is has a toolbar of its own, on the park - see BuildToolbar. It is a
+  // different kind of act from everything here: this strip decides what a thing is LIKE, and that
+  // decides what it is. On the strip it looked like the sixth setting of a thing somebody had
+  // already decided to build.
 
   // ---- a habitat ----
   { id: 'footprint', label: 'Footprint', meets: ['roomy', 'room-to-spare'], applies: habitat },

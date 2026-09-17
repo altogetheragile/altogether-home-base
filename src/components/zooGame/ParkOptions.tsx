@@ -8,7 +8,6 @@ import {
   type ItemDesign,
 } from './design';
 import { groupsFor, openCriteria, wouldSettle, isAbout, labelOf, type GroupDef, type GroupId } from './buildGroups';
-import { structuresFor } from './toolboxItems';
 import { inspect } from './parkChecks';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -176,9 +175,6 @@ export interface ParkOptionsApi {
   /** Open the card, from the chip that names it. The criteria are the item's, so the place to read
    *  them all is the item. */
   onOpenCard?: (id: string) => void;
-  /** The first act of building: what KIND of thing this is going to be. Theirs, and until it is
-   *  made there is nothing to place. */
-  onChooseStructure?: (id: string, key: string) => void;
   /** Offer the finished work to the Product Owner. This used to live on a pill floating under the
    *  object on the park; it belongs beside the controls that finished it. */
   onAskToCheck?: (id: string) => void;
@@ -233,30 +229,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
     /** A row keeps its label only where it says something the menu did not. */
     const L = (label: string) => (label.toLowerCase() === menu.toLowerCase() ? '' : label);
     switch (id) {
-      // What kind of thing to build. The first decision, and the Developers': picking the card used
-      // to put a ghost under the cursor with the shape already settled, so the first act of building
-      // was dropping somebody else's decision on the grass.
-      case 'structure': {
-        const kinds = structuresFor(subject.category);
-        const chosen = currentDesign(subject).parts.structure;
-        return (
-          <div className="space-y-1">
-            <p className="px-1 pb-1 text-[11px] text-muted-foreground">
-              {chosen ? 'What this is being built as. What it holds, how big and what borders it are yours too.'
-                : 'What are you building? Nothing goes on the park until you say.'}
-            </p>
-            {kinds.map((k) => (
-              <button key={k.key} type="button" data-part={`structure-${k.key}`} aria-pressed={chosen === k.key}
-                onClick={() => api.onChooseStructure?.(subject.id, k.key)}
-                className={cn(FOCUS, 'flex w-full items-baseline gap-2 rounded-md border-2 px-2 py-1.5 text-left',
-                  chosen === k.key ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/60')}>
-                <span className="text-xs font-semibold">{k.name}</span>
-                <span className="text-[11px] text-muted-foreground">{k.what}</span>
-              </button>
-            ))}
-          </div>
-        );
-      }
       case 'footprint':
         return (
           <Row label={L('Size')}>
