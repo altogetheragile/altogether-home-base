@@ -8,10 +8,6 @@
 --
 -- Assumes is_admin() already exists (it does, June 2025 migrations).
 
--- Needed for the overlap exclusion constraint on bookings (gist over a scalar
--- column alongside a range).
-create extension if not exists btree_gist;
-
 create type booking_status as enum ('pending', 'confirmed', 'cancelled');
 
 create table booking_types (
@@ -124,17 +120,21 @@ create table bookings (
 -- booking that eats the buffer. Two concurrent requests for 10:00 and 10:30 both
 -- pass the edge function's read-side buffer check and both commit.
 --
--- Ranging over the buffered window closes that. Verified against Postgres 16:
--- a 10:30 start is rejected against a 10:00-10:45 blocking window, and a 10:45
--- start is accepted.
+-- Scope: the WHOLE DIARY, not one booking type (Al's decision, 17 Sep 2026).
+-- There is one of him, so two different types must not land on him at once. This
+-- costs nothing in Layer 1's single-type world and is already right when Layer 3
+-- adds paid sessions.
 --
--- Open question 6 in the spec: this is scoped to booking_type_id. That is right
--- for Layer 1's single type and wrong from Layer 3, when two types could
--- double-book one person. Drop the booking_type_id term to scope it to the whole
--- diary instead.
+-- Because there is no scalar term alongside the range, core Postgres gist over
+-- tstzrange covers this and btree_gist is not needed. Re-adding a scalar term
+-- (say, a coach id when there is more than one coach) would need that extension
+-- back.
+--
+-- Verified against Postgres 16: an overlapping start is rejected, a back-to-back
+-- start inside the buffer is rejected, a start clear of the buffer is accepted,
+-- and two DIFFERENT booking types at the same time are rejected.
 alter table bookings add constraint bookings_no_overlap
   exclude using gist (
-    booking_type_id with =,
     tstzrange(blocks_from, blocks_until) with &&
   ) where (status <> 'cancelled');
 

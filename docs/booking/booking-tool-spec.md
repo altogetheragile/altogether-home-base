@@ -119,9 +119,9 @@ Rules:
   `blocks_from` and `blocks_until` (start minus `buffer_before`, end plus
   `buffer_after`) and the constraint ranges over those. The database enforces the
   buffers rather than trusting the function to have checked them.
-- Decide whether the constraint should be scoped to the booking type or to Al's
-  whole diary. When Layer 3 adds a second type, a type-scoped constraint lets two
-  types double-book one person.
+- **Scope: the whole diary, not one booking type.** There is one of Al, so two
+  different types must not land on him at once. This costs nothing while Layer 1
+  has a single type and is already right when Layer 3 adds paid sessions.
 - All time maths happens server-side in the edge functions. The browser only
   displays.
 - Store UTC. Compute availability in the booking type's timezone
@@ -201,9 +201,8 @@ needs a Zoom account admin to create it:
 - The app needs meeting **write** and **delete** scopes. Zoom moved to granular
   scope names, so read the exact strings off the Marketplace page rather than
   copying an older example.
-- **Confirm the account is paid.** Free Zoom caps every meeting at 40 minutes,
-  one-to-one included. A 30-minute chemistry session fits, but there is no room
-  to overrun, and Layer 3's paid sessions will be longer.
+- The account is paid, so the free tier's 40-minute cap does not apply. Session
+  length is a product decision, not a platform limit.
 
 **Never store Zoom's `start_url`.** It carries an embedded host token - anyone
 holding it can start the meeting as Al. It also expires in roughly two hours, so
@@ -364,6 +363,8 @@ the change fixes it. The string appears in `apps/web/src/app/coaching/page.tsx:3
   15-minute `buffer_after`): one succeeds, one gets 409, because 10:30 sits
   inside the first booking's blocking window. A constraint over the meeting times
   alone would let both through.
+- Two **different booking types** at the same time: one succeeds, one gets 409.
+  The constraint covers the whole diary, so this holds from Layer 3 onward.
 - A 10:45 start against a 10:00 booking succeeds - clear of the buffer.
 - Booking from a browser in New York shows the same UTC instant as London.
 - Zoom fails: the row stays `pending` with no `meeting_id`, and the admin sees it.
@@ -399,6 +400,8 @@ npx supabase functions deploy booking-create --project-ref wqaplkypnetifpqrungv
    Server-to-Server app credentials. If the Altogether Agile Zoom account ever
    grows past one user, name Al's address explicitly in `ZOOM_HOST_EMAIL` rather
    than relying on `me`.
-5. **Is the Zoom account paid?** Free tier caps meetings at 40 minutes.
-6. Should the overlap constraint be scoped to the booking type or to Al's whole
-   diary? Type-scoped is fine for Layer 1's single type and wrong from Layer 3.
+
+Settled on 17 September 2026:
+
+- The Zoom account is paid. No 40-minute cap.
+- The overlap constraint is scoped to the whole diary, not to the booking type.
