@@ -48,10 +48,10 @@ describe('every kind of thing has controls', () => {
   // The part of the strip each kind must offer, and what has to be inside it when you press it. A
   // button that opens an empty panel is the same nothing the lion had, one press further in.
   const wanted: Record<string, { group: Parameters<typeof openGroup>[0]; holds: RegExp }> = {
-    enclosure: { group: 'footprint', holds: /Size/ },
+    enclosure: { group: 'footprint', holds: /tiles/ },
     exhibit: { group: 'stock', holds: /A pair|A family/ },
-    flora: { group: 'planting', holds: /Size|Kind|Bank|Deck|Leaves|Trunk/ },
-    amenity: { group: 'type', holds: /kiosk|cafe|shop/ },
+    flora: { group: 'planting', holds: /Bank|Deck|Leaves|Trunk|Foliage|Blossom|Stone|Water/ },
+    amenity: { group: 'structure', holds: /Kiosk|Cafe|Gift Shop/ },
     path: { group: 'path', holds: /Width/ },
   };
   for (const [category, { group, holds }] of Object.entries(wanted)) {
@@ -75,12 +75,12 @@ describe('every kind of thing has controls', () => {
 });
 
 describe('what you can change about each kind of thing', () => {
-  it('a habitat: its footprint, its shape, its ground, its fence and the way inside', () => {
+  it('a habitat: its size, its shape, its ground, its fence and the way inside', () => {
     const s = game();
     const { container } = open(s, of(s, 'enclosure'));
     showEverything();
     const text = container.textContent ?? '';
-    expect(text).toMatch(/Footprint/);
+    expect(text, 'sizing is not called Size').toMatch(/Size/);
     expect(text).toMatch(/Shape/);
     expect(swatches(openGroup('ground')).some((l) => /^Ground /.test(l)), 'a habitat has no ground colour').toBe(true);
     expect(swatches(openGroup('fence')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);

@@ -22,7 +22,7 @@ import { structureChosen } from './engine';
 
 export type GroupId =
   | 'structure'
-  | 'footprint' | 'shape' | 'ground' | 'barrier' | 'fence' | 'inside'
+  | 'footprint' | 'shape' | 'ground' | 'barrier' | 'fence' | 'inside' | 'grown' | 'clump'
   | 'stock' | 'look' | 'lives-in'
   | 'type' | 'offers' | 'colours'
   | 'planting'
@@ -45,6 +45,14 @@ export interface GroupDef {
   /** Lit for a reason of its own, rather than because it would settle an open criterion. The one
    *  group this is true of is the first decision: what kind of thing to build at all. */
   litFor?: (item: BacklogItem) => boolean;
+  /** What this group's controls WRITE, as stable keys.
+   *
+   *  Hand-kept, like `meets`, and for the same reason: it is the only way to say out loud that two
+   *  menus are asking one question. The game has grown that fault three times - "Holds: land or a
+   *  tank" beside Structure, "Type" beside Structure, "Kind" beside Planting - and each time it was
+   *  found by somebody playing it rather than by the game. `oneQuestionOneMenu` makes it fail the
+   *  build instead. */
+  writes: string[];
 }
 
 const habitat = (it: BacklogItem) => it.category === 'enclosure';
@@ -59,7 +67,9 @@ export const GROUPS: GroupDef[] = [
   // It settles no criterion of its own - the criteria are about what a thing holds and offers, not
   // about what KIND it is - so it is never lit by `wouldSettle`. It is lit by being unanswered,
   // which is what `litFor` is for.
-  { id: 'structure', label: 'Structure', meets: [],
+  // It SEEDS `parts.piece` and the plant's colours rather than owning them: a tree chosen is an oak
+  // to start with, and which oak each plant in the clump is belongs to How many.
+  { id: 'structure', writes: ['parts.structure', 'parts.type', 'parts.ground', 'item.template'], label: 'Structure', meets: [],
     // Said in the words of the thing being built: a habitat is a structure, a lion is a species and
     // a stand of trees is planting.
     labelFor: (it) => structureWord(it.category),
@@ -67,42 +77,48 @@ export const GROUPS: GroupDef[] = [
     litFor: (it) => !structureChosen(it) },
 
   // ---- a habitat ----
-  { id: 'footprint', label: 'Footprint', meets: ['roomy', 'room-to-spare'], applies: habitat },
-  { id: 'shape', label: 'Shape', meets: [], applies: habitat },
+  { id: 'footprint', writes: ['item.enclosureSize'], label: 'Size', meets: ['roomy', 'room-to-spare'], applies: habitat },
+  { id: 'shape', writes: ['parts.shape'], label: 'Shape', meets: [], applies: habitat },
   // "Holds: land or a tank" was this question asked twice - a paddock holds land and a tank holds
   // water, and Structure is where that is decided now.
-  { id: 'ground', label: 'Surface', meets: ['a-home'], applies: habitat },
-  { id: 'barrier', label: 'Barrier', meets: ['held'], applies: habitat },
-  { id: 'fence', label: 'Fence', meets: [], applies: habitat },
-  { id: 'inside', label: 'Inside', meets: ['a-home'], applies: habitat },
+  { id: 'ground', writes: ['colors.ground', 'colors.water'], label: 'Surface', meets: ['a-home'], applies: habitat },
+  { id: 'barrier', writes: ['parts.barrier'], label: 'Barrier', meets: ['held'], applies: habitat },
+  // What it looks like. Called Look wherever it happens - a habitat's fence, a building's walls
+  // and sign, an animal's coat, a plant's foliage - because it is one act, and it was three words.
+  { id: 'fence', writes: ['colors.fence'], label: 'Look', meets: [], applies: habitat },
+  { id: 'inside', writes: ['design.water', 'design.flora'], label: 'Inside', meets: ['a-home'], applies: habitat },
 
   // ---- an animal ----
-  { id: 'stock', label: 'How many', meets: ['a-group', 'room-to-spare'], applies: animal },
+  { id: 'stock', writes: ['design.group'], label: 'How many', meets: ['a-group', 'room-to-spare'], applies: animal },
   // A white lion is what the posters are of, and whether you can tell it is a lion is a person's
   // judgement rather than a measurement - so this group settles nothing the park can check, and
   // gets no light. It is still the control somebody reaches for at the Review.
-  { id: 'look', label: 'Look', meets: [], applies: animal },
-  { id: 'lives-in', label: 'Lives in', meets: ['findable', 'room-to-spare'], applies: animal },
+  { id: 'look', writes: ['colors.coat'], label: 'Look', meets: [], applies: animal },
+  { id: 'lives-in', writes: ['item.enclosureId'], label: 'Lives in', meets: ['findable', 'room-to-spare'], applies: animal },
 
   // ---- a building ----
-  { id: 'type', label: 'Type', meets: [], applies: building },
-  { id: 'offers', label: 'Offers', meets: ['sells-food', 'has-cubicles', 'somewhere-to-sit'], applies: building },
+  // "Type: kiosk, cafe, shop" was Structure asked twice. What a building IS is the first decision.
+  { id: 'offers', writes: ['item.services'], label: 'Offers', meets: ['sells-food', 'has-cubicles', 'somewhere-to-sit'], applies: building },
   // The board over the door is a colour, which is why the colours are not purely cosmetic for a
   // building: "no name board yet - put a sign on it and give it a colour".
-  { id: 'colours', label: 'Colours', meets: ['says-what-it-is'], applies: building },
+  { id: 'colours', writes: ['colors.sign', 'colors.walls', 'colors.roof', 'colors.door'], label: 'Look', meets: ['says-what-it-is'], applies: building },
 
   // ---- planting ----
   // What it LOOKS like: how big it grew, what colour it is, how many of them. What it IS is the
   // first decision, on Planting, and this used to be called that too - two menus with one name.
-  { id: 'planting', label: 'Look', meets: [], applies: flora,
+  { id: 'grown', writes: ['parts.size'], label: 'Size', meets: [],
+    applies: (it) => flora(it) && !LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') },
+  { id: 'clump', writes: ['item.copies', 'parts.piece'], label: 'How many', meets: [],
+    applies: (it) => flora(it) && !LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') },
+  { id: 'planting', writes: ['colors.plant'], label: 'Look', meets: [], applies: flora,
     labelFor: (it) => (LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') ? 'Style' : 'Look') },
 
   // ---- the pen, and the park ----
   // Four groups were four: the pen, how wide, the runs laid, and the surface. They are one piece of
   // work - laying a path - and they are one menu.
-  { id: 'path', label: 'Paths', meets: ['walkable-to', 'joins-up', 'side-by-side'],
+  { id: 'path', writes: ['parts.thickness', 'colors.path', 'state.connectors'], label: 'Paths', meets: ['walkable-to', 'joins-up', 'side-by-side'],
     applies: (it) => path(it) || habitat(it) || building(it) },
-  { id: 'park', label: 'On the park', meets: ['crosses-water'],
+  { id: 'park', writes: ['item.rot', 'item.pos'], label: 'On the park', meets: ['crosses-water'],
     applies: (it) => !path(it) && !animal(it) },
 ];
 

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Plus, Minus, Trash2, Check, ChevronDown } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
-  currentDesign, floraColors, floraDefaultColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
-  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, LANDSCAPE_TYPES, BUILDING_TYPES, groupSize, piecesFor, pieceByKey, applyPiece, floraPalette,
+  currentDesign, floraColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
+  PLANTING_TYPES, HABITAT_FEATURE_TYPES, PATH_WIDTHS, PATH_SURFACES, groupSize, piecesFor, pieceByKey, applyPiece, floraPalette,
   hasRoomToRoam, homeSizeOf, SWATCHES, coatWord, looksFor, isTank, groupChoices, BARRIERS, chosenBarrier,
   enclosureWater, enclosureFlora,
   type ItemDesign,
@@ -451,14 +451,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         );
 
       // ---- a building ----
-      case 'type':
-        return (
-          <Row label={L('Type')}>
-            {BUILDING_TYPES.slice(0, 5).map((t) => (
-              <Chip key={t} on={kind === t} onClick={() => set({ parts: { ...design.parts, type: t } })}>{t}</Chip>
-            ))}
-          </Row>
-        );
       // What it OFFERS, which is a different question from what it looks like.
       //
       // The zoo counts three things a visitor needs: somewhere to eat, a toilet, somewhere to sit.
@@ -497,36 +489,30 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         );
 
       // ---- planting ----
-      case 'planting':
+      // How big the plants grew - a sapling, a tree, a mature oak. A choice about the PLANT, which
+      // is why both drawings read it. These chips used to write a rectangle on the park instead:
+      // "what's the point of expanding the trees?"
+      case 'grown':
+        return (
+          <Row label={L('Size')}>
+            {(['small', 'medium', 'large'] as const).map((key) => (
+              <Chip key={key} on={(design.parts.size ?? 'medium') === key}
+                title={{ small: 'A sapling', medium: 'A tree', large: 'A mature one' }[key]}
+                onClick={() => set({ parts: { ...design.parts, size: key } })}>{key[0].toUpperCase()}</Chip>
+            ))}
+          </Row>
+        );
+
+      // A planting item is a CLUMP, not one plant: "we can only add one tree and one type of tree.
+      // There used to be the ability to plant multiple trees of different types."
+      //
+      // Called How many, like the animals', because it is the same act. What KIND of plant this is
+      // belongs to Planting; which piece each one in the clump is belongs here.
+      case 'clump':
         return (
           <>
-            {/* A planting card is a kind of planting - a choice about the thing itself, not about
-                what card it came from. Landscape features came from their card knowing what they
-                are, so they are not asked again. */}
-            {!LANDSCAPE_TYPES.includes(kind) && (
-              <Row label="Kind">
-                {PLANTING_TYPES.map((t) => (
-                  <Chip key={t} on={kind === t}
-                    onClick={() => set({ parts: { ...design.parts, type: t, piece: t }, colors: { ...design.colors, ...floraDefaultColors(t) } })}>{t}</Chip>
-                ))}
-              </Row>
-            )}
-            {/* How big the plants grew - a sapling, a tree, a mature oak. A choice about the PLANT,
-                which is why both drawings read it. These chips used to write a rectangle on the park
-                instead: "what's the point of expanding the trees?" */}
-            {!LANDSCAPE_TYPES.includes(kind) && (
-              <Row label={L('Size')}>
-                {(['small', 'medium', 'large'] as const).map((key) => (
-                  <Chip key={key} on={(design.parts.size ?? 'medium') === key}
-                    title={{ small: 'A sapling', medium: 'A tree', large: 'A mature one' }[key]}
-                    onClick={() => set({ parts: { ...design.parts, size: key } })}>{key[0].toUpperCase()}</Chip>
-                ))}
-              </Row>
-            )}
-            {/* A planting item is a CLUMP, not one plant: "we can only add one tree and one type of
-                tree. There used to be the ability to plant multiple trees of different types." */}
-            {!LANDSCAPE_TYPES.includes(kind) && api.onAddCopy && (
-              <Row label="Plant another">
+            {api.onAddCopy && (
+              <Row label={L('Plant another')}>
                 {piecesFor(kind).map((p) => (
                   <Chip key={p.key} title={`Add a ${p.label.toLowerCase()} beside it`}
                     onClick={() => api.onAddCopy?.(subject.id, p.key)}>+ {p.label}</Chip>
@@ -575,6 +561,14 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 </Row>
               );
             })()}
+          </>
+        );
+
+      // What colour it is. What it IS is Planting's, how big it grew is Size's, how many there are
+      // is How many's - this is what is left, and it is the same question Look asks of an animal.
+      case 'planting':
+        return (
+          <>
             {floraColors(kind).map((slot) => (
               <Row key={slot.key} label={slot.label}>
                 {floraPalette(slot.key, kind).map((c) => (
