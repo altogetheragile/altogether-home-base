@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GROUPS, groupsFor, labelOf } from './buildGroups';
+import { GROUPS, groupsFor, labelOf, isAbout, wouldSettle, openCriteria } from './buildGroups';
 import { structuresFor } from './toolboxItems';
 import { initialZooState } from './config';
 import type { ZooGameState, BacklogItem, ItemCategory } from './types';
@@ -97,6 +97,19 @@ describe('the same act is called the same thing', () => {
       .toBe('Ground');
     expect(floor({ ...pen, draftDesign: { parts: { structure: 'tank', ground: 'water' }, colors: {} } }),
       'a tank was offered a ground colour').toBe('Water');
+  });
+
+  it('keeps the control that answers a judgement, though it can never be lit', () => {
+    // "There is no way to set the coat colour of the lions." A lion is asked four things: three the
+    // park measures, and whether you can tell it is a lion without reading the sign, which is
+    // nobody's measurement. The coat is the answer to that one - and because it settles nothing,
+    // "Needs only" filtered it off the strip with the rest of the cosmetics.
+    const lion = real('exhibit');
+    const look = groupsFor(lion).find((g) => g.id === 'look')!;
+    expect(isAbout(look, lion), 'the coat is not on the strip at all').toBe(true);
+    // ...and it still lights nothing: a dot means "press this and it goes green", and nothing here
+    // can turn somebody's judgement green.
+    expect(wouldSettle(look, openCriteria(seeded, lion), lion), 'the coat lit as if it settled something').toBe(false);
   });
 
   it('puts what it IS first, for everything that is placed', () => {

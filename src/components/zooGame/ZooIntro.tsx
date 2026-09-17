@@ -63,21 +63,11 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           <p className="mx-auto max-w-2xl text-sm text-muted-foreground">{INTRO_COPY.strapline}</p>
         </header>
 
-        {/* 2. How a Sprint goes, and what a Product Goal is - side by side, so the Goal itself stays
-               above the fold. It is the one thing this page asks you to write. */}
-        <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
-          <section className={cn(SURFACE.quiet, PADDING.default)}>
-            <h2 className="mb-1 text-sm font-semibold">{INTRO_COPY.loopTitle}</h2>
-            <ul className="space-y-0.5 text-sm leading-snug text-muted-foreground">
-              {INTRO_COPY.loop.map((l) => (
-                <li key={l.step}><strong className="text-foreground">{l.step}</strong> - {l.text}</li>
-              ))}
-            </ul>
-          </section>
-          {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-        </div>
-
-        {/* 4. The Product Goal itself: the one thing written here, so it gets the weight. */}
+        {/* The Product Goal, FIRST. It is the one thing this page asks you to write, and it sat
+            under an explanation of how a Sprint goes and a teaching card - so the thing to do was
+            below the things to read, and on a short window it was off the bottom. Reported from
+            playing it: "this should be at the top and expanded. The messages should be underneath.
+            On top they push down the Product Goals dialog." */}
         <section className="space-y-1.5 rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {/* The Product Goal's own mark. It is the thing every Sprint aims at, so it gets a
@@ -113,6 +103,21 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             </div>
           )}
         </section>
+
+        {/* ...and then what a Sprint is, and whatever the game is teaching. Reading material, under
+            the thing to do rather than over it. */}
+        <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+          <section className={cn(SURFACE.quiet, PADDING.default)}>
+            <h2 className="mb-1 text-sm font-semibold">{INTRO_COPY.loopTitle}</h2>
+            <ul className="space-y-0.5 text-sm leading-snug text-muted-foreground">
+              {INTRO_COPY.loop.map((l) => (
+                <li key={l.step}><strong className="text-foreground">{l.step}</strong> - {l.text}</li>
+              ))}
+            </ul>
+          </section>
+          {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
+        </div>
+
 
         {/* Floating, like every other primary action in the game. */}
         <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">

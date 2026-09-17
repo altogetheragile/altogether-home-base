@@ -42,6 +42,16 @@ export interface GroupDef {
   meets: string[];
   /** Whether this item has these controls at all. A river has no fence; an animal has no footprint. */
   applies: (item: BacklogItem) => boolean;
+  /** Criteria this group SPEAKS to but cannot settle.
+   *
+   *  A white lion is what makes it recognisable, and whether you can tell it is a lion is nobody's
+   *  measurement - so the coat can never light a dot. It still has to be on the strip: without this,
+   *  "Needs only" filtered to the groups that settle something and took the coat away with the
+   *  rest, and there was no way to colour a lion at all. Reported from playing it: "there is no way
+   *  to set the coat colour of the lions."
+   *
+   *  It never lights anything. It only keeps the control where the question it answers is asked. */
+  about?: string[];
   /** Lit for a reason of its own, rather than because it would settle an open criterion. The one
    *  group this is true of is the first decision: what kind of thing to build at all. */
   litFor?: (item: BacklogItem) => boolean;
@@ -99,7 +109,7 @@ export const GROUPS: GroupDef[] = [
   // A white lion is what the posters are of, and whether you can tell it is a lion is a person's
   // judgement rather than a measurement - so this group settles nothing the park can check, and
   // gets no light. It is still the control somebody reaches for at the Review.
-  { id: 'look', writes: ['colors.coat'], label: 'Look', meets: [], applies: animal },
+  { id: 'look', writes: ['colors.coat'], label: 'Look', meets: [], about: ['recognisable'], applies: animal },
   { id: 'lives-in', writes: ['item.enclosureId'], label: 'Lives in', meets: ['findable', 'room-to-spare'], applies: animal },
 
   // ---- a building ----
@@ -116,7 +126,11 @@ export const GROUPS: GroupDef[] = [
     applies: (it) => flora(it) && !LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') },
   { id: 'clump', writes: ['item.copies', 'parts.piece'], label: 'How many', meets: [],
     applies: (it) => flora(it) && !LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') },
-  { id: 'planting', writes: ['colors.plant'], label: 'Look', meets: [], applies: flora,
+  { id: 'planting', writes: ['colors.plant'], label: 'Look',
+    // What a piece of landscape looks like is the whole of what it is asked: can you tell that is
+    // water at a glance, can you see it from across the park, does it read as a crossing.
+    about: ['greenery', 'sense-of-place', 'water-at-a-glance', 'rock-at-a-glance',
+      'crossing-at-a-glance', 'this-is-the-way-in', 'seen-across-park', 'reads-at-a-distance', 'which-way'], meets: [], applies: flora,
     labelFor: (it) => (LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') ? 'Style' : 'Look') },
 
   // ---- the pen, and the park ----
@@ -165,7 +179,7 @@ export const criteriaOf = (item: BacklogItem): string[] => (item.acceptance ?? [
 export const isAbout = (group: GroupDef, item: BacklogItem): boolean => {
   if (group.litFor) return true;   // the first decision is always about the item in hand
   const asked = criteriaOf(item);
-  return group.meets.some((id) => asked.includes(id));
+  return [...group.meets, ...(group.about ?? [])].some((id) => asked.includes(id));
 };
 
 /** Every answerable criterion that some group on the strip can settle. Held by a test: a criterion
