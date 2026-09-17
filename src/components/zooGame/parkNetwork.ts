@@ -1,7 +1,7 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { zonePlots } from './parkZones';
 import { waterRects, spansTheWater } from './parkWater';
-import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType, runPoints } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
 import { buildNav, navRoute, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
 import { CANVAS_W, FRONT_Y } from './parkLayout';
@@ -48,8 +48,15 @@ export function parkNetwork(state: ZooGameState): NavInput {
 
   // The runs the Developers laid.
   for (const c of state.connectors ?? []) {
-    const a = c.a.featureId ? boxes.find((b) => b.item.id === c.a.featureId)?.at ?? { x: c.a.x, y: c.a.y } : { x: c.a.x, y: c.a.y };
-    const z = c.b.featureId ? boxes.find((b) => b.item.id === c.b.featureId)?.at ?? { x: c.b.x, y: c.b.y } : { x: c.b.x, y: c.b.y };
+    // Every point the run goes through, joints included: a path with a corner in it is walkable
+    // round the corner, and reading only its two ends had the visitors walking the shortcut the
+    // player deliberately did not lay. NOT clipped to the edge of what an end is attached to -
+    // reaching a thing is reaching it, and the drawing's question is a different one.
+    const pts = runPoints(c, (id) => {
+      const bx = boxes.find((b) => b.item.id === id);
+      return bx ? { at: bx.at, size: bx.size } : undefined;
+    });
+    const a = pts[0], z = pts[pts.length - 1];
     if (Number.isFinite(a.x) && Number.isFinite(z.x)) paths.push([a, z]);
   }
 

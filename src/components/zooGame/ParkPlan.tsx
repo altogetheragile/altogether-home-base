@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector, BacklogItem } from './types';
-import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf } from './parkModel';
+import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf, runPoints, runPath, pathTarget } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
@@ -228,7 +228,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onUpdateConnector, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -263,8 +263,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** The pathway item the run being drawn belongs to. */
   runFor?: string;
   onAddConnector?: (c: ZooConnector) => void;
+  /** Move a joint, or take one out. A run bends where the player put the corner. */
+  onUpdateConnector?: (id: string, patch: Partial<ZooConnector>) => void;
   /** Ask the Product Owner to look at something that meets all of its criteria. */
-  onAskToCheck?: (id: string) => void;
   className?: string;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -272,6 +273,15 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   // Where a run was started, while it is being drawn.
   const [runFrom, setRunFrom] = useState<{ x: number; y: number } | null>(null);
   const [runTo, setRunTo] = useState<{ x: number; y: number } | null>(null);
+  // The run being laid right now, if the last press carried on from where the one before it
+  // stopped. A path round a habitat and up to the kiosk is ONE path with corners in it, not four
+  // paths that happen to touch: "can the paths have joints like they used to?"
+  const [laying, setLaying] = useState<string | null>(null);
+  useEffect(() => {
+    // Putting the pen away finishes the path. Picking it up again starts a new one rather than
+    // carrying on from a corner nobody can see any more.
+    if (tool !== 'path') { setRunFrom(null); setRunTo(null); setLaying(null); }
+  }, [tool]);
 
   const standing = standingOnPark(state);
   // The ground each area of the zoo owns. Everything that asks where a thing stands reads the
@@ -474,6 +484,28 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   };
 
   /** Drag a pool or a plant about inside its habitat, in the habitat's own coordinates. */
+  /** Where a thing stands and how big it is, for the runs attached to it. */
+  const whereIs = (id: string) => {
+    const bx = boxes.find((b) => b.item.id === id);
+    return bx ? { at: bx.at, size: pathTarget(bx.item, bx.size) } : undefined;
+  };
+
+  /** Drag a joint to a new corner. The same gesture as moving a pool or a tree inside a habitat,
+   *  because it is the same act: taking hold of a part of something already built. */
+  const moveJoint = (e: ReactPointerEvent, c: ZooConnector, index: number) => {
+    if (!onUpdateConnector) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const move = (ev: PointerEvent) => {
+      const at = worldAt(ev);
+      if (!at) return;
+      onUpdateConnector(c.id, { bends: (c.bends ?? []).map((b, i) => (i === index ? at : b)) });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
   const movePiece = (e: ReactPointerEvent, b: typeof boxes[number], kind: 'water' | 'flora', index: number) => {
     if (!onMoveInside) return;
     e.preventDefault();
@@ -673,12 +705,17 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             // where visitors arrive, not somewhere the Developers lay paths.
             w.y = Math.min(w.y, FRONT_Y);
             if (!runFrom) { setRunFrom(w); setRunTo(w); return; }
-            // A stray click is not a run. Two presses in almost the same place laid a path a few
-            // pixels long, and a session hunting for the way in finished with eight of them fanned
-            // across the park. Reported from a play-through: "every stray click creates a junk path
-            // run. I finished with eight." The pen stays down either way: the second press just
-            // becomes the new start.
-            if (Math.hypot(w.x - runFrom.x, w.y - runFrom.y) < MIN_RUN) { setRunFrom(w); setRunTo(w); return; }
+            // Pressing the same spot twice finishes the path. It is the ordinary way to end a
+            // polyline, and it is the way to start a separate path somewhere else without putting
+            // the pen away: while one is being laid, every press carries on from the last corner.
+            //
+            // It also swallows the stray click it always swallowed. A press a few pixels from the
+            // last one used to lay a path a few pixels long, and a session hunting for the way in
+            // finished with eight of them fanned across the park: "every stray click creates a junk
+            // path run. I finished with eight."
+            if (Math.hypot(w.x - runFrom.x, w.y - runFrom.y) < MIN_RUN) {
+              setRunFrom(null); setRunTo(null); setLaying(null); return;
+            }
             // An end that lands on something is ATTACHED to it, so the run follows when the thing
             // moves. Runs were plain coordinates, so moving an exhibit left its paths behind,
             // fanning across the park - reported from a play-through: "orphaned paths are never
@@ -689,21 +726,36 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 && Math.abs(p.y - bx.at.y) <= bx.size.h / 2 + APRON_WIDTH);
               return hit ? { featureId: hit.item.id, x: p.x, y: p.y } : { x: p.x, y: p.y };
             };
-            onAddConnector?.({
-              id: `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`,
-              // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
-              // you were building never counted the run you had just drawn for it, so it could not
-              // be built, accepted or finished - "I added the main paths and cannot move it to Done".
-              itemId: runFor,
-              a: onThing(runFrom), b: onThing(w), bends: [],
-              thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
-            });
-            // The pen stays down. Laying a path is laying SEVERAL runs - round a habitat, along
-            // the front, up to the kiosk - and putting the tool away after every one meant pressing
-            // "Draw a run" between each of them. Reported from playing it: "drawing paths is clunky.
-            // Can the draw tool stay active so multiple paths can be drawn at once?" It stops when
-            // you say so, on the same chip that started it.
-            setRunFrom(null); setRunTo(null);
+            const from = onThing(runFrom), to = onThing(w);
+            // Carrying on from where the last press stopped bends the run it is carrying on from,
+            // rather than starting a second one beside it. The corner is where you stopped, and it
+            // is draggable afterwards.
+            const carryingOn = !!laying && (state.connectors ?? []).some((c) => c.id === laying);
+            if (carryingOn && onUpdateConnector) {
+              const c = (state.connectors ?? []).find((x) => x.id === laying)!;
+              onUpdateConnector(laying, { bends: [...(c.bends ?? []), { x: runFrom.x, y: runFrom.y }], b: to });
+            } else {
+              const id = `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`;
+              onAddConnector?.({
+                id,
+                // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
+                // you were building never counted the run you had just drawn for it, so it could not
+                // be built, accepted or finished - "I added the main paths and cannot move it to Done".
+                itemId: runFor,
+                a: from, b: to, bends: [],
+                thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
+              });
+              setLaying(id);
+            }
+            // The pen stays down AND it stays where you left it. Laying a path is laying several
+            // legs - round a habitat, along the front, up to the kiosk - and each press carries on
+            // from the last, so the path grows rather than starting again. Reported from playing
+            // it: "drawing paths is clunky. Can the draw tool stay active so multiple paths can be
+            // drawn at once?" It stops when you close the menu it lives in.
+            //
+            // An end that landed ON something finishes the path there: you have arrived.
+            if (to.featureId) { setRunFrom(null); setRunTo(null); setLaying(null); return; }
+            setRunFrom(w); setRunTo(w);
             return;
           }
           if (!panning.current) onSelect?.(null);
@@ -854,16 +906,29 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             could be attached at all; this one drew the coordinates it was given, so moving an
             exhibit left its paths behind. */}
         {(state.connectors ?? []).map((c) => {
-          const end = (e: { featureId?: string; x: number; y: number }) => {
-            const on = e.featureId ? boxes.find((bx) => bx.item.id === e.featureId) : undefined;
-            return on ? on.at : e;
-          };
-          const a = end(c.a), z = end(c.b);
+          const pts = runPoints(c, whereIs, true);
           return (
-            <line key={c.id} data-conn={c.id} x1={a.x} y1={a.y} x2={z.x} y2={z.y}
-              stroke={c.color ?? '#c9a86a'} strokeWidth={Math.max(6, c.thickness ?? 14)} strokeLinecap="round" />
+            <polyline key={c.id} data-conn={c.id} points={runPath(pts)} fill="none"
+              stroke={c.color ?? '#c9a86a'} strokeWidth={Math.max(6, c.thickness ?? 14)}
+              // Round joins and caps, so a corner in a path is a corner and not two paths that
+              // happen to end near each other.
+              strokeLinecap="round" strokeLinejoin="round" />
           );
         })}
+
+        {/* The joints, as something you can take hold of. They have been in the model since runs
+            could bend at all and nothing ever drew one: "we used to have joints on paths too". Only
+            with the pen away - with it out, every press on the park is drawing. */}
+        {tool !== 'path' && onUpdateConnector && (state.connectors ?? []).map((c) => (
+          (c.bends ?? []).map((bend, i) => (
+            <circle key={`${c.id}-joint-${i}`} data-joint={`${c.id}-${i}`} cx={bend.x} cy={bend.y} r={9}
+              fill="#fff" stroke={c.color ?? '#c9a86a'} strokeWidth={3}
+              style={{ cursor: 'grab' }}
+              onPointerDown={(e) => moveJoint(e, c, i)}>
+              <title>Drag to move this corner</title>
+            </circle>
+          ))
+        ))}
 
         {/* Everything standing on the park, straight down, nothing behind anything else. */}
         {boxes.map((b) => {

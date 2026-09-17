@@ -132,10 +132,14 @@ describe('a building on the plan', () => {
 });
 
 describe('laying a path', () => {
-  it('keeps the pen down, so several runs can be drawn one after another', () => {
+  it('keeps the pen down, so a path can be laid without taking the tool out again', () => {
     // "Drawing paths is clunky. Can the draw tool stay active so multiple paths can be drawn at
     // once?" It put itself away after every run, so laying a path round a habitat meant pressing
     // "Draw a run" between each line.
+    //
+    // Presses chain now: each one carries on from where the last stopped, so what four presses
+    // make is one path with corners rather than two paths that happen to touch. Pressing the same
+    // spot twice finishes it, which is what this asks for - two separate paths, no re-arming.
     const laid: ZooConnector[] = [];
     const s = park(shop());
     const { container } = render(
@@ -151,6 +155,7 @@ describe('laying a path', () => {
       fireEvent.pointerDown(svg, { clientX: x2, clientY: y2 });
     };
     draw(10, 10, 60, 60);
+    fireEvent.pointerDown(svg, { clientX: 60, clientY: 60 });   // same spot again: that path is done
     draw(70, 70, 90, 90);
     expect(laid.length, 'the second run needed the tool taking out again').toBe(2);
   });

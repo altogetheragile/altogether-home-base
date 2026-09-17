@@ -64,22 +64,35 @@ function Row({ label, part, children }: { label: string; part?: string; children
  *  Lit when it holds the answer to something this object is failing. The light is a dot rather than
  *  a colour change on the button: a row of buttons that change colour is a row where nothing stands
  *  out, and the dot is the only thing on the strip moving. */
-function Menu({ group, label, lit, children }: { group: GroupDef; label: string; lit: boolean; children: React.ReactNode }) {
+function Menu({ group, label, lit, busy, onClosed, children }: {
+  group: GroupDef; label: string; lit: boolean;
+  /** A mode this menu turned on is still running - the pen is out. Said on the button, because the
+   *  menu is shut and the mode is not. */
+  busy?: boolean;
+  /** Closing the menu puts away whatever it turned on. */
+  onClosed?: () => void;
+  children: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClosed?.(); }}>
       <PopoverTrigger asChild>
         <button type="button" data-part={`group-${group.id}`} data-lit={lit ? 'yes' : 'no'}
-          title={lit ? `${label} - something here would finish this item` : label}
+          data-drawing={busy ? 'yes' : undefined}
+          title={busy ? `${label} - the pen is out` : lit ? `${label} - something here would finish this item` : label}
           className={cn(FOCUS, 'flex h-9 shrink-0 items-center gap-1 rounded-md border px-2.5 text-xs font-medium transition-colors',
-            open ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:bg-muted/60')}>
+            open || busy ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:bg-muted/60')}>
           {label}
           {lit && <span data-part="lit" aria-label="would finish this item"
             className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
           <ChevronDown className="h-3 w-3 shrink-0 opacity-50" aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" data-part={`panel-${group.id}`} className="w-[19rem] p-2">
+      <PopoverContent align="start" data-part={`panel-${group.id}`} className="w-[19rem] p-2"
+        // The park is the drawing surface, so a press on it must not shut the menu the pen lives
+        // in: closing is what puts the pen away, and a menu that closed on the first press would
+        // put it away before the first point landed.
+        onInteractOutside={busy ? (e) => e.preventDefault() : undefined}>
         {children}
       </PopoverContent>
     </Popover>
@@ -514,9 +527,16 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             {onDrawing && (
               <Row label={L(subject.category === 'path' ? 'Draw' : 'Path to it')}>
                 <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
-                  {drawing ? 'Drawing - click where it starts, then where it ends'
+                  {drawing ? 'Drawing - press each corner in turn'
                     : subject.category === 'path' ? 'Draw a run' : 'Draw a path to it'}
                 </Chip>
+                {drawing && (
+                  <span className="w-full pt-1 text-[11px] text-muted-foreground">
+                    Each press carries on from the last, so the path bends where you stop. Press the
+                    same spot twice to finish one, or reach the thing you were heading for. Closing
+                    this menu puts the pen away.
+                  </span>
+                )}
               </Row>
             )}
             <Row label={L('Width')}>
@@ -622,7 +642,15 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       ) : (
         <>
           {shown.map((g) => (
-            <Menu key={g.id} group={g} label={labelOf(g, subject)} lit={lit(g)}>{body(g.id, labelOf(g, subject))}</Menu>
+            <Menu key={g.id} group={g} label={labelOf(g, subject)} lit={lit(g)}
+              // The pen is a mode, and a mode you cannot see is a mode that surprises you. It used
+              // to be a chip on a flat strip that was always on screen; behind a menu, closing the
+              // menu left it out invisibly and every press on the park drew instead of selecting.
+              // The same trap Look Inside was fixed for, from the other side.
+              busy={g.id === 'path' && !!drawing}
+              onClosed={g.id === 'path' && drawing ? () => onDrawing?.(false) : undefined}>
+              {body(g.id, labelOf(g, subject))}
+            </Menu>
           ))}
           {/* Everything measurable is met. Worth saying rather than leaving the player to notice
               that no dot is lit: the measurable part is done, and what is left is a conversation. */}
