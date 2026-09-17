@@ -720,6 +720,7 @@ export type ZooAction =
   /** The Developers decide what will meet a need. `pick` is a toolbox item's name. */
   | { type: 'CHOOSE_SOLUTION'; id: string; pick: string }
   | { type: 'CHOOSE_STRUCTURE'; id: string; key: string }
+  | { type: 'REMOVE_INSIDE'; id: string; kind: string }
   | { type: 'SET_POS'; id: string; pos: { x: number; y: number } }
   | { type: 'SPLIT_EPIC'; id: string; memberIds: string[] }
   | { type: 'ADD_PBI'; draft: PbiDraft }

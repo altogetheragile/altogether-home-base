@@ -64,7 +64,7 @@ describe('going inside a habitat', () => {
     expect(openGroup('path').querySelector('[data-part="panel-path"]')!.textContent,
       'the pen was not out to begin with').toMatch(/Drawing|Draw a path to it/i);
 
-    press(openGroup('inside').body as unknown as HTMLElement, /^Look inside$/i);
+    press(openGroup('inside').body as unknown as HTMLElement, /^Look inside/i);
     expect(askedFor, 'going inside did not put the pen away').toEqual([false]);
     // Inside a habitat the strip is what goes IN it, so there is no Paths menu to open at all.
     expect(container.querySelector('[data-part="park-options"]')!.textContent,

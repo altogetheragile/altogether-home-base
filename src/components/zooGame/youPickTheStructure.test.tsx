@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
-import { BuildToolbar } from './BuildToolbar';
+import { openGroup } from './openGroup';
 import { structuresFor, picksAStructure } from './toolboxItems';
 import { chooseStructure, structureChosen } from './engine';
 import { initialZooState } from './config';
@@ -51,45 +51,32 @@ describe('until they have chosen', () => {
     expect(structureChosen(pen(s)), 'the game had already decided what to build').toBe(false);
   });
 
-  it('asks to be opened, on a toolbar of its own', () => {
-    // Not a control on the strip beside the fence colour. The strip decides what a thing is LIKE;
-    // this decides what it IS, and on the strip it looked like the sixth setting of a thing
-    // somebody had already decided to build.
-    const s = seeded();
-    const { container } = render(<BuildToolbar item={pen(s)} onChoose={() => {}} />);
-    const shelf = container.querySelector('[data-part="shelf-structures"]')!;
-    expect(shelf, 'there is no toolbar to start from').toBeTruthy();
-    expect(shelf.getAttribute('data-waiting'), 'the one thing that has to happen next is not marked').toBe('yes');
-  });
-
-  it('is not one of the strip’s controls', () => {
+  it('is the first thing on the toolbar, and lit until it is answered', () => {
+    // One toolbar, in the order the work happens: what it is, then how big, then what it is
+    // surfaced in, what borders it and what goes inside. A toolbar of its own floating over the
+    // park was a second place to look - "why is structure not on the main toolbar?"
     const s = seeded();
     const { container } = render(
       <ParkOptions state={building(s, pen(s))} item={pen(s)} inside={null}
         api={{ onDesign: () => {}, onSetEnclosure: () => {} }} />,
     );
-    expect(container.querySelector('[data-part="group-structure"]'),
-      'the choice is offered in two places').toBeNull();
+    const first = container.querySelector('[data-part^="group-"]')!;
+    expect(first.getAttribute('data-part'), 'the toolbar opens on something other than the first decision')
+      .toBe('group-structure');
+    expect(first.getAttribute('data-lit'), 'the one thing that has to happen is not lit').toBe('yes');
   });
 
   it('offers the kinds when it is opened, and hands the choice back', () => {
-    const onChoose = vi.fn();
+    const onChooseStructure = vi.fn();
     const s = seeded();
-    const { container } = render(<BuildToolbar item={pen(s)} onChoose={onChoose} />);
-    fireEvent.click(container.querySelector('[data-part="shelf-structures"]')!);
-    const tank = container.querySelector('[data-part="structure-tank"]') as HTMLButtonElement;
+    render(
+      <ParkOptions state={building(s, pen(s))} item={pen(s)} inside={null}
+        api={{ onDesign: () => {}, onSetEnclosure: () => {}, onChooseStructure }} />,
+    );
+    const tank = openGroup('structure').querySelector('[data-part="structure-tank"]') as HTMLButtonElement;
     expect(tank, 'a habitat could not be built as a tank').toBeTruthy();
     fireEvent.click(tank);
-    expect(onChoose).toHaveBeenCalledWith(pen(s).id, 'tank');
-  });
-
-  it('puts the shelf away once it has been picked from', () => {
-    const s = seeded();
-    const { container } = render(<BuildToolbar item={pen(s)} onChoose={() => {}} />);
-    fireEvent.click(container.querySelector('[data-part="shelf-structures"]')!);
-    fireEvent.click(container.querySelector('[data-part="structure-paddock"]')!);
-    expect(container.querySelector('[data-part="shelf-open"]'),
-      'the shelf stayed open over the park you are about to place on').toBeNull();
+    expect(onChooseStructure).toHaveBeenCalledWith(pen(s).id, 'tank');
   });
 });
 

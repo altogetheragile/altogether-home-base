@@ -1497,7 +1497,13 @@ export function chooseStructure(state: ZooGameState, id: string, key: string): Z
   const design = currentDesign(item);
   const chosen = {
     ...design,
-    parts: { ...design.parts, structure: kind.key, ...(kind.template ? { type: kind.template } : {}) },
+    parts: {
+      ...design.parts, structure: kind.key,
+      ...(kind.template ? { type: kind.template } : {}),
+      // Said outright rather than inferred. A paddock holds land and a tank holds water, and with
+      // this written down the strip does not have to ask the same question a second time.
+      ...(item.category === 'enclosure' ? { ground: kind.key === 'tank' ? 'water' : 'land' } : {}),
+    },
   };
   return note({
     ...state,
@@ -1678,6 +1684,27 @@ export function moveItemCopy(state: ZooGameState, id: string, index: number, pos
 export function removeItemCopy(state: ZooGameState, id: string, index: number): ZooGameState {
   return { ...state, backlog: state.backlog.map((it) => (it.id === id
     ? { ...it, copies: (it.copies ?? []).filter((_, i) => i !== index) } : it)) };
+}
+
+/** Take one of something back out of a habitat: the other half of `addInside`.
+ *
+ *  A habitat's inside was add-only, so a pond dug by mistake stayed dug. It removes the LAST one of
+ *  that kind, which is the one just put in. */
+export function removeInside(state: ZooGameState, id: string, kind: 'water' | string): ZooGameState {
+  return { ...state, backlog: state.backlog.map((it) => {
+    if (it.id !== id) return it;
+    const design = currentDesign(it);
+    const next = kind === 'water'
+      ? { ...design, water: (design.water ?? []).slice(0, -1) }
+      : { ...design, flora: (() => {
+        const all = design.flora ?? [];
+        const last = all.map((f) => f.type).lastIndexOf(kind);
+        return last < 0 ? all : [...all.slice(0, last), ...all.slice(last + 1)];
+      })() };
+    return it.status === 'done' || it.status === 'open'
+      ? { ...it, design: next }
+      : { ...it, draftDesign: next };
+  }) };
 }
 
 /** Take one plant out of a clump, counting the item's own plant as the first of them.

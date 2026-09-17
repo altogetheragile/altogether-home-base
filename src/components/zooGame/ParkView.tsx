@@ -80,6 +80,8 @@ export interface EditApi {
   onSetServices?: (id: string, services: 'food' | 'toilet' | 'rest' | null) => void;
   /** Put another thing inside a habitat. In the reducer, so pressing it twice puts two in. */
   onAddInside?: (id: string, kind: string) => void;
+  /** ...and take one back out. */
+  onRemoveInside?: (id: string, kind: string) => void;
 }
 
 // ---- Features: the positionable things in the park (enclosures + amenities + planting) ----
