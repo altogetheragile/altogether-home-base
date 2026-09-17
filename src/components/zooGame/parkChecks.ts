@@ -225,12 +225,18 @@ export const CRITERIA: CriterionDef[] = [
         .filter(Boolean) as string[];
       const missing = [!ground && 'ground', !growing && 'shelter or planting', !water && 'water']
         .filter(Boolean) as string[];
-      // ...and where the missing ones are put. The ground is a swatch on the strip, but planting
-      // and water are inside the habitat, behind "Look Inside" - which is the one place a player
-      // has to know about to finish a habitat and the one place nothing pointed at.
+      // ...and where the missing ones are put, which is two different menus: the ground is a colour
+      // under Surface, and what grows and swims in it is under Interior.
+      //
+      // This said "Look Inside to add them", which was true when the only way in was to zoom the
+      // park. Interior lists what is in there with a count you take up and down, and Look inside is
+      // a line at the foot of it for arranging them. A criterion that names a control has to be
+      // told when the control moves - it is the one thing `buildGroups` cannot check, because the
+      // name is in prose.
       const indoors = !growing || !water;
+      const where = [!ground && 'Surface', indoors && 'Interior'].filter(Boolean).join(' and ');
       return missing.length
-        ? { met: false, evidence: `no ${missing.join(' or ')} yet${indoors ? ' - Look Inside to add them' : ''}` }
+        ? { met: false, evidence: `no ${missing.join(' or ')} yet - under ${where}` }
         : { met: true, evidence: `${has.join(', ')} in` };
     },
   },
