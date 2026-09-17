@@ -269,7 +269,9 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   className?: string;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [ghost, setGhost] = useState<{ x: number; y: number; w: number; h: number; ok: boolean; why?: string } | null>(null);
+  // `into` is where it is going rather than whether it may: an animal is moving INTO a habitat, and
+  // a ghost that can only say no had nothing to say about the one gesture that is a yes.
+  const [ghost, setGhost] = useState<{ x: number; y: number; w: number; h: number; ok: boolean; why?: string; into?: string } | null>(null);
   // Where a run was started, while it is being drawn.
   const [runFrom, setRunFrom] = useState<{ x: number; y: number } | null>(null);
   const [runTo, setRunTo] = useState<{ x: number; y: number } | null>(null);
@@ -411,6 +413,25 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   };
 
   /** Can this go here, and if not, why not. The same question the ghost answers on the isometric. */
+  /** The habitat an animal is being dropped into, if it is over one.
+   *
+   *  An animal does not stand on the park, it lives in a habitat - so the habitat is the TARGET
+   *  rather than an obstacle. The drop knew that and the ghost did not: carrying a lion over its own
+   *  enclosure showed a red box reading "on top of Lion Enclosure", which tells a player the one
+   *  thing they are trying to do is refused. Reported from playing it: "I cannot place the lions in
+   *  the enclosure."
+   *
+   *  One rule, asked by both, so what the ghost promises is what the drop does. */
+  const homeUnder = (id: string, box: { w: number; h: number }, at: { x: number; y: number }) => {
+    const item = state.backlog.find((it) => it.id === id);
+    if (item?.category !== 'exhibit') return undefined;
+    // Overlapping, not strictly inside: an animal is smaller than its pen and you are aiming at a
+    // pen, so anywhere its box touches the habitat is a place you meant.
+    return boxes.find((b) => b.item.category === 'enclosure'
+      && Math.abs(at.x - b.at.x) < (b.size.w + box.w) / 2
+      && Math.abs(at.y - b.at.y) < (b.size.h + box.h) / 2);
+  };
+
   const verdict = (id: string, box: { w: number; h: number }, w: { x: number; y: number }) => {
     // A bridge snaps to the water. Which part of the river to cross is a real decision and stays
     // yours; how squarely it sits on the water is not a decision anybody makes well by eye, and a
@@ -433,9 +454,20 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // river". Everything else keeps its ground to itself.
     const over = boxes.find((b) => b.item.id !== id && !overWater(b.item)
       && Math.abs(at.x - b.at.x) < (b.size.w + box.w) / 2 && Math.abs(at.y - b.at.y) < (b.size.h + box.h) / 2);
-    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed && !wet && !over,
+    // An animal over a habitat is moving IN. Its own zone still applies - a lion belongs in the Big
+    // Cats - but the habitat it is aimed at is the point of the gesture rather than something in
+    // the way of it.
+    const home = homeUnder(id, box, at);
+    if (home) {
+      return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed,
+        why: off ? 'off the park' : strayed ? `outside the ${zone} area` : undefined,
+        into: home.item.name };
+    }
+    const animal = state.backlog.find((it) => it.id === id)?.category === 'exhibit';
+    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed && !wet && !over && !animal,
       why: off ? 'off the park' : wet ? 'in the river' : strayed ? `outside the ${zone} area`
-        : over ? `on top of ${over.item.name}` : undefined };
+        : over ? `on top of ${over.item.name}`
+        : animal ? 'an animal lives in a habitat - drop it on one' : undefined };
   };
 
   /** Drag something that is already standing: it follows the pointer and lands where you let go. */
@@ -688,8 +720,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             // An animal goes IN somewhere: dropped on a habitat that is standing, it moves in.
             const item = state.backlog.find((it) => it.id === placing.id);
             if (item?.category === 'exhibit') {
-              const home = boxes.find((b) => b.item.category === 'enclosure'
-                && Math.abs(w.x - b.at.x) < b.size.w / 2 && Math.abs(w.y - b.at.y) < b.size.h / 2);
+              // The same rule the ghost showed. It used to be a stricter one - the pointer had to
+              // be inside the habitat's own box - so a lion let go where the ghost said "into the
+              // Lion Enclosure" landed nowhere at all and nothing said why.
+              const home = homeUnder(placing.id, placing, w);
               if (home && onPlace) { onPlace(placing.id, { x: w.x, y: w.y }, undefined, home.item.id); setGhost(null); }
               return;
             }
@@ -1238,6 +1272,14 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             )}
             {!ghost.ok && ghost.why && (
               <text x={ghost.x} y={ghost.y} textAnchor="middle" fontSize={ch(14)} fontWeight={700} fill="#b91c1c">{ghost.why}</text>
+            )}
+            {/* ...and where it is going, when that is the point of the gesture. An animal is moving
+                INTO something, and the thing it is moving into used to be drawn as the reason it
+                could not. */}
+            {ghost.ok && ghost.into && (
+              <text x={ghost.x} y={ghost.y} textAnchor="middle" fontSize={ch(13)} fontWeight={700} fill="#047857">
+                into {ghost.into}
+              </text>
             )}
           </g>
         )}
