@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ParkOptions } from './ParkOptions';
+import { openGroup } from './openGroup';
 import { ZooShell } from './ZooShell';
 import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
@@ -43,7 +44,8 @@ describe('the pen is offered for a habitat', () => {
           api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {} }} />
       </MemoryRouter>,
     );
-    const strip = container.querySelector('[data-part="park-options"]')!;
+    expect(container.querySelector('[data-part="park-options"]'), 'no strip at all').toBeTruthy();
+    const strip = openGroup('path').querySelector('[data-part="panel-path"]')!;
     expect(strip.textContent, 'the habitat was offered no pen to draw its way in with')
       .toMatch(/Draw a path to it/i);
   });
@@ -62,7 +64,8 @@ describe('how wide the path is', () => {
           api={{ onDesign: (_id, d) => chosen.push(d), onSetEnclosure: () => {}, onAddInside: () => {} }} />
       </MemoryRouter>,
     );
-    const strip = container.querySelector('[data-part="park-options"]')!;
+    expect(container.querySelector('[data-part="park-options"]'), 'no strip at all').toBeTruthy();
+    const strip = openGroup('path').querySelector('[data-part="panel-path"]')!;
     expect(strip.textContent, 'the habitat was given the pen and no width to draw at').toMatch(/Width/);
     const wide = [...strip.querySelectorAll('button')]
       .find((x) => x.textContent?.trim() === PATH_WIDTHS[PATH_WIDTHS.length - 1].label)!;
@@ -90,7 +93,8 @@ describe('a run already laid can be taken back up', () => {
             onRemoveRun: (id: string) => lifted.push(id) }} />
       </MemoryRouter>,
     );
-    const strip = container.querySelector('[data-part="park-options"]')!;
+    expect(container.querySelector('[data-part="park-options"]'), 'no strip at all').toBeTruthy();
+    const strip = openGroup('path').querySelector('[data-part="panel-path"]')!;
     expect(strip.textContent, 'the habitat does not say what runs it has').toMatch(/1 run/);
     const bin = strip.querySelector('[data-part="remove-run"]') as HTMLButtonElement | null;
     expect(bin, 'there is no way to take a run back up from the habitat that owns it').toBeTruthy();

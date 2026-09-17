@@ -263,6 +263,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // What is following the cursor, waiting to be put down on the park.
   /** Something already standing that you have picked up again to put down somewhere else. */
   const [moving, setMoving] = useState<string | null>(null);
+  // Whether the acceptance criteria are open over the park. Here rather than inside the panel,
+  // because the thing that opens them is the chip on the build strip: what an item has to be, and
+  // the controls that get it there, are one conversation and were at opposite ends of the screen.
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
   // Which habitat the park is zoomed into, so its inside can be worked on at a size you can see.
   // "Back to the park" zooms out. This replaces the takeover: there is no window over the park any
   // more, and nothing is built anywhere else.
@@ -529,6 +533,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onTurn,
                       onUnplace: (id) => setMoving(id),
                       onPutIn,
+                      // The chip names what is selected and says how far off it is. Ready, it is the
+                      // offer to the Product Owner - which used to be a pill floating under the
+                      // object on the park, at the other end of the screen from the controls that
+                      // got it there.
+                      onAskToCheck,
+                      onOpenCard: () => setCriteriaOpen((v) => !v),
                       // Going inside puts the pen away. The pen belongs to the park - it draws the
                       // way IN to a habitat - and inside one it is only in the way: the strip stops
                       // offering it, so the tool stayed out invisibly, every press inside the pen
@@ -554,7 +564,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       habitat it collapses to a pill, because in there the whole picture is the pen. */}
                   {inHand && (inHand.acceptance ?? []).length > 0 && (
                     <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem} quiet={drawing}
-                      corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck} />
+                      corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck}
+                      // The strip's chip says how far off this item is, so the panel does not also
+                      // leave a pill saying it over the park: the chip IS the pill now, and it opens
+                      // the detail. Only while there is a strip to press - the inspector keeps its
+                      // own pill everywhere else.
+                      open={edit && canBuild ? criteriaOpen : undefined}
+                      onOpenChange={edit && canBuild ? setCriteriaOpen : undefined} />
                   )}
                   <ParkPlan state={state} height={620} selected={building ?? null} inside={inside}
                     frame={frame}

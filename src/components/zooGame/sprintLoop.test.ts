@@ -69,6 +69,11 @@ describe('a Sprint, played through to the Review', () => {
         s = reducer(s, { type: 'FINISH_ITEM', id: it.id, by: 'developer' });
         if (s.backlog.find((x) => x.id === it.id)!.status === 'done') po({ type: 'OPEN_ITEM', id: it.id });
       }
+      // ...and anything that reached Done without the Developers being asked to say so. An item
+      // whose every criterion is a fact the park can see - a pathway wide enough for two, running
+      // to every area - settles itself as it is built. Releasing is still the Product Owner's, and
+      // it applies to what is Done rather than to what this loop happened to finish.
+      for (const it of s.backlog.filter((x) => x.status === 'done')) po({ type: 'OPEN_ITEM', id: it.id });
       s = reducer(s, { type: 'END_DAY' });
       if (s.dayStage === 'dailyScrum') settle();
     }

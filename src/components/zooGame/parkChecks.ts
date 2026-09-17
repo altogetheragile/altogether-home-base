@@ -1,6 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
-import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled } from './engine';
+import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, PATH_WIDTHS, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict } from './design';
+import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled, acTally } from './engine';
 import { whereItStands, groundSize } from './parkModel';
 import { spansTheWater, inWater } from './parkWater';
 import { areasOnAPath, pathTo, whatVisitorsCanReach } from './parkNetwork';
@@ -354,7 +354,18 @@ export const CRITERIA: CriterionDef[] = [
   { id: 'right-round-it', asks: 'Can I walk right round it?', short: 'a way round the outside' },
   { id: 'still-get-past', asks: 'Can I still get past it?', short: 'not in the way' },
   { id: 'still-get-round', asks: 'Can visitors still get round it?', short: 'not in the way' },
-  { id: 'side-by-side', asks: 'Can two people walk it side by side?', short: 'wide enough for two' },
+  // A fact, and one the strip has had a control for all along. It sat among the judgements while
+  // Width sat on the strip beside it: a question about width, a control that sets the width, and
+  // nothing joining them. A thin path is a pretty path that two people cannot walk abreast, and
+  // that is worth finding out from the question rather than from a person's opinion of it.
+  { id: 'side-by-side', asks: 'Can two people walk it side by side?', short: 'wide enough for two',
+    answer: (_state, item) => {
+      const w = currentDesign(item).parts.thickness ?? 'medium';
+      const label = PATH_WIDTHS.find((x) => x.key === w)?.label.toLowerCase() ?? w;
+      return w === 'thin'
+        ? { met: false, evidence: `${label}, single file - widen it under Paths` }
+        : { met: true, evidence: `${label}, two abreast` };
+    } },
   { id: 'reads-at-a-distance', asks: 'Can I read it from a few steps away?', short: 'readable from a few steps' },
   { id: 'which-way', asks: 'Can I tell which way to go from here?', short: 'which way to go' },
   { id: 'greenery', asks: 'Can I see greenery from the path?', short: 'greenery from the path' },
@@ -511,4 +522,42 @@ export function readyToAsk(state: ZooGameState, item: BacklogItem): boolean {
   if (!criteria.length || !item.design) return false;
   const facts = criteria.filter(answerable);
   return facts.every((c) => acSettled(item, criteria.indexOf(c)) || !!checkCriterion(state, item, c)?.met);
+}
+
+/** How far a built thing has got, and who the next move belongs to.
+ *
+ *  One calculation, because this is asked in two places that must not disagree: the panel below,
+ *  and the chip on the build strip that opens it. It used to be asked in three, and the third - a
+ *  pill floating under every object on the park - counted only what the park could see, so the
+ *  park and the panel could say different numbers about the same habitat.
+ *
+ *  Met means settled: the park can see it, or somebody ticked it, or the Product Owner waived it.
+ *  Ready means every criterion the park CAN answer is answered - the rest are judgement, and
+ *  judgement is what the asking is for. */
+export function inspect(state: ZooGameState, item: BacklogItem) {
+  const criteria = (item.acceptance ?? []).filter(Boolean);
+  const met = (label: string, i: number) =>
+    acSettled(item, i) || (!!item.design && !!checkCriterion(state, item, label)?.met);
+  const done = criteria.filter((c, i) => met(c, i)).length;
+  // Waived is not met. Accepting one as it is used to turn "4 of 5" into "5 of 5", which is the
+  // record agreeing with the decision instead of recording it. Reported from a play-through.
+  const tally = acTally(item);
+  const count = tally.waived
+    ? `${done - tally.waived} of ${criteria.length} \u00b7 ${tally.waived} waived`
+    : `${done} of ${criteria.length}`;
+  const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
+  const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
+  // Already accepted: asking again is asking a question that has been answered. Reported from
+  // playing it - "I get multiple ask Priya to check".
+  const accepted = criteria.length > 0 && criteria.every((_, i) => acSettled(item, i))
+    && (item.tasks ?? []).some((t) => /sign[- ]?off/i.test(t.label) && t.done);
+  const facts = criteria.filter(answerable);
+  const ready = criteria.length > 0 && facts.every((c) => met(c, criteria.indexOf(c)));
+  const missing = facts.find((c) => !met(c, criteria.indexOf(c)));
+  return {
+    criteria, met, done, count, po, asked, accepted, ready, tally,
+    outstanding: missing
+      ? { text: missing, why: checkCriterion(state, item, missing)?.evidence ?? 'not yet' }
+      : null,
+  };
 }

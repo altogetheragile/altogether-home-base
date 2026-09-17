@@ -7,7 +7,6 @@ import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { ENTRANCE } from './parkNetwork';
 
-import { answerable, checkCriterion } from './parkChecks';
 import { hasGround, groundPrice } from './engine';
 import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
@@ -229,7 +228,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onAskToCheck, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -1087,39 +1086,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   {b.item.name}{b.underWay ? ' · built, not Done' : ''}
                 </text>
               )}
-              {/* One pill per object that is built and not Done: how far off it is, and the one
-                  thing that would finish it. Green when there is nothing left to say. */}
-              {b.underWay && !inside && (() => {
-                const criteria = b.item.acceptance.filter(Boolean);
-                const verdicts = criteria.map((c) => ({ c, v: checkCriterion(state, b.item, c) }));
-                // Ready means every criterion the park can answer is answered. The rest are
-                // judgement - "can I walk right round it?" is somebody's eyes, not a measurement -
-                // and waiting for the park to tick those was a dead end: they never went green, so
-                // a finished habitat could never be offered for acceptance at all.
-                const facts = verdicts.filter((x) => answerable(x.c));
-                const met = facts.filter((x) => x.v?.met).length;
-                const next = facts.find((x) => !x.v?.met);
-                const ready = criteria.length > 0 && facts.every((x) => x.v?.met);
-                const judged = criteria.length - facts.length;
-                const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
-                const text = ready
-                  ? `${met} of ${facts.length} checked · ${judged ? `${po} judges the rest` : `ready for ${po}`}`
-                  : `${met} of ${facts.length} checked · ${next?.v?.evidence ?? 'still being built'}`;
-                return (
-                  <g data-part="built-pill" data-ready={ready ? 'yes' : 'no'}
-                    // Not while the pen is out: this pill sits directly under the habitat, which is
-                    // where a run from the way in has to finish, and it is 180px of press that never
-                    // reached the park.
-                    onPointerDown={tool === 'path' ? undefined : (e) => { e.stopPropagation(); if (ready) onAskToCheck?.(b.item.id); else onSelect?.(b.item.id); }}
-                    style={{ cursor: tool === 'path' ? 'crosshair' : 'pointer', pointerEvents: tool === 'path' ? 'none' : undefined }}>
-                    <rect x={b.at.x - Math.max(90, text.length * 3.4)} y={y + b.size.h + 6}
-                      width={Math.max(180, text.length * 6.8)} height={24} rx={12}
-                      fill={ready ? '#dcfce7' : '#fff7ed'} stroke={ready ? '#16a34a' : '#f59e0b'} strokeWidth={2} />
-                    <text x={b.at.x} y={y + b.size.h + 22} textAnchor="middle" fontSize={ch(12)} fontWeight={600}
-                      fill={ready ? '#166534' : '#9a3412'}>{text}</text>
-                  </g>
-                );
-              })()}
+              {/* The count and the offer to Priya used to be a pill under every built object out here,
+                  180px of text per thing, floating over the park: "2 of 5 checked - no ground or
+                  shelter or planting or water yet". It says the same things the build strip's chip
+                  says about whatever is selected, at the other end of the screen, over the thing the
+                  player is trying to look at. One question, one place: the chip. */}
               {/* A quarter turn, where the way a thing faces matters: a kiosk facing the path
                   instead of away from it, a habitat that fits better lying the other way. Here
                   rather than in the takeover, because which way it faces is placement, and

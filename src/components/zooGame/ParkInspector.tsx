@@ -1,11 +1,11 @@
 import type { ZooGameState, BacklogItem } from './types';
-import { answerable, checkCriterion, checkedAt } from './parkChecks';
+import { answerable, checkCriterion, checkedAt, inspect } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { AlertTriangle, Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { acSettled, acTally, acWaived } from './engine';
+import { acWaived } from './engine';
 
 // ============= The inspector =============
 //
@@ -18,7 +18,8 @@ import { acSettled, acTally, acWaived } from './engine';
 // are working on - and inside a habitat it collapses to a single pill, because in there the whole
 // screen is the enclosure.
 
-export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, corner = 'tr', className }: {
+
+export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, open, onOpenChange, corner = 'tr', className }: {
   state: ZooGameState;
   item: BacklogItem;
   /** Inside a habitat: one pill, so the enclosure is not covered by its own criteria. */
@@ -28,36 +29,21 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
    *  "cannot draw a path properly". Still readable, just not in the way. */
   quiet?: boolean;
   onAskToCheck?: (id: string) => void;
+  /** Opened and closed from outside, where the strip's chip carries the count and is the thing a
+   *  player presses to read the detail. Left undefined, the panel keeps its own pill and its own
+   *  state, which is how it works anywhere there is no strip. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   corner?: 'tl' | 'tr' | 'bl' | 'br';
   className?: string;
 }) {
-  const criteria = (item.acceptance ?? []).filter(Boolean);
-  const met = (label: string, i: number) =>
-    acSettled(item, i) || (!!item.design && !!checkCriterion(state, item, label)?.met);
-  const done = criteria.filter((c, i) => met(c, i)).length;
-  // Waived is not met. Accepting one as it is used to turn "4 of 5" into "5 of 5", which is the
-  // record agreeing with the decision instead of recording it. Reported from a play-through.
-  const tally = acTally(item);
-  const count = tally.waived
-    ? `${done - tally.waived} of ${criteria.length} \u00b7 ${tally.waived} waived`
-    : `${done} of ${criteria.length}`;
-  const po = state.team.productOwner.name.replace(/\s*\(PO\)$/i, '');
-  const asked = (state.questions ?? []).some((q) => q.id === `check-${item.id}`);
-  // Already accepted: asking again is asking a question that has been answered. Reported from
-  // playing it - "I get multiple ask Priya to check".
-  const accepted = criteria.length > 0 && criteria.every((_, i) => acSettled(item, i))
-    && (item.tasks ?? []).some((t) => /sign[- ]?off/i.test(t.label) && t.done);
-  // Ready to ask means every criterion the park can answer is answered. The rest are judgement, and
-  // judgement is what the asking is for.
-  const facts = criteria.filter(answerable);
-  const ready = criteria.length > 0 && facts.every((c) => met(c, criteria.indexOf(c)));
-  const missing = facts.find((c) => !met(c, criteria.indexOf(c)));
-  const outstanding = missing
-    ? { text: missing, why: checkCriterion(state, item, missing)?.evidence ?? 'not yet' }
-    : null;
+  const { criteria, met, count, po, asked, accepted, ready, outstanding } = inspect(state, item);
 
+  // The bottom corners sit clear of the bar that runs along the foot of the park - the day's dock
+  // and whatever the team is waiting on. Docking to bottom-2 put the panel's last line, which is the
+  // one that says what is still missing, underneath it.
   const place = {
-    tl: 'left-2 top-2', tr: 'right-2 top-2', bl: 'left-2 bottom-2', br: 'right-2 bottom-2',
+    tl: 'left-2 top-2', tr: 'right-2 top-2', bl: 'left-2 bottom-14', br: 'right-2 bottom-14',
   }[corner];
 
   // ...and wherever it is put, it stays. Docking to the corner furthest from the selected thing is a
@@ -69,7 +55,12 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   // are always in the way." What is left behind is not nothing: the pill carries the count, so how
   // many criteria are met is still readable at a glance, and one press has the detail. Opened, it
   // stays open - the player's choice outlasts the thing that was selected when they made it.
-  const [hidden, setHidden] = useState(true);
+  const [ownHidden, setOwnHidden] = useState(true);
+  // Controlled where something else already says the count. Two pills reading "2 of 5" a few inches
+  // apart is the duplication this panel's own numbers were pulled out of `inspect` to stop.
+  const outside = open !== undefined;
+  const hidden = outside ? !open : ownHidden;
+  const setHidden = (h: boolean) => (outside ? onOpenChange?.(!h) : setOwnHidden(h));
   const box = useRef<HTMLDivElement | null>(null);
   const carry = (e: ReactPointerEvent) => {
     const panel = box.current;
@@ -106,6 +97,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, cor
   //
   // The pill rather than nothing at all, because what you are trying to satisfy is the reason the
   // pen is out in the first place.
+  if (outside && hidden) return null;   // the chip on the strip is the way back in
   if (collapsed || hidden || quiet) {
     return (
       <button type="button" data-part="park-inspector" data-collapsed="yes"

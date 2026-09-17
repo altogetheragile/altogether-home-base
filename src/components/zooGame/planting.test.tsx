@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
+import { openGroup, showEverything } from './openGroup';
 import { ParkPlan } from './ParkPlan';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
@@ -35,10 +36,19 @@ const planting = (over: Partial<BacklogItem> = {}): { state: ZooGameState; item:
   };
 };
 
-const strip = (state: ZooGameState, item: BacklogItem, api: Record<string, unknown> = {}) => render(
+const mount = (state: ZooGameState, item: BacklogItem, api: Record<string, unknown> = {}) => render(
   <ParkOptions state={state} item={item} inside={null}
     api={{ onDesign: () => {}, onSetEnclosure: () => {}, onAddInside: () => {}, ...api }} />,
-).container.querySelector('[data-part="park-options"]')!;
+);
+
+/** What the Planting menu holds once it is open. The controls used to be laid out flat on the
+ *  strip; they are one part of the work now, and a player presses Planting to reach them. */
+const strip = (state: ZooGameState, item: BacklogItem, api: Record<string, unknown> = {}) => {
+  cleanup();                 // one strip at a time: the panels are portalled to a shared body
+  mount(state, item, api);
+  showEverything();
+  return openGroup('planting').querySelector('[data-part="panel-planting"]')!;
+};
 
 describe('planting more than one thing', () => {
   it('offers every kind of plant, not just the one the card came as', () => {

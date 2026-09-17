@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
 import { checkCriterion, answerable } from './parkChecks';
+import { openGroup } from './openGroup';
 import { setServices } from './engine';
 import { initialZooState, DEFAULT_SERVICE_CAPACITY } from './config';
 import { simulateSprint } from './simulation/simulate';
@@ -72,21 +73,24 @@ describe('choosing it', () => {
   it('is offered on a building, and says when it offers nothing', () => {
     const { container } = strip(park(shop()), shop());
     expect(container.textContent, 'a building cannot be told what it is for').toMatch(/Offers/);
-    expect(container.textContent).toMatch(/nothing visitors need, yet/i);
+    expect(openGroup('offers').body.textContent).toMatch(/nothing visitors need, yet/i);
   });
 
   it('sets it, and lets you take it back off', () => {
     const calls: unknown[][] = [];
     strip(park(shop()), shop(), (...a: unknown[]) => calls.push(a));
+    openGroup('offers');
     fireEvent.click(screen.getAllByRole('button', { name: 'Food and drink' })[0]);
     expect(calls[0]).toEqual(['kiosk', 'food']);
     // ...and pressing the one it already offers turns it off, rather than being a one-way door.
+    // The first strip goes first: its panel is portalled to the same body as the second's would be,
+    // and two open panels is two answers to "which button did I press".
+    cleanup();
     const chosen = shop({ services: 'food' });
     const again: unknown[][] = [];
-    const second = strip(park(chosen), chosen, (...a: unknown[]) => again.push(a));
-    // Its own container: the first strip is still mounted, and `screen` sees both.
-    fireEvent.click([...second.container.querySelectorAll('button')]
-      .find((b) => b.textContent === 'Food and drink')!);
+    strip(park(chosen), chosen, (...a: unknown[]) => again.push(a));
+    openGroup('offers');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Food and drink' })[0]);
     expect(again[0]).toEqual(['kiosk', null]);
   });
 

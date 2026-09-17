@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ZooShell } from './ZooShell';
+import { openGroup } from './openGroup';
 import { initialZooState } from './config';
 import { presetFor, addFloraTo, addWaterTo, HABITAT_FEATURE_TYPES } from './design';
 import type { ZooGameState, BacklogItem, ZooConnector } from './types';
@@ -60,12 +61,16 @@ describe('going inside a habitat', () => {
     });
 
     // The pen is out on the park, which is where it belongs.
-    const strip = () => container.querySelector('[data-part="park-options"]')!;
-    expect(strip().textContent, 'the pen was not out to begin with').toMatch(/Drawing|Draw a path to it/i);
+    expect(openGroup('path').querySelector('[data-part="panel-path"]')!.textContent,
+      'the pen was not out to begin with').toMatch(/Drawing|Draw a path to it/i);
 
-    press(container, /^Look inside$/i);
+    press(openGroup('inside').body as unknown as HTMLElement, /^Look inside$/i);
     expect(askedFor, 'going inside did not put the pen away').toEqual([false]);
-    expect(strip().textContent, 'the inside of a habitat is offering a pen').not.toMatch(/Draw a path to it/i);
+    // Inside a habitat the strip is what goes IN it, so there is no Paths menu to open at all.
+    expect(container.querySelector('[data-part="park-options"]')!.textContent,
+      'the inside of a habitat is offering a pen').not.toMatch(/Draw a path to it/i);
+    expect(document.querySelector('[data-part="group-path"]'),
+      'the pen is still on the strip inside the habitat').toBeFalsy();
 
     const svg = container.querySelector('[data-part="park-plan"]')!;
     svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 820, height: 760,
