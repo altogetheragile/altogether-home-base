@@ -1,7 +1,7 @@
 import type { BacklogItem, ZooGameState } from './types';
 import { CRITERIA, criterionFor, answerable, inspect } from './parkChecks';
 import { LANDSCAPE_TYPES, currentDesign } from './design';
-import { picksAStructure } from './toolboxItems';
+import { picksAStructure, structureWord } from './toolboxItems';
 import { structureChosen } from './engine';
 
 // ============= What the strip offers, and what each part of it would settle =============
@@ -60,6 +60,9 @@ export const GROUPS: GroupDef[] = [
   // about what KIND it is - so it is never lit by `wouldSettle`. It is lit by being unanswered,
   // which is what `litFor` is for.
   { id: 'structure', label: 'Structure', meets: [],
+    // Said in the words of the thing being built: a habitat is a structure, a lion is a species and
+    // a stand of trees is planting.
+    labelFor: (it) => structureWord(it.category),
     applies: (it) => picksAStructure(it.category),
     litFor: (it) => !structureChosen(it) },
 
@@ -89,8 +92,10 @@ export const GROUPS: GroupDef[] = [
   { id: 'colours', label: 'Colours', meets: ['says-what-it-is'], applies: building },
 
   // ---- planting ----
-  { id: 'planting', label: 'Planting', meets: [], applies: flora,
-    labelFor: (it) => (LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') ? 'Style' : 'Planting') },
+  // What it LOOKS like: how big it grew, what colour it is, how many of them. What it IS is the
+  // first decision, on Planting, and this used to be called that too - two menus with one name.
+  { id: 'planting', label: 'Look', meets: [], applies: flora,
+    labelFor: (it) => (LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') ? 'Style' : 'Look') },
 
   // ---- the pen, and the park ----
   // Four groups were four: the pen, how wide, the runs laid, and the surface. They are one piece of
