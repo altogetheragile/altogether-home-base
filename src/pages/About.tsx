@@ -263,9 +263,7 @@ const About: React.FC = () => {
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.</p>
               <a
                 href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}
+                                style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}
               >
                 <Icons.Chat />Book a chemistry session
               </a>
@@ -287,7 +285,7 @@ const About: React.FC = () => {
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
           <SectionHeading label="Why Altogether Agile exists" title="The mission." light />
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>
-            Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches ceremonies without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.
+            Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches the events without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.
           </p>
           <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>
             Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one - and every session ends with something concrete enough to act on.
@@ -358,9 +356,7 @@ const About: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <a
                 href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
+                                style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
               >
                 <Icons.Chat />Book a chemistry session
               </a>

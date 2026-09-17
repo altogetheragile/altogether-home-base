@@ -12,8 +12,12 @@ export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://altogetheragil
 
 /**
  * Shared booking and contact constants.
+ *
+ * BOOKING_URL is our own page now, not Calendly, so every link to it is
+ * internal: same tab, no target="_blank". The route is behind the show_bookings
+ * site setting and 404s when that is off.
  */
-export const BOOKING_URL = 'https://calendly.com/alundaviesbaker/30min';
+export const BOOKING_URL = '/book/chemistry-session';
 export const CONTACT_EMAIL = 'info@altogetheragile.com';
 
 export const featureFlags = {

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
+import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { HomeCarousel } from './HomeCarousel';
@@ -14,7 +15,6 @@ export const dynamic = 'force-dynamic';
 const TITLE = 'Altogether Agile - Agile Coaching & Training';
 const DESC =
   'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.';
-const BOOKING_URL = 'https://calendly.com/alundaviesbaker/30min';
 
 export const metadata: Metadata = {
   ...buildMetadata({ title: TITLE, description: DESC, path: '/' }),
@@ -40,6 +40,7 @@ export default async function HomePage() {
   ]);
   const showKnowledge = !!settings.show_knowledge;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const bookingUrl = bookingHref(settings.show_bookings);
 
   return (
     <div className="aa-page">
@@ -121,7 +122,7 @@ export default async function HomePage() {
         </div>
 
         {/* ABOUT ALUN */}
-        <AboutSection />
+        <AboutSection bookingUrl={bookingUrl} />
 
         {/* KNOWLEDGE BASE */}
         {showKnowledge && (
@@ -148,7 +149,7 @@ export default async function HomePage() {
               <p className="aa-cta-banner__body">Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell - just a conversation.</p>
               <div className="aa-cta-banner__actions">
                 <Link href="/events" className="aa-btn aa-btn--deep">Browse Events <Icons.ArrowRight /></Link>
-                <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="aa-btn aa-btn--ghost-light"><Icons.Chat />Book a Chemistry Session</a>
+                <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />Book a Chemistry Session</a>
               </div>
             </div>
             <div className="aa-hide-mobile">

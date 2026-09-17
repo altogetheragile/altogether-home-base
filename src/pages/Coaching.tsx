@@ -125,7 +125,7 @@ const services = [
     colour: '#6B5FCC',
     lightBg: '#EEECF9',
     tagline: "Better teams don't happen by accident.",
-    description: "Coaching for agile teams that are technically doing the ceremonies but not getting the results - or for newly formed teams that want to build good habits from the start.",
+    description: "Coaching for agile teams that are technically running the events but not getting the results - or for newly formed teams that want to build good habits from the start.",
     detail: "I work with the whole team, not just the Scrum Master or team lead. That means coaching the dynamics, not just the process - how the team makes decisions, how they handle conflict, and whether their retrospectives are actually changing anything.",
     includes: [
       'Initial team assessment and health check',
@@ -264,9 +264,7 @@ const Coaching: React.FC = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
             <a
               href={BOOKING_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+                            style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
             >
               <Icons.Chat />Book a free chemistry session
             </a>
@@ -385,9 +383,7 @@ const Coaching: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <a
                 href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
+                                style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}
               >
                 <Icons.Calendar />Book a time slot
               </a>

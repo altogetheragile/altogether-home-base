@@ -432,7 +432,7 @@ const Technique: React.FC = () => {
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>
                 Want to practise this technique with your team? Book a free chemistry session to talk through how it applies to your context.
               </p>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}>
+              <a href={BOOKING_URL} style={{ background: p.orange, color: '#fff', border: 'none', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}>
                 <Icons.Chat />Book a Chemistry Session
               </a>
             </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
+import { bookingHref } from '@/lib/booking';
 import { getAllApprovedFeedback } from '@/lib/testimonials';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME } from '@/lib/seo';
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
@@ -8,7 +9,6 @@ import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 export const dynamic = 'force-dynamic';
 
 const p = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
-const BOOKING_URL = 'https://calendly.com/alundaviesbaker/30min';
 
 export const metadata: Metadata = {
   ...buildMetadata({
@@ -70,6 +70,7 @@ function Stars({ rating }: { rating: number | null }) {
 export default async function AboutPage() {
   const [settings, feedback] = await Promise.all([getSiteSettings(), getAllApprovedFeedback()]);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const bookingUrl = bookingHref(settings.show_bookings);
   const quotes = [...feedback].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3);
   const name = (f: { first_name: string; last_name: string }) => (firstNameOnly ? f.first_name : `${f.first_name} ${f.last_name}`.trim());
 
@@ -152,7 +153,7 @@ export default async function AboutPage() {
             <div style={{ background: p.deepTeal, borderRadius: 14, padding: 24 }}>
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Work with me</div>
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.</p>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ background: p.orange, color: '#fff', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}><Chat />Book a chemistry session</a>
+              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}><Chat />Book a chemistry session</a>
             </div>
           </div>
         </div>
@@ -181,7 +182,7 @@ export default async function AboutPage() {
       <div className="aa-section-pad" style={{ background: '#006666' }}>
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
           <Heading label="Why Altogether Agile exists" title="The mission." light />
-          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches ceremonies without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.</p>
+          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches the events without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.</p>
           <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one - and every session ends with something concrete enough to act on.</p>
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable - not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who&apos;s been in the room for real.</p>
         </div>
@@ -240,7 +241,7 @@ export default async function AboutPage() {
             <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>Ready to work with someone who&apos;s been in the room?</h2>
             <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>Browse upcoming courses, explore the knowledge base, or book a free chemistry session to talk through what you need.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />Book a chemistry session</a>
+              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />Book a chemistry session</a>
               {settings.show_events !== false && <Link href="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>Browse Events <ArrowRight /></Link>}
               {settings.show_knowledge && <Link href="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>Knowledge Base <ArrowRight /></Link>}
             </div>

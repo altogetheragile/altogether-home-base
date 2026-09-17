@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { buildMetadata, JsonLd, breadcrumbJsonLd } from '@/lib/seo';
 import { ContactForm } from './ContactForm';
+import { getSiteSettings } from '@/lib/site-settings';
+import { bookingHref } from '@/lib/booking';
 
 export const dynamic = 'force-dynamic';
 
 const p = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
-const BOOKING_URL = 'https://calendly.com/alundaviesbaker/30min';
 const CONTACT_EMAIL = 'info@altogetheragile.com';
 
 export const metadata: Metadata = {
@@ -21,13 +22,19 @@ const Mail = () => <svg width="22" height="22" viewBox="0 0 256 256" fill="curre
 const MapPin = () => <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z" /></svg>;
 const Calendar = () => <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z" /></svg>;
 
-const cards = [
+// Built per request rather than at module scope: the booking href depends on the
+// show_bookings setting, which is read at render.
+const buildCards = (bookingUrl: string) => [
   { icon: <Mail />, title: 'Email', value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}`, external: false },
   { icon: <MapPin />, title: 'Location', value: 'London, England', href: null, external: false },
-  { icon: <Calendar />, title: 'Book a Call', value: 'Free 30-min chemistry session', href: BOOKING_URL, external: true },
+  // Our own page now, so it opens in the same tab.
+  { icon: <Calendar />, title: 'Book a Call', value: 'Free 30-min chemistry session', href: bookingUrl, external: false },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getSiteSettings();
+  const cards = buildCards(bookingHref(settings.show_bookings));
+
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Contact', path: '/contact' }])} />
