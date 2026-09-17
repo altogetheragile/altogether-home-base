@@ -46,7 +46,8 @@ describe('what the game is asking of whom', () => {
   });
 
   it('says when Done work is sitting unreleased', () => {
-    const s = sprint({}, { ...built, status: 'done', acConfirmed: enclosureAcceptance().map(() => true),
+    const s = sprint({}, { ...built, status: 'done', signedOff: true,
+      acConfirmed: enclosureAcceptance().map(() => true),
       tasks: [{ id: 't', label: 'Get the PO’s sign-off', done: true }] } as Partial<BacklogItem>);
     const release = asksNow(s).find((a) => a.kind === 'release');
     expect(release, 'work met the Definition of Done and nothing said it was still shut').toBeTruthy();

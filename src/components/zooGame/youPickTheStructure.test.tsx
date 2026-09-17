@@ -3,7 +3,8 @@ import { render, fireEvent } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
 import { openGroup } from './openGroup';
 import { structuresFor, picksAStructure, structureWord } from './toolboxItems';
-import { chooseStructure, structureChosen } from './engine';
+import { chooseStructure, structureChosen, planSprint, startItem, setServices, buildItem, placeOnPark,
+  addConnector, toggleItemTask, isSignOffTask, signOffReady, readyForDone, askToCheck, answerQuestion } from './engine';
 import { applyParkChecks } from './parkChecks';
 import { initialZooState } from './config';
 import { presetFor, buildingTypeFor } from './design';
@@ -179,5 +180,49 @@ describe('choosing one', () => {
     const s = seeded();
     const before = building(s, pen(s));
     expect(chooseStructure(before, pen(s).id, 'kiosk'), 'a habitat was built as a kiosk').toBe(before);
+  });
+});
+
+describe('nothing reaches Done without the Product Owner', () => {
+  // "There was no PO check on toilets needed to move it to Done."
+  //
+  // The sign-off followed the acceptance criteria alone, which works while one of them is a
+  // judgement: a habitat is asked whether you can walk right round it, and only a person can say.
+  // A toilet block is asked three questions and the park can answer all three - so nothing was ever
+  // asked of anybody, the sign-off ticked itself, and the card walked into Done without the Product
+  // Owner appearing at all.
+  const built = () => {
+    const s0 = seeded();
+    const loo = s0.backlog.find((it) => it.category === 'amenity')!;
+    let s = planSprint({ ...s0, phase: 'sprint', sprintNumber: 1 } as ZooGameState, [loo.id], 0);
+    s = startItem(s, loo.id, 'developer');
+    s = setServices(s, loo.id, 'toilet');
+    const p = presetFor(loo);
+    s = buildItem(s, loo.id, { ...p, parts: { ...p.parts, type: 'toilets', structure: 'toilets', sign: 'on' },
+      colors: { ...p.colors, sign: '#3f6f4f' } });
+    s = placeOnPark(s, loo.id);
+    s = addConnector(s, { id: 'r', itemId: loo.id, a: { x: 300, y: 1050 }, b: { x: 300, y: 700 },
+      bends: [], thickness: 9, color: '#c9a86a' } as never);
+    s = applyParkChecks(s);
+    for (const t of s.backlog.find((x) => x.id === loo.id)!.tasks ?? []) {
+      if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, loo.id, t.id);
+    }
+    return { s: applyParkChecks(s), id: loo.id };
+  };
+
+  it('meets every criterion the park can answer, and still is not signed off', () => {
+    const { s, id } = built();
+    const it = s.backlog.find((x) => x.id === id)!;
+    expect(it.acceptance.every((_, i) => it.acConfirmed?.[i]), 'the park has not answered them').toBe(true);
+    expect(signOffReady(it), 'it signed itself off').toBe(false);
+    expect(readyForDone(it), 'it walked into Done on its own').toBe(false);
+  });
+
+  it('is signed off once the Product Owner has looked at it', () => {
+    const { s, id } = built();
+    const after = answerQuestion(askToCheck(s, id, 'developer'), `check-${id}`, 'accept', 'product_owner');
+    const it = after.backlog.find((x) => x.id === id)!;
+    expect(it.signedOff, 'the Product Owner accepted it and nothing recorded that').toBe(true);
+    expect(readyForDone(it), 'accepted, and still not ready to move').toBe(true);
   });
 });

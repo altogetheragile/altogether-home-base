@@ -66,6 +66,11 @@ describe('a Sprint, played through to the Review', () => {
       // Placement criteria are answered by the park itself, so a tick alone will not do.
       for (const it of s.backlog.filter((x) => x.status === 'committed' && x.started && x.design)) {
         (it.acceptance ?? []).forEach((_, i) => { s = reducer(s, { type: 'CONFIRM_AC', id: it.id, index: i, value: true }); });
+        // The Developers ask and the Product Owner looks. Meeting the criteria is what makes the
+        // asking possible; it is not the answer, and work whose criteria are all facts used to
+        // reach Done without anybody being asked anything.
+        s = reducer(s, { type: 'ASK_TO_CHECK', id: it.id, by: 'developer' });
+        po({ type: 'ANSWER_QUESTION', id: `check-${it.id}`, choice: 'accept' });
         s = reducer(s, { type: 'FINISH_ITEM', id: it.id, by: 'developer' });
         if (s.backlog.find((x) => x.id === it.id)!.status === 'done') po({ type: 'OPEN_ITEM', id: it.id });
       }
