@@ -68,6 +68,8 @@ Repo: `altogetheragile/altogether-home-base` (current as of PR #644). Read
   and consumed in `src/components/Navigation.tsx`.
 - `react-day-picker` (^9.8.0) and `date-fns` (^4.1.0) are already dependencies.
 - Migrations are timestamped `YYYYMMDDHHMMSS_name.sql` in `supabase/migrations/`.
+  This one is `20260917100000_booking_layer1.sql`, which sorts after the last
+  existing migration (`20260916090000_zoo_seats_own_seat_only.sql`).
 
 Note: `supabase/config.toml` says `project_id = "tdfbqmjmrqcovwnptiux"`, while
 `CLAUDE.md`, the CSP in `vercel.json` and the deploy commands all say
@@ -95,7 +97,8 @@ Out (later layers):
 
 ## Data Model
 
-See `booking_layer1.sql`. Four tables, all under RLS.
+See `supabase/migrations/20260917100000_booking_layer1.sql`. Four tables, all
+under RLS. The migration runs on the next deploy; nothing reads the tables yet.
 
 - `booking_types`: what can be booked (name, slug, duration, buffers, notice,
   horizon, price, provider, timezone).

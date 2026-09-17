@@ -1,11 +1,12 @@
 -- Booking tool, Layer 1
 -- Revision 2: Zoom replaces Google Meet for conferencing.
 --
--- DRAFT. Not yet a migration. The schema questions are settled, so this is ready
--- to move to:
---   supabase/migrations/20260917100000_booking_layer1.sql
--- It is held here only so it does not create tables on the next deploy before
--- there is any code to use them. Move it when the build starts.
+-- Creates the four booking tables, their RLS policies, the show_bookings nav
+-- flag, and seeds the Chemistry Session with Mon to Fri 09:00 to 17:00
+-- Europe/London hours. Nothing reads these tables yet; the edge functions, the
+-- public page and the admin section land in later commits.
+--
+-- Design notes live in docs/booking/booking-tool-spec.md.
 --
 -- Assumes is_admin() already exists (it does, June 2025 migrations).
 
