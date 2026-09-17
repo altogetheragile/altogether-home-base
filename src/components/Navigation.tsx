@@ -37,6 +37,7 @@ const FLAG_DEFAULTS: Record<string, boolean> = {
   show_resources: true,
   show_exams: true,
   show_flow_game: true,
+  show_bookings: false,
 };
 
 const ChevronDown = () => (

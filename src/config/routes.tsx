@@ -68,6 +68,7 @@ const PathwaysPicker = lazy(() => import('@/components/pipeline/PathwaysPicker')
 const FlowSimulatorPreview = lazy(() => import('@/components/pipeline/FlowSimulatorPreview'));
 const ExamsListing = lazy(() => import('@/pages/Exams'));
 const ExamPlayer = lazy(() => import('@/pages/ExamPlayer'));
+const BookingPage = lazy(() => import('@/pages/BookingPage'));
 
 // Protected Project Pages
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
@@ -123,6 +124,7 @@ const AdminBlogPost = lazy(() => import('@/pages/admin/AdminBlogPost'));
 
 // Admin Pages - Exam Question Bank
 const AdminExams = lazy(() => import('@/pages/admin/AdminExams'));
+const AdminBookings = lazy(() => import('@/pages/admin/AdminBookings'));
 const AdminSEO = lazy(() => import('@/pages/admin/AdminSEO'));
 const AdminExamQuestions = lazy(() => import('@/pages/admin/AdminExamQuestions'));
 
@@ -385,6 +387,15 @@ export const PublicRoutes = () => {
         </ErrorBoundary>
       </SiteSettingsRouteGuard>
     } />
+    <Route path="/book/:slug" element={
+      <SiteSettingsRouteGuard feature="bookings">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <BookingPage />
+          </Suspense>
+        </ErrorBoundary>
+      </SiteSettingsRouteGuard>
+    } />
     <Route path="/backlog" element={
       <Suspense fallback={<LoadingFallback />}>
         <ProductBacklog />
@@ -643,6 +654,13 @@ export const AdminRoutes = () => {
           </Suspense>
         } />
         
+        {/* Bookings */}
+        <Route path="bookings" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminBookings />
+          </Suspense>
+        } />
+
         {/* Exam Question Bank */}
         <Route path="exams" element={
           <Suspense fallback={<LoadingFallback />}>
