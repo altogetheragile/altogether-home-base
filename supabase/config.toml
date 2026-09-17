@@ -7,3 +7,12 @@ verify_jwt = false
 # Public: records thumbs-up/down feedback for a Pattern Builder run.
 [functions.pattern-builder-feedback]
 verify_jwt = false
+
+# Public: the booking page reads free slots with the anon key.
+[functions.booking-slots]
+verify_jwt = false
+
+# Public: takes a booking. Unauthenticated by design, so it carries its own
+# honeypot, spam check and per-IP / per-email limits (see _shared/bookingGuards.ts).
+[functions.booking-create]
+verify_jwt = false

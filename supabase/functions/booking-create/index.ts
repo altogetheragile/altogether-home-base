@@ -1,0 +1,338 @@
+// Takes a booking.
+//
+// Public and unauthenticated, so it is guarded before it does anything
+// expensive. Three external calls, and the ORDER MATTERS:
+//
+//   1. re-check the slot server-side        (never trust the posted list)
+//   2. insert as pending                    (the constraint is the real guard)
+//   3. create the Zoom meeting, WRITE IT    (before the calendar call)
+//   4. create the calendar event
+//   5. confirm, then email
+//
+// Step 3's write is the part that is easy to get wrong. Zoom has no idempotency
+// key on meeting creation, so if Zoom succeeds and Google then fails, an
+// unwritten meeting id means a retry creates a second meeting and orphans the
+// first. Writing it first makes the retry safe.
+//
+// Anything after step 2 that fails leaves the row at pending rather than
+// deleting it. Admin surfaces those; a booking that half happened must never
+// vanish silently.
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from 'npm:resend@2.0.0';
+import { isSlotAvailable, type DateOverride, type WeeklyWindow } from '../_shared/bookingSlots.ts';
+import { fetchBusy, createCalendarEvent } from '../_shared/googleCalendar.ts';
+import { createZoomMeeting } from '../_shared/zoom.ts';
+import {
+  callerIp, hashIp, checkBookingGuards, recordAttempt, escapeHtml,
+} from '../_shared/bookingGuards.ts';
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+
+/** The shapes read back from Postgres, named so the mapping below is checkable. */
+interface AvailabilityRow { weekday: number; start_local: string; end_local: string }
+interface OverrideRow { on_date: string; closed: boolean; start_local: string | null; end_local: string | null }
+interface BlockedRow { blocks_from: string; blocks_until: string }
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://altogetheragile.com',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const COMPANY = 'Altogether Agile';
+const FROM = `${COMPANY} <noreply@altogetheragile.com>`;
+const OWNER_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'info@altogetheragile.com';
+const SITE = 'https://altogetheragile.com';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+/** A time formatted in a named zone, for the emails. */
+function inZone(iso: string, tz: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz,
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(iso));
+}
+
+/** Rejects a zone the browser made up, so Intl cannot throw later. */
+function safeTimezone(value: unknown): string {
+  if (typeof value !== 'string' || !value) return 'Europe/London';
+  try {
+    new Intl.DateTimeFormat('en-GB', { timeZone: value });
+    return value;
+  } catch {
+    return 'Europe/London';
+  }
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    { auth: { persistSession: false } },
+  );
+
+  let ipHash = 'unknown';
+  let email = '';
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const slug: string = body.type ?? '';
+    const startsAtRaw: string = body.starts_at ?? '';
+    const name: string = (body.name ?? '').trim();
+    email = (body.email ?? '').trim().toLowerCase();
+    const notes: string | null = body.notes ? String(body.notes).trim() : null;
+    const guestTimezone = safeTimezone(body.timezone);
+
+    ipHash = await hashIp(callerIp(req));
+
+    // ── Guards, before anything costs money or sends mail ──
+    const guard = await checkBookingGuards(supabase, {
+      ipHash, email, name, notes, honeypot: body.company ?? null,
+    });
+    if (!guard.ok) {
+      console.warn(`[booking-create] refused (${guard.reason}) for ${email || 'no email'}`);
+      await recordAttempt(supabase, ipHash, email, 'blocked');
+      return json({ error: guard.message }, guard.reason === 'ip-limit' ? 429 : 400);
+    }
+
+    if (!slug) return json({ error: 'Missing booking type' }, 400);
+    const startsAt = new Date(startsAtRaw);
+    if (Number.isNaN(startsAt.getTime())) return json({ error: 'Invalid start time' }, 400);
+
+    // ── 1. Re-check the slot ourselves ──
+    const { data: type, error: typeError } = await supabase
+      .from('booking_types')
+      .select('id, slug, name, description, duration_minutes, buffer_before, buffer_after, min_notice_minutes, max_days_ahead, timezone, active')
+      .eq('slug', slug)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (typeError) throw typeError;
+    if (!type) return json({ error: 'Unknown booking type' }, 404);
+
+    const dayBefore = new Date(startsAt.getTime() - DAY_MS).toISOString().slice(0, 10);
+    const dayAfter = new Date(startsAt.getTime() + DAY_MS).toISOString().slice(0, 10);
+
+    const [{ data: availability }, { data: overrides }] = await Promise.all([
+      supabase.from('booking_availability').select('weekday, start_local, end_local').eq('booking_type_id', type.id),
+      supabase.from('booking_overrides').select('on_date, closed, start_local, end_local')
+        .eq('booking_type_id', type.id).gte('on_date', dayBefore).lte('on_date', dayAfter),
+    ]);
+
+    const weekly: WeeklyWindow[] = (availability ?? []).map((w: AvailabilityRow) => ({
+      weekday: w.weekday, startLocal: w.start_local, endLocal: w.end_local,
+    }));
+    const dateOverrides: DateOverride[] = (overrides ?? []).map((o: OverrideRow) => ({
+      onDate: o.on_date, closed: o.closed, startLocal: o.start_local, endLocal: o.end_local,
+    }));
+
+    const timeMin = new Date(startsAt.getTime() - 2 * DAY_MS).toISOString();
+    const timeMax = new Date(startsAt.getTime() + 2 * DAY_MS).toISOString();
+
+    let calendarBusy: { start: string; end: string }[] = [];
+    try {
+      calendarBusy = await fetchBusy(timeMin, timeMax);
+    } catch (e) {
+      console.error('[booking-create] free/busy failed:', e);
+      return json({ error: 'Could not confirm availability. Please try again shortly.' }, 503);
+    }
+
+    const { data: booked } = await supabase
+      .from('bookings')
+      .select('blocks_from, blocks_until')
+      .neq('status', 'cancelled')
+      .gte('blocks_until', timeMin)
+      .lte('blocks_from', timeMax);
+
+    const slot = isSlotAvailable({
+      rules: {
+        durationMinutes: type.duration_minutes,
+        bufferBefore: type.buffer_before,
+        bufferAfter: type.buffer_after,
+        minNoticeMinutes: type.min_notice_minutes,
+        maxDaysAhead: type.max_days_ahead,
+        timezone: type.timezone,
+      },
+      weekly,
+      overrides: dateOverrides,
+      busy: [
+        ...calendarBusy,
+        ...(booked ?? []).map((b: BlockedRow) => ({ start: b.blocks_from, end: b.blocks_until })),
+      ],
+      from: dayBefore,
+      to: dayAfter,
+      now: new Date(),
+      startsAt: startsAt.toISOString(),
+    });
+
+    if (!slot) {
+      return json({ error: 'That time is no longer available. Please pick another.' }, 409);
+    }
+
+    // ── 2. Insert as pending. The exclusion constraint is the real guard: two
+    // callers can both reach here, only one can commit. ──
+    const { data: booking, error: insertError } = await supabase
+      .from('bookings')
+      .insert({
+        booking_type_id: type.id,
+        starts_at: slot.startsAt,
+        ends_at: slot.endsAt,
+        blocks_from: slot.blocksFrom,
+        blocks_until: slot.blocksUntil,
+        guest_name: name,
+        guest_email: email,
+        guest_timezone: guestTimezone,
+        notes,
+        status: 'pending',
+      })
+      .select('id, manage_token')
+      .single();
+
+    if (insertError) {
+      // 23P01 is exclusion_violation: someone took the slot between the check
+      // and the insert. That is the race working as designed, not an error.
+      if (insertError.code === '23P01' || insertError.code === '23505') {
+        return json({ error: 'That time was just taken. Please pick another.' }, 409);
+      }
+      throw insertError;
+    }
+
+    await recordAttempt(supabase, ipHash, email, 'ok');
+
+    // ── 3. Zoom, then write the id straight away ──
+    let meeting;
+    try {
+      meeting = await createZoomMeeting({
+        topic: `${type.name}: ${name}`,
+        startsAt: slot.startsAt,
+        durationMinutes: type.duration_minutes,
+        agenda: notes ?? '',
+      });
+    } catch (e) {
+      console.error(`[booking-create] Zoom failed for booking ${booking.id}:`, e);
+      return json({
+        error: 'Your slot is held but the video link could not be created. We will be in touch.',
+        bookingId: booking.id,
+      }, 502);
+    }
+
+    // Before the calendar call, so a retry reuses this meeting rather than
+    // creating a second one.
+    await supabase
+      .from('bookings')
+      .update({
+        meeting_id: meeting.meetingId,
+        meeting_url: meeting.joinUrl,
+        meeting_passcode: meeting.passcode,
+      })
+      .eq('id', booking.id);
+
+    // ── 4. Calendar ──
+    const passcodeLine = meeting.passcode ? `\nPasscode: ${meeting.passcode}` : '';
+    let calendarEventId: string | null = null;
+    try {
+      const event = await createCalendarEvent({
+        summary: `${type.name}: ${name}`,
+        description:
+          `${type.name} with ${name} (${email}).\n\n` +
+          `Join: ${meeting.joinUrl}${passcodeLine}\n\n` +
+          (notes ? `What they would like to talk about:\n${notes}\n` : ''),
+        location: meeting.joinUrl,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+        guestEmail: email,
+        guestName: name,
+      });
+      calendarEventId = event.eventId;
+    } catch (e) {
+      // The meeting exists and the slot is held. Leave it pending for admin.
+      console.error(`[booking-create] calendar failed for booking ${booking.id}:`, e);
+      return json({
+        error: 'Your slot is held but the calendar invite could not be sent. We will be in touch.',
+        bookingId: booking.id,
+        meetingUrl: meeting.joinUrl,
+      }, 502);
+    }
+
+    // ── 5. Confirm ──
+    await supabase
+      .from('bookings')
+      .update({ status: 'confirmed', calendar_event_id: calendarEventId })
+      .eq('id', booking.id);
+
+    // ── Emails. Failing here does not un-book anything, so it must not fail
+    // the request - the guest already has the calendar invite from Google. ──
+    const safeName = escapeHtml(name);
+    const safeNotes = notes ? escapeHtml(notes).replace(/\n/g, '<br>') : '';
+    const guestWhen = inZone(slot.startsAt, guestTimezone);
+    const ownerWhen = inZone(slot.startsAt, 'Europe/London');
+
+    try {
+      await resend.emails.send({
+        from: FROM,
+        to: [email],
+        replyTo: OWNER_EMAIL,
+        subject: `Your ${type.name} is booked`,
+        html: `
+          <h1>You are booked in, ${safeName}</h1>
+          <p><strong>${escapeHtml(type.name)}</strong><br>
+             ${escapeHtml(guestWhen)} (${escapeHtml(guestTimezone)})<br>
+             ${type.duration_minutes} minutes</p>
+          <p><a href="${meeting.joinUrl}">Join the Zoom meeting</a>
+             ${meeting.passcode ? `<br>Passcode: ${escapeHtml(meeting.passcode)}` : ''}</p>
+          <p>A calendar invite is on its way separately, so the meeting lands in
+             your own diary with the link attached.</p>
+          <p>If you need to change or cancel, just reply to this email.</p>
+          <p>See you then,<br>${COMPANY}</p>
+        `,
+      });
+
+      await resend.emails.send({
+        from: FROM,
+        to: [OWNER_EMAIL],
+        replyTo: email,
+        subject: `New booking: ${type.name} with ${name}`,
+        html: `
+          <h2>New booking</h2>
+          <p><strong>${safeName}</strong> &lt;${escapeHtml(email)}&gt;</p>
+          <p>${escapeHtml(type.name)}<br>
+             ${escapeHtml(ownerWhen)} (Europe/London)<br>
+             Guest is in ${escapeHtml(guestTimezone)}</p>
+          ${safeNotes ? `<p><strong>What they would like to talk about:</strong><br>${safeNotes}</p>` : ''}
+          <p><a href="${meeting.joinUrl}">Zoom meeting</a></p>
+          <p><a href="${SITE}/admin/bookings">Open in admin</a></p>
+        `,
+      });
+    } catch (e) {
+      console.error(`[booking-create] emails failed for booking ${booking.id}:`, e);
+    }
+
+    return json({
+      ok: true,
+      booking: {
+        id: booking.id,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+        meetingUrl: meeting.joinUrl,
+        passcode: meeting.passcode,
+        timezone: guestTimezone,
+      },
+    });
+  } catch (e) {
+    console.error('[booking-create] unexpected:', e);
+    await recordAttempt(supabase, ipHash, email, 'blocked');
+    return json({ error: 'Something went wrong. Please try again.' }, 500);
+  }
+});
