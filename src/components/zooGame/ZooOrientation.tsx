@@ -1,5 +1,6 @@
 import { Trees, Users, Boxes, Clock, Lightbulb, ArrowRight } from 'lucide-react';
 import { Section, Row } from './ScrumTeaching';
+import { LabelledPark } from './LabelledPark';
 import { ORIENTATION, INTRO_COPY } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { cn } from '@/lib/utils';
@@ -64,6 +65,10 @@ export function ZooOrientation({ onDone, onScrum, onBack, copy }: {
           <h2 className={TEXT.screen}>{O.title}</h2>
           <p className="text-sm leading-snug text-muted-foreground">{O.strapline}</p>
         </header>
+
+        {/* The zoo, before the words about it. Somebody built this one by playing the game, and the
+            numbers name the parts the toolbar will ask you about. */}
+        <LabelledPark />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Section title={O.park.title} tone="events" icon={Trees}>
