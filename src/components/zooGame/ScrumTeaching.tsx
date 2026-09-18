@@ -3,7 +3,7 @@ import { X, GraduationCap, Clock, Users, Boxes, Heart, Microscope, Recycle, Repe
 import { cn } from '@/lib/utils';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
-import { FOCUS, TEXT, TONE } from './ui/tokens';
+import { ACTION_BAR, BAR_ACTION, FOCUS, TEXT, TONE } from './ui/tokens';
 
 // The teaching, on screen. Three pieces: a card shown in context the first time an element is met,
 // a reference panel that is always to hand, and the one-page introduction before play. All of it can
@@ -235,16 +235,16 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
       {/* Floating, like every other primary action in the game: reachable without scrolling to the
           foot of the page, and the "turn the teaching off" escape is a real button rather than grey
           text nobody sees. */}
-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
+      <div className={ACTION_BAR}>
         {/* An escape you cannot see is not an escape. Bordered, in the foreground colour, with the
             icon that says what it does. */}
         <button type="button" onClick={onSkipTeaching}
-          className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
+          className={cn(FOCUS, BAR_ACTION, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
           <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
           I have covered this - turn the teaching off
         </button>
         <button type="button" onClick={onDone}
-          className={cn(FOCUS, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
+          className={cn(FOCUS, BAR_ACTION, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
           Start building the zoo &rarr;
         </button>
       </div>
