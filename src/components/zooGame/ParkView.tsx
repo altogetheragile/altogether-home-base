@@ -11,6 +11,7 @@ import type { SegmentId } from './simulation/types';
 import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { union, centreOn } from './frameTheWork';
 import { zoneSlices, zooIsOpen, crowdNow } from './engine';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FlyThrough } from './FlyThrough';
@@ -202,10 +203,19 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   const [tool, setTool] = useState<'none' | 'connect' | null>(null);
   const [selectedConn, setSelectedConn] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1); // 1 = the park fits the width it is given
-  // Zooming keeps the middle of what you are looking at where it is. The park grows from its
-  // top-left corner, so zooming in used to walk the view off it: at 300% you were looking at empty
-  // grass and the zoo was somewhere up and to the left. Whatever is in the middle of the box stays
-  // in the middle of the box, which is what zooming means everywhere else.
+  // Zooming takes you closer to the ZOO. It used to keep the middle of the viewport where it was,
+  // which on a park that is mostly grass means closer to grass: at 300% you were looking at an
+  // empty field with the zoo somewhere off the edge. Reported from playing it: "the zoom does not
+  // zoom in to the current work."
+  //
+  // And it wrote the new scroll position in the same frame as the zoom, before the drawing had
+  // grown - so the browser clamped it to the old extent and the view slid part of the way and came
+  // back: "when I click zoom it zooms in and out again partially each time". It waits a frame now,
+  // which is what it takes for the bigger drawing to exist.
+  //
+  // What it aims at is everything the view has drawn with a `data-item` on it, which is every
+  // habitat, animal, building and plant. Nothing built yet, nothing to aim at, and it leaves the
+  // view where it is.
   const scrollBox = useRef<HTMLDivElement>(null);
   const zoomWas = useRef(1);
   useLayoutEffect(() => {
@@ -213,8 +223,39 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
     const factor = zoom / zoomWas.current;
     zoomWas.current = zoom;
     if (!box || factor === 1) return;
-    box.scrollLeft = (box.scrollLeft + box.clientWidth / 2) * factor - box.clientWidth / 2;
-    box.scrollTop = (box.scrollTop + box.clientHeight / 2) * factor - box.clientHeight / 2;
+    // ...and it waits for the drawing to BE there. The isometric view is lazy and redraws itself
+    // from scratch at the new size, and it grows in stages - the box takes its new width before the
+    // park inside it is redrawn - so the first measurement is of a half-built picture, or of no
+    // picture at all. It aims, waits, and aims again until two goes running agree, then stops.
+    //
+    // On a TIMER rather than an animation frame. The browser does not run animation frames in a tab
+    // nobody is looking at, so a zoom pressed on a tab left in the background - or driven by
+    // anything other than a person watching it - never moved at all. A timer runs either way.
+    //
+    // And it stops the moment the answer settles rather than running out its tries, so it is not
+    // still dragging the view back half a second later while somebody is scrolling it by hand.
+    let timer = 0;
+    let tries = 0;
+    let was = '';
+    const aim = () => {
+      const again = () => { if (tries++ < 20) timer = window.setTimeout(aim, 25); };
+      const work = union([...box.querySelectorAll('[data-item]')].map((el) => el.getBoundingClientRect()));
+      if (!work) return again();
+      const at = centreOn(work, {
+        rect: box.getBoundingClientRect(),
+        scrollLeft: box.scrollLeft, scrollTop: box.scrollTop,
+        clientWidth: box.clientWidth, clientHeight: box.clientHeight,
+        scrollWidth: box.scrollWidth, scrollHeight: box.scrollHeight,
+      });
+      box.scrollLeft = at.left;
+      box.scrollTop = at.top;
+      const now = `${Math.round(at.left)},${Math.round(at.top)}`;
+      if (now === was) return;
+      was = now;
+      again();
+    };
+    aim();
+    return () => window.clearTimeout(timer);
   }, [zoom]);
   // Plan to build in, Increment to inspect. The same zoo either way - this switches how it is
   // drawn, not what it is.
