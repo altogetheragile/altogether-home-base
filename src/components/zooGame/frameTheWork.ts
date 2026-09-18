@@ -11,6 +11,25 @@
 
 export interface Rect { left: number; top: number; right: number; bottom: number }
 
+/** Which of the drawn things count as "the work".
+ *
+ *  Everything on the park is drawn with its item's id on it, so the union of all of them is the
+ *  union of the whole zoo - and on a park with a Sprint or two behind it, that is the park. Centring
+ *  the park is not "zoom in to the current work"; it is what the zoom did before, arrived at by a
+ *  longer route. So when the Developers have something in hand, the work is THAT, and everything
+ *  else is scenery it happens to stand in.
+ *
+ *  Nothing in hand - the Increment between Sprints, a park being looked at rather than built on -
+ *  and the whole zoo is the thing worth looking at, which is the honest answer to "closer to what?" */
+export function theWork<T extends { getAttribute(name: string): string | null }>(
+  drawn: T[], inHand?: string | null,
+): T[] {
+  if (!inHand) return drawn;
+  const its = drawn.filter((el) => el.getAttribute('data-item') === inHand);
+  // Held but not drawn yet - nothing has been placed on the park - and the zoo is what there is.
+  return its.length ? its : drawn;
+}
+
 /** The smallest rectangle holding all of them, ignoring anything with no size. */
 export function union(rects: Rect[]): Rect | null {
   const real = rects.filter((r) => r.right > r.left && r.bottom > r.top);

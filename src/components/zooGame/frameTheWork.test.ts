@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { union, centreOn, type Rect } from './frameTheWork';
+import { union, centreOn, theWork, type Rect } from './frameTheWork';
 
 // Zooming the Increment takes you closer to the zoo.
 //
@@ -61,5 +61,31 @@ describe('where it scrolls to', () => {
   it('asks for nothing where there is nothing to scroll', () => {
     const still = centreOn(r(100, 100, 200, 200), box({ scrollWidth: 800, scrollHeight: 600 }));
     expect(still).toEqual({ left: 0, top: 0 });
+  });
+});
+
+describe('what counts as the work', () => {
+  // Everything drawn on the park carries its item's id. The union of all of them is the union of the
+  // whole zoo, and centring the whole zoo is exactly what the zoom did wrong to begin with - so on a
+  // park with a Sprint or two behind it, aiming at "every data-item" would quietly be the old bug
+  // again, arrived at by a longer route.
+  const drawn = (...ids: string[]) => ids.map((id) => ({ getAttribute: () => id }));
+
+  it('is the thing in hand, and not the zoo it stands in', () => {
+    const park = drawn('lion-enc', 'lion-enc', 'penguins-enc', 'toilets', 'trees');
+    expect(theWork(park, 'lion-enc').length, 'it framed the whole park').toBe(2);
+  });
+
+  it('is the whole zoo when nothing is in hand', () => {
+    // Between Sprints there is no work in hand, and then the zoo IS the thing worth looking at.
+    const park = drawn('lion-enc', 'toilets');
+    expect(theWork(park, null)).toHaveLength(2);
+    expect(theWork(park, undefined)).toHaveLength(2);
+  });
+
+  it('falls back to the zoo when the thing in hand is not on the park yet', () => {
+    // Started, nothing placed. Framing an empty selection would leave the view wherever it was.
+    const park = drawn('toilets', 'trees');
+    expect(theWork(park, 'lion-enc'), 'it aimed at nothing').toHaveLength(2);
   });
 });
