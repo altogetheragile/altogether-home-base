@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { PRODUCT_GOAL } from './config';
-import { Pencil, FolderOpen, Trophy } from 'lucide-react';
+import { Pencil, FolderOpen, Trophy, Wand2 } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
 import { INTRO_COPY } from './scrumContent';
 import { GoalShapes } from './GoalShapes';
+import { rewordProductGoal } from './engine';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
-import { FOCUS, PADDING, SURFACE, TEXT } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE, TEXT, WIZARD } from './ui/tokens';
 import { cn } from '@/lib/utils';
 
 interface ZooIntroProps {
@@ -42,6 +43,9 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
   // half survived. Reported from a play-through: "the Product Goal I wrote was thrown away... this
   // is the same pre-filled-field bug I found in the AI tools suite last week."
   const [goal, setGoal] = useState(productGoal === PRODUCT_GOAL ? '' : productGoal);
+  // What the wand changed, cleared the moment they type again - the note was about the sentence
+  // that was there.
+  const [reworded, setReworded] = useState<string | null>(null);
   // ...and what is committed is what is in the field, or the suggestion if it was left alone.
   const chosen = () => goal.trim() || PRODUCT_GOAL;
 
@@ -88,13 +92,37 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
               <Pencil className="h-4 w-4 shrink-0 text-primary/70" />
               <input
                 value={goal}
-                onChange={(e) => setGoal(e.target.value)}
+                onChange={(e) => { setGoal(e.target.value); setReworded(null); }}
                 placeholder="Open a zoo that visitors love and come back to"
                 aria-label="Product Goal"
                 className="w-full bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-muted-foreground/70"
               />
+              {/* The same wand the Sprint Goal has, and deliberately only half of it. That one will
+                  write a Sprint Goal from nothing, because by then there is a forecast to write it
+                  from. Here there is nothing but the player, and a button that writes their Product
+                  Goal for them does the one piece of thinking this screen exists for - so it waits
+                  until they have had a go, and then rewords what they wrote. */}
+              <Button type="button" size="sm" data-part="goal-wand" disabled={!goal.trim()}
+                className={cn(WIZARD, 'h-7 shrink-0 gap-1 px-2.5 text-[11px] font-semibold')}
+                onClick={() => {
+                  const out = rewordProductGoal(goal);
+                  setGoal(out.goal);
+                  setReworded(out.note);
+                }}
+                title={goal.trim()
+                  ? 'Puts what you wrote into the shape of a Product Goal, and says what it changed. Your words, the Goal’s shape.'
+                  : 'Write a rough one first and I will shape it. The Product Goal is the Product Owner’s to decide.'}>
+                <Wand2 className="h-3.5 w-3.5" /> Reword mine
+              </Button>
             </span>
           </label>
+          {/* What the rewording changed, and why. The point of the wand is not a better sentence
+              handed over, but the reason theirs was not one yet. */}
+          {reworded && (
+            <p data-part="goal-reworded" className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs leading-snug">
+              <span className="font-semibold">Reworded.</span> {reworded}
+            </p>
+          )}
           <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
           {onSetGoalShape && (
             <div className="mt-2">

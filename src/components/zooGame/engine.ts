@@ -2635,7 +2635,7 @@ const GOAL_WHY = /\b(so that|so they|so we|so visitors|so families|so people|in 
 const GOAL_FLUFF = /^(our goal is to|our goal is|the goal is to|the goal is|goal:|we want to|we will|we are going to|i want to|to)\s+/i;
 const GOAL_SPLIT = /\.\s+|;\s*|\s+and also\s+|\s*\n+\s*/i;
 /** Openings that already carry their own determiner, so no article is put in front of them. */
-const GOAL_DETERMINED = /^(a|an|the|some|somewhere|something|more|our|my|your|all|every|each|both|two|three|four|five|enough|better)\b/i;
+const GOAL_DETERMINED = /^(a|an|the|some|somewhere|something|more|our|my|your|all|every|each|both|two|three|four|five|enough|better|lots|plenty|many|several|loads|no|nothing|everything)\b/i;
 /** Verbs that already say "deliver", so the rewording does not say it twice. */
 const GOAL_VERB = /^(build|open|make|create|add|deliver|finish|complete|launch|install|put|get|give|lay|run|set up|stock|fill|show|bring)\b/i;
 
@@ -2668,6 +2668,68 @@ export function rewordSprintGoal(theirs: string, items: BacklogItem[]): { goal: 
   if (trimmed) notes.push('A Sprint Goal is one thing the whole team can commit to, so I kept the first of yours and left the rest for the Sprint Backlog.');
   if (!already) notes.push('You named the work. A Goal names what the work is FOR, so I kept your words and added who it is for and why - that is the part the Review can judge.');
   if (!notes.length) notes.push('That was already a Goal: one outcome, and what it gives visitors. I have only tidied the opening so it reads as one sentence to agree to.');
+  return { goal, note: notes.join(' ') };
+}
+
+/** Nouns for things the game BUILDS. A goal whose subject is one of these has named a piece of
+ *  work, which is a fine Sprint Goal and much too small to order a whole Product Backlog by. */
+const GOAL_A_THING = /\b(enclosure|habitat|paddock|tank|aviary|pen|path(way)?s?|toilets?|kiosk|caf[eé]|bench(es)?|signposts?|bridge|fence|shelter|pond|rockery|fountain)\b/i;
+/** Words that put a goal at the scale of the whole product rather than one part of it. */
+const GOAL_THE_WHOLE = /\b(zoo|park|visitors?|families|people|everyone)\b/i;
+
+/** The same wand, at product scale: it rewords the Product Goal the player wrote, and says what it
+ *  changed.
+ *
+ *  Asked for while playing it: "add a wizard to the Product Goal field, please."
+ *
+ *  It only ever REWORDS. The Sprint Goal's wand will write one from nothing because by then there
+ *  is a forecast to write it from; on the first screen there is nothing but the player, and writing
+ *  their Product Goal for them would do the one piece of thinking the screen exists for. What the
+ *  wand is for is the move after that: their sentence survives, and the game says what a Product
+ *  Goal needs that it did not have.
+ *
+ *  Three things it looks for, all of them things the Guide is explicit about:
+ *
+ *  - ONE goal. "They must fulfill (or abandon) one objective before taking on the next", so what
+ *    follows the first full stop is the next one.
+ *  - A future STATE, not a list of features - so it wants the sentence to say what the park is
+ *    like once it is true, which is the part a Sprint Review can hold it up against.
+ *  - The LONG-TERM objective. A goal whose subject is one thing to build is a Sprint's worth. That
+ *    is the mirror of the note the Sprint Goal's wand gives for a goal that is too big, and the two
+ *    together are the distinction the game is really teaching.
+ *
+ *  Deterministic, like the Sprint Goal's: no model call, same words on a replayed seed, costs
+ *  nothing. */
+export function rewordProductGoal(theirs: string): { goal: string; note: string } {
+  const said = theirs.trim().replace(/\s+/g, ' ');
+  if (!said) return { goal: said, note: '' };
+
+  const first = said.split(GOAL_SPLIT)[0].trim().replace(/[,\s]+$/, '');
+  const trimmed = first.length < said.replace(/\.$/, '').length;
+
+  const core = first.replace(GOAL_FLUFF, '').trim();
+  const already = GOAL_WHY.test(core);
+  // Their words, kept - only the opening is normalised, and SHOUTING is left alone.
+  const lower = /^[A-Z][a-z]/.test(core) ? core.charAt(0).toLowerCase() + core.slice(1) : core;
+  const bare = !GOAL_VERB.test(lower) && !GOAL_DETERMINED.test(lower);
+  const stem = GOAL_VERB.test(lower) ? lower : `open ${bare ? 'the ' : ''}${lower}`;
+  // A Product Goal reads as a state of the park, so it is a sentence rather than a proposal: no
+  // "our goal is to" in front of it. That phrasing belongs to a Sprint, where a team agrees to it.
+  const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  // ...and the value clause does not say "zoo" back to somebody who has just said it. "Open a zoo
+  // everyone talks about so that visitors love the zoo and come back" is a sentence written by
+  // something that was not reading.
+  const it = GOAL_THE_WHOLE.test(core) ? 'it' : 'the zoo';
+  const goal = `${sentence(already ? stem : `${stem} so that visitors love ${it} and come back`)}.`;
+
+  // A thing to build, with nothing wider around it: they have written a Sprint Goal.
+  const oneThing = GOAL_A_THING.test(core) && !GOAL_THE_WHOLE.test(core);
+
+  const notes: string[] = [];
+  if (trimmed) notes.push('A Product Goal is one objective, held until it is met or abandoned, so I kept the first of yours - the rest is the Product Backlog.');
+  if (oneThing) notes.push('You named one thing to build, which is a good Sprint Goal and too small to order a whole Product Backlog by. I kept your words and said what the park is like once it is there, which is the long-term objective every Sprint then aims at.');
+  else if (!already) notes.push('You named the work. A Product Goal describes the future state of the product, so I kept your words and added what it gives visitors - that is the part a Sprint Review can hold it up against.');
+  if (!notes.length) notes.push('That was already a Product Goal: one objective, and the state of the park once it is true. I have only tidied it so it reads as one sentence.');
   return { goal, note: notes.join(' ') };
 }
 
