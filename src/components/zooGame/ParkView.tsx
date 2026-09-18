@@ -11,8 +11,8 @@ import type { SegmentId } from './simulation/types';
 import { standingOnPark } from './parkModel';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { union, centreOn } from './frameTheWork';
-import { zoneSlices, zooIsOpen, crowdNow } from './engine';
+import { union, centreOn, theWork } from './frameTheWork';
+import { zoneSlices, zooIsOpen, crowdNow, inHandItem } from './engine';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FlyThrough } from './FlyThrough';
 import { TurnControl } from './TurnControl';
@@ -218,6 +218,12 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   // view where it is.
   const scrollBox = useRef<HTMLDivElement>(null);
   const zoomWas = useRef(1);
+  // What the Developers have in hand, if anything. Everything on the park carries its item's id, so
+  // without this the union is the whole zoo - and centring the whole zoo is what the zoom did wrong
+  // in the first place. It is in the dependencies so the rule is honest rather than captured once,
+  // and picking up a different item does not move the view on its own: the effect leaves unless the
+  // zoom actually changed.
+  const inHand = inHandItem(state)?.id;
   useLayoutEffect(() => {
     const box = scrollBox.current;
     const factor = zoom / zoomWas.current;
@@ -239,7 +245,8 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
     let was = '';
     const aim = () => {
       const again = () => { if (tries++ < 20) timer = window.setTimeout(aim, 25); };
-      const work = union([...box.querySelectorAll('[data-item]')].map((el) => el.getBoundingClientRect()));
+      const drawn = theWork([...box.querySelectorAll('[data-item]')], inHand);
+      const work = union(drawn.map((el) => el.getBoundingClientRect()));
       if (!work) return again();
       const at = centreOn(work, {
         rect: box.getBoundingClientRect(),
@@ -256,7 +263,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
     };
     aim();
     return () => window.clearTimeout(timer);
-  }, [zoom]);
+  }, [zoom, inHand]);
   // Plan to build in, Increment to inspect. The same zoo either way - this switches how it is
   // drawn, not what it is.
   //
