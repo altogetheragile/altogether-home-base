@@ -39,6 +39,26 @@ export function reducer(state: ZooGameState, action: ZooAction): ZooGameState {
  *  every criterion and every run of path. A second passing does not move a fence. */
 const CLOCK_ONLY = new Set<ZooAction['type']>(['TICK_DAY', 'TICK_SCRUM', 'SET_CLOCK_PAUSED']);
 
+/** A game beginning, with what the Product Owner wrote on the way in still on it.
+ *
+ *  Starting builds a fresh state, which threw away the one thing the first screen asks anybody to
+ *  write: "Start building" sends SET_PRODUCT_GOAL and then START, and START ignored the state it was
+ *  handed. So the Product Goal was the house default from the first board onwards, however long you
+ *  had spent on yours.
+ *
+ *  Found by adding the wand and then watching a reworded goal get replaced by the default - the
+ *  fault is older than the wand, which only made it visible enough to catch. RESET is the action
+ *  that means "wipe it", and it still does.
+ *
+ *  The shape and the measures come too. Writing it as an objective and key results and then losing
+ *  the key results is the same loss, one field along. */
+const asWritten = (was: ZooGameState, fresh: ZooGameState): ZooGameState => ({
+  ...fresh,
+  productGoal: was.productGoal,
+  productGoalShape: was.productGoalShape,
+  productGoalMeasures: was.productGoalMeasures,
+});
+
 function step(state: ZooGameState, action: ZooAction): ZooGameState {
   switch (action.type) {
     case 'START':
@@ -47,11 +67,11 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       // finish, and the clock is running. The screens that used to come first - the brief, the
       // refinement, the three topics of Planning - are still in the game, and they are what the
       // Retrospective hands over once the team has felt the lack of them.
-      return startOnTheBoard(initialZooState(action.gameSeed ?? state.gameSeed));
+      return startOnTheBoard(asWritten(state, initialZooState(action.gameSeed ?? state.gameSeed)));
     // Writing the Product Backlog from the three questions. No longer the way in, but still the way
     // a group that wants to do it themselves can: the Scrum Master's menu offers it.
     case 'START_FROM_THE_BRIEF':
-      return { ...initialZooState(action.gameSeed ?? state.gameSeed), phase: 'brief', backlog: [] };
+      return { ...asWritten(state, initialZooState(action.gameSeed ?? state.gameSeed)), phase: 'brief', backlog: [] };
     case 'SET_PHASE':
       return { ...state, phase: action.phase };
     case 'SET_PRODUCT_GOAL':

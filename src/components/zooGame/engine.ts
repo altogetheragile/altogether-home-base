@@ -2707,7 +2707,10 @@ export function rewordProductGoal(theirs: string): { goal: string; note: string 
   const first = said.split(GOAL_SPLIT)[0].trim().replace(/[,\s]+$/, '');
   const trimmed = first.length < said.replace(/\.$/, '').length;
 
-  const core = first.replace(GOAL_FLUFF, '').trim();
+  // The full stop comes off, because one goes back on at the end. Without this, pressing the wand
+  // on a goal it has already worded adds another - "...and come back.." - while the note says it
+  // has only tidied it, which is the sort of thing that makes somebody stop trusting the button.
+  const core = first.replace(GOAL_FLUFF, '').trim().replace(/[.\s]+$/, '');
   const already = GOAL_WHY.test(core);
   // Their words, kept - only the opening is normalised, and SHOUTING is left alone.
   const lower = /^[A-Z][a-z]/.test(core) ? core.charAt(0).toLowerCase() + core.slice(1) : core;

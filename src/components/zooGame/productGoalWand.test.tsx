@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ZooIntro } from './ZooIntro';
 import { rewordProductGoal } from './engine';
+import { reducer } from './useZooGame';
+import { initialZooState, PRODUCT_GOAL } from './config';
+import type { ZooGameState, GoalShape, GoalMeasure } from './types';
 
 // A wand on the Product Goal field, and only the half of it that teaches.
 //
@@ -91,6 +94,43 @@ describe('and the panel under it keeps up', () => {
   });
 });
 
+describe('and the goal they wrote reaches the game', () => {
+  // The whole point of the screen. "Start building" sends SET_PRODUCT_GOAL and then START, and START
+  // built a fresh state from the seed - so it ignored the goal that had arrived a moment earlier and
+  // the game ran on the house default from the first board onwards.
+  //
+  // Older than the wand. What the wand did was make it visible: you shape a sentence, read what the
+  // game says it changed, press the button, and the Product Backlog shows somebody else's.
+  const started = (goal: string, shape: GoalShape = 'outcome', measures: GoalMeasure[] = []) => {
+    const before = reducer(initialZooState(1) as ZooGameState, { type: 'SET_GOAL_FORM', shape, goal, measures });
+    return reducer(before, { type: 'START' });
+  };
+
+  it('keeps it through Start building', () => {
+    const mine = 'Open a zoo the whole family remembers so that visitors love it and come back.';
+    expect(started(mine).productGoal, 'the game threw away the Product Goal and used its own').toBe(mine);
+  });
+
+  it('keeps it through writing the Product Backlog first', () => {
+    const mine = 'A zoo worth the train fare.';
+    const before = reducer(initialZooState(1) as ZooGameState, { type: 'SET_PRODUCT_GOAL', goal: mine });
+    expect(reducer(before, { type: 'START_FROM_THE_BRIEF' }).productGoal).toBe(mine);
+  });
+
+  it('keeps the shape and the measures with it', () => {
+    // Writing it as objectives and key results and then losing the key results is the same loss,
+    // one field along.
+    const out = started('People come back', 'okr', [{ metric: 'happiness', target: 80 }]);
+    expect(out.productGoalShape).toBe('okr');
+    expect(out.productGoalMeasures).toEqual([{ metric: 'happiness', target: 80 }]);
+  });
+
+  it('still wipes it when the game is reset, which is what reset means', () => {
+    const playing = started('A zoo worth the train fare.');
+    expect(reducer(playing, { type: 'RESET' }).productGoal).toBe(PRODUCT_GOAL);
+  });
+});
+
 describe('what the rewording does', () => {
   it('keeps their words and adds what the park gives visitors', () => {
     const out = rewordProductGoal('build a zoo with lots to see');
@@ -128,6 +168,17 @@ describe('what the rewording does', () => {
     expect(out.goal).toMatch(/families have a day out/i);
     expect(out.goal, 'it said "so that" twice').toBe('Open a zoo so that families have a day out worth paying for.');
     expect(out.note).toMatch(/already a Product Goal/i);
+  });
+
+  it('settles, however many times it is pressed', () => {
+    // The first thing anybody does with a button like this is press it twice. It added a full stop
+    // each time - "...and come back.." - while telling them it had only tidied the sentence, which
+    // is how a button stops being trusted.
+    const once = rewordProductGoal('lions');
+    const twice = rewordProductGoal(once.goal);
+    expect(twice.goal, 'pressing it again changed a sentence it had just called finished').toBe(once.goal);
+    expect(rewordProductGoal(twice.goal).goal).toBe(once.goal);
+    expect(once.goal).not.toMatch(/\.\./);
   });
 
   it('leaves SHOUTING alone rather than mangling it', () => {
