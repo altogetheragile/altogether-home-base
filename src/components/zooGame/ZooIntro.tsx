@@ -8,7 +8,7 @@ import { rewordProductGoal } from './engine';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
-import { FOCUS, PADDING, SURFACE, TEXT, WIZARD } from './ui/tokens';
+import { ACTION_BAR, BAR_ACTION, FOCUS, PADDING, SURFACE, TEXT, WIZARD } from './ui/tokens';
 import { cn } from '@/lib/utils';
 
 interface ZooIntroProps {
@@ -162,19 +162,21 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
 
 
         {/* Floating, like every other primary action in the game. */}
-        <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
+        <div className={ACTION_BAR}>
           {onOpenSaves ? (
             // Grey text on a white pill is not a button anyone finds. Bordered, in the foreground
             // colour, with the icon that says what it does.
             <button type="button" onClick={onOpenSaves}
-              className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
+              className={cn(FOCUS, BAR_ACTION, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
               <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Resume a saved game
             </button>
           ) : <span />}
           {/* The Product Goal is the commitment of the Product Backlog, and every Sprint aims at
               it. Starting with none is not a state the game should let a Product Owner into - it
               arrives written, so this only ever catches somebody who cleared it. */}
-          <span className="flex items-center gap-2">
+          {/* The two ways in, kept together as one group so a phone stacks the bar rather than
+              splitting this pair across two rows of it. */}
+          <span className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
             {!goal.trim() && (
               <span className="hidden text-[11px] text-muted-foreground sm:block">Write a Product Goal first.</span>
             )}
@@ -185,11 +187,11 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             {onStartFromTheBrief && (
               <button type="button" onClick={() => { onSetGoal(chosen()); onStartFromTheBrief(); }}
                 disabled={!goal.trim()} data-part="start-from-brief"
-                className={cn(FOCUS, 'rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40')}>
+                className={cn(FOCUS, BAR_ACTION, 'rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40')}>
                 Write the Product Backlog first
               </button>
             )}
-            <Button size="lg" className="rounded-full px-6" disabled={!goal.trim()}
+            <Button size="lg" className={cn(BAR_ACTION, 'rounded-full px-6')} disabled={!goal.trim()}
               title={goal.trim() ? 'Sprint 1 is already planned - the board is open and the clock runs when you are ready'
                 : 'Write a Product Goal first - every Sprint aims at it.'}
               onClick={() => { onSetGoal(chosen()); onStart(); }}>

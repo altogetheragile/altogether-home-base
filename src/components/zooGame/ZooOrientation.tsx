@@ -3,7 +3,7 @@ import { Section, Row } from './ScrumTeaching';
 import { ORIENTATION, INTRO_COPY } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { cn } from '@/lib/utils';
-import { FOCUS, TEXT } from './ui/tokens';
+import { ACTION_BAR, BAR_ACTION, FOCUS, TEXT } from './ui/tokens';
 
 // What am I looking at?
 //
@@ -95,15 +95,15 @@ export function ZooOrientation({ onDone, onScrum, onBack, copy }: {
         </Section>
 
         {/* Floating, like every other primary action in the game. */}
-        <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur">
+        <div className={ACTION_BAR}>
           {onScrum ? (
             <button type="button" onClick={onScrum} data-part="to-scrum"
-              className={cn(FOCUS, 'flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted')}>
+              className={cn(FOCUS, BAR_ACTION, 'flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted')}>
               {O.aside}
             </button>
           ) : <span />}
           <button type="button" onClick={onDone} data-part="orientation-done"
-            className={cn(FOCUS, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
+            className={cn(FOCUS, BAR_ACTION, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
             {O.onward} &rarr;
           </button>
         </div>

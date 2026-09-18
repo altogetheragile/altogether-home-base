@@ -172,3 +172,20 @@ export const TAP = 'h-11 w-11 shrink-0';
 
 /** The eyebrow above a question: small, bold, spaced, in the tone of what follows. */
 export const EYEBROW = 'text-[10px] font-bold uppercase tracking-[0.08em]';
+
+/** The floating bar at the foot of a screen that has a way onward.
+ *
+ *  Three screens had hand-rolled the same class string and it was a pill: one row, the quiet escape
+ *  on the left and the action you came for on the right. On a phone the two buttons wrapped, and a
+ *  `rounded-full` box two rows tall is an oval - a big soft blob sitting over the text behind it,
+ *  which is how a careful screen ends up looking broken on the device most people meet it on.
+ *
+ *  So it stacks on a phone and is a pill from the small breakpoint up. The buttons go full width
+ *  when stacked, which is the difference between "two rows because it ran out of room" and "two
+ *  rows because that is the shape". Reading order is kept: the quiet one first, the action last,
+ *  so it is the same order down a phone as it is across a desktop - and the action is the one
+ *  nearest the thumb. */
+export const ACTION_BAR = 'sticky bottom-4 z-20 flex flex-col gap-2 rounded-2xl border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:rounded-full';
+
+/** ...and what every button inside one wears, so a stacked bar is not a ragged column. */
+export const BAR_ACTION = 'w-full justify-center sm:w-auto';

@@ -3,6 +3,9 @@ import { render, fireEvent, within } from '@testing-library/react';
 import { ZooOrientation } from './ZooOrientation';
 import { ZooIntro } from './ZooIntro';
 import { ORIENTATION, INTRO_COPY } from './scrumContent';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { ACTION_BAR, BAR_ACTION } from './ui/tokens';
 
 // What am I looking at?
 //
@@ -114,5 +117,40 @@ describe('what it does to the screen after it', () => {
   it('shows neither link when the teaching is off', () => {
     const c = intro();
     expect(c.querySelector('[data-part="to-orientation"]')).toBeNull();
+  });
+});
+
+describe('the bar at the foot of a way-in screen', () => {
+  // Found by looking at the orientation screen at phone width. Three screens had hand-rolled the
+  // same class string, and it was a pill: one row, the quiet escape on the left, the action you
+  // came for on the right. At 390px the two buttons wrapped - and a `rounded-full` box two rows
+  // tall is an oval, a big soft blob sitting over the text behind it. A careful screen looking
+  // broken on the device most people meet it on.
+  //
+  // It is one token now, and this test is here because the fault was a copied string rather than a
+  // bad decision: the next screen with a way onward will copy something, and it should copy this.
+  const SOURCES = ['ZooOrientation.tsx', 'ScrumTeaching.tsx', 'ZooIntro.tsx'];
+
+  it('is the same bar on every screen that has one', () => {
+    const hand: string[] = [];
+    for (const f of SOURCES) {
+      const src = readFileSync(join(__dirname, f), 'utf8');
+      // A bar written out by hand rather than taken from the token.
+      if (/className="sticky bottom-4/.test(src)) hand.push(f);
+      expect(src, `${f} has a way onward but no bar`).toMatch(/ACTION_BAR/);
+    }
+    expect(hand, `these hand-roll the action bar instead of using ACTION_BAR:\n${hand.join('\n')}`).toEqual([]);
+  });
+
+  it('stacks rather than wrapping, so two rows look like a choice', () => {
+    // The phone shape first, the pill from `sm` up - and the radius moves with it, because the
+    // radius is the whole reason the wrapped version looked wrong.
+    expect(ACTION_BAR, 'it still wraps on a phone').toContain('flex-col');
+    expect(ACTION_BAR, 'it is a pill even when stacked').toContain('rounded-2xl');
+    expect(ACTION_BAR, 'it never becomes a pill again').toContain('sm:rounded-full');
+    expect(ACTION_BAR).toContain('sm:flex-row');
+    // ...and a stacked bar is not a ragged column.
+    expect(BAR_ACTION).toContain('w-full');
+    expect(BAR_ACTION).toContain('sm:w-auto');
   });
 });
