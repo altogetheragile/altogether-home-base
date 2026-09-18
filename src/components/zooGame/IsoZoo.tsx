@@ -513,8 +513,17 @@ export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlac
     };
   };
   const whole = { x: 0, y: 0, w: scene.w, h: scene.h };
-  const [view, setView] = useState(whole);
-  const viewNow = useRef(whole);
+  // A camera given at MOUNT means "stand here", not "walk here from the wide shot". It started at
+  // the whole park every time and walked in, so every picture with a camera on it opened on a swoop
+  // nobody asked for - and anything measured against the picture was measured against the wide shot
+  // and left behind when it landed. Worse, the walk is an animation, so on a tab nobody is looking
+  // at it never runs and the picture is simply the wrong one.
+  //
+  // The walk is still there, and still the right thing, for a camera that CHANGES: moving between
+  // shots is a move, and a cut reads as a cut.
+  const first = camera ? framed(camera) : whole;
+  const [view, setView] = useState(first);
+  const viewNow = useRef(first);
   // Only the numbers, so the walk is not restarted by every render the game's clock causes.
   const aim = camera ? `${camera.x.toFixed(1)},${camera.y.toFixed(1)},${camera.zoom}` : '';
   useEffect(() => {
@@ -1745,7 +1754,11 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           ...(signed ? [board(0.3, 0.7)] : []),
         ];
     }
-    push(depth(c.x, c.y), <g key={`b-${it.id}`} data-facility={look.shape}>{parts}</g>);
+    // Tagged with the item it IS, not only with the shape it is drawn as. Everything else on the
+    // park carries its id - a habitat's floor, its fence, an animal's spot - and a building did
+    // not, so nothing could point at one: not a label on the orientation screen, and not the zoom,
+    // which frames the work in hand by finding the things that carry its id.
+    push(depth(c.x, c.y), <g key={`b-${it.id}`} data-item={it.id} data-facility={look.shape}>{parts}</g>);
   };
 
   // ---- amenities and loose planting -------------------------------------------------------
