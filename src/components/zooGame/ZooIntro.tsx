@@ -18,6 +18,8 @@ interface ZooIntroProps {
   onMarkTaught?: (id: string) => void;
   /** Back to the one page of Scrum, for a player who wants to read it again. */
   onBack?: () => void;
+  /** ...and back to what the GAME is, which is a different question from what Scrum is. */
+  onOrient?: () => void;
   onSetGoal: (goal: string) => void;
   /** Writing the Goal in one of the other shapes - optional, and none of them Scrum. */
   goalShape?: GoalShape;
@@ -36,7 +38,7 @@ interface ZooIntroProps {
  *  Goal is, and then the Product Goal itself - which is the one thing the player writes before they
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
-export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onSetGoal, onSetGoalShape, onStart, onStartFromTheBrief, onOpenSaves, copy }: ZooIntroProps) {
+export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onStartFromTheBrief, onOpenSaves, copy }: ZooIntroProps) {
   // Empty while it is still the game's own suggestion, so the placeholder is doing the suggesting.
   // The field used to hold the default AS TEXT, identical to the placeholder behind it - so somebody
   // typing their own Goal appended it to one they had not written, and the game ran on whichever
@@ -52,12 +54,24 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 pb-28 pt-5">
+        {/* Both ways back, as links rather than as panels. What Scrum is, and what this game is:
+            they are two different questions and a player who wants one rarely wants the other. They
+            stay up here because the Product Goal owns the top of this page - putting either of them
+            in the body is the fault that moved the Goal up in the first place. */}
         <div className="flex items-center justify-between gap-2">
-          {onBack ? (
-            <button type="button" onClick={onBack} className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
-              &larr; Scrum on one page
-            </button>
-          ) : <span />}
+          <span className="flex items-center gap-3">
+            {onOrient && (
+              <button type="button" onClick={onOrient} data-part="to-orientation"
+                className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
+                &larr; How the zoo works
+              </button>
+            )}
+            {onBack && (
+              <button type="button" onClick={onBack} className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
+                Scrum on one page
+              </button>
+            )}
+          </span>
           {copy && <CopyEditor phase="intro" {...copy} />}
         </div>
 

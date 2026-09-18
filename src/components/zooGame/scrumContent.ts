@@ -388,3 +388,68 @@ export const INTRO_COPY = {
     { step: 'Retro', text: 'pick one improvement, then plan the next Sprint.' },
   ],
 };
+
+/** How the GAME works, as opposed to how Scrum works.
+ *
+ *  "Scrum on one page" answers "what is Scrum". Nothing answered "what am I looking at" - the park,
+ *  the five seats, the three tabs, the clock, and the three rules that catch everybody out. A
+ *  learner who knows Scrum still does not know any of that, which is why this screen is not behind
+ *  the teaching toggle's meaning of teaching: it is the manual, not the lesson.
+ *
+ *  The words live here rather than in the component so a trainer can polish them in place, like the
+ *  rest of the copy on the way in. The Sprint loop is NOT repeated here - it is read from
+ *  INTRO_COPY.loop and shown against when each step happens, so there is one source for those five
+ *  lines and two ways of looking at them. */
+export const ORIENTATION = {
+  title: 'How the zoo works',
+  // Done and open are two different things, and the copy has to keep them apart: an item is Done
+  // when it is built and accepted, and opening it to visitors is the Product Owner's separate call
+  // on the same card. There is a test across the whole codebase holding that line.
+  strapline: 'The zoo is the product. Each Sprint you forecast what you can finish and build it to your Definition of Done. Opening it to visitors is a decision of its own - and once you do, they turn up and tell you whether you were right.',
+  park: {
+    title: 'The park',
+    lead: 'Four areas and the Grounds that join them.',
+    rows: [
+      { name: 'Big Cats, Waterside, Savanna, Forest', text: 'You have ground in one of them to begin with.' },
+      { name: 'The rest cost what the zoo is worth', text: 'Not a level to unlock. Value is what visitors got out of coming, so growing is paid for by being good.' },
+    ],
+  },
+  seats: {
+    title: 'Who is here',
+    lead: 'Five seats, three accountabilities. Playing alone you hold all three, and the game says which one you are in as you act.',
+    rows: [
+      { name: 'Priya', note: 'Product Owner', text: 'Orders the Product Backlog, says what each item needs to be, and decides when Done work opens.' },
+      { name: 'Sam', note: 'Scrum Master', text: 'Keeps the events to their timebox and removes what is in the way.' },
+      { name: 'Ada, Ben and Cara', note: 'Developers', text: 'Pull work, build it, hold the Daily Scrum. The plan for the Sprint is theirs to change.' },
+    ],
+  },
+  tabs: {
+    title: 'Three tabs',
+    lead: 'The same three artifacts, in the order a team meets them.',
+    rows: [
+      { name: 'Product Backlog', text: 'Everything that could be built, in the order the Product Owner thinks is worth most.' },
+      { name: 'Sprint Backlog', text: 'What you took for this Sprint, and how it is going.' },
+      { name: 'Increment', text: 'The zoo as a visitor meets it. A view, not a workbench: nothing on it edits anything.' },
+    ],
+  },
+  clock: {
+    title: 'The clock',
+    lead: 'A Sprint is three days by default, and a day is three minutes.',
+    rows: [
+      { name: 'Each day ends when you say', text: 'The clock is pressure, not a guillotine. You can hold it, and the game says what holding it costs.' },
+      { name: 'Day 2 opens with the Daily Scrum', text: 'You may skip it. The game will let you, and the Retrospective will show you what that was worth.' },
+    ],
+  },
+  /** Which step of INTRO_COPY.loop happens when. Same five lines, shown against the clock. */
+  when: ['Sprint Planning', 'Days 1 to 3', 'Any time', 'End of the Sprint', 'Then Sprint 2'],
+  gotchas: {
+    title: 'Three rules that surprise people',
+    rows: [
+      { name: 'Points are not a budget', text: 'Nothing in the catalogue is ever refused. Take on more than you can finish and the game lets you - the park reports the consequence.' },
+      { name: 'Done needs the Product Owner', text: 'Every criterion the park can answer can be green and the item is still not Done. Somebody has to look at it.' },
+      { name: 'You were given a Definition of Done', text: 'Three lines arrived with the game and nobody asked you. Noticing that is part of the exercise.' },
+    ],
+  },
+  onward: 'Write your Product Goal',
+  aside: 'What is Scrum? One page',
+};
