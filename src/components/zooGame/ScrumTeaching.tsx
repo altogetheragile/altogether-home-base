@@ -144,7 +144,9 @@ const SECTION = {
   values: { wrap: 'border-rose-500/40 bg-rose-500/[0.08]', spine: TONE.reflect.solid, chip: 'bg-rose-600 text-white dark:bg-rose-500' },
 } as const;
 
-function Section({ title, tone, icon: Icon, children }: { title: string; tone: keyof typeof SECTION; icon: typeof Users; children: ReactNode }) {
+/** Exported so the orientation screen is the same panel, not a second one that looks like it.
+ *  The two screens are a pair - what Scrum is, and what this game is - and a pair should look it. */
+export function Section({ title, tone, icon: Icon, children }: { title: string; tone: keyof typeof SECTION; icon: typeof Users; children: ReactNode }) {
   const t = SECTION[tone];
   return (
     <section className={cn('relative space-y-2 overflow-hidden rounded-lg border py-2.5 pl-4 pr-3', t.wrap)}>
@@ -157,7 +159,7 @@ function Section({ title, tone, icon: Icon, children }: { title: string; tone: k
   );
 }
 
-function Row({ name, note, text, icon: Icon }: { name: string; note?: string; text: string; icon?: typeof Users }) {
+export function Row({ name, note, text, icon: Icon }: { name: string; note?: string; text: string; icon?: typeof Users }) {
   return (
     <p className="flex gap-1.5 text-xs leading-snug text-foreground">
       {Icon && <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" />}

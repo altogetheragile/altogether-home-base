@@ -35,6 +35,7 @@ import { SaveGameDialog } from '@/components/flowGame/SaveGameDialog';
 import { proposeSaveName } from '@/components/zooGame/zooSaves';
 import type { ZooGameState, PbiDraft } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance, presetFor, type ItemDesign } from '@/components/zooGame/design';
+import { ZooOrientation } from '@/components/zooGame/ZooOrientation';
 import { ScrumOnePager } from '@/components/zooGame/ScrumTeaching';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 import { useZooCopy } from '@/components/zooGame/useZooCopy';
@@ -78,6 +79,10 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // own link, and from Learn, rather than standing in the doorway.
   const [onePager, setOnePager] = useState(false);
   const [onePagerSeen, setOnePagerSeen] = useState(false); // ...and re-openable from the intro
+  // How the game works, shown once on the way in. Starts TRUE, because an orientation nobody is
+  // shown is a page in a manual nobody opens.
+  const [orient, setOrient] = useState(true);
+  const [orientSeen, setOrientSeen] = useState(false);
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
   // Viewport point the delivery confetti bursts from - the card as it lands in Done.
@@ -348,10 +353,20 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
           return <ScrumOnePager onDone={() => setOnePager(false)} onSkipTeaching={() => { setTeaching(false); setOnePager(false); }}
             onBack={onePagerSeen ? () => setOnePager(false) : undefined} copy={copyProps} />;
         }
+        // ...and before the Product Goal, what the game itself is. The one-pager above says what
+        // Scrum is; somebody who knows that still does not know what the park, the seats, the tabs
+        // or the clock are, and was finding out by pressing things. Passed through once, and
+        // reachable again from the intro's back link.
+        if (orient && (state.teaching ?? true)) {
+          return <ZooOrientation onDone={() => setOrient(false)}
+            onScrum={() => { setOrient(false); setOnePagerSeen(true); setOnePager(true); }}
+            onBack={orientSeen ? () => setOrient(false) : undefined} copy={copyProps} />;
+        }
         return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={start} onStartFromTheBrief={startFromTheBrief}
           teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
           onMarkTaught={markTaught}
           onBack={(state.teaching ?? true) ? () => { setOnePagerSeen(true); setOnePager(true); } : undefined}
+          onOrient={(state.teaching ?? true) ? () => { setOrientSeen(true); setOrient(true); } : undefined}
           onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
         // The Scrum Team, before the Backlog they will work on. Held here rather than in the game
