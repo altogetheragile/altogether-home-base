@@ -66,7 +66,16 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
   // that asks you to write something is help nobody finds.
   const [open, setOpen] = useState(true);
   const [pick, setPick] = useState<GoalShape>(shape ?? 'outcome');
+  // The draft FOLLOWS the field above until somebody types in here.
+  //
+  // It was seeded once, at mount. So the sentence in the field and the sentence in this box drifted
+  // apart the moment either changed, and "Use this as the Product Goal" then wrote this stale one
+  // back over theirs. That is the same thrown-away-goal fault the field above carries a comment
+  // about, one component down, and the wand makes it easy to hit: reword your goal, press the
+  // orange button, and the rewording is gone.
+  const [seen, setSeen] = useState(goal);
   const [draft, setDraft] = useState(goal);
+  if (seen !== goal) { setSeen(goal); setDraft(goal); }
   const [rows, setRows] = useState<GoalMeasure[]>(measures?.length ? measures : [{ metric: 'happiness', target: 70 }]);
   const current = SHAPES.find((s) => s.key === pick)!;
 
