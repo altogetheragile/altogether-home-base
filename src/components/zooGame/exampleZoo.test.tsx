@@ -92,3 +92,58 @@ describe('where the camera stands', () => {
       .not.toBe(wide?.getAttribute('viewBox'));
   });
 });
+
+describe('when somebody records one', () => {
+  // "Can the orientation zoo images be based upon actual zoo footage? We record steps so can the
+  // example view be based upon how a player actually places and builds features?"
+  //
+  // They can. The game already keeps its own account of what was pressed - the seed and the actions
+  // in order - and replays it, because the reducer is pure. A recorded trail dropped into
+  // exampleZooTrail.ts is replayed here, so the example stops being a zoo this repo describes and
+  // becomes the zoo somebody built.
+  //
+  // What is held here is the part that makes that safe: a recording is somebody else's play, and a
+  // screen that renders whatever it is handed is a screen that can ship a half-built zoo with four
+  // labels pointing at nothing.
+
+  it('replays to a state, not to a description', async () => {
+    const { replay } = await import('./replay');
+    const { initialZooState } = await import('./config');
+    // A trail of nothing still replays: the seed alone is a game that has not started.
+    const walked = replay({ seed: 3, actions: [] });
+    expect(walked).toHaveLength(1);
+    expect(walked[0].backlog.length, 'a replayed game has no Product Backlog').toBe(
+      (initialZooState(3) as { backlog: unknown[] }).backlog.length);
+  });
+
+  it('keeps the whole game when it is being recorded, and a window when it is not', async () => {
+    const { remember, trail, forgetTrail, recordEverything } = await import('./trail');
+    const press = (n: number) => ({ type: 'SET_PHASE', phase: `p${n}` } as never);
+    try {
+      // The ordinary game: a window on the end, short enough to paste into a message.
+      forgetTrail(); recordEverything(false);
+      for (let i = 0; i < 200; i++) remember(press(i));
+      expect(trail().actions.length, 'an ordinary game keeps everything and cannot be pasted').toBe(80);
+
+      // Recording: the whole build, because an example is the finished thing and a window on the
+      // end of it replays to a zoo with no beginning.
+      forgetTrail(); recordEverything(true);
+      for (let i = 0; i < 200; i++) remember(press(i));
+      expect(trail().actions.length, 'a recording lost the start of the build').toBe(200);
+    } finally {
+      forgetTrail(); recordEverything(false);
+    }
+  });
+
+  it('holds a recorded zoo to the same bar as one built here', () => {
+    // Whichever way the state arrived, the screen asks the zoo what is in it and labels that. The
+    // checks above - everything labelled is open, the animal is in the habitat, a path is drawn -
+    // are the ones that would catch a recording of a half-built zoo, and they run over whatever
+    // exampleZoo() returns rather than over the fallback specifically.
+    const { state, labels } = exampleZoo();
+    expect(labels.length, 'a zoo with nothing worth labelling reached the screen').toBeGreaterThan(2);
+    for (const l of labels) {
+      expect(state.backlog.find((it) => it.id === l.id)?.status, `${l.title} is not open`).toBe('open');
+    }
+  });
+});

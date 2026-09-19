@@ -19,6 +19,18 @@ import type { ZooAction } from './types';
  *  small enough to paste into a message. */
 const KEEP = 80;
 
+/** ...unless the game is being RECORDED, in which case keep the lot.
+ *
+ *  A bug report wants a window: the last few minutes, short enough to paste. Recording a zoo to
+ *  show somebody wants the opposite - the whole game from the first press, because the example is
+ *  the finished thing and a window on the end of it replays to a zoo with no beginning.
+ *
+ *  Off unless asked for, so nothing about the ordinary game changes. */
+let everything = false;
+export function recordEverything(on = true): void {
+  everything = on;
+}
+
 /** The clock's heartbeat, which is every second and says nothing about what anybody did. */
 const NOISE = new Set(['TICK_DAY', 'TICK_SCRUM']);
 
@@ -72,7 +84,7 @@ export function remember(action: ZooAction): void {
     return;
   }
   kept.push(action);
-  if (kept.length > KEEP) kept.splice(0, kept.length - KEEP);
+  if (!everything && kept.length > KEEP) kept.splice(0, kept.length - KEEP);
 }
 
 /** What has been pressed, ready to be pasted into a message or replayed in a test. */
