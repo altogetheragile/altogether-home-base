@@ -2,8 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { X, GraduationCap, Clock, Users, Boxes, Heart, Microscope, Recycle, Repeat, Target, Hammer, HeartHandshake, ClipboardList, ListTodo, Package, CalendarRange, ClipboardCheck, Sunrise, Presentation, MessageCircleQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
-import { CopyEditor, type CopyEditorProps } from './CopyEditor';
-import { ACTION_BAR, BAR_ACTION, FOCUS, TEXT, TONE } from './ui/tokens';
+import { FOCUS, TONE } from './ui/tokens';
 
 // The teaching, on screen. Three pieces: a card shown in context the first time an element is met,
 // a reference panel that is always to hand, and the one-page introduction before play. All of it can
@@ -178,26 +177,13 @@ const TEAM_ICON = [Target, Hammer, HeartHandshake];
 const ART_ICON = [ClipboardList, ListTodo, Package];
 const EVENT_ICON = [CalendarRange, ClipboardCheck, Sunrise, Presentation, MessageCircleQuestion];
 
-/** The one page of Scrum a player meets before building anything. Skippable. */
-export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone: () => void; onSkipTeaching: () => void; onBack?: () => void; copy?: CopyEditorProps }) {
+/** What Scrum is, as one page. A tab of the Before you start screen: the chrome round it - the
+ *  heading, the way onward, the escape - belongs to the screen, because both tabs share one of
+ *  each and a tab that brings its own is a tab that looks like a different place. */
+export function ScrumOnePagerBody() {
   return (
-    // The game frame never scrolls, so every screen inside it has to scroll itself - this one is
-    // taller than a viewport, and without its own overflow the foot of it is simply unreachable.
-    <div className="h-full overflow-y-auto">
-    <div className="mx-auto max-w-4xl space-y-3 px-4 py-5">
-      <header className="space-y-1">
-        {onBack && (
-          <button type="button" onClick={onBack} className={cn(FOCUS, "mb-1 block text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
-            &larr; Back
-          </button>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
-          {copy && <CopyEditor phase="intro" {...copy} />}
-        </div>
-        <h2 className={TEXT.screen}>Scrum on one page</h2>
-        <p className="text-sm leading-snug text-muted-foreground">{SCRUM_INTRO.what}</p>
-      </header>
+    <div className="space-y-3">
+      <p className="text-sm leading-snug text-muted-foreground">{SCRUM_INTRO.what}</p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Section title="Founded on" tone="founded" icon={Microscope}>
@@ -232,23 +218,6 @@ export function ScrumOnePager({ onDone, onSkipTeaching, onBack, copy }: { onDone
         <p className="text-[11px] text-muted-foreground">{SCRUM_INTRO.values.map((v) => v.text).join(' ')}</p>
       </Section>
 
-      {/* Floating, like every other primary action in the game: reachable without scrolling to the
-          foot of the page, and the "turn the teaching off" escape is a real button rather than grey
-          text nobody sees. */}
-      <div className={ACTION_BAR}>
-        {/* An escape you cannot see is not an escape. Bordered, in the foreground colour, with the
-            icon that says what it does. */}
-        <button type="button" onClick={onSkipTeaching}
-          className={cn(FOCUS, BAR_ACTION, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
-          <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-          I have covered this - turn the teaching off
-        </button>
-        <button type="button" onClick={onDone}
-          className={cn(FOCUS, BAR_ACTION, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
-          Start building the zoo &rarr;
-        </button>
-      </div>
-    </div>
     </div>
   );
 }
