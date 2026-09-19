@@ -1,39 +1,40 @@
-import { Suspense, lazy, useLayoutEffect, useRef, useState } from 'react';
-import { exampleZoo } from './exampleZoo';
+import { Suspense, lazy, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { exampleZoo, type ExampleLabel } from './exampleZoo';
+import { ParkPlan } from './ParkPlan';
 import { union } from './frameTheWork';
 import { cn } from '@/lib/utils';
 
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 
-// A zoo somebody built, with the parts named.
+// One zoo, drawn twice.
 //
-// Asked for after reading the orientation screen: "can we show an example of a built zoo using a
-// labelled isometric view?" The screen described the park in words, which is a strange way to
-// introduce the one thing the whole game is looking at.
+// Asked after the labelled example went in: "can we show an example of the studio park view and the
+// isometric increment side by side on the orientation view?"
 //
-// The picture is the REAL renderer over a state the engine really built, not a drawing of one. A
-// second drawing of the park would drift from the first the week somebody changes a fence, and then
-// the screen that teaches you what the game looks like would be the one screen that lies about it.
+// It is the thing this screen most needed to say and had not said. A learner meets a top-down plan
+// they build on and an isometric park they look at, and nothing anywhere told them those were the
+// same zoo. Side by side with the same numbers on both, it is said in one glance and needs no
+// sentence: this is where you work, that is what a visitor walks into, and 1 is the same enclosure
+// in each.
 //
-// The labels are numbered pins on the drawing and a numbered key beneath, rather than callouts with
-// leader lines. Callouts have to be placed so they miss each other and miss the thing they point
-// at, which is a solved problem on a poster and an unsolved one at 390px wide. A pin is always in
-// the right place, and the key reads as a list on any width.
+// Both are the REAL renderers over a state the engine really built - a recording of somebody
+// playing, replayed - so neither can drift from what the game does. The two drawings have disagreed
+// about the same piece of state more than once, and this screen is where that would show.
 
 interface Pin { n: number; x: number; y: number }
 
-export function LabelledPark({ className }: { className?: string }) {
-  const { state, labels, camera } = exampleZoo();
+/** A drawing, with numbered pins on the things the key names.
+ *
+ *  Measured off whatever was drawn rather than worked out from the model, so a pin cannot land
+ *  somewhere the thing is not: whatever the renderer did with its camera, its frame and the size of
+ *  the box it was handed, the pin followed it there. Which is also why one component can do this
+ *  for two different renderers without knowing anything about either. */
+function Pinned({ title, note, labels, children }: {
+  title: string; note: string; labels: ExampleLabel[]; children: ReactNode;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const [pins, setPins] = useState<Pin[]>([]);
 
-  // Measured from the drawing rather than worked out from the model, so a pin cannot land somewhere
-  // the thing is not: whatever the renderer did with the turn, the camera and the size of the box,
-  // the pin followed it there.
-  //
-  // On a timer rather than an animation frame, and the same lesson as the zoom: the browser does not
-  // run animation frames in a tab nobody is looking at, and the park is lazily loaded, so the first
-  // few attempts find nothing at all. It stops as soon as two goes agree.
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
@@ -47,8 +48,8 @@ export function LabelledPark({ className }: { className?: string }) {
       const found: Pin[] = [];
       labels.forEach((l, i) => {
         // Only the parts of it that are ON SCREEN. A path runs off to the way in, and the middle of
-        // the whole run is a point out in the car park: the pin sat outside the picture, pointing
-        // at the thing from off the edge of it. A pin marks the visible part of its thing.
+        // the whole run is a point out in the car park: the pin sat outside the picture, pointing at
+        // the thing from off the edge of it. A pin marks the visible part of its thing.
         const parts = [...el.querySelectorAll(l.find)]
           .map((n) => n.getBoundingClientRect())
           .filter((r) => r.right > rect.left && r.left < rect.right && r.bottom > rect.top && r.top < rect.bottom)
@@ -65,11 +66,13 @@ export function LabelledPark({ className }: { className?: string }) {
           y: (at.top - rect.top) / rect.height * 100,
         });
       });
-      if (found.length < labels.length) return retry();
-      // Pushed apart where they landed on each other. An animal lives INSIDE its habitat and the
-      // toilets are next door to it, so three of these four are genuinely within a few pixels - and
-      // three pins on the same spot name nothing. They keep their own x, so each one still points
-      // at its own thing; only the height is borrowed.
+      // What it can find, rather than all of them. The two drawings do not show the same things: an
+      // animal is drawn in one and implied by its habitat in the other, so waiting for a full set
+      // would mean waiting forever in whichever view is short of one.
+      if (!found.length) return retry();
+      // Pushed apart where they landed on each other. An animal lives INSIDE its habitat, so two of
+      // these are genuinely within a few pixels, and two pins on one spot name nothing. They keep
+      // their own x, so each still points at its own thing; only the height is borrowed.
       found.sort((a, b) => a.y - b.y);
       for (let i = 1; i < found.length; i++) {
         const gap = found[i].y - found[i - 1].y;
@@ -82,7 +85,6 @@ export function LabelledPark({ className }: { className?: string }) {
       retry();
     };
     const retry = () => { if (tries++ < 40) timer = window.setTimeout(measure, 40); };
-
     const again = () => { tries = 0; was = ''; measure(); };
 
     measure();
@@ -91,7 +93,7 @@ export function LabelledPark({ className }: { className?: string }) {
     ro.observe(el);
     // ...and again when the picture itself moves under them. Walking up to the zoo is a change of
     // viewBox rather than a change of size, so nothing about the BOX changes: the pins were measured
-    // against the wide shot, the camera then walked in, and four numbers were left standing in a
+    // against the wide shot, the camera then walked in, and the numbers were left standing in a
     // field. It is an animation, so it also does not start at all until somebody is looking at the
     // tab - which is exactly how this was found.
     const mo = new MutationObserver(again);
@@ -100,12 +102,14 @@ export function LabelledPark({ className }: { className?: string }) {
   }, [labels]);
 
   return (
-    <figure className={cn('m-0 space-y-2', className)}>
+    <div className="min-w-0">
+      <div className="mb-1 flex flex-wrap items-baseline gap-x-2">
+        <span className="text-xs font-semibold text-foreground">{title}</span>
+        <span className="text-[11px] text-muted-foreground">{note}</span>
+      </div>
       <div ref={box} data-part="labelled-park"
         className="relative overflow-hidden rounded-lg border border-border bg-muted/20">
-        <Suspense fallback={<div className="flex h-[260px] items-center justify-center text-xs text-muted-foreground sm:h-[320px]">Drawing the zoo...</div>}>
-          <IsoZoo state={state} height={320} camera={camera} />
-        </Suspense>
+        {children}
         {pins.map((p) => (
           <span key={p.n} data-part={`pin-${p.n}`} aria-hidden
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
@@ -114,8 +118,31 @@ export function LabelledPark({ className }: { className?: string }) {
           </span>
         ))}
       </div>
-      {/* The key. Numbered because the picture is numbered - the numbers are doing a job here, which
-          is the only reason to number anything. */}
+    </div>
+  );
+}
+
+export function LabelledPark({ className }: { className?: string }) {
+  const { state, labels, camera, box } = exampleZoo();
+
+  return (
+    <figure className={cn('m-0 space-y-2', className)}>
+      {/* Side by side where there is room, one above the other where there is not. Stacked it still
+          says the thing: the same numbers, twice, on two drawings of one zoo. */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {/* No handlers, so nothing here can be dragged: it is the studio, shown, not lent out. */}
+        <Pinned title="The plan" note="where the Developers build" labels={labels}>
+          <ParkPlan state={state} height={280} frame={box} still />
+        </Pinned>
+        <Pinned title="The Increment" note="what a visitor walks into" labels={labels}>
+          <Suspense fallback={<div className="flex h-[280px] items-center justify-center text-xs text-muted-foreground">Drawing the zoo...</div>}>
+            <IsoZoo state={state} height={280} camera={camera} />
+          </Suspense>
+        </Pinned>
+      </div>
+      {/* The key. Numbered because both pictures are numbered - the numbers are doing a job here,
+          which is the only reason to number anything, and the job is saying that 1 in one drawing is
+          1 in the other. */}
       <figcaption>
         <ol className="grid gap-1.5 sm:grid-cols-2">
           {labels.map((l, i) => (

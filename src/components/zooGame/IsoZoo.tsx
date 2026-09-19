@@ -1377,7 +1377,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           const beat = animalBeat(key, h, tank);
           const face = (flip: boolean) => (flip ? '-1 1' : '1 1');
           push(depth(wx, wy), (
-            <g key={key} data-spot={`${a.id}:${mi}`} filter={coat ? tintRef(grassClip, coat) : undefined}>
+            <g key={key} data-item={a.id} data-spot={`${a.id}:${mi}`} filter={coat ? tintRef(grassClip, coat) : undefined}>
               {stroll && (
                 <animateMotion dur={`${beat.secs}s`} repeatCount="indefinite" begin={`${beat.begin}s`}
                   path={beat.path} />

@@ -114,6 +114,10 @@ export interface ExampleLabel {
 export interface ExampleZoo {
   state: ZooGameState;
   labels: ExampleLabel[];
+  /** The built work's own bounds, in park coordinates. The isometric view is pointed at it with a
+   *  camera and the plan view with a frame - two ways of saying "look here" that have to agree, or
+   *  the two drawings are of different zoos. */
+  box: { x0: number; y0: number; x1: number; y1: number };
   /** Where to stand to see it. The park is four areas wide and this zoo is one corner of one of
    *  them, so the whole canvas draws the built work as a speck with four labels piled on it. The
    *  camera is the renderer's own window on the drawing, which means walking up to the zoo makes it
@@ -193,7 +197,10 @@ function labelsFor(s: ZooGameState): { labels: ExampleLabel[]; ids: Set<string> 
       find: `[data-item="${chosen.enclosure.id}"]`,
       text: 'A habitat. The Developers chose the structure, the size, the surface it is laid with and the perimeter that holds it.' },
     chosen.exhibit && { id: chosen.exhibit.id, title: chosen.exhibit.name,
-      find: `[data-spot^="${chosen.exhibit.id}:"]`,
+      // By its item id, which both drawings now put on it. It used to be the isometric view's own
+      // `data-spot`, and the animal simply had no pin in the plan - two renderers answering "which
+      // item is this?" in two different words.
+      find: `[data-item="${chosen.exhibit.id}"]`,
       text: 'The animal lives IN the habitat, not beside it. It could not be placed until there was one that could hold it.' },
     chosen.path && runOf(chosen.path) && { id: chosen.path.id, title: chosen.path.name,
       find: `[data-conn="${runOf(chosen.path)}"]`,
@@ -233,7 +240,10 @@ function frame(s: ZooGameState, ids: Set<string>) {
   //
   // The path is still in shot. It arrives into the frame, which is the thing being said about it.
   const points = built.filter((p) => Number.isFinite(p?.x) && Number.isFinite(p?.y));
-  if (!points.length) return { x: CANVAS_W / 2, y: PLAY_H / 2, zoom: 1 };
+  if (!points.length) {
+    return { camera: { x: CANVAS_W / 2, y: PLAY_H / 2, zoom: 1 },
+      box: { x0: 0, y0: 0, x1: CANVAS_W, y1: PLAY_H } };
+  }
 
   const span = (get: (p: { x: number; y: number }) => number) => {
     const all = points.map(get);
@@ -247,9 +257,8 @@ function frame(s: ZooGameState, ids: Set<string>) {
   const room = 1.45;
   const fit = Math.min(CANVAS_W / Math.max(1, (x.hi - x.lo) * room), PLAY_H / Math.max(1, (y.hi - y.lo) * room));
   return {
-    x: (x.lo + x.hi) / 2,
-    y: (y.lo + y.hi) / 2,
-    zoom: Math.max(1, Math.min(3, fit)),
+    camera: { x: (x.lo + x.hi) / 2, y: (y.lo + y.hi) / 2, zoom: Math.max(1, Math.min(3, fit)) },
+    box: { x0: x.lo, y0: y.lo, x1: x.hi, y1: y.hi },
   };
 }
 
@@ -270,6 +279,7 @@ export function exampleZoo(): ExampleZoo {
   const walked = RECORDED ? replay(RECORDED) : null;
   const state = walked ? walked[walked.length - 1] : builtHere();
   const { labels, ids } = labelsFor(state);
-  cached = { state, labels, camera: frame(state, ids) };
+  const shot = frame(state, ids);
+  cached = { state, labels, camera: shot.camera, box: shot.box };
   return cached;
 }
