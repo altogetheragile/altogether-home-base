@@ -7,6 +7,7 @@ import {
 } from './engine';
 import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, HABITAT_FEATURE_TYPES } from './design';
 import { standingOnPark, parkPositions, positionOf } from './parkModel';
+import { CANVAS_W, PLAY_H } from './parkLayout';
 import { replay } from './replay';
 import { RECORDED } from './exampleZooTrail';
 import type { ZooGameState, BacklogItem } from './types';
@@ -189,14 +190,38 @@ function labelsFor(s: ZooGameState): { labels: ExampleLabel[]; ids: Set<string> 
 function frame(s: ZooGameState, ids: Set<string>) {
   const standing = standingOnPark(s);
   const auto = parkPositions(standing, new Map());
-  const built = standing.filter((st) => ids.has(st.item.id)).map((st) => positionOf(st, auto));
-  const runs = (s.connectors ?? []).flatMap((c) => [c.a, c.b]);
-  const points = [...built, ...runs].filter((p) => Number.isFinite(p?.x));
-  const mid = (get: (p: { x: number; y: number }) => number) => {
+  // The corners of each labelled thing, not its middle: a large habitat framed by its centre is a
+  // habitat with its fences out of shot.
+  const built = standing.filter((st) => ids.has(st.item.id)).flatMap((st) => {
+    const at = positionOf(st, auto);
+    return [{ x: at.x - st.size.w / 2, y: at.y - st.size.h / 2 },
+      { x: at.x + st.size.w / 2, y: at.y + st.size.h / 2 }];
+  });
+  // The paths are deliberately NOT framed. A path runs from the way in to the thing it serves, so
+  // any point on it that is not the served end pulls the shot halfway across the park - which is
+  // what the first real recording did: the habitat, the animal in it and the toilets beside it all
+  // went off the top of the picture to make room for a car park nobody was pointing at.
+  //
+  // The path is still in shot. It arrives into the frame, which is the thing being said about it.
+  const points = built.filter((p) => Number.isFinite(p?.x) && Number.isFinite(p?.y));
+  if (!points.length) return { x: CANVAS_W / 2, y: PLAY_H / 2, zoom: 1 };
+
+  const span = (get: (p: { x: number; y: number }) => number) => {
     const all = points.map(get);
-    return all.length ? (Math.min(...all) + Math.max(...all)) / 2 : 0;
+    return { lo: Math.min(...all), hi: Math.max(...all) };
   };
-  return { x: mid((p) => p.x), y: mid((p) => p.y), zoom: 2.8 };
+  const x = span((p) => p.x);
+  const y = span((p) => p.y);
+  // Zoomed to FIT what is labelled rather than to a number somebody tuned once. A recording is
+  // somebody else's zoo: it can be tucked in a corner or spread across an area, and a fixed zoom
+  // that flatters one cuts the other in half.
+  const room = 1.45;
+  const fit = Math.min(CANVAS_W / Math.max(1, (x.hi - x.lo) * room), PLAY_H / Math.max(1, (y.hi - y.lo) * room));
+  return {
+    x: (x.lo + x.hi) / 2,
+    y: (y.lo + y.hi) / 2,
+    zoom: Math.max(1, Math.min(3, fit)),
+  };
 }
 
 /** The zoo on the orientation screen, and what to point at in it.

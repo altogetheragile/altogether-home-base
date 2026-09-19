@@ -36,6 +36,7 @@ import { proposeSaveName } from '@/components/zooGame/zooSaves';
 import type { ZooGameState, PbiDraft } from '@/components/zooGame/types';
 import { pathWidthPx, isDeployAcceptance, presetFor, type ItemDesign } from '@/components/zooGame/design';
 import { BeforeYouStart, type StartTab } from '@/components/zooGame/BeforeYouStart';
+import { RecordingChip } from '@/components/zooGame/RecordingChip';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 import { useZooCopy } from '@/components/zooGame/useZooCopy';
 
@@ -388,6 +389,9 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     // Fixed viewport height so the game frame never scrolls - the shell scrolls internally.
     // The marketing footer is omitted here to reclaim the full screen for the game.
     <div className="flex h-dvh flex-col overflow-hidden">
+      {/* Only on `?record=1`, and it says so: every press is being kept, and there is one button to
+          hand the result over at the end. */}
+      <RecordingChip />
       {/* Hold the game for the one query that decides which words it uses. A blank half-second
           beats a visible flash of superseded wording in front of a class. */}
       <main className="min-h-0 flex-1 overflow-hidden">{zooCopy.ready ? render() : null}</main>

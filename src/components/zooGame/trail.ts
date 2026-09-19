@@ -30,6 +30,12 @@ let everything = false;
 export function recordEverything(on = true): void {
   everything = on;
 }
+/** Whether this is an authoring session, so the game can say so on the screen. Somebody whose every
+ *  press is being kept should be told, and should not have to know where the admin menu is to get
+ *  the result out at the end. */
+export function recording(): boolean {
+  return everything;
+}
 
 /** The clock's heartbeat, which is every second and says nothing about what anybody did. */
 const NOISE = new Set(['TICK_DAY', 'TICK_SCRUM']);
