@@ -41,7 +41,7 @@ export function ExplainButton({ cards, phase, teachCard, onMarkTaught, compact }
           {!compact && (teachCard ? 'What is this?' : <span className="hidden sm:inline">What is this?</span>)}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="max-h-[70vh] w-96 overflow-y-auto">
+      <PopoverContent align="end" className="zoo-theme max-h-[70vh] w-96 overflow-y-auto">
         <div className="space-y-2.5">
           {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
           {cards.filter((id) => id !== teachCard).map((id) => <ExplainCard key={id} id={id} />)}

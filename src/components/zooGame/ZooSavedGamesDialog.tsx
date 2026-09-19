@@ -61,7 +61,7 @@ export function ZooSavedGamesDialog({ open, onOpenChange, onResume }: ZooSavedGa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="zoo-theme">
         <DialogHeader>
           <DialogTitle>Your saved zoos</DialogTitle>
           <DialogDescription>Pick up a game where you left off.</DialogDescription>

@@ -114,7 +114,7 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
             </span>
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-64">
+        <PopoverContent align="start" className="zoo-theme w-64">
           <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum Team</div>
           <TeamRows team={team} onRename={onRename} />
         </PopoverContent>
@@ -165,7 +165,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
             : <span className="flex -space-x-1">{team.developers.filter((d) => assigned.includes(d.id)).map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}</span>}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-52">
+      <PopoverContent align="end" className="zoo-theme w-52">
         <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Developers on this item</div>
         <div className="space-y-1">
           {team.developers.map((d) => {

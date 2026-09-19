@@ -44,7 +44,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
   // not notice it. Every other detail view in the game takes the screen, so this one does too.
   const takeover = (
     <Dialog open={reading} onOpenChange={setReading}>
-      <DialogContent data-part="pick-takeover" className="max-w-[min(96vw,720px)]">
+      <DialogContent data-part="pick-takeover" className="zoo-theme max-w-[min(96vw,720px)]">
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="min-w-0">

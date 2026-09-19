@@ -65,7 +65,7 @@ export function ExportPark({ state, caption }: { state: ZooGameState; caption?: 
           Export
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-60 p-2">
+      <PopoverContent align="end" className="zoo-theme w-60 p-2">
         <p className="mb-1.5 px-1 text-[11px] leading-snug text-muted-foreground">
           The zoo as you are looking at it now, at the zoom and the angle you have set.
         </p>

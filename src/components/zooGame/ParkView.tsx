@@ -52,7 +52,7 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
           <ChevronDown className="h-3 w-3" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-40 p-1">
+      <PopoverContent align="end" className="zoo-theme w-40 p-1">
         {PATH_STYLES.map((s) => (
           <button key={s.key} type="button" onClick={() => onPick(s.key)}
             className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs', s.key === current.key ? 'bg-primary/10 font-semibold text-primary' : 'text-foreground hover:bg-muted/50')}>

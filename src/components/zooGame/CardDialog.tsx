@@ -118,7 +118,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent data-part="card-dialog" className="max-w-[min(96vw,1000px)] p-0">
+      <DialogContent data-part="card-dialog" className="zoo-theme max-w-[min(96vw,1000px)] p-0">
         <DialogTitle className="sr-only">{item.name}</DialogTitle>
         <div className="border-b border-border px-5 py-4">
           <div className="flex items-center gap-3">
