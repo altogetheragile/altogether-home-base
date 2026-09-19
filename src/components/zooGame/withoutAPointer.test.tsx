@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ParkPlan } from './ParkPlan';
 import { SplitEpicPanel } from './Board';
-import { ScrumOnePager } from './ScrumTeaching';
+import { ScrumOnePagerBody } from './ScrumTeaching';
 import { SCRUM_INTRO, SCRUM_CARDS } from './scrumContent';
 import { initialZooState } from './config';
 import { startOnTheBoard } from './engine';
@@ -150,7 +150,7 @@ describe('what the game says is Scrum', () => {
   });
 
   it('shows the approach under the two, saying it is not one of them', () => {
-    const { container } = render(<ScrumOnePager onDone={() => {}} onSkipTeaching={() => {}} />);
+    const { container } = render(<ScrumOnePagerBody />);
     expect(container.textContent, 'the one-pager does not place the approach').toMatch(/not a third foundation/i);
   });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, within } from '@testing-library/react';
-import { ZooOrientation } from './ZooOrientation';
+import { ZooOrientationBody } from './ZooOrientation';
+import { BeforeYouStart } from './BeforeYouStart';
 import { ZooIntro } from './ZooIntro';
 import { ORIENTATION, INTRO_COPY } from './scrumContent';
 import { copyEntries } from './copy';
@@ -20,8 +21,11 @@ import { ACTION_BAR, BAR_ACTION } from './ui/tokens';
 // "this should be at the top and expanded. The messages should be underneath." So the orientation
 // is a screen you pass through once, not a panel that is always in the way.
 
-const screen = (over: Partial<Parameters<typeof ZooOrientation>[0]> = {}) =>
-  render(<ZooOrientation onDone={() => {}} {...over} />).container;
+/** The orientation on its own, which is how the screen mounts it. */
+const screen = () => render(<ZooOrientationBody />).container;
+/** ...and the screen round it, which owns the tabs and the one way onward. */
+const before = (over: Partial<Parameters<typeof BeforeYouStart>[0]> = {}) =>
+  render(<BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} onSkipTeaching={() => {}} {...over} />).container;
 
 describe('the orientation screen', () => {
   it('says what the game is, not what Scrum is', () => {
@@ -69,25 +73,63 @@ describe('the orientation screen', () => {
     for (const when of ORIENTATION.when) expect(text).toContain(when);
   });
 
-  it('leads on to the Product Goal, which is the first thing to decide', () => {
+  it('brings no chrome of its own, because the screen owns it', () => {
+    // It is a tab now. A tab that carries its own heading, its own way onward and its own escape
+    // is a tab that looks like a different place, which is the thing tabs exist not to be.
+    const c = screen();
+    expect(c.querySelector('[data-part="start-done"]'), 'the tab has its own way onward').toBeNull();
+    expect(c.querySelector('[role="tablist"]'), 'the tab has its own tabs').toBeNull();
+  });
+});
+
+describe('the two pages, as one screen', () => {
+  // "Can the Scrum one-pager and game orientation be tabbed so a player can easily switch between
+  // them?" They were two screens with a button on each pointing at the other, and the two buttons
+  // were not even the same shape: going across and coming back were differently named moves.
+
+  it('offers both, named as they name themselves', () => {
+    const c = before();
+    expect(c.querySelector('[data-part="start-tab-zoo"]')?.textContent).toBe(ORIENTATION.title);
+    expect(c.querySelector('[data-part="start-tab-scrum"]')?.textContent).toMatch(/Scrum on one page/);
+  });
+
+  it('says which one you are on, to anything that asks', () => {
+    const c = before({ tab: 'scrum' });
+    expect(c.querySelector('[data-part="start-tab-scrum"]')?.getAttribute('aria-selected')).toBe('true');
+    expect(c.querySelector('[data-part="start-tab-zoo"]')?.getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('switches without leaving the screen', () => {
+    const onTab = vi.fn();
+    const c = before({ onTab });
+    fireEvent.click(c.querySelector('[data-part="start-tab-scrum"]')!);
+    expect(onTab).toHaveBeenCalledWith('scrum');
+  });
+
+  it('shows the zoo on one tab and Scrum on the other', () => {
+    expect(before({ tab: 'zoo' }).textContent, 'the zoo tab is not the zoo').toContain(ORIENTATION.park.title);
+    expect(before({ tab: 'scrum' }).textContent, 'the Scrum tab is not Scrum').toMatch(/Three accountabilities/);
+  });
+
+  it('mounts only the tab you are on', () => {
+    // The Scrum page is a hundred-odd panels and the zoo page draws an isometric park. Mounting
+    // both and hiding one makes arriving here pay for the half nobody asked for.
+    expect(before({ tab: 'scrum' }).textContent, 'both tabs are mounted').not.toContain(ORIENTATION.park.title);
+  });
+
+  it('has one way onward and one escape, whichever tab you were reading', () => {
     const onDone = vi.fn();
-    const c = screen({ onDone });
-    const on = c.querySelector('[data-part="orientation-done"]') as HTMLButtonElement;
-    expect(on, 'there is no way off this screen').toBeTruthy();
-    expect(on.textContent).toContain(ORIENTATION.onward);
-    fireEvent.click(on);
-    expect(onDone).toHaveBeenCalled();
-  });
-
-  it('offers the framework page across, for somebody who wants it first', () => {
-    const onScrum = vi.fn();
-    const c = screen({ onScrum });
-    fireEvent.click(c.querySelector('[data-part="to-scrum"]') as HTMLButtonElement);
-    expect(onScrum).toHaveBeenCalled();
-  });
-
-  it('has no way back the first time, because there is nothing behind it', () => {
-    expect((screen().textContent ?? '').includes('← Back')).toBe(false);
+    const onSkipTeaching = vi.fn();
+    for (const tab of ['zoo', 'scrum'] as const) {
+      const c = before({ tab, onDone, onSkipTeaching });
+      const on = c.querySelector('[data-part="start-done"]') as HTMLButtonElement;
+      expect(on, `${tab}: there is no way off this screen`).toBeTruthy();
+      expect(on.textContent).toContain(ORIENTATION.onward);
+      fireEvent.click(on);
+      fireEvent.click(c.querySelector('[data-part="skip-teaching"]')!);
+    }
+    expect(onDone).toHaveBeenCalledTimes(2);
+    expect(onSkipTeaching).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -130,7 +172,9 @@ describe('the bar at the foot of a way-in screen', () => {
   //
   // It is one token now, and this test is here because the fault was a copied string rather than a
   // bad decision: the next screen with a way onward will copy something, and it should copy this.
-  const SOURCES = ['ZooOrientation.tsx', 'ScrumTeaching.tsx', 'ZooIntro.tsx'];
+  // The screens that HAVE a way onward. The two reading pages lost theirs when they became tabs:
+  // the screen round them owns one bar for both, which is the point of tabbing them.
+  const SOURCES = ['BeforeYouStart.tsx', 'ZooIntro.tsx'];
 
   it('is the same bar on every screen that has one', () => {
     const hand: string[] = [];
@@ -201,12 +245,25 @@ describe('a trainer can change the words on it', () => {
   });
 
   it('writes an edit back to the screen', () => {
+    // The title names the TAB now, so an edit to it has to come out on the tab. That is the whole
+    // reason the tab reads its label from the content rather than carrying its own copy of it.
     const entry = copyEntries().find((e) => e.key === 'orientation.title')!;
     const was = ORIENTATION.title;
     try {
       entry.apply('How this zoo works');
       expect(ORIENTATION.title, 'the edit did not reach the content').toBe('How this zoo works');
-      expect(screen().textContent).toContain('How this zoo works');
+      expect(before().querySelector('[data-part="start-tab-zoo"]')?.textContent).toBe('How this zoo works');
+    } finally {
+      entry.apply(was);
+    }
+  });
+
+  it('writes an edit back to the body of it too', () => {
+    const entry = copyEntries().find((e) => e.key === 'orientation.park.title')!;
+    const was = ORIENTATION.park.title;
+    try {
+      entry.apply('The grounds');
+      expect(screen().textContent).toContain('The grounds');
     } finally {
       entry.apply(was);
     }
