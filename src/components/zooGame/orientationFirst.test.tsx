@@ -140,6 +140,22 @@ describe('the two pages, as one screen', () => {
     expect(onTab).toHaveBeenCalledWith('scrum');
   });
 
+  it('brings the tab you chose into view', () => {
+    // On a phone the row scrolls rather than squashing, so the second tab sits half off the edge.
+    // Tapping it selected a tab that stayed half off the edge, which reads as a press that half
+    // worked. Checked at 320px in the browser: the row scrolls it fully in.
+    const seen: Element[] = [];
+    const was = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function scrollIntoView(this: Element) { seen.push(this); };
+    try {
+      before({ tab: 'scrum' });
+      const on = seen.find((e) => e.getAttribute('data-part') === 'start-tab-scrum');
+      expect(on, 'the chosen tab was left wherever it was').toBeTruthy();
+    } finally {
+      Element.prototype.scrollIntoView = was;
+    }
+  });
+
   it('shows the zoo on one tab and Scrum on the other', () => {
     expect(before({ tab: 'zoo' }).textContent, 'the zoo tab is not the zoo').toContain(ORIENTATION.park.title);
     expect(before({ tab: 'scrum' }).textContent, 'the Scrum tab is not Scrum').toMatch(/Three accountabilities/);
