@@ -3,6 +3,7 @@ import { render, fireEvent, within } from '@testing-library/react';
 import { ZooOrientation } from './ZooOrientation';
 import { ZooIntro } from './ZooIntro';
 import { ORIENTATION, INTRO_COPY } from './scrumContent';
+import { copyEntries } from './copy';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACTION_BAR, BAR_ACTION } from './ui/tokens';
@@ -152,5 +153,70 @@ describe('the bar at the foot of a way-in screen', () => {
     // ...and a stacked bar is not a ragged column.
     expect(BAR_ACTION).toContain('w-full');
     expect(BAR_ACTION).toContain('sm:w-auto');
+  });
+});
+
+describe('a trainer can change the words on it', () => {
+  // Asked while reading it: "can the orientation screen be editable like other copy?"
+  //
+  // It carried the pencil from the day it shipped and none of its own words were behind it - so a
+  // trainer who opened the editor on that screen was shown the front page's copy instead. The
+  // pencil was a promise the screen did not keep.
+  //
+  // The line this holds is the one the copy module already draws: everything a learner READS is
+  // editable, and the buttons are not, because a button label is bound to what the button does.
+
+  it('has every sentence on it behind the pencil', () => {
+    const keys = new Set(copyEntries().map((e) => e.key));
+    const want = ['orientation.title', 'orientation.strapline', 'orientation.gotchas.title'];
+    for (const k of want) expect(keys.has(k), `${k} cannot be edited`).toBe(true);
+
+    // Every panel, every line of every panel, and every one of the surprises. Named by walking the
+    // content rather than by listing them here, so a panel added later is covered or this fails.
+    for (const panel of ['park', 'seats', 'tabs', 'clock'] as const) {
+      const p = ORIENTATION[panel];
+      expect(keys.has(`orientation.${panel}.title`), `${panel}: the heading is fixed`).toBe(true);
+      expect(keys.has(`orientation.${panel}.lead`), `${panel}: the opening line is fixed`).toBe(true);
+      p.rows.forEach((_, i) => {
+        expect(keys.has(`orientation.${panel}.rows.${i}.name`), `${panel} line ${i}: the bold part is fixed`).toBe(true);
+        expect(keys.has(`orientation.${panel}.rows.${i}.text`), `${panel} line ${i} is fixed`).toBe(true);
+      });
+    }
+    ORIENTATION.gotchas.rows.forEach((_, i) => {
+      expect(keys.has(`orientation.gotchas.${i}.text`), `surprise ${i} is fixed`).toBe(true);
+    });
+    ORIENTATION.when.forEach((_, i) => {
+      expect(keys.has(`orientation.when.${i}`), `when-step ${i} is fixed`).toBe(true);
+    });
+  });
+
+  it('shows them on the screen they belong to, not on a list of everything', () => {
+    // The point of the in-game editor: open it where you are, and see what is in front of you.
+    const mine = copyEntries().filter((e) => e.group === 'How the zoo works');
+    expect(mine.length, 'the orientation has no editable copy at all').toBeGreaterThan(10);
+    for (const e of mine) {
+      expect(e.phases, `${e.key} would not be found on the screen it is on`).toContain('intro');
+      expect(e.where, `${e.key} does not say where it appears`).toMatch(/How the zoo works/);
+    }
+  });
+
+  it('writes an edit back to the screen', () => {
+    const entry = copyEntries().find((e) => e.key === 'orientation.title')!;
+    const was = ORIENTATION.title;
+    try {
+      entry.apply('How this zoo works');
+      expect(ORIENTATION.title, 'the edit did not reach the content').toBe('How this zoo works');
+      expect(screen().textContent).toContain('How this zoo works');
+    } finally {
+      entry.apply(was);
+    }
+  });
+
+  it('leaves the buttons alone, which is the rule everywhere else in this file', () => {
+    // "Only the TEACHING voice is editable: button labels, column names and step titles stay in
+    // code, because they are bound to layout and logic."
+    const keys = copyEntries().map((e) => e.key);
+    expect(keys).not.toContain('orientation.onward');
+    expect(keys).not.toContain('orientation.aside');
   });
 });

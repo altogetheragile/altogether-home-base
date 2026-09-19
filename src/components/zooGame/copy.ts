@@ -1,4 +1,4 @@
-import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE, INTRO_COPY } from './scrumContent';
+import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE, INTRO_COPY, ORIENTATION } from './scrumContent';
 import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 
 // ============= The teaching copy, as data you can edit =============
@@ -13,7 +13,7 @@ import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 // edit there breaks a screen rather than improving a sentence.
 
 /** Where a piece of copy appears, so the admin list can be grouped the way the game is played. */
-export type CopyGroup = 'Teaching cards' | 'The front page' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
+export type CopyGroup = 'Teaching cards' | 'The front page' | 'How the zoo works' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
 
 export interface CopyEntry {
   /** Stable id - the database key. Never renamed once shipped, or overrides orphan. */
@@ -61,6 +61,59 @@ export function copyEntries(): CopyEntry[] {
       key: `intro.loop.${i}`, group: 'The front page', label: l.step, where: 'The front page - each Sprint',
       value: l.text, phases: ['intro'], apply: (v) => { INTRO_COPY.loop[i].text = v; },
     });
+  });
+
+  // How the zoo works: the orientation screen. It carried the pencil from the day it shipped and
+  // none of its own words were behind it, so a trainer opening the editor on that screen was shown
+  // the front page's copy instead. Asked while reading it: "can the orientation screen be editable
+  // like other copy?"
+  //
+  // Everything a learner READS here is editable. The two buttons at the foot are not, by the same
+  // rule as everywhere else in this file: a button label is bound to what the button does, and an
+  // edit there breaks a screen rather than improving a sentence.
+  const PANELS = ['park', 'seats', 'tabs', 'clock'] as const;
+  out.push(
+    { key: 'orientation.title', group: 'How the zoo works', label: 'Title', where: 'How the zoo works',
+      value: ORIENTATION.title, phases: ['intro'], apply: (v) => { ORIENTATION.title = v; } },
+    { key: 'orientation.strapline', group: 'How the zoo works', label: 'Strapline', where: 'How the zoo works',
+      value: ORIENTATION.strapline, long: true, phases: ['intro'], apply: (v) => { ORIENTATION.strapline = v; } },
+  );
+  for (const panel of PANELS) {
+    const p = ORIENTATION[panel];
+    out.push(
+      { key: `orientation.${panel}.title`, group: 'How the zoo works', label: `${p.title} - heading`,
+        where: `How the zoo works - ${p.title}`, value: p.title, phases: ['intro'], apply: (v) => { p.title = v; } },
+      { key: `orientation.${panel}.lead`, group: 'How the zoo works', label: `${p.title} - opening line`,
+        where: `How the zoo works - ${p.title}`, value: p.lead, long: true, phases: ['intro'], apply: (v) => { p.lead = v; } },
+    );
+    p.rows.forEach((row, i) => {
+      out.push(
+        { key: `orientation.${panel}.rows.${i}.name`, group: 'How the zoo works', label: `${p.title} - line ${i + 1}, the bold part`,
+          where: `How the zoo works - ${p.title}`, value: row.name, phases: ['intro'], apply: (v) => { row.name = v; } },
+        { key: `orientation.${panel}.rows.${i}.text`, group: 'How the zoo works', label: `${p.title} - line ${i + 1}`,
+          where: `How the zoo works - ${p.title}`, value: row.text, long: true, phases: ['intro'], apply: (v) => { row.text = v; } },
+      );
+    });
+  }
+  ORIENTATION.when.forEach((w, i) => {
+    out.push({
+      key: `orientation.when.${i}`, group: 'How the zoo works', label: `When ${INTRO_COPY.loop[i]?.step ?? `step ${i + 1}`} happens`,
+      where: 'How the zoo works - each Sprint', value: w, phases: ['intro'],
+      apply: (v) => { ORIENTATION.when[i] = v; },
+    });
+  });
+  out.push({
+    key: 'orientation.gotchas.title', group: 'How the zoo works', label: 'The surprises - heading',
+    where: 'How the zoo works', value: ORIENTATION.gotchas.title, phases: ['intro'],
+    apply: (v) => { ORIENTATION.gotchas.title = v; },
+  });
+  ORIENTATION.gotchas.rows.forEach((row, i) => {
+    out.push(
+      { key: `orientation.gotchas.${i}.name`, group: 'How the zoo works', label: `Surprise ${i + 1} - the bold part`,
+        where: 'How the zoo works - the surprises', value: row.name, phases: ['intro'], apply: (v) => { row.name = v; } },
+      { key: `orientation.gotchas.${i}.text`, group: 'How the zoo works', label: `Surprise ${i + 1}`,
+        where: 'How the zoo works - the surprises', value: row.text, long: true, phases: ['intro'], apply: (v) => { row.text = v; } },
+    );
   });
 
   // The Why / Who / When / How cards - the largest block, and the one most worth owning.
