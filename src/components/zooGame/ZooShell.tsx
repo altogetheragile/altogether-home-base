@@ -140,10 +140,13 @@ function SprintBacklogGlance({ state, locked }: { state: ZooGameState; locked: b
 /** Which artifact you are looking at. */
 export type ArtifactTab = 'backlog' | 'sprint' | 'increment';
 
-function Tab({ active, onClick, icon: Icon, label, badge, locked }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string; locked?: string }) {
+/** Exported so the Before you start screen wears the same tab as the game does. It had its own -
+ *  big bold labels with an underline - and got the same report this one already carries in its
+ *  comment: "it is not clear they are tabs". One tab shape in the game, not two. */
+export function Tab({ active, onClick, icon: Icon, label, badge, locked, ...rest }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string; locked?: string } & React.ComponentProps<'button'>) {
   return (
     <button type="button" onClick={locked ? undefined : onClick} disabled={!!locked} title={locked}
-      aria-current={active ? 'page' : undefined}
+      aria-current={active ? 'page' : undefined} {...rest}
       // Drawn as tabs: an outlined shape that the active one joins to the screen below it. They were
       // three words with an underline, which reads as a menu rather than as three artifacts you are
       // standing in front of.

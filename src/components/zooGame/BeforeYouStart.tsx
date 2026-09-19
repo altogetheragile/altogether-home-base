@@ -1,4 +1,5 @@
-import { GraduationCap } from 'lucide-react';
+import { GraduationCap, Trees, Repeat } from 'lucide-react';
+import { Tab } from './ZooShell';
 import { ZooOrientationBody } from './ZooOrientation';
 import { ScrumOnePagerBody } from './ScrumTeaching';
 import { ORIENTATION } from './scrumContent';
@@ -23,11 +24,14 @@ import { ACTION_BAR, BAR_ACTION, FOCUS } from './ui/tokens';
 
 export type StartTab = 'zoo' | 'scrum';
 
-const TABS: { id: StartTab; label: () => string }[] = [
+const TABS: { id: StartTab; label: () => string; icon: typeof Trees }[] = [
   // Read from the content, so renaming the screen in the copy editor renames its tab. A tab whose
   // label disagrees with the heading it opens is a small lie the game tells about itself.
-  { id: 'zoo', label: () => ORIENTATION.title },
-  { id: 'scrum', label: () => 'Scrum on one page' },
+  //
+  // The icons are the ones each subject already wears: the park is trees, and the iterative loop is
+  // the mark on the foundation Scrum employs it on.
+  { id: 'zoo', label: () => ORIENTATION.title, icon: Trees },
+  { id: 'scrum', label: () => 'Scrum on one page', icon: Repeat },
 ];
 
 export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
@@ -46,30 +50,18 @@ export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
             {copy && <CopyEditor phase="intro" {...copy} />}
           </div>
-          {/* The tab IS the heading. It was a tab row under a title that said the same words, which
-              is the same thing said twice and one of them redundant. */}
+          {/* The game's own tab, not a second kind of tab.
+              It had big bold labels with an underline, and got the same report the game's tab row
+              already carries in its comment: "it is not clear they are tabs... outline colours?"
+              An outlined shape that the active one joins to the panel below it is what a tab looks
+              like here, and a player has already learnt that from the three tabs they meet next. */}
           <div role="tablist" aria-label="Before you start"
-            // A row that stays a row. Wrapped, the two labels stacked on a phone into two big bold
-            // lines one above the other, which reads as two headings rather than as a choice
-            // between two pages. Wide content scrolls in its own container here, as everywhere.
-            className="flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {TABS.map((t) => {
-              const on = t.id === tab;
-              return (
-                <button key={t.id} type="button" role="tab" id={`start-tab-${t.id}`} aria-selected={on}
-                  aria-controls={`start-panel-${t.id}`} data-part={`start-tab-${t.id}`}
-                  onClick={() => onTab(t.id)}
-                  className={cn(FOCUS,
-                    // The screen's heading size on a screen, a step down on a phone. At full size
-                    // the two tabs stack there, and two big bold lines one above the other read as
-                    // two headings rather than as a choice between two pages.
-                    'text-lg font-bold leading-tight sm:text-2xl',
-                    '-mb-px shrink-0 whitespace-nowrap rounded-t-md border-b-2 px-2 pb-1.5 pt-1 text-left transition-colors',
-                    on ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}>
-                  {t.label()}
-                </button>
-              );
-            })}
+            className="flex items-end gap-1 overflow-x-auto border-b-2 border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {TABS.map((t) => (
+              <Tab key={t.id} active={t.id === tab} onClick={() => onTab(t.id)} icon={t.icon} label={t.label()}
+                role="tab" id={`start-tab-${t.id}`} aria-selected={t.id === tab}
+                aria-controls={`start-panel-${t.id}`} data-part={`start-tab-${t.id}`} />
+            ))}
           </div>
         </header>
 

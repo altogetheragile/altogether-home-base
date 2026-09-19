@@ -89,8 +89,30 @@ describe('the two pages, as one screen', () => {
 
   it('offers both, named as they name themselves', () => {
     const c = before();
-    expect(c.querySelector('[data-part="start-tab-zoo"]')?.textContent).toBe(ORIENTATION.title);
+    expect(c.querySelector('[data-part="start-tab-zoo"]')?.textContent?.trim()).toBe(ORIENTATION.title);
     expect(c.querySelector('[data-part="start-tab-scrum"]')?.textContent).toMatch(/Scrum on one page/);
+  });
+
+  it('looks like the tabs the game already has', () => {
+    // Reported on the first version: "can the new tabs be more obvious? It is not clear they are
+    // tabs. Outline colours, or?" They were big bold labels with an underline - which is the exact
+    // fault the game's own tab row carries a comment about having already fixed:
+    //
+    //   "Drawn as tabs: an outlined shape that the active one joins to the screen below it. They
+    //    were three words with an underline, which reads as a menu rather than as three artifacts
+    //    you are standing in front of."
+    //
+    // So this screen wears the game's tab rather than a second kind of tab. A player learns what a
+    // tab looks like here from the three they meet on the very next screen.
+    const src = readFileSync(join(__dirname, 'BeforeYouStart.tsx'), 'utf8');
+    expect(src, 'the screen hand-rolls its own tab').toMatch(/import \{ Tab \} from '\.\/ZooShell'/);
+    expect(src, 'there is a second kind of tab in the game again').not.toMatch(/border-b-2 border-primary/);
+
+    // ...and it is drawn, not merely imported: an outlined shape, with the active one joined to
+    // the panel under it.
+    const on = before({ tab: 'zoo' }).querySelector('[data-part="start-tab-zoo"]')!;
+    expect(on.className, 'the active tab is not an outlined shape').toMatch(/rounded-t-lg/);
+    expect(on.className, 'the active tab does not join the panel below it').toMatch(/border-b-background/);
   });
 
   it('says which one you are on, to anything that asks', () => {
@@ -252,7 +274,7 @@ describe('a trainer can change the words on it', () => {
     try {
       entry.apply('How this zoo works');
       expect(ORIENTATION.title, 'the edit did not reach the content').toBe('How this zoo works');
-      expect(before().querySelector('[data-part="start-tab-zoo"]')?.textContent).toBe('How this zoo works');
+      expect(before().querySelector('[data-part="start-tab-zoo"]')?.textContent?.trim()).toBe('How this zoo works');
     } finally {
       entry.apply(was);
     }
