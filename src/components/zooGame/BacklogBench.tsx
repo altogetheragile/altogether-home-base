@@ -51,7 +51,7 @@ function Cost({ state, seconds }: { state: ZooGameState; seconds: number }) {
 export function ItemTakeover({ item, onClose, ...rest }: Parameters<typeof ItemBench>[0] & { onClose: () => void }) {
   return (
     <Dialog open={!!item} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent data-part="item-takeover" className="max-w-[min(96vw,1000px)] p-0">
+      <DialogContent data-part="item-takeover" className="zoo-theme max-w-[min(96vw,1000px)] p-0">
         <DialogTitle className="sr-only">{item?.name ?? 'Product Backlog item'}</DialogTitle>
         {/* No close button of its own: the takeover has one, and two Xs an inch apart is one too
             many. The right padding keeps the points clear of it. */}

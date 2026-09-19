@@ -45,3 +45,29 @@ describe('the zoo theme', () => {
     }
   });
 });
+
+describe('there is no dark inside the zoo', () => {
+  // The other half of the same idea, and the half that was still broken after the first fix.
+  //
+  // `.zoo-theme` makes the game a light surface in both themes. Every `dark:text-*` inside it
+  // therefore lightens its text for a ground that never arrives - measured on the board in dark
+  // mode, "Needs Lion Enclosure built first" fell from 5.02:1 to 1.67:1 and "Hand it back to the
+  // Product Backlog" from 4.84:1 to 1.39:1, both amber on a card that is white either way. There
+  // are about seventy more `dark:` variants in the game behind those two.
+  //
+  // Said once in the Tailwind config rather than stripped from seventy places: the dark variant
+  // does not apply inside the zoo. Held here because it is one line in a config file that nothing
+  // else would notice the loss of.
+  const CONFIG = readFileSync(join(__dirname, '..', '..', '..', 'tailwind.config.ts'), 'utf8');
+
+  it('leaves the dark variant at the gate', () => {
+    const dark = CONFIG.match(/darkMode:\s*\[[^\]]*\][^,]*,/s)?.[0] ?? '';
+    expect(dark, 'the dark variant applies inside the game again').toContain('zoo-theme');
+    expect(dark, 'it is not excluded, only mentioned').toMatch(/:not\(/);
+  });
+
+  it('still lets the rest of the site go dark', () => {
+    const dark = CONFIG.match(/darkMode:\s*\[[^\]]*\][^,]*,/s)?.[0] ?? '';
+    expect(dark, 'dark mode is driven by something other than the class').toContain('.dark');
+  });
+});

@@ -852,7 +852,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
         {/* No close button: the event ends by adapting the plan or carrying on regardless, and a
             cross that silently did nothing would be worse than no cross at all. */}
         <DialogContent data-part="daily-scrum"
-          className="max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-primary p-4 [&>button]:hidden">
+          className="zoo-theme max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-primary p-4 [&>button]:hidden">
           <DialogTitle className="sr-only">Daily Scrum</DialogTitle>
           <div>
             <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} />

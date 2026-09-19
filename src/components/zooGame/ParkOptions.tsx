@@ -93,7 +93,7 @@ function Menu({ group, label, lit, busy, open, onOpenChange, onClosed, children 
           <ChevronDown className="h-3 w-3 shrink-0 opacity-50" aria-hidden />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" data-part={`panel-${group.id}`} className="w-[19rem] p-2"
+      <PopoverContent align="start" data-part={`panel-${group.id}`} className="zoo-theme w-[19rem] p-2"
         // The park is the drawing surface, so a press on it must not shut the menu the pen lives
         // in: closing is what puts the pen away, and a menu that closed on the first press would
         // put it away before the first point landed.
@@ -139,7 +139,7 @@ function MoreColours({ label, current, options, onPick }: {
           <Plus className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-2">
+      <PopoverContent align="start" className="zoo-theme w-auto p-2">
         <div className="grid grid-cols-6 gap-1.5">
           {options.map((c) => (
             <button key={c} type="button" aria-label={`${label} ${c}`} title={c}

@@ -43,7 +43,7 @@ function GameMenu({ onSave, onOpenSaves, onMeasures, links, tools }: { onSave?: 
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-56">
+      <PopoverContent align="end" className="zoo-theme w-56">
         <div className="space-y-0.5">
           {tools}
           {/* The four key value measures. They are reference during a Sprint - they have their
@@ -408,7 +408,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                 )}
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-[min(92vw,32rem)]">
+            <PopoverContent align="start" className="zoo-theme w-[min(92vw,32rem)]">
               <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 Sprint Goal{state.phase === 'sprint' ? ` \u00b7 Sprint ${state.sprintNumber}` : ''}
               </div>

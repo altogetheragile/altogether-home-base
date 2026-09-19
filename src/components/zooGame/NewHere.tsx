@@ -19,7 +19,7 @@ export function NewHere({ title, children }: { title: string; children: ReactNod
           <Sparkles className="h-2.5 w-2.5" /> New
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72">
+      <PopoverContent align="end" className="zoo-theme w-72">
         <h4 className="text-sm font-semibold">{title}</h4>
         <div className="mt-1 space-y-1.5 text-xs leading-snug text-muted-foreground">{children}</div>
       </PopoverContent>

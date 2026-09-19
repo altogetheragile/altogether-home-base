@@ -487,7 +487,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   <ChevronDown className="h-3 w-3" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-96">
+              <PopoverContent align="start" className="zoo-theme w-96">
                 <div className="space-y-1.5">
                   <p className="text-[11px] text-muted-foreground">What the Sprint Review heard. Adding one puts it in the Product Backlog, unsized.</p>
                   {state.signals.map((sig, i) => (

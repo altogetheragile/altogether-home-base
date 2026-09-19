@@ -27,7 +27,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
           <SlidersHorizontal className="h-3.5 w-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-60">
+      <PopoverContent align="end" className="zoo-theme w-60">
         <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Board settings</div>
         <div className="space-y-2 text-xs">
           <div className="flex items-center justify-between gap-2">

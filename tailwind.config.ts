@@ -1,7 +1,18 @@
 import type { Config } from "tailwindcss";
 
 export default {
-	darkMode: ["class"],
+	// Dark mode is a class on the page - EXCEPT inside the zoo game, which is a light surface on
+	// purpose and stays one in both themes (see `.zoo-theme` in index.css: it is a page on a
+	// marketing site, and the park is drawn in daylight).
+	//
+	// Without this exclusion every `dark:text-*` inside the game lightens its text for a dark ground
+	// that never arrives. Measured on the board in dark mode: "Needs Lion Enclosure built first" went
+	// from 5.02:1 to 1.67:1, and "Hand it back to the Product Backlog" from 4.84:1 to 1.39:1 - both
+	// amber text on a card that is white in both themes. There are about seventy more of them.
+	//
+	// Said once here rather than stripped from seventy places, and it says the true thing: there is
+	// no dark inside the zoo.
+	darkMode: ["variant", ["&:where(.dark, .dark *):not(:where(.zoo-theme, .zoo-theme *))"]],
 	content: [
 		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
