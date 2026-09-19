@@ -46,7 +46,16 @@ export function LabelledPark({ className }: { className?: string }) {
       if (!rect.width || !rect.height) return retry();
       const found: Pin[] = [];
       labels.forEach((l, i) => {
-        const parts = [...el.querySelectorAll(l.find)].map((n) => n.getBoundingClientRect());
+        // Only the parts of it that are ON SCREEN. A path runs off to the way in, and the middle of
+        // the whole run is a point out in the car park: the pin sat outside the picture, pointing
+        // at the thing from off the edge of it. A pin marks the visible part of its thing.
+        const parts = [...el.querySelectorAll(l.find)]
+          .map((n) => n.getBoundingClientRect())
+          .filter((r) => r.right > rect.left && r.left < rect.right && r.bottom > rect.top && r.top < rect.bottom)
+          .map((r) => ({
+            left: Math.max(r.left, rect.left), right: Math.min(r.right, rect.right),
+            top: Math.max(r.top, rect.top), bottom: Math.min(r.bottom, rect.bottom),
+          }));
         const at = union(parts);
         if (!at) return;
         found.push({

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { IsoZoo } from './IsoZoo';
 import { exampleZoo } from './exampleZoo';
+import { standingOnPark, parkPositions, positionOf } from './parkModel';
 
 // The zoo on the orientation screen is one the game really built.
 //
@@ -78,6 +79,33 @@ describe('where the camera stands', () => {
     // work is a speck with four labels piled on it.
     expect(Number.isFinite(camera.x) && Number.isFinite(camera.y), 'the camera is aimed at nothing').toBe(true);
     expect(camera.zoom, 'it is not walked up to at all').toBeGreaterThan(1);
+  });
+
+  it('is not dragged off to the car park by a path', () => {
+    // The first real recording framed itself halfway to the way in, because the run drawn from
+    // there to the habitat was counted as part of the work. The habitat, the animal in it and the
+    // toilets beside it all went off the top of the picture to make room for a car park nobody was
+    // pointing at.
+    const { state, labels, camera } = exampleZoo();
+    const ids = new Set(labels.map((l) => l.id));
+    const spots = standingOnPark(state).filter((st) => ids.has(st.item.id));
+    expect(spots.length, 'nothing labelled is standing on the park').toBeGreaterThan(1);
+    const at = parkPositions(spots, new Map());
+    const xs = spots.map((st) => positionOf(st, at).x);
+    const ys = spots.map((st) => positionOf(st, at).y);
+    // The shot sits among the things it is pointing at, not somewhere between them and the gate.
+    const room = 160;
+    expect(camera.x, 'the camera wandered off the labelled work').toBeGreaterThan(Math.min(...xs) - room);
+    expect(camera.x).toBeLessThan(Math.max(...xs) + room);
+    expect(camera.y).toBeGreaterThan(Math.min(...ys) - room);
+    expect(camera.y).toBeLessThan(Math.max(...ys) + room);
+  });
+
+  it('walks in far enough to see what it is pointing at', () => {
+    // Fitted to what is labelled rather than a number tuned once: a recording can be tucked in a
+    // corner or spread across an area, and a fixed zoom that flatters one halves the other.
+    expect(exampleZoo().camera.zoom, 'it is showing the whole park and calling it an example')
+      .toBeGreaterThan(1.4);
   });
 
   it('stands there from the first frame rather than swooping in', () => {
