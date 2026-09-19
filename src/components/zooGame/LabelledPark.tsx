@@ -21,6 +21,17 @@ const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })
 // playing, replayed - so neither can drift from what the game does. The two drawings have disagreed
 // about the same piece of state more than once, and this screen is where that would show.
 
+/** The numeral on a numbered mark.
+ *
+ *  Dark, and a literal rather than a token, which is the one case where that is right: the mark's
+ *  ground is the primary in BOTH themes, so its text has to be fixed too - a `text-foreground` here
+ *  would be near-white on orange in dark mode and near-black on orange in light, from one colour
+ *  that is supposed to mean one thing.
+ *
+ *  It was white on the orange: 2.85:1, measured, in both themes. Below the 4.5 that small bold text
+ *  needs and below even the 3 that large text does. Dark takes it to about 7. */
+const ON_THE_MARK = 'text-[#2a1405]';
+
 interface Pin { n: number; x: number; y: number }
 
 /** A drawing, with numbered pins on the things the key names.
@@ -113,7 +124,7 @@ function Pinned({ title, note, labels, children }: {
         {pins.map((p) => (
           <span key={p.n} data-part={`pin-${p.n}`} aria-hidden
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-primary px-1.5 text-[11px] font-bold leading-5 text-primary-foreground shadow">
+            className={cn(ON_THE_MARK, 'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-primary px-1.5 text-[11px] font-bold leading-5 shadow')}>
             {p.n}
           </span>
         ))}
@@ -147,7 +158,7 @@ export function LabelledPark({ className }: { className?: string }) {
         <ol className="grid gap-1.5 sm:grid-cols-2">
           {labels.map((l, i) => (
             <li key={l.id} className="flex gap-2 text-xs leading-snug">
-              <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+              <span className={cn(ON_THE_MARK, 'mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold')}>
                 {i + 1}
               </span>
               <span>
