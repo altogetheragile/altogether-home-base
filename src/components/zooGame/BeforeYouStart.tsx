@@ -56,7 +56,7 @@ export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
               An outlined shape that the active one joins to the panel below it is what a tab looks
               like here, and a player has already learnt that from the three tabs they meet next. */}
           <div role="tablist" aria-label="Before you start"
-            className={cn(TAB_ROW, 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden')}>
+            className={TAB_ROW}>
             {TABS.map((t) => (
               <Tab key={t.id} active={t.id === tab} onClick={() => onTab(t.id)} icon={t.icon} label={t.label()}
                 role="tab" id={`start-tab-${t.id}`} aria-selected={t.id === tab}

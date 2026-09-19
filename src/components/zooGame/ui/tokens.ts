@@ -192,6 +192,11 @@ export const BAR_ACTION = 'w-full justify-center sm:w-auto';
 
 /** The line a tab row sits on, and the outline a tab is drawn with.
  *
+ *  In the PRIMARY, by the rule at the top of this file: a colour never appears except for its
+ *  meaning, and `action` is "the thing to do next, the current step". An active tab is exactly
+ *  that - the one of three you are looking at - so it is the one colour in the game that already
+ *  means what a tab is saying. It was a dark slate, which is legible and means nothing.
+ *
  *  ONE value, because the whole illusion is that the active tab is a piece of the panel below it
  *  standing up: its outline and the row's rule have to be the same line, in the same colour, at the
  *  same weight, or the join reads as two lines that nearly meet.
@@ -200,6 +205,14 @@ export const BAR_ACTION = 'w-full justify-center sm:w-auto';
  *  report was the obvious one: "can the tab outline be thicker and darker, it is still too subtle".
  *  A tab is not a quiet panel. It is the control that says which of three things you are looking
  *  at, and it should be legible across a room, because in a classroom it is. */
-export const TAB_EDGE = 'border-foreground/70';
-/** The row itself: tabs sit ON the line, so the active one can break it. */
-export const TAB_ROW = `flex items-end gap-1 border-b-[3px] ${TAB_EDGE}`;
+export const TAB_EDGE = 'border-primary';
+/** The row itself: tabs sit ON the line, so the active one can break it.
+ *
+ *  It SCROLLS rather than squashing. Three tabs need about 440px and a phone has 390, so the row
+ *  was letting them shrink: "Product Backlog" and "Sprint Backlog" wrapped to two lines inside
+ *  their own outlines while "Increment" stayed one, leaving three tabs at two different heights.
+ *  That has been true of the game's row since it was drawn as tabs - a thicker outline only made it
+ *  twelve pixels worse - and it is the same fault the way-in row had, so it is fixed in the one
+ *  place both of them read from. */
+export const TAB_ROW = `flex items-end gap-1 overflow-x-auto border-b-[3px] ${TAB_EDGE}`
+  + ' [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
