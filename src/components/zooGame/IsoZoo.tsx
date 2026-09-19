@@ -1152,11 +1152,13 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
 
   /** An outcrop: a big one with two or three smaller ones tumbled round it. One boulder alone reads
    *  as a pebble somebody dropped; a group reads as rock. */
-  const outcrop = (key: string, cx: number, cy: number, w: number, hex: string, seed: number) => {
+  /** A rock outcrop. Tagged with the item it is, like everything else drawn on the park: a thing
+   *  nothing can point at is a thing no label, and no zoom, can find. */
+  const outcrop = (key: string, cx: number, cy: number, w: number, hex: string, seed: number, id?: string) => {
     const r = Math.max(2.5, w * 0.3);
     const round = [[0, 0, 1], [-0.85, 0.34, 0.6], [0.78, 0.42, 0.52], [0.1, -0.66, 0.44]];
     return (
-      <g key={key}>
+      <g key={key} data-item={id}>
         {round.map(([dx, dy, k], i) => boulder(`${key}-${i}`,
           cx + dx * r * 1.15, cy + dy * r * 1.15, r * k, Math.max(1.5, u * 15 * k), hex, seed + i * 7))}
       </g>
@@ -1453,7 +1455,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       );
     });
     push(depth((x0 + x1) / 2, (y0 + y1) / 2), (
-      <g key={`bridge-${id}`}>
+      <g key={`bridge-${id}`} data-item={id}>
         <polygon points={shift(f.left)} fill={shade(wood, -34)} />
         <polygon points={shift(f.right)} fill={shade(wood, -18)} />
         <polygon points={shift(f.top)} fill={wood} />
@@ -1803,14 +1805,14 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           water.push({ x0: c.x - size.w / 2, y0: c.y - size.h / 2, x1: c.x + size.w / 2, y1: c.y + size.h / 2, rot: spin });
         }
         if (type === 'rocks') {
-          push(depth(c.x, c.y), outcrop(`land-${it.id}`, c.x, c.y, Math.min(x1 - x0, y1 - y0), primary, it.id.length * 3));
+          push(depth(c.x, c.y), outcrop(`land-${it.id}`, c.x, c.y, Math.min(x1 - x0, y1 - y0), primary, it.id.length * 3, it.id));
           continue;
         }
         // Turned at its full length and THEN cut to the grass, which is the only order that gives a
         // river reaching both banks at any angle without swinging out over the car park.
         const lie = clipTo(swing(c.x, c.y, size.w, size.h, spin), 0, 0, CANVAS_W, PLAY_H);
         if (!lie.length) continue;
-        nodes.push(<polygon key={`land-${it.id}`} points={drawPoly(lie)} fill={primary} opacity={0.92}
+        nodes.push(<polygon key={`land-${it.id}`} data-item={it.id} points={drawPoly(lie)} fill={primary} opacity={0.92}
           clipPath={`url(#${grassClip})`} />);
       } else {
         // How big the plants grew, the same choice the plan draws. Without it the strip said large,

@@ -21,17 +21,38 @@ describe('the example zoo', () => {
   const { state, labels } = exampleZoo();
   const find = (id: string) => state.backlog.find((it) => it.id === id);
 
-  it('is open to visitors, which is the whole route walked', () => {
-    // Not "built". Open: started, chosen, built, placed, accepted by the Product Owner, moved to
-    // Done by the Developers and then released. Anything less is a building site.
+  it('is built and accepted, which is what a finished thing is here', () => {
+    // Done, or Done and opened. Started, chosen, built, put where it belongs, the plan ticked off
+    // and the Product Owner asked. Opening it to visitors is a separate decision on the same card,
+    // and a zoo somebody built and has not opened yet is still a zoo somebody built.
+    //
+    // This asked for `open` until the first recording arrived with three items Done and none of
+    // them released - and the screen drew a park with no labels on it at all. A test that describes
+    // one way of playing is a test that fails the moment somebody plays another way.
     for (const l of labels) {
-      expect(find(l.id)?.status, `${l.title} never opened`).toBe('open');
+      expect(find(l.id)?.status, `${l.title} is not built`).toMatch(/^(done|open)$/);
     }
   });
 
-  it('has one of each thing the orientation talks about', () => {
+  it('labels things the game can actually put on a park', () => {
+    // Not a shopping list. It asked for exactly a habitat, an animal, a facility and a path, which
+    // was the zoo this file used to build for itself - so the first recording, which had a bridge
+    // instead of a facility, failed a test for building the wrong thing. What matters is that every
+    // label names a kind of thing that stands somewhere, and that no kind is named twice.
     const kinds = labels.map((l) => find(l.id)?.category);
-    expect(new Set(kinds)).toEqual(new Set(['enclosure', 'exhibit', 'amenity', 'path']));
+    const placeable = ['enclosure', 'exhibit', 'amenity', 'flora', 'path'];
+    for (const k of kinds) {
+      expect(placeable, `${k} is not something that stands on the park`).toContain(k);
+    }
+    // An epic is too big to be one thing and a need has not been decided yet: neither is ever
+    // standing anywhere, so neither should ever be pointed at.
+    expect(kinds).not.toContain('epic');
+    expect(kinds).not.toContain('need');
+  });
+
+  it('points at each thing once', () => {
+    const ids = labels.map((l) => l.id);
+    expect(new Set(ids).size, 'the same thing is labelled twice').toBe(ids.length);
   });
 
   it('puts the animal IN the habitat, because the game would not allow otherwise', () => {
@@ -171,7 +192,8 @@ describe('when somebody records one', () => {
     const { state, labels } = exampleZoo();
     expect(labels.length, 'a zoo with nothing worth labelling reached the screen').toBeGreaterThan(2);
     for (const l of labels) {
-      expect(state.backlog.find((it) => it.id === l.id)?.status, `${l.title} is not open`).toBe('open');
+      expect(state.backlog.find((it) => it.id === l.id)?.status, `${l.title} is not built`)
+        .toMatch(/^(done|open)$/);
     }
   });
 });
