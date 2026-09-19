@@ -228,7 +228,7 @@ function fillFor(item: { category: string; template?: string; design?: { parts?:
 }
 
 export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem, onSetSize, onTurn,
-  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onUpdateConnector, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, className }: {
+  placing, onPlace, tool = 'none', pathStyle, runFor, onAddConnector, onUpdateConnector, onSetMemberSpot, onMoveInside, onMoveCopy, inside, frame, still = false, className }: {
   state: ZooGameState;
   height?: number;
   /** What is in hand: drawn with a ring, and the thing the palette is acting on. */
@@ -255,6 +255,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   /** Somewhere to point the camera - an area of the zoo, a habitat. A request, not a mode: the
    *  camera moves there and the player is free to go elsewhere from it. */
   frame?: { x0: number; y0: number; x1: number; y1: number } | null;
+  /** A picture of the park rather than the park: no camera controls. For the orientation screen,
+   *  which shows the plan beside the Increment to say they are the same zoo - and where an offer to
+   *  zoom is an offer that leads nowhere. */
+  still?: boolean;
   onPlace?: (id: string, pos: { x: number; y: number }, drawn?: { w: number; h: number }, into?: string) => void;
   /** The park's own tool. A path is drawn point to point: click where it starts, click where it
    *  ends, and it runs between them. Nothing else on the park needs a tool. */
@@ -615,7 +619,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   return (
     <div className={cn('relative h-full w-full', className)}>
       {/* The camera's own controls. The park is bigger than the pane it is drawn in, so moving
-          about it is an ordinary thing to want rather than a mode to be in. */}
+          about it is an ordinary thing to want rather than a mode to be in.
+          ...unless this is a PICTURE of the park rather than the park: the orientation screen shows
+          the plan beside the Increment to say they are the same zoo, and a zoom control on a
+          picture is an offer that leads nowhere. */}
+      {!still && (
       <div data-part="park-camera" className="absolute right-2 top-2 z-20 flex items-center gap-1">
         <button type="button" aria-label="Zoom out" className={cn(FOCUS, stepper)}
           onClick={() => zoomAbout(null, 1.3)}>&minus;</button>
@@ -625,6 +633,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           className={cn(FOCUS, 'rounded-full border border-border bg-background/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm hover:bg-background')}
           onClick={() => setCam(whole)}>Whole zoo</button>
       </div>
+      )}
       {/* No selecting. Dragging across the park was painting the browser's own selection highlight
           over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
           there. Reported from playing it: "blue squares appear as trails." */}
@@ -969,8 +978,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           const c = fillFor(b.item);
           const on = selected === b.item.id;
           const x = b.at.x - b.size.w / 2, y = b.at.y - b.size.h / 2;
+          // `data-item` is what a thing IS, and it is the name the isometric view uses too, so one
+          // question - which item is this? - has one answer in both drawings. `data-plan-item`
+          // stays: it is the plan's own handle, and it is also put on things that are not items at
+          // all, like the gate and a single piece of a planting.
           return (
-            <g key={b.item.id} data-plan-item={b.item.id}
+            <g key={b.item.id} data-item={b.item.id} data-plan-item={b.item.id}
               // Reachable and movable without a pointer.
               //
               // Everything on the park was pointer-only: a thing could be picked up, dragged and
@@ -1167,7 +1180,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   const gy = own ? y + b.size.h * own.y
                     : y + b.size.h * (Math.floor(k / cols) + 1) / (Math.ceil(shown / cols) + 1);
                   return (
-                    <circle key={`${a.id}-${i}-${k}`} data-animal={`${a.id}-${k}`} cx={gx} cy={gy} r={9}
+                    <circle key={`${a.id}-${i}-${k}`} data-item={a.id} data-animal={`${a.id}-${k}`} cx={gx} cy={gy} r={9}
                       // The colour it is being GIVEN, not the colour it was last delivered in. This
                       // read `a.design` while the Increment reads the draft as well, so the whole
                       // time an animal was in hand the two views disagreed about what colour it was:
