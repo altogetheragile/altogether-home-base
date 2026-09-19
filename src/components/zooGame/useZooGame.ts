@@ -5,7 +5,7 @@ import { initialZooState } from './config';
 import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks, wantedServices } from './parkChecks';
 import { tallyWork } from './whatItCost';
-import { remember, trailStartedAt, forgetTrail } from './trail';
+import { remember, trailStartedAt, forgetTrail, recordEverything } from './trail';
 import { aiDesign } from './aiSeats';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
@@ -340,7 +340,14 @@ export function useZooGame(gameSeed?: number, runClock = true) {
   // What has been pressed, kept so a fault can be replayed rather than described. One place,
   // because every change in the game goes through one reducer - including the moves made by seats
   // the game is playing, which are the ones a player cannot tell you about.
-  useEffect(() => { trailStartedAt(gameSeed ?? 1); forgetTrail(); }, [gameSeed]);
+  useEffect(() => {
+    trailStartedAt(gameSeed ?? 1);
+    forgetTrail();
+    // `?record=1` keeps the WHOLE game rather than the last eighty actions, for recording a zoo to
+    // show somebody. A bug report wants a window on the end; an example wants the build from its
+    // first press, because a window replays to a zoo with no beginning.
+    recordEverything(typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('record') === '1');
+  }, [gameSeed]);
 
   // The one clock. It used to live in DayTimer and DailyScrum, one countdown per component,
   // which meant it could not be saved, shared or paused - and in a shared session every

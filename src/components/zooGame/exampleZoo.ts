@@ -7,6 +7,8 @@ import {
 } from './engine';
 import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, HABITAT_FEATURE_TYPES } from './design';
 import { standingOnPark, parkPositions, positionOf } from './parkModel';
+import { replay } from './replay';
+import { RECORDED } from './exampleZooTrail';
 import type { ZooGameState, BacklogItem } from './types';
 import type { ItemDesign } from './design';
 
@@ -120,11 +122,9 @@ export interface ExampleZoo {
 
 let cached: ExampleZoo | null = null;
 
-/** The built zoo, and what to point at in it. Built once: it is the same zoo every time, which is
- *  what makes it something a trainer can talk over. */
-export function exampleZoo(): ExampleZoo {
-  if (cached) return cached;
-
+/** A zoo this file builds for itself, for when there is no recording to replay. Every step is the
+ *  step a learner takes, so it can never produce a zoo the game would refuse to build. */
+function builtHere(): ZooGameState {
   const base = initialZooState(3);
   let s: ZooGameState = {
     ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, dayNumber: 1,
@@ -143,14 +143,30 @@ export function exampleZoo(): ExampleZoo {
     { category: 'amenity' },
     { category: 'path' },
   ];
-  const chosen: Record<string, string> = {};
   for (const { category, template } of order) {
     const item = pick(category, template);
     if (!item) continue;
-    chosen[category] = item.id;
     s = takeItLive(s, item.id);
   }
+  return s;
+}
 
+/** What to point at in a zoo, whoever built it.
+ *
+ *  Read off the state rather than remembered from the build, because the zoo on this screen may not
+ *  have been built by this file at all: a recorded game replays to a state nobody here chose, with
+ *  its own items, its own names and its own layout. Asking the zoo what is in it works for both.
+ *
+ *  Open, not merely built. A building site is a promise, and the screen is showing what a finished
+ *  one looks like. */
+function labelsFor(s: ZooGameState): { labels: ExampleLabel[]; ids: Set<string> } {
+  const open = s.backlog.filter((it) => it.status === 'open');
+  const first = (category: string) => open.find((it) => it.category === category);
+  const chosen: Record<string, string> = {};
+  for (const c of ['enclosure', 'exhibit', 'amenity', 'path']) {
+    const it = first(c);
+    if (it) chosen[c] = it.id;
+  }
   const named = (id?: string) => s.backlog.find((it) => it.id === id)?.name ?? '';
   const runOf = (id?: string) => (s.connectors ?? []).find((c) => c.itemId === id)?.id;
   const labels: ExampleLabel[] = [
@@ -164,9 +180,13 @@ export function exampleZoo(): ExampleZoo {
       text: 'A facility, decided the same way as anything else. What it offers visitors is part of building it.' },
   ].filter((l) => !!l.id);
 
-  // Framed on what was actually built, read off the model the renderer lays out from - so the shot
-  // follows the zoo rather than being a number somebody tuned once and left behind.
-  const ids = new Set(Object.values(chosen));
+  return { labels, ids: new Set(Object.values(chosen)) };
+}
+
+/** Where to stand to see it. Framed on what was built, read off the model the renderer lays out
+ *  from - so the shot follows the zoo rather than being a number somebody tuned once and left
+ *  behind, and a recorded zoo built in a different corner is still in shot. */
+function frame(s: ZooGameState, ids: Set<string>) {
   const standing = standingOnPark(s);
   const auto = parkPositions(standing, new Map());
   const built = standing.filter((st) => ids.has(st.item.id)).map((st) => positionOf(st, auto));
@@ -176,8 +196,26 @@ export function exampleZoo(): ExampleZoo {
     const all = points.map(get);
     return all.length ? (Math.min(...all) + Math.max(...all)) / 2 : 0;
   };
-  const camera = { x: mid((p) => p.x), y: mid((p) => p.y), zoom: 2.8 };
+  return { x: mid((p) => p.x), y: mid((p) => p.y), zoom: 2.8 };
+}
 
-  cached = { state: s, labels, camera };
+/** The zoo on the orientation screen, and what to point at in it.
+ *
+ *  A RECORDING if there is one: the seed somebody started from and every action they pressed,
+ *  replayed. That is the strongest version of what this file was already trying to be - the zoo in
+ *  the picture is not one described here, it is the one somebody built, with their placements,
+ *  their sizes, their colours and the route they walked the path along.
+ *
+ *  Otherwise it builds its own, which is what it did before there was a way to record one. Either
+ *  way the picture is a state the engine produced, so it can never show a zoo the game would
+ *  refuse to build.
+ *
+ *  Built once: the same zoo every time, which is what makes it something a trainer can talk over. */
+export function exampleZoo(): ExampleZoo {
+  if (cached) return cached;
+  const walked = RECORDED ? replay(RECORDED) : null;
+  const state = walked ? walked[walked.length - 1] : builtHere();
+  const { labels, ids } = labelsFor(state);
+  cached = { state, labels, camera: frame(state, ids) };
   return cached;
 }
