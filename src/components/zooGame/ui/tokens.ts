@@ -189,3 +189,17 @@ export const ACTION_BAR = 'sticky bottom-4 z-20 flex flex-col gap-2 rounded-2xl 
 
 /** ...and what every button inside one wears, so a stacked bar is not a ragged column. */
 export const BAR_ACTION = 'w-full justify-center sm:w-auto';
+
+/** The line a tab row sits on, and the outline a tab is drawn with.
+ *
+ *  ONE value, because the whole illusion is that the active tab is a piece of the panel below it
+ *  standing up: its outline and the row's rule have to be the same line, in the same colour, at the
+ *  same weight, or the join reads as two lines that nearly meet.
+ *
+ *  It was `border-border` at 2px - the same hairline every quiet panel in the game wears - and the
+ *  report was the obvious one: "can the tab outline be thicker and darker, it is still too subtle".
+ *  A tab is not a quiet panel. It is the control that says which of three things you are looking
+ *  at, and it should be legible across a room, because in a classroom it is. */
+export const TAB_EDGE = 'border-foreground/70';
+/** The row itself: tabs sit ON the line, so the active one can break it. */
+export const TAB_ROW = `flex items-end gap-1 border-b-[3px] ${TAB_EDGE}`;
