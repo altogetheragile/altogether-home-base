@@ -1,9 +1,11 @@
+import { useLayoutEffect, useRef } from 'react';
 import { GraduationCap, Trees, Repeat } from 'lucide-react';
 import { Tab } from './ZooShell';
 import { ZooOrientationBody } from './ZooOrientation';
 import { ScrumOnePagerBody } from './ScrumTeaching';
 import { ORIENTATION } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
+import { motionWanted } from './motion';
 import { cn } from '@/lib/utils';
 import { ACTION_BAR, BAR_ACTION, FOCUS, TAB_ROW } from './ui/tokens';
 
@@ -41,6 +43,17 @@ export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
   onSkipTeaching: () => void;
   copy?: CopyEditorProps;
 }) {
+  // The chosen tab brings itself into view. On a phone the row scrolls rather than squashing, so
+  // the second tab is half off the edge - and tapping it selected a tab that stayed half off the
+  // edge, which reads as a press that half worked.
+  const row = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const on = row.current?.querySelector(`[data-part="start-tab-${tab}"]`);
+    // Called defensively: not every environment that renders this has it, and a screen that throws
+    // on the way in because it could not scroll a tab a few pixels is a poor trade.
+    on?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: motionWanted() ? 'smooth' : 'auto' });
+  }, [tab]);
+
   return (
     // The game frame never scrolls, so every screen inside it scrolls itself.
     <div className="h-full overflow-y-auto">
@@ -55,7 +68,7 @@ export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
               already carries in its comment: "it is not clear they are tabs... outline colours?"
               An outlined shape that the active one joins to the panel below it is what a tab looks
               like here, and a player has already learnt that from the three tabs they meet next. */}
-          <div role="tablist" aria-label="Before you start"
+          <div ref={row} role="tablist" aria-label="Before you start"
             className={TAB_ROW}>
             {TABS.map((t) => (
               <Tab key={t.id} active={t.id === tab} onClick={() => onTab(t.id)} icon={t.icon} label={t.label()}
