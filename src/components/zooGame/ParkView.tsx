@@ -16,6 +16,8 @@ import { zoneSlices, zooIsOpen, crowdNow, inHandItem } from './engine';
 import { Users, Smile, LayoutGrid, PawPrint, Store, Move, Check, X, ChevronDown, Sparkles, Spline, Trash2, Minus, Plus, Lock, TrafficCone, Eye } from 'lucide-react';
 import { FlyThrough } from './FlyThrough';
 import { TurnControl } from './TurnControl';
+import { ExportPark } from './ExportPark';
+import { exportCaption } from './parkExport';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 
 // ============= The Park View =============
@@ -359,7 +361,10 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   );
 
   return (
-    <section className={cn('space-y-3', compact && 'space-y-2')}>
+    // Marked, so the export takes a picture of THIS park. Two ParkViews can be mounted at once -
+    // the board has one and the Increment tab has another - and "the first svg on the page" would
+    // sometimes be the hidden one.
+    <section data-part="park" className={cn('space-y-3', compact && 'space-y-2')}>
       <style>{`
         @keyframes zooStroll { 0%{transform:translate(0,0)} 25%{transform:translate(10px,-7px)} 50%{transform:translate(-6px,8px)} 75%{transform:translate(7px,5px)} 100%{transform:translate(0,0)} }
         @media (prefers-reduced-motion: reduce) { .zoo-visitor { animation: none !important } }
@@ -420,6 +425,9 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
               <ZoomControl zoom={zoom} onZoom={setZoom} />
               {/* Walk round it. Beside the zoom, because they are the same question asked twice. */}
               <TurnControl turn={turn} onTurn={setTurn} />
+              {/* ...and take it away. Beside those two because it exports what they have set up:
+                  the zoom you chose and the side you walked round to. */}
+              <ExportPark state={state} caption={exportCaption(state)} />
               {onSetPathStyle && <SurfacePicker current={style} onPick={onSetPathStyle} />}
               {canConnect && onAddConnector && !drawRoute && (
                 <button type="button" onClick={() => { setSelectedConn(null); setTool(effectiveTool === 'connect' ? 'none' : 'connect'); }} title="Draw a path" aria-pressed={effectiveTool === 'connect'}
@@ -543,9 +551,12 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   <span className="font-normal text-muted-foreground"> &middot; {total ? total.toLocaleString() : 'no'} visitors</span>
                 </div>
               )}
-              {/* The walk round the Increment, on the picture it walks. */}
+              {/* The walk round the Increment, on the picture it walks.
+                  The drawing itself is marked `park-drawing`, because marking the whole view was
+                  not enough: the first svg inside a ParkView is an icon on its toolbar, so the
+                  export took a picture of a 14px download arrow, very crisply. */}
               <FlyThrough state={state}>{(camera) => (
-              <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
+              <div data-part="park-drawing" style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
                 <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly} camera={camera}
                   onPlaceItem={onPlaceItem} placing={placing} onPlace={onPlace} selected={building} onSelect={onOpenBuild}
                   tool={effectiveTool} newConn={newConn}
