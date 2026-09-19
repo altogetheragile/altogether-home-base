@@ -58,3 +58,36 @@ describe('the plan and the Increment, together', () => {
     expect(live.querySelector('[data-part="park-camera"]'), 'the real plan lost its camera').toBeTruthy();
   });
 });
+
+describe('the numbered marks', () => {
+  // Found by measuring the screen in dark mode, though it was never a dark-mode fault: the marks
+  // were white on the primary, 2.85:1, in BOTH themes. Below the 4.5 that small bold text needs and
+  // below even the 3 that large text does. Dark ink takes it to about 6.
+  it('is dark ink on the mark, not white', () => {
+    const { container } = render(<LabelledPark />);
+    const marks = [
+      ...container.querySelectorAll('[data-part^="pin-"]'),
+      ...container.querySelectorAll('figcaption li > span:first-child'),
+    ];
+    expect(marks.length, 'there are no numbered marks to check').toBeGreaterThan(2);
+    for (const m of marks) {
+      expect(m.className, 'a mark went back to white on the orange').not.toMatch(/text-primary-foreground/);
+      expect(m.className, 'a mark has no colour of its own').toMatch(/text-\[#/);
+    }
+  });
+
+  it('keeps the same ink whichever theme the page is in', () => {
+    // The mark's ground is the primary in both themes, so its text has to be fixed too. A token
+    // here would be near-white on orange in one theme and near-black on orange in the other, from
+    // one colour that is supposed to mean one thing.
+    //
+    // Read off the KEY's marks rather than the pins: a pin is placed by measuring the drawing, and
+    // there is no layout to measure here, so none of them exist in this test. The key is where the
+    // same treatment can actually be seen.
+    const { container } = render(<LabelledPark />);
+    const inks = new Set([...container.querySelectorAll('figcaption li > span:first-child')]
+      .map((m) => (m.className.match(/text-\[#[0-9a-f]+\]/i) ?? [''])[0]));
+    expect(inks.size, 'the marks are not all the same colour').toBe(1);
+    expect([...inks][0], 'the mark has no ink of its own').toMatch(/^text-\[#/);
+  });
+});
