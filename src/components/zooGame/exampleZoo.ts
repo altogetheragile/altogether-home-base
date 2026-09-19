@@ -255,7 +255,17 @@ function frame(s: ZooGameState, ids: Set<string>) {
   // somebody else's zoo: it can be tucked in a corner or spread across an area, and a fixed zoom
   // that flatters one cuts the other in half.
   const room = 1.45;
-  const fit = Math.min(CANVAS_W / Math.max(1, (x.hi - x.lo) * room), PLAY_H / Math.max(1, (y.hi - y.lo) * room));
+  // The park is SEEN from the corner, and an isometric view squashes the far axis: a region that is
+  // tall in park coordinates comes out short and wide on the screen. Fitting it by its park height
+  // therefore leaves most of the picture empty - measured at 19% of the box, with the zoo a speck in
+  // the middle of it, while the plan beside it filled 91% of the same height.
+  //
+  // So the height counts for about half of itself, which is what the projection does to it.
+  const SEEN_FROM_THE_CORNER = 0.5;
+  const fit = Math.min(
+    CANVAS_W / Math.max(1, (x.hi - x.lo) * room),
+    PLAY_H / Math.max(1, (y.hi - y.lo) * room * SEEN_FROM_THE_CORNER),
+  );
   return {
     camera: { x: (x.lo + x.hi) / 2, y: (y.lo + y.hi) / 2, zoom: Math.max(1, Math.min(3, fit)) },
     box: { x0: x.lo, y0: y.lo, x1: x.hi, y1: y.hi },

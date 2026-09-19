@@ -125,8 +125,25 @@ describe('where the camera stands', () => {
   it('walks in far enough to see what it is pointing at', () => {
     // Fitted to what is labelled rather than a number tuned once: a recording can be tucked in a
     // corner or spread across an area, and a fixed zoom that flatters one halves the other.
+    //
+    // 2, not 1.4. The fit was dividing by the work's height in PARK coordinates, and the isometric
+    // view is seen from the corner: a region that is tall in the park comes out short and wide on
+    // the screen. So a tall zoo was fitted for a height it does not take up, and the drawing filled
+    // 19% of its box while the plan beside it filled 91% of the same. Measured, at both phone and
+    // desktop width - the picture had the whole park in it and a zoo the size of a stamp.
     expect(exampleZoo().camera.zoom, 'it is showing the whole park and calling it an example')
-      .toBeGreaterThan(1.4);
+      .toBeGreaterThan(2);
+  });
+
+  it('counts a tall zoo as the height it actually takes up on screen', () => {
+    // The rule, rather than the one number it produces: given work of the same size, a zoo laid out
+    // tall must not be zoomed out further than one laid out wide. It was - by about half, which is
+    // exactly what the projection does to the far axis.
+    const { camera } = exampleZoo();
+    const { box } = exampleZoo();
+    const tall = (box.y1 - box.y0) > (box.x1 - box.x0);
+    if (!tall) return;                       // this recording is not the case being described
+    expect(camera.zoom, 'a tall zoo is still being fitted by its park height').toBeGreaterThan(2);
   });
 
   it('stands there from the first frame rather than swooping in', () => {
