@@ -5,6 +5,7 @@ import { BeforeYouStart } from './BeforeYouStart';
 import { ZooIntro } from './ZooIntro';
 import { ORIENTATION, INTRO_COPY } from './scrumContent';
 import { copyEntries } from './copy';
+import { TAB_EDGE, TAB_ROW } from './ui/tokens';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACTION_BAR, BAR_ACTION } from './ui/tokens';
@@ -113,6 +114,17 @@ describe('the two pages, as one screen', () => {
     const on = before({ tab: 'zoo' }).querySelector('[data-part="start-tab-zoo"]')!;
     expect(on.className, 'the active tab is not an outlined shape').toMatch(/rounded-t-lg/);
     expect(on.className, 'the active tab does not join the panel below it').toMatch(/border-b-background/);
+  });
+
+  it('is drawn in a line you can see from across a room', () => {
+    // "Can the tab outline be thicker and darker - it is still too subtle." It was `border-border`
+    // at 2px: the same hairline every quiet panel in the game wears. A tab is not a quiet panel,
+    // and in a classroom it is being read from the back of the room.
+    expect(TAB_EDGE, 'the tab is drawn in the hairline panels use').not.toMatch(/border-border/);
+    expect(TAB_ROW, 'the row is not drawn in the same line as the tab on it').toContain(TAB_EDGE);
+    expect(TAB_ROW, 'the row is thinner than the tab standing on it').toMatch(/border-b-\[3px\]/);
+    const src = readFileSync(join(__dirname, 'ZooShell.tsx'), 'utf8');
+    expect(src, 'the tab outline is thinner than the row it stands on').toMatch(/border-\[3px\]/);
   });
 
   it('says which one you are on, to anything that asks', () => {

@@ -25,7 +25,7 @@ import { GameNotesProvider } from './GameNotes';
 import type { GameNote } from './notesDock';
 import type { SeatName } from './useZooSessions';
 import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge, Heart } from 'lucide-react';
-import { FOCUS, SURFACE } from './ui/tokens';
+import { FOCUS, SURFACE, TAB_EDGE, TAB_ROW } from './ui/tokens';
 
 /** The work tab's label per phase - what you are actually doing there. */
 
@@ -150,10 +150,14 @@ export function Tab({ active, onClick, icon: Icon, label, badge, locked, ...rest
       // Drawn as tabs: an outlined shape that the active one joins to the screen below it. They were
       // three words with an underline, which reads as a menu rather than as three artifacts you are
       // standing in front of.
-      className={cn(FOCUS, 'relative -mb-px flex items-center gap-1.5 rounded-t-lg border-2 px-3 py-1.5 text-sm font-semibold transition-colors',
+      className={cn(FOCUS, 'relative -mb-[3px] flex items-center gap-1.5 rounded-t-lg border-[3px] px-3 py-1.5 text-sm font-semibold transition-colors',
         locked ? 'cursor-not-allowed border-transparent text-muted-foreground/45'
-          : active ? 'border-border border-b-background bg-background text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground')}>
+          // The active one is drawn in the row's own line and then breaks it along the bottom, so
+          // it reads as a piece of the panel standing up rather than as a box near a rule.
+          : active ? cn(TAB_EDGE, 'border-b-background bg-background text-foreground')
+            // ...and the ones behind it show their shape on hover, so they look like something you
+            // can press before you press it.
+            : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground')}>
       <Icon className="h-4 w-4" /> {label}
       {/* The lock is written on the tab. "Sprint Backlog" greyed out with no reason is a dead
           control; with the reason on it, it is the rule being taught. */}
@@ -461,7 +465,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             it wrapped from one side to the other as the pane narrowed: the same control in two
             places depending on which state you were in. It is a property of the tab, so it rides on
             the tab row, in one place, on both states. */}
-        <div data-part="tab-row" className="mt-1 flex items-end gap-1 border-b-2 border-border">
+        <div data-part="tab-row" className={cn('mt-1', TAB_ROW)}>
           <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} icon={ClipboardList} label="Product Backlog" />
           <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} icon={ListChecks} label="Sprint Backlog"
             locked={sprintBacklog ? undefined : 'made at Planning'} />

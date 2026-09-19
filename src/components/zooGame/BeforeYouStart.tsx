@@ -5,7 +5,7 @@ import { ScrumOnePagerBody } from './ScrumTeaching';
 import { ORIENTATION } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { cn } from '@/lib/utils';
-import { ACTION_BAR, BAR_ACTION, FOCUS } from './ui/tokens';
+import { ACTION_BAR, BAR_ACTION, FOCUS, TAB_ROW } from './ui/tokens';
 
 // Two pages, one screen.
 //
@@ -56,7 +56,7 @@ export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
               An outlined shape that the active one joins to the panel below it is what a tab looks
               like here, and a player has already learnt that from the three tabs they meet next. */}
           <div role="tablist" aria-label="Before you start"
-            className="flex items-end gap-1 overflow-x-auto border-b-2 border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            className={cn(TAB_ROW, 'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden')}>
             {TABS.map((t) => (
               <Tab key={t.id} active={t.id === tab} onClick={() => onTab(t.id)} icon={t.icon} label={t.label()}
                 role="tab" id={`start-tab-${t.id}`} aria-selected={t.id === tab}
