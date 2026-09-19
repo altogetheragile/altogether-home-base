@@ -5,7 +5,7 @@ import {
   setEnclosureSize, setServices, askToCheck, answerQuestion, toggleItemTask, isSignOffTask,
   openItem, setDraftDesign, finishItem,
 } from './engine';
-import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, HABITAT_FEATURE_TYPES } from './design';
+import { presetFor, addWaterTo, addFloraTo, designSatisfiesTask, currentDesign, isLandscapeType, HABITAT_FEATURE_TYPES } from './design';
 import { standingOnPark, parkPositions, positionOf } from './parkModel';
 import { CANVAS_W, PLAY_H } from './parkLayout';
 import { replay } from './replay';
@@ -161,27 +161,56 @@ function builtHere(): ZooGameState {
  *  Open, not merely built. A building site is a promise, and the screen is showing what a finished
  *  one looks like. */
 function labelsFor(s: ZooGameState): { labels: ExampleLabel[]; ids: Set<string> } {
-  const open = s.backlog.filter((it) => it.status === 'open');
-  const first = (category: string) => open.find((it) => it.category === category);
-  const chosen: Record<string, string> = {};
-  for (const c of ['enclosure', 'exhibit', 'amenity', 'path']) {
-    const it = first(c);
-    if (it) chosen[c] = it.id;
-  }
-  const named = (id?: string) => s.backlog.find((it) => it.id === id)?.name ?? '';
-  const runOf = (id?: string) => (s.connectors ?? []).find((c) => c.itemId === id)?.id;
-  const labels: ExampleLabel[] = [
-    { id: chosen.enclosure, title: named(chosen.enclosure), find: `[data-item="${chosen.enclosure}"]`,
-      text: 'A habitat. The Developers chose the structure, the size, the surface it is laid with and the perimeter that holds it.' },
-    { id: chosen.exhibit, title: named(chosen.exhibit), find: `[data-spot^="${chosen.exhibit}:"]`,
-      text: 'The animal lives IN the habitat, not beside it. It could not be placed until there was one that could hold it.' },
-    { id: chosen.path, title: named(chosen.path), find: `[data-conn="${runOf(chosen.path)}"]`,
-      text: 'Drawn, not placed. Every habitat is asked whether a visitor can walk to it from the way in, and this is the answer.' },
-    { id: chosen.amenity, title: named(chosen.amenity), find: `[data-item="${chosen.amenity}"]`,
-      text: 'A facility, decided the same way as anything else. What it offers visitors is part of building it.' },
-  ].filter((l) => !!l.id);
+  // BUILT, which in this game means built and accepted by the Product Owner. Opening it to visitors
+  // is a separate decision on the same card, and a zoo somebody built and has not opened yet is
+  // still a zoo somebody built - which is what this screen is showing. The first recording somebody
+  // sent had three items Done and none of them opened, and the screen showed a park with no labels
+  // on it at all.
+  const built = s.backlog.filter((it) => it.status === 'done' || it.status === 'open');
+  const first = (category: string, pick?: (it: BacklogItem) => boolean) =>
+    built.find((it) => it.category === category && (!pick || pick(it)));
 
-  return { labels, ids: new Set(Object.values(chosen)) };
+  // Every category the game can put on a park. Epics and needs are not among them: an epic is too
+  // big to be one thing and a need has not been decided yet, so neither is ever standing anywhere.
+  const landscape = (it: BacklogItem) => isLandscapeType(it.template ?? '');
+  const chosen: Record<string, BacklogItem | undefined> = {
+    enclosure: first('enclosure'),
+    exhibit: first('exhibit'),
+    amenity: first('amenity'),
+    path: first('path'),
+    // Flora is two different things wearing one category: the landscape somebody LAYS - a bridge,
+    // a pond, a rockery - and the planting somebody grows. They teach different things, so they
+    // get their own lines rather than one line that fits neither.
+    landscape: first('flora', landscape),
+    planting: first('flora', (it) => !landscape(it)),
+  };
+
+  const runOf = (it?: BacklogItem) => (s.connectors ?? []).find((c) => c.itemId === it?.id)?.id;
+  const say = (it: ExampleLabel | null): it is ExampleLabel => !!it && !!it.id;
+
+  const lines: (ExampleLabel | null)[] = [
+    chosen.enclosure && { id: chosen.enclosure.id, title: chosen.enclosure.name,
+      find: `[data-item="${chosen.enclosure.id}"]`,
+      text: 'A habitat. The Developers chose the structure, the size, the surface it is laid with and the perimeter that holds it.' },
+    chosen.exhibit && { id: chosen.exhibit.id, title: chosen.exhibit.name,
+      find: `[data-spot^="${chosen.exhibit.id}:"]`,
+      text: 'The animal lives IN the habitat, not beside it. It could not be placed until there was one that could hold it.' },
+    chosen.path && runOf(chosen.path) && { id: chosen.path.id, title: chosen.path.name,
+      find: `[data-conn="${runOf(chosen.path)}"]`,
+      text: 'Drawn, not placed. Every habitat is asked whether a visitor can walk to it from the way in, and this is the answer.' },
+    chosen.amenity && { id: chosen.amenity.id, title: chosen.amenity.name,
+      find: `[data-item="${chosen.amenity.id}"]`,
+      text: 'A facility, decided the same way as anything else. What it offers visitors is part of building it.' },
+    chosen.landscape && { id: chosen.landscape.id, title: chosen.landscape.name,
+      find: `[data-item="${chosen.landscape.id}"]`,
+      text: 'Landscape, laid rather than grown. Water is a wall to a visitor, and a bridge is the one door through it - so where this sits decides where anybody can walk.' },
+    chosen.planting && { id: chosen.planting.id, title: chosen.planting.name,
+      find: `[data-item="${chosen.planting.id}"]`,
+      text: 'Planting. It settles nothing the park measures, and a zoo without it is a car park with animals in it.' },
+  ].map((l) => (l || null) as ExampleLabel | null);
+
+  const labels = lines.filter(say);
+  return { labels, ids: new Set(labels.map((l) => l.id)) };
 }
 
 /** Where to stand to see it. Framed on what was built, read off the model the renderer lays out

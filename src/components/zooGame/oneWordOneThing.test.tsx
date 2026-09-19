@@ -22,8 +22,19 @@ import type { ZooGameState } from './types';
 // a render only covers the one it mounted.
 
 const DIR = __dirname;
+/** A TRANSCRIPT is not copy.
+ *
+ *  `exampleZooTrail.ts` is a recording of somebody playing: the seed and every action they pressed,
+ *  including the Product Goal they typed. The rules below are about the words the GAME chooses, and
+ *  a player typing "the big cats zone" into their own goal has not broken one of them - they have
+ *  used the word they use. Scanning it would make this a test of somebody's typing, and the only
+ *  way to pass it would be to edit what they wrote.
+ *
+ *  That the game says "area" everywhere is exactly why a player may still say zone. */
+const TRANSCRIPTS = new Set(['exampleZooTrail.ts']);
+
 const sources = readdirSync(DIR)
-  .filter((f) => (f.endsWith('.tsx') || f.endsWith('.ts')) && !f.includes('.test.'))
+  .filter((f) => (f.endsWith('.tsx') || f.endsWith('.ts')) && !f.includes('.test.') && !TRANSCRIPTS.has(f))
   .map((f) => ({ f, text: readFileSync(join(DIR, f), 'utf8') }));
 
 /** The bits of a source file a player can actually read: quoted strings and text between tags.
