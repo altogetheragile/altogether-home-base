@@ -330,6 +330,18 @@
   /* The band itself, and the chips on it. */
   --zoo-band: 180 100% 15%;       /* #004d4d */
   --zoo-chip: 180 100% 24%;       /* #007a7a */
+
+  /* ...and the text, said here rather than left to be inherited.
+     Every token above is a BACKGROUND or a border. The colour of the words was
+     coming from `body`, which is outside this class - so with the site in dark
+     mode the game kept its own white cards and took the dark theme's near-white
+     text, and the board was white on white. Measured: 1.01:1 on the column
+     headings and the card titles, which is not low contrast, it is invisible.
+
+     The zoo is a light surface on purpose: it is a page on a marketing site, and
+     the park is drawn in daylight. Holding that means holding ALL of it, text
+     included, rather than half of it. */
+  color: hsl(var(--foreground));
 }
 
 /* A new thing said catches the eye for a moment and then stops asking. Notes used to arrive in
