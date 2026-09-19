@@ -14,6 +14,7 @@ import { FOCUS, TONE, type Tone } from './ui/tokens';
 const GROUP_TONE: Record<CopyGroup, Tone> = {
   'Teaching cards': 'teach',
   'The front page': 'quiet',
+  'How the zoo works': 'quiet',
   'Scrum on one page': 'action',
   'What events touch': 'done',
   'Artifacts': 'attention',
