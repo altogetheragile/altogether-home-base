@@ -12,10 +12,10 @@ import { FOCUS, TONE, type Tone } from './ui/tokens';
  *  emerald, the artifacts amber, the coach sky. Editing the Sprint Review's card should feel like
  *  editing the Sprint Review, not like filling in row 84 of a spreadsheet. */
 const GROUP_TONE: Record<CopyGroup, Tone> = {
-  'Teaching cards': 'teach',
-  'The way in': 'quiet',
   'How the zoo works': 'quiet',
   'Scrum on one page': 'action',
+  'Your Product Goal': 'quiet',
+  'Teaching cards': 'teach',
   'What events touch': 'done',
   'Artifacts': 'attention',
   'The coach': 'coach',
@@ -154,7 +154,17 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
               const inGroup = shown.filter((e) => e.group === g);
               // Six fields of one card all captioned "Product Goal card" is noise. Where several
               // entries share a home, name it once and let the fields sit under it.
-              const homes = [...new Set(inGroup.map((e) => e.where))];
+              //
+              // A RUN of entries sharing a home, not every entry that mentions it anywhere in the
+              // group. Bucketing by a set of names pulls the second mention of a home up next to
+              // the first, however far apart they sit on the page - which is the same fault, one
+              // level down, as the one that put this list out of order in the first place.
+              const homes = inGroup.reduce<{ where: string; rows: CopyEntry[] }[]>((runs, e) => {
+                const last = runs[runs.length - 1];
+                if (last && last.where === e.where) last.rows.push(e);
+                else runs.push({ where: e.where, rows: [e] });
+                return runs;
+              }, []);
               return (
                 <section key={g} className={cn('rounded-lg border p-2', TONE[GROUP_TONE[g]].soft)}>
                   <h3 className={cn('mb-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.08em]', TONE[GROUP_TONE[g]].text)}>
@@ -162,10 +172,9 @@ export function CopyEditor({ phase, overrides, onChanged }: CopyEditorProps & { 
                     <span className="rounded-full bg-background/80 px-1.5 py-0.5 text-[9px] font-semibold">{inGroup.length}</span>
                   </h3>
                   <div className={cn(wide ? 'columns-2 gap-2 [&>*]:mb-2 [&>*]:break-inside-avoid' : 'space-y-2')}>
-                    {homes.map((home) => {
-                      const rows = inGroup.filter((e) => e.where === home);
+                    {homes.map(({ where: home, rows }, run) => {
                       return (
-                        <div key={home} className="space-y-1">
+                        <div key={`${home}-${run}`} className="space-y-1">
                           {rows.length > 1 && <p className="px-0.5 text-[11px] font-semibold text-foreground/80">{home}</p>}
                           {rows.map((e) => (
                             <EditRow key={e.key} entry={e} tone={GROUP_TONE[g]} showWhere={rows.length === 1}
