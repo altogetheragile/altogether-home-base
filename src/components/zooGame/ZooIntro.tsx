@@ -8,7 +8,7 @@ import { rewordProductGoal } from './engine';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { Button } from '@/components/ui/button';
-import { ACTION_BAR, BAR_ACTION, FOCUS, PADDING, SURFACE, TEXT, WIZARD } from './ui/tokens';
+import { ACTION_BAR, BAR_ACTION, FOCUS, TEXT, WIZARD } from './ui/tokens';
 import { cn } from '@/lib/utils';
 
 interface ZooIntroProps {
@@ -146,19 +146,18 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           )}
         </section>
 
-        {/* ...and then what a Sprint is, and whatever the game is teaching. Reading material, under
-            the thing to do rather than over it. */}
-        <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
-          <section className={cn(SURFACE.quiet, PADDING.default)}>
-            <h2 className="mb-1 text-sm font-semibold">{INTRO_COPY.loopTitle}</h2>
-            <ul className="space-y-0.5 text-sm leading-snug text-muted-foreground">
-              {INTRO_COPY.loop.map((l) => (
-                <li key={l.step}><strong className="text-foreground">{l.step}</strong> - {l.text}</li>
-              ))}
-            </ul>
-          </section>
-          {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
-        </div>
+        {/* ...and then whatever the game is teaching. Reading material, under the thing to do
+            rather than over it.
+
+            The Sprint loop used to sit here too, and it is on the screen before this one - shown
+            there against WHEN each step happens, which is more than a list of five. The same five
+            lines on two screens in a row is the same thing said twice, and this is the screen that
+            asks you to write something. */}
+        {teachCard && onMarkTaught && (
+          <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+            <TeachingCard id={teachCard} onDismiss={onMarkTaught} />
+          </div>
+        )}
 
 
         {/* Floating, like every other primary action in the game. */}
