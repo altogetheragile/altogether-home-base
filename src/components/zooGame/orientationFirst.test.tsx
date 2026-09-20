@@ -74,9 +74,18 @@ describe('the orientation screen', () => {
     const text = screen().textContent ?? '';
     expect(text, 'Done is described as needing the Product Owner, full stop')
       .not.toMatch(/Done needs the Product Owner/i);
-    // ...and it says whose choice it is.
-    expect(text, 'the game does not own the choice it made').toMatch(/rather than a rule of Scrum/i);
+    // ...it says whose choice it is...
+    expect(text, 'the game does not own the choice it made').toMatch(/need not write it that way/i);
     expect(text, 'it does not say who conforms to the Definition of Done').toMatch(/Developers conform/i);
+    // ...and it says the tick is a criterion rather than a gate after the criteria.
+    //
+    // The second wording got the owner right and the mechanism wrong: "every criterion the park can
+    // answer can be green and it still is not Done" describes a gate that opens after the list.
+    // There is no such gate. "Meets its acceptance criteria, confirmed by the Product Owner" is the
+    // first line OF the list, so the tick is one of the boxes and the last one to go.
+    expect(text, 'the sign-off reads as a gate after Done rather than a box in it')
+      .not.toMatch(/still is not Done/i);
+    expect(text, 'it does not say the tick is one of the boxes').toMatch(/one of the boxes for Done/i);
   });
 
   it('reads the Sprint loop from the front page rather than writing its own', () => {
