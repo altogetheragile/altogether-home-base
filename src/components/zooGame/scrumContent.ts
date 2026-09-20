@@ -446,17 +446,22 @@ export const ORIENTATION = {
     title: 'Three rules that surprise people',
     rows: [
       { name: 'Points are not a budget', text: 'Nothing in the catalogue is ever refused. Take on more than you can finish and the game lets you - the park reports the consequence.' },
-      // Said carefully, because the first version of this line said a rule of THIS GAME as though it
-      // were a rule of Scrum: "Done needs the Product Owner. Somebody has to look at it."
+      // Said carefully, and it took two goes.
       //
-      // The Guide is the other way round. "Work cannot be considered part of an Increment unless it
-      // meets the Definition of Done", and "the Developers are required to conform to the Definition
-      // of Done" - which the Scrum Team writes. A Product Owner is accountable for the value of the
-      // product and may well let the Developers move work to Done on tacit approval. This zoo puts
-      // their look IN its Definition of Done, which is a choice available to any team and required
-      // of none.
+      // The first version stated a rule of THIS GAME as though it were a rule of Scrum: "Done needs
+      // the Product Owner. Somebody has to look at it." The Guide is the other way round. "Work
+      // cannot be considered part of an Increment unless it meets the Definition of Done", and "the
+      // Developers are required to conform to the Definition of Done" - which the Scrum Team writes.
+      // A Product Owner is accountable for the value of the product and may well let the Developers
+      // move work to Done on tacit approval.
+      //
+      // The second version fixed whose rule it was and still got the mechanism wrong: "every
+      // criterion the park can answer can be green and it still is not Done" describes a gate that
+      // opens after the criteria. There is no such gate. The Product Owner's confirmation is IN the
+      // first line of this zoo's Definition of Done - "meets its acceptance criteria, confirmed by
+      // the Product Owner" - so it is one of the boxes, and the last one to go.
       { name: 'Done is what your Definition of Done says',
-        text: 'Nothing else. This zoo\'s includes the Product Owner looking at the item, so every criterion the park can answer can be green and it still is not Done. That is a choice this Scrum Team made rather than a rule of Scrum: the Developers conform to the Definition of Done, and what goes in it is the team\'s to write.' },
+        text: 'Nothing else. The first line of this zoo\'s is that an item meets its acceptance criteria, confirmed by the Product Owner, so their tick is one of the boxes for Done and the last one to go, not a gate after them. Another Scrum Team need not write it that way: the Developers conform to the Definition of Done, and what is in it is the whole team\'s to agree.' },
       { name: 'You were given a Definition of Done', text: 'Three lines arrived with the game and nobody asked you. Noticing that is part of the exercise.' },
     ],
   },
