@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { ZooIntro } from './ZooIntro';
+import { INTRO_COPY } from './scrumContent';
 
 // The one thing this page asks you to write comes first.
 //
@@ -14,20 +15,29 @@ const intro = () => render(
     onSetGoalShape={() => {}} />,
 );
 
-/** Where something sits down the page, by the order the document puts it in. */
-const order = (container: HTMLElement, text: RegExp): number => {
-  const all = [...container.querySelectorAll('h1,h2,h3')];
-  return all.findIndex((h) => text.test(h.textContent ?? ''));
-};
 
 describe('the Product Goal on the first screen', () => {
   it('comes before the reading matter, not after it', () => {
+    // The game's own title is the only thing above it. Everything that is READING sits underneath.
     const { container } = intro();
-    const goal = order(container, /Your Product Goal/);
-    const loop = order(container, /Sprint|loop/i);
+    const headings = [...container.querySelectorAll('h1,h2,h3')].map((h) => h.textContent ?? '');
+    const goal = headings.findIndex((h) => /Your Product Goal/.test(h));
     expect(goal, 'there is no Product Goal on the page at all').toBeGreaterThanOrEqual(0);
-    expect(loop, 'nothing explains the loop any more').toBeGreaterThanOrEqual(0);
-    expect(goal, 'the explanation is above the thing to write').toBeLessThan(loop);
+    expect(goal, 'something was put above the thing this screen asks you to write').toBeLessThanOrEqual(1);
+  });
+
+  it('does not explain the Sprint loop, because the screen before it does', () => {
+    // It used to, and that made the same five lines the reading matter on two screens in a row.
+    // They are shown on How the zoo works against WHEN each step happens, which is more than a list
+    // of five, and this is the screen that asks you to write something.
+    //
+    // Asked for after spotting the double in the copy editor: "take the Sprint loop off the Product
+    // Goal screen."
+    const text = intro().container.textContent ?? '';
+    for (const l of INTRO_COPY.loop) {
+      expect(text, `the Sprint loop is back on this screen: "${l.step}"`).not.toContain(l.text);
+    }
+    expect(text, 'its heading is still here with nothing under it').not.toContain(INTRO_COPY.loopTitle);
   });
 
   it('opens with the other ways to write one already showing', () => {

@@ -57,18 +57,18 @@ export function copyEntries(): CopyEntry[] {
   // start, and then Your Product Goal. Reported by a trainer with the editor open: "where do I find
   // this text? I can't actually find it."
   //
-  // The Sprint loop is on two screens, so it says two screens. It is the same five lines from the
-  // same source, read once against when each step happens and once beside the Goal they aim at.
+  // The Sprint loop is on ONE screen. It was on two in a row, which is the same five lines as the
+  // reading matter twice, and the second of them was the screen that asks you to write something.
   const GOAL_SCREEN = 'Your Product Goal, at the top';
-  const BOTH = `${ORIENTATION.title}, and again on Your Product Goal`;
+  const LOOP_SCREEN = `${ORIENTATION.title}, under Each Sprint`;
   out.push(
     { key: 'intro.title', group: 'The way in', label: 'Game title', where: GOAL_SCREEN, value: INTRO_COPY.title, phases: ['intro'], apply: (v) => { INTRO_COPY.title = v; } },
     { key: 'intro.strapline', group: 'The way in', label: 'Strapline', where: 'Your Product Goal, under the title', value: INTRO_COPY.strapline, long: true, phases: ['intro'], apply: (v) => { INTRO_COPY.strapline = v; } },
-    { key: 'intro.loopTitle', group: 'The way in', label: 'The Sprint loop - heading', where: BOTH, value: INTRO_COPY.loopTitle, phases: ['intro'], apply: (v) => { INTRO_COPY.loopTitle = v; } },
+    { key: 'intro.loopTitle', group: 'The way in', label: 'The Sprint loop - heading', where: LOOP_SCREEN, value: INTRO_COPY.loopTitle, phases: ['intro'], apply: (v) => { INTRO_COPY.loopTitle = v; } },
   );
   INTRO_COPY.loop.forEach((l, i) => {
     out.push({
-      key: `intro.loop.${i}`, group: 'The way in', label: `The Sprint loop - ${l.step}`, where: BOTH,
+      key: `intro.loop.${i}`, group: 'The way in', label: `The Sprint loop - ${l.step}`, where: LOOP_SCREEN,
       value: l.text, phases: ['intro'], apply: (v) => { INTRO_COPY.loop[i].text = v; },
     });
   });
