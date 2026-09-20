@@ -46,13 +46,11 @@ function MeasureCard({ m }: { m: ReturnType<typeof valueMeasures>[number] }) {
 }
 
 /** The one button in the strip, and everything behind it. */
-export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProductGoal, onSetDod, onSetDor, onReading, openAt, onOpenAt }: {
+export function LearnDrawer({ state, notes, onSetProductGoal, onSetDod, onSetDor, onReading, openAt, onOpenAt }: {
   state: ZooGameState;
   /** What the game has said this Sprint - kept, because a note you dismissed is not a note you
    *  never needed. */
   notes?: GameNote[];
-  teaching: boolean;
-  onSetTeaching?: (on: boolean) => void;
   onSetProductGoal?: (g: string) => void;
   onSetDod?: (dod: string[]) => void;
   onSetDor?: (dor: string[]) => void;
@@ -113,7 +111,7 @@ export function LearnDrawer({ state, notes, teaching, onSetTeaching, onSetProduc
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5">
-              {at === 'scrum' && <ScrumReferenceBody teaching={teaching} onSetTeaching={onSetTeaching} />}
+              {at === 'scrum' && <ScrumReferenceBody />}
 
               {at === 'value' && (
                 <div className="space-y-2">

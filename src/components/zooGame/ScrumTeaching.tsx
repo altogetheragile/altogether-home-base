@@ -80,22 +80,18 @@ export function TeachingCard({ id, onDismiss }: { id: string; onDismiss: (id: st
   );
 }
 
-/** Every card, always to hand, whether or not the teaching is switched on. */
 /** Every element of Scrum, in the shape Scrum is in. Its own component because it is now the first
  *  section of the Learn drawer rather than a control of its own in the strip - the reference was
- *  always the right shape, so it became the model for everything else that is words. */
-export function ScrumReferenceBody({ teaching, onSetTeaching }: { teaching: boolean; onSetTeaching?: (on: boolean) => void }) {
+ *  always the right shape, so it became the model for everything else that is words.
+ *
+ *  Every card, always to hand. It used to carry a `Teaching on / off` switch in this heading, which
+ *  is gone: this is a game for learning Scrum, so there is no mode in which it does not teach. */
+export function ScrumReferenceBody() {
   const [open, setOpen] = useState<string | null>(null);
   return (
       <div>
         <div className="mb-1 flex items-center justify-between gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Scrum reference</span>
-          {onSetTeaching && (
-            <button type="button" onClick={() => onSetTeaching(!teaching)}
-              className={cn(FOCUS, "rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
-              Teaching {teaching ? 'on' : 'off'}
-            </button>
-          )}
         </div>
         <p className="mb-2 text-[11px] text-muted-foreground">
           Every element of Scrum and what it is for. Open one for why it exists, who it belongs to, when it happens and how it works.

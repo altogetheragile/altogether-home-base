@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { GraduationCap, Trees, Repeat } from 'lucide-react';
+import { Trees, Repeat } from 'lucide-react';
 import { Tab } from './ZooShell';
 import { ZooOrientationBody } from './ZooOrientation';
 import { ScrumOnePagerBody } from './ScrumTeaching';
@@ -36,11 +36,10 @@ const TABS: { id: StartTab; label: () => string; icon: typeof Trees }[] = [
   { id: 'scrum', label: () => 'Scrum on one page', icon: Repeat },
 ];
 
-export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
+export function BeforeYouStart({ tab, onTab, onDone, copy }: {
   tab: StartTab;
   onTab: (t: StartTab) => void;
   onDone: () => void;
-  onSkipTeaching: () => void;
   copy?: CopyEditorProps;
 }) {
   // The chosen tab brings itself into view. On a phone the row scrolls rather than squashing, so
@@ -85,16 +84,21 @@ export function BeforeYouStart({ tab, onTab, onDone, onSkipTeaching, copy }: {
           {tab === 'zoo' ? <ZooOrientationBody /> : <ScrumOnePagerBody />}
         </div>
 
-        {/* One way onward and one escape, for both tabs. Whichever page you were reading, the next
-            thing to do is the same thing. */}
+        {/* One way onward, for both tabs. Whichever page you were reading, the next thing to do is
+            the same thing.
+            There used to be a second button here: "I have covered this - turn the teaching off". It
+            is gone. It set a flag that hid this screen and the in-context cards, left the "?" on
+            every screen and the whole Learn drawer exactly as they were, and reset itself to ON at
+            the start of every new game - so the one person it was built for, a trainer opening a
+            fresh zoo in front of a class they have just taught, had to press it every single time.
+            Somebody who does not want to read this page can already leave it in one press, with
+            this button.
+            Which stays on the right, where the onward action has always been. The bar spaces its
+            children apart, so the lone survivor of a pair slid to the left end of a wide pill and
+            sat there looking like the escape rather than the way on. */}
         <div className={ACTION_BAR}>
-          <button type="button" onClick={onSkipTeaching} data-part="skip-teaching"
-            className={cn(FOCUS, BAR_ACTION, 'flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted')}>
-            <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-            I have covered this - turn the teaching off
-          </button>
           <button type="button" onClick={onDone} data-part="start-done"
-            className={cn(FOCUS, BAR_ACTION, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90')}>
+            className={cn(FOCUS, BAR_ACTION, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:ml-auto')}>
             {ORIENTATION.onward} &rarr;
           </button>
         </div>

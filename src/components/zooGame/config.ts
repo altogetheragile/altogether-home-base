@@ -466,7 +466,6 @@ export function initialZooState(gameSeed = 1): ZooGameState {
     definitionOfReady: [...DEFAULT_DOR],
     happiness: [],
     sprintsCancelled: 0,
-    teaching: true,
     taught: [],
     useUserStories: false,
     backlog,

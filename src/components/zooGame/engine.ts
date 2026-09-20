@@ -1333,13 +1333,13 @@ export function setSprintDays(state: ZooGameState, days: number): ZooGameState {
   return { ...state, sprintDays: Math.max(1, Math.round(days)), sprintDaysAgreed: true };
 }
 
-/** Toggle learn mode: pause the day clock so there is no real-time pressure. */
-/** Turn the teaching on or off. Off hides the one-page intro and the in-context cards; the Scrum
- *  reference stays available either way. */
-export function setTeaching(state: ZooGameState, on: boolean): ZooGameState {
-  return { ...state, teaching: on };
-}
-/** Remember a card has been read, so it is not shown again. */
+/** Remember a card has been read, so it is not shown again.
+ *
+ *  The whole of the teaching's "have you met this yet?" now lives here. There used to be a switch
+ *  beside it that turned the teaching off wholesale, and it is gone: it hid the way-in screen and
+ *  the cards, left the "?" on every screen and the Learn drawer untouched, and reset to ON at the
+ *  start of every new game. A mode that cannot survive the one transition it exists for is a
+ *  branch to maintain rather than a setting anybody uses. This list does the real job, per card. */
 export function markTaught(state: ZooGameState, id: string): ZooGameState {
   return state.taught?.includes(id) ? state : { ...state, taught: [...(state.taught ?? []), id] };
 }
@@ -1353,6 +1353,7 @@ export function setWipLimit(state: ZooGameState, limit: number, by?: string): Zo
     what: next === 0 ? 'The WIP limit was taken off.' : `The WIP limit was set to ${next}.` });
 }
 
+/** Toggle learn mode: pause the day clock so there is no real-time pressure. */
 export function setLearnMode(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, learnMode: on };
 }
