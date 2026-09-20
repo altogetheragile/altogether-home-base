@@ -13,7 +13,7 @@ import { FOCUS, TONE, type Tone } from './ui/tokens';
  *  editing the Sprint Review, not like filling in row 84 of a spreadsheet. */
 const GROUP_TONE: Record<CopyGroup, Tone> = {
   'Teaching cards': 'teach',
-  'The front page': 'quiet',
+  'The way in': 'quiet',
   'How the zoo works': 'quiet',
   'Scrum on one page': 'action',
   'What events touch': 'done',

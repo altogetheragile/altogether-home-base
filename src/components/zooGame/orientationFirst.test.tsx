@@ -346,3 +346,42 @@ describe('a trainer can change the words on it', () => {
     expect(keys).not.toContain('orientation.aside');
   });
 });
+
+describe('the editor says where the words are', () => {
+  // "Where do I find this text? I can't actually find it." - a trainer with the copy editor open,
+  // looking at a group called "The front page" for words that are on the Product Goal screen.
+  //
+  // There is no front page. The way in became Before you start, and then Your Product Goal, and the
+  // labels were left describing the game as it used to be. A `where` that names a screen nobody can
+  // reach is worse than no `where` at all: it sends somebody looking.
+
+  /** Every screen name a player could be told to go to. */
+  const SCREENS = [ORIENTATION.title, 'Scrum on one page', 'Your Product Goal'];
+
+  it('names a screen that exists for everything on the way in', () => {
+    const wayIn = copyEntries().filter((e) => e.group === 'The way in');
+    expect(wayIn.length, 'the way in has no editable copy').toBeGreaterThan(4);
+    for (const e of wayIn) {
+      expect(SCREENS.some((s) => e.where.includes(s)),
+        `${e.key} says it is on "${e.where}", which is not a screen`).toBe(true);
+    }
+  });
+
+  it('never sends anybody to the front page, because there is not one', () => {
+    const lost = copyEntries().filter((e) => /front page/i.test(e.where) || /front page/i.test(e.group));
+    expect(lost.map((e) => e.key), 'these point at a screen the game no longer has').toEqual([]);
+  });
+
+  it('says BOTH screens for the Sprint loop, because it is on both', () => {
+    // One source, two screens: read against when each step happens on one, and beside the Goal they
+    // aim at on the other. Somebody editing it should know they are changing both.
+    // `intro.loop.` with the dot: `intro.loopTitle` starts with the same letters and is the
+    // heading over them, not one of them.
+    const loop = copyEntries().filter((e) => e.key.startsWith('intro.loop.'));
+    expect(loop.length).toBe(INTRO_COPY.loop.length);
+    for (const e of loop) {
+      expect(e.where, `${e.key} only admits to one of the two screens it is on`).toContain(ORIENTATION.title);
+      expect(e.where).toContain('Your Product Goal');
+    }
+  });
+});
