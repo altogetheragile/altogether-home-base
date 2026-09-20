@@ -380,7 +380,10 @@ describe('the editor says where the words are', () => {
   const SCREENS = [ORIENTATION.title, 'Scrum on one page', 'Your Product Goal'];
 
   it('names a screen that exists for everything on the way in', () => {
-    const wayIn = copyEntries().filter((e) => e.group === 'The way in');
+    // The three groups the way in is made of. It used to be one group called "The way in" holding
+    // copy from two different screens, which is the shape the ordering question was really about.
+    const wayIn = copyEntries().filter((e) =>
+      e.group === 'How the zoo works' || e.group === 'Scrum on one page' || e.group === 'Your Product Goal');
     expect(wayIn.length, 'the way in has no editable copy').toBeGreaterThan(4);
     for (const e of wayIn) {
       expect(SCREENS.some((s) => e.where.includes(s)),

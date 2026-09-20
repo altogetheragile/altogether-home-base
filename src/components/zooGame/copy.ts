@@ -13,7 +13,7 @@ import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 // edit there breaks a screen rather than improving a sentence.
 
 /** Where a piece of copy appears, so the admin list can be grouped the way the game is played. */
-export type CopyGroup = 'Teaching cards' | 'The way in' | 'How the zoo works' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
+export type CopyGroup = 'How the zoo works' | 'Scrum on one page' | 'Your Product Goal' | 'Teaching cards' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
 
 export interface CopyEntry {
   /** Stable id - the database key. Never renamed once shipped, or overrides orphan. */
@@ -41,7 +41,21 @@ const CARD_FIELDS = [
 ] as const;
 
 /** Every editable string in the game, with its default and how to write it back. This one function
- *  serves both jobs: applying saved overrides at load, and listing what can be edited in admin. */
+ *  serves both jobs: applying saved overrides at load, and listing what can be edited in admin.
+ *
+ *  ORDER IS THE INTERFACE. Asked with the editor open beside the screen: "can the teaching copy be
+ *  in the order it appears on the pages?"
+ *
+ *  It could not, and for a reason worth naming: this list was written in the order the features were
+ *  BUILT, and the screens have been rearranged several times since. The editor renders groups in
+ *  first-seen order and rows in push order, so whatever this function does is what a trainer reads.
+ *  So the pushes below go down each screen the way a player's eye does, and the groups go in the
+ *  order the screens are met: How the zoo works, then Scrum on one page - its two tabs - then Your
+ *  Product Goal, then everything met during play.
+ *
+ *  `orderIsThePage.test.tsx` holds it there by rendering the real screens and reading the order back
+ *  off them, so moving a panel on a page and forgetting this file fails the build rather than
+ *  quietly making the editor lie again. */
 export function copyEntries(): CopyEntry[] {
   const out: CopyEntry[] = [];
 
@@ -49,43 +63,28 @@ export function copyEntries(): CopyEntry[] {
   const cardPhase: Record<string, string[]> = {};
   for (const [phase, ids] of Object.entries(CARDS_BY_PHASE)) for (const id of ids) (cardPhase[id] ??= []).push(phase);
 
-  // The way in: the first words anyone reads, and until recently the only ones a trainer could not
-  // touch. Not Scrum teaching, but the same job - saying what this is.
-  //
-  // WHERE has to name the screen a player actually sees, or it is worse than nothing. This group
-  // said "The front page" for both, and there is no front page any more: the way in is Before you
-  // start, and then Your Product Goal. Reported by a trainer with the editor open: "where do I find
-  // this text? I can't actually find it."
-  //
-  // The Sprint loop is on ONE screen. It was on two in a row, which is the same five lines as the
-  // reading matter twice, and the second of them was the screen that asks you to write something.
+  // WHERE has to name the screen a player actually sees, or it is worse than nothing. These said
+  // "The front page" for both, and there is no front page any more: the way in is Before you start,
+  // and then Your Product Goal. Reported by a trainer with the editor open: "where do I find this
+  // text? I can't actually find it."
   const GOAL_SCREEN = 'Your Product Goal, at the top';
   const LOOP_SCREEN = `${ORIENTATION.title}, under Each Sprint`;
-  out.push(
-    { key: 'intro.title', group: 'The way in', label: 'Game title', where: GOAL_SCREEN, value: INTRO_COPY.title, phases: ['intro'], apply: (v) => { INTRO_COPY.title = v; } },
-    { key: 'intro.strapline', group: 'The way in', label: 'Strapline', where: 'Your Product Goal, under the title', value: INTRO_COPY.strapline, long: true, phases: ['intro'], apply: (v) => { INTRO_COPY.strapline = v; } },
-    { key: 'intro.loopTitle', group: 'The way in', label: 'The Sprint loop - heading', where: LOOP_SCREEN, value: INTRO_COPY.loopTitle, phases: ['intro'], apply: (v) => { INTRO_COPY.loopTitle = v; } },
-  );
-  INTRO_COPY.loop.forEach((l, i) => {
-    out.push({
-      key: `intro.loop.${i}`, group: 'The way in', label: `The Sprint loop - ${l.step}`, where: LOOP_SCREEN,
-      value: l.text, phases: ['intro'], apply: (v) => { INTRO_COPY.loop[i].text = v; },
-    });
-  });
 
-  // How the zoo works: the orientation screen. It carried the pencil from the day it shipped and
-  // none of its own words were behind it, so a trainer opening the editor on that screen was shown
-  // the front page's copy instead. Asked while reading it: "can the orientation screen be editable
-  // like other copy?"
+  // How the zoo works: the orientation screen, and the first tab of the first screen anybody meets.
+  // It carried the pencil from the day it shipped and none of its own words were behind it, so a
+  // trainer opening the editor on that screen was shown the front page's copy instead. Asked while
+  // reading it: "can the orientation screen be editable like other copy?"
   //
   // Everything a learner READS here is editable. The two buttons at the foot are not, by the same
   // rule as everywhere else in this file: a button label is bound to what the button does, and an
   // edit there breaks a screen rather than improving a sentence.
+  // Down the page, in the order the page is: the tab it is opened by, the line under it, the four
+  // panels as the grid lays them out, the Sprint loop, and the surprises at the foot.
   const PANELS = ['park', 'seats', 'tabs', 'clock'] as const;
   out.push(
-    { key: 'orientation.title', group: 'How the zoo works', label: 'Title', where: 'How the zoo works',
+    { key: 'orientation.title', group: 'How the zoo works', label: 'Title', where: 'How the zoo works - the tab itself',
       value: ORIENTATION.title, phases: ['intro'], apply: (v) => { ORIENTATION.title = v; } },
-    { key: 'orientation.strapline', group: 'How the zoo works', label: 'Strapline', where: 'How the zoo works',
+    { key: 'orientation.strapline', group: 'How the zoo works', label: 'Strapline', where: 'How the zoo works, under the tabs',
       value: ORIENTATION.strapline, long: true, phases: ['intro'], apply: (v) => { ORIENTATION.strapline = v; } },
   );
   for (const panel of PANELS) {
@@ -105,16 +104,48 @@ export function copyEntries(): CopyEntry[] {
       );
     });
   }
-  ORIENTATION.when.forEach((w, i) => {
+  // The Sprint loop. Five lines, and each line is two editable pieces side by side: when it happens
+  // on the left, what it is on the right.
+  //
+  // They used to be two halves of one row filed under two different groups - the left-hand labels
+  // here, the right-hand text under "The way in" because that is where the loop USED to be drawn.
+  // The loop moved to this screen and the copy list did not follow it, so editing one line of what
+  // a player sees as a single row meant finding it twice, in two places, under two headings, one of
+  // which named a screen that no longer showed it. That is the fault behind "can the teaching copy
+  // be in the order it appears on the pages?", and it is why they are interleaved rather than
+  // merely adjacent: the pairing is what is on the screen.
+  out.push({
+    key: 'intro.loopTitle', group: 'How the zoo works', label: 'The Sprint loop - heading',
+    where: LOOP_SCREEN, value: INTRO_COPY.loopTitle, phases: ['intro'],
+    apply: (v) => { INTRO_COPY.loopTitle = v; },
+  });
+  INTRO_COPY.loop.forEach((l, i) => {
+    if (ORIENTATION.when[i] !== undefined) {
+      out.push({
+        key: `orientation.when.${i}`, group: 'How the zoo works', label: `${l.step} - when it happens`,
+        where: LOOP_SCREEN, value: ORIENTATION.when[i], phases: ['intro'],
+        apply: (v) => { ORIENTATION.when[i] = v; },
+      });
+    }
     out.push({
-      key: `orientation.when.${i}`, group: 'How the zoo works', label: `When ${INTRO_COPY.loop[i]?.step ?? `step ${i + 1}`} happens`,
-      where: 'How the zoo works - each Sprint', value: w, phases: ['intro'],
-      apply: (v) => { ORIENTATION.when[i] = v; },
+      key: `intro.loop.${i}`, group: 'How the zoo works', label: `${l.step} - what it is`,
+      where: LOOP_SCREEN, value: l.text, phases: ['intro'],
+      apply: (v) => { INTRO_COPY.loop[i].text = v; },
     });
   });
+  // ...and any `when` beyond the steps there are, so a mismatch shows up in the editor rather than
+  // going missing from it.
+  ORIENTATION.when.slice(INTRO_COPY.loop.length).forEach((w, n) => {
+    const i = INTRO_COPY.loop.length + n;
+    out.push({
+      key: `orientation.when.${i}`, group: 'How the zoo works', label: `When step ${i + 1} happens`,
+      where: LOOP_SCREEN, value: w, phases: ['intro'], apply: (v) => { ORIENTATION.when[i] = v; },
+    });
+  });
+
   out.push({
     key: 'orientation.gotchas.title', group: 'How the zoo works', label: 'The surprises - heading',
-    where: 'How the zoo works', value: ORIENTATION.gotchas.title, phases: ['intro'],
+    where: 'How the zoo works - the surprises', value: ORIENTATION.gotchas.title, phases: ['intro'],
     apply: (v) => { ORIENTATION.gotchas.title = v; },
   });
   ORIENTATION.gotchas.rows.forEach((row, i) => {
@@ -125,6 +156,39 @@ export function copyEntries(): CopyEntry[] {
         where: 'How the zoo works - the surprises', value: row.text, long: true, phases: ['intro'], apply: (v) => { row.text = v; } },
     );
   });
+
+  // Scrum on one page: the second tab of that same first screen, so it comes next. Its own order
+  // already matched the page and still does - what Scrum is, then founded on, the accountabilities,
+  // the artifacts, the events, the values, straight down the one-pager.
+  out.push({
+    key: 'intro.what', group: 'Scrum on one page', label: 'What Scrum is',
+    where: 'Scrum on one page, under the heading', value: SCRUM_INTRO.what, long: true, phases: ['intro'],
+    apply: (v) => { SCRUM_INTRO.what = v; },
+  });
+  const sections = [
+    ['foundations', 'Founded on'], ['accountabilities', 'Three accountabilities'],
+    ['artifacts', 'Three artifacts'], ['events', 'Five events'], ['values', 'Five values'],
+  ] as const;
+  for (const [section, label] of sections) {
+    SCRUM_INTRO[section].forEach((row, i) => {
+      out.push({
+        key: `intro.${section}.${i}`, group: 'Scrum on one page', label: `${label} - ${row.name}`,
+        where: `Scrum on one page - ${label}`, value: row.text, long: true, phases: ['intro'],
+        apply: (v) => { SCRUM_INTRO[section][i].text = v; },
+      });
+    });
+  }
+
+  // Your Product Goal: the screen after Before you start, and the last of the way in. Two pieces,
+  // the title and the line under it, in that order down the page.
+  //
+  // This group was called "The way in" and held the Sprint loop as well, which by then was drawn on
+  // the orientation screen rather than this one. The loop has gone to the screen that shows it and
+  // the group is named after the screen that is left.
+  out.push(
+    { key: 'intro.title', group: 'Your Product Goal', label: 'Game title', where: GOAL_SCREEN, value: INTRO_COPY.title, phases: ['intro'], apply: (v) => { INTRO_COPY.title = v; } },
+    { key: 'intro.strapline', group: 'Your Product Goal', label: 'Strapline', where: 'Your Product Goal, under the title', value: INTRO_COPY.strapline, long: true, phases: ['intro'], apply: (v) => { INTRO_COPY.strapline = v; } },
+  );
 
   // The Why / Who / When / How cards - the largest block, and the one most worth owning.
   for (const card of SCRUM_CARDS) {
@@ -142,26 +206,6 @@ export function copyEntries(): CopyEntry[] {
         apply: (v) => { (card as unknown as Record<string, string>)[field] = v; },
       });
     }
-  }
-
-  // The one page of Scrum shown before play.
-  out.push({
-    key: 'intro.what', group: 'Scrum on one page', label: 'What Scrum is',
-    where: 'Under the heading', value: SCRUM_INTRO.what, long: true, phases: ['intro'],
-    apply: (v) => { SCRUM_INTRO.what = v; },
-  });
-  const sections = [
-    ['foundations', 'Founded on'], ['accountabilities', 'Three accountabilities'],
-    ['artifacts', 'Three artifacts'], ['events', 'Five events'], ['values', 'Five values'],
-  ] as const;
-  for (const [section, label] of sections) {
-    SCRUM_INTRO[section].forEach((row, i) => {
-      out.push({
-        key: `intro.${section}.${i}`, group: 'Scrum on one page', label: `${label} - ${row.name}`,
-        where: `${label}, on the one-pager`, value: row.text, long: true, phases: ['intro'],
-        apply: (v) => { SCRUM_INTRO[section][i].text = v; },
-      });
-    });
   }
 
   // What each event inspects, adapts and creates - the extra line under the strip.
