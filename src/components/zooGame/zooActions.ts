@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure } from './types';
 import type { ItemDesign } from './design';
-import { bothLists, readTaught } from './whatYouHaveRead';
+import { bothLists, forgetTaught, readTaught } from './whatYouHaveRead';
 
 // Every action a player can take, in one list, built around whoever is going to carry it.
 //
@@ -49,6 +49,10 @@ export function zooActions(send: (action: ZooAction) => void) {
     setSprintDays: (days: number) => send({ type: 'SET_SPRINT_DAYS', days }),
     setWipLimit: (limit: number) => send({ type: 'SET_WIP_LIMIT', limit }),
     markTaught: (id: string) => send({ type: 'MARK_TAUGHT', id }),
+    /** Show the teaching again from the top, for somebody setting the game up in front of a room
+     *  they have already played it for. The state is cleared by the action and the browser's own
+     *  copy here, because a game that could not write also cannot clear by writing. */
+    forgetTaught: () => { forgetTaught(); send({ type: 'FORGET_TAUGHT' }); },
     setLearnMode: (on: boolean) => send({ type: 'SET_LEARN_MODE', on }),
     setDailyScrumAt: (at: 'start' | 'end') => send({ type: 'SET_SCRUM_AT', at }),
     setEnclosureSize: (id: string, size: 'small' | 'medium' | 'large') => send({ type: 'SET_ENCLOSURE', id, size }),

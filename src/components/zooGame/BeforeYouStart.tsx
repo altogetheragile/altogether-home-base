@@ -5,6 +5,7 @@ import { ZooOrientationBody } from './ZooOrientation';
 import { ScrumOnePagerBody } from './ScrumTeaching';
 import { ORIENTATION } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
+import { ShowTeachingAgain } from './ShowTeachingAgain';
 import { motionWanted } from './motion';
 import { cn } from '@/lib/utils';
 import { ACTION_BAR, BAR_ACTION, FOCUS, TAB_ROW } from './ui/tokens';
@@ -36,10 +37,14 @@ const TABS: { id: StartTab; label: () => string; icon: typeof Trees }[] = [
   { id: 'scrum', label: () => 'Scrum on one page', icon: Repeat },
 ];
 
-export function BeforeYouStart({ tab, onTab, onDone, copy }: {
+export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching, copy }: {
   tab: StartTab;
   onTab: (t: StartTab) => void;
   onDone: () => void;
+  /** How many teaching cards this browser remembers reading. The way out of that memory lives on
+   *  this screen, and only shows when there is something to forget. */
+  read?: number;
+  onForgetTeaching?: () => void;
   copy?: CopyEditorProps;
 }) {
   // The chosen tab brings itself into view. On a phone the row scrolls rather than squashing, so
@@ -58,9 +63,15 @@ export function BeforeYouStart({ tab, onTab, onDone, copy }: {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-4xl space-y-3 px-4 pb-24 pt-5">
         <header className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
-            {copy && <CopyEditor phase="intro" {...copy} />}
+            {/* The way out of the game's memory, on the one screen where somebody setting up for a
+                room is certain to pass. Invisible to a first-time player, because there is nothing
+                to forget yet. */}
+            <span className="flex items-center gap-2">
+              {onForgetTeaching && <ShowTeachingAgain read={read} onForget={onForgetTeaching} />}
+              {copy && <CopyEditor phase="intro" {...copy} />}
+            </span>
           </div>
           {/* The game's own tab, not a second kind of tab.
               It had big bold labels with an underline, and got the same report the game's tab row

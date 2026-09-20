@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, renderHook, act } from '@testing-library/react';
+import { render, renderHook, act, fireEvent } from '@testing-library/react';
 import { reducer, useZooGame } from './useZooGame';
 import { markTaught } from './engine';
 import { ScrumReferenceBody } from './ScrumTeaching';
+import { BeforeYouStart } from './BeforeYouStart';
 import { initialZooState } from './config';
 import { CARDS_BY_PHASE } from './scrumContent';
 import type { ZooGameState } from './types';
@@ -103,6 +104,61 @@ describe('...and across a visit, not just a game', () => {
     } finally {
       broken.mockRestore();
     }
+  });
+});
+
+describe('the way out of that memory', () => {
+  // "Yes, add a start fresh control." The memory is right for a learner and exactly wrong for the
+  // person who wrote it: a trainer opening the zoo in front of a class has played it themselves, so
+  // the cards they most want the room to see are the ones the game has decided not to show.
+  beforeEach(() => localStorage.clear());
+
+  const start = (over: Partial<Parameters<typeof BeforeYouStart>[0]> = {}) =>
+    render(<BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} {...over} />).container;
+
+  it('is not there for somebody who has read nothing', () => {
+    // A first-time player never meets it. Most of the argument for putting it on this screen rather
+    // than behind a menu: on the visit where it would do nothing, it is not on the page at all.
+    const c = start({ read: 0, onForgetTeaching: () => {} });
+    expect(c.querySelector('[data-part="show-teaching-again"]'), 'it greets a new player').toBeNull();
+  });
+
+  it('says how much there is to forget', () => {
+    const c = start({ read: 14, onForgetTeaching: () => {} });
+    const btn = c.querySelector('[data-part="show-teaching-again"]');
+    expect(btn, 'there is no way back to the teaching').toBeTruthy();
+    expect(btn?.textContent, 'the count is the reason to press it').toContain('14');
+  });
+
+  it('says it worked rather than vanishing', () => {
+    // Its own condition stops being true the moment it is pressed, so without a word said the
+    // answer to "did that work?" is a button that disappeared - which reads like one that broke.
+    const onForget = vi.fn();
+    const c = start({ read: 3, onForgetTeaching: onForget });
+    fireEvent.click(c.querySelector('[data-part="show-teaching-again"]')!);
+    expect(onForget).toHaveBeenCalledTimes(1);
+    expect(c.querySelector('[data-part="teaching-forgotten"]')?.textContent ?? '')
+      .toMatch(/shown again/i);
+  });
+
+  it('forgets the cards and keeps the zoo', () => {
+    // "Start fresh" could mean throw the park away. It does not: this forgets what the player has
+    // been TOLD, not what they have built. Throwing the park away is the end-of-game reset.
+    const { result } = renderHook(() => useZooGame(1));
+    act(() => { result.current.markTaught(CARDS_BY_PHASE.refine[0]); });
+    const backlog = result.current.state.backlog.length;
+    act(() => { result.current.forgetTaught(); });
+    expect(result.current.state.taught, 'the cards are still remembered').toEqual([]);
+    expect(result.current.state.backlog.length, 'it threw the zoo away too').toBe(backlog);
+  });
+
+  it('...and forgets it for the next visit as well', () => {
+    const { result, unmount } = renderHook(() => useZooGame(1));
+    act(() => { result.current.markTaught(CARDS_BY_PHASE.refine[0]); });
+    act(() => { result.current.forgetTaught(); });
+    unmount();
+    const next = renderHook(() => useZooGame(1));
+    expect(next.result.current.state.taught, 'the browser remembered anyway').toEqual([]);
   });
 });
 
