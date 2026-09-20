@@ -13,7 +13,7 @@ import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 // edit there breaks a screen rather than improving a sentence.
 
 /** Where a piece of copy appears, so the admin list can be grouped the way the game is played. */
-export type CopyGroup = 'Teaching cards' | 'The front page' | 'How the zoo works' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
+export type CopyGroup = 'Teaching cards' | 'The way in' | 'How the zoo works' | 'Scrum on one page' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
 
 export interface CopyEntry {
   /** Stable id - the database key. Never renamed once shipped, or overrides orphan. */
@@ -49,16 +49,26 @@ export function copyEntries(): CopyEntry[] {
   const cardPhase: Record<string, string[]> = {};
   for (const [phase, ids] of Object.entries(CARDS_BY_PHASE)) for (const id of ids) (cardPhase[id] ??= []).push(phase);
 
-  // The front page: the first words anyone reads, and until now the only ones a trainer could not
+  // The way in: the first words anyone reads, and until recently the only ones a trainer could not
   // touch. Not Scrum teaching, but the same job - saying what this is.
+  //
+  // WHERE has to name the screen a player actually sees, or it is worse than nothing. This group
+  // said "The front page" for both, and there is no front page any more: the way in is Before you
+  // start, and then Your Product Goal. Reported by a trainer with the editor open: "where do I find
+  // this text? I can't actually find it."
+  //
+  // The Sprint loop is on two screens, so it says two screens. It is the same five lines from the
+  // same source, read once against when each step happens and once beside the Goal they aim at.
+  const GOAL_SCREEN = 'Your Product Goal, at the top';
+  const BOTH = `${ORIENTATION.title}, and again on Your Product Goal`;
   out.push(
-    { key: 'intro.title', group: 'The front page', label: 'Title', where: 'The front page', value: INTRO_COPY.title, phases: ['intro'], apply: (v) => { INTRO_COPY.title = v; } },
-    { key: 'intro.strapline', group: 'The front page', label: 'Strapline', where: 'The front page', value: INTRO_COPY.strapline, long: true, phases: ['intro'], apply: (v) => { INTRO_COPY.strapline = v; } },
-    { key: 'intro.loopTitle', group: 'The front page', label: 'The Sprint loop - heading', where: 'The front page', value: INTRO_COPY.loopTitle, phases: ['intro'], apply: (v) => { INTRO_COPY.loopTitle = v; } },
+    { key: 'intro.title', group: 'The way in', label: 'Game title', where: GOAL_SCREEN, value: INTRO_COPY.title, phases: ['intro'], apply: (v) => { INTRO_COPY.title = v; } },
+    { key: 'intro.strapline', group: 'The way in', label: 'Strapline', where: 'Your Product Goal, under the title', value: INTRO_COPY.strapline, long: true, phases: ['intro'], apply: (v) => { INTRO_COPY.strapline = v; } },
+    { key: 'intro.loopTitle', group: 'The way in', label: 'The Sprint loop - heading', where: BOTH, value: INTRO_COPY.loopTitle, phases: ['intro'], apply: (v) => { INTRO_COPY.loopTitle = v; } },
   );
   INTRO_COPY.loop.forEach((l, i) => {
     out.push({
-      key: `intro.loop.${i}`, group: 'The front page', label: l.step, where: 'The front page - each Sprint',
+      key: `intro.loop.${i}`, group: 'The way in', label: `The Sprint loop - ${l.step}`, where: BOTH,
       value: l.text, phases: ['intro'], apply: (v) => { INTRO_COPY.loop[i].text = v; },
     });
   });
