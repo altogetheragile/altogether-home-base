@@ -749,6 +749,7 @@ export type ZooAction =
   | { type: 'CANCEL_SPRINT' }
   | { type: 'SET_WIP_LIMIT'; limit: number; by?: string }
   | { type: 'MARK_TAUGHT'; id: string }
+  | { type: 'FORGET_TAUGHT' }
   | { type: 'SET_DOR'; dor: string[] }
   | { type: 'DECLINE_PROPOSAL'; proposalId: string }
   /** The new plant stands beside the ones already there; nobody has to say where. */

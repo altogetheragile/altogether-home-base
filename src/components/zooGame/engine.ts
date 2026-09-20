@@ -1344,6 +1344,14 @@ export function markTaught(state: ZooGameState, id: string): ZooGameState {
   return state.taught?.includes(id) ? state : { ...state, taught: [...(state.taught ?? []), id] };
 }
 
+/** ...and forget the lot, so every card is shown again from the top.
+ *
+ *  The zoo is untouched. This forgets what the player has been TOLD, not what they have built: a
+ *  trainer setting the game up in front of a class wants the cards back, and wants their park. */
+export function forgetTheTeaching(state: ZooGameState): ZooGameState {
+  return { ...state, taught: [] };
+}
+
 /** Set the work in progress limit, or turn it off with 0. A WIP limit is Lean thinking, not part
  *  of Scrum - the Developers are self-managing, so it is their agreement to make and to drop. */
 export function setWipLimit(state: ZooGameState, limit: number, by?: string): ZooGameState {

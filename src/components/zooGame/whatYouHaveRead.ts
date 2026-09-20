@@ -47,6 +47,25 @@ export function writeTaught(taught: string[]): void {
   }
 }
 
+/** Forget the lot, so the teaching shows again from the top.
+ *
+ *  A trainer opening the game in front of a class has usually played it themselves, so the cards
+ *  they most want the room to see are exactly the ones this browser has decided not to show. That
+ *  is what a memory does when it works; it still needs a way out, and an invisible piece of stored
+ *  state with no visible way to clear it is a worse thing than the forgetting it replaced.
+ *
+ *  The game state is cleared by the same action, and the write-back effect follows it here, so
+ *  this is belt and braces rather than the main route: pressing it with storage unavailable still
+ *  shows the teaching again for the rest of the visit. */
+export function forgetTaught(): void {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem(KEY);
+  } catch {
+    // Nothing to do. The game state has been cleared either way.
+  }
+}
+
 /** Both lists, without duplicates and in the order they were first read.
  *
  *  Used when a saved game arrives: the save knows what was read while it was being played and this
