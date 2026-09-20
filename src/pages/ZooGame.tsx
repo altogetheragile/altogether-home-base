@@ -79,7 +79,12 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // own link, and from Learn, rather than standing in the doorway.
   // The way in: what Scrum is and what this game is, as two tabs of one screen. Shown once, and
   // re-openable from the intro's two links - which open it on the tab they name.
-  const [beforeStart, setBeforeStart] = useState(true);
+  //
+  // Whether it is SHOWN on the way in is the teaching toggle's business, and it is decided once,
+  // here. Whether it can be OPENED is not: the link on the intro works either way, because the
+  // screen is the manual and "I have covered this" is about Scrum. Gating the render on the toggle
+  // as well meant the link was there, was pressed, and nothing happened.
+  const [beforeStart, setBeforeStart] = useState(state.teaching ?? true);
   const [startTab, setStartTab] = useState<StartTab>('zoo');
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
@@ -349,15 +354,20 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
         // with a button on each pointing at the other, and every crossing cost a press and a scroll
         // back to the top: "can the Scrum one-pager and game orientation be tabbed so a player can
         // easily switch between them?"
-        if (beforeStart && (state.teaching ?? true)) {
+        if (beforeStart) {
           return <BeforeYouStart tab={startTab} onTab={setStartTab} onDone={() => setBeforeStart(false)}
             onSkipTeaching={() => { setTeaching(false); setBeforeStart(false); }} copy={copyProps} />;
         }
         return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={start} onStartFromTheBrief={startFromTheBrief}
           teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
           onMarkTaught={markTaught}
+          // Scrum on one page is teaching, and goes when the teaching does.
           onBack={(state.teaching ?? true) ? () => { setStartTab('scrum'); setBeforeStart(true); } : undefined}
-          onOrient={(state.teaching ?? true) ? () => { setStartTab('zoo'); setBeforeStart(true); } : undefined}
+          // How the zoo works is NOT. It is the manual: the park, the seats, the three tabs, the
+          // clock. "I have covered this" says the player has covered Scrum, not that they know
+          // their way round this software - and that escape also skips the screen itself, so
+          // hiding the way back to it left them with no way to reach it at all.
+          onOrient={() => { setStartTab('zoo'); setBeforeStart(true); }}
           onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
         // The Scrum Team, before the Backlog they will work on. Held here rather than in the game

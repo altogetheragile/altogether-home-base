@@ -235,9 +235,19 @@ describe('what it does to the screen after it', () => {
     expect(within(c).getByText(/Scrum on one page/), 'the framework page went missing').toBeTruthy();
   });
 
-  it('shows neither link when the teaching is off', () => {
-    const c = intro();
-    expect(c.querySelector('[data-part="to-orientation"]')).toBeNull();
+  it('keeps the way back to the manual when the teaching is off', () => {
+    // Turning the teaching off says "I have covered SCRUM". How the zoo works is not Scrum: it is
+    // the park, the seats, the three tabs and the clock. That escape also skips the screen on the
+    // way in, so gating the link on it too left a player who pressed it with no way to reach the
+    // manual at all - and the Sprint loop had just come off this screen, so there was nothing left
+    // telling them how the game goes.
+    const c = intro({ onOrient: () => {} });
+    expect(c.querySelector('[data-part="to-orientation"]'), 'the manual is unreachable').toBeTruthy();
+  });
+
+  it('takes Scrum on one page away with the teaching, because that IS teaching', () => {
+    const c = intro({ onOrient: () => {} });
+    expect(within(c).queryByText(/Scrum on one page/), 'the framework page outlived the teaching toggle').toBeNull();
   });
 });
 
