@@ -1,8 +1,10 @@
 import { Suspense, lazy, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Minus, Plus, Maximize2 } from 'lucide-react';
 import { exampleZoo, type ExampleLabel } from './exampleZoo';
 import { ParkPlan } from './ParkPlan';
 import { union } from './frameTheWork';
 import { cn } from '@/lib/utils';
+import { FOCUS } from './ui/tokens';
 
 const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })));
 
@@ -32,6 +34,43 @@ const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })
  *  needs and below even the 3 that large text does. Dark takes it to about 7. */
 const ON_THE_MARK = 'text-[#2a1405]';
 
+/** How far in each picture is walked, beyond the shot the example framed for itself.
+ *
+ *  Stops rather than a slider: a press should always land somewhere worth looking at, and the two
+ *  pictures should be able to agree about what "twice as close" means. */
+const STEPS = [1, 1.5, 2, 3];
+
+/** A zoom, in the shape the game's own park controls already use. */
+function Closer({ at, onZoom }: { at: number; onZoom: (z: number) => void }) {
+  const i = STEPS.indexOf(at);
+  const step = (dir: -1 | 1) => onZoom(STEPS[Math.max(0, Math.min(STEPS.length - 1, (i < 0 ? 0 : i) + dir))]);
+  const btn = 'flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm transition-colors hover:text-foreground disabled:opacity-40';
+  return (
+    <div className="absolute right-2 top-2 z-20 flex items-center gap-1" data-part="example-zoom">
+      {at !== 1 && (
+        <button type="button" onClick={() => onZoom(1)} title="Back to the whole example"
+          aria-label="Back to the whole example" className={cn(FOCUS, btn)}>
+          <Maximize2 className="h-3 w-3" />
+        </button>
+      )}
+      <button type="button" onClick={() => step(-1)} disabled={at <= STEPS[0]}
+        title="Further out" aria-label="Further out" className={cn(FOCUS, btn)}>
+        <Minus className="h-3 w-3" />
+      </button>
+      <button type="button" onClick={() => step(1)} disabled={at >= STEPS[STEPS.length - 1]}
+        title="Closer" aria-label="Closer" className={cn(FOCUS, btn)}>
+        <Plus className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+/** The corner the zoom sits in, as a share of the picture. A pin that lands inside it is moved
+ *  straight down to the edge of it: still over its own thing, and visible. */
+const CORNER = { x: 72, y: 21 };
+/** How far a pin is kept from the edge of its picture, as a share of it. Half a pin is not a pin. */
+const EDGE = 5;
+
 interface Pin { n: number; x: number; y: number }
 
 /** A drawing, with numbered pins on the things the key names.
@@ -40,8 +79,11 @@ interface Pin { n: number; x: number; y: number }
  *  somewhere the thing is not: whatever the renderer did with its camera, its frame and the size of
  *  the box it was handed, the pin followed it there. Which is also why one component can do this
  *  for two different renderers without knowing anything about either. */
-function Pinned({ title, note, labels, children }: {
+function Pinned({ title, note, labels, zoom, children }: {
   title: string; note: string; labels: ExampleLabel[]; children: ReactNode;
+  /** Walking closer into this one picture. The pins follow, because they are measured off whatever
+   *  was drawn rather than worked out from the model. */
+  zoom?: { at: number; onZoom: (z: number) => void };
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [pins, setPins] = useState<Pin[]>([]);
@@ -89,6 +131,18 @@ function Pinned({ title, note, labels, children }: {
         const gap = found[i].y - found[i - 1].y;
         if (Math.abs(found[i].x - found[i - 1].x) < 9 && gap < 7) found[i].y = found[i - 1].y + 7;
       }
+      // ...and out from under the zoom, which sits in the corner the game puts its park controls
+      // in. Walk into the example far enough and the thing in the top right is behind the buttons:
+      // the pin is still in the right place and you cannot see it, which is worse than either.
+      //
+      // ...and inside the picture at all. A pin marks the top of the VISIBLE part of its thing, so
+      // a thing running off the top of a zoomed-in frame puts its pin exactly on the edge, where
+      // the picture's own overflow cuts it in half.
+      for (const pin of found) {
+        if (pin.x > CORNER.x && pin.y < CORNER.y) pin.y = CORNER.y;
+        pin.y = Math.max(EDGE, Math.min(100 - EDGE, pin.y));
+        pin.x = Math.max(EDGE, Math.min(100 - EDGE, pin.x));
+      }
       const now = JSON.stringify(found.map((p) => [p.n, Math.round(p.x), Math.round(p.y)]));
       setPins(found);
       if (now === was) return;
@@ -121,6 +175,7 @@ function Pinned({ title, note, labels, children }: {
       <div ref={box} data-part="labelled-park"
         className="relative overflow-hidden rounded-lg border border-border bg-muted/20">
         {children}
+        {zoom && <Closer at={zoom.at} onZoom={zoom.onZoom} />}
         {pins.map((p) => (
           <span key={p.n} data-part={`pin-${p.n}`} aria-hidden
             style={{ left: `${p.x}%`, top: `${p.y}%` }}
@@ -135,6 +190,18 @@ function Pinned({ title, note, labels, children }: {
 
 export function LabelledPark({ className }: { className?: string }) {
   const { state, labels, camera, box } = exampleZoo();
+  // One each, not one for both. Looking closer at the plan and looking closer at the Increment are
+  // two different things somebody wants at two different moments.
+  const [planAt, setPlanAt] = useState(1);
+  const [isoAt, setIsoAt] = useState(1);
+  // The plan is pointed at a BOX, so walking in shrinks the box about its own middle. The Increment
+  // is pointed by a camera, so walking in multiplies its zoom. Same word, two mechanisms, because
+  // the two drawings are aimed in two different ways.
+  const closer = (b: typeof box, z: number) => {
+    const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+    const w = (b.x1 - b.x0) / z / 2, h = (b.y1 - b.y0) / z / 2;
+    return { x0: cx - w, y0: cy - h, x1: cx + w, y1: cy + h };
+  };
 
   return (
     <figure className={cn('m-0 space-y-2', className)}>
@@ -142,12 +209,14 @@ export function LabelledPark({ className }: { className?: string }) {
           says the thing: the same numbers, twice, on two drawings of one zoo. */}
       <div className="grid gap-3 md:grid-cols-2">
         {/* No handlers, so nothing here can be dragged: it is the studio, shown, not lent out. */}
-        <Pinned title="The plan" note="where the Developers build" labels={labels}>
-          <ParkPlan state={state} height={280} frame={box} still />
+        <Pinned title="The plan" note="where the Developers build" labels={labels}
+          zoom={{ at: planAt, onZoom: setPlanAt }}>
+          <ParkPlan state={state} height={280} frame={closer(box, planAt)} still />
         </Pinned>
-        <Pinned title="The Increment" note="what a visitor walks into" labels={labels}>
+        <Pinned title="The Increment" note="what a visitor walks into" labels={labels}
+          zoom={{ at: isoAt, onZoom: setIsoAt }}>
           <Suspense fallback={<div className="flex h-[280px] items-center justify-center text-xs text-muted-foreground">Drawing the zoo...</div>}>
-            <IsoZoo state={state} height={280} camera={camera} />
+            <IsoZoo state={state} height={280} camera={{ ...camera, zoom: camera.zoom * isoAt }} />
           </Suspense>
         </Pinned>
       </div>

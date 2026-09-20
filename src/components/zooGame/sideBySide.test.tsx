@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { LabelledPark } from './LabelledPark';
 import { ParkPlan } from './ParkPlan';
 import { exampleZoo } from './exampleZoo';
@@ -89,5 +89,51 @@ describe('the numbered marks', () => {
       .map((m) => (m.className.match(/text-\[#[0-9a-f]+\]/i) ?? [''])[0]));
     expect(inks.size, 'the marks are not all the same colour').toBe(1);
     expect([...inks][0], 'the mark has no ink of its own').toMatch(/^text-\[#/);
+  });
+});
+
+describe('walking closer into the example', () => {
+  // "Can we use the zoom on the park part of the screen?" It was the one park in the game without
+  // one: the game's own two both have a zoom, and this one had its controls taken off when it
+  // became a picture rather than a workbench. A picture somebody wants to look INTO is still worth
+  // a zoom.
+  const zooms = (c: HTMLElement) => [...c.querySelectorAll('[data-part="example-zoom"]')];
+  const btn = (within: Element, label: string) =>
+    [...within.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === label)!;
+
+  it('offers one on each picture', () => {
+    // One each, not one for both: looking closer at the plan and looking closer at the Increment
+    // are two different things somebody wants at two different moments.
+    expect(zooms(render(<LabelledPark />).container)).toHaveLength(2);
+  });
+
+  it('starts at the shot the example framed for itself', () => {
+    const c = render(<LabelledPark />).container;
+    for (const z of zooms(c)) {
+      expect(btn(z, 'Further out').disabled, 'it opens already zoomed').toBe(true);
+      expect(z.querySelector('[aria-label="Back to the whole example"]'),
+        'it offers to go back before anybody has gone anywhere').toBeNull();
+    }
+  });
+
+  it('offers the way back once you have walked in', () => {
+    const c = render(<LabelledPark />).container;
+    fireEvent.click(btn(zooms(c)[0], 'Closer'));
+    expect(zooms(c)[0].querySelector('[aria-label="Back to the whole example"]'),
+      'there is no way back to the framed shot').toBeTruthy();
+    expect(btn(zooms(c)[0], 'Further out').disabled).toBe(false);
+  });
+
+  it('stops, rather than going in for ever', () => {
+    const c = render(<LabelledPark />).container;
+    for (let i = 0; i < 6; i++) fireEvent.click(btn(zooms(c)[0], 'Closer'));
+    expect(btn(zooms(c)[0], 'Closer').disabled, 'it can be walked into indefinitely').toBe(true);
+  });
+
+  it('walks one picture without moving the other', () => {
+    const c = render(<LabelledPark />).container;
+    fireEvent.click(btn(zooms(c)[0], 'Closer'));
+    expect(zooms(c)[1].querySelector('[aria-label="Back to the whole example"]'),
+      'zooming the plan moved the Increment too').toBeNull();
   });
 });
