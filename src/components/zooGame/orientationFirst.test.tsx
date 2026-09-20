@@ -26,7 +26,7 @@ import { ACTION_BAR, BAR_ACTION } from './ui/tokens';
 const screen = () => render(<ZooOrientationBody />).container;
 /** ...and the screen round it, which owns the tabs and the one way onward. */
 const before = (over: Partial<Parameters<typeof BeforeYouStart>[0]> = {}) =>
-  render(<BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} onSkipTeaching={() => {}} {...over} />).container;
+  render(<BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} {...over} />).container;
 
 describe('the orientation screen', () => {
   it('says what the game is, not what Scrum is', () => {
@@ -195,19 +195,25 @@ describe('the two pages, as one screen', () => {
     expect(before({ tab: 'scrum' }).textContent, 'both tabs are mounted').not.toContain(ORIENTATION.park.title);
   });
 
-  it('has one way onward and one escape, whichever tab you were reading', () => {
+  it('has one way onward, whichever tab you were reading', () => {
     const onDone = vi.fn();
-    const onSkipTeaching = vi.fn();
     for (const tab of ['zoo', 'scrum'] as const) {
-      const c = before({ tab, onDone, onSkipTeaching });
+      const c = before({ tab, onDone });
       const on = c.querySelector('[data-part="start-done"]') as HTMLButtonElement;
       expect(on, `${tab}: there is no way off this screen`).toBeTruthy();
       expect(on.textContent).toContain(ORIENTATION.onward);
       fireEvent.click(on);
-      fireEvent.click(c.querySelector('[data-part="skip-teaching"]')!);
     }
     expect(onDone).toHaveBeenCalledTimes(2);
-    expect(onSkipTeaching).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not offer to turn the teaching off, because there is no such thing', () => {
+    // There was a second button here: "I have covered this - turn the teaching off". It set a flag
+    // that hid this screen and the in-context cards, left the "?" on every screen and the whole
+    // Learn drawer untouched, and reset to on at the start of every new game. Leaving the reading
+    // is one press of the button beside it, and always was.
+    const c = before();
+    expect(c.querySelector('[data-part="skip-teaching"]'), 'the teaching toggle came back').toBeNull();
   });
 });
 
@@ -235,19 +241,15 @@ describe('what it does to the screen after it', () => {
     expect(within(c).getByText(/Scrum on one page/), 'the framework page went missing').toBeTruthy();
   });
 
-  it('keeps the way back to the manual when the teaching is off', () => {
-    // Turning the teaching off says "I have covered SCRUM". How the zoo works is not Scrum: it is
-    // the park, the seats, the three tabs and the clock. That escape also skips the screen on the
-    // way in, so gating the link on it too left a player who pressed it with no way to reach the
-    // manual at all - and the Sprint loop had just come off this screen, so there was nothing left
-    // telling them how the game goes.
-    const c = intro({ onOrient: () => {} });
+  it('keeps both ways back, because they are two tabs of one screen', () => {
+    // These used to be gated differently: the framework page went when the teaching was switched
+    // off and the manual stayed, on the reasoning that "I have covered this" meant "I have covered
+    // Scrum". It was one of the two places that switch contradicted itself - press it and the
+    // Scrum link vanished from the intro, but the Scrum TAB was still sitting there the moment you
+    // opened the manual. With the switch gone they are simply two tabs again, and both are here.
+    const c = intro({ onOrient: () => {}, onBack: () => {} });
     expect(c.querySelector('[data-part="to-orientation"]'), 'the manual is unreachable').toBeTruthy();
-  });
-
-  it('takes Scrum on one page away with the teaching, because that IS teaching', () => {
-    const c = intro({ onOrient: () => {} });
-    expect(within(c).queryByText(/Scrum on one page/), 'the framework page outlived the teaching toggle').toBeNull();
+    expect(within(c).getByText(/Scrum on one page/), 'the framework page went missing').toBeTruthy();
   });
 });
 

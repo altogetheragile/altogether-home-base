@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
-  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, setTeaching, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
+  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -1858,17 +1858,23 @@ describe('zoo game: teaching Scrum while you play it', () => {
     expect(cardFor('pbi')!.notScrum).toMatch(/not part of Scrum/i);
   });
 
-  it('shows each card once, and only while the teaching is on', () => {
+  it('shows each card once', () => {
     let s = initialZooState(1);
-    expect(s.teaching).toBe(true);
     expect(s.taught).toEqual([]);
     const forRefine = CARDS_BY_PHASE.refine;
-    const next = (x: ZooGameState) => (x.teaching ? forRefine.find((id) => !x.taught.includes(id)) : undefined);
+    const next = (x: ZooGameState) => forRefine.find((id) => !x.taught.includes(id));
     expect(next(s)).toBe(forRefine[0]);
     s = markTaught(s, forRefine[0]);
     expect(next(s)).toBe(forRefine[1]);
     expect(markTaught(s, forRefine[0]).taught).toEqual([forRefine[0]]); // reading it twice changes nothing
-    expect(next(setTeaching(s, false))).toBeUndefined();
+  });
+
+  it('has no switch that turns the whole teaching off', () => {
+    // There was one, and it went. It hid the way-in screen and the in-context cards, left the "?"
+    // on every screen and the whole Learn drawer exactly as they were, and reset itself to on at
+    // the start of every new game - so the trainer it was built for had to press it every session.
+    // A game for learning Scrum has no mode in which it does not teach.
+    expect('teaching' in initialZooState(1), 'the teaching flag is back on the state').toBe(false);
   });
 });
 

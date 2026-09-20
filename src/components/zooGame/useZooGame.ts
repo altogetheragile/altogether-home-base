@@ -2,11 +2,12 @@ import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
-import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
+import {dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks, wantedServices } from './parkChecks';
 import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail, recordEverything } from './trail';
 import { aiDesign } from './aiSeats';
+import { readTaught, writeTaught } from './whatYouHaveRead';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
 // /scrum-game. This slice is the core loop: plan, build, open (release), review
@@ -51,12 +52,20 @@ const CLOCK_ONLY = new Set<ZooAction['type']>(['TICK_DAY', 'TICK_SCRUM', 'SET_CL
  *  that means "wipe it", and it still does.
  *
  *  The shape and the measures come too. Writing it as an objective and key results and then losing
- *  the key results is the same loss, one field along. */
+ *  the key results is the same loss, one field along.
+ *
+ *  ...and what has already been read. A card is shown once, and "once" should mean once to a
+ *  person rather than once per zoo: somebody starting their third game was met by the whole
+ *  teaching again from the top, every card, as though they had never played. That is the thing the
+ *  old teaching on/off switch was built to escape, and it escaped it by turning ALL the teaching
+ *  off, including the parts they had not read. Carrying the list instead means the game stops
+ *  telling you what you know and keeps telling you what you do not. RESET still means wipe it. */
 const asWritten = (was: ZooGameState, fresh: ZooGameState): ZooGameState => ({
   ...fresh,
   productGoal: was.productGoal,
   productGoalShape: was.productGoalShape,
   productGoalMeasures: was.productGoalMeasures,
+  taught: was.taught ?? [],
 });
 
 function step(state: ZooGameState, action: ZooAction): ZooGameState {
@@ -133,8 +142,6 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return setSprintDays(state, action.days);
     case 'SET_WIP_LIMIT':
       return setWipLimit(state, action.limit, action.by);
-    case 'SET_TEACHING':
-      return setTeaching(state, action.on);
     case 'MARK_TAUGHT':
       return markTaught(state, action.id);
     case 'SET_LEARN_MODE':
@@ -336,7 +343,19 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
 }
 
 export function useZooGame(gameSeed?: number, runClock = true) {
-  const [state, dispatch] = useReducer(reducer, gameSeed, initialZooState);
+  // A new game, already knowing which cards this browser has read.
+  //
+  // `initialZooState` stays pure and empty - it is the game's own idea of a beginning, and a
+  // hundred tests rely on it - so the remembering happens here, at the edge, where a hook is
+  // allowed to know about storage. Carrying `taught` through START (see `asWritten`) keeps it for
+  // the rest of THIS visit; this keeps it for the next one.
+  const [state, dispatch] = useReducer(reducer, gameSeed,
+    (seed: number | undefined) => ({ ...initialZooState(seed), taught: readTaught() }));
+
+  // ...and written back whenever it grows. Nothing else in the game is persisted this way, and
+  // nothing else should be: a half-built zoo is a saved game, which is a deliberate act with a
+  // name on it. What somebody has been told is not part of any one zoo.
+  useEffect(() => { writeTaught(state.taught ?? []); }, [state.taught]);
   // What has been pressed, kept so a fault can be replayed rather than described. One place,
   // because every change in the game goes through one reducer - including the moves made by seats
   // the game is playing, which are the ones a player cannot tell you about.

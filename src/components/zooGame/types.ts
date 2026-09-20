@@ -631,10 +631,13 @@ export interface ZooGameState {
   /** Learn mode: pause the day clock so there is no real-time pressure - days end only
    *  when you choose. The timed mode teaches Sprint pressure; this is the reflective one. */
   learnMode: boolean;
-  /** Teaching on: the one-page intro and the in-context cards. A learner who has just had the taught
-   *  session can turn it off, and back on from the Scrum reference. */
-  teaching: boolean;
-  /** Cards already read, so each is shown once and survives save and resume. */
+  /** Cards already read, so each is shown once - and shown once per PERSON rather than once per
+   *  game: it survives save, resume, and starting a fresh zoo.
+   *
+   *  This is what the old teaching on/off switch was reaching for and never managed. "I have
+   *  covered this" was a mode that skipped the way-in screen and the cards wholesale, reset itself
+   *  on every new game, and so served nobody; what a player on their third zoo actually wants is
+   *  not to be told again the things they have already been told, which is this list. */
   taught: string[];
   /** When the Daily Scrum is held: at the START of each day (Scrum's usual cadence) or at
    *  the END. Chosen by the team; the same event either way, just timed differently. */
@@ -745,7 +748,6 @@ export type ZooAction =
   | { type: 'FINISH_ITEM'; id: string; by?: string }
   | { type: 'CANCEL_SPRINT' }
   | { type: 'SET_WIP_LIMIT'; limit: number; by?: string }
-  | { type: 'SET_TEACHING'; on: boolean }
   | { type: 'MARK_TAUGHT'; id: string }
   | { type: 'SET_DOR'; dor: string[] }
   | { type: 'DECLINE_PROPOSAL'; proposalId: string }

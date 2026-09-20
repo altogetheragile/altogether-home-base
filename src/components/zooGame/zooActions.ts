@@ -1,5 +1,6 @@
 import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure } from './types';
 import type { ItemDesign } from './design';
+import { bothLists, readTaught } from './whatYouHaveRead';
 
 // Every action a player can take, in one list, built around whoever is going to carry it.
 //
@@ -47,7 +48,6 @@ export function zooActions(send: (action: ZooAction) => void) {
     toggleGoalCritical: (id: string) => send({ type: 'TOGGLE_GOAL_CRITICAL', id }),
     setSprintDays: (days: number) => send({ type: 'SET_SPRINT_DAYS', days }),
     setWipLimit: (limit: number) => send({ type: 'SET_WIP_LIMIT', limit }),
-    setTeaching: (on: boolean) => send({ type: 'SET_TEACHING', on }),
     markTaught: (id: string) => send({ type: 'MARK_TAUGHT', id }),
     setLearnMode: (on: boolean) => send({ type: 'SET_LEARN_MODE', on }),
     setDailyScrumAt: (at: 'start' | 'end') => send({ type: 'SET_SCRUM_AT', at }),
@@ -118,7 +118,12 @@ export function zooActions(send: (action: ZooAction) => void) {
     review: () => send({ type: 'REVIEW_SPRINT' }),
     nextSprint: (improvement: string) => send({ type: 'NEXT_SPRINT', improvement }),
     finish: () => send({ type: 'END_GAME' }),
-    loadGame: (loaded: ZooGameState) => send({ type: 'LOAD_GAME', state: loaded }),
+    // Resuming a save brings its own memory of which cards were read. So does this browser, from
+    // whatever has been played since, and reading a card is a thing that HAPPENED - neither copy is
+    // entitled to un-happen the other's. Merged here rather than in the reducer, which is pure and
+    // has to stay that way: a shared session replays it.
+    loadGame: (loaded: ZooGameState) =>
+      send({ type: 'LOAD_GAME', state: { ...loaded, taught: bothLists(loaded.taught, readTaught()) } }),
     poRefine: (decisions: PoDecisions) => send({ type: 'PO_REFINE', decisions }),
     reset: () => send({ type: 'RESET' }),
   };

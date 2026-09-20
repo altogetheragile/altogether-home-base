@@ -54,7 +54,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     away?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void }) {
-  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setTeaching, markTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
+  const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
   const { refine: poRefineCall, isRefining } = useZooProductOwner();
@@ -80,11 +80,13 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   // The way in: what Scrum is and what this game is, as two tabs of one screen. Shown once, and
   // re-openable from the intro's two links - which open it on the tab they name.
   //
-  // Whether it is SHOWN on the way in is the teaching toggle's business, and it is decided once,
-  // here. Whether it can be OPENED is not: the link on the intro works either way, because the
-  // screen is the manual and "I have covered this" is about Scrum. Gating the render on the toggle
-  // as well meant the link was there, was pressed, and nothing happened.
-  const [beforeStart, setBeforeStart] = useState(state.teaching ?? true);
+  // Always, now. It used to be shown only while a `teaching` flag was on, and that flag is gone:
+  // this is a game for learning Scrum, so there is no mode in which it does not teach, and one
+  // press leaves the page for anybody who does not want to read it.
+  //
+  // This guard sits inside `case 'intro'`, so resuming a saved game mid-Sprint does not put the
+  // reading back in front of you.
+  const [beforeStart, setBeforeStart] = useState(true);
   const [startTab, setStartTab] = useState<StartTab>('zoo');
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
@@ -298,9 +300,9 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     onChanged: (key: string, value: string) => setCopyEdits((e) => ({ ...e, [key]: value })),
   };
 
-  const cardFor = (phase: string) => ((state.teaching ?? true)
-    ? (CARDS_BY_PHASE[phase] ?? []).find((id) => !(state.taught ?? []).includes(id)) ?? null
-    : null);
+  // The next card for a screen, or nothing if it has already been read. `taught` now follows the
+  // player into a new zoo, so a second game is quiet about the parts they have already met.
+  const cardFor = (phase: string) => (CARDS_BY_PHASE[phase] ?? []).find((id) => !(state.taught ?? []).includes(id)) ?? null;
 
   // A pathway is laid out by drawing it, so while one is on the design bench the park hands you the
   // pen - at the width and colour it was designed at. It used to be drawn as a small building with
@@ -339,7 +341,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     // a habitat: whatever is in the draft becomes its design. Without it the Product Owner had
     // nothing built to accept - "how do I fulfil the last AC?" - and the card sat in Doing.
     planShape(id, { enclosureId }); commitBuild(id); placeOnPark(id);
-  }, onAskToCheck: askToCheck, rail: <ActionRail className="mt-2" state={state} seat={seat} onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete} onAddProposal={handleProposal} onSplitEpic={splitEpic} onDeclineProposal={declineProposal} />, onSetClockPaused: setClockPaused, onRenameMember: renameMember, onWho: (why: string) => toast(why), seat, observer, covering, away, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, canBuild: !!inHandItem(state, buildingId), links: <GameLinks />, menuLinks: <GameLinks variant="menu" />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onRemoveRun: deleteConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot,  onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemovePlant: removePlant, onAddCopy: plantAnother, onSetCopyPiece: setCopyPiece, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onSetTeaching: setTeaching, onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
+  }, onAskToCheck: askToCheck, rail: <ActionRail className="mt-2" state={state} seat={seat} onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete} onAddProposal={handleProposal} onSplitEpic={splitEpic} onDeclineProposal={declineProposal} />, onSetClockPaused: setClockPaused, onRenameMember: renameMember, onWho: (why: string) => toast(why), seat, observer, covering, away, said, onDismissSaid, refused, onDismissRefused, copy: copyProps, canBuild: !!inHandItem(state, buildingId), links: <GameLinks />, menuLinks: <GameLinks variant="menu" />, drawRoute, drawing, onDrawing: setDrawing, building: buildingId, onOpenBuild: selectOnPark, edit, onPart: setPartFocus, onStartHere: startHere, parkTab, onSetTab: setParkTab, onPlaceItem: setItemPos, onSetPathStyle: setPathStyle, onAddConnector: addConnector, onRemoveRun: deleteConnector, onUpdateConnector: updateConnector, onDeleteConnector: deleteConnector, deployMode: deploying, deployStyle, deployAcs, onFinishDeploy: () => { setParkTab('sprint'); clearDeploy(); }, onImprove: raiseImprovement, onSetSpot: setItemSpot,  onSetSize: setItemSize, onSetRot: setItemRot, onMoveCopy: moveCopy, onRemovePlant: removePlant, onAddCopy: plantAnother, onSetCopyPiece: setCopyPiece, onNest: nestItem, onUnnest: unnestItem, onEndDay: endDay, onSetDod: setDod, onSetDor: setDor, onSetProductGoal: setGoal, onSave: saves ? requestSave : undefined, onOpenSaves: saves ? () => setSavesOpen(true) : undefined, onPoRefine: handlePoRefine, poRefining: isRefining, poNote: poNote?.phase === state.phase ? poNote.text : null, onDismissPoNote: () => setPoNote(null), onMarkTaught: markTaught, onBack: (phase: string) => setPhase(phase as typeof state.phase),
     // The Coach is gone. It floated advice over whatever you were doing - often about refinement,
     // often at the wrong moment, twice over the button you needed. Every lesson it carried belongs
     // in the flow, at the moment it applies, as part of the screen that applies it. What survives
@@ -355,18 +357,16 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
         // back to the top: "can the Scrum one-pager and game orientation be tabbed so a player can
         // easily switch between them?"
         if (beforeStart) {
-          return <BeforeYouStart tab={startTab} onTab={setStartTab} onDone={() => setBeforeStart(false)}
-            onSkipTeaching={() => { setTeaching(false); setBeforeStart(false); }} copy={copyProps} />;
+          return <BeforeYouStart tab={startTab} onTab={setStartTab} onDone={() => setBeforeStart(false)} copy={copyProps} />;
         }
         return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={start} onStartFromTheBrief={startFromTheBrief}
-          teachCard={(state.teaching ?? true) ? (CARDS_BY_PHASE.intro ?? []).find((id) => !(state.taught ?? []).includes(id)) : null}
+          teachCard={cardFor('intro')}
           onMarkTaught={markTaught}
-          // Scrum on one page is teaching, and goes when the teaching does.
-          onBack={(state.teaching ?? true) ? () => { setStartTab('scrum'); setBeforeStart(true); } : undefined}
-          // How the zoo works is NOT. It is the manual: the park, the seats, the three tabs, the
-          // clock. "I have covered this" says the player has covered Scrum, not that they know
-          // their way round this software - and that escape also skips the screen itself, so
-          // hiding the way back to it left them with no way to reach it at all.
+          // Both ways back to the screen before: Scrum on one page, and the game's own manual.
+          // They used to be gated differently - the framework page went when the teaching was
+          // switched off and the manual stayed - which was one of two places that switch
+          // contradicted itself. With it gone they are simply two tabs of one screen again.
+          onBack={() => { setStartTab('scrum'); setBeforeStart(true); }}
           onOrient={() => { setStartTab('zoo'); setBeforeStart(true); }}
           onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
