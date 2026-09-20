@@ -56,8 +56,27 @@ describe('the orientation screen', () => {
     // Each of these has been met the hard way and reported. Said once, up front, costs nothing.
     const text = screen().textContent ?? '';
     expect(text).toMatch(/not a budget/i);
-    expect(text).toMatch(/Done needs the Product Owner/i);
+    expect(text).toMatch(/Done is what your Definition of Done says/i);
     expect(text).toMatch(/Definition of Done/i);
+  });
+
+  it('does not sell this game\'s Definition of Done as a rule of Scrum', () => {
+    // It did. "Done needs the Product Owner. Somebody has to look at it." - stated on the first
+    // screen of a game that teaches Scrum, about a thing the Guide says the other way round:
+    //
+    //   Work cannot be considered part of an Increment unless it meets the Definition of Done.
+    //   The Developers are required to conform to the Definition of Done.
+    //
+    // ...and the Scrum Team writes that definition. A Product Owner is accountable for the value of
+    // the product and may perfectly well let the Developers move work to Done on tacit approval.
+    // This zoo puts their look IN its Definition of Done, which is a choice open to any team and
+    // required of none - and a teaching product has to be the one that says which is which.
+    const text = screen().textContent ?? '';
+    expect(text, 'Done is described as needing the Product Owner, full stop')
+      .not.toMatch(/Done needs the Product Owner/i);
+    // ...and it says whose choice it is.
+    expect(text, 'the game does not own the choice it made').toMatch(/rather than a rule of Scrum/i);
+    expect(text, 'it does not say who conforms to the Definition of Done').toMatch(/Developers conform/i);
   });
 
   it('reads the Sprint loop from the front page rather than writing its own', () => {

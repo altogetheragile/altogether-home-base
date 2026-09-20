@@ -446,7 +446,17 @@ export const ORIENTATION = {
     title: 'Three rules that surprise people',
     rows: [
       { name: 'Points are not a budget', text: 'Nothing in the catalogue is ever refused. Take on more than you can finish and the game lets you - the park reports the consequence.' },
-      { name: 'Done needs the Product Owner', text: 'Every criterion the park can answer can be green and the item is still not Done. Somebody has to look at it.' },
+      // Said carefully, because the first version of this line said a rule of THIS GAME as though it
+      // were a rule of Scrum: "Done needs the Product Owner. Somebody has to look at it."
+      //
+      // The Guide is the other way round. "Work cannot be considered part of an Increment unless it
+      // meets the Definition of Done", and "the Developers are required to conform to the Definition
+      // of Done" - which the Scrum Team writes. A Product Owner is accountable for the value of the
+      // product and may well let the Developers move work to Done on tacit approval. This zoo puts
+      // their look IN its Definition of Done, which is a choice available to any team and required
+      // of none.
+      { name: 'Done is what your Definition of Done says',
+        text: 'Nothing else. This zoo\'s includes the Product Owner looking at the item, so every criterion the park can answer can be green and it still is not Done. That is a choice this Scrum Team made rather than a rule of Scrum: the Developers conform to the Definition of Done, and what goes in it is the team\'s to write.' },
       { name: 'You were given a Definition of Done', text: 'Three lines arrived with the game and nobody asked you. Noticing that is part of the exercise.' },
     ],
   },
