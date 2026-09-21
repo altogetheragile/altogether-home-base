@@ -28,7 +28,7 @@ interface NavChild {
   icon: LucideIcon;
 }
 
-interface NavItem {
+export interface NavItem {
   label: string;
   icon: LucideIcon;
   href: string;
@@ -110,7 +110,7 @@ const navigation: NavGroup[] = [
 
 /* ─── Sidebar nav item (with optional collapsible children) ─── */
 
-const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: string }) => {
+export const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: string }) => {
   const isItemActive = item.exact
     ? pathname === item.href
     : pathname.startsWith(item.href);
@@ -136,8 +136,22 @@ const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: string })
     );
   }
 
+  // A group opens because you are inside it, and closes again when you leave.
+  //
+  // Reported as "the admin page lands with the Events options open - annoying", and it did: land on
+  // /admin/events, then go to Dashboard and on to Site Settings, and Events is still hanging open
+  // the whole way. `defaultOpen` is UNCONTROLLED - Radix reads it once when the Collapsible mounts
+  // and ignores it forever after - and this layout never unmounts as you move about the admin, so
+  // every group froze in whatever state it happened to be in on the first render. It failed in both
+  // directions: a group you had left stayed open, and a group you navigated into never opened.
+  //
+  // Keyed on the route's answer rather than controlled, so a navigation that changes that answer
+  // remounts the group with the new default, and one that does not - moving between two children of
+  // the same group - leaves it alone. Opening a group by hand therefore lasts until you navigate,
+  // which is what a disclosure should do. Controlling it outright would need state reset in an
+  // effect, which this repo's lint counts and the gate pins to an exact number.
   return (
-    <Collapsible defaultOpen={isOpen} className="group/collapsible">
+    <Collapsible key={String(isOpen)} defaultOpen={isOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton isActive={isOpen}>
