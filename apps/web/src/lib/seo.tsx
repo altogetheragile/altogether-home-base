@@ -53,14 +53,35 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
   );
 }
 
+/** The Organization block on the home page.
+ *
+ *  This is the one that is actually SERVED. `/` is a Next route - the build cuts the prerendered
+ *  SPA home page over to `_spa.html` and lets Next own the path - so the richer copy of this block
+ *  in `src/components/seo/JsonLd.tsx` and `scripts/prerender.mjs` never reaches a crawler for the
+ *  home page. This one had no logo, no founder and no contact point, so the front page of the site
+ *  was emitting the least structured data of the three. */
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE_NAME,
     url: SITE_URL,
+    logo: `${SITE_URL}/og-image.png`,
     description:
-      'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
+      'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
+    founder: {
+      '@type': 'Person',
+      name: 'Alun Davies-Baker',
+      jobTitle: 'Agile Coach & Trainer',
+      // What he is an authority ON, where a search engine can read it. The hero says the same
+      // thing in words.
+      knowsAbout: ['AgilePM3 v2', 'AgileBA v3', 'Agile Project Management', 'Agile Business Analysis', 'Scrum'],
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'info@altogetheragile.com',
+      contactType: 'customer service',
+    },
   };
 }
 

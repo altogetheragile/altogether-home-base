@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const TITLE = 'Altogether Agile - Agile Coaching & Training';
 const DESC =
-  'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.';
+  'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.';
 
 export const metadata: Metadata = {
   ...buildMetadata({ title: TITLE, description: DESC, path: '/' }),
@@ -55,11 +55,18 @@ export default async function HomePage() {
           <div className="aa-hero-content">
             <div className="aa-hero-grid">
               <div>
-                <h1 className="aa-hero-h1">Work better together.<br />Accelerate time to value.</h1>
-                <p className="aa-hero-subtitle">Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.</p>
+                {/* The credential first: it is the one thing on this page nobody else can claim. */}
+                <p className="aa-hero-eyebrow">Co-author of AgilePM3 v2 and AgileBA v3</p>
+                {/* What he sells in the heading, the slogan underneath. It was the other way round,
+                    and "Work better together. Accelerate time to value." is true of any consultancy
+                    that has ever existed. */}
+                <h1 className="aa-hero-h1">Practical agile training<br />and coaching, delivered personally.</h1>
+                <p className="aa-hero-subtitle">Work better together. Accelerate time to value. 25 years of real experience, still delivered personally, every time.</p>
+                {/* Both of these used to be BROWSE actions, and the first "Book a Chemistry Session"
+                    on this page sat about three and a half screens below the fold. */}
                 <div className="aa-hero-actions">
                   <Link href="/events" className="aa-btn aa-btn--primary">Browse Events <Icons.ArrowRight /></Link>
-                  {showKnowledge && <Link href="/knowledge" className="aa-btn aa-btn--ghost">Knowledge Base <Icons.ArrowRight /></Link>}
+                  <a href={bookingUrl} className="aa-btn aa-btn--ghost">Book a Chemistry Session <Icons.ArrowRight /></a>
                 </div>
               </div>
             </div>

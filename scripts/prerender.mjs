@@ -157,11 +157,14 @@ function organizationJsonLd() {
     name: 'Altogether Agile',
     url: SITE_URL,
     logo: `${SITE_URL}/og-image.png`,
-    description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
+    description: 'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
     founder: {
       '@type': 'Person',
       name: 'Alun Davies-Baker',
       jobTitle: 'Agile Coach & Trainer',
+      // What he is an authority ON. The crawler-facing twin of the same block in
+      // src/components/seo/JsonLd.tsx - these two have to say the same thing.
+      knowsAbout: ['AgilePM3 v2', 'AgileBA v3', 'Agile Project Management', 'Agile Business Analysis', 'Scrum'],
     },
     contactPoint: {
       '@type': 'ContactPoint',
@@ -399,7 +402,7 @@ const EXAM_FAQS = [
 const STATIC_PAGES = {
   '/': {
     title: 'Altogether Agile - Agile Coaching & Training',
-    description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
+    description: 'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
     ogType: 'website',
     jsonLd: organizationJsonLd(),
   },

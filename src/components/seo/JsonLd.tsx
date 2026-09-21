@@ -18,11 +18,14 @@ export const OrganizationSchema = () => (
     name: 'Altogether Agile',
     url: SITE_URL,
     logo: `${SITE_URL}/og-image.png`,
-    description: 'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
+    description: 'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
     founder: {
       '@type': 'Person',
       name: 'Alun Davies-Baker',
       jobTitle: 'Agile Coach & Trainer',
+      // What he is an authority ON, in the machine-readable half of the page. The visible hero
+      // says he co-wrote these; this is the same claim where a search engine can read it.
+      knowsAbout: ['AgilePM3 v2', 'AgileBA v3', 'Agile Project Management', 'Agile Business Analysis', 'Scrum'],
     },
     sameAs: [],
     contactPoint: {
