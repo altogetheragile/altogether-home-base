@@ -19,6 +19,9 @@ export type ExamForPlayer = {
   id: string;
   title: string;
   description: string | null;
+  /** Long-form markdown about this paper. Shown on the start card only, and the substance a
+   *  crawler reads: the stats and the two-line description are the same shape on every exam. */
+  guide: string | null;
   scenario: string | null;
   shuffle: boolean;
   duration_minutes: number;
@@ -70,7 +73,7 @@ function isCorrect(q: Question, a: Answer | undefined) {
   if (!a || a.selected.length === 0) return false;
   return correctLetters(q).sort().join(',') === [...a.selected].map((s) => s.toUpperCase()).sort().join(',');
 }
-function renderScenario(md: string | null) {
+function renderMarkdown(md: string | null) {
   if (!md) return '';
   const html = String(marked.parse(md, { async: false }));
   return html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
@@ -122,7 +125,8 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
   const expiredRef = useRef(false);
 
   const grouped = !!exam.scenario;
-  const scenarioHtml = useMemo(() => renderScenario(exam.scenario), [exam.scenario]);
+  const scenarioHtml = useMemo(() => renderMarkdown(exam.scenario), [exam.scenario]);
+  const guideHtml = useMemo(() => renderMarkdown(exam.guide), [exam.guide]);
 
   const parts = useMemo<PartGroup[]>(() => {
     const map = new Map<string, PartGroup>();
@@ -244,6 +248,7 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
   // ── Choose ──
   if (phase === 'choose') {
     return (
+      <>
       <div style={{ maxWidth: 560, margin: '0 auto', background: c.white, borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
         <div style={{ height: 6, background: `linear-gradient(90deg, ${c.deepTeal}, ${c.midTeal})` }} />
         <div style={{ padding: 32 }}>
@@ -283,6 +288,32 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
           <p style={{ fontSize: 12, color: c.muted, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>Exam mode is timed with answers at the end. Practice mode is untimed and reveals answers as you go.</p>
         </div>
       </div>
+      {/* Below the card, and only before the paper starts: reading about the exam is what you do
+          instead of sitting it, not during it. Next server-renders this client component, so the
+          guide is in the HTML a crawler receives - which is the point of it. Without it every exam
+          page carries the same furniture and about two sentences of its own. */}
+      {guideHtml && (
+        <article className="aa-exam-guide" style={{ maxWidth: 720, margin: '40px auto 0' }}
+          dangerouslySetInnerHTML={{ __html: guideHtml }} />
+      )}
+      <style>{`
+        .aa-exam-guide{font-size:16px;line-height:1.75;color:${c.body}}
+        .aa-exam-guide h2{color:${c.deepTeal};font-size:22px;font-weight:800;margin:32px 0 10px;line-height:1.3}
+        .aa-exam-guide h3{color:${c.deepTeal};font-size:17px;font-weight:700;margin:24px 0 8px}
+        .aa-exam-guide h2:first-child,.aa-exam-guide h3:first-child{margin-top:0}
+        .aa-exam-guide p{margin:0 0 16px}
+        .aa-exam-guide ul,.aa-exam-guide ol{margin:0 0 16px;padding-left:24px}
+        /* The app's reset clears list markers, so a list reads as loose indented lines. */
+        .aa-exam-guide ul{list-style:disc}.aa-exam-guide ol{list-style:decimal}
+        .aa-exam-guide li{margin:0 0 8px}
+        .aa-exam-guide a{color:${c.midTeal};text-decoration:underline}
+        .aa-exam-guide strong{color:${c.deepTeal};font-weight:700}
+        .aa-exam-guide blockquote{margin:0 0 16px;padding:12px 18px;border-left:4px solid ${c.lightTeal};background:${c.skyTeal};border-radius:0 8px 8px 0}
+        .aa-exam-guide blockquote p:last-child{margin-bottom:0}
+        .aa-exam-guide table{border-collapse:collapse;width:100%;margin:0 0 16px}
+        .aa-exam-guide th,.aa-exam-guide td{border:1px solid #E5E7EB;padding:8px 10px;text-align:left;font-size:14px}
+      `}</style>
+      </>
     );
   }
 

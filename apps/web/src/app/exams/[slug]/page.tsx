@@ -17,7 +17,7 @@ async function getExam(slug: string): Promise<ExamRow | null> {
     const { data } = await supabase
       .from('exams')
       .select(
-        'id, title, description, scenario, shuffle, duration_minutes, pass_mark, total_questions, seo_title, seo_description',
+        'id, title, description, guide, scenario, shuffle, duration_minutes, pass_mark, total_questions, seo_title, seo_description',
       )
       .eq('slug', slug)
       .eq('status', 'published')
