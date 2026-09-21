@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface CourseCard {
   id: string;
+  /** The course's address. Null only for a row written before the column existed. */
+  slug: string | null;
   title: string;
   description: string | null;
   category: string | null;
@@ -29,6 +31,7 @@ export const useCourseCards = () => {
           .from('event_templates')
           .select(`
             id,
+            slug,
             title,
             description,
             difficulty_rating,
@@ -51,6 +54,7 @@ export const useCourseCards = () => {
 
       const cards: CourseCard[] = (templatesRes.data || []).map((t) => ({
         id: t.id,
+        slug: t.slug ?? null,
         title: t.title,
         description: t.description,
         category: asNameOnly(t.event_categories)?.name || null,

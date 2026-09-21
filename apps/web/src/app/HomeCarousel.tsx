@@ -55,7 +55,7 @@ export function HomeCarousel({ courses }: { courses: HomeCourseCard[] }) {
           }}
         >
           {courses.map((course) => (
-            <Link key={course.id} href={`/courses/${course.id}`} className="aa-course-card">
+            <Link key={course.id} href={`/courses/${course.slug || course.id}`} className="aa-course-card">
               <div className="aa-course-card__header">
                 {course.category && <span className="aa-badge aa-badge--deep">{course.category}</span>}
                 {course.difficulty && <span className="aa-badge--difficulty">{course.difficulty}</span>}

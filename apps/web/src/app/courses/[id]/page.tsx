@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import { marked } from 'marked';
 import { getCourse } from '@/lib/events';
@@ -19,7 +19,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return buildMetadata({
     title: course.seo_title || course.title,
     description,
-    path: `/courses/${id}`,
+    // The slug, whatever was asked for. A uuid request is redirected below, but metadata is built
+    // first and a canonical pointing at the address we are redirecting AWAY from is a canonical
+    // that argues with itself.
+    path: `/courses/${course.slug || id}`,
   });
 }
 
@@ -39,6 +42,14 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const course = await getCourse(id);
   if (!course) notFound();
+
+  // One course, one address.
+  //
+  // These pages were `/courses/<uuid>` - forty-odd characters of hex carrying no word anybody would
+  // search for, in a result that has to compete with Reed and The Knowledge Academy. Four of those
+  // uuids are indexed, so they still resolve and are sent here permanently rather than dropped:
+  // Google has to fetch the old address to learn where it went.
+  if (course.slug && id !== course.slug) permanentRedirect(`/courses/${course.slug}`);
 
   const now = Date.now();
   const dates = upcomingEvents(course, now);

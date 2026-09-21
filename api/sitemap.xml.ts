@@ -47,7 +47,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     // Fetch published event templates (courses)
     const { data: templates } = await supabase
       .from('event_templates')
-      .select('id, updated_at')
+      .select('id, slug, updated_at')
       .eq('is_published', true)
       .order('display_order', { ascending: true });
 
@@ -99,7 +99,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     if (templates) {
       for (const t of templates) {
         xml += `  <url>
-    <loc>${SITE_URL}/courses/${escapeXml(t.id)}</loc>
+    <loc>${SITE_URL}/courses/${escapeXml(t.slug || t.id)}</loc>
     <lastmod>${formatDate(t.updated_at)}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

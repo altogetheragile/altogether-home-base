@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 
 export type HomeCourseCard = {
   id: string;
+  /** The course's address. Null only for a row written before the column existed. */
+  slug: string | null;
   title: string;
   description: string | null;
   category: string | null;
@@ -28,7 +30,7 @@ export async function getHomeCourseCards(): Promise<HomeCourseCard[]> {
     const [templatesRes, eventsRes] = await Promise.all([
       supabase
         .from('event_templates')
-        .select('id, title, description, difficulty_rating, event_categories!category_id(name), levels!level_id(name)')
+        .select('id, slug, title, description, difficulty_rating, event_categories!category_id(name), levels!level_id(name)')
         .eq('is_published', true),
       supabase.from('events').select('template_id').eq('is_published', true).gte('start_date', new Date().toISOString()),
     ]);
@@ -36,11 +38,12 @@ export async function getHomeCourseCards(): Promise<HomeCourseCard[]> {
 
     const withDates = new Set((eventsRes.data || []).map((e) => (e as { template_id: string | null }).template_id).filter(Boolean));
     const rows = (templatesRes.data || []) as unknown as Array<{
-      id: string; title: string; description: string | null; difficulty_rating: string | null;
+      id: string; slug: string | null; title: string; description: string | null; difficulty_rating: string | null;
       event_categories: Named; levels: Named;
     }>;
     const cards: HomeCourseCard[] = rows.map((t) => ({
       id: t.id,
+      slug: t.slug,
       title: t.title,
       description: t.description,
       category: t.event_categories?.name || null,

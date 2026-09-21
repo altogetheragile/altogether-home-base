@@ -82,6 +82,9 @@ const Icons = {
 // ─── Fallback course catalogue ──────────────────────────────────────────────
 interface CourseItem {
   id: string;
+  /** The course's address. Absent on the hard-coded fallback cards, which have no row behind
+   *  them, and null only for a row written before the column existed. */
+  slug?: string | null;
   type: string;
   title: string;
   cert: string | null;
@@ -230,7 +233,7 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
         </div>
 
         {/* title */}
-        <Link to={hasDate ? `/events/${firstDate!.eventId}` : `/courses/${course.id}`} style={{ color: p.deepTeal, fontSize: 18, fontWeight: 800, lineHeight: 1.2, textDecoration: 'none', display: 'block' }}>{course.title}</Link>
+        <Link to={hasDate ? `/events/${firstDate!.eventId}` : `/courses/${course.slug || course.id}`} style={{ color: p.deepTeal, fontSize: 18, fontWeight: 800, lineHeight: 1.2, textDecoration: 'none', display: 'block' }}>{course.title}</Link>
 
         {/* description */}
         <div style={{ color: p.muted, fontSize: 13, lineHeight: 1.65 }}>{course.description}</div>
@@ -278,7 +281,7 @@ const CourseCard = ({ course, index }: { course: CourseItem; index: number }) =>
         {/* divider + CTAs */}
         <div style={{ borderTop: `1px solid ${p.paleTeal}`, paddingTop: 14, marginTop: 4, display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link
-            to={hasDate ? `/events/${firstDate!.eventId}` : `/courses/${course.id}`}
+            to={hasDate ? `/events/${firstDate!.eventId}` : `/courses/${course.slug || course.id}`}
             style={{ background: p.deepTeal, color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer', flex: 1, textDecoration: 'none', textAlign: 'center' }}
           >
             View details
@@ -331,6 +334,7 @@ const Events: React.FC = () => {
 
       return {
         id: t.id,
+        slug: (t as { slug?: string | null }).slug ?? null,
         type: typeName,
         title: t.title,
         cert,
@@ -368,7 +372,7 @@ const Events: React.FC = () => {
           const firstDate = course.scheduledDates[0];
           const courseUrl = firstDate
             ? `${SITE_URL}/events/${firstDate.eventId}`
-            : `${SITE_URL}/courses/${course.id}`;
+            : `${SITE_URL}/courses/${course.slug || course.id}`;
           return {
             '@type': 'ListItem',
             position: index + 1,
