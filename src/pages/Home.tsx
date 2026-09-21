@@ -118,7 +118,7 @@ const Home: React.FC = () => {
     <div className="aa-page">
       <SEOHead
         title="Altogether Agile - Agile Coaching & Training"
-        description="Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results."
+        description="Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally."
         path="/"
       />
       <OrganizationSchema />
@@ -143,21 +143,36 @@ const Home: React.FC = () => {
         <div className={`aa-hero-content${isMobile ? ' aa-hero-content--mobile' : ''}`}>
           <div className="aa-hero-grid">
             <div>
+              {/* The credential first, because it is the one thing on this page nobody else can
+                  claim. A freelancer's authority is the product. */}
+              <p className="aa-hero-eyebrow">Co-author of AgilePM3 v2 and AgileBA v3</p>
+              {/* What he sells, in the heading, and the slogan underneath it.
+                  It was the other way round: the h1 was "Work better together. Accelerate time to
+                  value." - true of any consultancy that has ever existed - and the line that
+                  actually distinguishes him, 25 years and still delivered personally, was set
+                  small beneath it. For a solo freelancer that sentence IS the proposition, so it
+                  moves up and the slogan keeps its place as the line that follows. */}
               <h1 className="aa-hero-h1">
-                Work better together.<br />Accelerate time to value.
+                Practical agile training<br />and coaching, delivered personally.
               </h1>
               <p className="aa-hero-subtitle">
-                Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.
+                Work better together. Accelerate time to value. 25 years of real experience, still delivered personally, every time.
               </p>
+              {/* The hire-me action, in the hero.
+                  Both buttons here used to be BROWSE actions - Browse Events and Knowledge Base -
+                  and the first "Book a Chemistry Session" on this page sat at about 2,800px down a
+                  4,500px page, three and a half screens below the fold. A reference library is a
+                  poor second call to action when the first is already a browse; the conversation is
+                  the thing worth asking for.
+                  `bookingHref` rather than a constant: the booking route is behind show_bookings
+                  and falls back to the contact page when it is off. */}
               <div className="aa-hero-actions">
                 <Link to="/events" className="aa-btn aa-btn--primary">
                   Browse Events <Icons.ArrowRight />
                 </Link>
-                {settings?.show_knowledge && (
-                  <Link to="/knowledge" className="aa-btn aa-btn--ghost">
-                    Knowledge Base <Icons.ArrowRight />
-                  </Link>
-                )}
+                <a href={bookingHref} className="aa-btn aa-btn--ghost">
+                  Book a Chemistry Session <Icons.ArrowRight />
+                </a>
               </div>
             </div>
           </div>

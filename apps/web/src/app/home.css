@@ -52,6 +52,21 @@
   padding: 40px 20px 56px;
 }
 
+/* The credential above the heading, as a kicker to it.
+ *
+ * Not the orange, and not uppercased, though it started as both. The orange is the accent and it is
+ * used for large things - a 36px stats icon, a filled button where it is the GROUND. As 12px bold
+ * text on white it measures 2.17:1, less than half the 4.5:1 small text needs; deep teal measures
+ * about ten to one. And uppercasing turned "AgilePM3 v2 and AgileBA v3" into "AGILEPM3 V2 AND
+ * AGILEBA V3" - product names with deliberate casing, in the one line that exists to be recognised
+ * by people who know them. */
+.aa-hero-eyebrow {
+  color: var(--aa-deep-teal);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
 .aa-hero-h1 {
   color: var(--aa-deep-teal);
   font-family: 'DM Serif Display', Georgia, serif;

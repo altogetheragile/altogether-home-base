@@ -52,6 +52,25 @@
   padding: 40px 20px 56px;
 }
 
+/* The credential above the heading, as a kicker to it.
+ *
+ * Not the orange, and not uppercased, though it started as both.
+ *
+ * The orange is the site's accent and it is used for large things - a 36px stats icon, a filled
+ * button where it is the GROUND and deep teal sits on it. As 12px bold text on white it measures
+ * 2.17:1, which is less than half the 4.5:1 small text needs. Deep teal is the same brand, reads
+ * as a kicker to the serif heading it sits above, and measures about ten to one.
+ *
+ * And `text-transform: uppercase` turned "AgilePM3 v2 and AgileBA v3" into "AGILEPM3 V2 AND
+ * AGILEBA V3". Those are product names with deliberate casing, and this line exists to be
+ * recognised by people who know them. A style that rewrites a proper noun is the wrong style. */
+.aa-hero-eyebrow {
+  color: var(--aa-deep-teal);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
 .aa-hero-h1 {
   color: var(--aa-deep-teal);
   font-family: 'DM Serif Display', Georgia, serif;
