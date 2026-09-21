@@ -4,7 +4,7 @@ import type { EventTemplate, CourseFeedback } from '@/lib/events-types';
 export * from '@/lib/events-types';
 
 const TEMPLATE_FIELDS = `
-  id, title, description, short_description, seo_title, seo_description,
+  id, slug, title, description, short_description, seo_title, seo_description,
   duration_days, target_audience, learning_outcomes, key_benefits, prerequisites,
   template_tags, difficulty_rating, is_published, display_order,
   event_types:event_types!event_type_id(name),
@@ -31,14 +31,25 @@ export async function getEventTemplates(): Promise<EventTemplate[]> {
   }
 }
 
-/** A single published course template by id (the SEO course page). */
-export async function getCourse(id: string): Promise<EventTemplate | null> {
+/** Is this a bare uuid, as the old course URLs were? */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A single published course template, by slug or by the uuid the URLs used to use.
+ *
+ *  Course pages were `/courses/<uuid>` - forty-odd characters of hex carrying no word anybody would
+ *  search for, in a search result that has to compete with Reed and The Knowledge Academy. They are
+ *  `/courses/agilepm-foundation` now.
+ *
+ *  Both still resolve, and they have to: four of those uuid URLs are indexed, and Google needs to
+ *  fetch them to be told where they went. The page redirects a uuid to its slug rather than serving
+ *  the same content at two addresses. */
+export async function getCourse(idOrSlug: string): Promise<EventTemplate | null> {
   try {
     const supabase = await createClient();
     const { data } = await supabase
       .from('event_templates')
       .select(TEMPLATE_FIELDS)
-      .eq('id', id)
+      .eq(UUID.test(idOrSlug) ? 'id' : 'slug', idOrSlug)
       .eq('is_published', true)
       .maybeSingle();
     return (data as unknown as EventTemplate) ?? null;

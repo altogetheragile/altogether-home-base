@@ -273,7 +273,7 @@ const Home: React.FC = () => {
               {courses.map((course) => (
                 <Link
                   key={course.id}
-                  to={`/courses/${course.id}`}
+                  to={`/courses/${course.slug || course.id}`}
                   className="aa-course-card"
                 >
                   <div className="aa-course-card__header">

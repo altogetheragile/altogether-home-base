@@ -16,6 +16,8 @@ export type ScheduledEvent = {
 
 export type EventTemplate = {
   id: string;
+  /** The course's address. Null only for a row written before the column existed. */
+  slug: string | null;
   title: string;
   description: string | null;
   short_description: string | null;
@@ -103,7 +105,9 @@ export function toCardModel(t: EventTemplate, feedback: CourseFeedback[], now: n
     description,
     scheduledDates,
     // Scheduled courses link to the SPA registration page; unscheduled to the Next course page.
-    href: first ? `/events/${first.eventId}` : `/courses/${t.id}`,
+    // By slug, falling back to the uuid: a row with no slug still has to be reachable, and the
+    // page resolves either.
+    href: first ? `/events/${first.eventId}` : `/courses/${t.slug || t.id}`,
     testimonial: topFeedbackFor(t.title, feedback),
   };
 }

@@ -1418,6 +1418,7 @@ export type Database = {
           prerequisites: string[] | null
           seo_description: string | null
           seo_title: string | null
+          slug: string | null
           short_description: string | null
           target_audience: string | null
           template_tags: string[] | null
@@ -1450,6 +1451,7 @@ export type Database = {
           prerequisites?: string[] | null
           seo_description?: string | null
           seo_title?: string | null
+          slug?: string | null
           short_description?: string | null
           target_audience?: string | null
           template_tags?: string[] | null
@@ -1482,6 +1484,7 @@ export type Database = {
           prerequisites?: string[] | null
           seo_description?: string | null
           seo_title?: string | null
+          slug?: string | null
           short_description?: string | null
           target_audience?: string | null
           template_tags?: string[] | null
