@@ -1759,6 +1759,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           duration_minutes: number
+          guide: string | null
           id: string
           pass_mark: number
           scenario: string | null
@@ -1775,6 +1776,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration_minutes?: number
+          guide?: string | null
           id?: string
           pass_mark?: number
           scenario?: string | null
@@ -1791,6 +1793,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration_minutes?: number
+          guide?: string | null
           id?: string
           pass_mark?: number
           scenario?: string | null

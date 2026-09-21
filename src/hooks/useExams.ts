@@ -6,6 +6,7 @@ export interface Exam {
   title: string;
   slug: string;
   description: string | null;
+  guide: string | null;
   duration_minutes: number;
   pass_mark: number;
   total_questions: number;

@@ -9,6 +9,7 @@ interface ExamData {
   title: string;
   slug: string;
   description?: string;
+  guide?: string;
   duration_minutes: number;
   pass_mark: number;
   total_questions: number;
