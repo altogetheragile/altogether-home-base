@@ -23,8 +23,6 @@ export default function AdminSettings() {
     show_dashboard: settings?.show_dashboard ?? true,
     show_resources: settings?.show_resources ?? true,
     show_flow_game: settings?.show_flow_game ?? true,
-    show_zoo_game: settings?.show_zoo_game ?? false,
-    show_scrum_game: settings?.show_scrum_game ?? false,
     show_exams: settings?.show_exams ?? true,
     show_bookings: settings?.show_bookings ?? false,
     show_admin_routes: settings?.show_admin_routes ?? true,
@@ -48,8 +46,6 @@ export default function AdminSettings() {
         show_dashboard: settings.show_dashboard ?? true,
         show_resources: settings.show_resources ?? true,
         show_flow_game: settings.show_flow_game ?? true,
-        show_zoo_game: settings.show_zoo_game ?? false,
-        show_scrum_game: settings.show_scrum_game ?? false,
         show_exams: settings.show_exams ?? true,
         show_bookings: settings.show_bookings ?? false,
         show_admin_routes: settings.show_admin_routes ?? true,
@@ -246,17 +242,6 @@ export default function AdminSettings() {
 
           <Separator />
 
-          {/* The three games, together.
-              Asked after finding the zoo was in no menu at all: "should I see a toggle in settings
-              for the game? In fact, all the games?" There were three games and one switch - Flow
-              Game, filed on its own among the content pages - while the zoo and the Scrum game were
-              reachable only by typing their URLs, with nothing anywhere to show or hide them. Games
-              are the part of this site most likely to be published or pulled for a particular
-              class, so all three answer to the same place. */}
-          <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-muted-foreground">Games</p>
-          </div>
-
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="show_flow_game" className="text-base font-medium">Flow Game</Label>
@@ -266,34 +251,6 @@ export default function AdminSettings() {
               id="show_flow_game"
               checked={localSettings.show_flow_game}
               onCheckedChange={() => handleToggle('show_flow_game')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_zoo_game" className="text-base font-medium">Zoo Game</Label>
-              <p className="text-sm text-muted-foreground">Show Build a Zoo, the Scrum game, in the Resources dropdown</p>
-            </div>
-            <Switch
-              id="show_zoo_game"
-              checked={localSettings.show_zoo_game}
-              onCheckedChange={() => handleToggle('show_zoo_game')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_scrum_game" className="text-base font-medium">Scrum Game</Label>
-              <p className="text-sm text-muted-foreground">Show the original Scrum simulation in the Resources dropdown</p>
-            </div>
-            <Switch
-              id="show_scrum_game"
-              checked={localSettings.show_scrum_game}
-              onCheckedChange={() => handleToggle('show_scrum_game')}
             />
           </div>
 
