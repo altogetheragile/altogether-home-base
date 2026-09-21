@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, ChevronRight, PencilLine } from 'lucide-react';
 import { useExams } from '@/hooks/useExams';
 import { useCreateExam, useUpdateExam, useDeleteExam } from '@/hooks/useExamMutations';
 import { Button } from '@/components/ui/button';
@@ -16,16 +16,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import SimpleForm from '@/components/admin/SimpleForm';
+import { ExamGuideEditor } from '@/components/admin/ExamGuideEditor';
 import type { Exam } from '@/hooks/useExams';
 
 const examFields = [
   { key: 'title', label: 'Title', type: 'text' as const, required: true },
   { key: 'slug', label: 'Slug (URL path)', type: 'text' as const, required: true, placeholder: 'e.g. professional-scrum-master' },
   { key: 'description', label: 'Description', type: 'textarea' as const },
-  {
-    key: 'guide', label: 'Guide (markdown, shown on the exam page)', type: 'textarea' as const,
-    placeholder: 'What this paper is, how the format works, how to prepare, what people get wrong.',
-  },
   { key: 'duration_minutes', label: 'Duration (minutes)', type: 'number' as const, required: true, placeholder: '40' },
   { key: 'pass_mark', label: 'Pass Mark', type: 'number' as const, required: true, placeholder: '30' },
   { key: 'total_questions', label: 'Total Questions', type: 'number' as const, required: true, placeholder: '50' },
@@ -41,6 +38,7 @@ const examFields = [
 const AdminExams = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  const [guideExam, setGuideExam] = useState<Exam | null>(null);
 
   const { data: exams, isLoading, error } = useExams();
   const createMutation = useCreateExam();
@@ -54,7 +52,6 @@ const AdminExams = () => {
           title: data.title as string,
           slug: data.slug as string,
           description: (data.description as string) || undefined,
-          guide: (data.guide as string) || undefined,
           duration_minutes: Number(data.duration_minutes) || 40,
           pass_mark: Number(data.pass_mark) || 30,
           total_questions: Number(data.total_questions) || 50,
@@ -75,7 +72,6 @@ const AdminExams = () => {
             title: data.title as string,
             slug: data.slug as string,
             description: (data.description as string) || undefined,
-          guide: (data.guide as string) || undefined,
             duration_minutes: Number(data.duration_minutes) || 40,
             pass_mark: Number(data.pass_mark) || 30,
             total_questions: Number(data.total_questions) || 50,
@@ -141,6 +137,13 @@ const AdminExams = () => {
       header: 'Actions',
       cell: (exam) => (
         <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={() => setGuideExam(exam)}
+            title={exam.guide ? 'Edit the guide on this exam page' : 'This page has no guide. Google does not index pages with nothing on them.'}>
+            <PencilLine className="h-4 w-4" /> Guide
+            <span className={exam.guide ? 'ml-1 text-[11px] text-muted-foreground' : 'ml-1 text-[11px] font-semibold text-amber-600'}>
+              {exam.guide ? `${exam.guide.trim().split(/\s+/).filter(Boolean).length}w` : 'none'}
+            </span>
+          </Button>
           <Dialog
             open={editingExam?.id === exam.id}
             onOpenChange={(open) => { if (!open) setEditingExam(null); }}
@@ -220,6 +223,13 @@ const AdminExams = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {guideExam && (
+        <ExamGuideEditor
+          exam={exams?.find((e) => e.id === guideExam.id) ?? guideExam}
+          onClose={() => setGuideExam(null)}
+        />
+      )}
 
       <Card>
         <CardHeader><CardTitle>All Exams</CardTitle></CardHeader>
