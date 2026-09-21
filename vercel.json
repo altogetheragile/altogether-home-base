@@ -6,149 +6,666 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+        }
       ]
     },
     {
       "source": "/((?!exams|blog|events|courses|about|coaching|testimonials|contact).+)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://cdn.credly.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; frame-src https://www.youtube.com https://youtube.com https://credly.com https://*.credly.com; worker-src 'self' blob:; upgrade-insecure-requests" }
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://cdn.credly.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; frame-src https://www.youtube.com https://youtube.com https://credly.com https://*.credly.com; worker-src 'self' blob:; upgrade-insecure-requests"
+        }
       ]
     },
     {
       "source": "/(exams|blog|events|courses|about|coaching|testimonials|contact)(/.*)?",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; upgrade-insecure-requests" }
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; upgrade-insecure-requests"
+        }
       ]
     },
     {
       "source": "/",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; upgrade-insecure-requests" }
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://wqaplkypnetifpqrungv.supabase.co wss://wqaplkypnetifpqrungv.supabase.co https://api.ipify.org https://*.ingest.de.sentry.io; upgrade-insecure-requests"
+        }
       ]
     }
   ],
   "redirects": [
-    { "source": "/agile-training-courses/", "destination": "/events", "statusCode": 301 },
-    { "source": "/agile-training-courses", "destination": "/events", "statusCode": 301 },
-    { "source": "/courses", "destination": "/events", "statusCode": 301 },
-    { "source": "/courses/", "destination": "/events", "statusCode": 301 },
-    { "source": "/schedule", "destination": "/events", "statusCode": 301 },
-    { "source": "/schedule/", "destination": "/events", "statusCode": 301 },
-    { "source": "/schedule/event/", "destination": "/events", "statusCode": 301 },
-    { "source": "/schedule/event/:path*", "destination": "/events", "statusCode": 301 },
-    { "source": "/agile-training-home/", "destination": "/events", "statusCode": 301 },
-    { "source": "/agile-training-home", "destination": "/events", "statusCode": 301 },
-    { "source": "/gallery/", "destination": "/", "statusCode": 301 },
-    { "source": "/registration-page/", "destination": "/events", "statusCode": 301 },
-    { "source": "/appointments/", "destination": "/contact", "statusCode": 301 },
-    { "source": "/user-story-mapping/", "destination": "/blog/user-story-mapping", "statusCode": 301 },
-    { "source": "/successful-agile-teams-fail-every-day/", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/successful-agile-teams-fail-every-day", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/blog/successful-agile-teams-fail-every-day", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/agile-teams-fail-every-day/", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/agile-teams-fail-every-day", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/agile-training-certification-1/", "destination": "/blog/agile-certifications-do-they-matter", "statusCode": 301 },
-    { "source": "/blog/agile-training-certification-1", "destination": "/blog/agile-certifications-do-they-matter", "statusCode": 301 },
-    { "source": "/top-ten-agile-failures/", "destination": "/blog/top-agile-failures", "statusCode": 301 },
-    { "source": "/top-ten-agile-failures", "destination": "/blog/top-agile-failures", "statusCode": 301 },
-    { "source": "/top-ten-agile-failures-and-how-to-avoid-them/", "destination": "/blog/top-agile-failures", "statusCode": 301 },
-    { "source": "/top-ten-agile-failures-and-how-to-avoid-them", "destination": "/blog/top-agile-failures", "statusCode": 301 },
-    { "source": "/blog/top-ten-agile-failures", "destination": "/blog/top-agile-failures", "statusCode": 301 },
-    { "source": "/agile-reading-list/", "destination": "/blog/agile-reading-list", "statusCode": 301 },
-    { "source": "/agile-reading-list", "destination": "/blog/agile-reading-list", "statusCode": 301 },
-    { "source": "/what-is-agile-part-2-agile-frameworks/", "destination": "/blog/what-is-agile-part-2-agile-frameworks", "statusCode": 301 },
-    { "source": "/what-is-agile-part-2-agile-frameworks", "destination": "/blog/what-is-agile-part-2-agile-frameworks", "statusCode": 301 },
-    { "source": "/agile-training-certification-2/", "destination": "/blog/agile-certifications-do-they-matter", "statusCode": 301 },
-    { "source": "/blog/agile-training-certification-2", "destination": "/blog/agile-certifications-do-they-matter", "statusCode": 301 },
-    { "source": "/an-introduction-to-agile/", "destination": "/blog/agile-is-not-what-you-think-it-is", "statusCode": 301 },
-    { "source": "/an-introduction-to-agile", "destination": "/blog/agile-is-not-what-you-think-it-is", "statusCode": 301 },
-    { "source": "/blog/an-introduction-to-agile", "destination": "/blog/agile-is-not-what-you-think-it-is", "statusCode": 301 },
-    { "source": "/understanding-mvp-meaning/", "destination": "/blog/mvp-thinking-age-of-ai", "statusCode": 301 },
-    { "source": "/understanding-mvp-meaning", "destination": "/blog/mvp-thinking-age-of-ai", "statusCode": 301 },
-    { "source": "/blog/understanding-mvp-meaning", "destination": "/blog/mvp-thinking-age-of-ai", "statusCode": 301 },
-    { "source": "/mvp-minimum-viable-product/", "destination": "/blog/mvp-thinking-age-of-ai", "statusCode": 301 },
-    { "source": "/mvp-minimum-viable-product", "destination": "/blog/mvp-thinking-age-of-ai", "statusCode": 301 },
-    { "source": "/what-is-agile-part-3-unpredictability-change/", "destination": "/blog/why-agile-exists-navigating-complexity-cynefin", "statusCode": 301 },
-    { "source": "/what-is-agile-part-3-unpredictability-change", "destination": "/blog/why-agile-exists-navigating-complexity-cynefin", "statusCode": 301 },
-    { "source": "/what-is-agile-part-3-recognising-unpredictability-change/", "destination": "/blog/why-agile-exists-navigating-complexity-cynefin", "statusCode": 301 },
-    { "source": "/what-is-agile-part-3-recognising-unpredictability-change", "destination": "/blog/why-agile-exists-navigating-complexity-cynefin", "statusCode": 301 },
-    { "source": "/blog/what-is-agile-part-3-unpredictability-change", "destination": "/blog/why-agile-exists-navigating-complexity-cynefin", "statusCode": 301 },
-    { "source": "/the-pdca-model-explained-exploring-the-deming-cycle/", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/the-pdca-model-explained-exploring-the-deming-cycle", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/blog/the-pdca-model-explained-exploring-the-deming-cycle", "destination": "/blog/pdca-cycle-explained", "statusCode": 301 },
-    { "source": "/better-coaching-with-moving-motivators/", "destination": "/blog/what-motivates-your-team", "statusCode": 301 },
-    { "source": "/better-coaching-with-moving-motivators", "destination": "/blog/what-motivates-your-team", "statusCode": 301 },
-    { "source": "/blog/better-coaching-with-moving-motivators", "destination": "/blog/what-motivates-your-team", "statusCode": 301 },
-    { "source": "/blog/moving-motivators", "destination": "/blog/what-motivates-your-team", "statusCode": 301 },
-    { "source": "/overcome-imposter-syndrome/", "destination": "/blog/overcome-imposter-syndrome", "statusCode": 301 },
-    { "source": "/coaching-benefits/", "destination": "/blog/why-coaching-works-and-when-it-doesnt", "statusCode": 301 },
-    { "source": "/coaching-benefits", "destination": "/blog/why-coaching-works-and-when-it-doesnt", "statusCode": 301 },
-    { "source": "/coaching-benefits-discover-6-benefits-for-you/", "destination": "/blog/why-coaching-works-and-when-it-doesnt", "statusCode": 301 },
-    { "source": "/coaching-benefits-discover-6-benefits-for-you", "destination": "/blog/why-coaching-works-and-when-it-doesnt", "statusCode": 301 },
-    { "source": "/blog/coaching-benefits", "destination": "/blog/why-coaching-works-and-when-it-doesnt", "statusCode": 301 },
-    { "source": "/portfolio-items/introduction-to-agile/", "destination": "/", "statusCode": 301 },
-    { "source": "/portfolio-items/introduction-to-agile", "destination": "/", "statusCode": 301 },
-    { "source": "/portfolio-items/m30-foundation-workshop/", "destination": "/", "statusCode": 301 },
-    { "source": "/portfolio-items/m30-foundation-workshop", "destination": "/", "statusCode": 301 },
-    { "source": "/portfolio-items/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/wp-content/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/wp-admin/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/wp-includes/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/wp-json/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/tag/coaching/feed/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/coaching/feed", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/coaching/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/coaching", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/agile/feed/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/agile/feed", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/agile/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/agile", "destination": "/blog", "statusCode": 301 },
-    { "source": "/tag/:path*", "destination": "/blog", "statusCode": 301 },
-    { "source": "/category/user-stories/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/category/user-stories", "destination": "/blog", "statusCode": 301 },
-    { "source": "/category/:path*", "destination": "/blog", "statusCode": 301 },
-    { "source": "/agile-feedback/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/agile-feedback", "destination": "/blog", "statusCode": 301 },
-    { "source": "/feed/", "destination": "/blog", "statusCode": 301 },
-    { "source": "/feed", "destination": "/blog", "statusCode": 301 },
-    { "source": "/xmlrpc.php", "destination": "/", "statusCode": 301 },
-    { "source": "/wp-login.php", "destination": "/", "statusCode": 301 },
-    { "source": "/wp-signup.php", "destination": "/", "statusCode": 301 },
-    { "source": "/author/ealinghands/feed/", "destination": "/about", "statusCode": 301 },
-    { "source": "/author/ealinghands/feed", "destination": "/about", "statusCode": 301 },
-    { "source": "/author/ealinghands/page/2/", "destination": "/about", "statusCode": 301 },
-    { "source": "/author/ealinghands/page/2", "destination": "/about", "statusCode": 301 },
-    { "source": "/author/ealinghands/", "destination": "/about", "statusCode": 301 },
-    { "source": "/author/ealinghands", "destination": "/about", "statusCode": 301 },
-    { "source": "/author/:path*", "destination": "/about", "statusCode": 301 },
-    { "source": "/page/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/blog/best-ai-strategy-200-years-old", "destination": "/blog/ai-adoption-strategy-200-years-old", "statusCode": 301 },
-    { "source": "/blog/humans-in-the-loop-not-a-checkbox", "destination": "/blog/humans-in-the-loop-cynefin-ai-agents", "statusCode": 301 },
-    { "source": "/exams/bcf2a50c-f29a-49e6-b82f-1dfa7243ec6a", "destination": "/exams/agilepm-foundation-paper-1", "statusCode": 301 },
-    { "source": "/exams/c031d99d-8e0a-4fe5-ae71-501c5df53372", "destination": "/exams/professional-scrum-master", "statusCode": 301 }
+    {
+      "source": "/agile-training-courses/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-training-courses",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/courses",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/courses/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/schedule",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/schedule/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/schedule/event/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/schedule/event/:path*",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/schedule/event/:path*/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-training-home/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-training-home",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/gallery/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/registration-page/",
+      "destination": "/events",
+      "statusCode": 301
+    },
+    {
+      "source": "/appointments/",
+      "destination": "/contact",
+      "statusCode": 301
+    },
+    {
+      "source": "/user-story-mapping/",
+      "destination": "/blog/user-story-mapping",
+      "statusCode": 301
+    },
+    {
+      "source": "/successful-agile-teams-fail-every-day/",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/successful-agile-teams-fail-every-day",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/successful-agile-teams-fail-every-day",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-teams-fail-every-day/",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-teams-fail-every-day",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-training-certification-1/",
+      "destination": "/blog/agile-certifications-do-they-matter",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/agile-training-certification-1",
+      "destination": "/blog/agile-certifications-do-they-matter",
+      "statusCode": 301
+    },
+    {
+      "source": "/top-ten-agile-failures/",
+      "destination": "/blog/top-agile-failures",
+      "statusCode": 301
+    },
+    {
+      "source": "/top-ten-agile-failures",
+      "destination": "/blog/top-agile-failures",
+      "statusCode": 301
+    },
+    {
+      "source": "/top-ten-agile-failures-and-how-to-avoid-them/",
+      "destination": "/blog/top-agile-failures",
+      "statusCode": 301
+    },
+    {
+      "source": "/top-ten-agile-failures-and-how-to-avoid-them",
+      "destination": "/blog/top-agile-failures",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/top-ten-agile-failures",
+      "destination": "/blog/top-agile-failures",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-reading-list/",
+      "destination": "/blog/agile-reading-list",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-reading-list",
+      "destination": "/blog/agile-reading-list",
+      "statusCode": 301
+    },
+    {
+      "source": "/what-is-agile-part-2-agile-frameworks/",
+      "destination": "/blog/what-is-agile-part-2-agile-frameworks",
+      "statusCode": 301
+    },
+    {
+      "source": "/what-is-agile-part-2-agile-frameworks",
+      "destination": "/blog/what-is-agile-part-2-agile-frameworks",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-training-certification-2/",
+      "destination": "/blog/agile-certifications-do-they-matter",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/agile-training-certification-2",
+      "destination": "/blog/agile-certifications-do-they-matter",
+      "statusCode": 301
+    },
+    {
+      "source": "/an-introduction-to-agile/",
+      "destination": "/blog/agile-is-not-what-you-think-it-is",
+      "statusCode": 301
+    },
+    {
+      "source": "/an-introduction-to-agile",
+      "destination": "/blog/agile-is-not-what-you-think-it-is",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/an-introduction-to-agile",
+      "destination": "/blog/agile-is-not-what-you-think-it-is",
+      "statusCode": 301
+    },
+    {
+      "source": "/understanding-mvp-meaning/",
+      "destination": "/blog/mvp-thinking-age-of-ai",
+      "statusCode": 301
+    },
+    {
+      "source": "/understanding-mvp-meaning",
+      "destination": "/blog/mvp-thinking-age-of-ai",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/understanding-mvp-meaning",
+      "destination": "/blog/mvp-thinking-age-of-ai",
+      "statusCode": 301
+    },
+    {
+      "source": "/mvp-minimum-viable-product/",
+      "destination": "/blog/mvp-thinking-age-of-ai",
+      "statusCode": 301
+    },
+    {
+      "source": "/mvp-minimum-viable-product",
+      "destination": "/blog/mvp-thinking-age-of-ai",
+      "statusCode": 301
+    },
+    {
+      "source": "/what-is-agile-part-3-unpredictability-change/",
+      "destination": "/blog/why-agile-exists-navigating-complexity-cynefin",
+      "statusCode": 301
+    },
+    {
+      "source": "/what-is-agile-part-3-unpredictability-change",
+      "destination": "/blog/why-agile-exists-navigating-complexity-cynefin",
+      "statusCode": 301
+    },
+    {
+      "source": "/what-is-agile-part-3-recognising-unpredictability-change/",
+      "destination": "/blog/why-agile-exists-navigating-complexity-cynefin",
+      "statusCode": 301
+    },
+    {
+      "source": "/what-is-agile-part-3-recognising-unpredictability-change",
+      "destination": "/blog/why-agile-exists-navigating-complexity-cynefin",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/what-is-agile-part-3-unpredictability-change",
+      "destination": "/blog/why-agile-exists-navigating-complexity-cynefin",
+      "statusCode": 301
+    },
+    {
+      "source": "/the-pdca-model-explained-exploring-the-deming-cycle/",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/the-pdca-model-explained-exploring-the-deming-cycle",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/the-pdca-model-explained-exploring-the-deming-cycle",
+      "destination": "/blog/pdca-cycle-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/better-coaching-with-moving-motivators/",
+      "destination": "/blog/what-motivates-your-team",
+      "statusCode": 301
+    },
+    {
+      "source": "/better-coaching-with-moving-motivators",
+      "destination": "/blog/what-motivates-your-team",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/better-coaching-with-moving-motivators",
+      "destination": "/blog/what-motivates-your-team",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/moving-motivators",
+      "destination": "/blog/what-motivates-your-team",
+      "statusCode": 301
+    },
+    {
+      "source": "/overcome-imposter-syndrome/",
+      "destination": "/blog/overcome-imposter-syndrome",
+      "statusCode": 301
+    },
+    {
+      "source": "/coaching-benefits/",
+      "destination": "/blog/why-coaching-works-and-when-it-doesnt",
+      "statusCode": 301
+    },
+    {
+      "source": "/coaching-benefits",
+      "destination": "/blog/why-coaching-works-and-when-it-doesnt",
+      "statusCode": 301
+    },
+    {
+      "source": "/coaching-benefits-discover-6-benefits-for-you/",
+      "destination": "/blog/why-coaching-works-and-when-it-doesnt",
+      "statusCode": 301
+    },
+    {
+      "source": "/coaching-benefits-discover-6-benefits-for-you",
+      "destination": "/blog/why-coaching-works-and-when-it-doesnt",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/coaching-benefits",
+      "destination": "/blog/why-coaching-works-and-when-it-doesnt",
+      "statusCode": 301
+    },
+    {
+      "source": "/portfolio-items/introduction-to-agile/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/portfolio-items/introduction-to-agile",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/portfolio-items/m30-foundation-workshop/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/portfolio-items/m30-foundation-workshop",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/portfolio-items/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/portfolio-items/:path*/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-content/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-content/:path*/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-admin/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-admin/:path*/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-includes/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-includes/:path*/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-json/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-json/:path*/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/coaching/feed/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/coaching/feed",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/coaching/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/coaching",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/agile/feed/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/agile/feed",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/agile/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/agile",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/:path*",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/tag/:path*/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/category/user-stories/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/category/user-stories",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/category/:path*",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/category/:path*/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-feedback/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/agile-feedback",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/feed/",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/feed",
+      "destination": "/blog",
+      "statusCode": 301
+    },
+    {
+      "source": "/xmlrpc.php",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-login.php",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/wp-signup.php",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/ealinghands/feed/",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/ealinghands/feed",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/ealinghands/page/2/",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/ealinghands/page/2",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/ealinghands/",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/ealinghands",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/:path*",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/author/:path*/",
+      "destination": "/about",
+      "statusCode": 301
+    },
+    {
+      "source": "/page/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/page/:path*/",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/best-ai-strategy-200-years-old",
+      "destination": "/blog/ai-adoption-strategy-200-years-old",
+      "statusCode": 301
+    },
+    {
+      "source": "/blog/humans-in-the-loop-not-a-checkbox",
+      "destination": "/blog/humans-in-the-loop-cynefin-ai-agents",
+      "statusCode": 301
+    },
+    {
+      "source": "/exams/bcf2a50c-f29a-49e6-b82f-1dfa7243ec6a",
+      "destination": "/exams/agilepm-foundation-paper-1",
+      "statusCode": 301
+    },
+    {
+      "source": "/exams/c031d99d-8e0a-4fe5-ae71-501c5df53372",
+      "destination": "/exams/professional-scrum-master",
+      "statusCode": 301
+    }
   ],
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" },
-    { "source": "/va/script.js", "destination": "https://va.vercel-scripts.com/v1/script.js" },
-    { "source": "/va/:path*", "destination": "https://va.vercel-scripts.com/:path*" },
-    { "source": "/exams", "destination": "https://altogether-home-base-web-next.vercel.app/exams" },
-    { "source": "/exams/:path*", "destination": "https://altogether-home-base-web-next.vercel.app/exams/:path*" },
-    { "source": "/blog", "destination": "https://altogether-home-base-web-next.vercel.app/blog" },
-    { "source": "/blog/:path*", "destination": "https://altogether-home-base-web-next.vercel.app/blog/:path*" },
-    { "source": "/events", "destination": "https://altogether-home-base-web-next.vercel.app/events" },
-    { "source": "/courses/:path*", "destination": "https://altogether-home-base-web-next.vercel.app/courses/:path*" },
-    { "source": "/about", "destination": "https://altogether-home-base-web-next.vercel.app/about" },
-    { "source": "/coaching", "destination": "https://altogether-home-base-web-next.vercel.app/coaching" },
-    { "source": "/testimonials", "destination": "https://altogether-home-base-web-next.vercel.app/testimonials" },
-    { "source": "/contact", "destination": "https://altogether-home-base-web-next.vercel.app/contact" },
-    { "source": "/_next/:path*", "destination": "https://altogether-home-base-web-next.vercel.app/_next/:path*" },
-    { "source": "/api/health", "destination": "https://altogether-home-base-web-next.vercel.app/api/health" },
-    { "source": "/", "destination": "https://altogether-home-base-web-next.vercel.app/" },
-    { "source": "/(.*)", "destination": "/_spa.html" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap.xml"
+    },
+    {
+      "source": "/va/script.js",
+      "destination": "https://va.vercel-scripts.com/v1/script.js"
+    },
+    {
+      "source": "/va/:path*",
+      "destination": "https://va.vercel-scripts.com/:path*"
+    },
+    {
+      "source": "/exams",
+      "destination": "https://altogether-home-base-web-next.vercel.app/exams"
+    },
+    {
+      "source": "/exams/:path*",
+      "destination": "https://altogether-home-base-web-next.vercel.app/exams/:path*"
+    },
+    {
+      "source": "/blog",
+      "destination": "https://altogether-home-base-web-next.vercel.app/blog"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "https://altogether-home-base-web-next.vercel.app/blog/:path*"
+    },
+    {
+      "source": "/events",
+      "destination": "https://altogether-home-base-web-next.vercel.app/events"
+    },
+    {
+      "source": "/courses/:path*",
+      "destination": "https://altogether-home-base-web-next.vercel.app/courses/:path*"
+    },
+    {
+      "source": "/about",
+      "destination": "https://altogether-home-base-web-next.vercel.app/about"
+    },
+    {
+      "source": "/coaching",
+      "destination": "https://altogether-home-base-web-next.vercel.app/coaching"
+    },
+    {
+      "source": "/testimonials",
+      "destination": "https://altogether-home-base-web-next.vercel.app/testimonials"
+    },
+    {
+      "source": "/contact",
+      "destination": "https://altogether-home-base-web-next.vercel.app/contact"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://altogether-home-base-web-next.vercel.app/_next/:path*"
+    },
+    {
+      "source": "/api/health",
+      "destination": "https://altogether-home-base-web-next.vercel.app/api/health"
+    },
+    {
+      "source": "/",
+      "destination": "https://altogether-home-base-web-next.vercel.app/"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/_spa.html"
+    }
   ]
 }
