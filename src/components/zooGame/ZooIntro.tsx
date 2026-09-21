@@ -7,6 +7,7 @@ import { GoalShapes } from './GoalShapes';
 import { rewordProductGoal } from './engine';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
+import { GameLinks } from './GameLinks';
 import { Button } from '@/components/ui/button';
 import { ACTION_BAR, BAR_ACTION, FOCUS, TEXT, WIZARD } from './ui/tokens';
 import { cn } from '@/lib/utils';
@@ -58,8 +59,13 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             they are two different questions and a player who wants one rarely wants the other. They
             stay up here because the Product Goal owns the top of this page - putting either of them
             in the body is the fault that moved the Goal up in the first place. */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {/* Top left is the way out, the same as on every other screen of this game. The two
+                links beside it go WITHIN the game; this one leaves it. */}
+            <GameLinks variant="home" />
+            {/* Out of the game, then about inside it. The rule is drawn rather than written. */}
+            <span aria-hidden className="h-3 w-px bg-border" />
             {onOrient && (
               <button type="button" onClick={onOrient} data-part="to-orientation"
                 className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>

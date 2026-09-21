@@ -6,6 +6,7 @@ import { ScrumOnePagerBody } from './ScrumTeaching';
 import { ORIENTATION } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { ShowTeachingAgain } from './ShowTeachingAgain';
+import { GameLinks } from './GameLinks';
 import { motionWanted } from './motion';
 import { cn } from '@/lib/utils';
 import { ACTION_BAR, BAR_ACTION, FOCUS, TAB_ROW } from './ui/tokens';
@@ -63,8 +64,15 @@ export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching,
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-4xl space-y-3 px-4 pb-24 pt-5">
         <header className="space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
+          {/* Top left is the way out, on every screen of this game. The board's strip has the mark
+              there and these two screens had nothing at all - no strip, no header, no link - so
+              somebody who opened the game and thought better of it had the browser's back button
+              and nothing the page offered. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <span className="flex items-center gap-3">
+              <GameLinks variant="home" />
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">Before you start</span>
+            </span>
             {/* The way out of the game's memory, on the one screen where somebody setting up for a
                 room is certain to pass. Invisible to a first-time player, because there is nothing
                 to forget yet. */}

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, renderHook, act, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { reducer, useZooGame } from './useZooGame';
 import { markTaught } from './engine';
 import { ScrumReferenceBody } from './ScrumTeaching';
@@ -114,7 +115,7 @@ describe('the way out of that memory', () => {
   beforeEach(() => localStorage.clear());
 
   const start = (over: Partial<Parameters<typeof BeforeYouStart>[0]> = {}) =>
-    render(<BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} {...over} />).container;
+    render(<MemoryRouter><BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} {...over} /></MemoryRouter>).container;
 
   it('is not there for somebody who has read nothing', () => {
     // A first-time player never meets it. Most of the argument for putting it on this screen rather

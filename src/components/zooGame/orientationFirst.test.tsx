@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { ZooOrientationBody } from './ZooOrientation';
 import { BeforeYouStart } from './BeforeYouStart';
 import { ZooIntro } from './ZooIntro';
@@ -26,7 +27,7 @@ import { ACTION_BAR, BAR_ACTION } from './ui/tokens';
 const screen = () => render(<ZooOrientationBody />).container;
 /** ...and the screen round it, which owns the tabs and the one way onward. */
 const before = (over: Partial<Parameters<typeof BeforeYouStart>[0]> = {}) =>
-  render(<BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} {...over} />).container;
+  render(<MemoryRouter><BeforeYouStart tab="zoo" onTab={() => {}} onDone={() => {}} {...over} /></MemoryRouter>).container;
 
 describe('the orientation screen', () => {
   it('says what the game is, not what Scrum is', () => {
@@ -219,7 +220,7 @@ describe('the two pages, as one screen', () => {
 
 describe('what it does to the screen after it', () => {
   const intro = (over: Partial<Parameters<typeof ZooIntro>[0]> = {}) => render(
-    <ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} onSetGoalShape={() => {}} {...over} />,
+    <MemoryRouter><ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} onSetGoalShape={() => {}} {...over} /></MemoryRouter>,
   ).container;
 
   it('leaves the Product Goal at the top of it', () => {

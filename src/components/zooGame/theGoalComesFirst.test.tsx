@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { ZooIntro } from './ZooIntro';
 import { INTRO_COPY } from './scrumContent';
 
@@ -11,8 +12,8 @@ import { INTRO_COPY } from './scrumContent';
 // to DO was below the things to read, and on a short window it was off the bottom of it.
 
 const intro = () => render(
-  <ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}}
-    onSetGoalShape={() => {}} />,
+  <MemoryRouter><ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}}
+    onSetGoalShape={() => {}} /></MemoryRouter>,
 );
 
 

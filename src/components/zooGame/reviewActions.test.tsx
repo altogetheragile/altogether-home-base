@@ -44,7 +44,7 @@ describe('the ending', () => {
 describe('the Product Goal', () => {
   it('cannot be left empty on the way in', () => {
     const { container } = render(
-      <ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} />,
+      <MemoryRouter><ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} /></MemoryRouter>,
     );
     const start = [...container.querySelectorAll('button')].find((b) => /Start building/.test(b.textContent ?? ''))!;
     expect(start, 'there is no way to start at all').toBeTruthy();
