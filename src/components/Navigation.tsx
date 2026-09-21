@@ -373,7 +373,7 @@ const Navigation = () => {
                       </Link>
                       {showAdminLinks && (
                         <Link
-                          to="/admin/events"
+                          to="/admin"
                           role="menuitem"
                           tabIndex={-1}
                           style={dropdownItemStyle}
@@ -546,7 +546,7 @@ const Navigation = () => {
                   </Link>
                   {showAdminLinks && (
                     <Link
-                      to="/admin/events"
+                      to="/admin"
                       role="menuitem"
                       onClick={() => setIsMenuOpen(false)}
                       style={{ display: 'block', padding: '12px 24px', color: p.deepTeal, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}

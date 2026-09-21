@@ -31,7 +31,7 @@ const Footer = () => {
     { label: 'Testimonials', url: '/testimonials', show: settings?.show_testimonials ?? true },
     { label: 'AI Tools', url: '/ai-tools', show: settings?.show_ai_tools ?? false },
     { label: 'Dashboard', url: '/dashboard', show: (settings?.show_dashboard ?? true) && !!user },
-    { label: 'Admin Panel', url: '/admin/events', show: !!user && userRole === 'admin' },
+    { label: 'Admin Panel', url: '/admin', show: !!user && userRole === 'admin' },
   ];
 
   const quickLinks = navLinks.filter(link => link.show);
