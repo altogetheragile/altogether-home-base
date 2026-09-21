@@ -23,6 +23,7 @@ const RESOURCE_LINKS = [
   { label: 'Practice Exams', to: '/exams', flag: 'show_exams' as const },
   { label: 'AI Tools', to: '/ai-tools', flag: 'show_ai_tools' as const },
   { label: 'Flow Game', to: '/flow-game', flag: 'show_flow_game' as const },
+  { label: 'Zoo Game', to: '/zoo-game', flag: 'show_zoo_game' as const },
 ];
 
 const FLAG_DEFAULTS: Record<string, boolean> = {
@@ -37,6 +38,11 @@ const FLAG_DEFAULTS: Record<string, boolean> = {
   show_resources: true,
   show_exams: true,
   show_flow_game: true,
+  // Off until it is asked for. The zoo has been reachable only by typing its URL - it is in no menu
+  // anywhere on the site - which is half of "how can I navigate to / from the game". This is the
+  // other half, built and held back: the entry exists, and publishing it is one value here or, once
+  // the `show_zoo_game` column is on `site_settings`, a switch on the admin settings page.
+  show_zoo_game: false,
   show_bookings: false,
 };
 

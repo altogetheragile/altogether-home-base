@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { ZooIntro } from './ZooIntro';
 import { rewordProductGoal } from './engine';
 import { reducer } from './useZooGame';
@@ -23,8 +24,8 @@ import type { ZooGameState, GoalShape, GoalMeasure } from './types';
 // player to write, and they are the Product Owner while they write it.
 
 const intro = (goal = '') => render(
-  <ZooIntro productGoal={goal} onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}}
-    onSetGoalShape={() => {}} />,
+  <MemoryRouter><ZooIntro productGoal={goal} onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}}
+    onSetGoalShape={() => {}} /></MemoryRouter>,
 );
 const wand = (c: HTMLElement) => c.querySelector('[data-part="goal-wand"]') as HTMLButtonElement;
 const field = (c: HTMLElement) => c.querySelector('input[aria-label="Product Goal"]') as HTMLInputElement;

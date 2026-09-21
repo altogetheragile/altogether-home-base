@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { ParkInspector } from './ParkInspector';
 import { ZooIntro } from './ZooIntro';
 import { initialZooState, PRODUCT_GOAL } from './config';
@@ -93,8 +94,8 @@ describe('the Product Goal field', () => {
     // It held the default AS TEXT, identical to the placeholder behind it, so a first attempt
     // appended to a Goal nobody had written.
     const { container } = render(
-      <ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
-        onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}} />,
+      <MemoryRouter><ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
+        onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}} /></MemoryRouter>,
     );
     const field = container.querySelector('input[aria-label="Product Goal"]') as HTMLInputElement;
     expect(field.value, 'the field is pre-filled, so typing appends to it').toBe('');
@@ -104,8 +105,8 @@ describe('the Product Goal field', () => {
   it('runs on the suggestion when nobody writes their own', () => {
     let got = '';
     const { container } = render(
-      <ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
-        onSetGoal={(g) => { got = g; }} onStart={() => {}} onStartFromTheBrief={() => {}} />,
+      <MemoryRouter><ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
+        onSetGoal={(g) => { got = g; }} onStart={() => {}} onStartFromTheBrief={() => {}} /></MemoryRouter>,
     );
     (container.querySelector('button[data-part="start"]') as HTMLButtonElement | null)?.click();
     expect(got === '' || got === PRODUCT_GOAL, `an empty field started a game with no Goal: "${got}"`).toBe(true);
