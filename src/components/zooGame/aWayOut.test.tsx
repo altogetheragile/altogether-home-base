@@ -44,6 +44,34 @@ describe('the way out', () => {
     expect(c.textContent ?? '').toContain('Altogether Agile');
   });
 
+  it('gives every game the same three pieces', async () => {
+    // "Should I see a toggle in settings for the game? In fact, all the games?"
+    //
+    // There were three games and one switch. Flow Game had a menu entry, a flag and a toggle; the
+    // zoo and the Scrum game were reachable only by typing their URLs, with nothing anywhere to
+    // show or hide them. A game needs all three or it is not really controllable: somewhere to be
+    // found from, a flag to gate it, and a switch a human can reach.
+    const read = await import('node:fs').then((fs) => (f: string) => fs.readFileSync(f, 'utf8'));
+    const nav = read('src/components/Navigation.tsx');
+    const admin = read('src/pages/admin/AdminSettings.tsx');
+    const hook = read('src/hooks/useSiteSettings.ts');
+
+    for (const [route, flag] of [
+      ['/flow-game', 'show_flow_game'],
+      ['/zoo-game', 'show_zoo_game'],
+      ['/scrum-game', 'show_scrum_game'],
+    ]) {
+      expect(nav, `${route} is in no menu`).toContain(`to: '${route}'`);
+      expect(nav, `${route} has no flag`).toContain(`flag: '${flag}'`);
+      expect(hook, `${flag} is not a setting`).toContain(`${flag}: boolean | null;`);
+      expect(admin, `${flag} has no switch anybody can reach`).toContain(`id="${flag}"`);
+      // Saving writes the whole object in one go, so a key the toggle sets and the save does not
+      // carry is a switch that silently forgets.
+      expect(admin, `${flag} is not loaded into the form`).toContain(`settings?.${flag} ??`);
+      expect(admin, `${flag} is dropped when the settings reload`).toContain(`settings.${flag} ??`);
+    }
+  });
+
   it('is listed in the site menu, and off until it is asked for', async () => {
     // The other half of the question, and the half that was invisible: there was no link to
     // /zoo-game anywhere on this site. Not in the navigation, not on the front page, not in
@@ -56,6 +84,7 @@ describe('the way out', () => {
     const src = await import('node:fs').then((fs) => fs.readFileSync('src/components/Navigation.tsx', 'utf8'));
     expect(src, 'the zoo is in no menu at all').toContain("to: '/zoo-game'");
     expect(src, 'it went live without being asked for').toMatch(/show_zoo_game:\s*false/);
+    expect(src, 'the Scrum game went live without being asked for').toMatch(/show_scrum_game:\s*false/);
   });
 
   it('still leaves the board its glyph', () => {
