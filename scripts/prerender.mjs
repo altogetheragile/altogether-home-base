@@ -210,7 +210,7 @@ function courseJsonLd(course) {
     '@type': 'Course',
     name: course.title,
     description: truncate(course.description, 300),
-    url: `${SITE_URL}/courses/${course.id}`,
+    url: `${SITE_URL}/courses/${course.slug || course.id}`,
     provider: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
   };
 }
@@ -350,7 +350,7 @@ function courseItemListJsonLd(templates) {
         '@type': 'Course',
         name: course.title,
         description: truncate(course.description, 300),
-        url: `${SITE_URL}/courses/${course.id}`,
+        url: `${SITE_URL}/courses/${course.slug || course.id}`,
         provider: {
           '@type': 'Organization',
           name: 'Altogether Agile',
@@ -531,7 +531,7 @@ async function main() {
       .eq('status', 'published'),
     supabase
       .from('event_templates')
-      .select('id, title, description, seo_title, seo_description, created_at')
+      .select('id, slug, title, description, seo_title, seo_description, created_at')
       .eq('is_published', true),
   ]);
 
@@ -615,7 +615,7 @@ async function main() {
       lastmod: fmtDate(exam.updated_at),
     })),
     ...templates.map((course) => ({
-      loc: `${SITE_URL}/courses/${course.id}`,
+      loc: `${SITE_URL}/courses/${course.slug || course.id}`,
       lastmod: fmtDate(course.created_at),
     })),
   ];
