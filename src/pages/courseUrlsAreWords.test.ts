@@ -22,7 +22,12 @@ const LINK_BUILDERS = [
   ['the Next home carousel', 'apps/web/src/app/HomeCarousel.tsx'],
   ['the SPA home page', 'src/pages/Home.tsx'],
   ['the SPA events page', 'src/pages/Events.tsx'],
-  ['the sitemap', 'api/sitemap.xml.ts'],
+  // BOTH sitemaps. `/sitemap.xml` is rewritten to the serverless function, but `npm run build`
+  // also writes a static `dist/sitemap.xml`, and on Vercel a static file wins over a rewrite - so
+  // the prerendered one is the one actually served. Shipping the function change alone left the
+  // live sitemap advertising uuids while every page on the site had moved to slugs.
+  ['the prerendered sitemap (this is the one served)', 'scripts/prerender.mjs'],
+  ['the sitemap function', 'api/sitemap.xml.ts'],
 ] as const;
 
 describe('every place that builds a course link', () => {
