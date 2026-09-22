@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
 import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
 import { requireModule } from '@/lib/module-gate';
+import { isAdmin } from '@/lib/auth';
+import { GuideEditor } from './GuideEditor';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +96,9 @@ export default async function ExamDetailPage({
   const exam = await getExam(slug);
   if (!exam) notFound();
   const siblings = await getSiblings(examSubject(exam.title), slug);
+  // Read from the real session on the server. A visitor never receives the editor's code, and
+  // saving re-checks this anyway (see actions.ts).
+  const canEdit = await isAdmin();
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -108,6 +113,7 @@ export default async function ExamDetailPage({
         ])}
       />
       <ExamPlayer exam={exam} siblings={siblings} />
+      {canEdit && <GuideEditor examId={exam.id} initial={exam.guide ?? ''} />}
     </main>
   );
 }

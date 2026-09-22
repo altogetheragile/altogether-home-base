@@ -379,7 +379,7 @@ happened to migrate first.
 | 1 | Delete the App's routes for the nine already-migrated URLs | **Done.** PR #724 removed them, 4,933 lines. PR #725 added the render guard. |
 | 2 | Move the remaining public pages, group by group, deleting App routes on the way out | **Not started.** Read "What Is Actually Left" below before starting it. |
 | 3 | Unify auth on cookie sessions | **Done.** PR #728 ("One session, both apps"), with #729, #730 and #731 fixing the four faults found in live testing. |
-| 4 | Authenticated areas: dashboard, projects, knowledge base | **Not started.** Unblocked by step 3, with the warning below. |
+| 4 | Authenticated areas: dashboard, projects, knowledge base | **Under way.** The server-side gate exists and is proven (below). The dashboard is deliberately deferred: it moves with `/projects/*`, not before. |
 | 5 | Admin, last or never | **Not started,** and possibly never. No SEO case, and the largest surface. |
 
 ### How Step 1 Is Held
@@ -394,20 +394,48 @@ Steps 2 and 4 follow the same three moves: build it on the Site, rewrite the pat
 `vercel.json`, then **delete the App's route and add the path to `SITE_OWNED`**. The third
 move is the one that was skipped nine times.
 
-### Step 3 Landed The Session, But Nothing Uses It Yet
+### The Server-Side Gate (PRs #739 and #740)
 
-This matters more than the tick mark suggests. `apps/web/src/lib/supabase/server.ts` holds a
-correctly wired cookie-reading server client, and since 22 September the session it reads is
-real. But **no page in the Site calls `getUser()` on the server.** `layout.tsx` still reads
-the cosmetic `aa-auth` cookie to choose between Dashboard and Sign In, and the only
-`getUser()` anywhere in the Site is client-side, in `ExamPlayer`. That one call is what
-started `exam_attempts` recording again after three months of silence, which is the only
-evidence so far that the shared session works at all.
+`apps/web/src/lib/auth.ts` is where the Site answers both questions it could not answer before:
 
-So the gate on steps 4 and 5 is open and has never been driven. The first page that
-server-gates will also be the first real test of server-side identity in this codebase. Do it
-as a piece of work in its own right, on one small page, rather than discovering what it costs
-on the dashboard.
+- `getCurrentUser()` - who, validated against the auth server rather than decoded from a cookie.
+- `getUserRole()` / `isAdmin()` - what they may do. The precedence mirrors the App's
+  `useUserRole`, written twice because the apps cannot import from each other and held together
+  by `roleMatchesTheApp.test.ts`.
+- `assurance()` - their second factor. The same rule as the App's `ProtectedRoute`: an account
+  with no factor configured passes, because AAL2 is a claim that anyone who has one has used it,
+  not that everyone has one. Demanding it of an account with no factor would lock that account
+  out with no way to satisfy the check.
+- `requireUser()` / `requireAdmin()` - the page-level gates. A non-admin gets a 404 rather than a
+  refusal, so nobody learns a page exists by being told they cannot see it.
+
+The refresh happens in `middleware.ts`, not in the page: a Server Component's cookie store is
+read-only, so a refresh there rotates the token and then throws the result away, which loses
+sessions rather than keeping them.
+
+**Everything fails closed,** with one asymmetry worth knowing. An unreadable role is not an
+admin, which costs nothing. An unreadable second factor is *not satisfied*, which can lock
+someone out. That is deliberate, and it is the only place in the gate where failing closed has a
+price.
+
+Proven against a running build rather than only in tests: signed out, signed in as a non-admin
+and signed in as an admin each got what they should, and a non-admin's write to `exams` was
+refused by RLS (0 rows, not an error). The three layers - the page not rendering the editor, the
+Server Action re-checking, and RLS - are independent, and only the third is load-bearing.
+
+### Why The Dashboard Is Not The First Page To Move
+
+It was going to be, and it should not be. The dashboard is the entry point to the tool pipeline:
+its Projects tab does create, edit, archive and delete through `useProjectMutations`, and
+`VITE_ENABLE_PROJECTS` is on. Moving it alone would put project *management* on the Site while
+`/projects/:id` and everything you do with a project stayed on the App. That is the
+two-implementations problem step 1 spent 4,933 lines removing, recreated on purpose.
+
+So the dashboard moves **with** `/projects/*`, which makes it the last thing in step 4 rather
+than the first. The size is the smaller issue but it is not nothing: the Site has two UI
+primitives (`button`, `card`), and a faithful port needs Tabs, Badge, Skeleton, Dialog,
+AlertDialog, form inputs and toasts, plus react-query, three hooks and about 860 lines of
+components.
 
 ### What Is Actually Left, And What It Is Worth
 
