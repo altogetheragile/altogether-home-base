@@ -1,0 +1,261 @@
+{
+  "page": "coaching",
+  "label": "Coaching",
+  "entries": {
+    "coaching.hero.eyebrow": {
+      "value": "Coaching",
+      "label": "Hero eyebrow",
+      "hint": "The teal hero at the top"
+    },
+    "coaching.hero.heading": {
+      "value": "Coaching that asks\nthe right questions.",
+      "label": "Hero heading",
+      "hint": "The teal hero at the top. A line break splits it in two"
+    },
+    "coaching.hero.intro": {
+      "value": "Whether you're navigating a difficult career moment or trying to build a team that actually functions well - coaching works best when it's grounded in real experience. That's what Altogether Agile brings.",
+      "label": "Hero introduction",
+      "hint": "The teal hero at the top"
+    },
+    "coaching.hero.cta": {
+      "value": "Book a free chemistry session",
+      "label": "Hero button",
+      "hint": "The teal hero at the top"
+    },
+    "coaching.hero.jump": {
+      "value": "Jump to enquiry form",
+      "label": "Hero link",
+      "hint": "The teal hero at the top. Scrolls to the form at the foot of the page"
+    },
+    "coaching.approach.label": {
+      "value": "The approach",
+      "label": "Approach eyebrow",
+      "hint": "The approach section, on pale teal"
+    },
+    "coaching.approach.heading": {
+      "value": "Coaching isn't advice-giving.",
+      "label": "Approach heading",
+      "hint": "The approach section, on pale teal"
+    },
+    "coaching.approach.p1": {
+      "value": "Most people who come to coaching are not short of information. They know what they should probably do. What they need is space to think it through - without someone else's agenda in the room.",
+      "label": "Approach, first paragraph",
+      "hint": "The approach section, on pale teal"
+    },
+    "coaching.approach.p2": {
+      "value": "My role as a coach is to hold that space and ask the questions that help you find your own answers. That might sound simple. In practice it requires real skill - and real discipline not to reach for the easy answer on your behalf.",
+      "label": "Approach, second paragraph",
+      "hint": "The approach section, on pale teal"
+    },
+    "coaching.approach.p3": {
+      "value": "Where it's useful, I'll bring 25 years of agile and organisational experience into the room. But the work is yours. That's why it sticks.",
+      "label": "Approach, third paragraph",
+      "hint": "The approach section, on pale teal"
+    },
+    "coaching.service.1.label": {
+      "value": "One-to-One",
+      "label": "Service 1 tag",
+      "hint": "Service 1: the one-to-one block. The word before \"Coaching\" in the pill"
+    },
+    "coaching.service.1.title": {
+      "value": "Professional Coaching",
+      "label": "Service 1 title",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.1.tagline": {
+      "value": "Space to think. Clarity to act.",
+      "label": "Service 1 tagline",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.1.description": {
+      "value": "One-to-one coaching for professionals navigating change - whether that's a new role, a difficult team dynamic, a career pivot, or the challenge of leading in an agile organisation without a map.",
+      "label": "Service 1 description",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.1.detail": {
+      "value": "This isn't mentoring or consultancy. I won't tell you what to do. My role is to hold the right space and ask the questions that help you find your own answers - because those are the ones that actually stick.",
+      "label": "Service 1 detail",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.1.includes": {
+      "value": "60-minute sessions via video call or in person (London)\nPre-session reflection prompts sent 48 hours before\nSession notes and agreed actions within 24 hours\nWhatsApp or email support between sessions\nICF-aligned approach throughout",
+      "label": "Service 1 what is included",
+      "hint": "Service 1: the one-to-one block. One per line, add or remove lines freely"
+    },
+    "coaching.service.1.price": {
+      "value": "On request",
+      "label": "Service 1 price",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.1.packageNote": {
+      "value": "Pricing discussed during your free chemistry session",
+      "label": "Service 1 price note",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.1.cta": {
+      "value": "Book a chemistry session",
+      "label": "Service 1 button",
+      "hint": "Service 1: the one-to-one block"
+    },
+    "coaching.service.2.label": {
+      "value": "Team",
+      "label": "Service 2 tag",
+      "hint": "Service 2: the team block. The word before \"Coaching\" in the pill"
+    },
+    "coaching.service.2.title": {
+      "value": "Agile Team Coaching",
+      "label": "Service 2 title",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.2.tagline": {
+      "value": "Better teams don't happen by accident.",
+      "label": "Service 2 tagline",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.2.description": {
+      "value": "Coaching for agile teams that are technically running the events but not getting the results - or for newly formed teams that want to build good habits from the start.",
+      "label": "Service 2 description",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.2.detail": {
+      "value": "I work with the whole team, not just the Scrum Master or team lead. That means coaching the dynamics, not just the process - how the team makes decisions, how they handle conflict, and whether their retrospectives are actually changing anything.",
+      "label": "Service 2 detail",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.2.includes": {
+      "value": "Initial team assessment and health check\nFortnightly team coaching sessions (90 minutes)\nOne-to-one sessions with team lead or Scrum Master\nRetrospective facilitation and coaching\nManagement 3.0 practices woven throughout",
+      "label": "Service 2 what is included",
+      "hint": "Service 2: the team block. One per line, add or remove lines freely"
+    },
+    "coaching.service.2.price": {
+      "value": "On request",
+      "label": "Service 2 price",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.2.packageNote": {
+      "value": "Engagement length discussed during your free chemistry session",
+      "label": "Service 2 price note",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.2.cta": {
+      "value": "Enquire about team coaching",
+      "label": "Service 2 button",
+      "hint": "Service 2: the team block"
+    },
+    "coaching.service.includesHeading": {
+      "value": "What's included",
+      "label": "\"What's included\" heading",
+      "hint": "Shown above the list on both service blocks"
+    },
+    "coaching.why.label": {
+      "value": "Why Altogether Agile",
+      "label": "Why eyebrow",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.heading": {
+      "value": "Coaching grounded in real experience.",
+      "label": "Why heading",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.1.label": {
+      "value": "ICF-accredited",
+      "label": "Credential 1 name",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.1.desc": {
+      "value": "Coaching approach aligned to International Coaching Federation standards",
+      "label": "Credential 1 description",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.2.label": {
+      "value": "STAR Manager Practitioner",
+      "label": "Credential 2 name",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.2.desc": {
+      "value": "Assessed portfolio across all nine management competencies",
+      "label": "Credential 2 description",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.3.label": {
+      "value": "25+ years experience",
+      "label": "Credential 3 name",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.3.desc": {
+      "value": "Working in and around agile teams as practitioner, trainer, and coach",
+      "label": "Credential 3 description",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.4.label": {
+      "value": "ABC Assessor",
+      "label": "Credential 4 name",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.4.desc": {
+      "value": "Interviews professional membership candidates for the Agile Business Consortium",
+      "label": "Credential 4 description",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.5.label": {
+      "value": "Management 3.0",
+      "label": "Credential 5 name",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.5.desc": {
+      "value": "Licensed Facilitator - energising people, teams, and organisations",
+      "label": "Credential 5 description",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.6.label": {
+      "value": "University Lecturer",
+      "label": "Credential 6 name",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.why.6.desc": {
+      "value": "Part-time visiting lecturer at the University of Westminster",
+      "label": "Credential 6 description",
+      "hint": "The teal band listing why Altogether Agile"
+    },
+    "coaching.chemistry.label": {
+      "value": "Free chemistry session",
+      "label": "Chemistry eyebrow",
+      "hint": "The dark teal chemistry-session band"
+    },
+    "coaching.chemistry.heading": {
+      "value": "Not sure if coaching is right for you?",
+      "label": "Chemistry heading",
+      "hint": "The dark teal chemistry-session band"
+    },
+    "coaching.chemistry.body": {
+      "value": "A chemistry session is a free 30-minute conversation - no agenda, no commitment. It's a chance for both of us to work out whether we're a good fit before anything else.",
+      "label": "Chemistry body",
+      "hint": "The dark teal chemistry-session band"
+    },
+    "coaching.chemistry.boxHeading": {
+      "value": "Book your chemistry session",
+      "label": "Chemistry box heading",
+      "hint": "The dark teal chemistry-session band. The panel on the right"
+    },
+    "coaching.chemistry.cta": {
+      "value": "Book a time slot",
+      "label": "Chemistry button",
+      "hint": "The dark teal chemistry-session band"
+    },
+    "coaching.chemistry.orForm": {
+      "value": "Or use the enquiry form below",
+      "label": "Chemistry fallback line",
+      "hint": "The dark teal chemistry-session band"
+    },
+    "coaching.enquiry.label": {
+      "value": "Get in touch",
+      "label": "Enquiry eyebrow",
+      "hint": "Above the enquiry form at the foot of the page"
+    },
+    "coaching.enquiry.heading": {
+      "value": "Send an enquiry.",
+      "label": "Enquiry heading",
+      "hint": "Above the enquiry form"
+    }
+  }
+}

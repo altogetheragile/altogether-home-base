@@ -11,6 +11,7 @@ import { REGISTRIES } from './index';
 const PAGES: Record<string, string> = {
   home: 'src/app/page.tsx',
   about: 'src/app/about/page.tsx',
+  coaching: 'src/app/coaching/page.tsx',
 };
 
 /** The copy keys a page actually asks for.
@@ -21,8 +22,10 @@ const PAGES: Record<string, string> = {
 function keysRead(file: string): { exact: Set<string>; patterns: RegExp[] } {
   const src = readFileSync(file, 'utf8');
   const exact = new Set([...src.matchAll(/\bt\('([A-Za-z0-9.]+)'\)/g)].map((m) => m[1]));
-  const patterns = [...src.matchAll(/\bt\(`([A-Za-z0-9.${}]+)`\)/g)].map(
-    (m) => new RegExp('^' + m[1].replace(/\./g, '\\.').replace(/\$\{[^}]+\}/g, '[A-Za-z0-9]+') + '$'),
+  // Anything inside the backticks, because the expression in ${...} can be `n` or `i + 1` or
+  // whatever the page finds readable. Only the shape around it matters.
+  const patterns = [...src.matchAll(/\bt\(`([^`]+)`\)/g)].map(
+    (m) => new RegExp('^' + m[1].replace(/\./g, '\\.').replace(/\$\{[^}]*\}/g, '[A-Za-z0-9]+') + '$'),
   );
   return { exact, patterns };
 }
