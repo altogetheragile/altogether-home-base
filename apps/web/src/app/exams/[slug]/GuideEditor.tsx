@@ -9,13 +9,15 @@ import { saveGuide } from './actions';
 
 // ============= Editing the guide on the page it appears on =============
 //
-// This lived in Admin, and the comment on the old one explains why: the exam pages are served by
-// the Site, and the Site deliberately could not see your session, so a page could not tell an
-// admin from a visitor and had no business offering an edit box.
+// This lived in Admin until the Site could see a session. The reason was not a preference: the
+// exam pages are served by the Site, the Site could not tell an admin from a visitor, and a page
+// that cannot tell has no business offering an edit box. So the editing went where the identity
+// was, which was Admin, two clicks and a table away from the words being edited.
 //
-// It can now. This is what the server-side gate is for, and it is the zoo game's model rather than
-// Admin's: you edit the words where you can see them, and the preview uses the page's own renderer
-// (lib/markdown.ts) so what you are looking at is what will ship.
+// It can be here now. This is the zoo game's model: you edit the words where you can see them, and
+// the preview uses the page's own renderer (lib/markdown.ts) so what you are looking at is what
+// will ship. Admin keeps the word count per paper, which is the one thing a table is better at:
+// seeing at a glance which papers still have nothing on them.
 
 export function GuideEditor({ examId, initial }: { examId: string; initial: string }) {
   const router = useRouter();
