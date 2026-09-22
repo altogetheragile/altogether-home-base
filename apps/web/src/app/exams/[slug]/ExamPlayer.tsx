@@ -15,6 +15,14 @@ const c = {
   midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280',
 };
 
+/** Another paper for the same qualification. */
+export type Sibling = {
+  title: string;
+  slug: string;
+  total_questions: number;
+  duration_minutes: number;
+};
+
 export type ExamForPlayer = {
   id: string;
   title: string;
@@ -79,7 +87,39 @@ function renderMarkdown(md: string | null) {
   return html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
 }
 
-export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
+/** Links to the other papers for the same qualification.
+ *
+ *  Before this, an exam page's only way out was back to /exams: you sat Paper 1, were marked, and
+ *  the obvious next thing - sit Paper 2 - was two clicks away through a hub. Server-rendered, so
+ *  the anchors are in the HTML rather than appearing after the JavaScript runs.
+ *
+ *  Worth being honest about what this is not. Every paper is already linked from /exams and listed
+ *  in the sitemap, so this is not how Google discovers them; agilepm-practitioner-paper-2 has never
+ *  been crawled despite both. This is for the person who just finished a paper. */
+function OtherPapers({ siblings, tight = false }: { siblings: Sibling[]; tight?: boolean }) {
+  if (siblings.length === 0) return null;
+  return (
+    <div style={{ maxWidth: 560, margin: tight ? '0 0 24px' : '24px auto 0' }}>
+      <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: c.muted, margin: '0 0 8px' }}>
+        {siblings.length === 1 ? 'The other paper in this set' : 'Other papers in this set'}
+      </p>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {siblings.map((sib) => (
+          <Link key={sib.slug} href={`/exams/${sib.slug}`}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1px solid ${c.lightTeal}`, background: c.white, textDecoration: 'none' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: c.deepTeal }}>{sib.title}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: c.muted, whiteSpace: 'nowrap' }}>
+              {sib.total_questions} questions · {sib.duration_minutes} min
+              <ChevronRight size={14} />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; siblings?: Sibling[] }) {
   const supabase = useMemo(() => createClient(), []);
   const [phase, setPhase] = useState<Phase>('choose');
   const [mode, setMode] = useState<Mode>('exam');
@@ -288,6 +328,7 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
           <p style={{ fontSize: 12, color: c.muted, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>Exam mode is timed with answers at the end. Practice mode is untimed and reveals answers as you go.</p>
         </div>
       </div>
+      <OtherPapers siblings={siblings} />
       {/* Below the card, and only before the paper starts: reading about the exam is what you do
           instead of sitting it, not during it. Next server-renders this client component, so the
           guide is in the HTML a crawler receives - which is the point of it. Without it every exam
@@ -329,6 +370,10 @@ export function ExamPlayer({ exam }: { exam: ExamForPlayer }) {
           <p style={{ margin: '4px 0 0', fontSize: 14, color: c.body }}>{pct}% · pass mark {exam.pass_mark} · {results.unanswered} unanswered</p>
           <button onClick={retake} style={{ marginTop: 18, padding: '10px 22px', borderRadius: 8, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}><RotateCcw size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} /> Retake</button>
         </div>
+        {/* Directly under the score, where "what now" is actually being asked. Retaking the paper
+            you have just been marked on teaches you its answers; the other paper teaches the
+            subject. */}
+        <OtherPapers siblings={siblings} tight />
         <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {questions.map((qq, i) => {
             const a = answers[i]; const ok = isCorrect(qq, a); const corr = correctLetters(qq);

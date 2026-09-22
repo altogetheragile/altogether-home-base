@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
-import { ExamPlayer, type ExamForPlayer } from './ExamPlayer';
+import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +10,22 @@ type ExamRow = ExamForPlayer & {
   seo_title: string | null;
   seo_description: string | null;
 };
+
+/** The other papers for the same qualification, for the links between them. */
+async function getSiblings(subject: string, slug: string): Promise<Sibling[]> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('exams')
+      .select('title, slug, total_questions, duration_minutes')
+      .eq('status', 'published');
+    return ((data ?? []) as Sibling[])
+      .filter((e) => e.slug !== slug && examSubject(e.title) === subject)
+      .sort((a, b) => a.title.localeCompare(b.title));
+  } catch {
+    return [];
+  }
+}
 
 async function getExam(slug: string): Promise<ExamRow | null> {
   try {
@@ -75,6 +91,7 @@ export default async function ExamDetailPage({
   const { slug } = await params;
   const exam = await getExam(slug);
   if (!exam) notFound();
+  const siblings = await getSiblings(examSubject(exam.title), slug);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -88,7 +105,7 @@ export default async function ExamDetailPage({
           { name: exam.title, path: `/exams/${slug}` },
         ])}
       />
-      <ExamPlayer exam={exam} />
+      <ExamPlayer exam={exam} siblings={siblings} />
     </main>
   );
 }

@@ -95,7 +95,10 @@ describe('an exam guide', () => {
   // is how #712 shipped: the code was right and the data it read was not.
   it('is fetched by the page that renders it', () => {
     const page = readFileSync('src/app/exams/[slug]/page.tsx', 'utf8');
-    const select = page.match(/\.select\(\s*'([^']*)'/)?.[1] ?? '';
+    // Scoped to getExam: the file has more than one query, and matching the first `.select(`
+    // made this assert against whichever function happened to be declared highest.
+    const getExam = page.slice(page.indexOf('async function getExam'));
+    const select = getExam.match(/\.select\(\s*'([^']*)'/)?.[1] ?? '';
     expect(select, 'the exam query does not ask for the guide column').toContain('guide');
   });
 });
