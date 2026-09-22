@@ -3878,11 +3878,13 @@ export type Database = {
           show_protected_projects: boolean | null
           show_recommendations: boolean | null
           show_resources: boolean | null
+          show_scrum_game: boolean | null
           show_testimonial_company: boolean | null
           show_testimonial_first_name_only: boolean | null
           show_testimonial_name: boolean | null
           show_testimonial_rating_header: boolean | null
           show_testimonials: boolean | null
+          show_zoo_game: boolean | null
           social_facebook: string | null
           social_github: string | null
           social_linkedin: string | null
@@ -3917,11 +3919,13 @@ export type Database = {
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
           show_resources?: boolean | null
+          show_scrum_game?: boolean | null
           show_testimonial_company?: boolean | null
           show_testimonial_first_name_only?: boolean | null
           show_testimonial_name?: boolean | null
           show_testimonial_rating_header?: boolean | null
           show_testimonials?: boolean | null
+          show_zoo_game?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null
@@ -3956,11 +3960,13 @@ export type Database = {
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
           show_resources?: boolean | null
+          show_scrum_game?: boolean | null
           show_testimonial_company?: boolean | null
           show_testimonial_first_name_only?: boolean | null
           show_testimonial_name?: boolean | null
           show_testimonial_rating_header?: boolean | null
           show_testimonials?: boolean | null
+          show_zoo_game?: boolean | null
           social_facebook?: string | null
           social_github?: string | null
           social_linkedin?: string | null
