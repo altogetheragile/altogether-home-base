@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import { useAuth } from '@/contexts/AuthContext';
 
 /** The mark, and the way back to the site it belongs to.
@@ -34,7 +35,7 @@ export function GameLinks({ variant = 'mark' }: {
   // the name there is room to be understood, so the way-in screens get both.
   if (variant === 'home') {
     return (
-      <Link to="/" data-part="way-home" title="Back to Altogether Agile"
+      <AppLink to="/" data-part="way-home" title="Back to Altogether Agile"
         className="flex shrink-0 items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground">
         {/* The mark and its name, and no arrow. It had one, and the Product Goal screen puts this
             beside "&larr; How the zoo works" - two back-arrows in a row, one leaving the game and one
@@ -42,14 +43,14 @@ export function GameLinks({ variant = 'mark' }: {
             wordmark at the top left is already understood to be the way home. */}
         <span className="text-base font-bold leading-none">皆</span>
         <span className="text-[11px] font-semibold">Altogether Agile</span>
-      </Link>
+      </AppLink>
     );
   }
   return (
-    <Link to="/" aria-label="Back to Altogether Agile" title="Back to Altogether Agile"
+    <AppLink to="/" aria-label="Back to Altogether Agile" title="Back to Altogether Agile"
       className="shrink-0 select-none text-lg font-bold leading-none opacity-90 transition-opacity hover:opacity-100">
       皆
-    </Link>
+    </AppLink>
   );
 }
 

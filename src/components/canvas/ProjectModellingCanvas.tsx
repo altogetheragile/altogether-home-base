@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, ArrowUpRight } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { Separator } from '@/components/ui/separator';
 import { KnowledgeItemHexiElement } from './elements/KnowledgeItemHexiElement';
@@ -573,9 +574,9 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+                <AppLink to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
                   <LogoFull height={32} />
-                </Link>
+                </AppLink>
                 <Separator orientation="vertical" className="h-6" />
                 <Button
                   variant="ghost"

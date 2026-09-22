@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { canvasByKey } from '@/config/canvases';
 import { validateArtifactData } from '@/types/artifacts/schemas';
@@ -522,9 +523,9 @@ export default function ArtifactViewer() {
         <div className="container mx-auto px-4 py-3">
           {/* Top row: Logo and actions */}
           <div className="flex items-center justify-between mb-2">
-            <Link to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+            <AppLink to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
               <LogoFull height={32} />
-            </Link>
+            </AppLink>
             <div className="flex gap-2">
               {renderHeaderActions()}
             </div>
