@@ -1,9 +1,11 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
+import { getCopy, lines } from '@/lib/copy';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
@@ -33,10 +35,11 @@ const Icons = {
 };
 
 export default async function HomePage() {
-  const [settings, courses, testimonials] = await Promise.all([
+  const [settings, courses, testimonials, t] = await Promise.all([
     getSiteSettings(),
     getHomeCourseCards(),
     getHomeTestimonials(),
+    getCopy('home'),
   ]);
   const showKnowledge = !!settings.show_knowledge;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
@@ -56,17 +59,19 @@ export default async function HomePage() {
             <div className="aa-hero-grid">
               <div>
                 {/* The credential first: it is the one thing on this page nobody else can claim. */}
-                <p className="aa-hero-eyebrow">Co-author of AgilePM3 v2 and AgileBA v3</p>
+                <p className="aa-hero-eyebrow">{t('home.hero.eyebrow')}</p>
                 {/* What he sells in the heading, the slogan underneath. It was the other way round,
                     and "Work better together. Accelerate time to value." is true of any consultancy
                     that has ever existed. */}
-                <h1 className="aa-hero-h1">Practical agile training<br />and coaching, delivered personally.</h1>
-                <p className="aa-hero-subtitle">Work better together. Accelerate time to value. 25 years of real experience, still delivered personally, every time.</p>
+                <h1 className="aa-hero-h1">{lines(t('home.hero.heading')).map((l, i) => (
+                  <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
+                ))}</h1>
+                <p className="aa-hero-subtitle">{t('home.hero.subtitle')}</p>
                 {/* Both of these used to be BROWSE actions, and the first "Book a Chemistry Session"
                     on this page sat about three and a half screens below the fold. */}
                 <div className="aa-hero-actions">
-                  <Link href="/events" className="aa-btn aa-btn--primary">Browse Events <Icons.ArrowRight /></Link>
-                  <a href={bookingUrl} className="aa-btn aa-btn--ghost">Book a Chemistry Session <Icons.ArrowRight /></a>
+                  <Link href="/events" className="aa-btn aa-btn--primary">{t('home.hero.cta.events')} <Icons.ArrowRight /></Link>
+                  <a href={bookingUrl} className="aa-btn aa-btn--ghost">{t('home.hero.cta.booking')} <Icons.ArrowRight /></a>
                 </div>
               </div>
             </div>
@@ -76,10 +81,10 @@ export default async function HomePage() {
         {/* STATS */}
         <div className="aa-stats-bar">
           {[
-            { icon: <Icons.Users />, num: '1,500+', label: 'Practitioners trained' },
-            { icon: <Icons.Books />, num: '80+', label: 'Agile techniques' },
-            { icon: <Icons.GraduationCap />, num: '12+', label: 'Frameworks covered' },
-            { icon: <Icons.Star />, num: '4.9★', label: 'Average rating' },
+            { icon: <Icons.Users />, num: t('home.stats.1.number'), label: t('home.stats.1.label') },
+            { icon: <Icons.Books />, num: t('home.stats.2.number'), label: t('home.stats.2.label') },
+            { icon: <Icons.GraduationCap />, num: t('home.stats.3.number'), label: t('home.stats.3.label') },
+            { icon: <Icons.Star />, num: t('home.stats.4.number'), label: t('home.stats.4.label') },
           ].map((s) => (
             <div key={s.label} className="aa-stat">
               <div className="aa-stat__icon">{s.icon}</div>
@@ -91,12 +96,12 @@ export default async function HomePage() {
 
         {/* WHO IS THIS FOR */}
         <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
-          <h2 className="aa-section-heading aa-section-heading--center">Who is this for?</h2>
+          <h2 className="aa-section-heading aa-section-heading--center">{t('home.personas.heading')}</h2>
           <div className="aa-three-col">
             {[
-              { heading: 'Moving into agile', body: "You're a project manager, BA, or team lead transitioning to agile ways of working and need grounded, practical guidance - not just theory." },
-              { heading: 'Seeking certification', body: 'You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - delivered by someone who has contributed to the frameworks and knows them inside out.' },
-              { heading: 'Building team agility', body: "You're a leader trying to grow genuine organisational agility - and you need a coach who understands both the human and structural side of change." },
+              { heading: t('home.personas.1.heading'), body: t('home.personas.1.body') },
+              { heading: t('home.personas.2.heading'), body: t('home.personas.2.body') },
+              { heading: t('home.personas.3.heading'), body: t('home.personas.3.body') },
             ].map((card) => (
               <div key={card.heading} className="aa-persona-card">
                 <div className="aa-persona-card__icon"><Icons.ArrowRight /></div>
@@ -113,18 +118,18 @@ export default async function HomePage() {
         {/* COURSES */}
         <div className="aa-section-pad" style={{ background: 'var(--aa-sky-teal)' }}>
           <div className="aa-mb-32">
-            <h2 className="aa-section-heading aa-section-heading--lg">Courses, workshops and masterclasses</h2>
+            <h2 className="aa-section-heading aa-section-heading--lg">{t('home.courses.heading')}</h2>
           </div>
           {courses.length > 0 ? (
             <HomeCarousel courses={courses} />
           ) : (
             <div className="aa-error-box">
-              <p className="aa-error-box__title">Unable to load courses</p>
-              <p className="aa-error-box__msg">Please try refreshing the page.</p>
+              <p className="aa-error-box__title">{t('home.courses.empty.title')}</p>
+              <p className="aa-error-box__msg">{t('home.courses.empty.body')}</p>
             </div>
           )}
           <div className="aa-text-center aa-mt-32">
-            <Link href="/events" className="aa-btn aa-btn--primary-sm">View all →</Link>
+            <Link href="/events" className="aa-btn aa-btn--primary-sm">{t('home.courses.viewAll')}</Link>
           </div>
         </div>
 
@@ -135,15 +140,17 @@ export default async function HomePage() {
         {showKnowledge && (
           <div className="aa-section-pad" style={{ background: 'var(--aa-deep-teal)' }}>
             <div>
-              <div className="aa-kb-badge"><Icons.Books />Knowledge Base</div>
-              <h2 className="aa-kb-heading">80+ agile techniques,<br />ready to use</h2>
-              <p className="aa-kb-body">From Story Mapping to OKRs - every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.</p>
+              <div className="aa-kb-badge"><Icons.Books />{t('home.kb.badge')}</div>
+              <h2 className="aa-kb-heading">{lines(t('home.kb.heading')).map((l, i) => (
+                <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
+              ))}</h2>
+              <p className="aa-kb-body">{t('home.kb.body')}</p>
               <div className="aa-kb-tags">
                 {['Story Mapping', 'OKRs', '5 Whys', 'Business Model Canvas', 'Impact Mapping', 'Retrospectives'].map((tag) => (
                   <span key={tag} className="aa-kb-tag"><Icons.Tag />{tag}</span>
                 ))}
               </div>
-              <Link href="/knowledge" className="aa-btn aa-btn--primary-sm">Browse Techniques <Icons.ArrowRight /></Link>
+              <Link href="/knowledge" className="aa-btn aa-btn--primary-sm">{t('home.kb.cta')} <Icons.ArrowRight /></Link>
             </div>
           </div>
         )}
@@ -152,11 +159,13 @@ export default async function HomePage() {
         <div className="aa-section-pad" style={{ background: 'var(--aa-orange)' }}>
           <div className="aa-cta-banner">
             <div className="aa-cta-banner__text">
-              <h2 className="aa-cta-banner__heading">Ready to work with someone<br />who&apos;s been in the room?</h2>
-              <p className="aa-cta-banner__body">Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell - just a conversation.</p>
+              <h2 className="aa-cta-banner__heading">{lines(t('home.cta.heading')).map((l, i) => (
+                <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
+              ))}</h2>
+              <p className="aa-cta-banner__body">{t('home.cta.body')}</p>
               <div className="aa-cta-banner__actions">
-                <Link href="/events" className="aa-btn aa-btn--deep">Browse Events <Icons.ArrowRight /></Link>
-                <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />Book a Chemistry Session</a>
+                <Link href="/events" className="aa-btn aa-btn--deep">{t('home.cta.events')} <Icons.ArrowRight /></Link>
+                <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />{t('home.cta.booking')}</a>
               </div>
             </div>
             <div className="aa-hide-mobile">

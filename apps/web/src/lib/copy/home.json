@@ -1,0 +1,166 @@
+{
+  "page": "home",
+  "label": "Home",
+  "entries": {
+    "home.hero.eyebrow": {
+      "value": "Co-author of AgilePM3 v2 and AgileBA v3",
+      "label": "Hero eyebrow",
+      "hint": "The credential line above the heading"
+    },
+    "home.hero.heading": {
+      "value": "Practical agile training\nand coaching, delivered personally.",
+      "label": "Hero heading",
+      "hint": "The h1. A line break splits it in two"
+    },
+    "home.hero.subtitle": {
+      "value": "Work better together. Accelerate time to value. 25 years of real experience, still delivered personally, every time.",
+      "label": "Hero subtitle",
+      "hint": "Under the heading"
+    },
+    "home.hero.cta.events": {
+      "value": "Browse Events",
+      "label": "Hero button, browse",
+      "hint": "Left button in the hero"
+    },
+    "home.hero.cta.booking": {
+      "value": "Book a Chemistry Session",
+      "label": "Hero button, booking",
+      "hint": "Right button in the hero"
+    },
+    "home.stats.1.number": {
+      "value": "1,500+",
+      "label": "Stat 1 number",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.1.label": {
+      "value": "Practitioners trained",
+      "label": "Stat 1 label",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.2.number": {
+      "value": "80+",
+      "label": "Stat 2 number",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.2.label": {
+      "value": "Agile techniques",
+      "label": "Stat 2 label",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.3.number": {
+      "value": "12+",
+      "label": "Stat 3 number",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.3.label": {
+      "value": "Frameworks covered",
+      "label": "Stat 3 label",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.4.number": {
+      "value": "4.9★",
+      "label": "Stat 4 number",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.stats.4.label": {
+      "value": "Average rating",
+      "label": "Stat 4 label",
+      "hint": "The band of four figures under the hero"
+    },
+    "home.personas.heading": {
+      "value": "Who is this for?",
+      "label": "Who is this for, heading",
+      "hint": "Above the three cards"
+    },
+    "home.personas.1.heading": {
+      "value": "Moving into agile",
+      "label": "Card 1 heading",
+      "hint": "One of the three Who is this for cards"
+    },
+    "home.personas.1.body": {
+      "value": "You're a project manager, BA, or team lead transitioning to agile ways of working and need grounded, practical guidance - not just theory.",
+      "label": "Card 1 body",
+      "hint": "One of the three Who is this for cards"
+    },
+    "home.personas.2.heading": {
+      "value": "Seeking certification",
+      "label": "Card 2 heading",
+      "hint": "One of the three Who is this for cards"
+    },
+    "home.personas.2.body": {
+      "value": "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - delivered by someone who has contributed to the frameworks and knows them inside out.",
+      "label": "Card 2 body",
+      "hint": "One of the three Who is this for cards"
+    },
+    "home.personas.3.heading": {
+      "value": "Building team agility",
+      "label": "Card 3 heading",
+      "hint": "One of the three Who is this for cards"
+    },
+    "home.personas.3.body": {
+      "value": "You're a leader trying to grow genuine organisational agility - and you need a coach who understands both the human and structural side of change.",
+      "label": "Card 3 body",
+      "hint": "One of the three Who is this for cards"
+    },
+    "home.courses.heading": {
+      "value": "Courses, workshops and masterclasses",
+      "label": "Courses heading",
+      "hint": "Above the course carousel"
+    },
+    "home.courses.empty.title": {
+      "value": "Unable to load courses",
+      "label": "Courses error title",
+      "hint": "Shown only when the courses fail to load"
+    },
+    "home.courses.empty.body": {
+      "value": "Please try refreshing the page.",
+      "label": "Courses error body",
+      "hint": "Shown only when the courses fail to load"
+    },
+    "home.courses.viewAll": {
+      "value": "View all →",
+      "label": "Courses link",
+      "hint": "Under the carousel"
+    },
+    "home.kb.badge": {
+      "value": "Knowledge Base",
+      "label": "Knowledge badge",
+      "hint": "The teal Knowledge Base section, hidden unless that module is on"
+    },
+    "home.kb.heading": {
+      "value": "80+ agile techniques,\nready to use",
+      "label": "Knowledge heading",
+      "hint": "A line break splits it in two"
+    },
+    "home.kb.body": {
+      "value": "From Story Mapping to OKRs - every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.",
+      "label": "Knowledge body",
+      "hint": "The teal Knowledge Base section"
+    },
+    "home.kb.cta": {
+      "value": "Browse Techniques",
+      "label": "Knowledge button",
+      "hint": "The teal Knowledge Base section"
+    },
+    "home.cta.heading": {
+      "value": "Ready to work with someone\nwho's been in the room?",
+      "label": "Closing heading",
+      "hint": "The orange band at the foot of the page"
+    },
+    "home.cta.body": {
+      "value": "Browse upcoming courses or book a free chemistry session to talk through what you need. No hard sell - just a conversation.",
+      "label": "Closing body",
+      "hint": "The orange band at the foot of the page"
+    },
+    "home.cta.events": {
+      "value": "Browse Events",
+      "label": "Closing button, browse",
+      "hint": "The orange band at the foot of the page"
+    },
+    "home.cta.booking": {
+      "value": "Book a Chemistry Session",
+      "label": "Closing button, booking",
+      "hint": "The orange band at the foot of the page"
+    }
+  }
+}
