@@ -23,13 +23,22 @@ const RESOURCE_LINKS = [
   { label: 'Flow Game', href: '/flow-game', flag: 'show_flow_game', def: true },
 ] as const;
 
-export function Navigation({ settings, signedIn = false }: { settings: SiteSettings; signedIn?: boolean }) {
+export function Navigation({
+  settings,
+  signedIn = false,
+  name = null,
+}: {
+  settings: SiteSettings;
+  signedIn?: boolean;
+  /** Their own name, read from the real session on the server. Null when signed out. */
+  name?: string | null;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
-  // The App (the SPA) publishes a non-sensitive presence cookie; if it's set we point
-  // people at their dashboard (still auth-gated on the App) instead of "Sign In".
+  // Read from the real session on the server (lib/auth.ts), not from the presence cookie this
+  // used to trust. /dashboard is still gated by the App; this only decides what the button says.
   const authCta = signedIn ? { href: '/dashboard', label: 'Dashboard' } : { href: '/auth', label: 'Sign In' };
 
   const flag = (key: string, def: boolean) => {
@@ -90,12 +99,20 @@ export function Navigation({ settings, signedIn = false }: { settings: SiteSetti
             </div>
           )}
 
-          <Link
+          {name && (
+            <span className="ml-2 hidden text-sm text-muted-foreground lg:inline" data-testid="nav-greeting">
+              Hi, {name}
+            </span>
+          )}
+          {/* A plain anchor, not <Link>: /auth and /dashboard are App-owned URLs this app does
+              not serve, so a client transition would prefetch a route that cannot answer and
+              then fall back to a full load anyway. */}
+          <a
             href={authCta.href}
             className="ml-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             {authCta.label}
-          </Link>
+          </a>
         </div>
 
         {/* Mobile toggle */}
@@ -123,9 +140,14 @@ export function Navigation({ settings, signedIn = false }: { settings: SiteSetti
                 ))}
               </>
             )}
-            <Link href={authCta.href} className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>
+            {name && (
+              <span className="mt-2 px-3 text-sm text-muted-foreground" data-testid="nav-greeting-mobile">
+                Hi, {name}
+              </span>
+            )}
+            <a href={authCta.href} className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>
               {authCta.label}
-            </Link>
+            </a>
           </div>
         </div>
       )}
