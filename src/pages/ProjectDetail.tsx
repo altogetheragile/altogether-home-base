@@ -1,4 +1,5 @@
-import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProject } from '@/hooks/useProjects';
@@ -49,9 +50,9 @@ export default function ProjectDetail() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-4">
-              <Link to="/" aria-label="Altogether Agile home" className="hidden flex-shrink-0 sm:block">
+              <AppLink to="/" aria-label="Altogether Agile home" className="hidden flex-shrink-0 sm:block">
                 <LogoFull height={32} />
-              </Link>
+              </AppLink>
               <Separator orientation="vertical" className="h-6 hidden sm:block" />
               <Button
                 variant="ghost"

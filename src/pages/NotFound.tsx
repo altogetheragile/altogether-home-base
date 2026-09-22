@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -29,12 +30,12 @@ const NotFound: React.FC = () => {
             The page you're looking for doesn't exist or has been moved. Let's get you back on track.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/" style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', textDecoration: 'none' }}>
+            <AppLink to="/" style={{ background: p.orange, color: '#fff', border: 'none', padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', textDecoration: 'none' }}>
               Go Home
-            </Link>
-            <Link to="/events" style={{ background: 'transparent', color: p.deepTeal, border: `2px solid ${p.deepTeal}`, padding: '11px 28px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', textDecoration: 'none' }}>
+            </AppLink>
+            <AppLink to="/events" style={{ background: 'transparent', color: p.deepTeal, border: `2px solid ${p.deepTeal}`, padding: '11px 28px', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer', textDecoration: 'none' }}>
               Browse Events
-            </Link>
+            </AppLink>
           </div>
         </div>
       </div>

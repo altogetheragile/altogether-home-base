@@ -7,7 +7,8 @@ import { useProjectArtifactMutations, useProjectArtifacts } from '@/hooks/usePro
 import { validateArtifactData } from '@/types/artifacts/schemas';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { Separator } from '@/components/ui/separator';
 import BMCCanvasElement from './elements/BMCCanvasElement';
@@ -1064,9 +1065,9 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
       {!artifactId && (
         <div className="border-b px-4 py-3 flex flex-wrap items-center justify-between gap-2 bg-card">
           <div className="flex min-w-0 items-center gap-3">
-            <Link to="/" aria-label="Altogether Agile home" className="hidden flex-shrink-0 sm:block">
+            <AppLink to="/" aria-label="Altogether Agile home" className="hidden flex-shrink-0 sm:block">
               <LogoFull height={32} />
-            </Link>
+            </AppLink>
             <Separator orientation="vertical" className="h-6 hidden sm:block" />
             <Button
               variant="ghost"

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -507,9 +507,9 @@ useEffect(() => {
           </Tabs>
 
           <div className="text-center mt-6">
-            <Link to="/" className="text-muted-foreground hover:text-primary">
+            <AppLink to="/" className="text-muted-foreground hover:text-primary">
               ← Back to Home
-            </Link>
+            </AppLink>
           </div>
         </div>
       </div>

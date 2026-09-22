@@ -6,7 +6,7 @@ import { UnifiedContentCard } from '@/components/content/UnifiedContentCard';
 import { adaptBlogPostToUnifiedContent } from '@/utils/contentAdapters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { AppLink } from '@/components/AppLink';
 
 interface BlogPostsBlockProps {
   block: ContentBlock;
@@ -71,7 +71,7 @@ export const BlogPostsBlock: React.FC<BlogPostsBlockProps> = ({ block }) => {
           <p className="text-muted-foreground">No blog posts available at the moment</p>
           {showViewAll && (
             <Button asChild variant="outline" className="mt-4">
-              <Link to="/blog">Browse Blog</Link>
+              <AppLink to="/blog">Browse Blog</AppLink>
             </Button>
           )}
         </div>
@@ -85,7 +85,7 @@ export const BlogPostsBlock: React.FC<BlogPostsBlockProps> = ({ block }) => {
         <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         {showViewAll && (
           <Button asChild variant="outline" className="flex items-center gap-1">
-            <Link to="/blog">View All</Link>
+            <AppLink to="/blog">View All</AppLink>
           </Button>
         )}
       </div>
