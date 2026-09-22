@@ -1,10 +1,13 @@
 # Platform Migration: Best in Class Rebuild (Strangler Fig)
 
-**Version:** 1.0 (28 June 2026). First draft for review.
+**Version:** 2.0 (22 September 2026). Revised after the auth unification.
 **Audience:** Claude Code and the founder, working in
 `altogetheragile/altogether-home-base`.
-**Status:** Proposed, not started. Read alongside `TOOLS.md` (tool inventory),
-`VISION_TO_VALUE.md` (pipeline) and `CLAUDE.md` (conventions).
+**Status:** Phase 1 complete, Phase 0 complete but for two items needing an
+account rather than code. Phase 2 revised on 22 September: the two-surface split
+is no longer the destination. Read Section 6a before doing any migration work,
+then `TOOLS.md` (tool inventory), `VISION_TO_VALUE.md` (pipeline) and `CLAUDE.md`
+(conventions).
 
 **Goal in one line:** move the site to a server-rendered framework so that
 security, SEO and maintainability stop being things we retrofit and start being
@@ -16,13 +19,16 @@ things the architecture guarantees, without ever taking the live site down.
 
 | Phase | What it delivers | State |
 |---|---|---|
-| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | In progress (skeleton built + deployed to preview) |
-| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | COMPLETE. exams, blog, courses/events, home (/), and the marketing pages (/about, /coaching, /testimonials, /contact) are all CUT OVER and live on Next.js. The Vite trunk now serves only the interactive tools, auth, the self-paced course player (/events/learn), and the knowledge base. |
-| 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | Largely complete via a deliberate TWO-SURFACE architecture: a public Site (Next) + a product App (the SPA). All interactive tools stay ROUTED on the App (not migrated - high effort, no SEO benefit, and fragmenting the integrated tool pipeline across stacks would break it). Shared design system (`packages/ui` @altogether/ui) consumed by both surfaces and live; Claude Design already has the full library synced ("Altogether Agile UI"). Auth seam unified via a non-sensitive presence signal (the App publishes `aa-auth`, the Site reflects it). Remaining: grow `@altogether/ui` by migrating SPA components into it over time. |
-| 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started |
+| 0: Harden and Skeleton | Safety on the current app + a Next.js app live alongside | Effectively complete. Route guard, RLS audit and fixes, security headers and CSP, AI rate limiting (`supabase/functions/_shared/rateLimit.ts` over `ai_rate_limits`, not Upstash), Sentry, and the Next skeleton are all live. Outstanding: dependency scanning (no Renovate or Dependabot, and CI runs no `npm audit`) and uptime monitoring. |
+| 1: Content Surface | Blog, exams, courses, events, home server-rendered in Next.js | COMPLETE. exams, blog, courses/events, home (/), and the marketing pages (/about, /coaching, /testimonials, /contact) are all CUT OVER and live on Next.js, and since PR #724 the App no longer declares routes for any of them. The App serves the interactive tools, the games, auth and the account pages, event registration and the self-paced course player, the knowledge base, the legal and `/:slug` CMS pages, and Admin. |
+| 2: Interactive Tools | Tools moved into Next.js (or routed to, if left in place) | SUPERSEDED on 22 September by Section 6a. The two-surface split shipped and worked, but it left two implementations of nine public URLs and a Site that could not tell who was asking. Both are now fixed. The destination is one frontend, reached incrementally. |
+| 2a: One Frontend | The App's claim on migrated URLs removed; one real session across both apps | Steps 1 and 3 of five are done (Section 6a). Public content is entirely on the Site. The session is now real cookies, readable by both apps. Steps 2, 4 and 5 are open. |
+| 3: Retire the Shell | `prerender.mjs` and the old SPA removed; one stack remains | Not started, and its scope now depends on where Section 6a stops. Step 5 may deliberately leave Admin on the App forever. |
 
 Each phase is shippable on its own. We can pause after any phase with a live,
-improved site. Nothing in Phase 1 to 3 begins until Phase 0 has shipped.
+improved site. The original rule that nothing begins until Phase 0 has shipped was
+relaxed deliberately: the two Phase 0 items still open need an account rather than
+code, and holding the migration for them would have been a poor trade.
 
 ---
 
@@ -333,12 +339,91 @@ world-class split (marketing site + product app), not an interim compromise.
   artifact Claude Design's design-sync consumes. The full SPA shadcn library is already
   synced to the "Altogether Agile UI" Claude Design project — do NOT overwrite it with the
   smaller `@altogether/ui` (see `.design-sync/NOTES.md`); grow `@altogether/ui` first.
-- **Auth seam:** because the Site never server-gates (all gated features live on the App),
-  migrating the live session into cookies was deliberately NOT done — it would risk live
-  login/logout/MFA for a server-auth capability the architecture doesn't use. Instead the
-  App publishes a non-sensitive presence cookie (`aa-auth`, display only) and the Site
-  reflects it (Dashboard vs Sign In). The full session-in-cookies migration is the right
-  move only if a gated feature ever moves to the Site.
+- **Auth seam: SUPERSEDED 22 September 2026.** The decision recorded below was that moving
+  the live session into cookies was not worth the risk, because the Site never server-gates.
+  That reasoning was circular: the Site never server-gated because it could not, and it could
+  not because the session lived in `localStorage`. The cost was larger than it looked.
+  `exam_attempts` recorded nothing for three months, because the Site's exam player called
+  `getUser()` on a client with no session and quietly gave up. The exam guide editor had to
+  go in Admin rather than on the page, because a page could not tell an admin from a visitor.
+  And the half of the app behind a login could not move at all. The session is now real
+  cookies via `@supabase/ssr`, seen by both apps. See Section 6a, step 3. The original
+  decision, kept for the record: the App publishes a non-sensitive presence cookie
+  (`aa-auth`, display only) and the Site reflects it (Dashboard vs Sign In).
+
+---
+
+## 6a. Phase 2 Revised: One Frontend, Incrementally (22 September 2026)
+
+Section 6 called the two-surface split "a standard, legitimate world-class split, not an
+interim compromise". Most of that held. What it missed was that nothing had removed the
+App's claim on the URLs that had already moved, so nine public pages had two
+implementations. Which one a visitor saw depended on how they arrived: the home page and the
+About page were each maintained twice and rendered differently to someone following an
+internal link than to someone typing the address.
+
+The destination is therefore **one frontend**, reached the same way Phase 1 was: a group at a
+time, each verified live. This is not a larger project than Section 6 described. It is the
+same project with its debt paid off as it goes.
+
+**"One frontend" may not mean "everything in Next."** The public site wants server
+rendering; an admin panel behind a login actively does not. Ending with a server-rendered
+public site and one SPA behind a login is a coherent architecture rather than a compromise.
+The point is that the boundary should be **authentication**, not the accident of which pages
+happened to migrate first.
+
+### The Five Steps
+
+| # | Step | State |
+|---|---|---|
+| 1 | Delete the App's routes for the nine already-migrated URLs | **Done.** PR #724 removed them, 4,933 lines. PR #725 added the render guard. |
+| 2 | Move the remaining public pages, group by group, deleting App routes on the way out | **Not started.** Read "What Is Actually Left" below before starting it. |
+| 3 | Unify auth on cookie sessions | **Done.** PR #728 ("One session, both apps"), with #729, #730 and #731 fixing the four faults found in live testing. |
+| 4 | Authenticated areas: dashboard, projects, knowledge base | **Not started.** Unblocked by step 3, with the warning below. |
+| 5 | Admin, last or never | **Not started,** and possibly never. No SEO case, and the largest surface. |
+
+### How Step 1 Is Held
+
+`src/config/siteOwnedRoutes.ts` lists the URLs the Site answers. `siteOwnedRoutes.test.ts`
+compares that list against the `vercel.json` rewrites, so adding a rewrite without adding the
+route fails the build. `src/components/AppLink.tsx` and `src/hooks/useAppNavigate.ts` make
+links to those URLs real browser navigations rather than React Router renders, which is what
+stops a twin being reintroduced by one careless `<Link>`.
+
+Steps 2 and 4 follow the same three moves: build it on the Site, rewrite the path in
+`vercel.json`, then **delete the App's route and add the path to `SITE_OWNED`**. The third
+move is the one that was skipped nine times.
+
+### Step 3 Landed The Session, But Nothing Uses It Yet
+
+This matters more than the tick mark suggests. `apps/web/src/lib/supabase/server.ts` holds a
+correctly wired cookie-reading server client, and since 22 September the session it reads is
+real. But **no page in the Site calls `getUser()` on the server.** `layout.tsx` still reads
+the cosmetic `aa-auth` cookie to choose between Dashboard and Sign In, and the only
+`getUser()` anywhere in the Site is client-side, in `ExamPlayer`. That one call is what
+started `exam_attempts` recording again after three months of silence, which is the only
+evidence so far that the shared session works at all.
+
+So the gate on steps 4 and 5 is open and has never been driven. The first page that
+server-gates will also be the first real test of server-side identity in this codebase. Do it
+as a piece of work in its own right, on one small page, rather than discovering what it costs
+on the dashboard.
+
+### What Is Actually Left, And What It Is Worth
+
+Step 2 was justified as an SEO step, and that justification has very largely been spent. Of
+the 40 URLs in the live sitemap, **one** is still served by the App: `/ai-tools`. Everything
+the crawler is told about is already server-rendered.
+
+The public App routes that remain are the games (`/flow-game`, `/zoo-game`, `/scrum-game`),
+the canvas tools, the knowledge base, the legal pages and the `/:slug` CMS pages. They are
+either absent from the sitemap or genuinely app-like. Moving them is a maintainability
+argument, not an SEO one, and it competes for time directly with the Vision to Value work.
+
+The split as it stands: the Site serves 11 routes across 5,297 lines; the App serves
+everything else across 176,397. That ratio is a poorer measure of progress than it looks,
+because what remains is overwhelmingly the tool pipeline and Admin, which Section 6's
+reasoning still covers.
 
 ---
 
@@ -470,12 +555,34 @@ the default, so the open questions below are resolved to the recommended option)
   audit notes are a non-exploitable build-time PostCSS transitive with no fix path).
   `next/image` remote hosts scoped to the Supabase host (no wildcard).
 
-**Next step:** the remaining Phase 0 items. Code-only items I can take directly:
-CSP and security headers (`vercel.json`), and a read-only RLS audit of the
-Supabase tables (reported from the migration history; fixes applied as
-migrations). Items that need the founder's accounts first: rate limiting
-(Upstash), error tracking (Sentry), uptime monitoring, and the Renovate GitHub
-app. The Next.js skeleton (4b) comes after the current app is hardened.
+**Done (September 2026, Section 6a):**
+
+- Step 1: PR #724 removed the App's routes for the nine URLs the Site already served,
+  deleting 4,933 lines including the duplicate home, About, Coaching, Contact,
+  Testimonials, Events, Blog and Exams pages and the second `ExamPlayer`. PR #725 added
+  `apps/web/scripts/check-routes.mjs`, which renders each Site-owned URL against the app
+  that actually serves it. An earlier version of that guard read the wrong router and
+  passed while the claim it tested was false, which is why it now reads `vercel.json` to
+  decide ownership.
+- Step 3: PR #728 replaced the `localStorage` session with `createBrowserClient` from
+  `@supabase/ssr`, so one cookie session is visible to both apps. Four faults surfaced only
+  in live testing by the founder and were fixed in #729 (the reset link never reached the
+  form), #730 (the code was never exchanged, and sign-out destroyed the pending verifier),
+  #731 (a rate-limit message that blamed the wrong thing) and #728 itself (sign-in landing
+  on a 404). Verified live: `exam_attempts` recorded a row on 22 September, the first since
+  June.
+- Supporting work in the same window, not part of Section 6a: PRs #720 and #723 made the
+  feature flags gate the served pages rather than only the menu, #721 and #732 to #734
+  moved page copy into `site_copy` and JSON registries, and #722 and #735 moved hard-coded
+  hex values onto the design tokens.
+
+**Next step:** step 2 and step 4 are both open, and they are not equally worth doing.
+Step 2's SEO case is nearly spent (one sitemap URL left on the App). Step 4 is blocked on
+nothing but has never been proven, because no Site page has yet server-gated on a real
+session. The cheapest way to convert that unknown into a fact is to move one small
+authenticated page to the Site and have it call `getUser()` on the server, rather than
+discovering what server-side identity costs on the dashboard.
+
 
 **CI note:** the workflow relies on `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY` being set as GitHub repository secrets (the Build step
