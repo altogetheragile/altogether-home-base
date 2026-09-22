@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 // because the catalogue is the product. A freelancer's product is the person, and the conversion is
 // a conversation, so the hero has to offer one.
 //
-// Source-level rather than rendered: this page is 380-odd lines of hard-coded marketing copy with
+// Source-level rather than rendered, with the copy registry resolved into it first: this page is 380-odd lines of hard-coded marketing copy with
 // three data hooks in it, and what is being held here is an editorial rule about what appears in
 // the hero, not a rendering behaviour. Rendering it would test react-query and an image loader.
 
@@ -23,8 +23,24 @@ const SOURCES = [
   ['the Next home page (this is the one that is served)', 'apps/web/src/app/page.tsx', 'STATS'],
   ['the SPA home page', 'src/pages/Home.tsx', 'STATS BAR'],
 ] as const;
+/** The home page's words live in a registry now, so a source slice alone says `t('home.hero.h1')`
+ *  where the heading used to be. Resolving the registry into the slice keeps these assertions
+ *  about what a visitor reads rather than about where the string is kept.
+ *
+ *  Worth knowing what this no longer covers. The registry is the wording the site SHIPS with; an
+ *  edit made in Admin lives in `site_copy` and never touches this file, so these rules guard the
+ *  default and not the live page. That is the price of copy being editable, and it is the right
+ *  trade: a rule in a test cannot be the thing that stops the owner of the site changing his own
+ *  heading. */
+const registry: Record<string, { value: string }> =
+  JSON.parse(readFileSync('apps/web/src/lib/copy/home.json', 'utf8')).entries;
+
+const resolve = (src: string) =>
+  src.replace(/\{t\('([A-Za-z0-9.]+)'\)\}/g, (_m, key) => registry[key]?.value ?? '')
+     .replace(/\bt\('([A-Za-z0-9.]+)'\)/g, (_m, key) => registry[key]?.value ?? '');
+
 const heroes = () => SOURCES.map(([name, path, marker]) =>
-  [name, readFileSync(path, 'utf8').split(marker)[0]] as const);
+  [name, resolve(readFileSync(path, 'utf8').split(marker)[0])] as const);
 
 describe.each(heroes())('the hero on %s', (_name, hero) => {
   it('offers a way to hire him, not only ways to browse', () => {

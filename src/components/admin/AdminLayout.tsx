@@ -3,7 +3,7 @@ import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
   FolderOpen, BarChart3, Upload, Layers, LayoutDashboard,
   Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList, CalendarClock,
-  ChevronRight, Search, Inbox, Flag,
+  ChevronRight, Search, Inbox, Flag, PencilLine,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,6 +63,7 @@ const navigation: NavGroup[] = [
         ],
       },
       { label: 'Assets', icon: Upload, href: '/admin/assets' },
+      { label: 'Site Copy', icon: PencilLine, href: '/admin/copy' },
       { label: 'SEO', icon: Search, href: '/admin/seo' },
     ],
   },
