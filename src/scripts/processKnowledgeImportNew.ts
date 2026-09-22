@@ -38,8 +38,9 @@ async function findOrCreateCategory(name: string, description?: string): Promise
     .insert({
       name: name.trim(),
       slug,
+      // No full_description: neither knowledge_categories nor planning_focuses has one, and it
+      // was being set from the same value as description.
       description: description || null,
-      full_description: description || null,
       color: generateColor()
     })
     .select('id')
@@ -80,8 +81,9 @@ async function findOrCreatePlanningLayer(name: string, description?: string): Pr
     .insert({
       name: name.trim(),
       slug,
+      // No full_description: neither knowledge_categories nor planning_focuses has one, and it
+      // was being set from the same value as description.
       description: description || null,
-      full_description: description || null,
       color: generateColor(),
       display_order: nextOrder
     })
@@ -113,8 +115,9 @@ async function findOrCreateActivityDomain(name: string, description?: string): P
     .insert({
       name: name.trim(),
       slug,
+      // No full_description: neither knowledge_categories nor planning_focuses has one, and it
+      // was being set from the same value as description.
       description: description || null,
-      full_description: description || null,
       color: generateColor()
     })
     .select('id')

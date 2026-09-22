@@ -22,12 +22,12 @@ export const useKnowledgeMediaMutations = () => {
       await supabase
         .from('knowledge_media')
         .delete()
-        .eq('technique_id', techniqueId);
+        .eq('knowledge_item_id', techniqueId);
 
       // Then insert new media items
       if (mediaItems.length > 0) {
         const mediaToInsert = mediaItems.map((item, index) => ({
-          technique_id: techniqueId,
+          knowledge_item_id: techniqueId,
           type: item.type,
           title: item.title,
           description: item.description,

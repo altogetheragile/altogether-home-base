@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface FeedbackData {
-  technique_id: string;
+  knowledge_item_id: string;
   rating?: number;
   comment?: string;
 }
@@ -15,7 +15,7 @@ export const useSubmitFeedback = () => {
   return useMutation({
     mutationFn: async (feedback: FeedbackData) => {
       const insertData: Record<string, unknown> = {
-        technique_id: feedback.technique_id,
+        knowledge_item_id: feedback.knowledge_item_id,
       };
 
       // Only include rating if it's actually set (greater than 0)
@@ -59,7 +59,7 @@ export const useTechniqueFeedback = (techniqueId: string) => {
       const { data, error } = await supabase
         .from('kb_feedback')
         .select('*')
-        .eq('technique_id', techniqueId)
+        .eq('knowledge_item_id', techniqueId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -74,7 +74,7 @@ export const useFeedbackStats = (techniqueId: string) => {
     queryKey: ['feedback-stats', techniqueId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_feedback_stats' as any, { p_technique_id: techniqueId });
+        .rpc('get_feedback_stats' as any, { p_knowledge_item_id: techniqueId });
 
       if (error) throw error;
 

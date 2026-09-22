@@ -757,66 +757,58 @@ export const useUpdateKnowledgeItem = () => {
         
         if (decision_level_ids !== undefined) {
           // Delete existing and insert new with is_primary/rationale
-          junctionUpdates.push(
-            supabase.from('knowledge_item_decision_levels').delete().eq('knowledge_item_id', id).then(() => 
-              decision_level_ids.length > 0 
-                ? supabase.from('knowledge_item_decision_levels').insert(
-                    decision_level_ids.map(dlId => ({ 
-                      knowledge_item_id: id, 
-                      decision_level_id: dlId,
-                      is_primary: dlId === primary_decision_level_id,
-                      rationale: dlId === primary_decision_level_id ? decision_level_rationale : null,
-                    }))
-                  )
-                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
-            )
-          );
+          junctionUpdates.push((async () => {
+            await supabase.from('knowledge_item_decision_levels').delete().eq('knowledge_item_id', id);
+            if (decision_level_ids.length === 0) return;
+            await supabase.from('knowledge_item_decision_levels').insert(
+              decision_level_ids.map(dlId => ({
+                knowledge_item_id: id,
+                decision_level_id: dlId,
+                is_primary: dlId === primary_decision_level_id,
+                rationale: dlId === primary_decision_level_id ? decision_level_rationale : null,
+              }))
+            );
+          })());
         }
         
         if (category_ids !== undefined) {
-          junctionUpdates.push(
-            supabase.from('knowledge_item_categories').delete().eq('knowledge_item_id', id).then(() =>
-              category_ids.length > 0
-                ? supabase.from('knowledge_item_categories').insert(
+          junctionUpdates.push((async () => {
+            await supabase.from('knowledge_item_categories').delete().eq('knowledge_item_id', id);
+            if (category_ids.length === 0) return;
+            await supabase.from('knowledge_item_categories').insert(
                     category_ids.map(catId => ({ 
                       knowledge_item_id: id, 
                       category_id: catId,
                       is_primary: catId === primary_category_id,
                       rationale: catId === primary_category_id ? category_rationale : null,
                     }))
-                  )
-                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
-            )
-          );
+            );
+          })());
         }
         
         if (domain_ids !== undefined) {
-          junctionUpdates.push(
-            supabase.from('knowledge_item_domains').delete().eq('knowledge_item_id', id).then(() =>
-              domain_ids.length > 0
-                ? supabase.from('knowledge_item_domains').insert(
+          junctionUpdates.push((async () => {
+            await supabase.from('knowledge_item_domains').delete().eq('knowledge_item_id', id);
+            if (domain_ids.length === 0) return;
+            await supabase.from('knowledge_item_domains').insert(
                     domain_ids.map(domId => ({ 
                       knowledge_item_id: id, 
                       domain_id: domId,
                       is_primary: domId === primary_domain_id,
                       rationale: domId === primary_domain_id ? domain_rationale : null,
                     }))
-                  )
-                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
-            )
-          );
+            );
+          })());
         }
         
         if (tag_ids !== undefined) {
-          junctionUpdates.push(
-            supabase.from('knowledge_item_tags').delete().eq('knowledge_item_id', id).then(() =>
-              tag_ids.length > 0
-                ? supabase.from('knowledge_item_tags').insert(
+          junctionUpdates.push((async () => {
+            await supabase.from('knowledge_item_tags').delete().eq('knowledge_item_id', id);
+            if (tag_ids.length === 0) return;
+            await supabase.from('knowledge_item_tags').insert(
                     tag_ids.map(tagId => ({ knowledge_item_id: id, tag_id: tagId }))
-                  )
-                : Promise.resolve({ error: null, data: null, count: null, status: 200, statusText: 'OK' })
-            )
-          );
+            );
+          })());
         }
         
         // Execute all junction updates in parallel

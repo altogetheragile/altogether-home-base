@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
 export const processKnowledgeImport = async (importId: string) => {
   // console.log('🚀 Starting knowledge import processing...');
@@ -101,8 +102,9 @@ export const processKnowledgeImport = async (importId: string) => {
               .insert([{
                 name: categoryName,
                 slug: categoryName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                description: catDesc,
-                full_description: catDesc
+                // No full_description: it is not a column on knowledge_categories, and it was
+                // being set from the same value as description anyway.
+                description: catDesc
               }])
               .select('id')
               .single();
@@ -143,7 +145,7 @@ export const processKnowledgeImport = async (importId: string) => {
         // Insert knowledge item
         const { data: knowledgeItem, error } = await supabase
           .from('knowledge_items')
-          .insert([mappedData as { name: string; slug: string; [key: string]: unknown }])
+          .insert([mappedData as Database['public']['Tables']['knowledge_items']['Insert']])
           .select('id')
           .single();
 

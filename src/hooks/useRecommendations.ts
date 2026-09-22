@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface Recommendation {
   id: string;
@@ -15,11 +16,16 @@ export interface Recommendation {
 export interface UserPreferences {
   id?: string;
   user_id: string;
-  preferred_difficulty_level?: string;
+  /** Plural. The column is `preferred_difficulty_levels`; this was declared singular and so was
+   *  never a column at all. */
+  preferred_difficulty_levels?: string[];
   preferred_categories?: string[];
-  preferred_formats?: string[];
-  learning_goals?: string[];
-  interaction_score?: Record<string, any>;
+  preferred_tags?: string[];
+  display_preferences?: Json;
+  notification_settings?: Json;
+  // Gone: preferred_formats, learning_goals and interaction_score. None is a column on
+  // user_preferences and nothing outside this file ever referenced them, so an upsert carrying one
+  // would have been rejected whole.
 }
 
 export const useUserPreferences = () => {
@@ -275,15 +281,21 @@ export const useTrackInteraction = () => {
     }) => {
       if (!user?.id) return;
 
-      // Update user preferences based on interaction
+      // Interaction scores had no column to live in. `interaction_score` is not on
+      // user_preferences, so the select returned an error and the upsert was rejected: this has
+      // been called on every recommendation click since it was written and has never recorded
+      // anything. `display_preferences` is a real jsonb column, so the score lives under a key
+      // inside it, merged rather than replaced so a genuine display preference is not lost.
+      //
+      // A column of its own would be better. This works today without a migration.
       const { data: currentPrefs } = await supabase
         .from('user_preferences')
-        .select('interaction_score')
+        .select('display_preferences')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const interactionScore: Record<string, number> = ((currentPrefs as any)?.interaction_score as Record<string, number> | null) || {};
+      const display = (currentPrefs?.display_preferences ?? {}) as Record<string, unknown>;
+      const interactionScore = { ...(display.interaction_score as Record<string, number> | undefined) };
       const key = `${contentType}_${interactionType}`;
       interactionScore[key] = (interactionScore[key] || 0) + value;
 
@@ -291,7 +303,7 @@ export const useTrackInteraction = () => {
         .from('user_preferences')
         .upsert({
           user_id: user.id,
-          interaction_score: interactionScore,
+          display_preferences: { ...display, interaction_score: interactionScore },
         });
 
       return { success: true };

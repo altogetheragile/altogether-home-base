@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { KnowledgeItemTemplate } from '@/types/template';
+import type { Database } from '@/integrations/supabase/types';
 
 export const useKnowledgeItemTemplates = (knowledgeItemId: string) => {
   return useQuery({
@@ -115,7 +116,9 @@ export const useUpdateTemplateAssociation = () => {
       displayOrder?: number;
       customConfig?: Record<string, any>;
     }) => {
-      const updateData: Record<string, any> = {};
+      // Built one key at a time so an undefined argument does not blank a column. Typed as the
+      // table's own Update shape rather than a loose bag, which is what the stricter client wants.
+      const updateData: Database['public']['Tables']['knowledge_item_templates']['Update'] = {};
       if (displayOrder !== undefined) updateData.display_order = displayOrder;
       if (customConfig !== undefined) updateData.custom_config = customConfig;
 
