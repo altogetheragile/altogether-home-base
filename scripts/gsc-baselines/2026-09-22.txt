@@ -1,0 +1,133 @@
+
+=== Google Search Console Report: altogetheragile.com ===
+
+Period: 2026-08-25 to 2026-09-21
+
+--- Sitemaps ---
+
+  https://altogetheragile.com/sitemap.xml
+    Last submitted: 2026-09-21T14:55:28.164Z
+    Last downloaded: 2026-09-21T15:26:25.531Z
+    Errors: 0, Warnings: 0
+    web: 40 submitted, 0 indexed
+
+--- Index Status (key pages) ---
+
+  URL                                      Verdict      Coverage                       Last Crawl   Crawled As
+  ---------------------------------------- ------------ ------------------------------ ------------ ----------
+  /                                        PASS         Submitted and indexed          2026-09-22   MOBILE
+  /blog                                    PASS         Submitted and indexed          2026-09-19   MOBILE
+  /events                                  PASS         Submitted and indexed          2026-08-19   MOBILE
+  /coaching                                PASS         Submitted and indexed          2026-08-21   MOBILE
+  /exams                                   PASS         Submitted and indexed          2026-09-16   MOBILE
+  /courses                                 NEUTRAL      URL is unknown to Google       N/A          N/A
+  /about                                   PASS         Submitted and indexed          2026-09-06   MOBILE
+  /exams/agilepm-practitioner-paper-2      NEUTRAL      Discovered - currently not indexed N/A          CRAWLING_USER_AGENT_UNSPECIFIED
+  /exams/agilepm-foundation-paper-1        PASS         Submitted and indexed          2026-06-28   MOBILE
+  /exams/agilepm-foundation---paper-2      PASS         Submitted and indexed          2026-09-11   MOBILE
+  /exams/agilepm-practitioner-paper-1      PASS         Submitted and indexed          2026-09-21   MOBILE
+  /exams/professional-scrum-master         NEUTRAL      Crawled - currently not indexed 2026-06-20   MOBILE
+  /courses/0a8cc86f-9e9a-4f30-9d46-42bf49d8c464 PASS         Submitted and indexed          2026-09-10   MOBILE
+  /courses/8dd37f68-3f39-4828-8040-cb3a6795ae8f NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/07dfb544-7e96-4a23-9406-06a2eee920ea NEUTRAL      Crawled - currently not indexed 2026-06-28   MOBILE
+  /courses/d34a6eaa-6eaa-4e1c-aafc-edef6cf8b80b PASS         Submitted and indexed          2026-08-20   MOBILE
+  /courses/0659b96b-e7f3-4b07-a336-fa7fefaaf994 PASS         Submitted and indexed          2026-07-15   MOBILE
+  /courses/44ad3b52-64d5-410e-8d61-e5139ebc912f NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/80903e81-5136-4a42-9a2d-8e1571e7e76d NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/d4df7836-09d5-4f9a-a57f-26a87c31b9f3 NEUTRAL      URL is unknown to Google       N/A          N/A
+  /courses/757ccb59-1f34-4338-9582-756cfdc5a17a PASS         Submitted and indexed          2026-09-19   MOBILE
+  /courses/3941ffb1-cffa-43bd-9663-571da6b2911a PASS         Submitted and indexed          2026-09-11   MOBILE
+
+--- Top 25 Queries ---
+
+  Query                                               Clicks    Impr     CTR    Pos
+  -------------------------------------------------- ------- ------- ------- ------
+  agile ai                                                 0       2    0.0%   64.5
+  agile alliance certification                             0       2    0.0%   39.0
+  agile alliance certifications                            0      29    0.0%   55.6
+  agile ba foundation                                      0       4    0.0%   67.5
+  agile courses london                                     0      97    0.0%   46.7
+  agile fundamentals: including scrum and kanban - 2020 course       0       4    0.0%   38.0
+  agile pm exam                                            0       5    0.0%   45.4
+  agile pm foundation exam                                 0      57    0.0%   48.9
+  agile pm foundation exam questions                       0       1    0.0%   30.0
+  agile practitioner exam                                  0      23    0.0%   49.1
+  agile project management exam                            0      56    0.0%   60.5
+  agile project management exam questions and answers       0       2    0.0%   26.0
+  agile project management foundation exam                 0       2    0.0%   54.5
+  agile project management foundation exam questions       0       1    0.0%   18.0
+  agile project management practitioner exam               0       1    0.0%   58.0
+  agile project management sample exam papers              0       1    0.0%   27.0
+  agile project management test                            0       1    0.0%   45.0
+  agile scrum foundation exam                              0       3    0.0%   70.3
+  agile thinking courses london                            0      53    0.0%   27.7
+  agile thinking training london                           0      57    0.0%   30.3
+  agile thinking trainings london                          0      55    0.0%   28.6
+  agile training courses london                            0      88    0.0%   63.3
+  agile training london                                    0     101    0.0%   41.0
+  agile transformation workshop                            0       1    0.0%   81.0
+  agileba foundation                                       0       3    0.0%   66.7
+
+--- Top 25 Pages ---
+
+  Page                                                          Clicks    Impr     CTR    Pos
+  ------------------------------------------------------------ ------- ------- ------- ------
+  /exams                                                             4     494    0.8%   39.1
+  /                                                                  1      12    8.3%   10.7
+  http://altogetheragile.com/                                        0       6    0.0%    8.5
+  /about                                                             0      14    0.0%    6.6
+  /agile-reading-list/                                               0       4    0.0%    8.5
+  /blog                                                              0       6    0.0%    5.0
+  /blog/agile-certifications-do-they-matter                          0      33    0.0%   51.6
+  /blog/agile-reading-list                                           0       8    0.0%    8.9
+  /blog/ai-adoption-strategy-200-years-old                           0       8    0.0%    3.5
+  /blog/humans-in-the-loop-cynefin-ai-agents                         0       4    0.0%    5.5
+  /blog/pdca-cycle-explained                                         0     869    0.0%   57.6
+  /blog/top-agile-failures                                           0      11    0.0%    7.5
+  /blog/why-coaching-works-and-when-it-doesnt                        0      12    0.0%   64.5
+  /coaching                                                          0       9    0.0%    2.2
+  /contact                                                           0       5    0.0%    5.2
+  /cookies                                                           0       3    0.0%    8.7
+  /courses/0659b96b-e7f3-4b07-a336-fa7fefaaf994                      0       8    0.0%   37.1
+  /courses/0a8cc86f-9e9a-4f30-9d46-42bf49d8c464                      0       2    0.0%    1.5
+  /courses/3941ffb1-cffa-43bd-9663-571da6b2911a                      0       8    0.0%   67.4
+  /courses/d34a6eaa-6eaa-4e1c-aafc-edef6cf8b80b                      0       2    0.0%    1.5
+  /events                                                            0     474    0.0%   42.0
+  /portfolio-items/agilepm-foundation-practice-exam-foundation/       0       1    0.0%    2.0
+  /privacy                                                           0       4    0.0%    7.0
+  /testimonials                                                      0       6    0.0%    6.0
+
+--- Daily Performance (last 28 days) ---
+
+  Date          Clicks    Impr     CTR    Pos
+  ------------ ------- ------- ------- ------
+  2026-08-25         0     114    0.0%   49.6
+  2026-08-26         0     107    0.0%   49.9
+  2026-08-27         0     120    0.0%   50.0
+  2026-08-28         0      87    0.0%   54.8
+  2026-08-29         1      97    1.0%   49.8
+  2026-08-30         0     114    0.0%   53.8
+  2026-08-31         0      89    0.0%   49.0
+  2026-09-01         1      80    1.3%   44.7
+  2026-09-02         0      80    0.0%   46.3
+  2026-09-03         1     100    1.0%   52.8
+  2026-09-04         0      71    0.0%   48.8
+  2026-09-05         0      83    0.0%   48.7
+  2026-09-06         0      64    0.0%   43.9
+  2026-09-07         1      86    1.2%   44.2
+  2026-09-08         0      71    0.0%   45.4
+  2026-09-09         0      73    0.0%   43.4
+  2026-09-10         0      43    0.0%   49.0
+  2026-09-11         0      54    0.0%   40.6
+  2026-09-12         0      49    0.0%   53.7
+  2026-09-13         0      51    0.0%   45.7
+  2026-09-14         1      67    1.5%   41.0
+  2026-09-15         0      49    0.0%   40.9
+  2026-09-16         0      48    0.0%   35.5
+  2026-09-17         0      46    0.0%   37.2
+  2026-09-18         0      34    0.0%   44.3
+  2026-09-19         0      41    0.0%   62.0
+  2026-09-20         0      29    0.0%   46.0
+  ──────────── ------- -------
+  TOTAL              5    1.9k
+
