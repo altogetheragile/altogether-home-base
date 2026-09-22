@@ -14,6 +14,7 @@ const ResetPassword = () => {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [linkProblem, setLinkProblem] = useState<string | null>(null);
 
   // MFA state
   const [mfaRequired, setMfaRequired] = useState(false);
@@ -31,11 +32,37 @@ const ResetPassword = () => {
     // Check if the user has MFA enabled and needs to verify before resetting
     const checkMfa = async () => {
       try {
-        // The link arrives carrying a code, and the client exchanges it for a session in the
-        // background. Asking about factors before that lands reads an empty session and decides
-        // there is no MFA, which is the wrong answer for the one person it matters to. getSession
-        // resolves after the exchange, so waiting on it is enough.
-        await supabase.auth.getSession();
+        // The link carries a code and the client exchanges it in the background, so wait for the
+        // session before asking anything about the account. Reading factors first returns an empty
+        // session and concludes there is no MFA, which is the wrong answer for the one person it
+        // matters to.
+        let { data: { session } } = await supabase.auth.getSession();
+
+        // If nothing landed, exchange the code by hand and say why if that fails. Without this the
+        // form renders, the password is typed, and only Update Password reports "Auth session
+        // missing!" - which tells somebody resetting their password nothing they can act on.
+        if (!session) {
+          const code = new URLSearchParams(window.location.search).get('code');
+          if (!code) {
+            setLinkProblem('This link is missing its code. Ask for a new reset email.');
+            setChecking(false);
+            return;
+          }
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            // The commonest cause is opening the email in a different browser from the one that
+            // asked for the reset: the verifier that completes the exchange is stored where the
+            // request was made.
+            setLinkProblem(
+              'This link could not be opened. It may have expired, or been used already, or been '
+              + 'opened in a different browser from the one that asked for the reset. Ask for a new '
+              + 'reset email and open it in the same browser.',
+            );
+            setChecking(false);
+            return;
+          }
+          ({ data: { session } } = await supabase.auth.getSession());
+        }
 
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData?.currentLevel === 'aal2') {
@@ -141,6 +168,30 @@ const ResetPassword = () => {
         <Navigation />
         <div className="flex-1 flex items-center justify-center py-12">
           <p className="text-muted-foreground">Loading...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // A link that cannot be opened says so here, rather than letting somebody type a new password
+  // and find out at the last moment.
+  if (linkProblem) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center py-12">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>This reset link did not work</CardTitle>
+              <CardDescription>{linkProblem}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => navigate('/auth')}>
+                Ask for a new reset email
+              </Button>
+            </CardContent>
+          </Card>
         </div>
         <Footer />
       </div>

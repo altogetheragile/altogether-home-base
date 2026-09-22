@@ -1,3 +1,15 @@
+/** Whether a stored key belongs to a PKCE exchange that has not happened yet.
+ *
+ *  A password reset is two steps with a gap in the middle: asking for the email stores a verifier,
+ *  and opening the link completes the exchange with it. The verifier is not a session and clearing
+ *  it does not clean anything up - it destroys a link that has already been sent, and the failure
+ *  lands minutes later on somebody who cannot act on it.
+ *
+ *  This became possible with the move to cookie sessions: under the old implicit flow there was no
+ *  verifier, so a blanket sweep of everything sb-* was harmless. Now signing in or out between
+ *  asking for a reset and opening the email would throw the reset away. */
+const isPendingFlow = (name: string) => name.includes('code-verifier');
+
 export const cleanupAuthState = () => {
   try {
     if (typeof window === 'undefined') return;
@@ -10,6 +22,7 @@ export const cleanupAuthState = () => {
     // Remove all Supabase-related keys from localStorage
     try {
       Object.keys(window.localStorage).forEach((key) => {
+        if (isPendingFlow(key)) return;
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
           window.localStorage.removeItem(key);
         }
@@ -34,6 +47,7 @@ export const cleanupAuthState = () => {
       for (const entry of document.cookie.split(';')) {
         const name = entry.split('=')[0]?.trim();
         if (!name) continue;
+        if (isPendingFlow(name)) continue;
         if (name.startsWith('sb-') || name.startsWith('supabase.auth.')) {
           document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
         }

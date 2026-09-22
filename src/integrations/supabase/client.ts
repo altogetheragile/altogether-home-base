@@ -32,4 +32,12 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // signed-in user on the server, which is the point of the change and is a real increase in what
 // that app is trusted with.
 
-export const supabase = createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    // Stated rather than inherited. createBrowserClient defaults this to isBrowser(), so it is
+    // already true here - but this app depends on the browser noticing the code in a reset link
+    // and exchanging it, and that dependency should be written down rather than left to a default
+    // that exists for a different kind of app.
+    detectSessionInUrl: true,
+  },
+});
