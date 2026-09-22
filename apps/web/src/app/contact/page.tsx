@@ -3,10 +3,10 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd } from '@/lib/seo';
 import { ContactForm } from './ContactForm';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
+import { colors as p } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-const p = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 const CONTACT_EMAIL = 'info@altogetheragile.com';
 
 export const metadata: Metadata = {

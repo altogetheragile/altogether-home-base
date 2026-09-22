@@ -24,15 +24,15 @@ import type { Exam } from '@/hooks/useExams';
  *  react-markdown here, marked there: close enough for prose, but a GFM table renders on the page
  *  and not in this preview. No guide uses one yet. */
 const PREVIEW = {
-  h2: 'text-[22px] font-extrabold leading-tight mt-8 mb-2.5 first:mt-0 text-[#004D4D]',
-  h3: 'text-[17px] font-bold mt-6 mb-2 first:mt-0 text-[#004D4D]',
+  h2: 'text-[22px] font-extrabold leading-tight mt-8 mb-2.5 first:mt-0 text-[color:var(--aa-deep-teal)]',
+  h3: 'text-[17px] font-bold mt-6 mb-2 first:mt-0 text-[color:var(--aa-deep-teal)]',
   p: 'mb-4',
   ul: 'mb-4 pl-6 list-disc',
   ol: 'mb-4 pl-6 list-decimal',
   li: 'mb-2',
-  a: 'text-[#007A7A] underline',
-  strong: 'font-bold text-[#004D4D]',
-  blockquote: 'mb-4 py-3 px-[18px] border-l-4 border-[#B2DFDF] bg-[#F0FAFA] rounded-r-lg [&>p:last-child]:mb-0',
+  a: 'text-[color:var(--aa-mid-teal)] underline',
+  strong: 'font-bold text-[color:var(--aa-deep-teal)]',
+  blockquote: 'mb-4 py-3 px-[18px] border-l-4 border-[color:var(--aa-light-teal)] bg-[color:var(--aa-sky-teal)] rounded-r-lg [&>p:last-child]:mb-0',
 };
 
 function Preview({ markdown }: { markdown: string }) {
@@ -40,7 +40,7 @@ function Preview({ markdown }: { markdown: string }) {
     return <p className="py-10 text-center text-sm text-muted-foreground">Nothing yet. What you type appears here as the page will show it.</p>;
   }
   return (
-    <div className="text-[16px] leading-[1.75] text-[#374151]">
+    <div className="text-[16px] leading-[1.75] text-[color:var(--aa-body)]">
       <ReactMarkdown
         components={{
           h2: ({ children }) => <h2 className={PREVIEW.h2}>{children}</h2>,

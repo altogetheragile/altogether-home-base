@@ -4,14 +4,10 @@ import { ClipboardList, Clock, Award, HelpCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, faqPageJsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { EXAM_FAQS } from '@/lib/exam-faqs';
+import { colors as c } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-// Brand teal palette (mirrors src/theme/colors.ts in the Vite app).
-const c = {
-  white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF',
-  midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280',
-};
 
 export const metadata: Metadata = buildMetadata({
   title: 'AgilePM & Scrum Practice Exam Questions',

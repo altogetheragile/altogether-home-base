@@ -3,13 +3,10 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getPost, renderArticle, formatDate } from '@/lib/blog';
 import { buildMetadata, JsonLd, blogPostingJsonLd, breadcrumbJsonLd, truncateText } from '@/lib/seo';
+import { colors as c } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-const c = {
-  white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF',
-  midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280',
-};
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

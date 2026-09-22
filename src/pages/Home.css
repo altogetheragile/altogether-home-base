@@ -1,17 +1,8 @@
 /* ─── Altogether Agile – Home page styles ─────────────────────────────────── */
 /* Colours mirror src/theme/colors.ts via CSS custom properties              */
 
-:root {
-  --aa-white: #FFFFFF;
-  --aa-sky-teal: #F0FAFA;
-  --aa-pale-teal: #D9F2F2;
-  --aa-light-teal: #B2DFDF;
-  --aa-mid-teal: #007A7A;
-  --aa-deep-teal: #004D4D;
-  --aa-orange: #FF9715;
-  --aa-body: #374151;
-  --aa-muted: #6B7280;
-}
+/* The --aa-* variables are provided by the app root (src/theme/brandCssVars.ts),
+   generated from @altogether/ui/tokens. This file used to declare its own copy. */
 
 /* ─── Layout / page ──────────────────────────────────────────────────────── */
 .aa-page {
@@ -148,7 +139,7 @@
   display: flex;
   align-items: stretch;
   justify-content: center;
-  background: #F0FAFA;
+  background: var(--aa-sky-teal);
   padding: 40px 48px;
 }
 

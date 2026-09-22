@@ -4,10 +4,10 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseListJsonLd } from '@/lib/seo';
 import { EventsList } from './EventsList';
+import { colors as c } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-const c = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 
 export const metadata: Metadata = buildMetadata({
   title: 'Agile Training Courses in London & the UK',

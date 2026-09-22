@@ -1,6 +1,6 @@
 import Link from 'next/link';
+import { colors as p } from '@/lib/brand';
 
-const p = { white: '#FFFFFF', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151' };
 
 const credentials = [
   'Lead Author, AgilePM3',
@@ -36,7 +36,7 @@ export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
         .aa-cred-item:nth-child(6) { animation-delay: 0.6s; }
         .aa-photo-wrap:hover .aa-photo-overlay { opacity: 1; }
         .aa-cta-primary:hover { background: #E6870E !important; transform: translateY(-1px); }
-        .aa-cta-secondary:hover { color: #004D4D !important; gap: 10px !important; }
+        .aa-cta-secondary:hover { color: var(--aa-deep-teal) !important; gap: 10px !important; }
         .aa-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
         @media (max-width: 767px) { .aa-about-grid { grid-template-columns: 1fr; gap: 40px; } }
       `}</style>
@@ -52,7 +52,7 @@ export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
               <div className="aa-photo-overlay" style={{ position: 'absolute', inset: 0, borderRadius: 24, background: 'linear-gradient(to top, rgba(0,77,77,0.5) 0%, transparent 60%)', opacity: 0, transition: 'opacity 0.3s ease' }} />
             </div>
             <div style={{ marginTop: 28, background: p.deepTeal, borderRadius: 20, padding: '28px 32px', position: 'relative', zIndex: 1 }}>
-              <div style={{ position: 'absolute', top: 20, right: 20, background: '#FF9715', borderRadius: 12, padding: '10px 14px', textAlign: 'center', boxShadow: '0 4px 16px rgba(255,151,21,0.3)', minWidth: 72 }}>
+              <div style={{ position: 'absolute', top: 20, right: 20, background: p.orange, borderRadius: 12, padding: '10px 14px', textAlign: 'center', boxShadow: '0 4px 16px rgba(255,151,21,0.3)', minWidth: 72 }}>
                 <div style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 26, fontWeight: 400, lineHeight: 1 }}>25</div>
                 <div style={{ color: p.deepTeal, opacity: 0.85, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 3 }}>years<br />experience</div>
               </div>

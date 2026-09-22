@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { HomeTestimonial } from '@/lib/home';
+import { colors as p } from '@/lib/brand';
 
-const p = { paleTeal: '#D9F2F2', orange: '#FF9715' };
 
 function Stars({ rating, size = 12 }: { rating: number; size?: number }) {
   const filled = Math.round((rating / 10) * 5);

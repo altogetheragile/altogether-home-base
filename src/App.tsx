@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Analytics } from "@vercel/analytics/react";
+import { brandCssVars } from '@/theme/brandCssVars';
 import {
   PublicRoutes,
   ProtectedUserRoutes,
@@ -33,6 +34,7 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <HelmetProvider>
+    <div style={brandCssVars}>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
@@ -62,6 +64,7 @@ const App = () => (
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
+    </div>
     <Analytics scriptSrc="/va/script.js" />
   </HelmetProvider>
 );

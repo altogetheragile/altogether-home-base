@@ -1,3 +1,5 @@
+import { colors } from '@/lib/brand';
+
 export function AlunTabletPortrait({ imgSrc = '/images/alun-illustrated.webp', className }: { imgSrc?: string; className?: string }) {
   const W = 300;
   const H = 420;
@@ -15,7 +17,7 @@ export function AlunTabletPortrait({ imgSrc = '/images/alun-illustrated.webp', c
       }}
     >
       <div style={{ position: 'absolute', top: 7, left: '50%', transform: 'translateX(-50%)', width: 7, height: 7, borderRadius: '50%', background: '#161616', border: '1.5px solid #2E2E2E', zIndex: 2 }} />
-      <div style={{ width: '100%', height: '100%', borderRadius: screenRadius, overflow: 'hidden', background: '#D9F2F2', position: 'relative' }}>
+      <div style={{ width: '100%', height: '100%', borderRadius: screenRadius, overflow: 'hidden', background: colors.paleTeal, position: 'relative' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imgSrc} alt="Alun Davies-Baker, founder of Altogether Agile" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%)', borderRadius: screenRadius, pointerEvents: 'none' }} />

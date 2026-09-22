@@ -3,10 +3,10 @@ import { getAllApprovedFeedback, feedbackStats } from '@/lib/testimonials';
 import { getSiteSettings } from '@/lib/site-settings';
 import { buildMetadata, JsonLd, breadcrumbJsonLd } from '@/lib/seo';
 import { TestimonialsGrid } from './TestimonialsGrid';
+import { colors as p } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-const p = { white: '#FFFFFF', paleTeal: '#D9F2F2', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 
 export const metadata: Metadata = {
   ...buildMetadata({
