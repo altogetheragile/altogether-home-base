@@ -1,0 +1,211 @@
+{
+  "page": "about",
+  "label": "About",
+  "entries": {
+    "about.hero.eyebrow": {
+      "value": "About",
+      "label": "Hero eyebrow",
+      "hint": "The teal hero at the top"
+    },
+    "about.hero.heading": {
+      "value": "25 years in.\nStill learning.",
+      "label": "Hero heading",
+      "hint": "The teal hero at the top. A line break splits it in two"
+    },
+    "about.hero.intro": {
+      "value": "I'm Alun - founder of Altogether Agile, agile practitioner, trainer, coach, and Visiting Lecturer, University of Westminster. This page is about where I've come from, what I believe, and why I built this.",
+      "label": "Hero introduction",
+      "hint": "The teal hero at the top"
+    },
+    "about.hero.tags": {
+      "value": "London-based\n25+ years experience\n1,500+ trained\nABC Assessor",
+      "label": "Hero tags",
+      "hint": "The teal hero at the top. One per line, add or remove lines freely"
+    },
+    "about.story.label": {
+      "value": "The story",
+      "label": "Story eyebrow",
+      "hint": "The story section, on white"
+    },
+    "about.story.heading": {
+      "value": "How I got here.",
+      "label": "Story heading",
+      "hint": "The story section, on white"
+    },
+    "about.story.p1": {
+      "value": "I didn't set out to be an agile trainer. I started as a graduate trainee at SSA after a Masters at UMIST, writing code for ERP systems on AS400. What followed was fifteen years at Boehringer Ingelheim - moving from systems analyst to Head of IS Consulting to leading a global SAP deployment across six countries.",
+      "label": "Story, first paragraph",
+      "hint": "The story section, on white"
+    },
+    "about.story.p2": {
+      "value": "It was inside Boehringer that I first got serious about agile - pioneering a Scrum-wrapped-with-DSDM approach to enterprise SAP rollouts at a time when most organisations considered the two incompatible. It worked. Not perfectly, but well enough to prove the point.",
+      "label": "Story, second paragraph",
+      "hint": "The story section, on white"
+    },
+    "about.story.p3": {
+      "value": "In 2016 I went independent, founding Altogether Agile and building a training and coaching practice from the ground up. I've worked as an affiliate trainer with QA, Metadata Training, and TCC; as a Scrum Master and Assessor at the Agile Business Consortium; and as a Visiting Lecturer at the University of Westminster since 2020.",
+      "label": "Story, third paragraph",
+      "hint": "The story section, on white"
+    },
+    "about.story.p4": {
+      "value": "Altogether Agile is now the centre of gravity - training, coaching, knowledge base, and platform in one place. One person, nearly 30 years of experience, and a genuine belief that agile works when it's taught and coached by someone who's actually done it.",
+      "label": "Story, fourth paragraph",
+      "hint": "The story section, on white"
+    },
+    "about.credentials.heading": {
+      "value": "Credentials",
+      "label": "Credentials heading",
+      "hint": "The pale card beside the story"
+    },
+    "about.credentials.list": {
+      "value": "Co-author - AgilePM (new version, 2025)\nABC Level-4 Specialist in agile training\nAdvanced Certified Scrum Master (A-CSM)\nABC Assessor - interviews professional membership candidates\nAgileBA module author\nManagement 3.0 Facilitator\nICF-aligned coaching practice\nSTAR Manager Trainer\nVisiting Lecturer, University of Westminster\nSAFe 5 Agilist (elapsed)\nScrum Master (elapsed)",
+      "label": "Credentials list",
+      "hint": "The pale card beside the story. One per line, add or remove lines freely"
+    },
+    "about.badges.heading": {
+      "value": "Verified Badges",
+      "label": "Badges heading",
+      "hint": "The pale card beside the story. The badge images themselves are set in code"
+    },
+    "about.work.label": {
+      "value": "Work with me",
+      "label": "Work with me eyebrow",
+      "hint": "The dark teal box under the credentials"
+    },
+    "about.work.body": {
+      "value": "Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.",
+      "label": "Work with me body",
+      "hint": "The dark teal box under the credentials"
+    },
+    "about.work.cta": {
+      "value": "Book a chemistry session",
+      "label": "Work with me button",
+      "hint": "The dark teal box under the credentials"
+    },
+    "about.feedback.label": {
+      "value": "Feedback",
+      "label": "Testimonials eyebrow",
+      "hint": "Above the three quotes, which come from the database"
+    },
+    "about.feedback.heading": {
+      "value": "What people say.",
+      "label": "Testimonials heading",
+      "hint": "Above the three quotes"
+    },
+    "about.mission.label": {
+      "value": "Why Altogether Agile exists",
+      "label": "Mission eyebrow",
+      "hint": "The teal mission band"
+    },
+    "about.mission.heading": {
+      "value": "The mission.",
+      "label": "Mission heading",
+      "hint": "The teal mission band"
+    },
+    "about.mission.p1": {
+      "value": "Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches the events without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.",
+      "label": "Mission, first paragraph",
+      "hint": "The teal mission band"
+    },
+    "about.mission.p2": {
+      "value": "Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one - and every session ends with something concrete enough to act on.",
+      "label": "Mission, second paragraph",
+      "hint": "The teal mission band. This one is set in bolder white"
+    },
+    "about.mission.p3": {
+      "value": "Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable - not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who's been in the room for real.",
+      "label": "Mission, third paragraph",
+      "hint": "The teal mission band"
+    },
+    "about.philosophy.label": {
+      "value": "How I work",
+      "label": "Philosophy eyebrow",
+      "hint": "The two philosophy cards"
+    },
+    "about.philosophy.heading": {
+      "value": "Training and coaching philosophy.",
+      "label": "Philosophy heading",
+      "hint": "The two philosophy cards"
+    },
+    "about.philosophy.1.label": {
+      "value": "Training",
+      "label": "Card 1 tag",
+      "hint": "The two philosophy cards. The left card"
+    },
+    "about.philosophy.1.heading": {
+      "value": "Learning that transfers.",
+      "label": "Card 1 heading",
+      "hint": "The two philosophy cards. The left card"
+    },
+    "about.philosophy.1.body": {
+      "value": "Most agile training fails not because people don't understand the concepts - but because they've never had to apply them under real conditions. Good training puts people in those conditions safely, with a facilitator who's been in the room for real.",
+      "label": "Card 1 body",
+      "hint": "The two philosophy cards. The left card"
+    },
+    "about.philosophy.1.principles": {
+      "value": "Scenario-led from the first session\nFrameworks as tools, not religions\nCertification as a by-product of learning, not the goal\nEvery technique connected to a real business problem",
+      "label": "Card 1 principles",
+      "hint": "The two philosophy cards. One per line, add or remove lines freely"
+    },
+    "about.philosophy.2.label": {
+      "value": "Coaching",
+      "label": "Card 2 tag",
+      "hint": "The two philosophy cards. The right card"
+    },
+    "about.philosophy.2.heading": {
+      "value": "Questions, not answers.",
+      "label": "Card 2 heading",
+      "hint": "The two philosophy cards. The right card"
+    },
+    "about.philosophy.2.body": {
+      "value": "The best coaching conversations don't end with a solution handed over. They end with the person finding their own clarity - which means they own it, and they're more likely to act on it. My job is to ask the right questions, hold the space, and get out of the way.",
+      "label": "Card 2 body",
+      "hint": "The two philosophy cards. The right card"
+    },
+    "about.philosophy.2.principles": {
+      "value": "ICF-aligned approach throughout\nExperience in the room, but not imposing it\nThe coachee's agenda, not mine\nHonest feedback when it's asked for",
+      "label": "Card 2 principles",
+      "hint": "The two philosophy cards. One per line, add or remove lines freely"
+    },
+    "about.timeline.label": {
+      "value": "Career",
+      "label": "Timeline eyebrow",
+      "hint": "Above the career timeline. The entries themselves are still in code"
+    },
+    "about.timeline.heading": {
+      "value": "How it unfolded.",
+      "label": "Timeline heading",
+      "hint": "Above the career timeline"
+    },
+    "about.cta.label": {
+      "value": "Work with Altogether Agile",
+      "label": "Closing eyebrow",
+      "hint": "The dark teal band at the foot of the page"
+    },
+    "about.cta.heading": {
+      "value": "Ready to work with someone who's been in the room?",
+      "label": "Closing heading",
+      "hint": "The dark teal band at the foot of the page"
+    },
+    "about.cta.body": {
+      "value": "Browse upcoming courses, explore the knowledge base, or book a free chemistry session to talk through what you need.",
+      "label": "Closing body",
+      "hint": "The dark teal band at the foot of the page"
+    },
+    "about.cta.booking": {
+      "value": "Book a chemistry session",
+      "label": "Closing button, booking",
+      "hint": "The dark teal band at the foot of the page"
+    },
+    "about.cta.events": {
+      "value": "Browse Events",
+      "label": "Closing link, events",
+      "hint": "The dark teal band at the foot of the page"
+    },
+    "about.cta.knowledge": {
+      "value": "Knowledge Base",
+      "label": "Closing link, knowledge base",
+      "hint": "The dark teal band at the foot of the page. Only shown when that module is on"
+    }
+  }
+}

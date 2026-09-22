@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import homeJson from './home.json';
+import aboutJson from './about.json';
 
 // ============= The site's words, editable without a deploy =============
 //
@@ -17,7 +18,7 @@ import homeJson from './home.json';
 export interface CopyEntry { value: string; label: string; hint: string }
 export interface CopyRegistry { page: string; label: string; entries: Record<string, CopyEntry> }
 
-export const REGISTRIES: CopyRegistry[] = [homeJson as CopyRegistry];
+export const REGISTRIES: CopyRegistry[] = [homeJson as CopyRegistry, aboutJson as CopyRegistry];
 
 /** Reads a page's copy, with anything saved in `site_copy` laid over the shipped wording. */
 export async function getCopy(page: string): Promise<(key: string) => string> {
@@ -38,3 +39,7 @@ export async function getCopy(page: string): Promise<(key: string) => string> {
 
 /** Split on the newlines the registry uses for a deliberate line break in a heading. */
 export const lines = (text: string) => text.split('\n');
+
+/** A list kept as one entry, one item per line, so items can be added and removed by editing it.
+ *  A key-value editor cannot grow a list of separate keys; it can grow a textarea. */
+export const list = (text: string) => text.split('\n').map((l) => l.trim()).filter(Boolean);

@@ -10,13 +10,25 @@ import { REGISTRIES } from './index';
 
 const PAGES: Record<string, string> = {
   home: 'src/app/page.tsx',
+  about: 'src/app/about/page.tsx',
 };
 
-/** The copy keys a page actually asks for. */
-function keysRead(file: string): Set<string> {
+/** The copy keys a page actually asks for.
+ *
+ *  Two shapes. A plain t('a.b.c'), and a template literal with an index in it, which is how a page
+ *  reads a numbered pair of cards: t(`about.philosophy.${n}.body`). The second is returned as a
+ *  regex so a declared key can be matched against it. */
+function keysRead(file: string): { exact: Set<string>; patterns: RegExp[] } {
   const src = readFileSync(file, 'utf8');
-  return new Set([...src.matchAll(/\bt\('([A-Za-z0-9.]+)'\)/g)].map((m) => m[1]));
+  const exact = new Set([...src.matchAll(/\bt\('([A-Za-z0-9.]+)'\)/g)].map((m) => m[1]));
+  const patterns = [...src.matchAll(/\bt\(`([A-Za-z0-9.${}]+)`\)/g)].map(
+    (m) => new RegExp('^' + m[1].replace(/\./g, '\\.').replace(/\$\{[^}]+\}/g, '[A-Za-z0-9]+') + '$'),
+  );
+  return { exact, patterns };
 }
+
+const isRead = (key: string, read: ReturnType<typeof keysRead>) =>
+  read.exact.has(key) || read.patterns.some((p) => p.test(key));
 
 describe('each page registry', () => {
   for (const registry of REGISTRIES) {
@@ -27,13 +39,14 @@ describe('each page registry', () => {
     });
 
     it(`${registry.page}: declares every key the page reads`, () => {
-      const missing = [...keysRead(file)].filter((k) => !(k in registry.entries));
+      const read = keysRead(file);
+      const missing = [...read.exact].filter((k) => !(k in registry.entries));
       expect(missing, `read but not declared: ${missing.join(', ')}`).toEqual([]);
     });
 
     it(`${registry.page}: declares nothing the page ignores`, () => {
       const read = keysRead(file);
-      const unused = Object.keys(registry.entries).filter((k) => !read.has(k));
+      const unused = Object.keys(registry.entries).filter((k) => !isRead(k, read));
       expect(unused, `declared but never read: ${unused.join(', ')}`).toEqual([]);
     });
 

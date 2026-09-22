@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -7,6 +8,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME } from '@/
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
+import { getCopy, lines, list } from '@/lib/copy';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,13 +44,11 @@ const timeline = [
   { year: 'Now', title: 'Still in it', body: "Training, coaching, assessing, lecturing, and building the platform. In 2025 co-wrote the new version of AgilePM as one of the lead authors - the kind of work that only happens when you've been close to the practice long enough to have something worth saying. Still learning. Still finding it interesting." },
 ];
 
-const philosophyCards = [
-  { label: 'Training', heading: 'Learning that transfers.', colour: '#1A9090', lightBg: '#E6F5F5', body: "Most agile training fails not because people don't understand the concepts - but because they've never had to apply them under real conditions. Good training puts people in those conditions safely, with a facilitator who's been in the room for real.", principles: ['Scenario-led from the first session', 'Frameworks as tools, not religions', 'Certification as a by-product of learning, not the goal', 'Every technique connected to a real business problem'] },
-  { label: 'Coaching', heading: 'Questions, not answers.', colour: '#6B5FCC', lightBg: '#EEECF9', body: "The best coaching conversations don't end with a solution handed over. They end with the person finding their own clarity - which means they own it, and they're more likely to act on it. My job is to ask the right questions, hold the space, and get out of the way.", principles: ['ICF-aligned approach throughout', 'Experience in the room, but not imposing it', "The coachee's agenda, not mine", "Honest feedback when it's asked for"] },
-];
-
-const credentials = [
-  'Co-author - AgilePM (new version, 2025)', 'ABC Level-4 Specialist in agile training', 'Advanced Certified Scrum Master (A-CSM)', 'ABC Assessor - interviews professional membership candidates', 'AgileBA module author', 'Management 3.0 Facilitator', 'ICF-aligned coaching practice', 'STAR Manager Trainer', 'Visiting Lecturer, University of Westminster', 'SAFe 5 Agilist (elapsed)', 'Scrum Master (elapsed)',
+// The colours stay here; the words are copy. The timeline below is still in code, because its
+// entries are three fields each and a list of those is not something a textarea should hold.
+const philosophyStyles = [
+  { colour: '#1A9090', lightBg: '#E6F5F5' },
+  { colour: '#6B5FCC', lightBg: '#EEECF9' },
 ];
 
 const badges = [
@@ -70,7 +70,7 @@ function Stars({ rating }: { rating: number | null }) {
 
 export default async function AboutPage() {
   await requireModule('about');
-  const [settings, feedback] = await Promise.all([getSiteSettings(), getAllApprovedFeedback()]);
+  const [settings, feedback, t] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about')]);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
   const quotes = [...feedback].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3);
@@ -104,11 +104,11 @@ export default async function AboutPage() {
       <div id="main-content" className="aa-about-hero" style={{ background: '#006666' }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
           <div>
-            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>About</div>
-            <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 48px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>25 years in.<br />Still learning.</h1>
-            <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }}>I&apos;m Alun - founder of Altogether Agile, agile practitioner, trainer, coach, and Visiting Lecturer, University of Westminster. This page is about where I&apos;ve come from, what I believe, and why I built this.</p>
+            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('about.hero.eyebrow')}</div>
+            <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 48px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('about.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
+            <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }}>{t('about.hero.intro')}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {['London-based', '25+ years experience', '1,500+ trained', 'ABC Assessor'].map((tag) => (
+              {list(t('about.hero.tags')).map((tag) => (
                 <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
               ))}
             </div>
@@ -124,24 +124,24 @@ export default async function AboutPage() {
       <div className="aa-section-pad" style={{ background: p.white }}>
         <div className="aa-two-col-wide">
           <div>
-            <Heading label="The story" title="How I got here." />
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>I didn&apos;t set out to be an agile trainer. I started as a graduate trainee at SSA after a Masters at UMIST, writing code for ERP systems on AS400. What followed was fifteen years at Boehringer Ingelheim - moving from systems analyst to Head of IS Consulting to leading a global SAP deployment across six countries.</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>It was inside Boehringer that I first got serious about agile - pioneering a Scrum-wrapped-with-DSDM approach to enterprise SAP rollouts at a time when most organisations considered the two incompatible. It worked. Not perfectly, but well enough to prove the point.</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>In 2016 I went independent, founding Altogether Agile and building a training and coaching practice from the ground up. I&apos;ve worked as an affiliate trainer with QA, Metadata Training, and TCC; as a Scrum Master and Assessor at the Agile Business Consortium; and as a Visiting Lecturer at the University of Westminster since 2020.</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }}>Altogether Agile is now the centre of gravity - training, coaching, knowledge base, and platform in one place. One person, nearly 30 years of experience, and a genuine belief that agile works when it&apos;s taught and coached by someone who&apos;s actually done it.</p>
+            <Heading label={t('about.story.label')} title={t('about.story.heading')} />
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>{t('about.story.p1')}</p>
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>{t('about.story.p2')}</p>
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>{t('about.story.p3')}</p>
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }}>{t('about.story.p4')}</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ background: p.skyTeal, borderRadius: 14, padding: 24 }}>
-              <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />Credentials</div>
+              <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />{t('about.credentials.heading')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {credentials.map((cred) => (
+                {list(t('about.credentials.list')).map((cred) => (
                   <div key={cred} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 13, lineHeight: 1.5 }}>
                     <span style={{ color: p.orange, flexShrink: 0, marginTop: 1 }}><CheckCircle /></span>{cred}
                   </div>
                 ))}
               </div>
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${p.paleTeal}` }}>
-                <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>Verified Badges</div>
+                <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>{t('about.badges.heading')}</div>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
                   {badges.map((badge) => (
                     <a key={badge.src} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
@@ -153,9 +153,9 @@ export default async function AboutPage() {
               </div>
             </div>
             <div style={{ background: p.deepTeal, borderRadius: 14, padding: 24 }}>
-              <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Work with me</div>
-              <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.</p>
-              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}><Chat />Book a chemistry session</a>
+              <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('about.work.label')}</div>
+              <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>{t('about.work.body')}</p>
+              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}><Chat />{t('about.work.cta')}</a>
             </div>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default async function AboutPage() {
       {/* TESTIMONIALS */}
       {quotes.length > 0 && (
         <div className="aa-section-pad" style={{ background: p.skyTeal }}>
-          <Heading label="Feedback" title="What people say." />
+          <Heading label={t('about.feedback.label')} title={t('about.feedback.heading')} />
           <div className="aa-three-col">
             {quotes.map((q) => (
               <div key={q.id} style={{ background: p.white, borderRadius: 14, padding: '24px 26px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -183,18 +183,27 @@ export default async function AboutPage() {
       {/* MISSION */}
       <div className="aa-section-pad" style={{ background: '#006666' }}>
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
-          <Heading label="Why Altogether Agile exists" title="The mission." light />
-          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>Most agile training is too abstract. It describes frameworks without connecting them to real problems. It teaches the events without explaining why they exist. It certifies people who leave the course without knowing what to do on Monday morning.</p>
-          <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one - and every session ends with something concrete enough to act on.</p>
-          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable - not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who&apos;s been in the room for real.</p>
+          <Heading label={t('about.mission.label')} title={t('about.mission.heading')} light />
+          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>{t('about.mission.p1')}</p>
+          <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>{t('about.mission.p2')}</p>
+          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>{t('about.mission.p3')}</p>
         </div>
       </div>
 
       {/* PHILOSOPHY */}
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
-        <Heading label="How I work" title="Training and coaching philosophy." />
+        <Heading label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
         <div className="aa-two-col" style={{ gap: 24 }}>
-          {philosophyCards.map((card) => (
+          {philosophyStyles.map((style, idx) => {
+            const n = idx + 1;
+            const card = {
+              label: t(`about.philosophy.${n}.label`),
+              heading: t(`about.philosophy.${n}.heading`),
+              body: t(`about.philosophy.${n}.body`),
+              principles: list(t(`about.philosophy.${n}.principles`)),
+              ...style,
+            };
+            return (
             <div key={card.label} style={{ background: p.white, borderRadius: 16, overflow: 'hidden' }}>
               <div style={{ background: card.lightBg, padding: '20px 28px' }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: card.colour, color: '#fff', fontSize: 10, fontWeight: 700, padding: '4px 12px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>{card.label}</div>
@@ -211,13 +220,14 @@ export default async function AboutPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* TIMELINE */}
       <div className="aa-section-pad" style={{ background: p.white }}>
-        <Heading label="Career" title="How it unfolded." />
+        <Heading label={t('about.timeline.label')} title={t('about.timeline.heading')} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 680 }}>
           {timeline.map((item, i) => (
             <div key={item.year} style={{ display: 'flex', gap: 24, position: 'relative' }}>
@@ -239,13 +249,13 @@ export default async function AboutPage() {
       <div className="aa-about-cta" style={{ background: p.deepTeal }}>
         <div className="aa-two-col" style={{ alignItems: 'center', gap: 40 }}>
           <div>
-            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Work with Altogether Agile</div>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>Ready to work with someone who&apos;s been in the room?</h2>
-            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>Browse upcoming courses, explore the knowledge base, or book a free chemistry session to talk through what you need.</p>
+            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('about.cta.label')}</div>
+            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('about.cta.heading')}</h2>
+            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('about.cta.body')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />Book a chemistry session</a>
-              {settings.show_events !== false && <Link href="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>Browse Events <ArrowRight /></Link>}
-              {settings.show_knowledge && <Link href="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>Knowledge Base <ArrowRight /></Link>}
+              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('about.cta.booking')}</a>
+              {settings.show_events !== false && <Link href="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.events')} <ArrowRight /></Link>}
+              {settings.show_knowledge && <Link href="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.knowledge')} <ArrowRight /></Link>}
             </div>
           </div>
           <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
