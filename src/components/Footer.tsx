@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Youtube, Github } from 'lucide-react';
 import LogoFull from '@/components/LogoFull';
+import { AppLink } from '@/components/AppLink';
 
 const Footer = () => {
   const { settings } = useSiteSettings();
@@ -54,7 +55,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {quickLinks.map((link, index) => (
                 <li key={index}>
-                  <Link 
+                  <AppLink 
                     to={link.url} 
                     onClick={() => {
                       if (link.url === '/') {
@@ -64,7 +65,7 @@ const Footer = () => {
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     {link.label}
-                  </Link>
+                  </AppLink>
                 </li>
               ))}
             </ul>

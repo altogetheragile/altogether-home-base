@@ -12,16 +12,15 @@ import { readFileSync } from 'node:fs';
 // where it went. Serving the same course at two addresses would be worse than either.
 //
 // Held at the source, and against BOTH copies of the site: `/courses/:path*` is rewritten to the
-// Next app, and the Vite SPA carries its own near-identical listing pages. Updating one and not the
-// other is the trap the home page hero already fell into once.
+// Next app. The SPA used to carry its own near-identical listing pages and they were checked here
+// too; those are gone, because the Site owns those URLs outright now and a second implementation of
+// a page nobody is served was only ever somewhere for a bug to hide.
 
 const read = (f: string) => readFileSync(f, 'utf8');
 
 const LINK_BUILDERS = [
   ['the Next course-card model', 'apps/web/src/lib/events-types.ts'],
   ['the Next home carousel', 'apps/web/src/app/HomeCarousel.tsx'],
-  ['the SPA home page', 'src/pages/Home.tsx'],
-  ['the SPA events page', 'src/pages/Events.tsx'],
   // The sitemap. There is one of these now, and there were three: a serverless function that a
   // static file silently shadowed, and a Next route that served a different, shorter list on the
   // preview domain. Shipping a change to the function alone left the live sitemap advertising
