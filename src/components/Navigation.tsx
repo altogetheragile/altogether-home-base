@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { AppLink } from '@/components/AppLink';
 
 /* Top-level nav links (Resources items excluded — they go in the dropdown) */
 const TOP_LINKS = [
@@ -236,16 +237,16 @@ const Navigation = () => {
       >
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 64 }}>
           {/* Logo */}
-          <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ flexShrink: 0, textDecoration: 'none' }} aria-label="Altogether Agile home">
+          <AppLink to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ flexShrink: 0, textDecoration: 'none' }} aria-label="Altogether Agile home">
             <LogoFull height={38} />
-          </Link>
+          </AppLink>
 
           {/* Desktop links */}
           <div className="aa-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }} role="menubar">
             {visibleTopLinks.map((link) => (
-              <Link key={link.to} to={link.to} style={linkStyle(isActive(link.to))} role="menuitem" aria-current={isActive(link.to) ? 'page' : undefined}>
+              <AppLink key={link.to} to={link.to} style={linkStyle(isActive(link.to))} role="menuitem" aria-current={isActive(link.to) ? 'page' : undefined}>
                 {link.label}
-              </Link>
+              </AppLink>
             ))}
 
             {/* Resources dropdown */}
@@ -283,7 +284,7 @@ const Navigation = () => {
                 {isResourcesOpen && (
                   <div ref={resourcesMenuRef} role="menu" aria-label="Resources" style={{ ...dropdownStyle, left: 0, minWidth: 180 }} onKeyDown={resourcesKb.handleMenuKeyDown}>
                     {visibleResourceLinks.map((item) => (
-                      <Link
+                      <AppLink
                         key={item.to}
                         to={item.to}
                         role="menuitem"
@@ -302,7 +303,7 @@ const Navigation = () => {
                         onClick={() => setIsResourcesOpen(false)}
                       >
                         {item.label}
-                      </Link>
+                      </AppLink>
                     ))}
                   </div>
                 )}
@@ -468,7 +469,7 @@ const Navigation = () => {
           >
             {/* Top-level links */}
             {visibleTopLinks.map((link) => (
-              <Link
+              <AppLink
                 key={link.to}
                 to={link.to}
                 role="menuitem"
@@ -485,7 +486,7 @@ const Navigation = () => {
                 }}
               >
                 {link.label}
-              </Link>
+              </AppLink>
             ))}
 
             {/* Resources group */}
@@ -495,7 +496,7 @@ const Navigation = () => {
                   Resources
                 </div>
                 {visibleResourceLinks.map((link) => (
-                  <Link
+                  <AppLink
                     key={link.to}
                     to={link.to}
                     role="menuitem"
@@ -512,7 +513,7 @@ const Navigation = () => {
                     }}
                   >
                     {link.label}
-                  </Link>
+                  </AppLink>
                 ))}
               </>
             )}

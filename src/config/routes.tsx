@@ -34,7 +34,6 @@ const KnowledgeBaseTechniques = lazy(() => import('@/pages/KnowledgeBaseTechniqu
 const KnowledgeBaseTechnique = lazy(() => import('@/pages/KnowledgeBaseTechnique'));
 const KnowledgeBaseLattice = lazy(() => import('@/pages/KnowledgeBaseLattice'));
 const PatternBuilder = lazy(() => import('@/pages/PatternBuilder'));
-const Testimonials = lazy(() => import('@/pages/Testimonials'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const AIToolsCanvas = lazy(() => import('@/pages/AIToolsCanvas'));
@@ -51,9 +50,7 @@ const JourneyMap = lazy(() => import('@/pages/JourneyMap'));
 const StoryMap = lazy(() => import('@/pages/StoryMap'));
 const CanvasCatalogue = lazy(() => import('@/pages/CanvasCatalogue'));
 const CoachedCanvasPage = lazy(() => import('@/pages/CoachedCanvasPage'));
-const Contact = lazy(() => import('@/pages/Contact'));
 const CoursePage = lazy(() => import('@/pages/CoursePage'));
-const BlogPost = lazy(() => import('@/pages/BlogPost'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const CookiePolicy = lazy(() => import('@/pages/CookiePolicy'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
@@ -66,8 +63,6 @@ const ZooGame = lazy(() => import('@/pages/ZooGame'));
 const ZooTogether = lazy(() => import('@/pages/ZooTogether'));
 const PathwaysPicker = lazy(() => import('@/components/pipeline/PathwaysPicker'));
 const FlowSimulatorPreview = lazy(() => import('@/components/pipeline/FlowSimulatorPreview'));
-const ExamsListing = lazy(() => import('@/pages/Exams'));
-const ExamPlayer = lazy(() => import('@/pages/ExamPlayer'));
 const BookingPage = lazy(() => import('@/pages/BookingPage'));
 
 // Protected Project Pages
@@ -138,7 +133,6 @@ const AdminImports = lazy(() => import('@/pages/admin/AdminImports'));
 
 // Dynamic Pages
 const DynamicPageRenderer = lazy(() => import('@/components/DynamicPageRenderer').then(m => ({ default: m.DynamicPageRenderer })));
-const Home = lazy(() => import('@/pages/Home'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // ============= Public Routes =============
@@ -146,15 +140,6 @@ export const PublicRoutes = () => {
   return (
     <>
       <Route path="/events/:id" element={
-        <SiteSettingsRouteGuard feature="events">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <EventDetail />
-            </Suspense>
-          </ErrorBoundary>
-        </SiteSettingsRouteGuard>
-      } />
-      <Route path="/courses/:id" element={
         <SiteSettingsRouteGuard feature="events">
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
@@ -173,16 +158,6 @@ export const PublicRoutes = () => {
         </SiteSettingsRouteGuard>
       } />
       <Route path="/knowledge/:slug" element={<LegacyKnowledgeRedirect />} />
-    <Route path="/testimonials" element={
-      <SiteSettingsRouteGuard feature="testimonials">
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <Testimonials />
-          </Suspense>
-        </ErrorBoundary>
-    
-      </SiteSettingsRouteGuard>
-    } />
     <Route path="/auth" element={
       <ErrorBoundary>
         <Suspense fallback={<LoadingFallback />}>
@@ -337,16 +312,6 @@ export const PublicRoutes = () => {
     
       </SiteSettingsRouteGuard>
     } />
-    <Route path="/contact" element={
-      <SiteSettingsRouteGuard feature="contact">
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <Contact />
-          </Suspense>
-        </ErrorBoundary>
-    
-      </SiteSettingsRouteGuard>
-    } />
     <Route path="/events/learn/:slug" element={
       <SiteSettingsRouteGuard feature="events">
         <Suspense fallback={<LoadingFallback />}>
@@ -437,24 +402,6 @@ export const PublicRoutes = () => {
           </Suspense>
         </ErrorBoundary>
     
-      </SiteSettingsRouteGuard>
-    } />
-    <Route path="/exams" element={
-      <SiteSettingsRouteGuard feature="exams">
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <ExamsListing />
-          </Suspense>
-        </ErrorBoundary>
-      </SiteSettingsRouteGuard>
-    } />
-    <Route path="/exams/:slug" element={
-      <SiteSettingsRouteGuard feature="exams">
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <ExamPlayer />
-          </Suspense>
-        </ErrorBoundary>
       </SiteSettingsRouteGuard>
     } />
     <Route path="/book/:slug" element={
@@ -839,19 +786,10 @@ export const DynamicRoutes = () => {
   if (!featureFlags.dynamicPages) return null;
 
   // Special page components - must be defined BEFORE catch-all
-  const Events = lazy(() => import('@/pages/Events'));
-  const Coaching = lazy(() => import('@/pages/Coaching'));
-  const AboutPage = lazy(() => import('@/pages/About'));
-  const Blog = lazy(() => import('@/pages/Blog'));
 
   return (
     <>
       {/* Home Page — renders the new designed homepage directly */}
-      <Route path="/" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Home />
-        </Suspense>
-      } />
       
       {/* Special Pages - Always defined, guarded by SiteSettingsRouteGuard */}
       {/* Legacy /knowledge now redirects to the ISA-O3 Knowledge Base */}
@@ -908,58 +846,6 @@ export const DynamicRoutes = () => {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <PatternBuilder />
-            </Suspense>
-          </ErrorBoundary>
-        </SiteSettingsRouteGuard>
-      } />
-      
-      <Route path="/events" element={
-        <SiteSettingsRouteGuard feature="events">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <Events />
-            </Suspense>
-          </ErrorBoundary>
-        </SiteSettingsRouteGuard>
-      } />
-      
-      <Route path="/coaching" element={
-        <SiteSettingsRouteGuard feature="coaching">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <Coaching />
-            </Suspense>
-          </ErrorBoundary>
-      
-        </SiteSettingsRouteGuard>
-      } />
-
-      <Route path="/about" element={
-        <SiteSettingsRouteGuard feature="about">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <AboutPage />
-            </Suspense>
-          </ErrorBoundary>
-      
-        </SiteSettingsRouteGuard>
-      } />
-
-      <Route path="/blog" element={
-        <SiteSettingsRouteGuard feature="blog">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <Blog />
-            </Suspense>
-          </ErrorBoundary>
-        </SiteSettingsRouteGuard>
-      } />
-
-      <Route path="/blog/:slug" element={
-        <SiteSettingsRouteGuard feature="blog">
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <BlogPost />
             </Suspense>
           </ErrorBoundary>
         </SiteSettingsRouteGuard>

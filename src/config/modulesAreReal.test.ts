@@ -70,10 +70,13 @@ describe('every module', () => {
     expect(missing, `no site_settings column: ${missing.join(', ')}`).toEqual([]);
   });
 
-  it('guards at least one route', () => {
-    const guarded = new Set(routeGates().map((r) => r.feature));
+  // Either router will do. The App owns /flow-game and /projects; the Site owns /about and /blog;
+  // and since the App stopped declaring routes the Site answers, six modules are gated only on the
+  // Site side. A module switching nothing anywhere is still a lie in a form.
+  it('guards at least one route, on whichever side owns it', () => {
+    const guarded = new Set([...routeGates().map((r) => r.feature), ...siteGated()]);
     const unused = MODULES.filter((m) => !guarded.has(m.feature)).map((m) => m.feature);
-    expect(unused, `switches nothing: ${unused.join(', ')}`).toEqual([]);
+    expect(unused, `switches nothing on either side: ${unused.join(', ')}`).toEqual([]);
   });
 });
 
@@ -130,6 +133,14 @@ describe('every menu flag', () => {
 // because the test only ever read one router. This is the half that was missing.
 
 const gateSource = () => readFileSync('apps/web/src/lib/module-gate.ts', 'utf8');
+
+/** The modules the Site gates a page on, found by grepping its pages for requireModule(). */
+function siteGated(): Set<string> {
+  const out = execSync(
+    `grep -rho "requireModule('[a-z_]*'" apps/web/src/app || true`, { encoding: 'utf8' },
+  );
+  return new Set([...out.matchAll(/requireModule\('([a-z_]+)'/g)].map((m) => m[1]));
+}
 
 /** The Site's copy of the defaults. */
 function siteDefaults(): Record<string, boolean> {

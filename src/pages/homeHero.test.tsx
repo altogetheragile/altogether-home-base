@@ -15,13 +15,15 @@ import { readFileSync } from 'node:fs';
 // three data hooks in it, and what is being held here is an editorial rule about what appears in
 // the hero, not a rendering behaviour. Rendering it would test react-query and an image loader.
 
-// BOTH home pages. `/` is served by the Next route in apps/web, and `src/pages/Home.tsx` is the
-// SPA's near-identical twin of it - same class names, same hero, its own copy of every string.
-// Editing one and not the other is the trap this file exists to prevent: the change that matters
-// to a visitor is the Next one, and the change that is easiest to make is the other.
+// There is one home page now. There were two: `/` is served by the Next route in apps/web, and
+// `src/pages/Home.tsx` was the SPA's near-identical twin of it - same class names, same hero, its
+// own copy of every string, rendered to anyone who clicked Home from inside the app. Editing one
+// and not the other was the trap this file was written to prevent, and it caught it at least once.
+//
+// The twin is deleted and the SPA no longer claims the URL, so there is nothing left to keep in
+// step. What survives is the editorial rule about what belongs in the hero.
 const SOURCES = [
-  ['the Next home page (this is the one that is served)', 'apps/web/src/app/page.tsx', 'STATS'],
-  ['the SPA home page', 'src/pages/Home.tsx', 'STATS BAR'],
+  ['the home page', 'apps/web/src/app/page.tsx', 'STATS'],
 ] as const;
 /** The home page's words live in a registry now, so a source slice alone says `t('home.hero.h1')`
  *  where the heading used to be. Resolving the registry into the slice keeps these assertions
