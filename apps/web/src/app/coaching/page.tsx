@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
@@ -7,6 +8,7 @@ import { HomeTestimonials } from '../HomeTestimonials';
 import { CoachingEnquiryForm } from './CoachingEnquiryForm';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
+import { getCopy, lines, list } from '@/lib/copy';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,18 +36,10 @@ const Heading = ({ label, title, light = false }: { label: string; title: string
   </div>
 );
 
-const services = [
-  { id: 'one-to-one', icon: <User />, label: 'One-to-One', title: 'Professional Coaching', colour: '#1A9090', lightBg: '#E6F5F5', tagline: 'Space to think. Clarity to act.', description: "One-to-one coaching for professionals navigating change - whether that's a new role, a difficult team dynamic, a career pivot, or the challenge of leading in an agile organisation without a map.", detail: "This isn't mentoring or consultancy. I won't tell you what to do. My role is to hold the right space and ask the questions that help you find your own answers - because those are the ones that actually stick.", includes: ['60-minute sessions via video call or in person (London)', 'Pre-session reflection prompts sent 48 hours before', 'Session notes and agreed actions within 24 hours', 'WhatsApp or email support between sessions', 'ICF-aligned approach throughout'], price: 'On request', packageNote: 'Pricing discussed during your free chemistry session', cta: 'Book a chemistry session', img: '/images/coaching-one-to-one.webp', imgAlt: 'One-to-one coaching session in comfortable chairs', imgScale: 118, imgPos: 'center 35%' },
-  { id: 'team', icon: <Users />, label: 'Team', title: 'Agile Team Coaching', colour: '#6B5FCC', lightBg: '#EEECF9', tagline: "Better teams don't happen by accident.", description: 'Coaching for agile teams that are technically running the events but not getting the results - or for newly formed teams that want to build good habits from the start.', detail: 'I work with the whole team, not just the Scrum Master or team lead. That means coaching the dynamics, not just the process - how the team makes decisions, how they handle conflict, and whether their retrospectives are actually changing anything.', includes: ['Initial team assessment and health check', 'Fortnightly team coaching sessions (90 minutes)', 'One-to-one sessions with team lead or Scrum Master', 'Retrospective facilitation and coaching', 'Management 3.0 practices woven throughout'], price: 'On request', packageNote: 'Engagement length discussed during your free chemistry session', cta: 'Enquire about team coaching', img: '/images/coaching-team.webp', imgAlt: 'Team coaching session at a desk with laptop', imgScale: 105, imgPos: 'center center' },
-];
-
-const credentials = [
-  { label: 'ICF-accredited', desc: 'Coaching approach aligned to International Coaching Federation standards' },
-  { label: 'STAR Manager Practitioner', desc: 'Assessed portfolio across all nine management competencies' },
-  { label: '25+ years experience', desc: 'Working in and around agile teams as practitioner, trainer, and coach' },
-  { label: 'ABC Assessor', desc: 'Interviews professional membership candidates for the Agile Business Consortium' },
-  { label: 'Management 3.0', desc: 'Licensed Facilitator - energising people, teams, and organisations' },
-  { label: 'University Lecturer', desc: 'Part-time visiting lecturer at the University of Westminster' },
+// Styling and images stay here; every word in these blocks is copy.
+const serviceStyles = [
+  { id: 'one-to-one', icon: <User />, colour: '#1A9090', lightBg: '#E6F5F5', img: '/images/coaching-one-to-one.webp', imgAlt: 'One-to-one coaching session in comfortable chairs', imgScale: 118, imgPos: 'center 35%' },
+  { id: 'team', icon: <Users />, colour: '#6B5FCC', lightBg: '#EEECF9', img: '/images/coaching-team.webp', imgAlt: 'Team coaching session at a desk with laptop', imgScale: 105, imgPos: 'center center' },
 ];
 
 function Illustration({ src, alt, height, scale = 105, position = 'center center' }: { src: string; alt: string; height: number; scale?: number; position?: string }) {
@@ -59,7 +53,25 @@ function Illustration({ src, alt, height, scale = 105, position = 'center center
 
 export default async function CoachingPage() {
   await requireModule('coaching');
-  const [settings, testimonials] = await Promise.all([getSiteSettings(), getHomeTestimonials()]);
+  const [settings, testimonials, t] = await Promise.all([getSiteSettings(), getHomeTestimonials(), getCopy('coaching')]);
+
+  // Styling from serviceStyles, words from the registry.
+  const services = serviceStyles.map((style, i) => ({
+    ...style,
+    label: t(`coaching.service.${i + 1}.label`),
+    title: t(`coaching.service.${i + 1}.title`),
+    tagline: t(`coaching.service.${i + 1}.tagline`),
+    description: t(`coaching.service.${i + 1}.description`),
+    detail: t(`coaching.service.${i + 1}.detail`),
+    includes: list(t(`coaching.service.${i + 1}.includes`)),
+    price: t(`coaching.service.${i + 1}.price`),
+    packageNote: t(`coaching.service.${i + 1}.packageNote`),
+    cta: t(`coaching.service.${i + 1}.cta`),
+  }));
+  const credentials = Array.from({ length: 6 }, (_, i) => ({
+    label: t(`coaching.why.${i + 1}.label`),
+    desc: t(`coaching.why.${i + 1}.desc`),
+  }));
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
 
@@ -89,12 +101,12 @@ export default async function CoachingPage() {
       {/* HERO */}
       <div id="main-content" className="aa-coach-hero" style={{ background: '#006666' }}>
         <div style={{ maxWidth: 680 }}>
-          <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Coaching</div>
-          <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 50px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>Coaching that asks<br />the right questions.</h1>
-          <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }}>Whether you&apos;re navigating a difficult career moment or trying to build a team that actually functions well - coaching works best when it&apos;s grounded in real experience. That&apos;s what Altogether Agile brings.</p>
+          <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('coaching.hero.eyebrow')}</div>
+          <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 50px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('coaching.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
+          <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }}>{t('coaching.hero.intro')}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-            <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Chat />Book a free chemistry session</a>
-            <a href="#enquiry" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>Jump to enquiry form <ArrowRight /></a>
+            <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('coaching.hero.cta')}</a>
+            <a href="#enquiry" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>{t('coaching.hero.jump')} <ArrowRight /></a>
           </div>
         </div>
       </div>
@@ -103,10 +115,10 @@ export default async function CoachingPage() {
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
         <div className="aa-service-layout">
           <div>
-            <Heading label="The approach" title="Coaching isn't advice-giving." />
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>Most people who come to coaching are not short of information. They know what they should probably do. What they need is space to think it through - without someone else&apos;s agenda in the room.</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>My role as a coach is to hold that space and ask the questions that help you find your own answers. That might sound simple. In practice it requires real skill - and real discipline not to reach for the easy answer on your behalf.</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }}>Where it&apos;s useful, I&apos;ll bring 25 years of agile and organisational experience into the room. But the work is yours. That&apos;s why it sticks.</p>
+            <Heading label={t('coaching.approach.label')} title={t('coaching.approach.heading')} />
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p1')}</p>
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p2')}</p>
+            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }}>{t('coaching.approach.p3')}</p>
           </div>
           <Illustration src="/images/coaching-hero.webp" alt="Two people having a coaching conversation" height={320} position="center 40%" />
         </div>
@@ -123,7 +135,7 @@ export default async function CoachingPage() {
               <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 14px' }}>{service.description}</p>
               <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 28px' }}>{service.detail}</p>
               <div style={{ background: service.lightBg, borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
-                <div style={{ color: service.colour, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>What&apos;s included</div>
+                <div style={{ color: service.colour, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{t('coaching.service.includesHeading')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {service.includes.map((item) => (
                     <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 14, lineHeight: 1.6 }}>
@@ -149,7 +161,7 @@ export default async function CoachingPage() {
 
       {/* CREDENTIALS */}
       <div className="aa-section-pad" style={{ background: '#006666' }}>
-        <Heading label="Why Altogether Agile" title="Coaching grounded in real experience." light />
+        <Heading label={t('coaching.why.label')} title={t('coaching.why.heading')} light />
         <div className="aa-creds-grid">
           {credentials.map((cred) => (
             <div key={cred.label} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 20px 24px' }}>
@@ -167,9 +179,9 @@ export default async function CoachingPage() {
       <div className="aa-coach-band" style={{ background: p.deepTeal }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
           <div>
-            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Free chemistry session</div>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>Not sure if coaching is right for you?</h2>
-            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>A chemistry session is a free 30-minute conversation - no agenda, no commitment. It&apos;s a chance for both of us to work out whether we&apos;re a good fit before anything else.</p>
+            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('coaching.chemistry.label')}</div>
+            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('coaching.chemistry.heading')}</h2>
+            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('coaching.chemistry.body')}</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {['30 minutes', 'No commitment', 'Video or phone', 'Free'].map((tag) => (
                 <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
@@ -177,10 +189,10 @@ export default async function CoachingPage() {
             </div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: '32px 28px' }}>
-            <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>Book your chemistry session</div>
+            <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>{t('coaching.chemistry.boxHeading')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Calendar />Book a time slot</a>
-              <div style={{ color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>Or use the enquiry form below</div>
+              <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Calendar />{t('coaching.chemistry.cta')}</a>
+              <div style={{ color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>{t('coaching.chemistry.orForm')}</div>
             </div>
           </div>
         </div>
@@ -189,7 +201,7 @@ export default async function CoachingPage() {
       {/* ENQUIRY FORM */}
       <div id="enquiry" className="aa-section-pad" style={{ background: p.skyTeal }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <Heading label="Get in touch" title="Send an enquiry." />
+          <Heading label={t('coaching.enquiry.label')} title={t('coaching.enquiry.heading')} />
           <CoachingEnquiryForm />
         </div>
       </div>
