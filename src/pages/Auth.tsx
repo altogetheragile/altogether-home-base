@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, } from 'react-router-dom';
+import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +33,7 @@ const Auth = () => {
 
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
 
   // Helper to navigate after successful auth
   const navigateAfterAuth = () => {

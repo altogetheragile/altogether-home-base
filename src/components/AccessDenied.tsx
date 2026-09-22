@@ -2,7 +2,7 @@
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useAppNavigate } from '@/hooks/useAppNavigate';
 
 interface AccessDeniedProps {
   title?: string;
@@ -15,7 +15,7 @@ const AccessDenied = ({
   message = "You don't have permission to access this page. Please contact your administrator if you believe this is an error.",
   showBackButton = true 
 }: AccessDeniedProps) => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

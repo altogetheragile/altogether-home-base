@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAppNavigate } from '@/hooks/useAppNavigate';
 import { useRecommendations, useTrackInteraction } from '@/hooks/useRecommendations';
 import { RecommendationCard } from './RecommendationCard';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
   showViewAll = true,
   className = '',
 }) => {
-  const navigate = useNavigate();
+  const navigate = useAppNavigate();
   const { settings } = useSiteSettings();
 
   // Filter out content types for disabled features
