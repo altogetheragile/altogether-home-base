@@ -29,6 +29,15 @@ editor lists. A shared `.json` needs no build step and no shared package.
 `copyRegistryMatchesPage.test.ts` fails if a registry declares a key the page never reads, or the
 page reads a key no registry declares.
 
+## Lists
+
+A list of plain strings lives in ONE entry, one item per line, and the page splits it with
+`list()`. That is deliberate: a key-value editor cannot add a key, but it can add a line, so the
+credentials and the hero tags on About can be grown and shortened without a developer.
+
+A list whose items have several fields of their own, like the career timeline on About, stays in
+code. Squeezing three fields per row into a textarea trades one problem for a worse one.
+
 ## A Line Break In A Heading
 
 Two headings are deliberately split across lines. The registry stores the break as a newline and the
