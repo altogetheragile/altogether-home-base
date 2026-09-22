@@ -9,6 +9,7 @@ import { BlogPostSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +17,10 @@ import { format } from 'date-fns';
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { settings } = useSiteSettings();
+  // Declared, shown in Admin, and read nowhere until now: the panel appeared whatever the
+  // switch said. Off by default, which is what the setting always claimed.
+  const showRecommendations = settings?.show_recommendations ?? false;
   const [searchParams] = useSearchParams();
   const { loading: authLoading } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
@@ -231,7 +236,7 @@ const BlogPost = () => {
         )}
 
         {/* Cross-content recommendations */}
-        {post && (
+        {post && showRecommendations && (
           <div style={{ marginTop: 48, paddingTop: 40, borderTop: `1px solid ${p.paleTeal}` }}>
             <RecommendationsSection
               title="Explore More"

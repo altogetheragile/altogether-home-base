@@ -12,6 +12,7 @@ import { TechniqueSchema, BreadcrumbSchema } from '@/components/seo/JsonLd';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { RecommendationsSection } from '@/components/recommendations/RecommendationsSection';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { colors as p } from '@/theme/colors';
 
 // ─── Mobile detection hook ──────────────────────────────────────────────────
@@ -122,6 +123,10 @@ function getDomains(item: KnowledgeItem): string[] {
 const Technique: React.FC = () => {
   const bookingHref = useBookingHref();
   const { slug } = useParams<{ slug: string }>();
+  const { settings } = useSiteSettings();
+  // Declared, shown in Admin, and read nowhere until now: the panel appeared whatever the
+  // switch said. Off by default, which is what the setting always claimed.
+  const showRecommendations = settings?.show_recommendations ?? false;
   const isMobile = useIsMobile();
 
   const { data: item, isLoading, error } = useKnowledgeItemBySlug(slug || '');
@@ -475,7 +480,7 @@ const Technique: React.FC = () => {
       )}
 
       {/* ─── CROSS-CONTENT RECOMMENDATIONS ─── */}
-      {item && (
+      {item && showRecommendations && (
         <div style={{ background: '#FAFAFA', padding: isMobile ? '40px 20px' : '56px 48px' }}>
           <div style={{ maxWidth: 960, margin: '0 auto' }}>
             <RecommendationsSection

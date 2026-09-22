@@ -5,362 +5,143 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { Settings, Navigation, Route, Globe } from 'lucide-react';
+import { MODULES, MODULE_GROUPS, NAV_FLAGS, flagOf } from '@/config/modules';
+import { Settings, AlertTriangle } from 'lucide-react';
 import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
+
+// ============= Which parts of the site are switched on =============
+//
+// Rendered from `MODULES`, the one list of switchable parts, rather than from sixteen hand-written
+// blocks. Before this the page carried switches for four flags that were read nowhere - you could
+// turn Projects off and nothing happened - and had no switch at all for the games, while 32 public
+// routes had nothing in front of them. Adding a module is now a line in that list.
+//
+// `show_admin_routes` is deliberately not here. A switch that can hide the admin area from inside
+// the admin area is a way to lock yourself out of your own site.
+
+type Flags = Record<string, boolean>;
+
+const defaults = (settings: Record<string, unknown> | null | undefined): Flags =>
+  Object.fromEntries([...MODULES.map((m) => [flagOf(m), m.defaultOn] as const),
+                      ...NAV_FLAGS.map((f) => [f.flag, f.defaultOn] as const)]
+    .map(([flag, fallback]) => {
+      const v = settings?.[flag];
+      return [flag, typeof v === 'boolean' ? v : fallback];
+    }));
 
 export default function AdminSettings() {
   const { settings, isLoading, updateSettings } = useSiteSettings();
-  
-  const [localSettings, setLocalSettings] = useState({
-    show_events: settings?.show_events ?? false,
-    show_knowledge: settings?.show_knowledge ?? false,
-    show_coaching: settings?.show_coaching ?? true,
-    show_about: settings?.show_about ?? true,
-    show_blog: settings?.show_blog ?? false,
-    show_ai_tools: settings?.show_ai_tools ?? true,
-    show_contact: settings?.show_contact ?? true,
-    show_testimonials: settings?.show_testimonials ?? true,
-    show_dashboard: settings?.show_dashboard ?? true,
-    show_resources: settings?.show_resources ?? true,
-    show_flow_game: settings?.show_flow_game ?? true,
-    show_exams: settings?.show_exams ?? true,
-    show_bookings: settings?.show_bookings ?? false,
-    show_admin_routes: settings?.show_admin_routes ?? true,
-    show_protected_projects: settings?.show_protected_projects ?? true,
-    show_dynamic_pages: settings?.show_dynamic_pages ?? true,
-    show_recommendations: settings?.show_recommendations ?? false,
-  });
+  const [localSettings, setLocalSettings] = useState<Flags>(() => defaults(settings as unknown as Record<string, unknown>));
 
-  // Update local state when settings load
   useEffect(() => {
-    if (settings) {
-      setLocalSettings({
-        show_events: settings.show_events ?? false,
-        show_knowledge: settings.show_knowledge ?? false,
-        show_coaching: settings.show_coaching ?? true,
-        show_about: settings.show_about ?? true,
-        show_blog: settings.show_blog ?? false,
-        show_ai_tools: settings.show_ai_tools ?? true,
-        show_contact: settings.show_contact ?? true,
-        show_testimonials: settings.show_testimonials ?? true,
-        show_dashboard: settings.show_dashboard ?? true,
-        show_resources: settings.show_resources ?? true,
-        show_flow_game: settings.show_flow_game ?? true,
-        show_exams: settings.show_exams ?? true,
-        show_bookings: settings.show_bookings ?? false,
-        show_admin_routes: settings.show_admin_routes ?? true,
-        show_protected_projects: settings.show_protected_projects ?? true,
-        show_dynamic_pages: settings.show_dynamic_pages ?? true,
-        show_recommendations: settings.show_recommendations ?? false,
-      });
-    }
+    if (settings) setLocalSettings(defaults(settings as unknown as Record<string, unknown>));
   }, [settings]);
 
-  const handleToggle = (key: keyof typeof localSettings) => {
-    setLocalSettings(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  const handleToggle = (key: string) =>
+    setLocalSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleSave = () => {
-    updateSettings(localSettings);
-  };
+  const handleSave = () => updateSettings(localSettings);
 
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="h-64 bg-muted rounded"></div>
+          <div className="h-8 w-1/4 rounded bg-muted" />
+          <div className="h-64 rounded bg-muted" />
         </div>
       </div>
     );
   }
 
+  const off = MODULES.filter((m) => !localSettings[flagOf(m)]).length;
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="container mx-auto space-y-6 p-6">
+      <div className="mb-6 flex items-center gap-3">
         <Settings className="h-8 w-8 text-primary" />
         <div>
           <h1 className="text-3xl font-bold">Site Settings</h1>
-          <p className="text-muted-foreground">Control which pages and features are visible on your site</p>
+          <p className="text-muted-foreground">
+            Which parts of the site are switched on. Off means the pages are hidden from the menu
+            <em> and</em> unreachable, not merely unlinked.
+            {off > 0 && <> Currently <strong>{off} off</strong>.</>}
+          </p>
         </div>
       </div>
 
+      {MODULE_GROUPS.map((group) => {
+        const inGroup = MODULES.filter((m) => m.group === group);
+        if (inGroup.length === 0) return null;
+        return (
+          <Card key={group}>
+            <CardHeader>
+              <CardTitle>{group}</CardTitle>
+              <CardDescription>
+                {inGroup.filter((m) => localSettings[flagOf(m)]).length} of {inGroup.length} on
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {inGroup.map((m, i) => (
+                <div key={m.feature}>
+                  {i > 0 && <Separator className="mb-6" />}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor={flagOf(m)} className="flex items-center gap-2 text-base font-medium">
+                        {m.label}
+                        {m.hasColumn === false && (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                            <AlertTriangle className="h-3 w-3" /> not saved yet
+                          </span>
+                        )}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {m.blurb}
+                        {m.hasColumn === false && ' This switch has no column on site_settings yet, so it will not persist.'}
+                      </p>
+                    </div>
+                    <Switch
+                      id={flagOf(m)}
+                      checked={localSettings[flagOf(m)]}
+                      disabled={m.hasColumn === false}
+                      onCheckedChange={() => handleToggle(flagOf(m))}
+                    />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {/* Not modules: these change what is offered, while everything behind them stays reachable
+          by its own URL. Separated so it is clear which kind of switch you are looking at. */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Navigation className="h-5 w-5 text-primary" />
-            <CardTitle>Navigation Features</CardTitle>
-          </div>
-          <CardDescription>
-            Toggle which pages appear in the main navigation menu
-          </CardDescription>
+          <CardTitle>Menus</CardTitle>
+          <CardDescription>What the site offers, rather than what it allows</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_events" className="text-base font-medium">Events</Label>
-              <p className="text-sm text-muted-foreground">
-                Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
-              </p>
+          {NAV_FLAGS.map((f, i) => (
+            <div key={f.flag}>
+              {i > 0 && <Separator className="mb-6" />}
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor={f.flag} className="text-base font-medium">{f.label}</Label>
+                  <p className="text-sm text-muted-foreground">{f.blurb}</p>
+                </div>
+                <Switch id={f.flag} checked={localSettings[f.flag]}
+                  onCheckedChange={() => handleToggle(f.flag)} />
+              </div>
             </div>
-            <Switch
-              id="show_events"
-              checked={localSettings.show_events}
-              onCheckedChange={() => handleToggle('show_events')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_knowledge" className="text-base font-medium">Knowledge Base</Label>
-              <p className="text-sm text-muted-foreground">
-                Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
-              </p>
-            </div>
-            <Switch
-              id="show_knowledge"
-              checked={localSettings.show_knowledge}
-              onCheckedChange={() => handleToggle('show_knowledge')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_coaching" className="text-base font-medium">Coaching</Label>
-              <p className="text-sm text-muted-foreground">Show coaching page in navigation</p>
-            </div>
-            <Switch
-              id="show_coaching"
-              checked={localSettings.show_coaching}
-              onCheckedChange={() => handleToggle('show_coaching')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_about" className="text-base font-medium">About</Label>
-              <p className="text-sm text-muted-foreground">Show about page in navigation</p>
-            </div>
-            <Switch
-              id="show_about"
-              checked={localSettings.show_about}
-              onCheckedChange={() => handleToggle('show_about')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_blog" className="text-base font-medium">Blog</Label>
-              <p className="text-sm text-muted-foreground">
-                Controls navigation visibility AND page accessibility. When OFF: Page is hidden from navigation and non-admins cannot access it. When ON: Page appears in navigation and is publicly accessible.
-              </p>
-            </div>
-            <Switch
-              id="show_blog"
-              checked={localSettings.show_blog}
-              onCheckedChange={() => handleToggle('show_blog')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_ai_tools" className="text-base font-medium">AI Tools</Label>
-              <p className="text-sm text-muted-foreground">Show AI tools dropdown in navigation</p>
-            </div>
-            <Switch
-              id="show_ai_tools"
-              checked={localSettings.show_ai_tools}
-              onCheckedChange={() => handleToggle('show_ai_tools')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_contact" className="text-base font-medium">Contact</Label>
-              <p className="text-sm text-muted-foreground">Show contact page and navigation link</p>
-            </div>
-            <Switch
-              id="show_contact"
-              checked={localSettings.show_contact}
-              onCheckedChange={() => handleToggle('show_contact')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_testimonials" className="text-base font-medium">Testimonials</Label>
-              <p className="text-sm text-muted-foreground">Show testimonials page in navigation</p>
-            </div>
-            <Switch
-              id="show_testimonials"
-              checked={localSettings.show_testimonials}
-              onCheckedChange={() => handleToggle('show_testimonials')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_dashboard" className="text-base font-medium">Dashboard</Label>
-              <p className="text-sm text-muted-foreground">Show user dashboard page and navigation links</p>
-            </div>
-            <Switch
-              id="show_dashboard"
-              checked={localSettings.show_dashboard}
-              onCheckedChange={() => handleToggle('show_dashboard')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_resources" className="text-base font-medium">Resources Menu</Label>
-              <p className="text-sm text-muted-foreground">Show the Resources dropdown in the main navigation (contains Knowledge Base, Blog, AI Tools, Flow Game)</p>
-            </div>
-            <Switch
-              id="show_resources"
-              checked={localSettings.show_resources}
-              onCheckedChange={() => handleToggle('show_resources')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_flow_game" className="text-base font-medium">Flow Game</Label>
-              <p className="text-sm text-muted-foreground">Show the Kanban Flow Simulation game in the Resources dropdown</p>
-            </div>
-            <Switch
-              id="show_flow_game"
-              checked={localSettings.show_flow_game}
-              onCheckedChange={() => handleToggle('show_flow_game')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_exams" className="text-base font-medium">Practice Exams</Label>
-              <p className="text-sm text-muted-foreground">Show the Practice Exams page in the Resources dropdown</p>
-            </div>
-            <Switch
-              id="show_exams"
-              checked={localSettings.show_exams}
-              onCheckedChange={() => handleToggle('show_exams')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_bookings" className="text-base font-medium">Bookings</Label>
-              <p className="text-sm text-muted-foreground">
-                Enable the public booking page at /book/chemistry-session. With this off the route
-                returns Not Found and the "Book a chemistry session" buttons fall back to the contact
-                page.
-              </p>
-            </div>
-            <Switch
-              id="show_bookings"
-              checked={localSettings.show_bookings}
-              onCheckedChange={() => handleToggle('show_bookings')}
-            />
-          </div>
+          ))}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Route className="h-5 w-5 text-primary" />
-            <CardTitle>System Routes</CardTitle>
-          </div>
-          <CardDescription>
-            Control access to advanced features and routing systems
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_protected_projects" className="text-base font-medium">Protected Initiatives</Label>
-              <p className="text-sm text-muted-foreground">Enable initiative canvas and BMC features</p>
-            </div>
-            <Switch
-              id="show_protected_projects"
-              checked={localSettings.show_protected_projects}
-              onCheckedChange={() => handleToggle('show_protected_projects')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_dynamic_pages" className="text-base font-medium">Dynamic Pages</Label>
-              <p className="text-sm text-muted-foreground">Enable CMS-driven dynamic page system</p>
-            </div>
-            <Switch
-              id="show_dynamic_pages"
-              checked={localSettings.show_dynamic_pages}
-              onCheckedChange={() => handleToggle('show_dynamic_pages')}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-primary" />
-            <CardTitle>Content Display</CardTitle>
-          </div>
-          <CardDescription>
-            Configure dynamic content sections on your homepage
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="show_recommendations" className="text-base font-medium">Recommendations Section</Label>
-              <p className="text-sm text-muted-foreground">
-                Display personalized content recommendations including featured techniques, upcoming events, and latest blog posts on the homepage
-              </p>
-            </div>
-            <Switch
-              id="show_recommendations"
-              checked={localSettings.show_recommendations}
-              onCheckedChange={() => handleToggle('show_recommendations')}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Testimonial display settings save immediately (not staged behind the button below). */}
+      {/* Saves immediately, not staged behind the button below. */}
       <TestimonialDisplaySettings />
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg">
-          Save Changes
-        </Button>
+        <Button onClick={handleSave} size="lg">Save Changes</Button>
       </div>
     </div>
   );

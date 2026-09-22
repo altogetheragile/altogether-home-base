@@ -173,11 +173,14 @@ export const PublicRoutes = () => {
       } />
       <Route path="/knowledge/:slug" element={<LegacyKnowledgeRedirect />} />
     <Route path="/testimonials" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <Testimonials />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="testimonials">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Testimonials />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/auth" element={
       <ErrorBoundary>
@@ -194,114 +197,162 @@ export const PublicRoutes = () => {
       </ErrorBoundary>
     } />
     <Route path="/ai-tools" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <AIToolsHub />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <AIToolsHub />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/user-story-canvas" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <AIToolsCanvas />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <AIToolsCanvas />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/bmc-generator" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <BMCGenerator />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <BMCGenerator />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/project-modelling" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ProjectModellingCanvas />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ProjectModellingCanvas />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/impact-map" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ImpactMap />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ImpactMap />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/personas" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <PersonaStudio />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <PersonaStudio />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/ways-of-working" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <WaysOfWorking />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <WaysOfWorking />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/probes" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ProbeTracker />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ProbeTracker />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/benefits" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <BenefitsScorecard />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <BenefitsScorecard />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/coach" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <CoachingStudio />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <CoachingStudio />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/journey-map" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <JourneyMap />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <JourneyMap />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/story-map" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <StoryMap />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <StoryMap />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/canvases" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <CanvasCatalogue />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <CanvasCatalogue />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/canvases/:canvasKey" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <CoachedCanvasPage />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="ai_tools">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <CoachedCanvasPage />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/contact" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <Contact />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="contact">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Contact />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/events/learn/:slug" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <CoursePage />
-      </Suspense>
+      <SiteSettingsRouteGuard feature="events">
+        <Suspense fallback={<LoadingFallback />}>
+          <CoursePage />
+        </Suspense>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/terms" element={
       <Suspense fallback={<LoadingFallback />}>
@@ -328,46 +379,64 @@ export const PublicRoutes = () => {
       </ProtectedRoute>
     } />
     <Route path="/flow-game" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <FlowGame />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="flow_game">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <FlowGame />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/scrum-game" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ScrumGame />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="scrum_game">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ScrumGame />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/zoo-game" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ZooGame />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="zoo_game">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ZooGame />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/zoo-game/together" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <ZooTogether />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="zoo_game">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <ZooTogether />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/pathways" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <PathwaysPicker />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <PathwaysPicker />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/simulator-preview" element={
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <FlowSimulatorPreview />
-        </Suspense>
-      </ErrorBoundary>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <FlowSimulatorPreview />
+          </Suspense>
+        </ErrorBoundary>
+    
+      </SiteSettingsRouteGuard>
     } />
     <Route path="/exams" element={
       <SiteSettingsRouteGuard feature="exams">
@@ -397,9 +466,12 @@ export const PublicRoutes = () => {
       </SiteSettingsRouteGuard>
     } />
     <Route path="/backlog" element={
-      <Suspense fallback={<LoadingFallback />}>
-        <ProductBacklog />
-      </Suspense>
+      <SiteSettingsRouteGuard feature="protected_projects">
+        <Suspense fallback={<LoadingFallback />}>
+          <ProductBacklog />
+        </Suspense>
+    
+      </SiteSettingsRouteGuard>
     } />
     </>
   );
@@ -410,43 +482,58 @@ export const ProtectedUserRoutes = () => (
   <>
     {/* User Dashboard - Requires AAL2 */}
     <Route path="/dashboard" element={
-      <ProtectedRoute requireAAL2={true}>
-        <Suspense fallback={<LoadingFallback />}>
-          <Dashboard />
-        </Suspense>
-      </ProtectedRoute>
+      <SiteSettingsRouteGuard feature="dashboard">
+        <ProtectedRoute requireAAL2={true}>
+          <Suspense fallback={<LoadingFallback />}>
+            <Dashboard />
+          </Suspense>
+        </ProtectedRoute>
+    
+      </SiteSettingsRouteGuard>
     } />
     
     {/* Project Routes */}
     {featureFlags.protectedProjects && (
       <>
         <Route path="/projects/:projectId" element={
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback />}>
-              <ProjectDetail />
-            </Suspense>
-          </ProtectedRoute>
+          <SiteSettingsRouteGuard feature="protected_projects">
+            <ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProjectDetail />
+              </Suspense>
+            </ProtectedRoute>
+        
+          </SiteSettingsRouteGuard>
         } />
         <Route path="/projects/:projectId/canvas" element={
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback />}>
-              <ProjectCanvas />
-            </Suspense>
-          </ProtectedRoute>
+          <SiteSettingsRouteGuard feature="protected_projects">
+            <ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProjectCanvas />
+              </Suspense>
+            </ProtectedRoute>
+        
+          </SiteSettingsRouteGuard>
         } />
         <Route path="/projects/:projectId/bmc" element={
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback />}>
-              <ProjectBMC />
-            </Suspense>
-          </ProtectedRoute>
+          <SiteSettingsRouteGuard feature="protected_projects">
+            <ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProjectBMC />
+              </Suspense>
+            </ProtectedRoute>
+        
+          </SiteSettingsRouteGuard>
         } />
         <Route path="/projects/:projectId/artifacts/:artifactId" element={
-          <ProtectedRoute>
-            <Suspense fallback={<LoadingFallback />}>
-              <ArtifactViewer />
-            </Suspense>
-          </ProtectedRoute>
+          <SiteSettingsRouteGuard feature="protected_projects">
+            <ProtectedRoute>
+              <Suspense fallback={<LoadingFallback />}>
+                <ArtifactViewer />
+              </Suspense>
+            </ProtectedRoute>
+        
+          </SiteSettingsRouteGuard>
         } />
       </>
     )}
@@ -835,19 +922,25 @@ export const DynamicRoutes = () => {
       } />
       
       <Route path="/coaching" element={
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <Coaching />
-          </Suspense>
-        </ErrorBoundary>
+        <SiteSettingsRouteGuard feature="coaching">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <Coaching />
+            </Suspense>
+          </ErrorBoundary>
+      
+        </SiteSettingsRouteGuard>
       } />
 
       <Route path="/about" element={
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingFallback />}>
-            <AboutPage />
-          </Suspense>
-        </ErrorBoundary>
+        <SiteSettingsRouteGuard feature="about">
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <AboutPage />
+            </Suspense>
+          </ErrorBoundary>
+      
+        </SiteSettingsRouteGuard>
       } />
 
       <Route path="/blog" element={
@@ -872,15 +965,18 @@ export const DynamicRoutes = () => {
       
       {/* Dynamic Catch-All for CMS Pages - MUST be last */}
       <Route path="/:slug" element={
-        <ErrorBoundary fallback={
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg text-destructive">Failed to load page</div>
-          </div>
-        }>
-          <Suspense fallback={<LoadingFallback />}>
-            <DynamicPageRenderer />
-          </Suspense>
-        </ErrorBoundary>
+        <SiteSettingsRouteGuard feature="dynamic_pages">
+          <ErrorBoundary fallback={
+            <div className="flex items-center justify-center h-64">
+              <div className="text-lg text-destructive">Failed to load page</div>
+            </div>
+          }>
+            <Suspense fallback={<LoadingFallback />}>
+              <DynamicPageRenderer />
+            </Suspense>
+          </ErrorBoundary>
+      
+        </SiteSettingsRouteGuard>
       } />
     </>
   );
