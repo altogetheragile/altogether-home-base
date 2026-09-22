@@ -36,7 +36,7 @@ function Row({ row }: { row: CopyRow }) {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           aria-label={row.label}
-          rows={Math.min(10, Math.max(2, Math.ceil(draft.length / 70) + draft.split('\n').length))}
+          rows={Math.min(10, Math.max(2, draft.split('\n').length + Math.floor(draft.length / 110)))}
           className="w-full resize-y rounded border border-border bg-background px-2 py-1.5 text-sm leading-relaxed outline-none focus:border-primary"
         />
       ) : (
