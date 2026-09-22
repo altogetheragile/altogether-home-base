@@ -1,3 +1,4 @@
+import { colors } from '@/theme/colors';
 interface TabletFrameProps {
   imgSrc?: string;
   className?: string;
@@ -53,7 +54,7 @@ export function AlunTabletPortrait({ imgSrc = "/images/alun-illustrated.webp", c
           height: "100%",
           borderRadius: screenRadius,
           overflow: "hidden",
-          background: "#D9F2F2",
+          background: colors.paleTeal,
           position: "relative",
         }}
       >

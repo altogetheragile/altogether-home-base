@@ -203,7 +203,7 @@ export function ValueHorizonsMap() {
       {/* Right rail: Learning flows up (bottom-up feedback) */}
       <div
         className="flex flex-col items-center justify-between rounded-md shrink-0 py-2"
-        style={{ width: 22, background: '#F0FAFA', border: '1px solid #A8E4E2' }}
+        style={{ width: 22, background: p.skyTeal, border: '1px solid #A8E4E2' }}
       >
         <span className="w-3.5" />
         <span

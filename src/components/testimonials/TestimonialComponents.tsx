@@ -168,7 +168,7 @@ export const HomepageStrip: React.FC = () => {
           {visibleItems.map((t, i) => (
             <div key={startIndex + i} style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: 16, padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Stars rating={t.rating} size={12} />
-              <ReadMoreText text={t.comment} limit={200} buttonColor="#FF9715" style={{ color: '#ffffff', fontSize: 16, lineHeight: 1.65, flex: 1 }} />
+              <ReadMoreText text={t.comment} limit={200} buttonColor={p.orange} style={{ color: '#ffffff', fontSize: 16, lineHeight: 1.65, flex: 1 }} />
               <div>
                 <div style={{ color: '#ffffff', fontWeight: 700, fontSize: 14 }}>{displayName(t, firstNameOnly)}</div>
                 <div style={{ color: p.paleTeal, fontSize: 12 }}>{t.job_title}{t.job_title && t.company ? ' \u00b7 ' : ''}{t.company}</div>

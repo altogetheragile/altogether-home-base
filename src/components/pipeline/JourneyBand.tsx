@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { ArrowDown, ArrowUp, ArrowRight } from 'lucide-react';
 import { STAGES, PIPELINE, PipelineStage } from '@/config/pipeline';
+import { colors } from '@/theme/colors';
 
-const TEAL = '#004D4D';
-const ORANGE = '#FF9715';
+const TEAL = colors.deepTeal;
+const ORANGE = colors.orange;
 
 // The first three stages cascade intent down; the last three return learning up.
 const CASCADE_DOWN: PipelineStage[] = ['intent', 'scope', 'approach'];

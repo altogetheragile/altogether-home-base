@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { exportToCSV } from '@/utils/exportUtils';
 import { toast } from 'sonner';
+import { colors } from '@/theme/colors';
 
 // A Story Map view (see VISION_TO_VALUE.md 6.13, after Jeff Patton) over the
 // existing backlog: backbone columns from the epics, cards beneath via
@@ -98,7 +99,7 @@ export function StoryMap({ items }: { items: StoryMapItem[] }) {
           <div className="w-28 shrink-0" />
           {columns.map((col) => (
             <div key={col.id} className="w-56 shrink-0 px-1">
-              <div className="rounded-md px-2 py-1.5 text-sm font-semibold text-white" style={{ backgroundColor: '#004D4D' }}>
+              <div className="rounded-md px-2 py-1.5 text-sm font-semibold text-white" style={{ backgroundColor: colors.deepTeal }}>
                 {col.name}
               </div>
             </div>
@@ -109,7 +110,7 @@ export function StoryMap({ items }: { items: StoryMapItem[] }) {
         {rows.map((release) => (
           <div key={release || 'unscheduled'} className="flex gap-3 border-b border-border/60 py-2">
             <div className="flex w-28 shrink-0 flex-col gap-1 pt-1">
-              <span className="text-xs font-bold tracking-wide" style={{ color: '#FF9715' }}>
+              <span className="text-xs font-bold tracking-wide" style={{ color: colors.orange }}>
                 {release || 'Unscheduled'}
               </span>
               <Button variant="ghost" size="sm" className="h-6 justify-start px-1 text-[11px] text-muted-foreground" onClick={() => exportRelease(release)}>

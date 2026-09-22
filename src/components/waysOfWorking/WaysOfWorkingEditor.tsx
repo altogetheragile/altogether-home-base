@@ -10,6 +10,7 @@ import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
 import { confirmReplace } from '@/utils/confirmDiscard';
+import { colors } from '@/theme/colors';
 import {
   WaysOfWorking,
   RetroAction,
@@ -21,7 +22,7 @@ import {
 } from '@/types/waysOfWorking';
 
 const STORAGE_KEY = 'waysOfWorking.v1';
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 
 const wowHasContent = (w: WaysOfWorking): boolean =>
   w.agreements.some((a) => a.trim() !== '') || w.retro_actions.length > 0;

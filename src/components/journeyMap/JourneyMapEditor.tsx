@@ -26,9 +26,10 @@ import {
 } from '@/types/journeyMap';
 import { toJson, toMarkdown, fileStem, downloadText } from '@/utils/journeyMap/exportJourneyMap';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { colors } from '@/theme/colors';
 
 const STORAGE_KEY = 'journeyMap.v1';
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 
 const loadInitial = (): JourneyMap => {
   try {

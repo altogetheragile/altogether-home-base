@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Send, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CoachTurn, CoachMode } from '@/types/coaching';
+import { colors } from '@/theme/colors';
 
 interface CoachChatProps {
   /** Tool key, e.g. 'impact-map', for the coach prompt context. */
@@ -18,8 +19,8 @@ interface CoachChatProps {
   onClose?: () => void;
 }
 
-const TEAL = '#004D4D';
-const ORANGE = '#FF9715';
+const TEAL = colors.deepTeal;
+const ORANGE = colors.orange;
 
 /**
  * A non-directive coaching conversation that fills one cell in the user's own

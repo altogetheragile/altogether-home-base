@@ -10,8 +10,9 @@ import { CoachChat } from '@/components/coaching/CoachChat';
 import BusinessModelCanvas, { BusinessModelCanvasRef } from '@/components/bmc/BusinessModelCanvas';
 import BMCExportDialog from '@/components/bmc/BMCExportDialog';
 import type { CellCoach } from '@/types/coaching';
+import { colors } from '@/theme/colors';
 
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 const MIDTEAL = '#1A9090';
 const ORANGE = '#E08A4E';
 const TAN = '#9C8A6A';

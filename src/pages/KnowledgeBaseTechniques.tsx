@@ -8,7 +8,7 @@ import { colors as p } from '@/theme/colors';
 const HORIZON_DOT: Record<string, string> = {
   Organisation: '#8B6FE0',
   Coordination: '#2FA8A3',
-  Team: '#FF9715',
+  Team: p.orange,
 };
 
 const KnowledgeBaseTechniques = () => {

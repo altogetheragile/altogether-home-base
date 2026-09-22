@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { colors } from '@/theme/colors';
 
 // Ordered for maximum visual variety on each transition:
 // afro → short → covering → long → afro → short → covering …
@@ -105,7 +106,7 @@ export default function HumaanisCycler() {
     }}>
       <div style={{
         width: SIZE, height: SIZE, borderRadius: 32,
-        background: "#D9F2F2",
+        background: colors.paleTeal,
         display: "flex", alignItems: "center", justifyContent: "center",
         overflow: "hidden", position: "relative",
         boxShadow: "0 12px 40px rgba(0,0,0,0.25)",

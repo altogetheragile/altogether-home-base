@@ -6,6 +6,7 @@
 //   WHAT -> deliverables: what we could do to support each impact
 
 import type { CellCoach } from './coaching';
+import { colors } from '@/theme/colors';
 
 export interface Deliverable {
   id: string;
@@ -38,7 +39,7 @@ export const LEVEL_META: Record<ImpactLevel, CellCoach> = {
     question: 'What is the goal?',
     help: 'A measurable business objective. Make it specific and time-bound, for example "Grow active users by 20% by Q4". Avoid listing features here.',
     stretch: 'If you achieved this and nothing felt different, how would you know?',
-    color: '#004D4D',
+    color: colors.deepTeal,
   },
   actor: {
     tag: 'WHO',

@@ -9,6 +9,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { colors } from '@/theme/colors';
 import {
   ProbeTracker,
   Probe,
@@ -22,7 +23,7 @@ import {
 } from '@/types/probeTracker';
 
 const STORAGE_KEY = 'probeTracker.v1';
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 
 const today = () => new Date().toISOString().slice(0, 10);
 
