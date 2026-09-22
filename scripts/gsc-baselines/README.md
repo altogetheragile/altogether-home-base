@@ -13,3 +13,7 @@ a new snapshot, then diff against an earlier one.
   new course slugs. The course URLs inspected here are the **old uuids**, which
   now 308 to slugs; treat their verdicts as the equity being handed over, not as
   the state of the new addresses. See `docs/seo-request-indexing-2026-09-21.md`.
+- **2026-09-22.txt** — one day after the guides went live. `agilepm-practitioner-paper-1` has
+  flipped to **indexed**; on the 21st it was "crawled, currently not indexed" and had been recrawled
+  and declined that same day. `professional-scrum-master` also has a guide but has not been
+  recrawled since 20 June, so Google has not yet seen it: no verdict on that one.
