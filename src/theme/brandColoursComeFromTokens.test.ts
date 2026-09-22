@@ -8,42 +8,22 @@ import { execSync } from 'node:child_process';
 // find-and-replace rather than a config change, which is the opposite of what a token system is
 // for, and the kind of thing nobody notices until they try to sell the thing.
 //
-// The Site is clean. The App is not yet, so the files that still need converting are listed rather
-// than ignored: nothing NEW can hardcode a brand colour, and this list only ever shrinks.
+// Both apps are clean now. The Site went first; the App followed, 25 files of it - inline styles,
+// module constants named TEAL and ORANGE, a stylesheet, and a handful of data defaults.
+//
+// The list of exceptions is empty and meant to stay that way. Anything that needs a brand colour
+// imports it from '@/theme/colors' (App) or '@/lib/brand' (Site), or uses var(--aa-*) where the
+// value has to live in CSS.
 
 const BRAND = ['#004D4D', '#007A7A', '#FF9715', '#F0FAFA', '#D9F2F2', '#B2DFDF'];
 
 /** Where the palette is allowed to be written as hex, because this is where it is defined. */
 const SOURCE_OF_TRUTH = ['packages/ui/src/tokens.ts'];
 
-/** Still to convert. Deleting a line here is the whole job for that file. */
-const NOT_YET = [
-  'src/components/AboutSection.tsx',
-  'src/components/AlunTabletPortrait.tsx',
-  'src/components/CoursePlayer.css',
-  'src/components/CoursePlayer.tsx',
-  'src/components/HumaanisCycler.tsx',
-  'src/components/backlog/StoryMap.tsx',
-  'src/components/benefitsScorecard/BenefitsScorecardEditor.tsx',
-  'src/components/bmc/CoachedBMCEditor.tsx',
-  'src/components/canvases/CoachedCanvasEditor.tsx',
-  'src/components/coaching/CoachChat.tsx',
-  'src/components/coachingStudio/CoachingStudioEditor.tsx',
-  'src/components/journeyMap/JourneyMapEditor.tsx',
-  'src/components/knowledge-base/ValueHorizonsMap.tsx',
-  'src/components/persona/PersonaEditor.tsx',
-  'src/components/pipeline/JourneyBand.tsx',
-  'src/components/probeTracker/ProbeTrackerEditor.tsx',
-  'src/components/storyMap/StoryMapEditor.tsx',
-  'src/components/testimonials/TestimonialComponents.tsx',
-  'src/components/waysOfWorking/WaysOfWorkingEditor.tsx',
-  'src/config/canvases.ts',
-  'src/config/toolIcons.ts',
-  'src/pages/KnowledgeBaseTechniques.tsx',
-  'src/types/impactMap.ts',
-  'src/types/journeyMap.ts',
-  'src/types/persona.ts',
-];
+/** Still to convert. Empty, and it stays empty: everything the App draws now takes its colour
+ *  from the token package, either as an import or through the --aa-* variables the app root
+ *  provides. A new entry here means somebody reintroduced a literal. */
+const NOT_YET: string[] = [];
 
 /** Files carrying a brand colour as a literal hex value.
  *
@@ -71,8 +51,8 @@ describe('the brand palette', () => {
     expect(done, `already converted, remove from NOT_YET: ${done.join(', ')}`).toEqual([]);
   });
 
-  it('is entirely absent from the Site, which is converted', () => {
-    const site = offenders().filter((f) => f.startsWith('apps/web/'));
-    expect(site, `the Site is meant to be clean: ${site.join(', ')}`).toEqual([]);
+  it('is entirely absent from both apps', () => {
+    const strays = offenders().filter((f) => !SOURCE_OF_TRUTH.includes(f));
+    expect(strays, `hardcoded brand colours: ${strays.join(', ')}`).toEqual([]);
   });
 });

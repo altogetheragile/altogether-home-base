@@ -20,9 +20,10 @@ import {
   parseCoachingSession,
 } from '@/types/coachingSession';
 import { toolForStep, prettySlug } from '@/config/pathTools';
+import { colors } from '@/theme/colors';
 
-const TEAL = '#004D4D';
-const ORANGE = '#FF9715';
+const TEAL = colors.deepTeal;
+const ORANGE = colors.orange;
 const SESSION_STRETCH = 'If this conversation went really well, what would be different afterwards?';
 const newId = () => crypto.randomUUID();
 

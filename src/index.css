@@ -316,20 +316,20 @@
   --card-foreground: 217 19% 27%;
   --popover: 0 0% 100%;
   --popover-foreground: 217 19% 27%;
-  --primary: 33 100% 54%;         /* #ff9715 - the next thing to do, and only that */
+  --primary: 33 100% 54%;         /* var(--aa-orange) - the next thing to do, and only that */
   --primary-foreground: 0 0% 100%;
-  --secondary: 180 50% 96%;       /* #f0fafa - a tinted panel */
+  --secondary: 180 50% 96%;       /* var(--aa-sky-teal) - a tinted panel */
   --secondary-foreground: 180 100% 15%;
   --muted: 180 50% 96%;
   --muted-foreground: 220 9% 46%; /* #6b7280 */
-  --accent: 180 49% 90%;          /* #d9f2f2 */
+  --accent: 180 49% 90%;          /* var(--aa-pale-teal) */
   --accent-foreground: 180 100% 15%;
   --border: 220 13% 91%;          /* #e5e7eb */
   --input: 220 13% 91%;
   --ring: 180 100% 24%;
   /* The band itself, and the chips on it. */
-  --zoo-band: 180 100% 15%;       /* #004d4d */
-  --zoo-chip: 180 100% 24%;       /* #007a7a */
+  --zoo-band: 180 100% 15%;       /* var(--aa-deep-teal) */
+  --zoo-chip: 180 100% 24%;       /* var(--aa-mid-teal) */
 
   /* ...and the text, said here rather than left to be inherited.
      Every token above is a BACKGROUND or a border. The colour of the words was

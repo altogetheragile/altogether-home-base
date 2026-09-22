@@ -1,3 +1,4 @@
+import { colors } from '@/theme/colors';
 import {
   type LucideIcon,
   FileText,
@@ -27,8 +28,8 @@ export interface ToolVisual {
 // menu, artifact cards and the artifact viewer all render the same icon in the
 // same colour. Add a tool here once and every surface stays consistent.
 export const TOOL_VISUALS: Record<string, ToolVisual> = {
-  'coaching-session': { icon: MessagesSquare, color: '#004D4D' },
-  'impact-map': { icon: Target, color: '#FF9715' },
+  'coaching-session': { icon: MessagesSquare, color: colors.deepTeal },
+  'impact-map': { icon: Target, color: colors.orange },
   persona: { icon: UserCircle, color: '#C2603A' },
   bmc: { icon: Sparkles, color: '#1A9090' },
   canvas: { icon: FileSpreadsheet, color: '#6B5FCC' },
@@ -37,8 +38,8 @@ export const TOOL_VISUALS: Record<string, ToolVisual> = {
   user_story: { icon: LayoutTemplate, color: '#3F8080' },
   'product-backlog': { icon: ClipboardList, color: '#E08A4E' },
   'project-model': { icon: Hexagon, color: '#9C8A6A' },
-  'probe-tracker': { icon: FlaskConical, color: '#007A7A' },
-  'benefits-scorecard': { icon: LineChart, color: '#FF9715' },
+  'probe-tracker': { icon: FlaskConical, color: colors.midTeal },
+  'benefits-scorecard': { icon: LineChart, color: colors.orange },
   'ways-of-working': { icon: RefreshCw, color: '#1A9090' },
   'journey-map': { icon: MapIcon, color: '#3F8080' },
   'story-map': { icon: LayoutGrid, color: '#1A9090' },

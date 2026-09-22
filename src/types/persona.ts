@@ -3,6 +3,7 @@
 // inconvenienced by this succeeding?" lives on the goals field.
 
 import type { CellCoach } from './coaching';
+import { colors } from '@/theme/colors';
 
 export interface Persona {
   name: string;
@@ -19,7 +20,7 @@ export interface Persona {
 export type PersonaField = keyof Persona;
 
 export const PERSONA_FIELDS: { key: PersonaField; coach: CellCoach }[] = [
-  { key: 'name', coach: { tag: 'NAME', question: 'Who is this person? Give them a name.', help: 'A memorable, realistic name makes the persona a concrete "named character".', stretch: 'Is this a real type of person you have met, or one you wish existed?', color: '#004D4D' } },
+  { key: 'name', coach: { tag: 'NAME', question: 'Who is this person? Give them a name.', help: 'A memorable, realistic name makes the persona a concrete "named character".', stretch: 'Is this a real type of person you have met, or one you wish existed?', color: colors.deepTeal } },
   { key: 'role', coach: { tag: 'ROLE', question: 'What is their role or situation?', help: 'Their job, role, or the situation that brings them to your product.', stretch: 'What part of their role do they find hardest to admit?', color: '#1A9090' } },
   { key: 'context', coach: { tag: 'CONTEXT', question: 'What is their context?', help: 'Where, when and how they meet the need; their environment and constraints.', stretch: 'What in their day quietly works against using this?', color: '#3F8080' } },
   { key: 'goals', coach: { tag: 'GOALS', question: 'What are they trying to get done?', help: 'The jobs they are trying to do, in their own terms (Jobs to Be Done).', stretch: 'Who would be inconvenienced by this person succeeding?', color: '#E08A4E' } },

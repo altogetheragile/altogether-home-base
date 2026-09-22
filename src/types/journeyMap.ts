@@ -1,3 +1,4 @@
+import { colors } from '@/theme/colors';
 // Journey Map Studio (see VISION_TO_VALUE.md 6.12). The Scope stage, anchored to
 // one persona (deliberately cross-stage). A grid: journey stages across the top;
 // rows for doing, thinking, feeling, pains and opportunities. Pains and
@@ -17,7 +18,7 @@ export interface JourneyRowMeta {
 }
 
 export const JOURNEY_ROWS: JourneyRowMeta[] = [
-  { key: 'doing', label: 'Doing', question: 'What is this persona trying to get done at this stage?', color: '#004D4D' },
+  { key: 'doing', label: 'Doing', question: 'What is this persona trying to get done at this stage?', color: colors.deepTeal },
   { key: 'thinking', label: 'Thinking', question: 'What is going through their mind here?', color: '#1A9090' },
   { key: 'feeling', label: 'Feeling', question: 'How do they feel at this point, and why?', color: '#3F8080' },
   { key: 'pains', label: 'Pains', question: 'What gets in their way or frustrates them here?', color: '#C2603A', promotable: true },

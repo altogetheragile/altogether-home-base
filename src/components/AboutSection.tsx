@@ -40,7 +40,7 @@ export default function AboutSection() {
           transform: translateY(-1px);
         }
         .aa-cta-secondary:hover {
-          color: #004D4D !important;
+          color: var(--aa-deep-teal) !important;
           gap: 10px !important;
         }
         .aa-about-grid {
@@ -129,7 +129,7 @@ export default function AboutSection() {
                 position: "absolute",
                 top: 20,
                 right: 20,
-                background: "#FF9715",
+                background: p.orange,
                 borderRadius: 12,
                 padding: "10px 14px",
                 textAlign: "center",

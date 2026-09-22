@@ -10,6 +10,7 @@ import { SaveToProjectDialog } from '@/components/projects/SaveToProjectDialog';
 import { CoachChat } from '@/components/coaching/CoachChat';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
 import { confirmReplace } from '@/utils/confirmDiscard';
+import { colors } from '@/theme/colors';
 import {
   BenefitsScorecard,
   Benefit,
@@ -23,7 +24,7 @@ import {
 } from '@/types/benefitsScorecard';
 
 const STORAGE_KEY = 'benefitsScorecard.v1';
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 
 const scorecardHasContent = (s: BenefitsScorecard): boolean => s.benefits.length > 0;
 

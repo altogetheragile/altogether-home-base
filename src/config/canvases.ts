@@ -4,6 +4,7 @@
 // Record<cellKey, string> stored in the artifact.
 
 import type { CellCoach } from '@/types/coaching';
+import { colors } from '@/theme/colors';
 
 export interface CanvasCellDef {
   key: string;
@@ -21,7 +22,7 @@ export interface CanvasDef {
   cells: CanvasCellDef[];
 }
 
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 const MIDTEAL = '#1A9090';
 const ORANGE = '#E08A4E';
 const TAN = '#9C8A6A';

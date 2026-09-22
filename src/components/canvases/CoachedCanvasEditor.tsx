@@ -12,6 +12,7 @@ import { AutoTextarea } from '@/components/coaching/AutoTextarea';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
 import { confirmReplace } from '@/utils/confirmDiscard';
 import type { CanvasDef } from '@/config/canvases';
+import { colors } from '@/theme/colors';
 
 type CanvasData = Record<string, string>;
 
@@ -168,7 +169,7 @@ export function CoachedCanvasEditor({ def, initialData, artifactId, projectId }:
       </div>
 
       <div ref={diagramRef} className="rounded-lg border border-border bg-white p-5">
-        <h2 className="mb-3 text-lg font-semibold" style={{ color: '#004D4D' }}>{def.name}</h2>
+        <h2 className="mb-3 text-lg font-semibold" style={{ color: colors.deepTeal }}>{def.name}</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {def.cells.map((cell) => (
             <div key={cell.key} className={`rounded-md border border-border p-3 ${cell.wide ? 'sm:col-span-2' : ''}`}>

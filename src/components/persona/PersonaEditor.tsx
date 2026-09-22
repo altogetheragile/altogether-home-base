@@ -22,6 +22,7 @@ import {
 import { toJson, toMarkdown, fileStem, downloadText } from '@/utils/persona/exportPersona';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
 import { confirmReplace } from '@/utils/confirmDiscard';
+import { colors } from '@/theme/colors';
 
 const STORAGE_KEY = 'persona.v1';
 
@@ -215,7 +216,7 @@ export function PersonaEditor({ initialData, artifactId, projectId }: PersonaEdi
 
       {/* Persona card (exportable) */}
       <div ref={diagramRef} className="rounded-lg border border-border bg-white p-5">
-        <div className="rounded-lg p-3 text-white" style={{ backgroundColor: '#004D4D' }}>
+        <div className="rounded-lg p-3 text-white" style={{ backgroundColor: colors.deepTeal }}>
           <div className="flex items-center gap-3">
             {persona.image ? (
               <img

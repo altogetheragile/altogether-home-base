@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import './CoursePlayer.css';
+import { colors } from '@/theme/colors';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Lesson {
@@ -31,8 +32,8 @@ interface Course {
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
-const deepTeal = '#004D4D';
-const orange = '#FF9715';
+const deepTeal = colors.deepTeal;
+const orange = colors.orange;
 
 const typeBadge = (type: string) => {
   if (type === 'video') return { bg: '#E1F5EE', color: '#0F6E56', label: 'Video' };

@@ -32,9 +32,10 @@ import {
 } from '@/types/storyMap';
 import { toJson, toMarkdown, fileStem, downloadText } from '@/utils/storyMap/exportStoryMap';
 import { exportCanvas, downloadFile } from '@/utils/canvas/canvasExporter';
+import { colors } from '@/theme/colors';
 
 const STORAGE_KEY = 'storyMap.v1';
-const TEAL = '#004D4D';
+const TEAL = colors.deepTeal;
 const UNSCHEDULED = 'Unscheduled';
 
 const loadInitial = (): StoryMap => {
