@@ -16,7 +16,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import SimpleForm from '@/components/admin/SimpleForm';
-import { ExamGuideEditor } from '@/components/admin/ExamGuideEditor';
 import type { Exam } from '@/hooks/useExams';
 
 const examFields = [
@@ -38,7 +37,6 @@ const examFields = [
 const AdminExams = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
-  const [guideExam, setGuideExam] = useState<Exam | null>(null);
 
   const { data: exams, isLoading, error } = useExams();
   const createMutation = useCreateExam();
@@ -137,12 +135,20 @@ const AdminExams = () => {
       header: 'Actions',
       cell: (exam) => (
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={() => setGuideExam(exam)}
-            title={exam.guide ? 'Edit the guide on this exam page' : 'This page has no guide. Google does not index pages with nothing on them.'}>
-            <PencilLine className="h-4 w-4" /> Guide
-            <span className={exam.guide ? 'ml-1 text-[11px] text-muted-foreground' : 'ml-1 text-[11px] font-semibold text-amber-600'}>
-              {exam.guide ? `${exam.guide.trim().split(/\s+/).filter(Boolean).length}w` : 'none'}
-            </span>
+          {/* The guide is edited on the exam page itself now, which is served by the Site. A
+              plain anchor, not <Link>: the App must not render its own version of a Site URL
+              (src/config/siteOwnedRoutes.ts). The word count stays here because this table is the
+              only place you can see, at a glance, which papers still have nothing on them. */}
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={`/exams/${exam.slug}`}
+              title={exam.guide ? 'Edit the guide on the exam page' : 'This page has no guide. Google does not index pages with nothing on them.'}
+            >
+              <PencilLine className="h-4 w-4" /> Guide
+              <span className={exam.guide ? 'ml-1 text-[11px] text-muted-foreground' : 'ml-1 text-[11px] font-semibold text-amber-600'}>
+                {exam.guide ? `${exam.guide.trim().split(/\s+/).filter(Boolean).length}w` : 'none'}
+              </span>
+            </a>
           </Button>
           <Dialog
             open={editingExam?.id === exam.id}
@@ -223,13 +229,6 @@ const AdminExams = () => {
           </DialogContent>
         </Dialog>
       </div>
-
-      {guideExam && (
-        <ExamGuideEditor
-          exam={exams?.find((e) => e.id === guideExam.id) ?? guideExam}
-          onClose={() => setGuideExam(null)}
-        />
-      )}
 
       <Card>
         <CardHeader><CardTitle>All Exams</CardTitle></CardHeader>
