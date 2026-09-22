@@ -8,12 +8,8 @@ import {
   Clock, Timer, BookOpen, Flag, ChevronLeft, ChevronRight, SkipForward,
   CheckCircle2, XCircle, RotateCcw, ArrowLeft,
 } from 'lucide-react';
+import { colors as c } from '@/lib/brand';
 
-// Brand teal palette (mirrors src/theme/colors.ts in the Vite app).
-const c = {
-  white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF',
-  midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280',
-};
 
 /** Another paper for the same qualification. */
 export type Sibling = {

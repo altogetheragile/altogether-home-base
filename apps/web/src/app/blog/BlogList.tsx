@@ -4,11 +4,8 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { BlogPostRow } from '@/lib/blog';
 import { formatDate } from '@/lib/format';
+import { colors as c } from '@/lib/brand';
 
-const c = {
-  white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF',
-  midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280',
-};
 
 function Card({ post }: { post: BlogPostRow }) {
   const date = formatDate(post.published_at);

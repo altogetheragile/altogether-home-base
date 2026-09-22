@@ -6,10 +6,10 @@ import { getCourse } from '@/lib/events';
 import { durationLong, formatPrice, formatDateRange, type EventTemplate, type ScheduledEvent } from '@/lib/events-types';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText } from '@/lib/seo';
 import { InterestForm } from './InterestForm';
+import { colors as p } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-const p = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

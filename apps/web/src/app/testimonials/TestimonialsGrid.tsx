@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import type { Feedback } from '@/lib/testimonials';
+import { colors as p } from '@/lib/brand';
 
-const p = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });

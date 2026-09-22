@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { colors as c } from '@/lib/brand';
 
-const c = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 
 const MIN_SUBMIT_TIME_MS = 3000;
 const inputStyle: React.CSSProperties = {

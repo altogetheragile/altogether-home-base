@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { CourseCardModel, CourseFeedback } from '@/lib/events-types';
 import { displayFeedbackName } from '@/lib/events-types';
+import { colors as p } from '@/lib/brand';
 
-const p = { white: '#FFFFFF', skyTeal: '#F0FAFA', paleTeal: '#D9F2F2', lightTeal: '#B2DFDF', midTeal: '#007A7A', deepTeal: '#004D4D', orange: '#FF9715', body: '#374151', muted: '#6B7280' };
 
 const categoryColours: Record<string, { solid: string; pill: string; light: string }> = {
   Course: { solid: '#1A9090', pill: '#0D5C5C', light: '#E6F5F5' },

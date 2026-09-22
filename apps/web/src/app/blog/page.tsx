@@ -2,10 +2,10 @@ import type { Metadata } from 'next';
 import { getPosts } from '@/lib/blog';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { BlogList } from './BlogList';
+import { colors as c } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
-const c = { white: '#FFFFFF', paleTeal: '#D9F2F2', deepTeal: '#004D4D' };
 
 export const metadata: Metadata = buildMetadata({
   title: 'Blog',
