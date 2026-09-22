@@ -15,6 +15,15 @@ import { MODULES, NAV_FLAGS, flagOf } from './modules';
 
 const routes = () => readFileSync('src/config/routes.tsx', 'utf8');
 const settings = () => readFileSync('src/hooks/useSiteSettings.ts', 'utf8');
+const dbTypes = () => readFileSync('src/integrations/supabase/types.ts', 'utf8');
+
+/** The site_settings columns, as the generated Supabase types have them. */
+function settingsColumns(): Set<string> {
+  const src = dbTypes();
+  const start = src.indexOf('      site_settings: {');
+  const block = src.slice(start, src.indexOf('Relationships: []', start));
+  return new Set([...block.matchAll(/(show_[a-z_]+)\??:/g)].map((m) => m[1]));
+}
 
 /** Every path in the router, with the feature guarding it, if any.
  *
@@ -50,6 +59,15 @@ describe('every module', () => {
     const src = settings();
     const missing = MODULES.filter((m) => !src.includes(`${flagOf(m)}:`)).map(flagOf);
     expect(missing, `not on SiteSettings: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  // The zoo switch existed in the type, in the nav defaults and on the settings page for weeks
+  // while site_settings had no column for it, so turning it on saved into nothing. A module whose
+  // flag has nowhere to live is not a module yet.
+  it('has a column on site_settings to be saved in', () => {
+    const cols = settingsColumns();
+    const missing = MODULES.filter((m) => !cols.has(flagOf(m))).map(flagOf);
+    expect(missing, `no site_settings column: ${missing.join(', ')}`).toEqual([]);
   });
 
   it('guards at least one route', () => {

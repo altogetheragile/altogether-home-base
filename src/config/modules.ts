@@ -24,9 +24,6 @@ export interface SiteModule {
   group: ModuleGroup;
   /** What the site does when the column is null, which is also what a fresh site starts as. */
   defaultOn: boolean;
-  /** False where the column is not on `site_settings` yet, so the UI can say so instead of
-   *  silently saving into nothing. */
-  hasColumn?: boolean;
 }
 
 export const MODULES: SiteModule[] = [
@@ -46,8 +43,8 @@ export const MODULES: SiteModule[] = [
   { feature: 'protected_projects', label: 'Projects', blurb: 'Projects, artifacts, the backlog and the coaching pipeline.', defaultOn: true, group: 'Tools' },
 
   { feature: 'flow_game', label: 'Flow Game', blurb: 'The Kanban flow simulation.', defaultOn: true, group: 'Games' },
-  { feature: 'zoo_game', label: 'Zoo Game', blurb: 'The Scrum teaching game.', defaultOn: false, group: 'Games', hasColumn: false },
-  { feature: 'scrum_game', label: 'Scrum Game', blurb: 'The earlier Scrum simulation.', defaultOn: false, group: 'Games', hasColumn: false },
+  { feature: 'zoo_game', label: 'Zoo Game', blurb: 'The Scrum teaching game.', defaultOn: false, group: 'Games' },
+  { feature: 'scrum_game', label: 'Scrum Game', blurb: 'The earlier Scrum simulation.', defaultOn: false, group: 'Games' },
 
   { feature: 'dashboard', label: 'Dashboard', blurb: 'The signed-in landing page.', defaultOn: true, group: 'Platform' },
 ];

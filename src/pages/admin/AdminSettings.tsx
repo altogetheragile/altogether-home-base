@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { MODULES, MODULE_GROUPS, NAV_FLAGS, flagOf } from '@/config/modules';
-import { Settings, AlertTriangle } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
 
 // ============= Which parts of the site are switched on =============
@@ -86,23 +86,12 @@ export default function AdminSettings() {
                   {i > 0 && <Separator className="mb-6" />}
                   <div className="flex items-center justify-between gap-4">
                     <div className="space-y-0.5">
-                      <Label htmlFor={flagOf(m)} className="flex items-center gap-2 text-base font-medium">
-                        {m.label}
-                        {m.hasColumn === false && (
-                          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                            <AlertTriangle className="h-3 w-3" /> not saved yet
-                          </span>
-                        )}
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        {m.blurb}
-                        {m.hasColumn === false && ' This switch has no column on site_settings yet, so it will not persist.'}
-                      </p>
+                      <Label htmlFor={flagOf(m)} className="text-base font-medium">{m.label}</Label>
+                      <p className="text-sm text-muted-foreground">{m.blurb}</p>
                     </div>
                     <Switch
                       id={flagOf(m)}
                       checked={localSettings[flagOf(m)]}
-                      disabled={m.hasColumn === false}
                       onCheckedChange={() => handleToggle(flagOf(m))}
                     />
                   </div>
