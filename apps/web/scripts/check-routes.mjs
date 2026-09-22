@@ -15,15 +15,23 @@
  * A module that is switched off 404s by design (src/lib/module-gate.ts), so the flags are read
  * first and those routes are reported as skipped rather than failed.
  */
-import { createClient } from '@supabase/supabase-js';
-
 const base = (process.argv[2] ?? 'http://localhost:3000').replace(/\/$/, '');
 const MIN_WORDS = 100;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-);
+// PostgREST over plain fetch rather than @supabase/supabase-js. Creating that client constructs a
+// realtime client, which needs a WebSocket, which Node 20 does not have natively - so the script
+// died on startup in CI while passing locally on a newer Node. These are three unauthenticated
+// selects; they do not need a client library.
+const REST = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1`;
+const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+async function select(path) {
+  const res = await fetch(`${REST}/${path}`, {
+    headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
+  });
+  if (!res.ok) throw new Error(`${path} -> ${res.status} ${await res.text()}`);
+  return res.json();
+}
 
 /** Visible words in a server-rendered response. */
 function words(html) {
@@ -37,14 +45,14 @@ function words(html) {
 /** One real row per dynamic route, so the check exercises them as a visitor would. */
 async function dynamicRoutes() {
   const out = [];
-  const [{ data: posts }, { data: exams }, { data: courses }] = await Promise.all([
-    supabase.from('blog_posts').select('slug').eq('is_published', true).limit(1),
-    supabase.from('exams').select('slug').eq('status', 'published').limit(1),
-    supabase.from('event_templates').select('slug').not('slug', 'is', null).limit(1),
+  const [posts, exams, courses] = await Promise.all([
+    select('blog_posts?select=slug&is_published=eq.true&limit=1'),
+    select('exams?select=slug&status=eq.published&limit=1'),
+    select('event_templates?select=slug&slug=not.is.null&limit=1'),
   ]);
-  if (posts?.[0]) out.push({ path: `/blog/${posts[0].slug}`, module: 'blog' });
-  if (exams?.[0]) out.push({ path: `/exams/${exams[0].slug}`, module: 'exams' });
-  if (courses?.[0]) out.push({ path: `/courses/${courses[0].slug}`, module: 'events' });
+  if (posts[0]) out.push({ path: `/blog/${posts[0].slug}`, module: 'blog' });
+  if (exams[0]) out.push({ path: `/exams/${exams[0].slug}`, module: 'exams' });
+  if (courses[0]) out.push({ path: `/courses/${courses[0].slug}`, module: 'events' });
   return out;
 }
 
@@ -59,8 +67,7 @@ const STATIC_ROUTES = [
   { path: '/exams', module: 'exams' },
 ];
 
-const { data: settingsRows } = await supabase.from('site_settings').select('*').limit(1);
-const settings = settingsRows?.[0] ?? {};
+const settings = (await select('site_settings?select=*&limit=1'))[0] ?? {};
 const isOn = (module) => module === null || settings[`show_${module}`] !== false;
 
 // --extra is for proving the guard still fails when it should.
