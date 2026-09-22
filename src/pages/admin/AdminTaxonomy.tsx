@@ -22,6 +22,31 @@ const DEFAULT_FORM_DATA: TaxonomyFormData = {
   display_order: 0,
 };
 
+// ============= The four taxonomy tables are not the same shape =============
+//
+// One form writes to all four, and it sent every field to whichever was active. Each table is
+// missing at least one of them, so PostgREST rejected the lot. Confirmed against all four:
+//
+//   decision_levels       no full_description
+//   knowledge_categories  no full_description
+//   activity_domains      no display_order
+//   knowledge_tags        neither, nor colour or description
+//
+// Creating or editing any taxonomy item has been failing. The columns are named per table now, so
+// the form can carry a field a table does not have without the write being rejected whole.
+const TAXONOMY_COLUMNS: Record<string, readonly string[]> = {
+  decision_levels: ['name', 'slug', 'description', 'color', 'display_order'],
+  knowledge_categories: ['name', 'slug', 'description', 'color', 'display_order'],
+  activity_domains: ['name', 'slug', 'description', 'full_description', 'color'],
+  knowledge_tags: ['name', 'slug'],
+};
+
+/** The writable columns of one taxonomy table, and nothing else. */
+const taxonomyRow = (table: string, data: Record<string, unknown>) =>
+  Object.fromEntries(
+    (TAXONOMY_COLUMNS[table] ?? []).filter((c) => c in data).map((c) => [c, data[c]]),
+  );
+
 const AdminTaxonomy = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,9 +88,10 @@ const AdminTaxonomy = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: TaxonomyFormData) => {
+      const table = getTableName(activeTab);
       const { error } = await supabase
-        .from(getTableName(activeTab))
-        .insert(data);
+        .from(table)
+        .insert(taxonomyRow(table, data as unknown as Record<string, unknown>) as never);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -80,9 +106,10 @@ const AdminTaxonomy = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string } & TaxonomyFormData) => {
+      const table = getTableName(activeTab);
       const { error } = await supabase
-        .from(getTableName(activeTab))
-        .update(data)
+        .from(table)
+        .update(taxonomyRow(table, data as unknown as Record<string, unknown>) as never)
         .eq('id', id);
       if (error) throw error;
     },

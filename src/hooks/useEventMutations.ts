@@ -11,8 +11,10 @@ export interface EventData {
   end_date: string;
   location_id?: string;
   instructor_id?: string;
-  max_participants?: number;
-  price?: number;
+  // No max_participants or price here. Neither is a column on `events` - the table has `capacity`
+  // and `price_cents` - and nothing ever passed them, so an insert carrying one would have been
+  // rejected outright. They were declared, never used, and invisible until the client types got
+  // strict enough to say so.
   status?: 'draft' | 'published' | 'cancelled';
   template_id?: string;
   price_cents?: number;

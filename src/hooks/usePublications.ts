@@ -95,7 +95,9 @@ export const useUpdatePublication = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, ...data }: Partial<Publication> & { id: string }) => {
+    mutationFn: async ({ id, publication_authors: _authors, ...data }: Partial<Publication> & { id: string }) => {
+      // publication_authors is a joined table, not a column. It arrives on the object because the
+      // read selects it, and sending it back would have the update rejected whole.
       const { data: result, error } = await supabase
         .from('publications')
         .update({ ...data, updated_by: (await supabase.auth.getUser()).data.user?.id })

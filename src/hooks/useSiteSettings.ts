@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
 
 const SETTINGS_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -72,7 +73,10 @@ export const useSiteSettings = () => {
       // 1. Update site_settings table
       const { data: settingsData, error: settingsError } = await supabase
         .from('site_settings')
-        .update(updates as Record<string, unknown>)
+        // Partial<SiteSettings> is the App's own shape and every key on it is a real column; the
+        // cast is to the table's Update type rather than to a loose bag, which the stricter client
+        // rejects outright.
+        .update(updates as Database['public']['Tables']['site_settings']['Update'])
         .eq('id', SETTINGS_ID)
         .select()
         .single();
