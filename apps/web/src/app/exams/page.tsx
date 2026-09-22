@@ -6,6 +6,7 @@ import { buildMetadata, JsonLd, faqPageJsonLd, breadcrumbJsonLd, itemListJsonLd 
 import { EXAM_FAQS } from '@/lib/exam-faqs';
 import { colors as c } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
+import { getCopy, list } from '@/lib/copy';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,7 @@ async function getExams(): Promise<ExamRow[]> {
 
 export default async function ExamsPage() {
   await requireModule('exams');
-  const exams = await getExams();
+  const [exams, t] = await Promise.all([getExams(), getCopy('exams')]);
 
   return (
     <>
@@ -83,39 +84,29 @@ export default async function ExamsPage() {
               </div>
             </div>
           ))}
-          {exams.length === 0 && <p style={{ color: c.muted }}>No exams available yet. Check back soon.</p>}
+          {exams.length === 0 && <p style={{ color: c.muted }}>{t('exams.empty')}</p>}
         </div>
       </div>
 
       {/* About + How to prepare + FAQ (content parity with the live page) */}
       <div style={{ background: c.white, borderTop: '1px solid #E5E7EB' }}>
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px' }}>
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.25 }}>About the AgilePM Foundation Exam</h2>
+          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.25 }}>{t('exams.about.heading')}</h2>
           <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
-            The AgilePM Foundation exam tests your understanding of the AgilePM framework: its eight
-            principles, the team roles, the products produced through a project, and the agile project
-            lifecycle. It is a closed-book, multiple-choice paper based on the AgilePM Handbook, and it
-            is the entry-level AgilePM qualification. Passing Foundation is the prerequisite for the
-            AgilePM Practitioner exam, which tests how well you can apply the framework to a real project
-            scenario.
+            {t('exams.about.p1')}
           </p>
           <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
-            Our free AgilePM3 Foundation practice papers follow the Foundation format: 50 questions to
-            complete in 40 minutes, with a pass mark of 25 out of 50 (50%). They are based on the latest
-            version of the AgilePM Handbook. Sit a paper as a timed mock exam to rehearse the real thing,
-            or switch to revision mode and work through the questions at your own pace with answers and
-            explanations.
+            {t('exams.about.p2')}
           </p>
 
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>How to Prepare</h2>
+          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>{t('exams.prepare.heading')}</h2>
           <ul style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: 0, paddingLeft: 22 }}>
-            <li>Read the AgilePM Handbook and learn the eight principles, the roles, and the products.</li>
-            <li>Understand the agile project lifecycle and how the phases fit together.</li>
-            <li>Practise under timed conditions so the 40-minute limit feels comfortable.</li>
-            <li>Use revision mode to focus on the topics you find hardest, then re-sit a full paper.</li>
+            {list(t('exams.prepare.steps')).map((step) => (
+              <li key={step}>{step}</li>
+            ))}
           </ul>
 
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>Frequently Asked Questions</h2>
+          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>{t('exams.faq.heading')}</h2>
           {EXAM_FAQS.map((f) => (
             <div key={f.q} style={{ marginBottom: 20 }}>
               <h3 style={{ color: c.deepTeal, fontSize: 17, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.4 }}>{f.q}</h3>

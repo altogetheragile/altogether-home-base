@@ -2,6 +2,11 @@ import { createClient } from '@/lib/supabase/server';
 import homeJson from './home.json';
 import aboutJson from './about.json';
 import coachingJson from './coaching.json';
+import contactJson from './contact.json';
+import testimonialsJson from './testimonials.json';
+import blogJson from './blog.json';
+import eventsJson from './events.json';
+import examsJson from './exams.json';
 
 // ============= The site's words, editable without a deploy =============
 //
@@ -19,7 +24,9 @@ import coachingJson from './coaching.json';
 export interface CopyEntry { value: string; label: string; hint: string }
 export interface CopyRegistry { page: string; label: string; entries: Record<string, CopyEntry> }
 
-export const REGISTRIES: CopyRegistry[] = [homeJson as CopyRegistry, aboutJson as CopyRegistry, coachingJson as CopyRegistry];
+export const REGISTRIES: CopyRegistry[] = [
+  homeJson, aboutJson, coachingJson, contactJson, testimonialsJson, blogJson, eventsJson, examsJson,
+] as CopyRegistry[];
 
 /** Reads a page's copy, with anything saved in `site_copy` laid over the shipped wording. */
 export async function getCopy(page: string): Promise<(key: string) => string> {

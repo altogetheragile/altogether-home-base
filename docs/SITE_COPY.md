@@ -18,6 +18,18 @@ Registries are JSON rather than TypeScript because two things read them and they
 other's source: the Next app renders the pages, and `scripts/seed-site-copy.mjs` writes the rows the
 editor lists. A shared `.json` needs no build step and no shared package.
 
+## What Is Covered
+
+All eight public pages: home, about, coaching, contact, testimonials, events, blog and the exams
+listing. 153 entries.
+
+Three things are deliberately still in code, and each for the same reason: they are lists whose
+items have several fields, and a textarea is the wrong shape for those.
+
+- the career timeline on About, three fields per entry
+- the exam FAQ, which also feeds the page's FAQ structured data
+- the two philosophy card colours and the service images, which are styling rather than words
+
 ## Adding A Page
 
 1. Write `apps/web/src/lib/copy/<page>.json` in the shape of `home.json`: a `page` id, a `label`,

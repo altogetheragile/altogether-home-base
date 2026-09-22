@@ -1,0 +1,21 @@
+{
+  "page": "testimonials",
+  "label": "Testimonials",
+  "entries": {
+    "testimonials.hero.heading": {
+      "value": "What Our Attendees Say",
+      "label": "Hero heading",
+      "hint": "The pale hero above the quotes"
+    },
+    "testimonials.hero.intro": {
+      "value": "Real feedback from professionals who have attended our courses and coaching programmes.",
+      "label": "Hero introduction",
+      "hint": "The pale hero above the quotes"
+    },
+    "testimonials.hero.reviewsSuffix": {
+      "value": "reviews",
+      "label": "Rating suffix",
+      "hint": "The pale hero above the quotes. Reads \"from 24 reviews\"; the number comes from the database"
+    }
+  }
+}

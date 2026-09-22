@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import { getEventTemplates, getApprovedFeedback, toCardModel, type CourseCardModel } from '@/lib/events';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -6,6 +7,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, courseListJsonLd } from '@/lib
 import { EventsList } from './EventsList';
 import { colors as c } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
+import { getCopy, lines } from '@/lib/copy';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,22 +21,23 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function EventsPage() {
   await requireModule('events');
-  const [templates, feedback, settings] = await Promise.all([
+  const [templates, feedback, settings, t] = await Promise.all([
     getEventTemplates(),
     getApprovedFeedback(),
     getSiteSettings(),
+    getCopy('events'),
   ]);
 
   // Stamp "now" once on the server so card date filtering is deterministic.
   const now = Date.now();
-  const courses: CourseCardModel[] = templates.map((t) => toCardModel(t, feedback, now));
+  const courses: CourseCardModel[] = templates.map((template) => toCardModel(template, feedback, now));
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
   const scheduledCount = courses.filter((m) => m.scheduledDates.length > 0).length;
   const stats = [
-    { n: String(courses.length), label: 'Courses offered' },
-    { n: String(scheduledCount), label: 'Dates scheduled' },
-    { n: '1,500+', label: 'Practitioners trained' },
+    { n: String(courses.length), label: t('events.stats.courses') },
+    { n: String(scheduledCount), label: t('events.stats.scheduled') },
+    { n: t('events.stats.trained.number'), label: t('events.stats.trained.label') },
   ];
 
   return (
@@ -62,20 +65,20 @@ export default async function EventsPage() {
       <div style={{ background: '#006666' }} className="aa-hero-pad">
         <div className="aa-page-intro" style={{ paddingBottom: 48, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
-            <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Courses &amp; Events</div>
+            <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('events.hero.eyebrow')}</div>
             <h1 style={{ color: '#fff', fontSize: 'clamp(32px, 5vw, 46px)', fontWeight: 800, lineHeight: 1.15, margin: '0 0 20px' }}>
-              Every course, run personally.<br />No associates. No surprises.
+              {lines(t('events.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}
             </h1>
             <p style={{ color: c.lightTeal, fontSize: 16, lineHeight: 1.7, margin: 0, maxWidth: 440 }}>
-              Browse the full catalogue below. Delivered in person across the London area at your site, or live online across the UK. Courses with a date scheduled show an orange badge - all others can be arranged for your team or organisation on request.
+              {t('events.hero.intro')}
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, justifyContent: 'flex-end' }}>
             <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px' }}>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Not sure where to start?</div>
-              <p style={{ color: c.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>Book a free 30-minute chemistry session and we&apos;ll work out the best fit together.</p>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>{t('events.help.heading')}</div>
+              <p style={{ color: c.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>{t('events.help.body')}</p>
               <a href={bookingUrl} style={{ background: c.orange, color: '#fff', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', width: 'fit-content', display: 'inline-block' }}>
-                Book a chemistry session
+                {t('events.help.cta')}
               </a>
             </div>
             <div style={{ display: 'flex', gap: 32 }}>
@@ -97,17 +100,17 @@ export default async function EventsPage() {
       <div style={{ background: '#006666', padding: '56px 48px' }}>
         <div className="aa-bespoke" style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div>
-            <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>In-house &amp; bespoke</div>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>Need it tailored for your team?</h2>
+            <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('events.bespoke.eyebrow')}</div>
+            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>{t('events.bespoke.heading')}</h2>
             <p style={{ color: c.lightTeal, fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
-              Every course can be delivered in-house - adapted to your context, your team size, and your organisation&apos;s way of working. Same quality, no generic materials.
+              {t('events.bespoke.body')}
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
             <a href="/contact" style={{ background: c.orange, color: c.deepTeal, padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none', whiteSpace: 'nowrap', textAlign: 'center' }}>
-              Book a conversation →
+              {t('events.bespoke.cta')}
             </a>
-            <div style={{ color: c.lightTeal, fontSize: 12, textAlign: 'center' }}>No hard sell. Just a conversation.</div>
+            <div style={{ color: c.lightTeal, fontSize: 12, textAlign: 'center' }}>{t('events.bespoke.reassurance')}</div>
           </div>
         </div>
       </div>

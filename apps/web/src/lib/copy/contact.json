@@ -1,0 +1,16 @@
+{
+  "page": "contact",
+  "label": "Contact",
+  "entries": {
+    "contact.hero.heading": {
+      "value": "Get in Touch",
+      "label": "Hero heading",
+      "hint": "The pale hero above the form"
+    },
+    "contact.hero.intro": {
+      "value": "Whether you have a question about our courses, want to discuss coaching, or just want to say hello - we'd love to hear from you.",
+      "label": "Hero introduction",
+      "hint": "The pale hero above the form"
+    }
+  }
+}
