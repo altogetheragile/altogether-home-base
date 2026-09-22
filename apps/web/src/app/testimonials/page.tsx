@@ -4,6 +4,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { buildMetadata, JsonLd, breadcrumbJsonLd } from '@/lib/seo';
 import { TestimonialsGrid } from './TestimonialsGrid';
 import { colors as p } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TestimonialsPage() {
+  await requireModule('testimonials');
   const [feedback, settings] = await Promise.all([getAllApprovedFeedback(), getSiteSettings()]);
   const stats = feedbackStats(feedback);
   const showName = settings.show_testimonial_name ?? true;

@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { getPost, renderArticle, formatDate } from '@/lib/blog';
 import { buildMetadata, JsonLd, blogPostingJsonLd, breadcrumbJsonLd, truncateText } from '@/lib/seo';
 import { colors as c } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  await requireModule('blog');
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) notFound();

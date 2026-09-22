@@ -7,6 +7,7 @@ import { durationLong, formatPrice, formatDateRange, type EventTemplate, type Sc
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText } from '@/lib/seo';
 import { InterestForm } from './InterestForm';
 import { colors as p } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,7 @@ function renderDescription(text: string | null): string {
 }
 
 export default async function CoursePage({ params }: { params: Promise<{ id: string }> }) {
+  await requireModule('events');
   const { id } = await params;
   const course = await getCourse(id);
   if (!course) notFound();

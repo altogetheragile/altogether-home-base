@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, faqPageJsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { EXAM_FAQS } from '@/lib/exam-faqs';
 import { colors as c } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ async function getExams(): Promise<ExamRow[]> {
 }
 
 export default async function ExamsPage() {
+  await requireModule('exams');
   const exams = await getExams();
 
   return (

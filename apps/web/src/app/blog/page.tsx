@@ -3,6 +3,7 @@ import { getPosts } from '@/lib/blog';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { BlogList } from './BlogList';
 import { colors as c } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function BlogPage() {
+  await requireModule('blog');
   const posts = await getPosts();
   return (
     <>

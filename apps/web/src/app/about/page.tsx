@@ -6,6 +6,7 @@ import { getAllApprovedFeedback } from '@/lib/testimonials';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME } from '@/lib/seo';
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 import { colors as p } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +69,7 @@ function Stars({ rating }: { rating: number | null }) {
 }
 
 export default async function AboutPage() {
+  await requireModule('about');
   const [settings, feedback] = await Promise.all([getSiteSettings(), getAllApprovedFeedback()]);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
