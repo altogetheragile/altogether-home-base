@@ -17,7 +17,21 @@ export const getFriendlyAuthError = (error: any, action: 'sign-in' | 'sign-up' =
     };
   }
 
-  if (msg.includes('email rate limit') || msg.includes('too many requests') || msg.includes('rate limit')) {
+  // Two different limits wore the same message, and one of them was being told the wrong thing.
+  // Sign-in throttling does clear in minutes. The limit on sending email does not: Supabase's
+  // built-in mail service allows a handful an hour, so "wait a few minutes" sends somebody back to
+  // press the button again and be refused again, with no idea why.
+  if (msg.includes('email rate limit') || (msg.includes('rate limit') && msg.includes('email'))) {
+    return {
+      title: 'Too many emails requested',
+      description:
+        'The limit on sending is hourly, not a few minutes. If you already have one of these '
+        + 'emails, use it - the most recent link is the one that works.',
+      variant: 'destructive',
+    };
+  }
+
+  if (msg.includes('too many requests') || msg.includes('rate limit')) {
     return {
       title: 'Too many attempts',
       description: 'Please wait a few minutes before trying again.',
