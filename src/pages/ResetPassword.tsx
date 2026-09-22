@@ -31,6 +31,12 @@ const ResetPassword = () => {
     // Check if the user has MFA enabled and needs to verify before resetting
     const checkMfa = async () => {
       try {
+        // The link arrives carrying a code, and the client exchanges it for a session in the
+        // background. Asking about factors before that lands reads an empty session and decides
+        // there is no MFA, which is the wrong answer for the one person it matters to. getSession
+        // resolves after the exchange, so waiting on it is enough.
+        await supabase.auth.getSession();
+
         const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (aalData?.currentLevel === 'aal2') {
           // Already at AAL2, no MFA step needed
