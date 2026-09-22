@@ -6,7 +6,6 @@ import { UnifiedContentCard } from '@/components/content/UnifiedContentCard';
 import { adaptBlogPostToUnifiedContent } from '@/utils/contentAdapters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { AppLink } from '@/components/AppLink';
 
 interface BlogPostsBlockProps {

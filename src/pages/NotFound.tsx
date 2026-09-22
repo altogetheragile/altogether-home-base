@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { AppLink } from '@/components/AppLink';
 import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';

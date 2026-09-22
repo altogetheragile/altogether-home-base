@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { useAuth } from '@/contexts/AuthContext';

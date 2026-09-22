@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { canvasByKey } from '@/config/canvases';

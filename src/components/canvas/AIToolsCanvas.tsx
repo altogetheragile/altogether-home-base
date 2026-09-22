@@ -7,7 +7,7 @@ import { useProjectArtifactMutations, useProjectArtifacts } from '@/hooks/usePro
 import { validateArtifactData } from '@/types/artifacts/schemas';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLink } from '@/components/AppLink';
 import LogoFull from '@/components/LogoFull';
 import { Separator } from '@/components/ui/separator';
