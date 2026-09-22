@@ -4,6 +4,7 @@ import { ContactForm } from './ContactForm';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { colors as p } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,7 @@ const buildCards = (bookingUrl: string) => [
 ];
 
 export default async function ContactPage() {
+  await requireModule('contact');
   const settings = await getSiteSettings();
   const cards = buildCards(bookingHref(settings.show_bookings));
 

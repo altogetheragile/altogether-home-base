@@ -6,6 +6,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME } from '@/
 import { HomeTestimonials } from '../HomeTestimonials';
 import { CoachingEnquiryForm } from './CoachingEnquiryForm';
 import { colors as p } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,7 @@ function Illustration({ src, alt, height, scale = 105, position = 'center center
 }
 
 export default async function CoachingPage() {
+  await requireModule('coaching');
   const [settings, testimonials] = await Promise.all([getSiteSettings(), getHomeTestimonials()]);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);

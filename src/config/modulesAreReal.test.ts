@@ -119,3 +119,39 @@ describe('every menu flag', () => {
     }
   });
 });
+
+// ============= The two routers must agree =============
+//
+// The Site answers /about, /coaching, /events, /blog, /exams and /courses; the App answers the
+// rest. Both gate on the same site_settings columns, and neither can import the other's source, so
+// the Site repeats the defaults in apps/web/src/lib/module-gate.ts.
+//
+// #720 gated 32 App routes, declared "off means unreachable", and left every Site page open,
+// because the test only ever read one router. This is the half that was missing.
+
+const gateSource = () => readFileSync('apps/web/src/lib/module-gate.ts', 'utf8');
+
+/** The Site's copy of the defaults. */
+function siteDefaults(): Record<string, boolean> {
+  const src = gateSource();
+  const block = src.slice(src.indexOf('const DEFAULTS'), src.indexOf('};', src.indexOf('const DEFAULTS')));
+  return Object.fromEntries(
+    [...block.matchAll(/(\w+):\s*(true|false)/g)].map((m) => [m[1], m[2] === 'true']),
+  );
+}
+
+describe('the modules the Site gates', () => {
+  it('are modules the App has heard of', () => {
+    const known = new Set(MODULES.map((m) => m.feature));
+    const strays = Object.keys(siteDefaults()).filter((f) => !known.has(f as never));
+    expect(strays, `gated on the Site, unknown to the module list: ${strays.join(', ')}`).toEqual([]);
+  });
+
+  it('default the same way on both sides', () => {
+    const site = siteDefaults();
+    const drift = MODULES
+      .filter((m) => m.feature in site && site[m.feature] !== m.defaultOn)
+      .map((m) => `${m.feature}: App ${m.defaultOn}, Site ${site[m.feature]}`);
+    expect(drift, `the two routers disagree about what off means: ${drift.join('; ')}`).toEqual([]);
+  });
+});

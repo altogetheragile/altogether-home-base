@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
 import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,6 +89,7 @@ export default async function ExamDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await requireModule('exams');
   const { slug } = await params;
   const exam = await getExam(slug);
   if (!exam) notFound();

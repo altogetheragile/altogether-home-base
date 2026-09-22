@@ -5,6 +5,7 @@ import { bookingHref } from '@/lib/booking';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseListJsonLd } from '@/lib/seo';
 import { EventsList } from './EventsList';
 import { colors as c } from '@/lib/brand';
+import { requireModule } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function EventsPage() {
+  await requireModule('events');
   const [templates, feedback, settings] = await Promise.all([
     getEventTemplates(),
     getApprovedFeedback(),
