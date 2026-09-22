@@ -88,14 +88,22 @@ describe('the question order is a choice', () => {
     cleanup();
 
     // Shuffled, over several sittings, the paper does not always come back in the written order.
-    // Asked over several because a shuffle is allowed to land on the written order by chance -
-    // once in 12 factorial, but a test that can fail once in a blue moon is a test nobody trusts.
+    //
+    // Three sittings, not six. A shuffle landing exactly on the written order is one in 12
+    // factorial - about one in 479 million - so a single sitting already makes a chance failure
+    // negligible, and six were six times the cost of a guarantee one had. What the repeats are
+    // actually worth is the second assertion: the same twelve questions come back every time,
+    // however they are ordered.
+    //
+    // It matters because this was the slowest test in the suite and ran within a few percent of
+    // the default timeout: 1.9s here, 5.19s on a CI runner against a 5s limit. It failed on a
+    // branch that touched none of this.
     const runs = [] as string[][];
-    for (let i = 0; i < 6; i += 1) { cleanup(); runs.push(await paperOrder({ shuffled: true })); }
+    for (let i = 0; i < 3; i += 1) { cleanup(); runs.push(await paperOrder({ shuffled: true })); }
     expect(runs.some((r) => r.join() !== WRITTEN.join()), 'shuffling changed nothing').toBe(true);
     // ...and whatever the order, it is the same twelve questions.
     for (const r of runs) expect([...r].sort()).toEqual([...WRITTEN].sort());
-  });
+  }, 20000);
 
   it('does not offer it on a paper whose order carries meaning', () => {
     // A scenario paper's items build on one another, so jumbling them is not an option, it is a
@@ -116,11 +124,14 @@ describe('the question order is a choice', () => {
     expect(screen.queryByLabelText(/shuffle the question order/i),
       'a pool paper is offered a switch that would turn it into a different exam').toBeNull();
 
-    // ...and it still draws a fresh set, exactly as it did before any of this.
+    // ...and it still draws a fresh set, exactly as it did before any of this. Three sittings for
+    // the same reason as the shuffle test above: a draw coming back in the written order is rarer
+    // than one in 12 factorial, so the repeats buy nothing a single one does not, and this was the
+    // second slowest test in the suite.
     const runs: string[][] = [];
-    for (let i = 0; i < 6; i += 1) { cleanup(); runs.push(await paperOrder({ exam: { total_questions: 12 } })); }
+    for (let i = 0; i < 3; i += 1) { cleanup(); runs.push(await paperOrder({ exam: { total_questions: 12 } })); }
     expect(runs.some((r) => r.join() !== WRITTEN.join()), 'the pool paper stopped drawing').toBe(true);
-  });
+  }, 20000);
 
   it('is offered where the paper IS its bank, which is the Foundation papers', async () => {
     // 50 of 50: shuffling changes nothing but the sequence, so the sequence is a free choice.
