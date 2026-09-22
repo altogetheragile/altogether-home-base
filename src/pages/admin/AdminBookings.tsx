@@ -291,11 +291,8 @@ const AdminBookings = () => {
       <Alert>
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Layer 1 is part built. Bookings are listed and availability is editable here, but the
-          booking page cannot take a booking until the <code>booking-slots</code> and{' '}
-          <code>booking-create</code> edge functions are deployed, which needs the Zoom and Google
-          secrets. Cancelling here frees the slot; it does not yet remove the Zoom meeting or the
-          calendar event.
+          Cancelling here frees the slot so someone else can book it, but it does not remove the
+          Zoom meeting or the calendar event. Delete those yourself, and tell the guest.
         </AlertDescription>
       </Alert>
 
@@ -339,7 +336,7 @@ const AdminBookings = () => {
                 emptyMessage={
                   bookings?.length
                     ? 'No bookings match this filter'
-                    : 'No bookings yet. The booking page goes live once the edge functions are deployed.'
+                    : 'No bookings yet. They will appear here as people book from /book/chemistry-session.'
                 }
                 toolbar={
                   <Select value={filter} onValueChange={(v) => setFilter(v as Filter)}>
