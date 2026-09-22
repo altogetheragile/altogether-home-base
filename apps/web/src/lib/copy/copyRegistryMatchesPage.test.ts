@@ -12,6 +12,11 @@ const PAGES: Record<string, string> = {
   home: 'src/app/page.tsx',
   about: 'src/app/about/page.tsx',
   coaching: 'src/app/coaching/page.tsx',
+  contact: 'src/app/contact/page.tsx',
+  testimonials: 'src/app/testimonials/page.tsx',
+  blog: 'src/app/blog/page.tsx',
+  events: 'src/app/events/page.tsx',
+  exams: 'src/app/exams/page.tsx',
 };
 
 /** The copy keys a page actually asks for.

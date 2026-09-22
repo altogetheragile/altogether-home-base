@@ -1,0 +1,16 @@
+{
+  "page": "blog",
+  "label": "Blog",
+  "entries": {
+    "blog.hero.heading": {
+      "value": "Blog",
+      "label": "Hero heading",
+      "hint": "The teal hero above the post list"
+    },
+    "blog.hero.intro": {
+      "value": "Practical insights on agile delivery, coaching, AI and ways of working, drawn from 25 years of hands-on experience.",
+      "label": "Hero introduction",
+      "hint": "The teal hero above the post list"
+    }
+  }
+}

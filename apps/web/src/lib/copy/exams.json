@@ -1,0 +1,41 @@
+{
+  "page": "exams",
+  "label": "Practice Exams",
+  "entries": {
+    "exams.empty": {
+      "value": "No exams available yet. Check back soon.",
+      "label": "Empty state",
+      "hint": "Shown only when no exam is published"
+    },
+    "exams.about.heading": {
+      "value": "About the AgilePM Foundation Exam",
+      "label": "About heading",
+      "hint": "The explainer below the exam cards"
+    },
+    "exams.about.p1": {
+      "value": "The AgilePM Foundation exam tests your understanding of the AgilePM framework: its eight principles, the team roles, the products produced through a project, and the agile project lifecycle. It is a closed-book, multiple-choice paper based on the AgilePM Handbook, and it is the entry-level AgilePM qualification. Passing Foundation is the prerequisite for the AgilePM Practitioner exam, which tests how well you can apply the framework to a real project scenario.",
+      "label": "About, first paragraph",
+      "hint": "The explainer below the exam cards"
+    },
+    "exams.about.p2": {
+      "value": "Our free AgilePM3 Foundation practice papers follow the Foundation format: 50 questions to complete in 40 minutes, with a pass mark of 25 out of 50 (50%). They are based on the latest version of the AgilePM Handbook. Sit a paper as a timed mock exam to rehearse the real thing, or switch to revision mode and work through the questions at your own pace with answers and explanations.",
+      "label": "About, second paragraph",
+      "hint": "The explainer below the exam cards"
+    },
+    "exams.prepare.heading": {
+      "value": "How to Prepare",
+      "label": "How to prepare heading",
+      "hint": "The explainer below the exam cards"
+    },
+    "exams.prepare.steps": {
+      "value": "Read the AgilePM Handbook and learn the eight principles, the roles, and the products.\nUnderstand the agile project lifecycle and how the phases fit together.\nPractise under timed conditions so the 40-minute limit feels comfortable.\nUse revision mode to focus on the topics you find hardest, then re-sit a full paper.",
+      "label": "How to prepare steps",
+      "hint": "The explainer below the exam cards. One per line, add or remove lines freely"
+    },
+    "exams.faq.heading": {
+      "value": "Frequently Asked Questions",
+      "label": "FAQ heading",
+      "hint": "The explainer below the exam cards. The questions themselves are in code, because each also feeds the page's FAQ structured data"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
+import { getCopy } from '@/lib/copy';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ const buildCards = (bookingUrl: string) => [
 
 export default async function ContactPage() {
   await requireModule('contact');
-  const settings = await getSiteSettings();
+  const [settings, t] = await Promise.all([getSiteSettings(), getCopy('contact')]);
   const cards = buildCards(bookingHref(settings.show_bookings));
 
   return (
@@ -49,8 +50,8 @@ export default async function ContactPage() {
 
       {/* HERO */}
       <div id="main-content" style={{ background: p.paleTeal, padding: '56px 24px', textAlign: 'center' }}>
-        <h1 style={{ color: p.deepTeal, fontSize: 'clamp(30px, 5vw, 40px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.15 }}>Get in Touch</h1>
-        <p style={{ color: p.body, fontSize: 16, lineHeight: 1.6, margin: '0 auto', maxWidth: 620 }}>Whether you have a question about our courses, want to discuss coaching, or just want to say hello - we&apos;d love to hear from you.</p>
+        <h1 style={{ color: p.deepTeal, fontSize: 'clamp(30px, 5vw, 40px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.15 }}>{t('contact.hero.heading')}</h1>
+        <p style={{ color: p.body, fontSize: 16, lineHeight: 1.6, margin: '0 auto', maxWidth: 620 }}>{t('contact.hero.intro')}</p>
       </div>
 
       {/* INFO CARDS */}

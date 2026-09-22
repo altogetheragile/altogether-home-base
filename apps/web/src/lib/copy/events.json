@@ -1,0 +1,81 @@
+{
+  "page": "events",
+  "label": "Events",
+  "entries": {
+    "events.hero.eyebrow": {
+      "value": "Courses & Events",
+      "label": "Hero eyebrow",
+      "hint": "The teal hero at the top"
+    },
+    "events.hero.heading": {
+      "value": "Every course, run personally.\nNo associates. No surprises.",
+      "label": "Hero heading",
+      "hint": "The teal hero at the top. A line break splits it in two"
+    },
+    "events.hero.intro": {
+      "value": "Browse the full catalogue below. Delivered in person across the London area at your site, or live online across the UK. Courses with a date scheduled show an orange badge - all others can be arranged for your team or organisation on request.",
+      "label": "Hero introduction",
+      "hint": "The teal hero at the top"
+    },
+    "events.help.heading": {
+      "value": "Not sure where to start?",
+      "label": "Help box heading",
+      "hint": "The panel beside the hero"
+    },
+    "events.help.body": {
+      "value": "Book a free 30-minute chemistry session and we'll work out the best fit together.",
+      "label": "Help box body",
+      "hint": "The panel beside the hero"
+    },
+    "events.help.cta": {
+      "value": "Book a chemistry session",
+      "label": "Help box button",
+      "hint": "The panel beside the hero"
+    },
+    "events.stats.courses": {
+      "value": "Courses offered",
+      "label": "Stat 1 label",
+      "hint": "The three figures under the hero. The first two are counted from the data"
+    },
+    "events.stats.scheduled": {
+      "value": "Dates scheduled",
+      "label": "Stat 2 label",
+      "hint": "The three figures under the hero. The first two are counted from the data"
+    },
+    "events.stats.trained.number": {
+      "value": "1,500+",
+      "label": "Stat 3 number",
+      "hint": "The three figures under the hero. The first two are counted from the data. This one is typed, not counted"
+    },
+    "events.stats.trained.label": {
+      "value": "Practitioners trained",
+      "label": "Stat 3 label",
+      "hint": "The three figures under the hero. The first two are counted from the data"
+    },
+    "events.bespoke.eyebrow": {
+      "value": "In-house & bespoke",
+      "label": "Bespoke eyebrow",
+      "hint": "The dark band at the foot of the page"
+    },
+    "events.bespoke.heading": {
+      "value": "Need it tailored for your team?",
+      "label": "Bespoke heading",
+      "hint": "The dark band at the foot of the page"
+    },
+    "events.bespoke.body": {
+      "value": "Every course can be delivered in-house - adapted to your context, your team size, and your organisation's way of working. Same quality, no generic materials.",
+      "label": "Bespoke body",
+      "hint": "The dark band at the foot of the page"
+    },
+    "events.bespoke.cta": {
+      "value": "Book a conversation →",
+      "label": "Bespoke button",
+      "hint": "The dark band at the foot of the page"
+    },
+    "events.bespoke.reassurance": {
+      "value": "No hard sell. Just a conversation.",
+      "label": "Bespoke reassurance",
+      "hint": "The dark band at the foot of the page"
+    }
+  }
+}
