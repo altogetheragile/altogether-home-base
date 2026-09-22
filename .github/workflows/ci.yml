@@ -160,3 +160,20 @@ jobs:
       - name: Build (type-check + build)
         run: npm run build
         working-directory: apps/web
+
+      # Hard gate: every public URL the Site owns must answer 200 with real content in the
+      # HTML. These pages exist because a crawler reading an SPA gets an empty shell, so one
+      # that renders but says nothing has failed at the only job it has. Routes whose module
+      # is switched off 404 by design and are reported as skipped.
+      #
+      # The App's own guard (npm run check:routes at the root) can no longer do this: it
+      # renders against dist/, and the App stopped claiming the Site's URLs.
+      - name: Route guard (Site pages render)
+        working-directory: apps/web
+        run: |
+          npx next start -p 3100 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3100/ >/dev/null && break
+            sleep 2
+          done
+          node scripts/check-routes.mjs http://localhost:3100

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:routes": "node scripts/check-routes.mjs"
   },
   "dependencies": {
     "@altogether/ui": "file:../../packages/ui",
