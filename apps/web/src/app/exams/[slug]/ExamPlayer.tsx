@@ -2,8 +2,8 @@
 
 import { Fragment, useState, useEffect, useMemo, useCallback, useRef, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
-import { marked } from 'marked';
 import { createClient } from '@/lib/supabase/client';
+import { renderMarkdown } from '@/lib/markdown';
 import {
   Clock, Timer, BookOpen, Flag, ChevronLeft, ChevronRight, SkipForward,
   CheckCircle2, XCircle, RotateCcw, ArrowLeft,
@@ -76,11 +76,6 @@ function correctLetters(q: Question) {
 function isCorrect(q: Question, a: Answer | undefined) {
   if (!a || a.selected.length === 0) return false;
   return correctLetters(q).sort().join(',') === [...a.selected].map((s) => s.toUpperCase()).sort().join(',');
-}
-function renderMarkdown(md: string | null) {
-  if (!md) return '';
-  const html = String(marked.parse(md, { async: false }));
-  return html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
 }
 
 /** Links to the other papers for the same qualification.
