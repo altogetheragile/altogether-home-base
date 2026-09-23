@@ -9,31 +9,45 @@ import { cn } from '@/lib/utils';
 import { SiteLogo } from '@/components/SiteLogo';
 import type { SiteSettings } from '@/lib/site-settings';
 
+// The URL is fixed by the file that answers it; the label is not. A freelancer who sells
+// "Services" should not have to say "Coaching" because that is what the folder is called, so
+// every label here is a copy key an admin can edit. Defaults live in copy/navigation.json.
 const TOP_LINKS = [
-  { label: 'Events', href: '/events', flag: 'show_events' },
-  { label: 'Coaching', href: '/coaching', flag: 'show_coaching' },
-  { label: 'About', href: '/about', flag: 'show_about' },
-  { label: 'Contact', href: '/contact', flag: 'show_contact' },
-  { label: 'Testimonials', href: '/testimonials', flag: 'show_testimonials' },
+  { key: 'nav.events', href: '/events', flag: 'show_events' },
+  { key: 'nav.coaching', href: '/coaching', flag: 'show_coaching' },
+  { key: 'nav.about', href: '/about', flag: 'show_about' },
+  { key: 'nav.contact', href: '/contact', flag: 'show_contact' },
+  { key: 'nav.testimonials', href: '/testimonials', flag: 'show_testimonials' },
 ] as const;
 
 const RESOURCE_LINKS = [
-  { label: 'Knowledge Base', href: '/knowledge-base', flag: 'show_knowledge' },
-  { label: 'Blog', href: '/blog', flag: 'show_blog' },
-  { label: 'Practice Exams', href: '/exams', flag: 'show_exams' },
-  { label: 'AI Tools', href: '/ai-tools', flag: 'show_ai_tools' },
-  { label: 'Flow Game', href: '/flow-game', flag: 'show_flow_game' },
+  { key: 'nav.knowledge', href: '/knowledge-base', flag: 'show_knowledge' },
+  { key: 'nav.blog', href: '/blog', flag: 'show_blog' },
+  { key: 'nav.exams', href: '/exams', flag: 'show_exams' },
+  { key: 'nav.ai_tools', href: '/ai-tools', flag: 'show_ai_tools' },
+  { key: 'nav.flow_game', href: '/flow-game', flag: 'show_flow_game' },
 ] as const;
+
+/** Shipped wording, so this renders correctly in a test and if the copy fetch fails. */
+const FALLBACK: Record<string, string> = {
+  'nav.events': 'Events', 'nav.coaching': 'Coaching', 'nav.about': 'About',
+  'nav.contact': 'Contact', 'nav.testimonials': 'Testimonials', 'nav.resources': 'Resources',
+  'nav.knowledge': 'Knowledge Base', 'nav.blog': 'Blog', 'nav.exams': 'Practice Exams',
+  'nav.ai_tools': 'AI Tools', 'nav.flow_game': 'Flow Game',
+};
 
 export function Navigation({
   settings,
   signedIn = false,
   name = null,
+  labels,
 }: {
   settings: SiteSettings;
   signedIn?: boolean;
   /** Their own name, read from the real session on the server. Null when signed out. */
   name?: string | null;
+  /** Menu labels, resolved on the server because getCopy needs a server client. */
+  labels?: Record<string, string>;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -46,6 +60,7 @@ export function Navigation({
   // One list of defaults, shared with the module gate. They used to disagree, and a site with
   // no settings row showed links to pages that answered 404.
   const flag = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
+  const label = (key: string) => labels?.[key] || FALLBACK[key] || '';
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   const topLinks = TOP_LINKS.filter((l) => flag(l.flag));
@@ -70,7 +85,7 @@ export function Navigation({
                 isActive(l.href) ? 'text-primary' : 'text-foreground',
               )}
             >
-              {l.label}
+              {label(l.key)}
             </Link>
           ))}
 
@@ -81,7 +96,7 @@ export function Navigation({
                 aria-expanded={resourcesOpen}
                 onClick={() => setResourcesOpen((o) => !o)}
               >
-                Resources <ChevronDown size={16} />
+                {label('nav.resources')} <ChevronDown size={16} />
               </button>
               {resourcesOpen && (
                 <div className="absolute left-0 top-full min-w-[200px] rounded-md border border-border bg-background py-1 shadow-lg">
@@ -92,7 +107,7 @@ export function Navigation({
                       className="block px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-primary"
                       onClick={() => setResourcesOpen(false)}
                     >
-                      {l.label}
+                      {label(l.key)}
                     </Link>
                   ))}
                 </div>
@@ -128,15 +143,15 @@ export function Navigation({
           <div className="flex flex-col gap-1">
             {topLinks.map((l) => (
               <Link key={l.href} href={l.href} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent" onClick={() => setMobileOpen(false)}>
-                {l.label}
+                {label(l.key)}
               </Link>
             ))}
             {resourceLinks.length > 0 && (
               <>
-                <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Resources</p>
+                <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label('nav.resources')}</p>
                 {resourceLinks.map((l) => (
                   <Link key={l.href} href={l.href} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent" onClick={() => setMobileOpen(false)}>
-                    {l.label}
+                    {label(l.key)}
                   </Link>
                 ))}
               </>

@@ -7,6 +7,7 @@ import testimonialsJson from './testimonials.json';
 import blogJson from './blog.json';
 import eventsJson from './events.json';
 import examsJson from './exams.json';
+import navigationJson from './navigation.json';
 
 // ============= The site's words, editable without a deploy =============
 //
@@ -26,6 +27,7 @@ export interface CopyRegistry { page: string; label: string; entries: Record<str
 
 export const REGISTRIES: CopyRegistry[] = [
   homeJson, aboutJson, coachingJson, contactJson, testimonialsJson, blogJson, eventsJson, examsJson,
+  navigationJson,
 ] as CopyRegistry[];
 
 /** Reads a page's copy, with anything saved in `site_copy` laid over the shipped wording. */

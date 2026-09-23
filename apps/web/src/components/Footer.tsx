@@ -6,20 +6,25 @@ import { moduleIsOn } from '@altogether/ui/modules';
 
 // Server component (no interactivity). The auth-only links (Dashboard, Admin) from
 // the Vite footer are intentionally dropped - this is the public content surface.
-export function Footer({ settings, year }: { settings: SiteSettings; year: number
+export function Footer({ settings, year, t }: {
+  settings: SiteSettings;
+  year: number;
+  /** The navigation registry's reader, so the footer and the menu agree on what a page is called. */
+  t: (key: string) => string;
 }) {
   // The shared list, not a fourth copy. This was the last place still carrying its own.
   const on = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
 
+  // Same copy keys as the menu. A site that renames Coaching to Services renames it once.
   const quickLinks = [
-    { label: 'Home', href: '/', show: true },
-    { label: 'Events', href: '/events', show: on('show_events') },
-    { label: 'Coaching', href: '/coaching', show: on('show_coaching') },
-    { label: 'About', href: '/about', show: on('show_about') },
-    { label: 'Blog', href: '/blog', show: on('show_blog') },
-    { label: 'Practice Exams', href: '/exams', show: on('show_exams') },
-    { label: 'Contact', href: '/contact', show: on('show_contact') },
-    { label: 'Testimonials', href: '/testimonials', show: on('show_testimonials') },
+    { label: t('nav.home'), href: '/', show: true },
+    { label: t('nav.events'), href: '/events', show: on('show_events') },
+    { label: t('nav.coaching'), href: '/coaching', show: on('show_coaching') },
+    { label: t('nav.about'), href: '/about', show: on('show_about') },
+    { label: t('nav.blog'), href: '/blog', show: on('show_blog') },
+    { label: t('nav.exams'), href: '/exams', show: on('show_exams') },
+    { label: t('nav.contact'), href: '/contact', show: on('show_contact') },
+    { label: t('nav.testimonials'), href: '/testimonials', show: on('show_testimonials') },
   ].filter((l) => l.show);
 
   const social = [
@@ -44,7 +49,7 @@ export function Footer({ settings, year }: { settings: SiteSettings; year: numbe
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">Quick Links</h3>
+            <h3 className="mb-4 text-sm font-semibold text-foreground">{t('footer.quicklinks')}</h3>
             <ul className="space-y-2">
               {quickLinks.map((l) => (
                 <li key={l.href}>
@@ -57,7 +62,7 @@ export function Footer({ settings, year }: { settings: SiteSettings; year: numbe
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">Contact</h3>
+            <h3 className="mb-4 text-sm font-semibold text-foreground">{t('footer.contact')}</h3>
             <div className="space-y-2">
               {settings.contact_email && (
                 <a href={`mailto:${settings.contact_email}`} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">

@@ -17,6 +17,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import { Resvg } from '@resvg/resvg-js';
+import { withBrand } from './lib/brandShell.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -96,6 +97,18 @@ let BRAND_OG_IMAGE = `${SITE_URL}/og-image.png`;
  *  React to hydrate, and in every link preview of an App page. */
 let SITE_COMPANY = 'AltogetherAgile';
 let SITE_TAGLINE = null;
+
+/** This site's palette and logo, written into the shell as CSS custom properties.
+ *
+ *  The App is client-rendered, so it painted the shipped defaults and corrected itself once
+ *  site_settings arrived. On altogetheragile.com that is invisible. On a site with a different
+ *  brand it is a flash of somebody else's colours and logo on every first load, which is exactly
+ *  what it looks like: a site wearing the wrong clothes for a moment.
+ *
+ *  Putting the values in the shell's own <style> means the first paint is already right. */
+let BRAND_CSS = '';
+let BRAND_LOGO = null;
+const brandHead = (html) => withBrand(html, { css: BRAND_CSS, logo: BRAND_LOGO });
 
 /** Build meta tag block to inject into <head>. */
 function buildMetaTags({ title, description, canonical, ogType = 'website', ogImage, jsonLd }) {
@@ -539,12 +552,19 @@ async function main() {
     }
     if (settings?.company_name?.trim()) SITE_COMPANY = settings.company_name.trim();
     if (settings?.company_description?.trim()) SITE_TAGLINE = settings.company_description.trim();
+
+    const { resolveColors, cssVarsFor, logoOf } = await import('@altogether/ui/brand');
+    const vars = cssVarsFor(resolveColors(settings?.brand));
+    BRAND_CSS = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
+    const logo = logoOf(settings?.brand, settings?.company_name);
+    BRAND_LOGO = logo.mode === 'image' ? logo.src : null;
+    console.log(`  ok   brand inlined into the shell (${Object.keys(vars).length / 2} colours)`);
   } catch {
     // Never fail a build over a brand lookup.
   }
 
   // Read the base HTML shell
-  const baseHtml = readFileSync(resolve(DIST, 'index.html'), 'utf-8');
+  const baseHtml = brandHead(readFileSync(resolve(DIST, 'index.html'), 'utf-8'));
 
   // Fetch all dynamic content in parallel
   const [postsRes, examsRes, templatesRes] = await Promise.all([
@@ -670,6 +690,7 @@ async function main() {
     }
     shell = shell.replaceAll('https://altogetheragile.com/og-image.png', BRAND_OG_IMAGE);
     shell = shell.replaceAll('https://altogetheragile.com', SITE_URL);
+    shell = brandHead(shell);
     writeFileSync(resolve(DIST, '_spa.html'), shell, 'utf-8');
     if (shell !== before) console.log(`  ok   SPA shell head rewritten for ${SITE_COMPANY}`);
     rmSync(indexHtmlPath);
