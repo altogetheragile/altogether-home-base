@@ -88,6 +88,9 @@ export default async function AboutPage() {
   await requireModule('about');
   const [settings, feedback, t] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about')]);
   const founder = founderOf(settings);
+  // Whether there is a left column at all in the story section. Without one the boxes on the
+  // right were floating beside half a page of white space.
+  const storyTold = has(t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4'));
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
   const quotes = [...feedback].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3);
@@ -102,7 +105,12 @@ export default async function AboutPage() {
 
       <style>{`
         .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+        /* One child, one column. Otherwise the text sits in the left half of a banner. */
+        .aa-two-col--alone { grid-template-columns: 1fr; }
         .aa-two-col-wide { display: grid; grid-template-columns: 1fr 340px; gap: 56px; align-items: start; }
+        /* With no story written, the left column is empty and the boxes on the right float beside
+           a void. One column instead, at the width of the boxes. */
+        .aa-two-col-wide--alone { grid-template-columns: 1fr; max-width: 420px; }
         .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .aa-section-pad { padding: 64px 48px; }
         .aa-about-hero { padding: 72px 48px 60px; }
@@ -141,7 +149,8 @@ export default async function AboutPage() {
 
       {/* PERSONAL STORY */}
       <div className="aa-section-pad" style={{ background: p.white }}>
-        <div className="aa-two-col-wide">
+        <div className={`aa-two-col-wide${storyTold ? '' : ' aa-two-col-wide--alone'}`}>
+          {storyTold && (
           <div>
             <When any={[t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4')]}>
               <Heading label={t('about.story.label')} title={t('about.story.heading')} />
@@ -151,6 +160,7 @@ export default async function AboutPage() {
               <Prose text={t('about.story.p4')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }} />
             </When>
           </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Nobody's qualifications and nobody's badges: an empty panel with two headings in
                 it is worse than no panel. */}
@@ -282,7 +292,10 @@ export default async function AboutPage() {
 
       {/* CTA */}
       <div className="aa-about-cta" style={{ background: p.deepTeal }}>
-        <div className="aa-two-col" style={{ alignItems: 'center', gap: 40 }}>
+        <div
+          className={`aa-two-col${founder.shown && founder.portrait ? '' : ' aa-two-col--alone'}`}
+          style={{ alignItems: 'center', gap: 40 }}
+        >
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('about.cta.label')}</div>
             <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('about.cta.heading')}</h2>
@@ -293,9 +306,12 @@ export default async function AboutPage() {
               {settings.show_knowledge && <Link href="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.knowledge')} <ArrowRight /></Link>}
             </div>
           </div>
-          <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
-            {founder.shown && founder.portrait && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
-          </div>
+          {/* The column existed to hold the portrait. Without one it is half a banner of nothing. */}
+          {founder.shown && founder.portrait && (
+            <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+            </div>
+          )}
         </div>
       </div>
     </div>

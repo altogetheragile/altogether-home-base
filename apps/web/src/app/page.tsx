@@ -186,9 +186,12 @@ export default async function HomePage() {
                 <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />{t('home.cta.booking')}</a>
               </div>
             </div>
-            <div className="aa-hide-mobile">
-              {founder.shown && founder.portrait && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
-            </div>
+            {/* The column existed to hold the portrait. Without one it is half a banner of nothing. */}
+            {founder.shown && founder.portrait && (
+              <div className="aa-hide-mobile">
+                <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+              </div>
+            )}
           </div>
         </div>
       </main>
