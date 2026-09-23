@@ -43,6 +43,12 @@ build). Read it before building pipeline/coaching features.
   React `<Helmet>`/`SEOHead`. `prerender.mjs` skips every route in its `CUT_OVER`
   list so it cannot shadow a rewrite, but it still writes the SPA shell and the
   exam OG images.
+- **`/sitemap.xml` is built at deploy time, not per request.** `prerender.mjs`
+  reads the database and writes `dist/sitemap.xml`, so a change made only in the
+  database or in Admin - a new slug, a newly published exam or course - does not
+  reach the sitemap until something is deployed. Nothing warns you: the page is
+  live and correct while the sitemap still lists the old URL. After any
+  content-only change that adds or renames a public URL, redeploy.
 - **Canvas tools** share `src/hooks/canvas/` and `src/utils/canvas/canvasExporter.ts`.
   Tools persist into Projects as artifacts (`project_artifacts`, dispatched by
   `artifact_type` in `src/pages/ArtifactViewer.tsx`).

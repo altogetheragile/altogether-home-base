@@ -101,6 +101,9 @@ in the 28 days to 2026-09-20, against 1 click and 1.4k impressions in August.
   where the hyphen already in "AgilePM3 Foundation - Paper 2" kept its own spaces and
   each became a hyphen. Nothing generates slugs now, so no other row can acquire one:
   Admin asks for the slug as a required field.
+  One thing the change taught: `/sitemap.xml` is written at deploy time by
+  `prerender.mjs`, so it kept listing the old URL after the row changed. A
+  content-only change needs a redeploy before the sitemap agrees with the site.
 - **The preview domain is crawlable** (`Allow: /`), noted in #714. Canonicals handle
   it; an `X-Robots-Tag: noindex` on that deployment would guarantee it.
 - **`/courses` is still "unknown to Google"** and that is intended: it 301s to
