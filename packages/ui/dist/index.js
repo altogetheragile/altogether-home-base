@@ -8,7 +8,7 @@ export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScro
 export { Separator } from './chunk-RUO7ILQT.js';
 export { Switch } from './chunk-NI6DAPXZ.js';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './chunk-SRSEZE2O.js';
-export { cssVarName, cssVarsFor, hexToHslTriplet, resolveColors } from './chunk-BZWDV45S.js';
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, resolveColors, resolveImages } from './chunk-QHXCS3XX.js';
 export { colors, fontWeights, fonts, radii, space, tokens } from './chunk-63HQX2YB.js';
 export { Badge, badgeVariants } from './chunk-3ZO5UTAS.js';
 export { Button, buttonVariants } from './chunk-5J4S3I5W.js';

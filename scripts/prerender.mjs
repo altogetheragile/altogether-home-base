@@ -85,9 +85,14 @@ function buildSitemap(entries) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
 
+/** This site's share image and organisation logo, read from site_settings.brand at the start of
+ *  the run. The file in public/ is this repository's default; a site that has uploaded its own
+ *  should not be advertising ours to every crawler that reads a shared link. */
+let BRAND_OG_IMAGE = `${SITE_URL}/og-image.png`;
+
 /** Build meta tag block to inject into <head>. */
 function buildMetaTags({ title, description, canonical, ogType = 'website', ogImage, jsonLd }) {
-  const img = ogImage || `${SITE_URL}/og-image.png`;
+  const img = ogImage || BRAND_OG_IMAGE;
   let tags = '';
 
   // Title - replace the existing <title> tag via a marker
@@ -156,7 +161,7 @@ function organizationJsonLd() {
     '@type': 'Organization',
     name: 'Altogether Agile',
     url: SITE_URL,
-    logo: `${SITE_URL}/og-image.png`,
+    logo: BRAND_OG_IMAGE,
     description: 'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
     founder: {
       '@type': 'Person',
@@ -183,7 +188,7 @@ function blogPostJsonLd(post) {
     url: `${SITE_URL}/blog/${post.slug}`,
     datePublished: post.published_at,
     dateModified: post.updated_at || post.published_at,
-    image: post.featured_image_url || `${SITE_URL}/og-image.png`,
+    image: post.featured_image_url || BRAND_OG_IMAGE,
     author: { '@type': 'Person', name: 'Alun Davies-Baker' },
     publisher: {
       '@type': 'Organization',
@@ -515,6 +520,19 @@ async function main() {
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // This site's brand, before anything is written. Absent or malformed leaves the default in
+  // place, which is what altogetheragile.com wants.
+  try {
+    const { data: settings } = await supabase.from('site_settings').select('brand').limit(1).maybeSingle();
+    const given = settings?.brand?.images?.ogImage;
+    if (typeof given === 'string' && /^https?:\/\/\S+$/i.test(given.trim())) {
+      BRAND_OG_IMAGE = given.trim();
+      console.log(`  ok   share image from site_settings.brand`);
+    }
+  } catch {
+    // Never fail a build over a brand lookup.
+  }
 
   // Read the base HTML shell
   const baseHtml = readFileSync(resolve(DIST, 'index.html'), 'utf-8');

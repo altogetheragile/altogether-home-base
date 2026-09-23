@@ -39,5 +39,20 @@ function cssVarsFor(palette) {
     ])
   );
 }
+var defaultImages = {
+  logo: "/brand/lockup-horizontal-tight.svg",
+  favicon: "/favicon.svg",
+  ogImage: "/og-image.png"
+};
+function resolveImages(overrides) {
+  const out = { ...defaultImages };
+  const given = overrides?.images;
+  if (!given) return out;
+  for (const name of Object.keys(defaultImages)) {
+    const v = given[name];
+    if (typeof v === "string" && /^https?:\/\/\S+$/i.test(v.trim())) out[name] = v.trim();
+  }
+  return out;
+}
 
-export { cssVarName, cssVarsFor, hexToHslTriplet, resolveColors };
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, resolveColors, resolveImages };

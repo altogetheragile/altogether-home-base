@@ -28,7 +28,7 @@ export type SiteSettings = {
   show_testimonial_name?: boolean | null;
   show_testimonial_company?: boolean | null;
   /** Per-site brand overrides. See @altogether/ui/brand resolveColors. */
-  brand?: { colors?: Record<string, unknown> | null } | null;
+  brand?: { colors?: Record<string, unknown> | null; images?: Record<string, unknown> | null } | null;
 };
 
 /** Single-row site settings (feature flags, contact, social). Anon-readable. */

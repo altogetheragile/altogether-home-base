@@ -9,6 +9,7 @@ import { MODULES, MODULE_GROUPS, NAV_FLAGS, flagOf } from '@/config/modules';
 import { Settings } from 'lucide-react';
 import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
 import { BrandColours } from '@/components/admin/BrandColours';
+import { BrandImages } from '@/components/admin/BrandImages';
 
 // ============= Which parts of the site are switched on =============
 //
@@ -21,7 +22,7 @@ import { BrandColours } from '@/components/admin/BrandColours';
 // the admin area is a way to lock yourself out of your own site.
 
 type Flags = Record<string, boolean>;
-type Brand = { colors?: Record<string, unknown> | null } | null;
+type Brand = { colors?: Record<string, unknown> | null; images?: Record<string, unknown> | null } | null;
 
 const brandOf = (settings: unknown): Brand =>
   ((settings as { brand?: Brand } | null | undefined)?.brand ?? null);
@@ -137,6 +138,8 @@ export default function AdminSettings() {
       </Card>
 
       <BrandColours value={brand} onChange={setBrand} />
+
+      <BrandImages value={brand} onChange={setBrand} />
 
       {/* Saves immediately, not staged behind the button below. */}
       <TestimonialDisplaySettings />

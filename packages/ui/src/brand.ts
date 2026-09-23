@@ -61,3 +61,34 @@ export function cssVarsFor(palette: Palette): Record<string, string> {
     ]),
   );
 }
+
+// ============= The images =============
+//
+// Three files carry a brand as much as its colours do: the lockup on every page, the icon in the
+// tab, and the picture that appears when somebody shares a link. They live in the repository as
+// defaults, which is right for this site and wrong for anyone else's.
+
+export type ImageName = 'logo' | 'favicon' | 'ogImage';
+
+/** The files this repository ships. A site that sets nothing gets these. */
+export const defaultImages: Record<ImageName, string> = {
+  logo: '/brand/lockup-horizontal-tight.svg',
+  favicon: '/favicon.svg',
+  ogImage: '/og-image.png',
+};
+
+export type BrandImageOverrides = { images?: Partial<Record<string, unknown>> | null } | null | undefined;
+
+/** Only absolute http(s) URLs are accepted. An uploaded file has one; a relative path would be
+ *  resolved against whichever site is rendering, which for an Open Graph image means a crawler
+ *  fetching a path that does not exist. */
+export function resolveImages(overrides?: BrandImageOverrides): Record<ImageName, string> {
+  const out = { ...defaultImages };
+  const given = overrides?.images;
+  if (!given) return out;
+  for (const name of Object.keys(defaultImages) as ImageName[]) {
+    const v = given[name];
+    if (typeof v === 'string' && /^https?:\/\/\S+$/i.test(v.trim())) out[name] = v.trim();
+  }
+  return out;
+}

@@ -35,7 +35,7 @@ const MEANING: Record<string, string> = {
 
 type Props = {
   value: { colors?: Record<string, unknown> | null } | null | undefined;
-  onChange: (next: { colors: Record<string, string> }) => void;
+  onChange: (next: { colors: Record<string, string>; images?: Record<string, unknown> | null }) => void;
 };
 
 export function BrandColours({ value, onChange }: Props) {
@@ -49,7 +49,8 @@ export function BrandColours({ value, onChange }: Props) {
     if (!hex.trim()) delete next[name];
     else next[name] = hex.trim().toUpperCase();
     setDraft(next);
-    onChange({ colors: next });
+    // Keep whatever images are set; this editor only owns the colours.
+    onChange({ ...(value ?? {}), colors: next });
   };
 
   const invalid = (name: string) => {
