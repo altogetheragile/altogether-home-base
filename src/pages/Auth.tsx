@@ -17,8 +17,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { cleanupAuthState } from "@/utils/authCleanup";
 import type { Factor } from "@supabase/auth-js";
 import type { MfaAuthError } from "@/types/supabaseMfa";
+import { useCompanyName } from '@/hooks/useCompanyName';
 
 const Auth = () => {
+  const companyName = useCompanyName();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -372,7 +374,7 @@ useEffect(() => {
                 <CardHeader>
                   <CardTitle>Welcome Back</CardTitle>
                   <CardDescription>
-                    Sign in to your AltogetherAgile account to access your courses and events.
+                    Sign in to your {companyName} account to access your courses and events.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -453,7 +455,7 @@ useEffect(() => {
                 <CardHeader>
                   <CardTitle>Create Account</CardTitle>
                   <CardDescription>
-                    Join AltogetherAgile to register for events and access exclusive content.
+                    Join {companyName} to register for events and access exclusive content.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -33,16 +33,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The real session, read on the server from the cookies both apps now share. This replaces
   // the `aa-auth` presence cookie, which could only ever say that somebody was signed in.
   const [settings, user] = await Promise.all([getSiteSettings(), getCurrentUser()]);
-  const images = brandImagesFor(settings.brand);
   return (
     <html lang="en">
       <body>
         {/* Brand tokens from the shared design system (@altogether/ui), exposed as
             CSS variables for the whole Site. */}
         <div className="flex min-h-screen flex-col" style={brandCssVarsFor(settings.brand)}>
-          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} logo={images.logo} />
+          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} />
           <div className="flex-1">{children}</div>
-          <Footer settings={settings} year={new Date().getFullYear()} logo={images.logo} />
+          <Footer settings={settings} year={new Date().getFullYear()} />
         </div>
       </body>
     </html>

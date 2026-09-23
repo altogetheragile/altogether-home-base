@@ -56,5 +56,13 @@ function resolveImages(overrides) {
   }
   return out;
 }
+function logoOf(overrides, companyName) {
+  const given = overrides?.images?.logo;
+  if (typeof given === "string" && /^https?:\/\/\S+$/i.test(given.trim())) {
+    return { mode: "image", src: given.trim() };
+  }
+  const text = companyName?.trim();
+  return text ? { mode: "wordmark", text } : { mode: "image", src: defaultImages.logo };
+}
 
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, resolveColors, resolveImages };
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, logoOf, resolveColors, resolveImages };

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { colors } from '@altogether/ui/tokens';
-import { resolveColors, cssVarsFor, hexToHslTriplet, cssVarName, resolveImages, defaultImages } from '@altogether/ui/brand';
+import { resolveColors, cssVarsFor, hexToHslTriplet, cssVarName, resolveImages, defaultImages, logoOf } from '@altogether/ui/brand';
 
 // Lives here rather than in packages/ui because the root suite only collects src/**.
 //
@@ -89,5 +89,26 @@ describe('resolving a site logo, favicon and share image', () => {
     for (const bad of ['/logo.svg', 'logo.svg', '//cdn/logo.svg', 'javascript:alert(1)', 'data:image/svg+xml,x', '', 42, null]) {
       expect(resolveImages({ images: { logo: bad } }).logo, `accepted ${JSON.stringify(bad)}`).toBe(defaultImages.logo);
     }
+  });
+});
+
+describe('the logo a site has not chosen', () => {
+  it('is the configured image when there is one', () => {
+    expect(logoOf({ images: { logo: 'https://cdn.example.com/l.svg' } }, 'Anything')).toEqual({ mode: 'image', src: 'https://cdn.example.com/l.svg' });
+  });
+
+  it('is the site\'s own name, not this repository\'s lockup', () => {
+    expect(logoOf(null, 'Throwaway Test Co')).toEqual({ mode: 'wordmark', text: 'Throwaway Test Co' });
+    expect(logoOf({ images: {} }, 'Her Business')).toEqual({ mode: 'wordmark', text: 'Her Business' });
+  });
+
+  it('falls back to the shipped file only when there is no name either', () => {
+    // A site with neither has nothing to draw, and an empty header is worse than a placeholder.
+    expect(logoOf(null, null)).toEqual({ mode: 'image', src: defaultImages.logo });
+    expect(logoOf(null, '   ')).toEqual({ mode: 'image', src: defaultImages.logo });
+  });
+
+  it('ignores a relative path, as everywhere else', () => {
+    expect(logoOf({ images: { logo: '/logo.svg' } }, 'Co')).toEqual({ mode: 'wordmark', text: 'Co' });
   });
 });

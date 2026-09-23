@@ -97,3 +97,28 @@ export function resolveImages(overrides?: BrandImageOverrides): Record<ImageName
   }
   return out;
 }
+
+// ============= The logo a site has not chosen =============
+//
+// `resolveImages` falls back to the files in public/, which is right for a favicon and a share
+// image: a placeholder is better than nothing and nobody reads a favicon as a claim.
+//
+// A logo is different. Falling back to this repository's lockup means a site that has not chosen
+// one renders Altogether Agile's name in Altogether Agile's colours, in its header and its footer,
+// as if that were whose site it is. Standing up a second site made that obvious in about four
+// seconds.
+//
+// So: a site with no logo of its own gets its own name set as a wordmark. It looks unfinished,
+// which it is, rather than looking like somebody else's.
+
+export type Logo = { mode: 'image'; src: string } | { mode: 'wordmark'; text: string };
+
+/** What to render where the logo goes. `companyName` is only used when no logo is configured. */
+export function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo {
+  const given = overrides?.images?.logo;
+  if (typeof given === 'string' && /^https?:\/\/\S+$/i.test(given.trim())) {
+    return { mode: 'image', src: given.trim() };
+  }
+  const text = companyName?.trim();
+  return text ? { mode: 'wordmark', text } : { mode: 'image', src: defaultImages.logo };
+}
