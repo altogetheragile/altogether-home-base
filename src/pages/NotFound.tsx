@@ -5,17 +5,22 @@ import { Helmet } from 'react-helmet-async';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { colors as p } from '@/theme/colors';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 
 const NotFound: React.FC = () => {
   const location = useLocation();
+  // A 404 is the one page in this app a stranger reaches, so it is the one tab title that must
+  // not say somebody else's company name.
+  const { settings } = useSiteSettings();
+  const companyName = (settings as { company_name?: string | null } | undefined)?.company_name ?? 'Altogether Agile';
 
   useEffect(() => {}, [location.pathname]);
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF' }}>
       <Helmet>
-        <title>Page Not Found - Altogether Agile</title>
+        <title>{`Page Not Found - ${companyName}`}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       {/* ─── NAV ─── */}

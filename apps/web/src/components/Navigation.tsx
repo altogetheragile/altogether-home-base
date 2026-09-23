@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SiteLogo } from '@/components/SiteLogo';
 import type { SiteSettings } from '@/lib/site-settings';
 
 const TOP_LINKS = [
@@ -27,12 +28,9 @@ export function Navigation({
   settings,
   signedIn = false,
   name = null,
-  logo,
 }: {
   settings: SiteSettings;
   signedIn?: boolean;
-  /** This site's lockup. Defaults to the one in public/ when a site has not set its own. */
-  logo: string;
   /** Their own name, read from the real session on the server. Null when signed out. */
   name?: string | null;
 }) {
@@ -58,7 +56,7 @@ export function Navigation({
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" aria-label="Altogether Agile home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo} alt={settings.company_name ?? 'Home'} className="h-9 w-auto" />
+          <SiteLogo brand={settings.brand} companyName={settings.company_name} height={36} className="" />
         </Link>
 
         {/* Desktop nav */}

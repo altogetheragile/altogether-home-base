@@ -36,5 +36,14 @@ type BrandImageOverrides = {
  *  resolved against whichever site is rendering, which for an Open Graph image means a crawler
  *  fetching a path that does not exist. */
 declare function resolveImages(overrides?: BrandImageOverrides): Record<ImageName, string>;
+type Logo = {
+    mode: 'image';
+    src: string;
+} | {
+    mode: 'wordmark';
+    text: string;
+};
+/** What to render where the logo goes. `companyName` is only used when no logo is configured. */
+declare function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo;
 
-export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, resolveColors, resolveImages };
+export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Logo, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, logoOf, resolveColors, resolveImages };

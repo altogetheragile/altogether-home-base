@@ -1,15 +1,32 @@
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { resolveImages } from '@altogether/ui/brand';
+import { logoOf } from '@altogether/ui/brand';
+import { colors } from '@/theme/colors';
 
-/** The lockup, from this site's brand rather than this repository's.
+/** The mark in the App's header.
  *
- *  Falls back to the file in public/ while settings load and whenever a site has not set one, so
- *  it never renders empty. */
+ *  An image when this site has uploaded one, and the site's own name otherwise. It does not fall
+ *  back to this repository's lockup: a site that has not chosen a logo should look unfinished
+ *  rather than look like Altogether Agile, which is what standing up a second site showed. */
 const LogoFull = ({ height = 48 }: { height?: number; light?: boolean }) => {
   const { settings } = useSiteSettings();
-  const { logo } = resolveImages((settings as { brand?: unknown } | undefined)?.brand as Parameters<typeof resolveImages>[0]);
-  const name = (settings as { company_name?: string | null } | undefined)?.company_name ?? 'Altogether Agile';
-  return <img src={logo} alt={name} style={{ height }} className="w-auto" />;
+  const s = settings as { brand?: unknown; company_name?: string | null } | undefined;
+  const logo = logoOf(s?.brand as Parameters<typeof logoOf>[0], s?.company_name);
+
+  if (logo.mode === 'image') {
+    return <img src={logo.src} alt={s?.company_name ?? 'Home'} style={{ height }} className="w-auto" />;
+  }
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', height,
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        fontWeight: 800, fontSize: Math.round(height * 0.44), letterSpacing: '-0.02em',
+        color: colors.deepTeal, whiteSpace: 'nowrap',
+      }}
+    >
+      {logo.text}
+    </span>
+  );
 };
 
 export default LogoFull;

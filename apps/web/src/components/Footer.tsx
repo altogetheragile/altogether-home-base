@@ -1,12 +1,11 @@
 import Link from 'next/link';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Youtube, Github } from 'lucide-react';
 import type { SiteSettings } from '@/lib/site-settings';
+import { SiteLogo } from '@/components/SiteLogo';
 
 // Server component (no interactivity). The auth-only links (Dashboard, Admin) from
 // the Vite footer are intentionally dropped - this is the public content surface.
-export function Footer({ settings, year, logo }: { settings: SiteSettings; year: number
-  /** This site's lockup. */
-  logo: string;
+export function Footer({ settings, year }: { settings: SiteSettings; year: number
 }) {
   const flag = (key: keyof SiteSettings, def: boolean) => {
     const v = settings[key];
@@ -38,7 +37,7 @@ export function Footer({ settings, year, logo }: { settings: SiteSettings; year:
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logo} alt={settings.company_name ?? ''} className="mb-4 h-8 w-auto" />
+            <SiteLogo brand={settings.brand} companyName={settings.company_name} height={32} className="mb-4" />
             <p className="text-muted-foreground">
               {settings.company_description ||
                 'Empowering teams and organizations through agile training and coaching.'}

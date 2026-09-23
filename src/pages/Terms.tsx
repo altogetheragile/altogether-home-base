@@ -1,16 +1,19 @@
 import { colors as p } from '@/theme/colors';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, CONTACT_EMAIL } from '@/config/featureFlags';
+import { useCompanyName } from '@/hooks/useCompanyName';
 
 const h1Style = { color: p.deepTeal, fontSize: 32, fontWeight: 800 as const, marginBottom: 8 };
 const h2Style = { color: p.deepTeal, fontSize: 20, fontWeight: 700 as const, marginTop: 40, marginBottom: 12 };
 const h3Style = { color: p.deepTeal, fontSize: 16, fontWeight: 700 as const, marginTop: 24, marginBottom: 8 };
 const pStyle = { color: p.body, fontSize: 15, lineHeight: 1.75, marginBottom: 16 };
 
-const Terms = () => (
+const Terms = () => {
+  const companyName = useCompanyName();
+  return (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>
-      <title>Terms and Conditions - Altogether Agile</title>
+      <title>{`Terms and Conditions - ${companyName}`}</title>
       <meta name="description" content="Terms and conditions for using Altogether Agile services, courses, and website." />
       <link rel="canonical" href={`${SITE_URL}/terms`} />
     </Helmet>
@@ -119,5 +122,6 @@ const Terms = () => (
     </div>
   </div>
 );
+};
 
 export default Terms;
