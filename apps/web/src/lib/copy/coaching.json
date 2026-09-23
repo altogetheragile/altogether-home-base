@@ -3,7 +3,7 @@
   "label": "Coaching",
   "entries": {
     "coaching.meta.description": {
-      "value": "Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience.",
+      "value": "One-to-one professional coaching and team coaching, with a first conversation offered free.",
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
@@ -18,9 +18,9 @@
       "hint": "The teal hero at the top. A line break splits it in two"
     },
     "coaching.hero.intro": {
-      "value": "Whether you're navigating a difficult career moment or trying to build a team that actually functions well - coaching works best when it's grounded in real experience. That's what Altogether Agile brings.",
+      "value": "",
       "label": "Hero introduction",
-      "hint": "The teal hero at the top"
+      "hint": "What someone gets from working with you, in two or three sentences."
     },
     "coaching.hero.cta": {
       "value": "Book a free chemistry session",
@@ -53,9 +53,9 @@
       "hint": "The approach section, on pale teal"
     },
     "coaching.approach.p3": {
-      "value": "Where it's useful, I'll bring 25 years of agile and organisational experience into the room. But the work is yours. That's why it sticks.",
+      "value": "",
       "label": "Approach, third paragraph",
-      "hint": "The approach section, on pale teal"
+      "hint": "What you bring into the room, and what stays the client’s."
     },
     "coaching.service.1.label": {
       "value": "One-to-One",
@@ -78,9 +78,9 @@
       "hint": "Service 1: the one-to-one block"
     },
     "coaching.service.1.detail": {
-      "value": "This isn't mentoring or consultancy. I won't tell you what to do. My role is to hold the right space and ask the questions that help you find your own answers - because those are the ones that actually stick.",
+      "value": "",
       "label": "Service 1 detail",
-      "hint": "Service 1: the one-to-one block"
+      "hint": "What this service is, and what it is not."
     },
     "coaching.service.1.includes": {
       "value": "60-minute sessions via video call or in person (London)\nPre-session reflection prompts sent 48 hours before\nSession notes and agreed actions within 24 hours\nWhatsApp or email support between sessions\nICF-aligned approach throughout",
@@ -123,9 +123,9 @@
       "hint": "Service 2: the team block"
     },
     "coaching.service.2.detail": {
-      "value": "I work with the whole team, not just the Scrum Master or team lead. That means coaching the dynamics, not just the process - how the team makes decisions, how they handle conflict, and whether their retrospectives are actually changing anything.",
+      "value": "",
       "label": "Service 2 detail",
-      "hint": "Service 2: the team block"
+      "hint": "What this service is, and what it is not."
     },
     "coaching.service.2.includes": {
       "value": "Initial team assessment and health check\nFortnightly team coaching sessions (90 minutes)\nOne-to-one sessions with team lead or Scrum Master\nRetrospective facilitation and coaching\nManagement 3.0 practices woven throughout",
@@ -153,7 +153,7 @@
       "hint": "Shown above the list on both service blocks"
     },
     "coaching.why.label": {
-      "value": "Why Altogether Agile",
+      "value": "Why This Practice",
       "label": "Why eyebrow",
       "hint": "The teal band listing why Altogether Agile"
     },
@@ -183,14 +183,14 @@
       "hint": "The teal band listing why Altogether Agile"
     },
     "coaching.why.3.label": {
-      "value": "25+ years experience",
+      "value": "",
       "label": "Credential 3 name",
-      "hint": "The teal band listing why Altogether Agile"
+      "hint": "The third reason. Leave empty and the card does not appear."
     },
     "coaching.why.3.desc": {
-      "value": "Working in and around agile teams as practitioner, trainer, and coach",
+      "value": "",
       "label": "Credential 3 description",
-      "hint": "The teal band listing why Altogether Agile"
+      "hint": "One line under the third reason."
     },
     "coaching.why.4.label": {
       "value": "ABC Assessor",
@@ -218,9 +218,9 @@
       "hint": "The teal band listing why Altogether Agile"
     },
     "coaching.why.6.desc": {
-      "value": "Part-time visiting lecturer at the University of Westminster",
+      "value": "",
       "label": "Credential 6 description",
-      "hint": "The teal band listing why Altogether Agile"
+      "hint": "One line under the sixth reason. Keep it to a single short phrase; it sits in a narrow card."
     },
     "coaching.chemistry.label": {
       "value": "Free chemistry session",

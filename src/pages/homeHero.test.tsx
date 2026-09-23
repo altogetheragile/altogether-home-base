@@ -66,12 +66,33 @@ describe.each(heroes())('the hero on %s', (_name, hero) => {
   });
 
   it('keeps the thing that actually distinguishes him', () => {
-    expect(hero).toMatch(/25 years/);
     expect(hero).toMatch(/delivered personally/);
   });
 
-  it('says he co-wrote the frameworks he teaches', () => {
-    expect(hero, 'the credential is not on the front page')
-      .toMatch(/Co-author of AgilePM3 v2 and AgileBA v3/);
+  it('keeps a place in the hero for the thing that distinguishes him', () => {
+    // This used to assert the words themselves: "25 years", "Co-author of AgilePM3 v2 and
+    // AgileBA v3". They are still on the front page of altogetheragile.com, in `site_copy`, which
+    // is where they always were for anyone who had edited them.
+    //
+    // What changed is the value this repository SHIPS. It ships blank now, because a second site
+    // built from it was claiming to have trained 1,500 people and to have co-written AgilePM on
+    // its first day online. A default cannot be a credential: the whole point of a credential is
+    // that it is true of whoever is claiming it.
+    //
+    // So the editorial rule survives as a rule about the hero rather than about one person's
+    // wording: there is a line above the headline for a credential, and a line below it for what
+    // the visitor gets, and both are the site's own to fill.
+    // Against the raw source: `resolve` substitutes each key for its value, so a resolved hero
+    // cannot be asked which keys it reads.
+    const raw = readFileSync('apps/web/src/app/page.tsx', 'utf8').split('STATS')[0];
+    expect(raw, 'the hero lost its credential line').toMatch(/home\.hero\.eyebrow/);
+    expect(raw, 'the hero lost its subtitle').toMatch(/home\.hero\.subtitle/);
+  });
+
+  it('ships no credential of its own', () => {
+    expect(registry['home.hero.eyebrow'].value.trim(), 'a new site would claim this on day one').toBe('');
+    const boast = /\d[\d,]*\s*\+|★|co-author|\d+\s*years?/i;
+    const claiming = Object.entries(registry).filter(([, e]) => e.value.trim() && boast.test(e.value));
+    expect(claiming.map(([k]) => k), 'shipped as a default, so every new site says it').toEqual([]);
   });
 });

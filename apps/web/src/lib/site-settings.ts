@@ -34,6 +34,10 @@ export type SiteSettings = {
   show_legal?: boolean | null;
   /** The person named in Person structured data and image alt text. */
   founder_name?: string | null;
+  /** The founder's job title, and what they are an authority on (one per line), for the
+   *  Organization structured data. Both were hardcoded and described one person. */
+  founder_role?: string | null;
+  founder_expertise?: string | null;
   /** Per-site brand overrides. See @altogether/ui/brand resolveColors. */
   brand?: { colors?: Record<string, unknown> | null; images?: Record<string, unknown> | null } | null;
 };

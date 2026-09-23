@@ -3,7 +3,7 @@
   "label": "Testimonials",
   "entries": {
     "testimonials.meta.description": {
-      "value": "Read what professionals say about Altogether Agile’s courses, coaching, and training programmes.",
+      "value": "What people say about the courses, coaching and training here.",
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },

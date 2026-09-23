@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
+import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, siteName } from '@/lib/seo';
 import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
 import { requireModule } from '@/lib/module-gate';
 import { isAdmin } from '@/lib/auth';
@@ -71,7 +71,7 @@ export async function generateMetadata({
   });
 }
 
-function quizJsonLd(exam: ExamRow, slug: string) {
+async function quizJsonLd(exam: ExamRow, slug: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Quiz',
@@ -82,7 +82,7 @@ function quizJsonLd(exam: ExamRow, slug: string) {
     learningResourceType: 'Practice exam',
     isAccessibleForFree: true,
     about: { '@type': 'Thing', name: examSubject(exam.title) },
-    provider: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
+    provider: { '@type': 'Organization', name: await siteName(), url: SITE_URL },
   };
 }
 
@@ -104,7 +104,7 @@ export default async function ExamDetailPage({
     <main className="mx-auto max-w-5xl px-6 py-10">
       {/* SEO structured data; the visible h1/description/stats are server-rendered
           by the player's start card (a client component, SSR'd by Next). */}
-      <JsonLd data={quizJsonLd(exam, slug)} />
+      <JsonLd data={await quizJsonLd(exam, slug)} />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Home', path: '/' },

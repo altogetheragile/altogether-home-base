@@ -9,6 +9,7 @@ import { CoachingEnquiryForm } from './CoachingEnquiryForm';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list } from '@/lib/copy';
+import { Prose } from '@/lib/copy/Prose';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,7 +75,7 @@ export default async function CoachingPage() {
   const credentials = Array.from({ length: 6 }, (_, i) => ({
     label: t(`coaching.why.${i + 1}.label`),
     desc: t(`coaching.why.${i + 1}.desc`),
-  }));
+  })).filter((c) => c.label.trim());
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
 
@@ -106,7 +107,7 @@ export default async function CoachingPage() {
         <div style={{ maxWidth: 680 }}>
           <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('coaching.hero.eyebrow')}</div>
           <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 50px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('coaching.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
-          <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }}>{t('coaching.hero.intro')}</p>
+          <Prose text={t('coaching.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }} />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
             <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('coaching.hero.cta')}</a>
             <a href="#enquiry" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>{t('coaching.hero.jump')} <ArrowRight /></a>
@@ -121,7 +122,7 @@ export default async function CoachingPage() {
             <Heading label={t('coaching.approach.label')} title={t('coaching.approach.heading')} />
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p1')}</p>
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p2')}</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }}>{t('coaching.approach.p3')}</p>
+            <Prose text={t('coaching.approach.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }} />
           </div>
           <Illustration src="/images/coaching-hero.webp" alt="Two people having a coaching conversation" height={320} position="center 40%" />
         </div>
@@ -136,7 +137,7 @@ export default async function CoachingPage() {
               <h2 style={{ color: p.deepTeal, fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 6px', lineHeight: 1.2 }}>{service.title}</h2>
               <div style={{ color: service.colour, fontWeight: 700, fontSize: 16, marginBottom: 20 }}>{service.tagline}</div>
               <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 14px' }}>{service.description}</p>
-              <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 28px' }}>{service.detail}</p>
+              <Prose text={service.detail} style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 28px' }} />
               <div style={{ background: service.lightBg, borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
                 <div style={{ color: service.colour, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{t('coaching.service.includesHeading')}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

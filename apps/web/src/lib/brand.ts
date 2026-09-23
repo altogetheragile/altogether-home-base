@@ -50,19 +50,26 @@ export function brandImagesFor(overrides: Parameters<typeof resolveImages>[0]) {
   return resolveImages(overrides);
 }
 
-/** The shipped default, for a site that has not said who founded it. */
-export const DEFAULT_FOUNDER_NAME = 'Alun Davies-Baker';
+/** A site that has not said who founded it does not get given a founder. This was one person's
+ *  name, so a second site with the founder section on and no name filled in introduced its owner
+ *  as him, in the hero, the alt text and the Person structured data. Empty means the caller must
+ *  decide, and every caller already falls back to the company name. */
+export const DEFAULT_FOUNDER_NAME = '';
 
 /** Who this site's founder is, and whether it has one.
  *
  *  `show_founder` defaults to true so that this site is unchanged, and a new site turns it off
  *  rather than being asked to fill it in. A site with it off renders no portrait, no bio and no
  *  Person structured data: the block is not there, rather than there and empty. */
-export function founderOf(settings: { show_founder?: boolean | null; founder_name?: string | null; brand?: Parameters<typeof resolveImages>[0] }) {
+export function founderOf(settings: { show_founder?: boolean | null; founder_name?: string | null; company_name?: string | null; brand?: Parameters<typeof resolveImages>[0] }) {
   const images = resolveImages(settings.brand);
+  // The company name, not this repository's founder. A site that has not said who founded it is
+  // not making a claim about a person, so nothing here should invent one.
+  const name = settings.founder_name?.trim() || settings.company_name?.trim() || DEFAULT_FOUNDER_NAME;
   return {
-    shown: settings.show_founder !== false,
-    name: settings.founder_name?.trim() || DEFAULT_FOUNDER_NAME,
+    // Named or not shown. A founder block with no name is a photograph of nobody.
+    shown: settings.show_founder !== false && name !== '',
+    name,
     photo: images.founderPhoto,
     portrait: images.founderPortrait,
   };
