@@ -94,9 +94,13 @@ in the 28 days to 2026-09-20, against 1 click and 1.4k impressions in August.
 
 - **Differentiate the Practitioner and PSM exam content.** The evidence above makes
   this the clearest single lever on indexing.
-- **`/exams/agilepm-foundation---paper-2` keeps its triple-dash slug** and is **now
-  indexed** (2026-09-11). Renaming it is no longer free: it would need the same
-  permanent-redirect treatment the courses got. Worth doing, but as its own change.
+- ~~**`/exams/agilepm-foundation---paper-2` keeps its triple-dash slug**~~ **Done,
+  2026-09-23.** It is now `/exams/agilepm-foundation-paper-2`, with a 301 from the old
+  URL in `vercel.json`, which is what "not free" meant: it was indexed (2026-09-11), so
+  the old address had to keep working. The `---` came from the March slug migration,
+  where the hyphen already in "AgilePM3 Foundation - Paper 2" kept its own spaces and
+  each became a hyphen. Nothing generates slugs now, so no other row can acquire one:
+  Admin asks for the slug as a required field.
 - **The preview domain is crawlable** (`Allow: /`), noted in #714. Canonicals handle
   it; an `X-Robots-Tag: noindex` on that deployment would guarantee it.
 - **`/courses` is still "unknown to Google"** and that is intended: it 301s to

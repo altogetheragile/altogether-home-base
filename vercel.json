@@ -588,6 +588,11 @@
       "statusCode": 301
     },
     {
+      "source": "/exams/agilepm-foundation---paper-2",
+      "destination": "/exams/agilepm-foundation-paper-2",
+      "statusCode": 301
+    },
+    {
       "source": "/exams/bcf2a50c-f29a-49e6-b82f-1dfa7243ec6a",
       "destination": "/exams/agilepm-foundation-paper-1",
       "statusCode": 301
