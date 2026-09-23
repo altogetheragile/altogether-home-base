@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/site-settings';
+import { founderOf } from '@/lib/brand';
 
 export const SITE_URL = 'https://altogetheragile.com';
 
@@ -75,6 +76,8 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
  *  home page. This one had no logo, no founder and no contact point, so the front page of the site
  *  was emitting the least structured data of the three. */
 export async function organizationJsonLd(logo?: string) {
+  const settings = await getSiteSettings();
+  const founder = founderOf(settings);
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -83,17 +86,23 @@ export async function organizationJsonLd(logo?: string) {
     logo: logo ?? `${SITE_URL}/og-image.png`,
     description:
       'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
-    founder: {
-      '@type': 'Person',
-      name: 'Alun Davies-Baker',
-      jobTitle: 'Agile Coach & Trainer',
-      // What he is an authority ON, where a search engine can read it. The hero says the same
-      // thing in words.
-      knowsAbout: ['AgilePM3 v2', 'AgileBA v3', 'Agile Project Management', 'Agile Business Analysis', 'Scrum'],
-    },
+    // Only claimed if this site has a founder. A business that does not lead with a person should
+    // not be telling Google it was founded by one.
+    ...(founder.shown
+      ? {
+          founder: {
+            '@type': 'Person',
+            name: founder.name,
+            jobTitle: 'Agile Coach & Trainer',
+            // What they are an authority ON, where a search engine can read it. The hero says the
+            // same thing in words.
+            knowsAbout: ['AgilePM3 v2', 'AgileBA v3', 'Agile Project Management', 'Agile Business Analysis', 'Scrum'],
+          },
+        }
+      : {}),
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'info@altogetheragile.com',
+      email: settings.contact_email || 'info@altogetheragile.com',
       contactType: 'customer service',
     },
   };

@@ -128,6 +128,42 @@ Updated 23 September, after #745 to #751.
 - `recommend-pattern` and `export-data` mention the company in an AI system prompt and an export provenance string. Neither is customer-facing.
 - The App flashes the default brand before `site_settings` arrives, because it is client-rendered. The Site does not.
 
+## 5a. What Still Says Altogether Agile, And Where
+
+Audited 23 September by grepping both apps, the edge functions and the build scripts for the
+company name, the founder's name, the domain and the email addresses, then discarding every line
+that already reads a setting or an environment variable. **177 references had no way to be
+anything else.** They are not all the same kind of problem.
+
+| Kind | Count | What to do |
+|---|---|---|
+| The company name, visible | 102 | Mostly tab titles on App pages (`Journey Map Studio - Altogether Agile`) and `aria-label="Altogether Agile home"`. Mechanical, and only matters for the App, which is behind a login. |
+| Hardcoded domain or email | 20 | `SITE_URL` constants, `info@altogetheragile.com`, and Search Console's `sc-domain:`. Several are already env-var fallbacks. A new site needs its own, and some are deployment config rather than content. |
+| Names a person | 29 | Handled for the Site by `show_founder` and `founder_name`. What remains is the App's Terms page, its `JsonLd` constant, and the blog importer's default author. |
+| Alt text and labels | 26 | `alt="Altogether Agile"` on logos, `title="... - Altogether Agile"` on App pages. Invisible until a screen reader or a tab reads them out. |
+
+**The founder is done** (this section's work): `show_founder` removes the portrait, the biography
+and the `Person` structured data entirely; `founder_name`, `brand.images.founderPhoto` and
+`brand.images.founderPortrait` change who it is; the words are in `site_copy` under
+`home.founder.*` and `about.founder.*`.
+
+**Verified by running it.** With `show_founder` off, the home page and the About page render zero
+founder photographs, no `Person` structured data and no `founder` claim in the `Organization`.
+With it on, both are byte-identical to production.
+
+**Three things a new site must still rewrite by hand**, because they are sentences about a person
+and templating them would produce something nobody would have written:
+
+- `src/pages/Terms.tsx`: "Our courses are delivered personally by Alun Davies-Baker".
+- `src/components/seo/JsonLd.tsx`: a `FOUNDER_NAME` constant. It does not reach a crawler
+  (`prerender.mjs` writes what Google sees) but it is in the DOM.
+- `src/components/admin/ImportMarkdownDialog.tsx`: the default author on an imported blog post.
+
+**And one that is data, not code:** the testimonials name Alun, because customers wrote them. A
+new site has its own.
+
+---
+
 ## 6. The Blocker, Tested
 
 **FIXED 23 September (#747).** What follows is the diagnosis, kept because it explains the shape

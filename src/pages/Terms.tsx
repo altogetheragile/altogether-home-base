@@ -58,6 +58,8 @@ const Terms = () => (
 
       <h3 style={h3Style}>3.5 Course Delivery</h3>
       <p style={pStyle}>
+        {/* TODO: this names a person and the App has no copy registry to move it into. Listed in
+            docs/NEW_SITE_SETUP.md as one of the pages a new site must rewrite. */}
         Our courses are delivered personally by Alun Davies-Baker unless otherwise stated. We reserve the right to substitute an equally qualified trainer in exceptional circumstances.
       </p>
 

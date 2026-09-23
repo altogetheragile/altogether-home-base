@@ -22,7 +22,12 @@ const ArrowRight = () => (
  * client-side component with no access to site settings, and the parent already
  * has them.
  */
-export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
+export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: string;
+  /** Who this site's founder is. The words come from the copy registry; these are the two facts
+   *  that are not sentences. */
+  founder: { name: string; photo: string };
+  t: (key: string) => string;
+}) {
   return (
     <>
       <style>{`
@@ -48,7 +53,7 @@ export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
             <div style={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%', background: p.paleTeal, top: -40, left: -60, zIndex: 0 }} />
             <div className="aa-photo-wrap" style={{ position: 'relative', zIndex: 1, width: 320, height: 380, boxShadow: '0 24px 64px rgba(0,77,77,0.15)', cursor: 'default' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/alun.webp" alt="Alun Davies-Baker, founder of Altogether Agile" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', borderRadius: 24 }} />
+              <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', borderRadius: 24 }} />
               <div className="aa-photo-overlay" style={{ position: 'absolute', inset: 0, borderRadius: 24, background: 'linear-gradient(to top, rgba(0,77,77,0.5) 0%, transparent 60%)', opacity: 0, transition: 'opacity 0.3s ease' }} />
             </div>
             <div style={{ marginTop: 28, background: p.deepTeal, borderRadius: 20, padding: '28px 32px', position: 'relative', zIndex: 1 }}>
@@ -73,14 +78,14 @@ export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
 
           {/* RIGHT - text */}
           <div style={{ paddingTop: 40 }}>
-            <p style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>About Alun</p>
+            <p style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>{t('home.founder.eyebrow')}</p>
             <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 48, fontWeight: 400, lineHeight: 1.1, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
               Train with someone<br />
               <span style={{ fontStyle: 'italic' }}>who&apos;s been in the room.</span>
             </h2>
             <div style={{ width: 48, height: 3, background: p.orange, borderRadius: 2, marginBottom: 32 }} />
             <p style={{ color: p.body, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }}>
-              I&apos;m Alun, founder of Altogether Agile. I&apos;ve spent 25 years in agile teams as a practitioner, coach and trainer - and I still run every course myself.
+              {t('home.founder.body')}
             </p>
             <div style={{ borderLeft: `3px solid ${p.orange}`, paddingLeft: 20, marginBottom: 44 }}>
               <p style={{ color: p.midTeal, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>
@@ -92,7 +97,7 @@ export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
                 Book a Chemistry Session <ArrowRight />
               </a>
               <Link href="/about" className="aa-cta-secondary" style={{ background: 'none', border: 'none', color: p.midTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease', padding: 0, textDecoration: 'none' }}>
-                Read more about Alun <ArrowRight />
+                {t('home.founder.cta')} <ArrowRight />
               </Link>
             </div>
           </div>

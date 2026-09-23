@@ -1,6 +1,12 @@
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL } from '@/config/featureFlags';
 
+// The App's structured data does not reach a crawler - prerender.mjs writes what Google sees - but
+// it is in the DOM, and a second site should not have somebody else's founder in its DOM either.
+// A constant rather than a settings read: this file is a pure component and the App has no server
+// render to resolve it in. scripts/prerender.mjs reads the real value.
+const FOUNDER_NAME = 'Alun Davies-Baker';
+
 interface JsonLdProps {
   data: Record<string, unknown>;
 }
@@ -21,7 +27,7 @@ export const OrganizationSchema = () => (
     description: 'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
     founder: {
       '@type': 'Person',
-      name: 'Alun Davies-Baker',
+      name: FOUNDER_NAME,
       jobTitle: 'Agile Coach & Trainer',
       // What he is an authority ON, in the machine-readable half of the page. The visible hero
       // says he co-wrote these; this is the same claim where a search engine can read it.
@@ -101,7 +107,7 @@ export const BlogPostSchema = ({ title, description, url, datePublished, dateMod
     ...(imageUrl && { image: imageUrl }),
     author: {
       '@type': 'Person',
-      name: 'Alun Davies-Baker',
+      name: FOUNDER_NAME,
     },
     publisher: {
       '@type': 'Organization',

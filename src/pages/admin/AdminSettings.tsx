@@ -10,6 +10,7 @@ import { Settings } from 'lucide-react';
 import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
 import { BrandColours } from '@/components/admin/BrandColours';
 import { BrandImages } from '@/components/admin/BrandImages';
+import { FounderSettings } from '@/components/admin/FounderSettings';
 
 // ============= Which parts of the site are switched on =============
 //
@@ -27,6 +28,11 @@ type Brand = { colors?: Record<string, unknown> | null; images?: Record<string, 
 const brandOf = (settings: unknown): Brand =>
   ((settings as { brand?: Brand } | null | undefined)?.brand ?? null);
 
+const founderOf = (settings: unknown) => {
+  const s = settings as { show_founder?: boolean | null; founder_name?: string | null } | null | undefined;
+  return { show_founder: s?.show_founder !== false, founder_name: s?.founder_name ?? '' };
+};
+
 const defaults = (settings: Record<string, unknown> | null | undefined): Flags =>
   Object.fromEntries([...MODULES.map((m) => [flagOf(m), m.defaultOn] as const),
                       ...NAV_FLAGS.map((f) => [f.flag, f.defaultOn] as const)]
@@ -40,18 +46,20 @@ export default function AdminSettings() {
   const [localSettings, setLocalSettings] = useState<Flags>(() => defaults(settings as unknown as Record<string, unknown>));
   // Held apart from the flags because it is not one. Flags is Record<string, boolean>.
   const [brand, setBrand] = useState<Brand>(() => brandOf(settings));
+  const [founder, setFounder] = useState(() => founderOf(settings));
 
   useEffect(() => {
     if (settings) {
       setLocalSettings(defaults(settings as unknown as Record<string, unknown>));
       setBrand(brandOf(settings));
+      setFounder(founderOf(settings));
     }
   }, [settings]);
 
   const handleToggle = (key: string) =>
     setLocalSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleSave = () => updateSettings({ ...localSettings, brand } as Parameters<typeof updateSettings>[0]);
+  const handleSave = () => updateSettings({ ...localSettings, brand, ...founder } as Parameters<typeof updateSettings>[0]);
 
   if (isLoading) {
     return (
@@ -140,6 +148,8 @@ export default function AdminSettings() {
       <BrandColours value={brand} onChange={setBrand} />
 
       <BrandImages value={brand} onChange={setBrand} />
+
+      <FounderSettings shown={founder.show_founder} name={founder.founder_name} onChange={setFounder} />
 
       {/* Saves immediately, not staged behind the button below. */}
       <TestimonialDisplaySettings />

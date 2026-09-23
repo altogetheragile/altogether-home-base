@@ -7,11 +7,11 @@ import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines } from '@/lib/copy';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
-import { brandImagesFor } from '@/lib/brand';
+import { brandImagesFor , founderOf } from '@/lib/brand';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
 import AboutSection from '@/components/AboutSection';
-import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
+import { FounderPortrait } from '@/components/FounderPortrait';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +44,7 @@ export default async function HomePage() {
     getHomeTestimonials(),
     getCopy('home'),
   ]);
+  const founder = founderOf(settings);
   const showKnowledge = !!settings.show_knowledge;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
@@ -136,8 +137,8 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* ABOUT ALUN */}
-        <AboutSection bookingUrl={bookingUrl} />
+        {/* The founder, if this site has one. */}
+        {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} />}
 
         {/* KNOWLEDGE BASE */}
         {showKnowledge && (
@@ -172,7 +173,7 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="aa-hide-mobile">
-              <AlunTabletPortrait />
+              {founder.shown && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
             </div>
           </div>
         </div>

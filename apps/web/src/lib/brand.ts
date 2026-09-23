@@ -49,3 +49,21 @@ export function brandCssVarsFor(overrides: BrandOverrides): Record<`--aa-${strin
 export function brandImagesFor(overrides: Parameters<typeof resolveImages>[0]) {
   return resolveImages(overrides);
 }
+
+/** The shipped default, for a site that has not said who founded it. */
+export const DEFAULT_FOUNDER_NAME = 'Alun Davies-Baker';
+
+/** Who this site's founder is, and whether it has one.
+ *
+ *  `show_founder` defaults to true so that this site is unchanged, and a new site turns it off
+ *  rather than being asked to fill it in. A site with it off renders no portrait, no bio and no
+ *  Person structured data: the block is not there, rather than there and empty. */
+export function founderOf(settings: { show_founder?: boolean | null; founder_name?: string | null; brand?: Parameters<typeof resolveImages>[0] }) {
+  const images = resolveImages(settings.brand);
+  return {
+    shown: settings.show_founder !== false,
+    name: settings.founder_name?.trim() || DEFAULT_FOUNDER_NAME,
+    photo: images.founderPhoto,
+    portrait: images.founderPortrait,
+  };
+}
