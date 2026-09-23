@@ -55,3 +55,6 @@ supabase/.branches/
 art-src/**/*contact-sheet.png
 
 art-src/.work/
+
+# TypeScript incremental build state. Committed by mistake in #745.
+*.tsbuildinfo

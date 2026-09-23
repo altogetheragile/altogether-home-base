@@ -5,6 +5,28 @@
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
 
 @layer base {
+  /* ============= The brand, as Tailwind expects it =============
+     The theme below is written the shadcn way, as HSL triplets that Tailwind wraps in hsl(), which
+     is what makes bg-primary/90 work. So the brand has to arrive in that shape.
+
+     These are static defaults, so the first paint is right. applyBrandCssVars() overwrites them at
+     startup from the token package, which is what lets the palette change without a rebuild.
+     brandHslMatchesTokens.test.ts fails if they drift from the tokens. */
+  :root {
+    --aa-white-hsl: 0 0% 100%;
+    --aa-sky-teal-hsl: 180 50% 96.1%;
+    --aa-pale-teal-hsl: 180 49% 90%;
+    --aa-light-teal-hsl: 180 41.3% 78.6%;
+    --aa-mid-teal-hsl: 180 100% 23.9%;
+    --aa-deep-teal-hsl: 180 100% 15.1%;
+    --aa-hero-teal-hsl: 180 100% 20%;
+    --aa-orange-hsl: 33.3 100% 54.1%;
+    --aa-orange-hover-hsl: 33.6 88.5% 47.8%;
+    --aa-body-hsl: 216.9 19.1% 26.7%;
+    --aa-muted-hsl: 220 8.9% 46.1%;
+    --aa-danger-hsl: 0 72.2% 50.6%;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -15,14 +37,14 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 24 95% 53%;
-    --primary-foreground: 0 0% 100%;
+    --primary: var(--aa-orange-hsl); /* was 24 95% 53%, Tailwind's orange, not this brand's */
+    --primary-foreground: var(--aa-white-hsl);
     --primary-glow: 31 100% 70%;
     
     /* BMC Theme Colors */
-    --bmc-orange: 24 95% 53%;
+    --bmc-orange: var(--aa-orange-hsl);
     --bmc-orange-light: 31 100% 70%;
-    --bmc-orange-dark: 20 90% 45%;
+    --bmc-orange-dark: var(--aa-orange-hover-hsl);
     --bmc-accent: 45 100% 85%;
     --bmc-text: 20 14% 20%;
     --bmc-muted: 30 20% 95%;
@@ -36,7 +58,7 @@
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: var(--aa-danger-hsl);
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
@@ -72,11 +94,11 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 24 95% 53%;
-    --primary-foreground: 0 0% 100%;
+    --primary: var(--aa-orange-hsl); /* was 24 95% 53%, Tailwind's orange, not this brand's */
+    --primary-foreground: var(--aa-white-hsl);
     
     /* Dark mode BMC colors */
-    --bmc-orange: 24 95% 53%;
+    --bmc-orange: var(--aa-orange-hsl);
     --bmc-orange-light: 31 100% 70%;
     --bmc-orange-dark: 20 90% 35%;
     --bmc-accent: 45 50% 25%;
@@ -311,25 +333,25 @@
    ========================================================================= */
 .zoo-theme {
   --background: 180 17% 98%;      /* #f8fafa - the ground the cards sit on */
-  --foreground: 217 19% 27%;      /* #374151 - body text, not pure black */
+  --foreground: var(--aa-body-hsl);      /* body text, not pure black */
   --card: 0 0% 100%;
-  --card-foreground: 217 19% 27%;
+  --card-foreground: var(--aa-body-hsl);
   --popover: 0 0% 100%;
-  --popover-foreground: 217 19% 27%;
-  --primary: 33 100% 54%;         /* var(--aa-orange) - the next thing to do, and only that */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 180 50% 96%;       /* var(--aa-sky-teal) - a tinted panel */
-  --secondary-foreground: 180 100% 15%;
-  --muted: 180 50% 96%;
-  --muted-foreground: 220 9% 46%; /* #6b7280 */
-  --accent: 180 49% 90%;          /* var(--aa-pale-teal) */
-  --accent-foreground: 180 100% 15%;
+  --popover-foreground: var(--aa-body-hsl);
+  --primary: var(--aa-orange-hsl);       /* the next thing to do, and only that */
+  --primary-foreground: var(--aa-white-hsl);
+  --secondary: var(--aa-sky-teal-hsl);   /* a tinted panel */
+  --secondary-foreground: var(--aa-deep-teal-hsl);
+  --muted: var(--aa-sky-teal-hsl);
+  --muted-foreground: var(--aa-muted-hsl);
+  --accent: var(--aa-pale-teal-hsl);
+  --accent-foreground: var(--aa-deep-teal-hsl);
   --border: 220 13% 91%;          /* #e5e7eb */
   --input: 220 13% 91%;
-  --ring: 180 100% 24%;
+  --ring: var(--aa-mid-teal-hsl);
   /* The band itself, and the chips on it. */
-  --zoo-band: 180 100% 15%;       /* var(--aa-deep-teal) */
-  --zoo-chip: 180 100% 24%;       /* var(--aa-mid-teal) */
+  --zoo-band: var(--aa-deep-teal-hsl);
+  --zoo-chip: var(--aa-mid-teal-hsl);
 
   /* ...and the text, said here rather than left to be inherited.
      Every token above is a BACKGROUND or a border. The colour of the words was
