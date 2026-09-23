@@ -82,14 +82,16 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
 export async function organizationJsonLd(logo?: string) {
   const settings = await getSiteSettings();
   const founder = founderOf(settings);
+  const expertise = (settings.founder_expertise ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: await siteName(),
     url: SITE_URL,
     logo: logo ?? `${SITE_URL}/og-image.png`,
-    description:
-      'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
+    // What this site says about itself in Settings, not what this repository's site says about
+    // itself. A second site was telling Google it was written by the co-author of AgilePM3.
+    ...(settings.company_description?.trim() ? { description: settings.company_description.trim() } : {}),
     // Only claimed if this site has a founder. A business that does not lead with a person should
     // not be telling Google it was founded by one.
     ...(founder.shown
@@ -97,16 +99,17 @@ export async function organizationJsonLd(logo?: string) {
           founder: {
             '@type': 'Person',
             name: founder.name,
-            jobTitle: 'Agile Coach & Trainer',
-            // What they are an authority ON, where a search engine can read it. The hero says the
-            // same thing in words.
-            knowsAbout: ['AgilePM3 v2', 'AgileBA v3', 'Agile Project Management', 'Agile Business Analysis', 'Scrum'],
+            ...(settings.founder_role?.trim() ? { jobTitle: settings.founder_role.trim() } : {}),
+            // What they are an authority ON, where a search engine can read it. One per line in
+            // Settings; claimed for nobody until somebody says so, because this is a claim about a
+            // named person that a search engine will attribute to them.
+            ...(expertise.length ? { knowsAbout: expertise } : {}),
           },
         }
       : {}),
     contactPoint: {
       '@type': 'ContactPoint',
-      email: settings.contact_email || 'info@altogetheragile.com',
+      ...(settings.contact_email ? { email: settings.contact_email } : {}),
       contactType: 'customer service',
     },
   };

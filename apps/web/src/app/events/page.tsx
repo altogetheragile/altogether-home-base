@@ -40,7 +40,9 @@ export default async function EventsPage() {
     { n: String(courses.length), label: t('events.stats.courses') },
     { n: String(scheduledCount), label: t('events.stats.scheduled') },
     { n: t('events.stats.trained.number'), label: t('events.stats.trained.label') },
-  ];
+  // Courses and scheduled dates are counted from the database, so they are always true. The number
+  // trained is typed in by a person, and a new site has trained nobody.
+  ].filter((s) => s.n.trim());
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: c.white }}>

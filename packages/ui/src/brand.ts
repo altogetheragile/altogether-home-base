@@ -78,8 +78,11 @@ export const defaultImages: Record<ImageName, string> = {
   logo: '/brand/lockup-horizontal-tight.svg',
   favicon: '/favicon.svg',
   ogImage: '/og-image.png',
-  founderPhoto: '/images/alun.webp',
-  founderPortrait: '/images/alun-illustrated.webp',
+  // No default face. These were one person's photograph and portrait, so every site built from
+  // this repository showed him wherever a founder appeared. A site that has not uploaded a
+  // photograph renders no photograph, and the layout closes up around it.
+  founderPhoto: '',
+  founderPortrait: '',
 };
 
 export type BrandImageOverrides = { images?: Partial<Record<string, unknown>> | null } | null | undefined;

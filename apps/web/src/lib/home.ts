@@ -23,8 +23,12 @@ export type HomeTestimonial = {
 
 type Named = { name: string } | null;
 
-/** Course cards for the home carousel: templates + which have future published dates. */
-export async function getHomeCourseCards(): Promise<HomeCourseCard[]> {
+/** Course cards for the home carousel: templates + which have future published dates.
+ *
+ *  Null means the query failed; an empty array means this site has no published courses. They used
+ *  to be the same value, so a brand new site with nothing in it yet was told "Unable to load
+ *  courses. Please try refreshing the page." Refreshing was never going to help. */
+export async function getHomeCourseCards(): Promise<HomeCourseCard[] | null> {
   try {
     const supabase = await createClient();
     const [templatesRes, eventsRes] = await Promise.all([
@@ -34,7 +38,7 @@ export async function getHomeCourseCards(): Promise<HomeCourseCard[]> {
         .eq('is_published', true),
       supabase.from('events').select('template_id').eq('is_published', true).gte('start_date', new Date().toISOString()),
     ]);
-    if (templatesRes.error || eventsRes.error) return [];
+    if (templatesRes.error || eventsRes.error) return null;
 
     const withDates = new Set((eventsRes.data || []).map((e) => (e as { template_id: string | null }).template_id).filter(Boolean));
     const rows = (templatesRes.data || []) as unknown as Array<{
@@ -56,7 +60,7 @@ export async function getHomeCourseCards(): Promise<HomeCourseCard[]> {
     });
     return cards;
   } catch {
-    return [];
+    return null;
   }
 }
 

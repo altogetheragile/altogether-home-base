@@ -3,19 +3,19 @@
   "label": "Home",
   "entries": {
     "home.meta.title": {
-      "value": "Altogether Agile - Agile Coaching & Training",
+      "value": "Coaching and Training",
       "label": "Search title",
       "hint": "The full browser tab and search result title for the home page. The company name is not added after it."
     },
     "home.meta.description": {
-      "value": "Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.",
+      "value": "Practical training and coaching, delivered personally. Courses, workshops and one-to-one work.",
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
     "home.hero.eyebrow": {
-      "value": "Co-author of AgilePM3 v2 and AgileBA v3",
+      "value": "",
       "label": "Hero eyebrow",
-      "hint": "The credential line above the heading"
+      "hint": "The small line above the headline. A credential or a claim you can stand behind. Leave empty and it does not appear."
     },
     "home.hero.heading": {
       "value": "Practical agile training\nand coaching, delivered personally.",
@@ -23,7 +23,7 @@
       "hint": "The h1. A line break splits it in two"
     },
     "home.hero.subtitle": {
-      "value": "Work better together. Accelerate time to value. 25 years of real experience, still delivered personally, every time.",
+      "value": "Work better together. Accelerate time to value.",
       "label": "Hero subtitle",
       "hint": "Under the heading"
     },
@@ -38,44 +38,44 @@
       "hint": "Right button in the hero"
     },
     "home.stats.1.number": {
-      "value": "1,500+",
+      "value": "",
       "label": "Stat 1 number",
-      "hint": "The band of four figures under the hero"
+      "hint": "The figure itself, for example 1,500+. Leave every figure empty and the whole bar disappears."
     },
     "home.stats.1.label": {
-      "value": "Practitioners trained",
+      "value": "",
       "label": "Stat 1 label",
-      "hint": "The band of four figures under the hero"
+      "hint": "What the figure counts."
     },
     "home.stats.2.number": {
-      "value": "80+",
+      "value": "",
       "label": "Stat 2 number",
-      "hint": "The band of four figures under the hero"
+      "hint": "The figure itself. Leave every figure empty and the whole bar disappears."
     },
     "home.stats.2.label": {
-      "value": "Agile techniques",
+      "value": "",
       "label": "Stat 2 label",
-      "hint": "The band of four figures under the hero"
+      "hint": "What the figure counts."
     },
     "home.stats.3.number": {
-      "value": "12+",
+      "value": "",
       "label": "Stat 3 number",
-      "hint": "The band of four figures under the hero"
+      "hint": "The figure itself. Leave every figure empty and the whole bar disappears."
     },
     "home.stats.3.label": {
-      "value": "Frameworks covered",
+      "value": "",
       "label": "Stat 3 label",
-      "hint": "The band of four figures under the hero"
+      "hint": "What the figure counts."
     },
     "home.stats.4.number": {
-      "value": "4.9★",
+      "value": "",
       "label": "Stat 4 number",
-      "hint": "The band of four figures under the hero"
+      "hint": "The figure itself. Leave every figure empty and the whole bar disappears."
     },
     "home.stats.4.label": {
-      "value": "Average rating",
+      "value": "",
       "label": "Stat 4 label",
-      "hint": "The band of four figures under the hero"
+      "hint": "What the figure counts."
     },
     "home.personas.heading": {
       "value": "Who is this for?",
@@ -98,7 +98,7 @@
       "hint": "One of the three Who is this for cards"
     },
     "home.personas.2.body": {
-      "value": "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - delivered by someone who has contributed to the frameworks and knows them inside out.",
+      "value": "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - taught by somebody who has used it in earnest.",
       "label": "Card 2 body",
       "hint": "One of the three Who is this for cards"
     },
@@ -138,7 +138,7 @@
       "hint": "The teal Knowledge Base section, hidden unless that module is on"
     },
     "home.kb.heading": {
-      "value": "80+ agile techniques,\nready to use",
+      "value": "Agile techniques,\nready to use",
       "label": "Knowledge heading",
       "hint": "A line break splits it in two"
     },
@@ -146,6 +146,11 @@
       "value": "From Story Mapping to OKRs - every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.",
       "label": "Knowledge body",
       "hint": "The teal Knowledge Base section"
+    },
+    "home.kb.tags": {
+      "value": "Story Mapping\nOKRs\n5 Whys\nBusiness Model Canvas\nImpact Mapping\nRetrospectives",
+      "label": "Knowledge base examples",
+      "hint": "The small tags under the knowledge base blurb, one per line. Examples of what is in there. Leave empty and no tags appear."
     },
     "home.kb.cta": {
       "value": "Browse Techniques",
@@ -173,19 +178,44 @@
       "hint": "The orange band at the foot of the page"
     },
     "home.founder.eyebrow": {
-      "value": "About Alun",
+      "value": "About The Founder",
       "label": "Founder section, small heading",
       "hint": "The small line above the founder heading."
     },
+    "home.founder.years": {
+      "value": "",
+      "label": "Years of experience badge",
+      "hint": "The orange number on the photograph, for example 25. Leave empty and the badge does not appear."
+    },
+    "home.founder.credentials": {
+      "value": "",
+      "label": "Credentials beside the photograph",
+      "hint": "One per line, kept short: these sit in a narrow column. Leave empty and the list does not appear."
+    },
+    "home.founder.heading": {
+      "value": "Train with someone\nwho has been in the room.",
+      "label": "Founder heading",
+      "hint": "The large serif heading beside the photograph. A line break splits it in two, and the second line is set in italics."
+    },
     "home.founder.body": {
-      "value": "I'm Alun, founder of Altogether Agile. I've spent 25 years in agile teams as a practitioner, coach and trainer - and I still run every course myself.",
+      "value": "",
       "label": "Founder section, introduction",
-      "hint": "Written in the first person, as the founder speaking."
+      "hint": "Two sentences about whoever runs this."
+    },
+    "home.founder.quote": {
+      "value": "",
+      "label": "Founder quote",
+      "hint": "The pulled-out line beside the orange rule. Something the founder believes, in their own words. Leave empty and the quote does not appear."
     },
     "home.founder.cta": {
-      "value": "Read more about Alun",
+      "value": "Read More",
       "label": "Founder section, link",
       "hint": "The link through to the About page."
+    },
+    "home.founder.bookCta": {
+      "value": "Book a Chemistry Session",
+      "label": "Founder booking button",
+      "hint": "The orange button beside the photograph. It opens the booking link from Settings."
     }
   }
 }

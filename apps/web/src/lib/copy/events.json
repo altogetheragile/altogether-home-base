@@ -3,7 +3,7 @@
   "label": "Events",
   "entries": {
     "events.meta.description": {
-      "value": "Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK.",
+      "value": "Training courses and workshops, with dates, locations and booking.",
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
@@ -48,9 +48,9 @@
       "hint": "The three figures under the hero. The first two are counted from the data"
     },
     "events.stats.trained.number": {
-      "value": "1,500+",
+      "value": "",
       "label": "Stat 3 number",
-      "hint": "The three figures under the hero. The first two are counted from the data. This one is typed, not counted"
+      "hint": "How many people you have trained. Leave empty and the figure does not appear."
     },
     "events.stats.trained.label": {
       "value": "Practitioners trained",

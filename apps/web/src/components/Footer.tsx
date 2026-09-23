@@ -97,7 +97,7 @@ export function Footer({ settings, year, t }: {
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-sm text-muted-foreground md:flex-row">
           <p>
-            © {year} {settings.company_name || 'Altogether Agile'}. {settings.copyright_text || 'All rights reserved.'}
+            © {year} {settings.company_name}. {settings.copyright_text || 'All rights reserved.'}
           </p>
           <div className="flex gap-6">
             <Link href="/privacy" className="transition-colors hover:text-primary">Privacy Policy</Link>

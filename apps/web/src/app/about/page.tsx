@@ -9,6 +9,7 @@ import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list } from '@/lib/copy';
+import { Prose, When, has } from '@/lib/copy/Prose';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,28 +38,40 @@ const Heading = ({ label, title, light = false }: { label: string; title: string
   </div>
 );
 
-const timeline = [
-  { year: 'Late 1990s', title: 'Starting with systems, not people', body: "Began in enterprise software - ERP implementations, data warehousing, systems analysis. Good technical grounding, but the most interesting problems were never the technical ones. They were the people ones." },
-  { year: 'Early 2000s', title: 'First encounter with agile', body: "Working inside a large pharmaceutical organisation, I started experimenting with Scrum wrapped around DSDM for SAP rollouts - in environments where most people said it couldn't work. It did. That was the turning point." },
-  { year: 'Mid 2000s', title: 'Leading teams, learning to coach', body: "Moved into team leadership and consulting roles. Quickly found that the hard part of agile adoption was never the framework - it was the dynamics. How teams make decisions. How they handle uncertainty. How leaders get out of the way. Started coaching before I had a word for it." },
-  { year: '2016', title: 'Going independent', body: "Left the corporate world to run Altogether Agile full time. Started delivering Scrum and agile training alongside coaching and facilitation work. The goal from day one: practical, honest, grounded in real experience - not textbook agile." },
-  { year: '2017 onwards', title: 'Building the training practice', body: "Developed affiliate training relationships and began delivering APMG-accredited courses - AgilePM, AgileBA, Agile Digital Services. Each course sharpened the conviction that certification only sticks when it's connected to real problems." },
-  { year: '2020', title: 'Coaching, Westminster, and Management 3.0', body: "Formalised the coaching practice. Became a licensed Management 3.0 Facilitator. Took on a Visiting Lectureship at the University of Westminster. The pandemic forced everything online - and proved that good facilitation is about the room you create, not the room you're in." },
-  { year: 'Now', title: 'Still in it', body: "Training, coaching, assessing, lecturing, and building the platform. In 2025 co-wrote the new version of AgilePM as one of the lead authors - the kind of work that only happens when you've been close to the practice long enough to have something worth saying. Still learning. Still finding it interesting." },
-];
 
-// The colours stay here; the words are copy. The timeline below is still in code, because its
-// entries are three fields each and a list of those is not something a textarea should hold.
+// The colours stay here; the words are copy.
+//
+// The timeline used to be in code, with a note saying three fields per entry was more than a
+// textarea should hold. That was true and beside the point: what it held was seven paragraphs of
+// one person's career, which a second site would have displayed as its own. Same shape as the
+// badges, one entry per line.
+type Era = { year: string; title: string; body: string };
+
+function timelineFrom(text: string): Era[] {
+  return list(text)
+    .map((line) => line.split('|').map((f) => f.trim()))
+    .filter((f) => f.length === 3 && f.every(Boolean))
+    .map(([year, title, body]) => ({ year, title, body }));
+}
 const philosophyStyles = [
   { colour: '#1A9090', lightBg: '#E6F5F5' },
   { colour: '#6B5FCC', lightBg: '#EEECF9' },
 ];
 
-const badges = [
-  { src: '/images/badges/acc.webp', alt: 'Associate Certified Coach (ACC)', url: 'https://www.credly.com/badges/aaac0b7b-dbd7-4560-ad51-f8d89a84f6cf/public_url' },
-  { src: '/images/badges/psm-ii.webp', alt: 'Professional Scrum Master II (PSM II)', url: 'https://www.credly.com/badges/ab193ca2-d233-48a2-a264-55ee82a819c2/public_url' },
-  { src: '/images/badges/business-agility-catalyst.webp', alt: 'Business Agility Catalyst', url: 'https://www.credly.com/badges/2e963763-78d4-43ba-92f4-3ce262e5f8b7/public_url' },
-];
+/** The badges were three of one person's Credly credentials, hardcoded, verification links and
+ *  all. A second site would have displayed them as its own, which is worse than borrowed prose:
+ *  they are checkable claims about a named individual. They are copy now, and empty by default.
+ *
+ *  One per line, "name | image | link". A line missing a field is skipped rather than rendered
+ *  half-built, because this is typed into a textarea by a person, not generated. */
+type Badge = { alt: string; src: string; url: string };
+
+function badgesFrom(text: string): Badge[] {
+  return list(text)
+    .map((line) => line.split('|').map((f) => f.trim()))
+    .filter((f) => f.length === 3 && f.every(Boolean))
+    .map(([alt, src, url]) => ({ alt, src, url }));
+}
 
 function Stars({ rating }: { rating: number | null }) {
   const filled = Math.round(((rating ?? 10) / 10) * 5);
@@ -83,7 +96,7 @@ export default async function AboutPage() {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       {founder.shown && (
-        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}`, worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
+        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
       )}
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'About', path: '/about' }])} />
 
@@ -112,7 +125,7 @@ export default async function AboutPage() {
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('about.hero.eyebrow')}</div>
             <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 48px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('about.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
-            <p style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }}>{t('about.hero.intro')}</p>
+            <Prose text={t('about.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {list(t('about.hero.tags')).map((tag) => (
                 <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
@@ -121,7 +134,7 @@ export default async function AboutPage() {
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {founder.shown && <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '65%', height: 'auto', display: 'block', borderRadius: 16 }} />}
+            {founder.shown && founder.photo && <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '65%', height: 'auto', display: 'block', borderRadius: 16 }} />}
           </div>
         </div>
       </div>
@@ -130,34 +143,44 @@ export default async function AboutPage() {
       <div className="aa-section-pad" style={{ background: p.white }}>
         <div className="aa-two-col-wide">
           <div>
-            <Heading label={t('about.story.label')} title={t('about.story.heading')} />
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>{t('about.story.p1')}</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>{t('about.story.p2')}</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }}>{t('about.story.p3')}</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }}>{t('about.story.p4')}</p>
+            <When any={[t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4')]}>
+              <Heading label={t('about.story.label')} title={t('about.story.heading')} />
+              <Prose text={t('about.story.p1')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
+              <Prose text={t('about.story.p2')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
+              <Prose text={t('about.story.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
+              <Prose text={t('about.story.p4')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }} />
+            </When>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{ background: p.skyTeal, borderRadius: 14, padding: 24 }}>
-              <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />{t('about.credentials.heading')}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {list(t('about.credentials.list')).map((cred) => (
-                  <div key={cred} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 13, lineHeight: 1.5 }}>
-                    <span style={{ color: p.orange, flexShrink: 0, marginTop: 1 }}><CheckCircle /></span>{cred}
+            {/* Nobody's qualifications and nobody's badges: an empty panel with two headings in
+                it is worse than no panel. */}
+            <When any={[t('about.credentials.list'), t('about.badges.list')]}>
+              <div style={{ background: p.skyTeal, borderRadius: 14, padding: 24 }}>
+                <When any={[t('about.credentials.list')]}>
+                  <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />{t('about.credentials.heading')}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {list(t('about.credentials.list')).map((cred) => (
+                      <div key={cred} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 13, lineHeight: 1.5 }}>
+                        <span style={{ color: p.orange, flexShrink: 0, marginTop: 1 }}><CheckCircle /></span>{cred}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </When>
+                {badgesFrom(t('about.badges.list')).length > 0 && (
+                  <div style={{ marginTop: has(t('about.credentials.list')) ? 20 : 0, paddingTop: has(t('about.credentials.list')) ? 16 : 0, borderTop: has(t('about.credentials.list')) ? `1px solid ${p.paleTeal}` : undefined }}>
+                    <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>{t('about.badges.heading')}</div>
+                    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+                      {badgesFrom(t('about.badges.list')).map((badge) => (
+                        <a key={badge.src} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={badge.src} alt={badge.alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${p.paleTeal}` }}>
-                <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>{t('about.badges.heading')}</div>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {badges.map((badge) => (
-                    <a key={badge.src} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={badge.src} alt={badge.alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </When>
             <div style={{ background: p.deepTeal, borderRadius: 14, padding: 24 }}>
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('about.work.label')}</div>
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>{t('about.work.body')}</p>
@@ -191,7 +214,7 @@ export default async function AboutPage() {
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
           <Heading label={t('about.mission.label')} title={t('about.mission.heading')} light />
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>{t('about.mission.p1')}</p>
-          <p style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }}>{t('about.mission.p2')}</p>
+          <Prose text={t('about.mission.p2')} style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }} />
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>{t('about.mission.p3')}</p>
         </div>
       </div>
@@ -232,24 +255,30 @@ export default async function AboutPage() {
       </div>
 
       {/* TIMELINE */}
-      <div className="aa-section-pad" style={{ background: p.white }}>
-        <Heading label={t('about.timeline.label')} title={t('about.timeline.heading')} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 680 }}>
-          {timeline.map((item, i) => (
-            <div key={item.year} style={{ display: 'flex', gap: 24, position: 'relative' }}>
-              {i < timeline.length - 1 && <div style={{ position: 'absolute', left: 19, top: 40, bottom: -8, width: 2, background: p.paleTeal }} />}
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: i === timeline.length - 1 ? p.orange : p.deepTeal, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1, fontSize: 10, fontWeight: 700 }}>
-                {i === timeline.length - 1 ? 'Now' : <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff' }} />}
-              </div>
-              <div style={{ background: p.skyTeal, borderRadius: 12, padding: '16px 20px', marginBottom: 8, flex: 1 }}>
-                <div style={{ color: p.orange, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{item.year}</div>
-                <div style={{ color: p.deepTeal, fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{item.title}</div>
-                <div style={{ color: p.body, fontSize: 13, lineHeight: 1.7 }}>{item.body}</div>
-              </div>
+      {(() => {
+        const eras = timelineFrom(t('about.timeline.list'));
+        if (eras.length === 0) return null;
+        return (
+          <div className="aa-section-pad" style={{ background: p.white }}>
+            <Heading label={t('about.timeline.label')} title={t('about.timeline.heading')} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 680 }}>
+              {eras.map((item, i) => (
+                <div key={item.year} style={{ display: 'flex', gap: 24, position: 'relative' }}>
+                  {i < eras.length - 1 && <div style={{ position: 'absolute', left: 19, top: 40, bottom: -8, width: 2, background: p.paleTeal }} />}
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: i === eras.length - 1 ? p.orange : p.deepTeal, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1, fontSize: 10, fontWeight: 700 }}>
+                    {i === eras.length - 1 ? 'Now' : <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff' }} />}
+                  </div>
+                  <div style={{ background: p.skyTeal, borderRadius: 12, padding: '16px 20px', marginBottom: 8, flex: 1 }}>
+                    <div style={{ color: p.orange, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{item.year}</div>
+                    <div style={{ color: p.deepTeal, fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{item.title}</div>
+                    <div style={{ color: p.body, fontSize: 13, lineHeight: 1.7 }}>{item.body}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        );
+      })()}
 
       {/* CTA */}
       <div className="aa-about-cta" style={{ background: p.deepTeal }}>
@@ -265,7 +294,7 @@ export default async function AboutPage() {
             </div>
           </div>
           <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
-            {founder.shown && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
+            {founder.shown && founder.portrait && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
           </div>
         </div>
       </div>

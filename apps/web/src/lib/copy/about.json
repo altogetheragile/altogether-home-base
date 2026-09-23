@@ -3,12 +3,12 @@
   "label": "About",
   "entries": {
     "about.meta.description": {
-      "value": "Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.",
+      "value": "Who is behind this practice, where the experience comes from, and how the work is approached.",
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
     "about.meta.titlePrefix": {
-      "value": "About Alun",
+      "value": "About",
       "label": "Search title",
       "hint": "The left half of the browser tab and search result. The company name is added after it."
     },
@@ -18,19 +18,19 @@
       "hint": "The teal hero at the top"
     },
     "about.hero.heading": {
-      "value": "25 years in.\nStill learning.",
+      "value": "About\nthis practice.",
       "label": "Hero heading",
       "hint": "The teal hero at the top. A line break splits it in two"
     },
     "about.hero.intro": {
-      "value": "I'm Alun - founder of Altogether Agile, agile practitioner, trainer, coach, and Visiting Lecturer, University of Westminster. This page is about where I've come from, what I believe, and why I built this.",
+      "value": "",
       "label": "Hero introduction",
-      "hint": "The teal hero at the top"
+      "hint": "A short introduction to whoever is behind this. Two or three sentences."
     },
     "about.hero.tags": {
-      "value": "London-based\n25+ years experience\n1,500+ trained\nABC Assessor",
+      "value": "",
       "label": "Hero tags",
-      "hint": "The teal hero at the top. One per line, add or remove lines freely"
+      "hint": "One per line, kept to two or three words: where you are based, how long you have been doing this, anything you are known for. Leave empty and no tags appear."
     },
     "about.story.label": {
       "value": "The story",
@@ -38,29 +38,29 @@
       "hint": "The story section, on white"
     },
     "about.story.heading": {
-      "value": "How I got here.",
+      "value": "How This Started.",
       "label": "Story heading",
       "hint": "The story section, on white"
     },
     "about.story.p1": {
-      "value": "I didn't set out to be an agile trainer. I started as a graduate trainee at SSA after a Masters at UMIST, writing code for ERP systems on AS400. What followed was fifteen years at Boehringer Ingelheim - moving from systems analyst to Head of IS Consulting to leading a global SAP deployment across six countries.",
+      "value": "",
       "label": "Story, first paragraph",
-      "hint": "The story section, on white"
+      "hint": "Where this started. The first job, the thing that did not work, the moment the approach made sense."
     },
     "about.story.p2": {
-      "value": "It was inside Boehringer that I first got serious about agile - pioneering a Scrum-wrapped-with-DSDM approach to enterprise SAP rollouts at a time when most organisations considered the two incompatible. It worked. Not perfectly, but well enough to prove the point.",
+      "value": "",
       "label": "Story, second paragraph",
-      "hint": "The story section, on white"
+      "hint": "What came next."
     },
     "about.story.p3": {
-      "value": "In 2016 I went independent, founding Altogether Agile and building a training and coaching practice from the ground up. I've worked as an affiliate trainer with QA, Metadata Training, and TCC; as a Scrum Master and Assessor at the Agile Business Consortium; and as a Visiting Lecturer at the University of Westminster since 2020.",
+      "value": "",
       "label": "Story, third paragraph",
-      "hint": "The story section, on white"
+      "hint": "How the practice began."
     },
     "about.story.p4": {
-      "value": "Altogether Agile is now the centre of gravity - training, coaching, knowledge base, and platform in one place. One person, nearly 30 years of experience, and a genuine belief that agile works when it's taught and coached by someone who's actually done it.",
+      "value": "",
       "label": "Story, fourth paragraph",
-      "hint": "The story section, on white"
+      "hint": "Where it is now."
     },
     "about.credentials.heading": {
       "value": "Credentials",
@@ -68,14 +68,19 @@
       "hint": "The pale card beside the story"
     },
     "about.credentials.list": {
-      "value": "Co-author - AgilePM (new version, 2025)\nABC Level-4 Specialist in agile training\nAdvanced Certified Scrum Master (A-CSM)\nABC Assessor - interviews professional membership candidates\nAgileBA module author\nManagement 3.0 Facilitator\nICF-aligned coaching practice\nSTAR Manager Trainer\nVisiting Lecturer, University of Westminster\nSAFe 5 Agilist (elapsed)\nScrum Master (elapsed)",
+      "value": "",
       "label": "Credentials list",
-      "hint": "The pale card beside the story. One per line, add or remove lines freely"
+      "hint": "One qualification per line."
     },
     "about.badges.heading": {
       "value": "Verified Badges",
       "label": "Badges heading",
       "hint": "The pale card beside the story. The badge images themselves are set in code"
+    },
+    "about.badges.list": {
+      "value": "",
+      "label": "Credential badges",
+      "hint": "One badge per line, as: name | image address | link to the verification page. Leave empty and the badges do not appear. These are somebody’s own credentials, so they start empty on a new site."
     },
     "about.work.label": {
       "value": "Work with me",
@@ -103,7 +108,7 @@
       "hint": "Above the three quotes"
     },
     "about.mission.label": {
-      "value": "Why Altogether Agile exists",
+      "value": "Why This Practice Exists",
       "label": "Mission eyebrow",
       "hint": "The teal mission band"
     },
@@ -118,9 +123,9 @@
       "hint": "The teal mission band"
     },
     "about.mission.p2": {
-      "value": "Altogether Agile exists to close that gap. That means every technique connects to a real decision, not a hypothetical one - and every session ends with something concrete enough to act on.",
+      "value": "",
       "label": "Mission, second paragraph",
-      "hint": "The teal mission band. This one is set in bolder white"
+      "hint": "The sentence at the centre of this page. What this practice is for."
     },
     "about.mission.p3": {
       "value": "Every course, every coaching conversation, and every technique in the knowledge base is designed to be immediately usable - not a concept to be filed away for later. That means real scenarios, honest facilitation, and a trainer who's been in the room for real.",
@@ -187,8 +192,13 @@
       "label": "Timeline heading",
       "hint": "Above the career timeline"
     },
+    "about.timeline.list": {
+      "value": "",
+      "label": "Timeline entries",
+      "hint": "One entry per line, as: when | what it was called | what happened. For example \"2016 | Going independent | Left the corporate world to do this full time.\" The last entry is marked Now. Leave empty and the timeline does not appear."
+    },
     "about.cta.label": {
-      "value": "Work with Altogether Agile",
+      "value": "Start A Conversation",
       "label": "Closing eyebrow",
       "hint": "The dark teal band at the foot of the page"
     },

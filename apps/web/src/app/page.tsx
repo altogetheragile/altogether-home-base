@@ -5,7 +5,8 @@ import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
-import { getCopy, lines } from '@/lib/copy';
+import { getCopy, lines, list } from '@/lib/copy';
+import { Prose } from '@/lib/copy/Prose';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
 import { HomeCarousel } from './HomeCarousel';
@@ -62,7 +63,7 @@ export default async function HomePage() {
             <div className="aa-hero-grid">
               <div>
                 {/* The credential first: it is the one thing on this page nobody else can claim. */}
-                <p className="aa-hero-eyebrow">{t('home.hero.eyebrow')}</p>
+                <Prose as="p" className="aa-hero-eyebrow" text={t('home.hero.eyebrow')} />
                 {/* What he sells in the heading, the slogan underneath. It was the other way round,
                     and "Work better together. Accelerate time to value." is true of any consultancy
                     that has ever existed. */}
@@ -81,21 +82,30 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* STATS */}
-        <div className="aa-stats-bar">
-          {[
+        {/* STATS
+            A figure with nothing behind it is not a placeholder, it is a claim. A new site counts
+            nobody, so each stat needs its own number before it appears, and the bar goes entirely
+            when none of them do. */}
+        {(() => {
+          const stats = [
             { icon: <Icons.Users />, num: t('home.stats.1.number'), label: t('home.stats.1.label') },
             { icon: <Icons.Books />, num: t('home.stats.2.number'), label: t('home.stats.2.label') },
             { icon: <Icons.GraduationCap />, num: t('home.stats.3.number'), label: t('home.stats.3.label') },
             { icon: <Icons.Star />, num: t('home.stats.4.number'), label: t('home.stats.4.label') },
-          ].map((s) => (
-            <div key={s.label} className="aa-stat">
-              <div className="aa-stat__icon">{s.icon}</div>
-              <div className="aa-stat__num">{s.num}</div>
-              <div className="aa-stat__label">{s.label}</div>
+          ].filter((s) => s.num.trim());
+          if (stats.length === 0) return null;
+          return (
+            <div className="aa-stats-bar">
+              {stats.map((s) => (
+                <div key={s.label} className="aa-stat">
+                  <div className="aa-stat__icon">{s.icon}</div>
+                  <div className="aa-stat__num">{s.num}</div>
+                  <div className="aa-stat__label">{s.label}</div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
         {/* WHO IS THIS FOR */}
         <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
@@ -118,23 +128,28 @@ export default async function HomePage() {
         {/* TESTIMONIALS */}
         <HomeTestimonials items={testimonials} firstNameOnly={firstNameOnly} />
 
-        {/* COURSES */}
+        {/* COURSES
+            A site with no courses yet shows no courses section. The heading, the empty carousel
+            and a "View all" button leading to an empty page are three ways of saying nothing. */}
+        {courses?.length !== 0 && (
         <div className="aa-section-pad" style={{ background: 'var(--aa-sky-teal)' }}>
           <div className="aa-mb-32">
             <h2 className="aa-section-heading aa-section-heading--lg">{t('home.courses.heading')}</h2>
           </div>
-          {courses.length > 0 ? (
-            <HomeCarousel courses={courses} />
-          ) : (
+          {courses === null ? (
+            // The query failed. Worth saying, because refreshing might genuinely help.
             <div className="aa-error-box">
               <p className="aa-error-box__title">{t('home.courses.empty.title')}</p>
               <p className="aa-error-box__msg">{t('home.courses.empty.body')}</p>
             </div>
+          ) : (
+            <HomeCarousel courses={courses} />
           )}
           <div className="aa-text-center aa-mt-32">
             <Link href="/events" className="aa-btn aa-btn--primary-sm">{t('home.courses.viewAll')}</Link>
           </div>
         </div>
+        )}
 
         {/* The founder, if this site has one. */}
         {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} />}
@@ -149,7 +164,7 @@ export default async function HomePage() {
               ))}</h2>
               <p className="aa-kb-body">{t('home.kb.body')}</p>
               <div className="aa-kb-tags">
-                {['Story Mapping', 'OKRs', '5 Whys', 'Business Model Canvas', 'Impact Mapping', 'Retrospectives'].map((tag) => (
+                {list(t('home.kb.tags')).map((tag) => (
                   <span key={tag} className="aa-kb-tag"><Icons.Tag />{tag}</span>
                 ))}
               </div>
@@ -172,7 +187,7 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="aa-hide-mobile">
-              {founder.shown && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
+              {founder.shown && founder.portrait && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
             </div>
           </div>
         </div>
