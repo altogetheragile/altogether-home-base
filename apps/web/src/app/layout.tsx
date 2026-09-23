@@ -5,6 +5,7 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { brandCssVarsFor, brandImagesFor } from '@/lib/brand';
 import { getCurrentUser, displayName } from '@/lib/auth';
+import { getCopy, REGISTRIES } from '@/lib/copy';
 import './globals.css';
 
 /** Generated rather than static, because the favicon is now this site's rather than this
@@ -32,16 +33,20 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // The real session, read on the server from the cookies both apps now share. This replaces
   // the `aa-auth` presence cookie, which could only ever say that somebody was signed in.
-  const [settings, user] = await Promise.all([getSiteSettings(), getCurrentUser()]);
+  // The menu labels resolve here because getCopy needs a server client and Navigation is a
+  // client component. Passing the resolved strings down costs one query the layout already waits on.
+  const [settings, user, t] = await Promise.all([getSiteSettings(), getCurrentUser(), getCopy('navigation')]);
+  const navKeys = REGISTRIES.find((r) => r.page === 'navigation')?.entries ?? {};
+  const labels = Object.fromEntries(Object.keys(navKeys).map((k) => [k, t(k)]));
   return (
     <html lang="en">
       <body>
         {/* Brand tokens from the shared design system (@altogether/ui), exposed as
             CSS variables for the whole Site. */}
         <div className="flex min-h-screen flex-col" style={brandCssVarsFor(settings.brand)}>
-          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} />
+          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} />
           <div className="flex-1">{children}</div>
-          <Footer settings={settings} year={new Date().getFullYear()} />
+          <Footer settings={settings} year={new Date().getFullYear()} t={t} />
         </div>
       </body>
     </html>
