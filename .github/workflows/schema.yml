@@ -1,0 +1,64 @@
+name: Schema
+
+# Can the database be built from nothing?
+#
+# For most of this project's life the answer was no, and nobody knew, because every migration had
+# only ever run against a database that was already most of the way there. The history began in
+# the middle: the earliest files altered ten tables that nothing here created, and a clean
+# `supabase start` died on the first one. That was found by trying it, on 23 September 2026, while
+# working out what standing up a second site would take.
+#
+# The fix was a baseline dumped from production. This job is what keeps it true: it builds the
+# schema from an empty database on every change under supabase/, and fails if the result is not
+# the schema we expect.
+
+on:
+  pull_request:
+    paths: ['supabase/**', '.github/workflows/schema.yml']
+  push:
+    branches: [main]
+    paths: ['supabase/**', '.github/workflows/schema.yml']
+
+jobs:
+  builds-from-nothing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Only the database and what it needs. The rest of the stack is not under test here and
+      # doubles the run time.
+      - name: Build the schema from an empty database
+        run: supabase start -x vector,studio,imgproxy,edge-runtime,logflare,realtime,storage-api,mailpit,postgres-meta
+
+      - name: Check what was built
+        run: |
+          set -euo pipefail
+          DB=$(docker ps --format '{{.Names}}' | grep supabase_db | head -1)
+          q() { docker exec "$DB" psql -U postgres -d postgres -tAc "$1"; }
+
+          TABLES=$(q "select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE'")
+          POLICIES=$(q "select count(*) from pg_policies where schemaname='public'")
+          UNPROTECTED=$(q "select count(*) from pg_tables t join pg_class c on c.relname=t.tablename where t.schemaname='public' and not c.relrowsecurity")
+
+          echo "tables=$TABLES policies=$POLICIES tables-without-rls=$UNPROTECTED"
+
+          # Thresholds, not exact counts: this should fail when the schema stops building, not
+          # every time somebody legitimately adds a table.
+          [ "$TABLES" -ge 100 ] || { echo "::error::only $TABLES tables built; the schema did not apply"; exit 1; }
+          [ "$POLICIES" -ge 250 ] || { echo "::error::only $POLICIES policies; row level security did not apply"; exit 1; }
+
+          # This one is exact, and deliberately so. A public table with no RLS is readable by
+          # anyone holding the anon key, which is in the browser.
+          [ "$UNPROTECTED" -eq 0 ] || {
+            echo "::error::$UNPROTECTED public tables have no row level security"
+            q "select tablename from pg_tables t join pg_class c on c.relname=t.tablename where t.schemaname='public' and not c.relrowsecurity"
+            exit 1
+          }
+
+      - name: Stop
+        if: always()
+        run: supabase stop --no-backup || true
