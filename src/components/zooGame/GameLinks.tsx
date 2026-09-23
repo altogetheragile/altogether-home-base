@@ -12,11 +12,20 @@ import { useAuth } from '@/contexts/AuthContext';
  *  taking it from the page would be a circle, and a circular import of a component is the kind that
  *  fails as a blank screen rather than as an error.
  */
-export function GameLinks({ variant = 'mark' }: {
+export function GameLinks({ variant = 'mark', companyName = 'Altogether Agile' }: {
   /** `mark` is the strip's one glyph; `home` is the same link with its name beside it, for the
    *  screens that have room for a word; `menu` is the row inside the game menu, where signing in
    *  belongs - it is done once, and it is not part of playing. */
   variant?: 'mark' | 'home' | 'menu';
+  /** What the way home is called.
+   *
+   *  A prop with a default, rather than a lookup, because this renders inside a game screen and
+   *  those are tested in isolation: a data hook here breaks seven test files for a label. The zoo
+   *  game is switched off by default, so a new site never shows this. If it is ever switched on
+   *  for a site that is not this one, the caller should pass the name.
+   *
+   *  Listed in docs/NEW_SITE_SETUP.md as a known remainder. */
+  companyName?: string;
 }) {
   // Only the menu row knows about who is signed in, and it is its own component so that knowing
   // costs nothing anywhere else. `useAuth` used to be called at the top of this function for all
@@ -35,19 +44,19 @@ export function GameLinks({ variant = 'mark' }: {
   // the name there is room to be understood, so the way-in screens get both.
   if (variant === 'home') {
     return (
-      <AppLink to="/" data-part="way-home" title="Back to Altogether Agile"
+      <AppLink to="/" data-part="way-home" title="Back to the home page"
         className="flex shrink-0 items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground">
         {/* The mark and its name, and no arrow. It had one, and the Product Goal screen puts this
             beside "&larr; How the zoo works" - two back-arrows in a row, one leaving the game and one
             moving about inside it, which is two different journeys drawn as the same gesture. A
             wordmark at the top left is already understood to be the way home. */}
         <span className="text-base font-bold leading-none">皆</span>
-        <span className="text-[11px] font-semibold">Altogether Agile</span>
+        <span className="text-[11px] font-semibold">{companyName}</span>
       </AppLink>
     );
   }
   return (
-    <AppLink to="/" aria-label="Back to Altogether Agile" title="Back to Altogether Agile"
+    <AppLink to="/" aria-label="Back to the home page" title="Back to the home page"
       className="shrink-0 select-none text-lg font-bold leading-none opacity-90 transition-opacity hover:opacity-100">
       皆
     </AppLink>

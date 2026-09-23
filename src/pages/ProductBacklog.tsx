@@ -147,7 +147,7 @@ const ProductBacklog: React.FC = () => {
     <SchemeProvider scheme={scheme}>
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Product Backlog | Altogether Agile</title>
+        <title>Product Backlog</title>
         <meta name="description" content="Capture, prioritize, and manage your product backlog with our intuitive backlog management tool." />
       </Helmet>
       

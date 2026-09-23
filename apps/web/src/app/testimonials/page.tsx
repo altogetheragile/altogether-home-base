@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy('testimonials');
   return {
   ...(await buildMetadata({
-    title: 'Testimonials - Altogether Agile',
+    title: `Testimonials - ${await siteName()}`,
     description: t('testimonials.meta.description'),
     path: '/testimonials',
   })),

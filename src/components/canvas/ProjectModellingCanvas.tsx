@@ -574,7 +574,7 @@ export const ProjectModellingCanvas: React.FC<ProjectModellingCanvasProps> = ({
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <AppLink to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+                <AppLink to="/" aria-label="Home" className="flex-shrink-0">
                   <LogoFull height={32} />
                 </AppLink>
                 <Separator orientation="vertical" className="h-6" />

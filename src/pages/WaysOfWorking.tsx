@@ -11,7 +11,7 @@ const WaysOfWorkingPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Ways of Working - Altogether Agile"
+        title="Ways of Working"
         description="Capture your team's working agreements and run short coached retrospectives that produce one improvement action at a time. Export to PNG, PDF, JSON and Markdown."
         path="/ways-of-working"
       />

@@ -237,7 +237,7 @@ const Navigation = () => {
       >
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 64 }}>
           {/* Logo */}
-          <AppLink to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ flexShrink: 0, textDecoration: 'none' }} aria-label="Altogether Agile home">
+          <AppLink to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ flexShrink: 0, textDecoration: 'none' }} aria-label="Home">
             <LogoFull height={38} />
           </AppLink>
 

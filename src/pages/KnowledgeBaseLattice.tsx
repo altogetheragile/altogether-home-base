@@ -44,7 +44,7 @@ const KnowledgeBaseLattice = () => {
 
   return (
     <KnowledgeBaseLayout
-      title="Lattice (preview) - Knowledge Base - Altogether Agile"
+      title="Lattice (preview) - Knowledge Base"
       description="Prototype: anchor families inherited across horizons, and container cascades."
       crumbs={[{ label: 'Map', to: '/knowledge-base' }, { label: 'Lattice (preview)' }]}
     >

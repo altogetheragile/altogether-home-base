@@ -11,7 +11,7 @@ const StoryMapPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="User Story Map - Altogether Agile"
+        title="User Story Map"
         description="Build a Jeff Patton user story map: a backbone of activities, story cards beneath each, and release slices that right-size your backlog. Coached on each card, then push the whole map to your backlog. Export to PNG, PDF, JSON and Markdown."
         path="/story-map"
       />

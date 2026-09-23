@@ -11,7 +11,7 @@ const CoachingStudioPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Coaching Studio - Altogether Agile"
+        title="Coaching Studio"
         description="A standalone coaching conversation on whatever you bring. Think out loud, then harvest the conversation: the coach proposes where each goal, idea, probe or measure could live, with one tap to send it there."
         path="/coach"
       />

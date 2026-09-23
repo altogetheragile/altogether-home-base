@@ -23,7 +23,7 @@ const CoursePage = () => {
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <Helmet>
-        <title>Self-paced Course | Altogether Agile</title>
+        <title>Self-paced Course</title>
         <link rel="canonical" href={`${SITE_URL}/events/learn/${slug}`} />
       </Helmet>
       <Navigation />

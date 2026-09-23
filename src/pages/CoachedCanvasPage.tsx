@@ -15,7 +15,7 @@ const CoachedCanvasPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title={`${def.name} - Altogether Agile`}
+        title={`${def.name}`}
         description={def.blurb}
         path={`/canvases/${def.key}`}
       />

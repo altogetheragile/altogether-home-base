@@ -9,6 +9,7 @@ import Navigation from './Navigation';
 import Footer from './Footer';
 import NotFound from '@/pages/NotFound';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useCompanyName } from '@/hooks/useCompanyName';
 
 // Reusable loading state component
 const LoadingState = () => (
@@ -26,6 +27,7 @@ interface DynamicPageRendererProps {
 }
 
 export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }) => {
+  const companyName = useCompanyName();
   const { slug: paramSlug } = useParams<{ slug: string }>();
   const effectiveSlug = slug ?? paramSlug ?? 'home';
   
@@ -54,7 +56,7 @@ export const DynamicPageRenderer: React.FC<DynamicPageRendererProps> = ({ slug }
     return <NotFound />;
   }
 
-  const pageTitle = page.title ? `${page.title} - Altogether Agile` : 'Altogether Agile';
+  const pageTitle = page.title ? `${page.title} - ${companyName}` : companyName;
 
   // Render CMS page with content blocks
   return (

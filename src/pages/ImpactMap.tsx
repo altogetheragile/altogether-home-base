@@ -11,7 +11,7 @@ const ImpactMapPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Impact Map Builder - Altogether Agile"
+        title="Impact Map Builder"
         description="Build and export Impact Maps (Gojko Adzic). A guided tool that walks you through goal, actors, impacts, and deliverables, with FreeMind, PNG, PDF, and JSON export."
         path="/impact-map"
       />

@@ -7,6 +7,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { colors as p } from '@/theme/colors';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCompanyName } from '@/hooks/useCompanyName';
 
 interface CourseListItem {
   id: string;
@@ -17,6 +18,7 @@ interface CourseListItem {
 }
 
 const Courses = () => {
+  const companyName = useCompanyName();
   const isMobile = useIsMobile();
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,8 +69,8 @@ const Courses = () => {
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: '#fff' }}>
       <Helmet>
-        <title>Self-paced Courses | Altogether Agile</title>
-        <meta name="description" content="Browse self-paced agile courses from Altogether Agile." />
+        <title>Self-paced Courses</title>
+        <meta name="description" content={`Browse self-paced agile courses from ${companyName}.`} />
         <link rel="canonical" href={`${SITE_URL}/courses`} />
       </Helmet>
       <Navigation />

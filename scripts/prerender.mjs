@@ -90,6 +90,13 @@ function buildSitemap(entries) {
  *  should not be advertising ours to every crawler that reads a shared link. */
 let BRAND_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
+/** This site's name and one-line description, for the SPA shell's own head. index.html hardcodes
+ *  them, and that head is what a browser shows before any JavaScript runs, on every page the App
+ *  serves. A second site announced itself as AltogetherAgile in the tab for as long as it took
+ *  React to hydrate, and in every link preview of an App page. */
+let SITE_COMPANY = 'AltogetherAgile';
+let SITE_TAGLINE = null;
+
 /** Build meta tag block to inject into <head>. */
 function buildMetaTags({ title, description, canonical, ogType = 'website', ogImage, jsonLd }) {
   const img = ogImage || BRAND_OG_IMAGE;
@@ -524,12 +531,14 @@ async function main() {
   // This site's brand, before anything is written. Absent or malformed leaves the default in
   // place, which is what altogetheragile.com wants.
   try {
-    const { data: settings } = await supabase.from('site_settings').select('brand').limit(1).maybeSingle();
+    const { data: settings } = await supabase.from('site_settings').select('brand, company_name, company_description').limit(1).maybeSingle();
     const given = settings?.brand?.images?.ogImage;
     if (typeof given === 'string' && /^https?:\/\/\S+$/i.test(given.trim())) {
       BRAND_OG_IMAGE = given.trim();
       console.log(`  ok   share image from site_settings.brand`);
     }
+    if (settings?.company_name?.trim()) SITE_COMPANY = settings.company_name.trim();
+    if (settings?.company_description?.trim()) SITE_TAGLINE = settings.company_description.trim();
   } catch {
     // Never fail a build over a brand lookup.
   }
@@ -649,7 +658,20 @@ async function main() {
   // the old index.html).
   const indexHtmlPath = resolve(DIST, 'index.html');
   if (existsSync(indexHtmlPath)) {
-    copyFileSync(indexHtmlPath, resolve(DIST, '_spa.html'));
+    // The shell carries this site's name, not this repository's, before it is put in place.
+    let shell = readFileSync(indexHtmlPath, 'utf-8');
+    const before = shell;
+    shell = shell.replaceAll('AltogetherAgile', SITE_COMPANY);
+    if (SITE_TAGLINE) {
+      shell = shell.replace(
+        /content="Expert agile coaching, training, and transformation services to help your organization achieve sustainable success through collaborative practices\."/g,
+        `content="${SITE_TAGLINE.replace(/"/g, '&quot;')}"`,
+      );
+    }
+    shell = shell.replaceAll('https://altogetheragile.com/og-image.png', BRAND_OG_IMAGE);
+    shell = shell.replaceAll('https://altogetheragile.com', SITE_URL);
+    writeFileSync(resolve(DIST, '_spa.html'), shell, 'utf-8');
+    if (shell !== before) console.log(`  ok   SPA shell head rewritten for ${SITE_COMPANY}`);
     rmSync(indexHtmlPath);
     console.log('  ok   home cutover: dist/index.html -> dist/_spa.html (/ served by Next)');
   }
