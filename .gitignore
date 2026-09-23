@@ -49,6 +49,7 @@ scripts/gsc-token.json
 
 # Supabase CLI local cache (machine-specific, regenerated on link)
 supabase/.temp/
+supabase/.branches/
 
 # Contact sheets are generated on demand by `npm run animal-art -- --index`
 art-src/**/*contact-sheet.png

@@ -1,4 +1,4 @@
-project_id = "tdfbqmjmrqcovwnptiux"
+project_id = "wqaplkypnetifpqrungv"
 
 # Pattern Builder is a public tool; it does its own optional-auth rate limiting.
 [functions.recommend-pattern]
