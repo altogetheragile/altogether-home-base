@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getSiteSettings, type SiteSettings } from '@/lib/site-settings';
+import { MODULE_DEFAULTS } from '@altogether/ui/modules';
 
 // ============= A module that is off is not reachable here either =============
 //
@@ -20,20 +21,11 @@ export type GatedModule =
   | 'about' | 'coaching' | 'contact' | 'testimonials'
   | 'events' | 'blog' | 'exams';
 
-const DEFAULTS: Record<GatedModule, boolean> = {
-  about: true,
-  coaching: true,
-  contact: true,
-  testimonials: true,
-  events: false,
-  blog: false,
-  exams: true,
-};
 
 /** 404s the page when its module is switched off. Call it before fetching anything else. */
 export async function requireModule(module: GatedModule, settings?: SiteSettings): Promise<void> {
   const s = settings ?? (await getSiteSettings());
   const value = s[`show_${module}` as keyof SiteSettings];
-  const on = typeof value === 'boolean' ? value : DEFAULTS[module];
+  const on = typeof value === 'boolean' ? value : (MODULE_DEFAULTS[module as keyof typeof MODULE_DEFAULTS] ?? false);
   if (!on) notFound();
 }

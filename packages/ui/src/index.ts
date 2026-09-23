@@ -1,5 +1,6 @@
 export * from './tokens';
 export * from './brand';
+export * from './modules';
 export { cn } from './lib/cn';
 
 // shadcn-based component library (the canonical UI, shared by the App and the Site).

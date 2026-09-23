@@ -1,5 +1,6 @@
 'use client';
 
+import { moduleIsOn } from '@altogether/ui/modules';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,19 +10,19 @@ import { SiteLogo } from '@/components/SiteLogo';
 import type { SiteSettings } from '@/lib/site-settings';
 
 const TOP_LINKS = [
-  { label: 'Events', href: '/events', flag: 'show_events', def: true },
-  { label: 'Coaching', href: '/coaching', flag: 'show_coaching', def: true },
-  { label: 'About', href: '/about', flag: 'show_about', def: true },
-  { label: 'Contact', href: '/contact', flag: 'show_contact', def: true },
-  { label: 'Testimonials', href: '/testimonials', flag: 'show_testimonials', def: true },
+  { label: 'Events', href: '/events', flag: 'show_events' },
+  { label: 'Coaching', href: '/coaching', flag: 'show_coaching' },
+  { label: 'About', href: '/about', flag: 'show_about' },
+  { label: 'Contact', href: '/contact', flag: 'show_contact' },
+  { label: 'Testimonials', href: '/testimonials', flag: 'show_testimonials' },
 ] as const;
 
 const RESOURCE_LINKS = [
-  { label: 'Knowledge Base', href: '/knowledge-base', flag: 'show_knowledge', def: false },
-  { label: 'Blog', href: '/blog', flag: 'show_blog', def: true },
-  { label: 'Practice Exams', href: '/exams', flag: 'show_exams', def: true },
-  { label: 'AI Tools', href: '/ai-tools', flag: 'show_ai_tools', def: false },
-  { label: 'Flow Game', href: '/flow-game', flag: 'show_flow_game', def: true },
+  { label: 'Knowledge Base', href: '/knowledge-base', flag: 'show_knowledge' },
+  { label: 'Blog', href: '/blog', flag: 'show_blog' },
+  { label: 'Practice Exams', href: '/exams', flag: 'show_exams' },
+  { label: 'AI Tools', href: '/ai-tools', flag: 'show_ai_tools' },
+  { label: 'Flow Game', href: '/flow-game', flag: 'show_flow_game' },
 ] as const;
 
 export function Navigation({
@@ -42,14 +43,13 @@ export function Navigation({
   // used to trust. /dashboard is still gated by the App; this only decides what the button says.
   const authCta = signedIn ? { href: '/dashboard', label: 'Dashboard' } : { href: '/auth', label: 'Sign In' };
 
-  const flag = (key: string, def: boolean) => {
-    const v = settings[key as keyof SiteSettings];
-    return v == null ? def : !!v;
-  };
+  // One list of defaults, shared with the module gate. They used to disagree, and a site with
+  // no settings row showed links to pages that answered 404.
+  const flag = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
-  const topLinks = TOP_LINKS.filter((l) => flag(l.flag, l.def));
-  const resourceLinks = flag('show_resources', true) ? RESOURCE_LINKS.filter((l) => flag(l.flag, l.def)) : [];
+  const topLinks = TOP_LINKS.filter((l) => flag(l.flag));
+  const resourceLinks = settings.show_resources !== false ? RESOURCE_LINKS.filter((l) => flag(l.flag)) : [];
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
