@@ -124,7 +124,7 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
-export function blogPostingJsonLd(opts: {
+export async function blogPostingJsonLd(opts: {
   title: string;
   description: string;
   path: string;
@@ -132,6 +132,7 @@ export function blogPostingJsonLd(opts: {
   datePublished?: string | null;
   dateModified?: string | null;
 }) {
+  const publisherName = await siteName();
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -142,8 +143,8 @@ export function blogPostingJsonLd(opts: {
     image: opts.image || undefined,
     datePublished: opts.datePublished || undefined,
     dateModified: opts.dateModified || opts.datePublished || undefined,
-    author: { '@type': 'Organization', name, url: SITE_URL },
-    publisher: { '@type': 'Organization', name, url: SITE_URL },
+    author: { '@type': 'Organization', name: publisherName, url: SITE_URL },
+    publisher: { '@type': 'Organization', name: publisherName, url: SITE_URL },
   };
 }
 
