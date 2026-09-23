@@ -1,3 +1,4 @@
+import { MODULE_DEFAULTS } from '@altogether/ui/modules';
 import type { GatedFeature } from '@/components/SiteSettingsRouteGuard';
 
 // ============= The parts this site is made of =============
@@ -27,26 +28,26 @@ export interface SiteModule {
 }
 
 export const MODULES: SiteModule[] = [
-  { feature: 'about', label: 'About', blurb: 'The page about you.', defaultOn: true, group: 'Content' },
-  { feature: 'coaching', label: 'Coaching', blurb: 'The coaching service page.', defaultOn: true, group: 'Content' },
-  { feature: 'contact', label: 'Contact', blurb: 'The contact page and its form.', defaultOn: true, group: 'Content' },
-  { feature: 'testimonials', label: 'Testimonials', blurb: 'Client quotes, as a page and a carousel.', defaultOn: true, group: 'Content' },
-  { feature: 'blog', label: 'Blog', blurb: 'Posts, tags and authors.', defaultOn: false, group: 'Content' },
-  { feature: 'dynamic_pages', label: 'CMS Pages', blurb: 'Pages built from content blocks, served at their own slugs.', defaultOn: true, group: 'Content' },
+  { feature: 'about', label: 'About', blurb: 'The page about you.', defaultOn: MODULE_DEFAULTS['about' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
+  { feature: 'coaching', label: 'Coaching', blurb: 'The coaching service page.', defaultOn: MODULE_DEFAULTS['coaching' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
+  { feature: 'contact', label: 'Contact', blurb: 'The contact page and its form.', defaultOn: MODULE_DEFAULTS['contact' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
+  { feature: 'testimonials', label: 'Testimonials', blurb: 'Client quotes, as a page and a carousel.', defaultOn: MODULE_DEFAULTS['testimonials' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
+  { feature: 'blog', label: 'Blog', blurb: 'Posts, tags and authors.', defaultOn: MODULE_DEFAULTS['blog' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
+  { feature: 'dynamic_pages', label: 'CMS Pages', blurb: 'Pages built from content blocks, served at their own slugs.', defaultOn: MODULE_DEFAULTS['dynamic_pages' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
 
-  { feature: 'events', label: 'Events & Courses', blurb: 'The schedule, course pages, instructors and locations.', defaultOn: false, group: 'Training' },
-  { feature: 'bookings', label: 'Bookings', blurb: 'Taking appointments against your availability.', defaultOn: false, group: 'Training' },
-  { feature: 'exams', label: 'Practice Exams', blurb: 'Practice papers, their questions and attempts.', defaultOn: true, group: 'Training' },
-  { feature: 'knowledge', label: 'Knowledge Base', blurb: 'Techniques, the lattice and the pattern builder.', defaultOn: false, group: 'Training' },
+  { feature: 'events', label: 'Events & Courses', blurb: 'The schedule, course pages, instructors and locations.', defaultOn: MODULE_DEFAULTS['events' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
+  { feature: 'bookings', label: 'Bookings', blurb: 'Taking appointments against your availability.', defaultOn: MODULE_DEFAULTS['bookings' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
+  { feature: 'exams', label: 'Practice Exams', blurb: 'Practice papers, their questions and attempts.', defaultOn: MODULE_DEFAULTS['exams' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
+  { feature: 'knowledge', label: 'Knowledge Base', blurb: 'Techniques, the lattice and the pattern builder.', defaultOn: MODULE_DEFAULTS['knowledge' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
 
-  { feature: 'ai_tools', label: 'Canvases & AI Tools', blurb: 'Business Model Canvas, story mapping, personas, impact maps.', defaultOn: true, group: 'Tools' },
-  { feature: 'protected_projects', label: 'Projects', blurb: 'Projects, artifacts, the backlog and the coaching pipeline.', defaultOn: true, group: 'Tools' },
+  { feature: 'ai_tools', label: 'Canvases & AI Tools', blurb: 'Business Model Canvas, story mapping, personas, impact maps.', defaultOn: MODULE_DEFAULTS['ai_tools' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Tools' },
+  { feature: 'protected_projects', label: 'Projects', blurb: 'Projects, artifacts, the backlog and the coaching pipeline.', defaultOn: MODULE_DEFAULTS['protected_projects' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Tools' },
 
-  { feature: 'flow_game', label: 'Flow Game', blurb: 'The Kanban flow simulation.', defaultOn: true, group: 'Games' },
-  { feature: 'zoo_game', label: 'Zoo Game', blurb: 'The Scrum teaching game.', defaultOn: false, group: 'Games' },
-  { feature: 'scrum_game', label: 'Scrum Game', blurb: 'The earlier Scrum simulation.', defaultOn: false, group: 'Games' },
+  { feature: 'flow_game', label: 'Flow Game', blurb: 'The Kanban flow simulation.', defaultOn: MODULE_DEFAULTS['flow_game' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Games' },
+  { feature: 'zoo_game', label: 'Zoo Game', blurb: 'The Scrum teaching game.', defaultOn: MODULE_DEFAULTS['zoo_game' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Games' },
+  { feature: 'scrum_game', label: 'Scrum Game', blurb: 'The earlier Scrum simulation.', defaultOn: MODULE_DEFAULTS['scrum_game' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Games' },
 
-  { feature: 'dashboard', label: 'Dashboard', blurb: 'The signed-in landing page.', defaultOn: true, group: 'Platform' },
+  { feature: 'dashboard', label: 'Dashboard', blurb: 'The signed-in landing page.', defaultOn: MODULE_DEFAULTS['dashboard' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Platform' },
 ];
 
 export const MODULE_GROUPS: ModuleGroup[] = ['Content', 'Training', 'Tools', 'Games', 'Platform'];

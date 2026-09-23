@@ -2,25 +2,24 @@ import Link from 'next/link';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Youtube, Github } from 'lucide-react';
 import type { SiteSettings } from '@/lib/site-settings';
 import { SiteLogo } from '@/components/SiteLogo';
+import { moduleIsOn } from '@altogether/ui/modules';
 
 // Server component (no interactivity). The auth-only links (Dashboard, Admin) from
 // the Vite footer are intentionally dropped - this is the public content surface.
 export function Footer({ settings, year }: { settings: SiteSettings; year: number
 }) {
-  const flag = (key: keyof SiteSettings, def: boolean) => {
-    const v = settings[key];
-    return v == null ? def : !!v;
-  };
+  // The shared list, not a fourth copy. This was the last place still carrying its own.
+  const on = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
 
   const quickLinks = [
     { label: 'Home', href: '/', show: true },
-    { label: 'Events', href: '/events', show: flag('show_events', true) },
-    { label: 'Coaching', href: '/coaching', show: flag('show_coaching', true) },
-    { label: 'About', href: '/about', show: flag('show_about', true) },
-    { label: 'Blog', href: '/blog', show: flag('show_blog', true) },
-    { label: 'Practice Exams', href: '/exams', show: flag('show_exams', true) },
-    { label: 'Contact', href: '/contact', show: flag('show_contact', true) },
-    { label: 'Testimonials', href: '/testimonials', show: flag('show_testimonials', true) },
+    { label: 'Events', href: '/events', show: on('show_events') },
+    { label: 'Coaching', href: '/coaching', show: on('show_coaching') },
+    { label: 'About', href: '/about', show: on('show_about') },
+    { label: 'Blog', href: '/blog', show: on('show_blog') },
+    { label: 'Practice Exams', href: '/exams', show: on('show_exams') },
+    { label: 'Contact', href: '/contact', show: on('show_contact') },
+    { label: 'Testimonials', href: '/testimonials', show: on('show_testimonials') },
   ].filter((l) => l.show);
 
   const social = [

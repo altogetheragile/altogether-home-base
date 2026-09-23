@@ -30,9 +30,12 @@ describe('a switched-off module', () => {
   });
 
   it('falls back to the declared default when the column is null', async () => {
-    // events defaults off, about defaults on. A null must not mean "on" for everything.
-    await requireModule('events', { show_events: null });
-    expect(notFound, 'events defaults off and was allowed through').toHaveBeenCalled();
+    // exams defaults off, about defaults on. A null must not mean "on" for everything.
+    //
+    // This used to use `events`, which defaulted off until the defaults were rewritten for a new
+    // site: a freelancer's site has Events, and a practice exam bank is this practice's.
+    await requireModule('exams', { show_exams: null });
+    expect(notFound, 'exams defaults off and was allowed through').toHaveBeenCalled();
 
     notFound.mockClear();
     await requireModule('about', { show_about: null });

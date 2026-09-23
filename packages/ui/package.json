@@ -23,6 +23,10 @@
     "./brand": {
       "types": "./dist/brand.d.ts",
       "import": "./dist/brand.js"
+    },
+    "./modules": {
+      "types": "./dist/modules.d.ts",
+      "import": "./dist/modules.js"
     }
   },
   "files": [
