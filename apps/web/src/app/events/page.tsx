@@ -12,12 +12,14 @@ import { getCopy, lines } from '@/lib/copy';
 export const dynamic = 'force-dynamic';
 
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: 'Agile Training Courses in London & the UK',
   description:
     'Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK.',
   path: '/events',
 });
+}
 
 export default async function EventsPage() {
   await requireModule('events');
@@ -43,7 +45,7 @@ export default async function EventsPage() {
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: c.white }}>
       <JsonLd
-        data={courseListJsonLd(
+        data={await courseListJsonLd(
           'Agile Training Courses and Workshops',
           courses.map((m) => ({ name: m.title, description: m.description, path: m.href })),
         )}

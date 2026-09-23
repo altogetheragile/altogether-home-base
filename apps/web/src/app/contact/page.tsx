@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { buildMetadata, JsonLd, breadcrumbJsonLd } from '@/lib/seo';
+import { buildMetadata, JsonLd, breadcrumbJsonLd , siteName } from '@/lib/seo';
 import { ContactForm } from './ContactForm';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
@@ -11,14 +11,16 @@ export const dynamic = 'force-dynamic';
 
 const CONTACT_EMAIL = 'info@altogetheragile.com';
 
-export const metadata: Metadata = {
-  ...buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+  ...(await buildMetadata({
     title: 'Contact - Altogether Agile',
     description: 'Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session.',
     path: '/contact',
-  }),
-  title: { absolute: 'Contact - Altogether Agile' },
-};
+  })),
+  title: { absolute: `Contact - ${await siteName()}` },
+  };
+}
 
 const Mail = () => <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM203.43,64,128,133.15,52.57,64ZM216,192H40V74.19l82.59,75.71a8,8,0,0,0,10.82,0L216,74.19V192Z" /></svg>;
 const MapPin = () => <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z" /></svg>;

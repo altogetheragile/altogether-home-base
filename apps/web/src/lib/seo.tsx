@@ -1,7 +1,20 @@
 import type { Metadata } from 'next';
+import { getSiteSettings } from '@/lib/site-settings';
 
 export const SITE_URL = 'https://altogetheragile.com';
+
+/** The name this repository ships with. Used when a site has not set its own. */
 export const SITE_NAME = 'Altogether Agile';
+
+/** What this site calls itself.
+ *
+ *  It appeared as a constant in eleven places: the Open Graph site name, the Organization in four
+ *  kinds of structured data, and the suffix on every page title. On a second site every one of
+ *  those said Altogether Agile, which is the sort of thing a crawler believes. */
+export async function siteName(): Promise<string> {
+  const settings = await getSiteSettings();
+  return settings.company_name?.trim() || SITE_NAME;
+}
 
 export function truncateText(str: string, len = 160): string {
   if (!str) return '';
@@ -13,14 +26,15 @@ export function truncateText(str: string, len = 160): string {
  * its own title/description/canonical/OG, generated from data, with no separate
  * list to drift out of sync.
  */
-export function buildMetadata(opts: {
+export async function buildMetadata(opts: {
   title: string;
   description: string;
   path: string;
   ogImage?: string;
   type?: 'website' | 'article';
-}): Metadata {
+}): Promise<Metadata> {
   const url = `${SITE_URL}${opts.path === '/' ? '' : opts.path}`;
+  const name = await siteName();
   return {
     title: opts.title,
     description: opts.description,
@@ -29,7 +43,7 @@ export function buildMetadata(opts: {
       title: opts.title,
       description: opts.description,
       url,
-      siteName: SITE_NAME,
+      siteName: name,
       type: opts.type ?? 'website',
       images: opts.ogImage ? [opts.ogImage] : undefined,
     },
@@ -60,11 +74,11 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
  *  in `src/components/seo/JsonLd.tsx` and `scripts/prerender.mjs` never reaches a crawler for the
  *  home page. This one had no logo, no founder and no contact point, so the front page of the site
  *  was emitting the least structured data of the three. */
-export function organizationJsonLd(logo?: string) {
+export async function organizationJsonLd(logo?: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE_NAME,
+    name: await siteName(),
     url: SITE_URL,
     logo: logo ?? `${SITE_URL}/og-image.png`,
     description:
@@ -110,7 +124,7 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
-export function blogPostingJsonLd(opts: {
+export async function blogPostingJsonLd(opts: {
   title: string;
   description: string;
   path: string;
@@ -118,6 +132,7 @@ export function blogPostingJsonLd(opts: {
   datePublished?: string | null;
   dateModified?: string | null;
 }) {
+  const publisherName = await siteName();
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -128,20 +143,21 @@ export function blogPostingJsonLd(opts: {
     image: opts.image || undefined,
     datePublished: opts.datePublished || undefined,
     dateModified: opts.dateModified || opts.datePublished || undefined,
-    author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
-    publisher: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+    author: { '@type': 'Organization', name: publisherName, url: SITE_URL },
+    publisher: { '@type': 'Organization', name: publisherName, url: SITE_URL },
   };
 }
 
-const COURSE_PROVIDER = {
+/** A function rather than a constant, because the name is no longer known at module load. */
+const courseProvider = async () => ({
   '@type': 'Organization',
-  name: SITE_NAME,
+  name: await siteName(),
   url: SITE_URL,
   areaServed: ['London', 'United Kingdom'],
-};
+});
 
 /** A single training course (provider = Altogether Agile). */
-export function courseJsonLd(opts: {
+export async function courseJsonLd(opts: {
   name: string;
   description: string;
   path: string;
@@ -152,12 +168,13 @@ export function courseJsonLd(opts: {
     name: opts.name,
     description: opts.description,
     url: `${SITE_URL}${opts.path}`,
-    provider: COURSE_PROVIDER,
+    provider: await courseProvider(),
   };
 }
 
 /** ItemList of Course entries for the catalogue page. */
-export function courseListJsonLd(name: string, items: { name: string; description: string; path: string }[]) {
+export async function courseListJsonLd(name: string, items: { name: string; description: string; path: string }[]) {
+  const provider = await courseProvider();
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -170,7 +187,7 @@ export function courseListJsonLd(name: string, items: { name: string; descriptio
         name: it.name,
         description: it.description,
         url: `${SITE_URL}${it.path}`,
-        provider: COURSE_PROVIDER,
+        provider,
       },
     })),
   };

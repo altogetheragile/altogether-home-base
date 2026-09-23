@@ -47,10 +47,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const COMPANY = 'Altogether Agile';
-const FROM = `${COMPANY} <noreply@altogetheragile.com>`;
+// The name and the sending address are this deployment's, not this repository's. A customer of
+// another site receiving a booking confirmation signed "Altogether Agile" is the worst version of
+// getting this wrong, because it goes out under their name and they only find out from a reply.
+//
+// Env vars rather than a settings lookup, matching send-contact-email, which already reads
+// COMPANY_NAME. The sending address has to be a verified domain in the mail provider anyway, so
+// it is deployment configuration either way.
+const COMPANY = Deno.env.get('COMPANY_NAME') || 'Altogether Agile';
+const FROM = Deno.env.get('MAIL_FROM') || `${COMPANY} <noreply@altogetheragile.com>`;
 const OWNER_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'info@altogetheragile.com';
-const SITE = 'https://altogetheragile.com';
+const SITE = Deno.env.get('SITE_URL') || 'https://altogetheragile.com';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function json(body: unknown, status = 200) {

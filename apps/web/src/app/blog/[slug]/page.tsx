@@ -33,7 +33,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '40px 24px 64px' }}>
-      <JsonLd data={blogPostingJsonLd({ title: post.title, description: post.seo_description || post.excerpt || post.title, path: `/blog/${slug}`, image: post.featured_image_url, datePublished: post.published_at, dateModified: post.updated_at })} />
+      <JsonLd data={await blogPostingJsonLd({ title: post.title, description: post.seo_description || post.excerpt || post.title, path: `/blog/${slug}`, image: post.featured_image_url, datePublished: post.published_at, dateModified: post.updated_at })} />
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }, { name: post.title, path: `/blog/${slug}` }])} />
 
       <nav style={{ fontSize: 13, color: c.muted, marginBottom: 16 }}>

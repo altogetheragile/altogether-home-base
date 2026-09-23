@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getAllApprovedFeedback, feedbackStats } from '@/lib/testimonials';
 import { getSiteSettings } from '@/lib/site-settings';
-import { buildMetadata, JsonLd, breadcrumbJsonLd } from '@/lib/seo';
+import { buildMetadata, JsonLd, breadcrumbJsonLd , siteName } from '@/lib/seo';
 import { TestimonialsGrid } from './TestimonialsGrid';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
@@ -10,14 +10,16 @@ import { getCopy } from '@/lib/copy';
 export const dynamic = 'force-dynamic';
 
 
-export const metadata: Metadata = {
-  ...buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+  ...(await buildMetadata({
     title: 'Testimonials - Altogether Agile',
     description: 'Read what professionals say about Altogether Agile’s courses, coaching, and training programmes.',
     path: '/testimonials',
-  }),
-  title: { absolute: 'Testimonials - Altogether Agile' },
-};
+  })),
+  title: { absolute: `Testimonials - ${await siteName()}` },
+  };
+}
 
 export default async function TestimonialsPage() {
   await requireModule('testimonials');

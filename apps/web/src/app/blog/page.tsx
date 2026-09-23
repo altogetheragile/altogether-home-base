@@ -9,12 +9,14 @@ import { getCopy } from '@/lib/copy';
 export const dynamic = 'force-dynamic';
 
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: 'Blog',
   description:
     'Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation.',
   path: '/blog',
 });
+}
 
 export default async function BlogPage() {
   await requireModule('blog');

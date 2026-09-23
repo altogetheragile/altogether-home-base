@@ -68,7 +68,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: p.white }}>
       <JsonLd
-        data={courseJsonLd({
+        data={await courseJsonLd({
           name: course.title,
           description: truncateText(course.description || `Agile training course: ${course.title}.`, 300),
           path: `/courses/${id}`,

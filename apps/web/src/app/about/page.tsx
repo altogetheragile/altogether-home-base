@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getAllApprovedFeedback } from '@/lib/testimonials';
-import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME } from '@/lib/seo';
+import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName } from '@/lib/seo';
 import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
@@ -13,14 +13,16 @@ import { getCopy, lines, list } from '@/lib/copy';
 export const dynamic = 'force-dynamic';
 
 
-export const metadata: Metadata = {
-  ...buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+  ...(await buildMetadata({
     title: 'About Alun - Altogether Agile',
     description: 'Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.',
     path: '/about',
-  }),
-  title: { absolute: 'About Alun - Altogether Agile' },
-};
+  })),
+  title: { absolute: `About Alun - ${await siteName()}` },
+  };
+}
 
 const ArrowRight = () => <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z" /></svg>;
 const Chat = () => <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H40A16,16,0,0,0,24,64V224a15.85,15.85,0,0,0,9.24,14.5A16.13,16.13,0,0,0,40,240a15.89,15.89,0,0,0,10.25-3.78.69.69,0,0,0,.13-.11L82.5,208H216a16,16,0,0,0,16-16V64A16,16,0,0,0,216,48ZM216,192H82.5a16,16,0,0,0-10.25,3.78.69.69,0,0,0-.13.11L40,224V64H216Z" /></svg>;

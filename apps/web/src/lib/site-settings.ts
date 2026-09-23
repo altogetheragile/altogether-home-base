@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 
 export type SiteSettings = {
@@ -31,8 +32,13 @@ export type SiteSettings = {
   brand?: { colors?: Record<string, unknown> | null; images?: Record<string, unknown> | null } | null;
 };
 
-/** Single-row site settings (feature flags, contact, social). Anon-readable. */
-export async function getSiteSettings(): Promise<SiteSettings> {
+/** Single-row site settings (feature flags, contact, social, brand). Anon-readable.
+ *
+ *  Cached per request. The layout reads it, every page's generateMetadata reads it, and several
+ *  JSON-LD builders read it; without this each of those was a separate round trip for the same
+ *  row. `cache` is React's, so the deduplication lasts exactly one request and never leaks one
+ *  visitor's view of the settings into another's. */
+export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   try {
     const supabase = await createClient();
     const { data } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
@@ -40,4 +46,4 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   } catch {
     return {};
   }
-}
+});
