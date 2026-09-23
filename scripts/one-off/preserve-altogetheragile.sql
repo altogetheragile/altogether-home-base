@@ -49,11 +49,17 @@ on conflict (key) do nothing;
 
 
 -- 2. The founder's photograph and portrait, which were the shipped defaults and are now empty.
+--
+--    Merged rather than jsonb_set: jsonb_set cannot create a missing intermediate key, so on a
+--    row whose brand has no "images" object at all it would quietly do nothing and report
+--    success. This row does have one, holding the logo, but a statement that works only because
+--    of that is a statement that breaks the next time it is reused.
 update public.site_settings
-   set brand = jsonb_set(
-         jsonb_set(coalesce(brand, '{}'::jsonb), '{images,founderPhoto}',
-                   to_jsonb('/images/alun.webp'::text), true),
-         '{images,founderPortrait}', to_jsonb('/images/alun-illustrated.webp'::text), true)
+   set brand = coalesce(brand, '{}'::jsonb) || jsonb_build_object(
+         'images',
+         coalesce(brand -> 'images', '{}'::jsonb) || jsonb_build_object(
+           'founderPhoto',    '/images/alun.webp',
+           'founderPortrait', '/images/alun-illustrated.webp'))
  where id = '00000000-0000-0000-0000-000000000001'
    and coalesce(brand #>> '{images,founderPhoto}', '') = '';
 
