@@ -16,12 +16,11 @@ import { FounderPortrait } from '@/components/FounderPortrait';
 export const dynamic = 'force-dynamic';
 
 const TITLE = 'Altogether Agile - Agile Coaching & Training';
-const DESC =
-  'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.';
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('home');
   return {
-  ...(await buildMetadata({ title: TITLE, description: DESC, path: '/' })),
+  ...(await buildMetadata({ title: TITLE, description: t('home.meta.description'), path: '/' })),
   // Absolute title so the layout's "%s - Altogether Agile" template is not applied.
   title: { absolute: TITLE },
   };

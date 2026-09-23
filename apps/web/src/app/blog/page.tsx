@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('blog');
   return buildMetadata({
   title: 'Blog',
-  description:
-    'Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation.',
+  description: t('blog.meta.description'),
   path: '/blog',
 });
 }

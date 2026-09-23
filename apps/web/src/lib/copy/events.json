@@ -2,6 +2,11 @@
   "page": "events",
   "label": "Events",
   "entries": {
+    "events.meta.description": {
+      "value": "Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "events.hero.eyebrow": {
       "value": "Courses & Events",
       "label": "Hero eyebrow",

@@ -2,6 +2,11 @@
   "page": "blog",
   "label": "Blog",
   "entries": {
+    "blog.meta.description": {
+      "value": "Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "blog.hero.heading": {
       "value": "Blog",
       "label": "Hero heading",

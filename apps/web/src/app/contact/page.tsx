@@ -12,10 +12,11 @@ export const dynamic = 'force-dynamic';
 const CONTACT_EMAIL = 'info@altogetheragile.com';
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('contact');
   return {
   ...(await buildMetadata({
     title: 'Contact - Altogether Agile',
-    description: 'Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session.',
+    description: t('contact.meta.description'),
     path: '/contact',
   })),
   title: { absolute: `Contact - ${await siteName()}` },

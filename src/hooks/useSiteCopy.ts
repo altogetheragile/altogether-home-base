@@ -2,9 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// `site_copy` is applied by hand in the Supabase dashboard (the migration history is out of sync
-// with remote), so it is not in the generated types yet. Cast in this one place, and drop the cast
+// `site_copy` is not in the generated types yet, so it is cast in this one place. Drop the cast
 // when the types are next regenerated. Same arrangement as zoo_copy.
+//
+// This used to say the table was applied by hand because the migration history was out of sync
+// with remote. That was true and is not any more: the history was baselined on 23 September (#747)
+// and `supabase db push` works. Schema changes go through a migration now.
 const db = supabase as unknown as {
   from: (t: string) => {
     select: (c: string) => { order: (c: string, o: { ascending: boolean }) => Promise<{ data: CopyRow[] | null; error: { message: string } | null }> };

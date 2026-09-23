@@ -14,10 +14,11 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('coaching');
   return {
   ...(await buildMetadata({
     title: 'Coaching - Altogether Agile',
-    description: 'Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience.',
+    description: t('coaching.meta.description'),
     path: '/coaching',
   })),
   title: { absolute: `Coaching - ${await siteName()}` },
