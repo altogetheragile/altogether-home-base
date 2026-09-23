@@ -9,6 +9,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { colors as p } from '@/theme/colors';
+import { useCompanyName } from '@/hooks/useCompanyName';
 
 const categoryColours: Record<string, { bg: string; text: string; pill: string; light: string }> = {
   Analysis:     { bg: '#1A9090', text: '#fff', pill: '#0D5C5C', light: '#E6F5F5' },
@@ -124,6 +125,7 @@ const FILTERS = ['All', 'Analysis', 'Planning', 'Delivery', 'Facilitation', 'Str
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 const Knowledge: React.FC = () => {
+  const companyName = useCompanyName();
   const bookingHref = useBookingHref();
   const isMobile = useIsMobile();
   const [activeFilter, setActiveFilter] = useState('All');
@@ -161,9 +163,9 @@ const Knowledge: React.FC = () => {
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
       <Helmet>
-        <title>Knowledge Base - Altogether Agile</title>
+        <title>Knowledge Base</title>
         <meta name="description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
-        <meta property="og:title" content="Knowledge Base - Altogether Agile" />
+        <meta property="og:title" content={`Knowledge Base - ${companyName}`} />
         <meta property="og:description" content="Explore 80+ agile techniques, frameworks, and practices. Practical guides for Scrum, Kanban, facilitation, and team coaching." />
         <meta property="og:image" content={`${SITE_URL}/og-image.png`} />
         <link rel="canonical" href={`${SITE_URL}/knowledge`} />
@@ -340,7 +342,7 @@ const Knowledge: React.FC = () => {
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Go Deeper</div>
             <h2 style={{ color: '#fff', fontSize: isMobile ? 26 : 34, fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>Want to use these techniques with your team?</h2>
             <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
-              Altogether Agile runs hands-on workshops and certification courses built around these techniques - with real scenarios, not toy examples.
+              {companyName} runs hands-on workshops and courses built around these techniques - with real scenarios, not toy examples.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>

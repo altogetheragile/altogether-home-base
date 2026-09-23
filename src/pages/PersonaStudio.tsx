@@ -11,7 +11,7 @@ const PersonaStudioPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Persona Studio - Altogether Agile"
+        title="Persona Studio"
         description="Build and export a coached persona: a named character with goals, pains and behaviours, grounded in Jobs to Be Done. Export to PNG, PDF, JSON and Markdown."
         path="/personas"
       />

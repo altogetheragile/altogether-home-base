@@ -41,7 +41,7 @@ const KnowledgeBaseTechnique = () => {
 
   if (kb.loading) {
     return (
-      <KnowledgeBaseLayout title="Technique - Altogether Agile">
+      <KnowledgeBaseLayout title="Technique">
         <p style={{ color: p.muted }}>Loading...</p>
       </KnowledgeBaseLayout>
     );
@@ -50,7 +50,7 @@ const KnowledgeBaseTechnique = () => {
   if (!technique) {
     if (kb.getArtifact(id)) return <Navigate to={`/knowledge-base/artifacts/${id}`} replace />;
     return (
-      <KnowledgeBaseLayout title="Not found - Altogether Agile" crumbs={[{ label: 'Techniques', to: '/knowledge-base/techniques' }, { label: 'Not found' }]}>
+      <KnowledgeBaseLayout title="Not found" crumbs={[{ label: 'Techniques', to: '/knowledge-base/techniques' }, { label: 'Not found' }]}>
         <p style={{ color: p.body }}>That technique could not be found.</p>
       </KnowledgeBaseLayout>
     );
@@ -63,7 +63,7 @@ const KnowledgeBaseTechnique = () => {
 
   return (
     <KnowledgeBaseLayout
-      title={`${technique.name} - Technique - Altogether Agile`}
+      title={`${technique.name} - Technique`}
       description={technique.description.slice(0, 160)}
       canonicalPath={`/knowledge-base/techniques/${technique.id}`}
       crumbs={[{ label: 'Map', to: '/knowledge-base' }, { label: 'Techniques', to: '/knowledge-base/techniques' }, { label: technique.name }]}

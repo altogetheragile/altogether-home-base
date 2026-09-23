@@ -54,7 +54,7 @@ export function Navigation({
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" aria-label="Altogether Agile home">
+        <Link href="/" aria-label={`${settings.company_name ?? 'Home'}, home`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <SiteLogo brand={settings.brand} companyName={settings.company_name} height={36} className="" />
         </Link>

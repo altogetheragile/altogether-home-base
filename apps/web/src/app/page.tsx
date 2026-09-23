@@ -15,14 +15,14 @@ import { FounderPortrait } from '@/components/FounderPortrait';
 
 export const dynamic = 'force-dynamic';
 
-const TITLE = 'Altogether Agile - Agile Coaching & Training';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy('home');
+  const title = t('home.meta.title');
   return {
-  ...(await buildMetadata({ title: TITLE, description: t('home.meta.description'), path: '/' })),
+  ...(await buildMetadata({ title, description: t('home.meta.description'), path: '/' })),
   // Absolute title so the layout's "%s - Altogether Agile" template is not applied.
-  title: { absolute: TITLE },
+  title: { absolute: title },
   };
 }
 

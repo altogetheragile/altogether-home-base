@@ -165,7 +165,7 @@ const BMCGenerator = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Helmet>
-        <title>Business Model Canvas - Altogether Agile</title>
+        <title>Business Model Canvas</title>
         <meta name="description" content="Build a Business Model Canvas through a coaching conversation, in your own words, or generate a draft with AI to refine. Export to PNG and PDF." />
         <link rel="canonical" href={`${SITE_URL}/bmc-generator`} />
       </Helmet>

@@ -58,7 +58,7 @@ const KnowledgeBaseTechniques = () => {
 
   return (
     <KnowledgeBaseLayout
-      title="Technique Library - Knowledge Base - Altogether Agile"
+      title="Technique Library - Knowledge Base"
       description="Browse the agile technique library: search and filter practical techniques across the ISA-O3 horizons."
       canonicalPath="/knowledge-base/techniques"
       crumbs={[{ label: 'Map', to: '/knowledge-base' }, { label: 'Techniques' }]}

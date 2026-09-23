@@ -523,7 +523,7 @@ export default function ArtifactViewer() {
         <div className="container mx-auto px-4 py-3">
           {/* Top row: Logo and actions */}
           <div className="flex items-center justify-between mb-2">
-            <AppLink to="/" aria-label="Altogether Agile home" className="flex-shrink-0">
+            <AppLink to="/" aria-label="Home" className="flex-shrink-0">
               <LogoFull height={32} />
             </AppLink>
             <div className="flex gap-2">

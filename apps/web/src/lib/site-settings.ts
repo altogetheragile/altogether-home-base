@@ -30,6 +30,8 @@ export type SiteSettings = {
   show_testimonial_company?: boolean | null;
   /** Whether this site has a founder section at all. Some will not. */
   show_founder?: boolean | null;
+  /** Whether the Terms, Privacy and Cookie pages are published. */
+  show_legal?: boolean | null;
   /** The person named in Person structured data and image alt text. */
   founder_name?: string | null;
   /** Per-site brand overrides. See @altogether/ui/brand resolveColors. */

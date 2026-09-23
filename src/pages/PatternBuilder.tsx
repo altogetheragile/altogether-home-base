@@ -142,7 +142,7 @@ const PatternBuilder = () => {
 
   return (
     <KnowledgeBaseLayout
-      title="Pattern Builder - Knowledge Base - Altogether Agile"
+      title="Pattern Builder - Knowledge Base"
       description="Describe your product or project scenario and get a sequenced flow of ISA-O3 artifacts and techniques."
       canonicalPath="/knowledge-base/pattern-builder"
       crumbs={[{ label: 'Map', to: '/knowledge-base' }, { label: 'Pattern Builder' }]}

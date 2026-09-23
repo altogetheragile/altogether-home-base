@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { marked } from 'marked';
 import { getCourse } from '@/lib/events';
 import { durationLong, formatPrice, formatDateRange, type EventTemplate, type ScheduledEvent } from '@/lib/events-types';
-import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText } from '@/lib/seo';
+import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText , siteName } from '@/lib/seo';
 import { InterestForm } from './InterestForm';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const course = await getCourse(id);
-  if (!course) return { title: 'Course Not Found - Altogether Agile' };
+  if (!course) return { title: `Course Not Found - ${await siteName()}` };
   const description = course.seo_description || truncateText(course.description || `Agile training course: ${course.title}.`, 160);
   return buildMetadata({
     title: course.seo_title || course.title,

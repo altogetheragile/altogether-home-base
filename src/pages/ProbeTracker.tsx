@@ -11,7 +11,7 @@ const ProbeTrackerPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Probe Tracker - Altogether Agile"
+        title="Probe Tracker"
         description="Run your output options as safe-to-fail experiments. A simple kanban moves each probe from Planned to Running to Kept or Killed, with the signal that would prove it wrong. Export to PNG, PDF, JSON and Markdown."
         path="/probes"
       />

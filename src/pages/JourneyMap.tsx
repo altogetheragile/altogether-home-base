@@ -11,7 +11,7 @@ const JourneyMapPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Journey Map Studio - Altogether Agile"
+        title="Journey Map Studio"
         description="Map a persona's journey stage by stage: what they are doing, thinking and feeling, the pains and the opportunities. Coached throughout, with pains and opportunities you can send to the backlog. Export to PNG, PDF, JSON and Markdown."
         path="/journey-map"
       />

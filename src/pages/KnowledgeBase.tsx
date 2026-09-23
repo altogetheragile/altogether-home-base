@@ -5,7 +5,7 @@ import { colors as p } from '@/theme/colors';
 const KnowledgeBase = () => {
   return (
     <KnowledgeBaseLayout
-      title="Knowledge Base - Value Horizons - Altogether Agile"
+      title="Knowledge Base - Value Horizons"
       description="The ISA-O3 Value Horizons map: artifacts and techniques across Organisation, Coordination and Team horizons."
       canonicalPath="/knowledge-base"
     >

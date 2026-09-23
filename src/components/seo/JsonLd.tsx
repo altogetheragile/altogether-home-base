@@ -7,6 +7,11 @@ import { SITE_URL } from '@/config/featureFlags';
 // render to resolve it in. scripts/prerender.mjs reads the real value.
 const FOUNDER_NAME = 'Alun Davies-Baker';
 
+// The same reasoning as FOUNDER_NAME. These are pure components with no server render to resolve a
+// setting in, and prerender.mjs writes what a crawler actually reads. A second site should still
+// not have this one's name in its DOM, so the value is in one place rather than five.
+const COMPANY_NAME = 'Altogether Agile';
+
 interface JsonLdProps {
   data: Record<string, unknown>;
 }
@@ -21,7 +26,7 @@ export const OrganizationSchema = () => (
   <JsonLd data={{
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Altogether Agile',
+    name: COMPANY_NAME,
     url: SITE_URL,
     logo: `${SITE_URL}/og-image.png`,
     description: 'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
@@ -56,11 +61,11 @@ export const CourseSchema = ({ title, description, url, startDate, endDate, loca
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: title,
-    description: description || `${title} - professional training course by Altogether Agile.`,
+    description: description || `${title} - professional training course by ${COMPANY_NAME}.`,
     url,
     provider: {
       '@type': 'Organization',
-      name: 'Altogether Agile',
+      name: COMPANY_NAME,
       url: SITE_URL,
     },
     ...(startDate && {
@@ -111,7 +116,7 @@ export const BlogPostSchema = ({ title, description, url, datePublished, dateMod
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Altogether Agile',
+      name: COMPANY_NAME,
       logo: {
         '@type': 'ImageObject',
         url: `${SITE_URL}/og-image.png`,
@@ -140,7 +145,7 @@ export const TechniqueSchema = ({ name, description, url, category }: {
     }),
     author: {
       '@type': 'Organization',
-      name: 'Altogether Agile',
+      name: COMPANY_NAME,
     },
   }} />
 );

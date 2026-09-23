@@ -86,7 +86,7 @@ const CanvasCatalogue = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Canvas Catalogue - Altogether Agile"
+        title="Canvas Catalogue"
         description="Coached strategy canvases: Business Model Canvas, Business Case, and Product Vision. Fill each through a coaching conversation, then export."
         path="/canvases"
       />

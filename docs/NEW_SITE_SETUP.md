@@ -164,6 +164,44 @@ new site has its own.
 
 ---
 
+## 5b. What A Fresh Instance Shows, Measured
+
+Standing one up on 23 September found four things an audit had not, and they are recorded here
+because each was invisible from inside a working site.
+
+**No `site_settings` row.** The App reads and writes a fixed id, and an `UPDATE` matching nothing
+is not an error. A new owner would change their company name, click Save, be told nothing, and see
+nothing change. Fixed by a migration that inserts the row.
+
+**The logo fell back to this repository's lockup.** A favicon can fall back to a shipped file; a
+logo is a claim about whose site it is. A site with no logo now renders its own name as a
+wordmark.
+
+**The SPA shell's head was hardcoded.** `index.html` carried the name, description and Open Graph
+title, and that is what a browser shows before any JavaScript runs. `prerender.mjs` rewrites it
+from `site_settings` now.
+
+**The legal pages published one company's terms**, complete with registration number and
+registered office. The routes stay reachable, because a site nobody can read the terms of is not a
+configuration anyone wants, but with `show_legal` false they say the page is unwritten rather than
+presenting somebody else's liability wording as yours. Off by default.
+
+### What is left, after the sweep
+
+From 177 references this morning to **103**, of which only a handful are reachable by a stranger
+on an unconfigured site:
+
+- The `/about` title prefix and body copy still say "Alun", **and they are `site_copy` rows**, so a
+  new site edits them in Admin rather than in code.
+- `src/pages/Terms.tsx`, `Privacy.tsx` and `CookiePolicy.tsx` still contain this company's legal
+  text, now behind the placeholder. **A new site writes its own.**
+- `GameLinks` names the company in the zoo game's way-home label, as a prop default. The zoo game
+  is switched off by default, so a new site never renders it.
+- `NEXT_PUBLIC_SITE_URL` must be set per deployment, or canonicals point at altogetheragile.com.
+- The App's Admin has four hardcoded mentions, behind a login.
+
+---
+
 ## 6. The Blocker, Tested
 
 **FIXED 23 September (#747).** What follows is the diagnosis, kept because it explains the shape

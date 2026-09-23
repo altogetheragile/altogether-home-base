@@ -11,7 +11,7 @@ const BenefitsScorecardPage = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Benefits Scorecard - Altogether Agile"
+        title="Benefits Scorecard"
         description="Track whether the numbers actually moved. Each outcome carries a leading indicator, a target and dated readings, with a simple trend line and a Benefits on a Page PDF export."
         path="/benefits"
       />

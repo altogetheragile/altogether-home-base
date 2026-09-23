@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { LucideIcon } from 'lucide-react';
+import { useCompanyName } from '@/hooks/useCompanyName';
 
 /* ─── Navigation data ─── */
 
@@ -182,6 +183,7 @@ export const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: st
 /* ─── Main layout ─── */
 
 const AdminLayout = () => {
+  const companyName = useCompanyName();
   const location = useLocation();
   const { user } = useAuth();
   const { data: userRole, isLoading: roleLoading } = useUserRole();
@@ -230,7 +232,7 @@ const AdminLayout = () => {
               <Layers className="h-4 w-4 text-white" />
             </div>
             <div className="leading-tight">
-              <div className="text-[13px] font-medium">Altogether Agile</div>
+              <div className="text-[13px] font-medium">{companyName}</div>
               <div className="text-[11px] text-muted-foreground">Admin Panel</div>
             </div>
           </Link>

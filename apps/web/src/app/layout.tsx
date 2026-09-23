@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      default: 'Altogether Agile - Agile Coaching & Training',
+      default: settings.company_description?.trim() ? `${name} - ${settings.company_description.trim().split('.')[0]}` : name,
       template: `%s - ${name}`,
     },
     description:
