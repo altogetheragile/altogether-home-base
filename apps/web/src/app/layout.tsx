@@ -6,6 +6,8 @@ import { Footer } from '@/components/Footer';
 import { brandCssVarsFor, brandImagesFor } from '@/lib/brand';
 import { getCurrentUser, displayName } from '@/lib/auth';
 import { getCopy, REGISTRIES } from '@/lib/copy';
+import { isAdmin } from '@/lib/auth';
+import { EditThisPage } from '@/components/edit/EditThisPage';
 import './globals.css';
 
 /** Generated rather than static, because the favicon is now this site's rather than this
@@ -35,7 +37,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // the `aa-auth` presence cookie, which could only ever say that somebody was signed in.
   // The menu labels resolve here because getCopy needs a server client and Navigation is a
   // client component. Passing the resolved strings down costs one query the layout already waits on.
-  const [settings, user, t] = await Promise.all([getSiteSettings(), getCurrentUser(), getCopy('navigation')]);
+  const [settings, user, t, admin] = await Promise.all([
+    getSiteSettings(),
+    getCurrentUser(),
+    getCopy('navigation'),
+    isAdmin(),
+  ]);
   const navKeys = REGISTRIES.find((r) => r.page === 'navigation')?.entries ?? {};
   const labels = Object.fromEntries(Object.keys(navKeys).map((k) => [k, t(k)]));
   return (
@@ -47,6 +54,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} />
           <div className="flex-1">{children}</div>
           <Footer settings={settings} year={new Date().getFullYear()} t={t} />
+          {/* Not mounted at all for anyone else, so a visitor never downloads the editor. The
+              actions it calls check again, because not mounting a component is not a permission. */}
+          {admin && <EditThisPage />}
         </div>
       </body>
     </html>
