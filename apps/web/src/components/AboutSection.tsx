@@ -35,7 +35,7 @@ export default function AboutSection({ bookingUrl }: { bookingUrl: string }) {
         .aa-cred-item:nth-child(5) { animation-delay: 0.5s; }
         .aa-cred-item:nth-child(6) { animation-delay: 0.6s; }
         .aa-photo-wrap:hover .aa-photo-overlay { opacity: 1; }
-        .aa-cta-primary:hover { background: #E6870E !important; transform: translateY(-1px); }
+        .aa-cta-primary:hover { background: ${p.orangeHover} !important; transform: translateY(-1px); }
         .aa-cta-secondary:hover { color: var(--aa-deep-teal) !important; gap: 10px !important; }
         .aa-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
         @media (max-width: 767px) { .aa-about-grid { grid-template-columns: 1fr; gap: 40px; } }

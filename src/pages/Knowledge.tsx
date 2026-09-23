@@ -174,7 +174,7 @@ const Knowledge: React.FC = () => {
       <Navigation />
 
       {/* ─── PAGE INTRO ─── */}
-      <div id="main-content" style={{ background: '#006666', padding: isMobile ? '40px 20px 0' : '64px 48px 0' }}>
+      <div id="main-content" style={{ background: p.heroTeal, padding: isMobile ? '40px 20px 0' : '64px 48px 0' }}>
         <div className="aa-page-intro" style={{ paddingBottom: isMobile ? 32 : 48, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>Knowledge Base</div>
@@ -334,7 +334,7 @@ const Knowledge: React.FC = () => {
       </div>
 
       {/* ─── CTA BAND ─── */}
-      <div style={{ background: '#006666', padding: isMobile ? '40px 20px' : '56px 48px' }}>
+      <div style={{ background: p.heroTeal, padding: isMobile ? '40px 20px' : '56px 48px' }}>
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 40, alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between' }}>
           <div style={{ maxWidth: 520 }}>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Go Deeper</div>

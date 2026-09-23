@@ -62,7 +62,7 @@ export default async function EventsPage() {
       `}</style>
 
       {/* Hero (server-rendered: H1 + intro are the SEO-critical content) */}
-      <div style={{ background: '#006666' }} className="aa-hero-pad">
+      <div style={{ background: c.heroTeal }} className="aa-hero-pad">
         <div className="aa-page-intro" style={{ paddingBottom: 48, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
             <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('events.hero.eyebrow')}</div>
@@ -97,7 +97,7 @@ export default async function EventsPage() {
       <EventsList courses={courses} firstNameOnly={firstNameOnly} />
 
       {/* Bespoke CTA */}
-      <div style={{ background: '#006666', padding: '56px 48px' }}>
+      <div style={{ background: c.heroTeal, padding: '56px 48px' }}>
         <div className="aa-bespoke" style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div>
             <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('events.bespoke.eyebrow')}</div>

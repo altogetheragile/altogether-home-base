@@ -158,7 +158,7 @@ export const HomepageStrip: React.FC = () => {
   };
 
   return (
-    <div style={{ background: '#006666', padding: '56px 48px' }}>
+    <div style={{ background: p.heroTeal, padding: '56px 48px' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h2 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0 }}>What practitioners say</h2>
       </div>

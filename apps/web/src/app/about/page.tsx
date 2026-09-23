@@ -101,7 +101,7 @@ export default async function AboutPage() {
       `}</style>
 
       {/* HERO */}
-      <div id="main-content" className="aa-about-hero" style={{ background: '#006666' }}>
+      <div id="main-content" className="aa-about-hero" style={{ background: p.heroTeal }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
           <div>
             <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('about.hero.eyebrow')}</div>
@@ -181,7 +181,7 @@ export default async function AboutPage() {
       )}
 
       {/* MISSION */}
-      <div className="aa-section-pad" style={{ background: '#006666' }}>
+      <div className="aa-section-pad" style={{ background: p.heroTeal }}>
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
           <Heading label={t('about.mission.label')} title={t('about.mission.heading')} light />
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>{t('about.mission.p1')}</p>

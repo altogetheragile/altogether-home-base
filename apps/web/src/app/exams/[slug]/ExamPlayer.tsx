@@ -371,7 +371,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
             return (
               <li key={qq.id} style={{ ...card, padding: 16 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                  {ok ? <CheckCircle2 size={18} color="#059669" style={{ marginTop: 2, flexShrink: 0 }} /> : <XCircle size={18} color="#DC2626" style={{ marginTop: 2, flexShrink: 0 }} />}
+                  {ok ? <CheckCircle2 size={18} color="#059669" style={{ marginTop: 2, flexShrink: 0 }} /> : <XCircle size={18} color={c.danger} style={{ marginTop: 2, flexShrink: 0 }} />}
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: c.body }}>{i + 1}. {qq.question_text}</p>
                 </div>
                 <ul style={{ listStyle: 'none', padding: '0 0 0 26px', margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -414,7 +414,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
           {flaggedCount > 0 && <span style={{ fontSize: 13, color: '#F59E0B', display: 'flex', alignItems: 'center', gap: 3 }}><Flag size={12} /> {flaggedCount} flagged</span>}
         </div>
         {mode === 'exam' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: urgent ? '#FEF2F2' : c.skyTeal, padding: '6px 14px', borderRadius: 8, color: urgent ? '#DC2626' : c.deepTeal, fontWeight: 700, fontSize: 16, fontVariantNumeric: 'tabular-nums' }}><Clock size={16} /> {mm}:{ss.toString().padStart(2, '0')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: urgent ? '#FEF2F2' : c.skyTeal, padding: '6px 14px', borderRadius: 8, color: urgent ? c.danger : c.deepTeal, fontWeight: 700, fontSize: 16, fontVariantNumeric: 'tabular-nums' }}><Clock size={16} /> {mm}:{ss.toString().padStart(2, '0')}</div>
         ) : <span style={{ fontSize: 13, color: c.midTeal, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><BookOpen size={14} /> Practice Mode</span>}
       </div>
 

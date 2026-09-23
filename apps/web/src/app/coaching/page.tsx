@@ -99,7 +99,7 @@ export default async function CoachingPage() {
       `}</style>
 
       {/* HERO */}
-      <div id="main-content" className="aa-coach-hero" style={{ background: '#006666' }}>
+      <div id="main-content" className="aa-coach-hero" style={{ background: p.heroTeal }}>
         <div style={{ maxWidth: 680 }}>
           <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('coaching.hero.eyebrow')}</div>
           <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 50px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('coaching.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
@@ -160,7 +160,7 @@ export default async function CoachingPage() {
       ))}
 
       {/* CREDENTIALS */}
-      <div className="aa-section-pad" style={{ background: '#006666' }}>
+      <div className="aa-section-pad" style={{ background: p.heroTeal }}>
         <Heading label={t('coaching.why.label')} title={t('coaching.why.heading')} light />
         <div className="aa-creds-grid">
           {credentials.map((cred) => (

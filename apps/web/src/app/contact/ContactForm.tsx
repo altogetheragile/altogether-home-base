@@ -73,8 +73,8 @@ export function ContactForm() {
 
   const set = (k: keyof Form, v: string) => { setForm((d) => ({ ...d, [k]: v })); if (vErrors[k]) setVErrors((e) => ({ ...e, [k]: undefined })); };
   const labelStyle: React.CSSProperties = { color: p.deepTeal, fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 };
-  const inputStyle = (invalid?: boolean): React.CSSProperties => ({ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${invalid ? '#DC2626' : p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box' });
-  const err = (k: keyof Form) => vErrors[k] && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{vErrors[k]}</div>;
+  const inputStyle = (invalid?: boolean): React.CSSProperties => ({ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${invalid ? p.danger : p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box' });
+  const err = (k: keyof Form) => vErrors[k] && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors[k]}</div>;
 
   return (
     <form onSubmit={handleSubmit} style={{ background: p.white, borderRadius: 16, padding: '40px 40px', border: `1px solid ${p.paleTeal}` }}>
@@ -122,7 +122,7 @@ export function ContactForm() {
           <label htmlFor="contact-website">Website</label>
           <input id="contact-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
         </div>
-        {error && <div style={{ color: '#DC2626', fontSize: 13, textAlign: 'center' }}>{error}</div>}
+        {error && <div style={{ color: p.danger, fontSize: 13, textAlign: 'center' }}>{error}</div>}
         <button type="submit" disabled={submitting} style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
           {submitting ? 'Sending...' : 'Send Message'}
         </button>

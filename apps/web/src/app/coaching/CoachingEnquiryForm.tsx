@@ -57,7 +57,7 @@ export function CoachingEnquiryForm() {
 
   const field = (key: 'name' | 'email' | 'message', value: string) => setForm((d) => ({ ...d, [key]: value }));
   const clearErr = (key: 'name' | 'email' | 'message') => { if (vErrors[key]) setVErrors((e) => ({ ...e, [key]: undefined })); };
-  const inputStyle = (invalid?: boolean): React.CSSProperties => ({ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${invalid ? '#DC2626' : p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box' });
+  const inputStyle = (invalid?: boolean): React.CSSProperties => ({ width: '100%', padding: '12px 16px', borderRadius: 8, border: `1px solid ${invalid ? p.danger : p.paleTeal}`, fontSize: 14, color: p.body, background: p.skyTeal, outline: 'none', boxSizing: 'border-box' });
   const labelStyle: React.CSSProperties = { color: p.deepTeal, fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 };
 
   return (
@@ -66,12 +66,12 @@ export function CoachingEnquiryForm() {
         <div>
           <label style={labelStyle}>Your name</label>
           <input type="text" placeholder="Jane Smith" value={form.name} onChange={(e) => { field('name', e.target.value); clearErr('name'); }} style={inputStyle(!!vErrors.name)} />
-          {vErrors.name && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{vErrors.name}</div>}
+          {vErrors.name && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors.name}</div>}
         </div>
         <div>
           <label style={labelStyle}>Email address</label>
           <input type="email" placeholder="jane@company.com" value={form.email} onChange={(e) => { field('email', e.target.value); clearErr('email'); }} style={inputStyle(!!vErrors.email)} />
-          {vErrors.email && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{vErrors.email}</div>}
+          {vErrors.email && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors.email}</div>}
         </div>
         <div>
           <label style={labelStyle}>I&apos;m interested in</label>
@@ -86,9 +86,9 @@ export function CoachingEnquiryForm() {
         <div>
           <label style={labelStyle}>What&apos;s on your mind?</label>
           <textarea placeholder="Tell me a bit about what you're working through or what you're looking for..." value={form.message} onChange={(e) => { field('message', e.target.value); clearErr('message'); }} rows={5} style={{ ...inputStyle(!!vErrors.message), resize: 'vertical', fontFamily: 'inherit' }} />
-          {vErrors.message && <div style={{ color: '#DC2626', fontSize: 12, marginTop: 4 }}>{vErrors.message}</div>}
+          {vErrors.message && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors.message}</div>}
         </div>
-        {error && <div style={{ color: '#DC2626', fontSize: 13, textAlign: 'center' }}>{error}</div>}
+        {error && <div style={{ color: p.danger, fontSize: 13, textAlign: 'center' }}>{error}</div>}
         <button onClick={handleSubmit} disabled={submitting} style={{ background: submitting ? p.muted : p.orange, color: submitting ? p.white : p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: submitting ? 0.7 : 1 }}>
           {submitting ? 'Sending...' : <>Send enquiry <ArrowRight /></>}
         </button>
