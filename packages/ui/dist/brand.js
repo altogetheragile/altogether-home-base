@@ -1,2 +1,2 @@
-export { cssVarName, cssVarsFor, hexToHslTriplet, resolveColors } from './chunk-BZWDV45S.js';
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, resolveColors, resolveImages } from './chunk-QHXCS3XX.js';
 import './chunk-63HQX2YB.js';

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { colors } from '@altogether/ui/tokens';
-import { resolveColors, cssVarsFor, hexToHslTriplet, cssVarName } from '@altogether/ui/brand';
+import { resolveColors, cssVarsFor, hexToHslTriplet, cssVarName, resolveImages, defaultImages } from '@altogether/ui/brand';
 
 // Lives here rather than in packages/ui because the root suite only collects src/**.
 //
@@ -65,5 +65,25 @@ describe('the custom properties both apps render from', () => {
     expect(vars['--aa-orange']).toBe('#7C3AED');
     expect(vars['--aa-orange-hsl']).toBe(hexToHslTriplet('#7C3AED'));
     expect(vars['--aa-orange-hsl']).not.toBe('33.3 100% 54.1%');
+  });
+});
+
+describe('resolving a site logo, favicon and share image', () => {
+  it('is the files this repository ships when nothing is set', () => {
+    expect(resolveImages(null)).toEqual(defaultImages);
+    expect(resolveImages({ images: {} })).toEqual(defaultImages);
+  });
+
+  it('takes an uploaded URL', () => {
+    const r = resolveImages({ images: { logo: 'https://cdn.example.com/logo.svg' } });
+    expect(r.logo).toBe('https://cdn.example.com/logo.svg');
+    expect(r.favicon).toBe(defaultImages.favicon);
+  });
+
+  it('refuses a relative path, which would resolve against whoever is rendering', () => {
+    // An Open Graph image especially: a crawler would fetch a path that does not exist.
+    for (const bad of ['/logo.svg', 'logo.svg', '//cdn/logo.svg', 'javascript:alert(1)', 'data:image/svg+xml,x', '', 42, null]) {
+      expect(resolveImages({ images: { logo: bad } }).logo, `accepted ${JSON.stringify(bad)}`).toBe(defaultImages.logo);
+    }
   });
 });

@@ -60,13 +60,13 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
  *  in `src/components/seo/JsonLd.tsx` and `scripts/prerender.mjs` never reaches a crawler for the
  *  home page. This one had no logo, no founder and no contact point, so the front page of the site
  *  was emitting the least structured data of the three. */
-export function organizationJsonLd() {
+export function organizationJsonLd(logo?: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/og-image.png`,
+    logo: logo ?? `${SITE_URL}/og-image.png`,
     description:
       'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.',
     founder: {

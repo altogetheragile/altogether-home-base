@@ -4,7 +4,10 @@ import type { SiteSettings } from '@/lib/site-settings';
 
 // Server component (no interactivity). The auth-only links (Dashboard, Admin) from
 // the Vite footer are intentionally dropped - this is the public content surface.
-export function Footer({ settings, year }: { settings: SiteSettings; year: number }) {
+export function Footer({ settings, year, logo }: { settings: SiteSettings; year: number
+  /** This site's lockup. */
+  logo: string;
+}) {
   const flag = (key: keyof SiteSettings, def: boolean) => {
     const v = settings[key];
     return v == null ? def : !!v;
@@ -35,7 +38,7 @@ export function Footer({ settings, year }: { settings: SiteSettings; year: numbe
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/lockup-horizontal-tight.svg" alt="Altogether Agile" className="mb-4 h-8 w-auto" />
+            <img src={logo} alt={settings.company_name ?? ''} className="mb-4 h-8 w-auto" />
             <p className="text-muted-foreground">
               {settings.company_description ||
                 'Empowering teams and organizations through agile training and coaching.'}

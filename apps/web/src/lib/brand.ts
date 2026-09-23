@@ -1,5 +1,5 @@
 import { colors as tokenColors } from '@altogether/ui/tokens';
-import { resolveColors, cssVarsFor, type BrandOverrides } from '@altogether/ui/brand';
+import { resolveColors, cssVarsFor, resolveImages, type BrandOverrides } from '@altogether/ui/brand';
 
 // ============= The palette, and why these are not hex values =============
 //
@@ -43,4 +43,9 @@ export const brandCssVars = cssVarsFor(tokenColors) as Record<`--aa-${string}`, 
  *  on the first frame rather than changing colour once JavaScript arrives. */
 export function brandCssVarsFor(overrides: BrandOverrides): Record<`--aa-${string}`, string> {
   return cssVarsFor(resolveColors(overrides)) as Record<`--aa-${string}`, string>;
+}
+
+/** The logo, favicon and share image this site uses. Defaults to the files in `public/`. */
+export function brandImagesFor(overrides: Parameters<typeof resolveImages>[0]) {
+  return resolveImages(overrides);
 }

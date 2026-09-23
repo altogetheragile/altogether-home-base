@@ -7,6 +7,7 @@ import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines } from '@/lib/copy';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
+import { brandImagesFor } from '@/lib/brand';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
 import AboutSection from '@/components/AboutSection';
@@ -47,7 +48,7 @@ export default async function HomePage() {
 
   return (
     <div className="aa-page">
-      <JsonLd data={organizationJsonLd()} />
+      <JsonLd data={organizationJsonLd(brandImagesFor(settings.brand).ogImage)} />
       <main id="main-content">
         {/* HERO */}
         <div className="aa-hero">

@@ -23,5 +23,15 @@ declare const cssVarName: (token: string) => string;
  *  triplet, for the Tailwind theme. Spread onto a root element's style, or written with
  *  setProperty. Both apps use this, so a site's brand reaches both the same way. */
 declare function cssVarsFor(palette: Palette): Record<string, string>;
+type ImageName = 'logo' | 'favicon' | 'ogImage';
+/** The files this repository ships. A site that sets nothing gets these. */
+declare const defaultImages: Record<ImageName, string>;
+type BrandImageOverrides = {
+    images?: Partial<Record<string, unknown>> | null;
+} | null | undefined;
+/** Only absolute http(s) URLs are accepted. An uploaded file has one; a relative path would be
+ *  resolved against whichever site is rendering, which for an Open Graph image means a crawler
+ *  fetching a path that does not exist. */
+declare function resolveImages(overrides?: BrandImageOverrides): Record<ImageName, string>;
 
-export { type BrandOverrides, type ColorName, type Palette, cssVarName, cssVarsFor, hexToHslTriplet, resolveColors };
+export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, resolveColors, resolveImages };
