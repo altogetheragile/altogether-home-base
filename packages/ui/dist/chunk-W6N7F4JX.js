@@ -42,7 +42,9 @@ function cssVarsFor(palette) {
 var defaultImages = {
   logo: "/brand/lockup-horizontal-tight.svg",
   favicon: "/favicon.svg",
-  ogImage: "/og-image.png"
+  ogImage: "/og-image.png",
+  founderPhoto: "/images/alun.webp",
+  founderPortrait: "/images/alun-illustrated.webp"
 };
 function resolveImages(overrides) {
   const out = { ...defaultImages };

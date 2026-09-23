@@ -1,6 +1,10 @@
 import { colors } from '@/lib/brand';
 
-export function AlunTabletPortrait({ imgSrc = '/images/alun-illustrated.webp', className }: { imgSrc?: string; className?: string }) {
+/** A tablet-shaped frame around a portrait of whoever founded this site.
+ *
+ *  It was called FounderPortrait and defaulted to one particular illustration of one particular
+ *  person, which is a fine thing for a component to do right up until a second site renders it. */
+export function FounderPortrait({ imgSrc, name, className }: { imgSrc: string; name: string; className?: string }) {
   const W = 300;
   const H = 420;
   const bezel = 14;
@@ -19,7 +23,7 @@ export function AlunTabletPortrait({ imgSrc = '/images/alun-illustrated.webp', c
       <div style={{ position: 'absolute', top: 7, left: '50%', transform: 'translateX(-50%)', width: 7, height: 7, borderRadius: '50%', background: '#161616', border: '1.5px solid #2E2E2E', zIndex: 2 }} />
       <div style={{ width: '100%', height: '100%', borderRadius: screenRadius, overflow: 'hidden', background: colors.paleTeal, position: 'relative' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imgSrc} alt="Alun Davies-Baker, founder of Altogether Agile" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+        <img src={imgSrc} alt={name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%)', borderRadius: screenRadius, pointerEvents: 'none' }} />
       </div>
       <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', width: 80, height: 4, borderRadius: 2, background: '#2E2E2E' }} />
@@ -31,4 +35,4 @@ export function AlunTabletPortrait({ imgSrc = '/images/alun-illustrated.webp', c
   );
 }
 
-export default AlunTabletPortrait;
+export default FounderPortrait;

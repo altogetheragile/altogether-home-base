@@ -2,6 +2,16 @@
   "page": "about",
   "label": "About",
   "entries": {
+    "about.meta.description": {
+      "value": "Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title. Around 150 to 160 characters."
+    },
+    "about.meta.titlePrefix": {
+      "value": "About Alun",
+      "label": "Search title",
+      "hint": "The left half of the browser tab and search result. The company name is added after it."
+    },
     "about.hero.eyebrow": {
       "value": "About",
       "label": "Hero eyebrow",
@@ -206,6 +216,11 @@
       "value": "Knowledge Base",
       "label": "Closing link, knowledge base",
       "hint": "The dark teal band at the foot of the page. Only shown when that module is on"
+    },
+    "about.founder.role": {
+      "value": "Agile Coach and Trainer",
+      "label": "Founder role",
+      "hint": "The job title given in structured data for the person who founded this business."
     }
   }
 }

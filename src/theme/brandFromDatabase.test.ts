@@ -69,6 +69,10 @@ describe('the custom properties both apps render from', () => {
 });
 
 describe('resolving a site logo, favicon and share image', () => {
+  it('covers the founder images too, which a site with a founder will replace', () => {
+    expect(Object.keys(defaultImages)).toEqual(['logo', 'favicon', 'ogImage', 'founderPhoto', 'founderPortrait']);
+  });
+
   it('is the files this repository ships when nothing is set', () => {
     expect(resolveImages(null)).toEqual(defaultImages);
     expect(resolveImages({ images: {} })).toEqual(defaultImages);

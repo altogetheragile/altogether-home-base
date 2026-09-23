@@ -161,6 +161,21 @@
       "value": "Book a Chemistry Session",
       "label": "Closing button, booking",
       "hint": "The orange band at the foot of the page"
+    },
+    "home.founder.eyebrow": {
+      "value": "About Alun",
+      "label": "Founder section, small heading",
+      "hint": "The small line above the founder heading."
+    },
+    "home.founder.body": {
+      "value": "I'm Alun, founder of Altogether Agile. I've spent 25 years in agile teams as a practitioner, coach and trainer - and I still run every course myself.",
+      "label": "Founder section, introduction",
+      "hint": "Written in the first person, as the founder speaking."
+    },
+    "home.founder.cta": {
+      "value": "Read more about Alun",
+      "label": "Founder section, link",
+      "hint": "The link through to the About page."
     }
   }
 }

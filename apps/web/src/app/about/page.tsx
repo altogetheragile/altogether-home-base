@@ -5,8 +5,8 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getAllApprovedFeedback } from '@/lib/testimonials';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName } from '@/lib/seo';
-import { AlunTabletPortrait } from '@/components/AlunTabletPortrait';
-import { colors as p } from '@/lib/brand';
+import { FounderPortrait } from '@/components/FounderPortrait';
+import { colors as p , founderOf } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list } from '@/lib/copy';
 
@@ -14,13 +14,14 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('about');
   return {
   ...(await buildMetadata({
-    title: 'About Alun - Altogether Agile',
-    description: 'Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.',
+    title: `${t('about.meta.titlePrefix')} - ${await siteName()}`,
+    description: t('about.meta.description'),
     path: '/about',
   })),
-  title: { absolute: `About Alun - ${await siteName()}` },
+  title: { absolute: `${t('about.meta.titlePrefix')} - ${await siteName()}` },
   };
 }
 
@@ -73,6 +74,7 @@ function Stars({ rating }: { rating: number | null }) {
 export default async function AboutPage() {
   await requireModule('about');
   const [settings, feedback, t] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about')]);
+  const founder = founderOf(settings);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
   const quotes = [...feedback].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3);
@@ -80,7 +82,9 @@ export default async function AboutPage() {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: 'Alun Davies-Baker', jobTitle: 'Agile Coach and Trainer', description: 'Founder of Altogether Agile, with 25 years of hands-on agile experience as an ICF-accredited coach and accredited Scrum trainer.', url: `${SITE_URL}/about`, image: `${SITE_URL}/images/alun.webp`, worksFor: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL } } }} />
+      {founder.shown && (
+        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}`, worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
+      )}
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'About', path: '/about' }])} />
 
       <style>{`
@@ -117,7 +121,7 @@ export default async function AboutPage() {
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/alun.webp" alt="Alun Davies-Baker, founder of Altogether Agile" loading="lazy" style={{ width: '65%', height: 'auto', display: 'block', borderRadius: 16 }} />
+            {founder.shown && <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '65%', height: 'auto', display: 'block', borderRadius: 16 }} />}
           </div>
         </div>
       </div>
@@ -261,7 +265,7 @@ export default async function AboutPage() {
             </div>
           </div>
           <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
-            <AlunTabletPortrait />
+            {founder.shown && <FounderPortrait imgSrc={founder.portrait} name={founder.name} />}
           </div>
         </div>
       </div>

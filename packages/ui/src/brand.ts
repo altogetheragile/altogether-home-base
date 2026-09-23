@@ -68,13 +68,18 @@ export function cssVarsFor(palette: Palette): Record<string, string> {
 // tab, and the picture that appears when somebody shares a link. They live in the repository as
 // defaults, which is right for this site and wrong for anyone else's.
 
-export type ImageName = 'logo' | 'favicon' | 'ogImage';
+export type ImageName = 'logo' | 'favicon' | 'ogImage' | 'founderPhoto' | 'founderPortrait';
 
-/** The files this repository ships. A site that sets nothing gets these. */
+/** The files this repository ships. A site that sets nothing gets these.
+ *
+ *  The two founder images are a photograph, used on the About page, and an illustration, used in
+ *  the home page's portrait block. A site with `show_founder` off never asks for either. */
 export const defaultImages: Record<ImageName, string> = {
   logo: '/brand/lockup-horizontal-tight.svg',
   favicon: '/favicon.svg',
   ogImage: '/og-image.png',
+  founderPhoto: '/images/alun.webp',
+  founderPortrait: '/images/alun-illustrated.webp',
 };
 
 export type BrandImageOverrides = { images?: Partial<Record<string, unknown>> | null } | null | undefined;

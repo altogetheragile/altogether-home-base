@@ -23,8 +23,11 @@ declare const cssVarName: (token: string) => string;
  *  triplet, for the Tailwind theme. Spread onto a root element's style, or written with
  *  setProperty. Both apps use this, so a site's brand reaches both the same way. */
 declare function cssVarsFor(palette: Palette): Record<string, string>;
-type ImageName = 'logo' | 'favicon' | 'ogImage';
-/** The files this repository ships. A site that sets nothing gets these. */
+type ImageName = 'logo' | 'favicon' | 'ogImage' | 'founderPhoto' | 'founderPortrait';
+/** The files this repository ships. A site that sets nothing gets these.
+ *
+ *  The two founder images are a photograph, used on the About page, and an illustration, used in
+ *  the home page's portrait block. A site with `show_founder` off never asks for either. */
 declare const defaultImages: Record<ImageName, string>;
 type BrandImageOverrides = {
     images?: Partial<Record<string, unknown>> | null;

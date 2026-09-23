@@ -21,6 +21,8 @@ const WHAT: Record<ImageName, { label: string; hint: string; accept: string }> =
   logo: { label: 'Logo', hint: 'The lockup in the header and footer, on both the site and this app', accept: 'image/svg+xml,image/png,image/webp' },
   favicon: { label: 'Favicon', hint: 'The icon in the browser tab, and in search results', accept: 'image/svg+xml,image/png,image/x-icon' },
   ogImage: { label: 'Share image', hint: 'What appears when somebody shares a link. Also the logo in structured data', accept: 'image/png,image/jpeg,image/webp' },
+  founderPhoto: { label: 'Founder photograph', hint: 'Shown on the About page. Only used if this site has a founder section', accept: 'image/jpeg,image/png,image/webp' },
+  founderPortrait: { label: 'Founder portrait', hint: 'The framed illustration on the home page. Only used if this site has a founder section', accept: 'image/svg+xml,image/png,image/webp' },
 };
 
 type Brand = { colors?: Record<string, unknown> | null; images?: Record<string, unknown> | null } | null;

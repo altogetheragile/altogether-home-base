@@ -19,13 +19,20 @@ const PAGES: Record<string, string> = {
   exams: 'src/app/exams/page.tsx',
 };
 
+/** Components a page hands its `t` to, which therefore read its keys on its behalf. A page that
+ *  renders `<AboutSection t={t} />` is reading every key that component asks for, and the naive
+ *  version of this test called all of them unused. */
+const DELEGATES: Record<string, string[]> = {
+  home: ['src/components/AboutSection.tsx'],
+};
+
 /** The copy keys a page actually asks for.
  *
  *  Two shapes. A plain t('a.b.c'), and a template literal with an index in it, which is how a page
  *  reads a numbered pair of cards: t(`about.philosophy.${n}.body`). The second is returned as a
  *  regex so a declared key can be matched against it. */
-function keysRead(file: string): { exact: Set<string>; patterns: RegExp[] } {
-  const src = readFileSync(file, 'utf8');
+function keysRead(file: string, delegates: string[] = []): { exact: Set<string>; patterns: RegExp[] } {
+  const src = [file, ...delegates].map((f) => readFileSync(f, 'utf8')).join('\n');
   const exact = new Set([...src.matchAll(/\bt\('([A-Za-z0-9.]+)'\)/g)].map((m) => m[1]));
   // Anything inside the backticks, because the expression in ${...} can be `n` or `i + 1` or
   // whatever the page finds readable. Only the shape around it matters.
@@ -47,13 +54,13 @@ describe('each page registry', () => {
     });
 
     it(`${registry.page}: declares every key the page reads`, () => {
-      const read = keysRead(file);
+      const read = keysRead(file, DELEGATES[registry.page] ?? []);
       const missing = [...read.exact].filter((k) => !(k in registry.entries));
       expect(missing, `read but not declared: ${missing.join(', ')}`).toEqual([]);
     });
 
     it(`${registry.page}: declares nothing the page ignores`, () => {
-      const read = keysRead(file);
+      const read = keysRead(file, DELEGATES[registry.page] ?? []);
       const unused = Object.keys(registry.entries).filter((k) => !isRead(k, read));
       expect(unused, `declared but never read: ${unused.join(', ')}`).toEqual([]);
     });
