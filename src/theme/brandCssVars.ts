@@ -1,45 +1,17 @@
 import { colors } from '@altogether/ui/tokens';
+import { resolveColors, cssVarsFor, hexToHslTriplet, type BrandOverrides } from '@altogether/ui/brand';
 
-const cssVarName = (token: string) => `--aa-${token.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+export { hexToHslTriplet };
 
-/** A hex colour as the space-separated HSL triplet Tailwind's theme expects.
- *
- *  The theme in index.css is written the shadcn way: `--primary: 24 95% 53%`, wrapped by Tailwind
- *  as `hsl(var(--primary) / <alpha-value>)`. The triplet rather than a colour is what makes
- *  `bg-primary/90` work, and this app uses that in a lot of places, so the brand has to arrive in
- *  that shape or the opacity modifiers break. */
-export function hexToHslTriplet(hex: string): string {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  let h = 0;
-  if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-  const round = (n: number) => String(Math.round(n * 10) / 10);
-  return `${round(h)} ${round(s * 100)}% ${round(l * 100)}%`;
-}
-
-/** Brand colours as CSS custom properties (`--aa-deep-teal` and friends), generated from the token
- *  package so the palette is written down once.
+/** Brand colours as CSS custom properties (`--aa-deep-teal` and `--aa-deep-teal-hsl`), for a site
+ *  with no brand of its own. Generated from the token package so the palette is written down once.
  *
  *  Each colour is published twice: as the hex value, for anything styled directly, and as an HSL
- *  triplet (`--aa-orange-hsl`), for the Tailwind theme. index.css carries the same triplets as
- *  static defaults so the first paint is right; these override them, which is what lets the
- *  palette change without a rebuild. brandHslMatchesTokens.test.ts holds the two in step. */
-export const brandCssVars = Object.fromEntries(
-  Object.entries(colors).flatMap(([k, v]) => [
-    [cssVarName(k), v],
-    [`${cssVarName(k)}-hsl`, hexToHslTriplet(v)],
-  ]),
-) as Record<`--aa-${string}`, string>;
+ *  triplet, for the Tailwind theme in index.css, which is written the shadcn way. index.css
+ *  carries the same triplets as static defaults so the first paint is right; these override them,
+ *  which is what lets the palette change without a rebuild. brandHslMatchesTokens.test.ts holds
+ *  the two in step. */
+export const brandCssVars = cssVarsFor(colors) as Record<`--aa-${string}`, string>;
 
 /** Put them on :root, not on a wrapper.
  *
@@ -49,10 +21,15 @@ export const brandCssVars = Object.fromEntries(
  *  nothing and the colour would silently disappear.
  *
  *  Measured before changing it: inside the wrapper --aa-deep-teal gave rgb(0, 77, 77); at body
- *  level it gave nothing. On :root it reaches both. */
-export function applyBrandCssVars() {
+ *  level it gave nothing. On :root it reaches both.
+ *
+ *  Called twice on purpose. Once at startup with no argument, so the app paints in the default
+ *  brand immediately rather than waiting on the network, and again once `site_settings` arrives
+ *  with whatever this site has set. On altogetheragile.com the second call changes nothing,
+ *  because its brand IS the tokens. */
+export function applyBrandCssVars(overrides?: BrandOverrides) {
   if (typeof document === 'undefined') return;
-  for (const [name, value] of Object.entries(brandCssVars)) {
+  for (const [name, value] of Object.entries(cssVarsFor(resolveColors(overrides)))) {
     document.documentElement.style.setProperty(name, value);
   }
 }

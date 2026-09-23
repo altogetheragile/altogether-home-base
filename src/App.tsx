@@ -9,6 +9,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Analytics } from "@vercel/analytics/react";
 import { applyBrandCssVars } from '@/theme/brandCssVars';
+import { BrandFromSettings } from '@/theme/BrandFromSettings';
 import {
   PublicRoutes,
   ProtectedUserRoutes,
@@ -39,6 +40,7 @@ const App = () => (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <BrandFromSettings />
           <Toaster />
           <Sonner />
           <BrowserRouter>

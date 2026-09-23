@@ -1,4 +1,5 @@
 export { ColorToken, colors, fontWeights, fonts, radii, space, tokens } from './tokens.js';
+export { BrandOverrides, ColorName, Palette, cssVarName, cssVarsFor, hexToHslTriplet, resolveColors } from './brand.js';
 import { ClassValue } from 'clsx';
 export { Button, ButtonProps, buttonVariants } from './components/ui/button.js';
 export { Input } from './components/ui/input.js';
