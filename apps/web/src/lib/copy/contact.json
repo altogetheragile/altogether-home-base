@@ -2,6 +2,11 @@
   "page": "contact",
   "label": "Contact",
   "entries": {
+    "contact.meta.description": {
+      "value": "Get in touch with Altogether Agile for coaching, training enquiries, or to book a free chemistry session.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "contact.hero.heading": {
       "value": "Get in Touch",
       "label": "Hero heading",

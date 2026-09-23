@@ -2,6 +2,11 @@
   "page": "coaching",
   "label": "Coaching",
   "entries": {
+    "coaching.meta.description": {
+      "value": "Professional one-to-one coaching and agile team coaching. ICF-aligned approach with 25 years of experience.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "coaching.hero.eyebrow": {
       "value": "Coaching",
       "label": "Hero eyebrow",

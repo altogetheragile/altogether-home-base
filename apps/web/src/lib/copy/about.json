@@ -5,7 +5,7 @@
     "about.meta.description": {
       "value": "Meet Alun, founder of Altogether Agile. 25 years of agile experience, ICF-accredited coach, and accredited Scrum trainer.",
       "label": "Search description",
-      "hint": "The sentence Google shows under the page title. Around 150 to 160 characters."
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
     "about.meta.titlePrefix": {
       "value": "About Alun",

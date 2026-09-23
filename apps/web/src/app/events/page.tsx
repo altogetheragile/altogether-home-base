@@ -13,10 +13,10 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('events');
   return buildMetadata({
   title: 'Agile Training Courses in London & the UK',
-  description:
-    'Framework-based agile training courses covering AgilePM, Scrum Master, Product Owner, and more. Delivered in person across the London area at your site, or live online across the UK.',
+  description: t('events.meta.description'),
   path: '/events',
 });
 }

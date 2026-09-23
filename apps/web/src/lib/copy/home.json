@@ -2,6 +2,11 @@
   "page": "home",
   "label": "Home",
   "entries": {
+    "home.meta.description": {
+      "value": "Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "home.hero.eyebrow": {
       "value": "Co-author of AgilePM3 v2 and AgileBA v3",
       "label": "Hero eyebrow",

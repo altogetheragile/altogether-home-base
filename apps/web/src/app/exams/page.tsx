@@ -12,10 +12,10 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCopy('exams');
   return buildMetadata({
   title: 'AgilePM & Scrum Practice Exam Questions',
-  description:
-    'Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.',
+  description: t('exams.meta.description'),
   path: '/exams',
 });
 }

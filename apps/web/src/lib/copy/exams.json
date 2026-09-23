@@ -2,6 +2,11 @@
   "page": "exams",
   "label": "Practice Exams",
   "entries": {
+    "exams.meta.description": {
+      "value": "Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "exams.empty": {
       "value": "No exams available yet. Check back soon.",
       "label": "Empty state",

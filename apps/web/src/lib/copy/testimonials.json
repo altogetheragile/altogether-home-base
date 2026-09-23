@@ -2,6 +2,11 @@
   "page": "testimonials",
   "label": "Testimonials",
   "entries": {
+    "testimonials.meta.description": {
+      "value": "Read what professionals say about Altogether Agile’s courses, coaching, and training programmes.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
     "testimonials.hero.heading": {
       "value": "What Our Attendees Say",
       "label": "Hero heading",
