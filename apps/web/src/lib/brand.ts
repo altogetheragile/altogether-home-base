@@ -1,4 +1,5 @@
 import { colors as tokenColors } from '@altogether/ui/tokens';
+import { resolveColors, cssVarsFor, type BrandOverrides } from '@altogether/ui/brand';
 
 // ============= The palette, and why these are not hex values =============
 //
@@ -30,9 +31,16 @@ export const colors = Object.fromEntries(
 export type ColorToken = keyof typeof tokenColors;
 export { fonts, radii, fontWeights, space, tokens } from '@altogether/ui/tokens';
 
-/** What the references above resolve to. Spread onto a root element's `style`, which
- *  `app/layout.tsx` does for every page. Built from the literal values, never from `colors`,
- *  or each property would define itself. */
-export const brandCssVars = Object.fromEntries(
-  Object.entries(tokenColors).map(([k, v]) => [cssVarName(k), v]),
-) as Record<`--aa-${string}`, string>;
+/** What the references above resolve to, for a site with no brand of its own. Spread onto a root
+ *  element's `style`. Built from the literal values, never from `colors`, or each property would
+ *  define itself. */
+export const brandCssVars = cssVarsFor(tokenColors) as Record<`--aa-${string}`, string>;
+
+/** The same, for a site that has set some colours of its own in `site_settings.brand`.
+ *
+ *  This is the whole point of the palette being references rather than values: the page is
+ *  server-rendered with these already resolved, so a site with a different brand paints correctly
+ *  on the first frame rather than changing colour once JavaScript arrives. */
+export function brandCssVarsFor(overrides: BrandOverrides): Record<`--aa-${string}`, string> {
+  return cssVarsFor(resolveColors(overrides)) as Record<`--aa-${string}`, string>;
+}

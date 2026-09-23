@@ -3,7 +3,7 @@ import { SITE_NAME, SITE_URL } from '@/lib/seo';
 import { getSiteSettings } from '@/lib/site-settings';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { brandCssVars } from '@/lib/brand';
+import { brandCssVarsFor } from '@/lib/brand';
 import { getCurrentUser, displayName } from '@/lib/auth';
 import './globals.css';
 
@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         {/* Brand tokens from the shared design system (@altogether/ui), exposed as
             CSS variables for the whole Site. */}
-        <div className="flex min-h-screen flex-col" style={brandCssVars}>
+        <div className="flex min-h-screen flex-col" style={brandCssVarsFor(settings.brand)}>
           <Navigation settings={settings} name={displayName(user)} signedIn={!!user} />
           <div className="flex-1">{children}</div>
           <Footer settings={settings} year={new Date().getFullYear()} />

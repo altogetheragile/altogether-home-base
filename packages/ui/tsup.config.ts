@@ -4,6 +4,7 @@ export default defineConfig({
   entry: [
     'src/index.ts',
     'src/tokens.ts',
+    'src/brand.ts',
     'src/components/ui/*.tsx',
     '!src/components/ui/*.stories.tsx',
   ],

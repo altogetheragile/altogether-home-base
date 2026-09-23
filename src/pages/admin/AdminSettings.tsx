@@ -8,6 +8,7 @@ import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { MODULES, MODULE_GROUPS, NAV_FLAGS, flagOf } from '@/config/modules';
 import { Settings } from 'lucide-react';
 import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
+import { BrandColours } from '@/components/admin/BrandColours';
 
 // ============= Which parts of the site are switched on =============
 //
@@ -20,6 +21,10 @@ import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDispla
 // the admin area is a way to lock yourself out of your own site.
 
 type Flags = Record<string, boolean>;
+type Brand = { colors?: Record<string, unknown> | null } | null;
+
+const brandOf = (settings: unknown): Brand =>
+  ((settings as { brand?: Brand } | null | undefined)?.brand ?? null);
 
 const defaults = (settings: Record<string, unknown> | null | undefined): Flags =>
   Object.fromEntries([...MODULES.map((m) => [flagOf(m), m.defaultOn] as const),
@@ -32,15 +37,20 @@ const defaults = (settings: Record<string, unknown> | null | undefined): Flags =
 export default function AdminSettings() {
   const { settings, isLoading, updateSettings } = useSiteSettings();
   const [localSettings, setLocalSettings] = useState<Flags>(() => defaults(settings as unknown as Record<string, unknown>));
+  // Held apart from the flags because it is not one. Flags is Record<string, boolean>.
+  const [brand, setBrand] = useState<Brand>(() => brandOf(settings));
 
   useEffect(() => {
-    if (settings) setLocalSettings(defaults(settings as unknown as Record<string, unknown>));
+    if (settings) {
+      setLocalSettings(defaults(settings as unknown as Record<string, unknown>));
+      setBrand(brandOf(settings));
+    }
   }, [settings]);
 
   const handleToggle = (key: string) =>
     setLocalSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleSave = () => updateSettings(localSettings);
+  const handleSave = () => updateSettings({ ...localSettings, brand } as Parameters<typeof updateSettings>[0]);
 
   if (isLoading) {
     return (
@@ -125,6 +135,8 @@ export default function AdminSettings() {
           ))}
         </CardContent>
       </Card>
+
+      <BrandColours value={brand} onChange={setBrand} />
 
       {/* Saves immediately, not staged behind the button below. */}
       <TestimonialDisplaySettings />
