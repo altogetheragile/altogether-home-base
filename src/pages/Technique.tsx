@@ -225,7 +225,7 @@ const Technique: React.FC = () => {
       <Navigation />
 
       {/* ─── HERO BAND ─── */}
-      <div style={{ background: '#006666', padding: isMobile ? '40px 20px 36px' : '56px 48px 48px' }}>
+      <div style={{ background: p.heroTeal, padding: isMobile ? '40px 20px 36px' : '56px 48px 48px' }}>
         {/* breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, color: p.lightTeal, fontSize: 12 }}>
           <Link to="/knowledge" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: p.lightTeal, textDecoration: 'none' }}>
@@ -434,7 +434,7 @@ const Technique: React.FC = () => {
             </div>
 
             {/* CTA */}
-            <div style={{ background: '#006666', borderRadius: 14, padding: '20px 20px 24px' }}>
+            <div style={{ background: p.heroTeal, borderRadius: 14, padding: '20px 20px 24px' }}>
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Go deeper</div>
               <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>
                 Want to practise this technique with your team? Book a free chemistry session to talk through how it applies to your context.

@@ -52,7 +52,7 @@ export default async function ExamsPage() {
       <JsonLd data={itemListJsonLd(exams.map((e) => ({ name: e.title, path: `/exams/${e.slug}` })))} />
 
       {/* Teal gradient hero */}
-      <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, #006666 100%)`, padding: '48px 24px', textAlign: 'center' }}>
+      <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, ${c.heroTeal} 100%)`, padding: '48px 24px', textAlign: 'center' }}>
         <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
           AgilePM &amp; Scrum Practice Exam Questions
         </h1>

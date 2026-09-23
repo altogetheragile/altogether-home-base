@@ -133,7 +133,7 @@ export function EventsList({ courses, firstNameOnly }: { courses: CourseCardMode
   return (
     <>
       {/* Tab bar continues the teal hero */}
-      <div style={{ background: '#006666', padding: '0 48px' }}>
+      <div style={{ background: p.heroTeal, padding: '0 48px' }}>
         <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto', maxWidth: 1200, margin: '0 auto' }}>
           {FILTERS.map((f) => {
             const count = f === 'All' ? courses.length : courses.filter((c) => c.type === f).length;

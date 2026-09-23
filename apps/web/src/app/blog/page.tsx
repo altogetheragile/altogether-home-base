@@ -24,7 +24,7 @@ export default async function BlogPage() {
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }])} />
       <JsonLd data={itemListJsonLd(posts.map((p) => ({ name: p.title, path: `/blog/${p.slug}` })))} />
 
-      <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, #006666 100%)`, padding: '48px 24px', textAlign: 'center' }}>
+      <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, ${c.heroTeal} 100%)`, padding: '48px 24px', textAlign: 'center' }}>
         <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{t('blog.hero.heading')}</h1>
         <p style={{ color: c.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginInline: 'auto' }}>
           {t('blog.hero.intro')}

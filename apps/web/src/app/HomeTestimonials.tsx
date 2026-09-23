@@ -29,7 +29,7 @@ function ReadMore({ text, limit }: { text: string; limit: number }) {
   const needs = text.length > limit;
   const preview = needs ? text.slice(0, limit).trimEnd() + '...' : text;
   return (
-    <div style={{ color: '#ffffff', fontSize: 16, lineHeight: 1.65, flex: 1 }}>
+    <div style={{ color: p.white, fontSize: 16, lineHeight: 1.65, flex: 1 }}>
       <span style={{ fontStyle: 'italic' }}>&ldquo;{expanded ? text : preview}&rdquo;</span>
       {needs && (
         <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: p.orange, fontSize: 'inherit', fontWeight: 600, marginLeft: 4 }}>
@@ -45,7 +45,7 @@ const displayName = (t: HomeTestimonial, firstNameOnly: boolean) =>
 
 const navBtnStyle: React.CSSProperties = {
   background: 'none', border: '2px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 44, height: 44,
-  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ffffff', fontSize: 22, flexShrink: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: p.white, fontSize: 22, flexShrink: 0,
 };
 
 export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimonial[]; firstNameOnly: boolean }) {
@@ -72,7 +72,7 @@ export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimon
   const handleNext = () => setStartIndex((i) => (i + visibleCount >= items.length ? 0 : i + 1));
 
   return (
-    <div style={{ background: '#006666', padding: '56px 48px' }}>
+    <div style={{ background: p.heroTeal, padding: '56px 48px' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h2 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0 }}>What practitioners say</h2>
       </div>
@@ -84,7 +84,7 @@ export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimon
               <Stars rating={t.rating} size={12} />
               <ReadMore text={t.comment} limit={200} />
               <div>
-                <div style={{ color: '#ffffff', fontWeight: 700, fontSize: 14 }}>{displayName(t, firstNameOnly)}</div>
+                <div style={{ color: p.white, fontWeight: 700, fontSize: 14 }}>{displayName(t, firstNameOnly)}</div>
                 <div style={{ color: p.paleTeal, fontSize: 12 }}>{t.job_title}{t.job_title && t.company ? ' · ' : ''}{t.company}</div>
                 {t.source === 'linkedin' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: p.paleTeal, fontSize: 11, marginTop: 4 }}>

@@ -15,7 +15,14 @@ import { execSync } from 'node:child_process';
 // imports it from '@/theme/colors' (App) or '@/lib/brand' (Site), or uses var(--aa-*) where the
 // value has to live in CSS.
 
-const BRAND = ['#004D4D', '#007A7A', '#FF9715', '#F0FAFA', '#D9F2F2', '#B2DFDF'];
+// Every brand colour, not the six this started with. heroTeal and orangeHover were missing, which
+// is how #006666 survived in four App files and ten Site files long after this test claimed both
+// apps were clean. A guard that watches half a palette reports a clean palette.
+//
+// The neutrals (body, muted, white) are deliberately NOT here. They appear all over the App in
+// contexts that are not brand at all - a colour picker's swatches, canvas element defaults, icon
+// tints - and banning the literal there would be wrong rather than strict.
+const BRAND = ['#004D4D', '#007A7A', '#FF9715', '#F0FAFA', '#D9F2F2', '#B2DFDF', '#006666', '#E6870E'];
 
 /** Where the palette is allowed to be written as hex, because this is where it is defined. */
 const SOURCE_OF_TRUTH = ['packages/ui/src/tokens.ts'];

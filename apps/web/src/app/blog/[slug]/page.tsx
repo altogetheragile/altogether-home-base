@@ -62,13 +62,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <style>{`
         .blog-html-body h1 { color:${c.deepTeal}; font-size:28px; font-weight:800; margin:2.5rem 0 .75rem; line-height:1.2; }
         .blog-html-body h2 { color:${c.deepTeal}; font-size:24px; font-weight:700; margin:2.5rem 0 .75rem; line-height:1.3; }
-        .blog-html-body h3 { color:#006666; font-size:20px; font-weight:700; margin:2rem 0 .625rem; }
+        .blog-html-body h3 { color:${c.heroTeal}; font-size:20px; font-weight:700; margin:2rem 0 .625rem; }
         .blog-html-body p { color:${c.body}; font-size:16px; line-height:1.8; margin-bottom:16px; }
         .blog-html-body strong { color:${c.deepTeal}; font-weight:700; }
         .blog-html-body a { color:${c.midTeal}; font-weight:600; text-decoration:underline; }
         .blog-html-body ul, .blog-html-body ol { color:${c.body}; font-size:16px; line-height:1.8; padding-left:24px; margin-bottom:16px; }
         .blog-html-body li { margin-bottom:4px; }
-        .blog-html-body blockquote { border-left:3px solid ${c.orange}; padding-left:16px; margin:24px 0; color:#006666; font-style:italic; }
+        .blog-html-body blockquote { border-left:3px solid ${c.orange}; padding-left:16px; margin:24px 0; color:${c.heroTeal}; font-style:italic; }
         .blog-html-body code { background:${c.skyTeal}; padding:2px 6px; border-radius:4px; font-size:14px; }
         .blog-html-body img { max-width:100%; border-radius:10px; margin:16px 0; }
         .blog-html-body hr { border:none; border-top:1px solid ${c.paleTeal}; margin:2.5rem 0; }

@@ -36,7 +36,7 @@ export default function AboutSection() {
           opacity: 1;
         }
         .aa-cta-primary:hover {
-          background: #E6870E !important;
+          background: ${p.orangeHover} !important;
           transform: translateY(-1px);
         }
         .aa-cta-secondary:hover {
