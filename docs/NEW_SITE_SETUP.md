@@ -1,10 +1,11 @@
 # Standing Up A New Site
 
 **Version:** 1.0 (23 September 2026).
-**Status:** Specification, with one tested finding. The walk-through described here is the last
-thing to build, not the next: each step names configuration that has to exist first, so this
-document is the target for that work. **Read Section 6 first.** The database cannot currently be
-built from this repository, which blocks everything else here.
+**Status:** Specification, mostly implemented. Brand, modules and identity are configuration now;
+the walk-through and the remaining prose are not. Section 6's blocker is fixed: the database can
+be built from this repository, and CI proves it on every change under `supabase/`.
+
+**Version 1.1 (23 September 2026)**, after #745 to #751.
 
 **The goal in one line:** a second site, on its own domain, set up by filling in a form rather
 than by editing code.
@@ -108,18 +109,31 @@ redirect allowlist, the sitemap submission, and a redeploy so the sitemap reflec
 The walk-through is a form over configuration. Where the configuration is missing, the form has
 nothing to set. As of 23 September:
 
+Updated 23 September, after #745 to #751.
+
 | Step | State |
 |---|---|
-| Identity | **Ready.** The columns exist and Admin already edits them. |
-| Brand, colours | **Half.** The Site resolves its palette through CSS custom properties (#745), so it can be repainted without a rebuild, but the values still come from `tokens.ts` at build time. The App is worse: its Tailwind theme reads `--primary` and friends, which `src/index.css` sets statically and which are not derived from the brand tokens. Two palettes, one of them not swappable at all. |
-| Brand, images | **Not started,** and small. Three referenced paths: `/brand/lockup-horizontal-tight.svg`, `/favicon.svg`, `/og-image.png`. |
+| Identity | **Ready.** The columns exist and Admin edits them. `company_name` now also drives the Open Graph site name, the `Organization` in structured data and the page title suffixes (#751). |
+| Brand, colours | **Ready.** Both apps render from CSS custom properties, and the values come from `site_settings.brand` with the tokens as fallback (#745, #748, #749). Twelve fields in Admin. Proved by setting a purple brand in the database and watching both apps repaint. |
+| Brand, images | **Ready.** Logo, favicon and share image, in the same `brand` column, uploaded to the existing `assets` bucket (#750). Reaches five places, including `prerender.mjs`, which writes `og:image` into every page the App serves. |
 | Modules | **Ready.** 39 flags, enforced on both routers. |
-| Words | **Partial, and the gap is larger than it looks.** `site_copy` holds 153 entries covering visible body copy on eight Site pages. It does not cover page metadata: titles, descriptions and JSON-LD are hardcoded in `generateMetadata` across 16 Site files. The company name also appears in 46 App files and 4 edge functions, including the emails a customer receives. A new site would render its own words and email somebody else's name. |
+| Words | **The remaining work.** `site_copy` holds 153 entries covering body copy on eight Site pages, and the company *name* is now configuration everywhere it is used as a name. What is left is 49 mentions that say more than the name, such as "founder of Altogether Agile", across the App's pages and tool descriptions, plus per-page descriptions. These get rewritten on a new site rather than templated, so this is a content job, not a plumbing one. |
 | Content | **Ready enough.** The tables exist and Admin manages them. |
+
+**Still this repository's, and worth knowing before standing a site up:**
+
+- Per-page `description` strings are hardcoded. A second site's search snippets would describe Altogether Agile.
+- The `Organization` description and founder in `organizationJsonLd` name Alun.
+- The Course, Workshop and Masterclass card colours are their own palette, unconnected to the brand.
+- `recommend-pattern` and `export-data` mention the company in an AI system prompt and an export provenance string. Neither is customer-facing.
+- The App flashes the default brand before `site_settings` arrives, because it is client-rendered. The Site does not.
 
 ## 6. The Blocker, Tested
 
-**The migrations do not build an empty database. Tested 23 September; the first one fails.**
+**FIXED 23 September (#747).** What follows is the diagnosis, kept because it explains the shape
+of `supabase/migrations-archive/` and why a baseline exists at all.
+
+~~The migrations do not build an empty database. Tested 23 September; the first one fails.~~
 
 Run against a clean local Supabase stack, `supabase start` gets exactly one migration in:
 
@@ -161,9 +175,9 @@ that file is aimed at something else.
 
 ### Then, In Order
 
-1. **Add a CI job that applies the migrations to an empty database.** Once the baseline exists,
-   this is what stops the history rotting again. It is the cheapest guard on the list and the
-   absence of it is why nobody knew.
+1. ~~**Add a CI job that applies the migrations to an empty database.**~~ **Done** (#747). The
+   `Schema` workflow builds from nothing on any change under `supabase/`. One of its checks is
+   exact: zero public tables without row level security.
 2. **Unify the App palette,** so one brand drives both apps. The largest remaining piece.
 3. **Brand as data:** the palette and the image URLs into `site_settings`, defaults from the
    tokens, so an unset value still renders today's brand.
