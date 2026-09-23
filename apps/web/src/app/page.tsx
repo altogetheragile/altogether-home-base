@@ -19,11 +19,13 @@ const TITLE = 'Altogether Agile - Agile Coaching & Training';
 const DESC =
   'Practical agile training and coaching from the co-author of AgilePM3 v2 and AgileBA v3. 80+ techniques, 25 years of hands-on experience, delivered personally.';
 
-export const metadata: Metadata = {
-  ...buildMetadata({ title: TITLE, description: DESC, path: '/' }),
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+  ...(await buildMetadata({ title: TITLE, description: DESC, path: '/' })),
   // Absolute title so the layout's "%s - Altogether Agile" template is not applied.
   title: { absolute: TITLE },
-};
+  };
+}
 
 const Icons = {
   ArrowRight: () => <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z" /></svg>,
@@ -48,7 +50,7 @@ export default async function HomePage() {
 
   return (
     <div className="aa-page">
-      <JsonLd data={organizationJsonLd(brandImagesFor(settings.brand).ogImage)} />
+      <JsonLd data={await organizationJsonLd(brandImagesFor(settings.brand).ogImage)} />
       <main id="main-content">
         {/* HERO */}
         <div className="aa-hero">

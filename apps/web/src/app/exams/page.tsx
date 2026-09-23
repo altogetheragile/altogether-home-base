@@ -11,12 +11,14 @@ import { getCopy, list } from '@/lib/copy';
 export const dynamic = 'force-dynamic';
 
 
-export const metadata: Metadata = buildMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
   title: 'AgilePM & Scrum Practice Exam Questions',
   description:
     'Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.',
   path: '/exams',
 });
+}
 
 type ExamRow = {
   slug: string;
