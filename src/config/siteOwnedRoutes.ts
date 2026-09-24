@@ -22,6 +22,9 @@ export const SITE_OWNED = [
   '/blog',
   '/exams',
   '/courses',
+  // Admin only, and 404 to everybody else. Listed here because the Site answers it, not because
+  // it is public.
+  '/setup',
 ] as const;
 
 /** Whether the Site answers this path. Prefix match, so /blog/a-post counts, but /events/:id does

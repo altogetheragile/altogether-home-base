@@ -39,6 +39,12 @@ type EditorHost = {
         on: boolean;
         set: (on: boolean) => void;
     };
+    /** Open on arrival, at this tab. Set from the URL, so something elsewhere can send somebody
+     *  straight to the right box rather than to the right page and a hunt. */
+    openAt?: string | null;
+    /** Where the setup checklist lives, if this app can reach it. A plain address rather than a
+     *  callback: it is a page, and both apps should leave to it properly. */
+    setupHref?: string;
 };
 declare function EditDrawer({ host }: {
     host: EditorHost;
