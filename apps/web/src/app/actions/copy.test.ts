@@ -6,7 +6,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const upsert = vi.fn(async () => ({ error: null }));
 const del = vi.fn(async () => ({ error: null }));
+const revisionInsert = vi.fn(async () => ({ error: null }));
+const revisionDelete = vi.fn(async () => ({ error: null }));
 let admin = true;
+let upsertFails = false;
+/** What site_copy holds before the call under test. */
+let existing: { key: string; value: string }[] = [];
+/** The newest revision for a key, or null when there is none to undo to. */
+let newestRevision: { id: number; value: string } | null = null;
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/auth', () => ({
@@ -15,11 +22,37 @@ vi.mock('@/lib/auth', () => ({
 }));
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
-    from: () => ({
-      select: () => ({ eq: async () => ({ data: [{ key: 'about.hero.heading', value: 'Her words' }] }) }),
-      upsert: (rows: unknown, opts: unknown) => upsert(rows as never, opts as never),
-      delete: () => ({ eq: () => ({ eq: () => del() }) }),
-    }),
+    from: (table: string) => {
+      if (table === 'site_copy_revisions') {
+        const one = { data: newestRevision };
+        const chain: Record<string, unknown> = {
+          select: () => chain,
+          eq: () => chain,
+          order: () => chain,
+          limit: () => chain,
+          maybeSingle: async () => one,
+          then: (r: (v: { data: unknown }) => void) => r({ data: [] }),
+        };
+        return {
+          ...chain,
+          insert: (rows: unknown) => revisionInsert(rows as never),
+          delete: () => ({ eq: () => revisionDelete() }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: Object.assign(async () => ({ data: [{ key: 'about.hero.heading', value: 'Her words' }] }), {
+            maybeSingle: async () => ({ data: existing[0] ?? null }),
+          }),
+          in: async () => ({ data: existing }),
+        }),
+        upsert: (rows: unknown, opts: unknown) => {
+          upsert(rows as never, opts as never);
+          return Promise.resolve({ error: upsertFails ? { message: 'write failed' } : null });
+        },
+        delete: () => ({ eq: () => ({ eq: () => del() }) }),
+      };
+    },
   }),
 }));
 
@@ -27,8 +60,13 @@ const load = async () => await import('./copy');
 
 beforeEach(() => {
   admin = true;
+  upsertFails = false;
+  existing = [];
+  newestRevision = null;
   upsert.mockClear();
   del.mockClear();
+  revisionInsert.mockClear();
+  revisionDelete.mockClear();
 });
 
 describe('editing the words from the page they appear on', () => {
@@ -107,5 +145,81 @@ describe('putting a value back', () => {
     // cannot tell "put back the original" from "delete everything I have written".
     expect(blank.every((f) => f.shipped === '')).toBe(true);
     expect(fields.find((f) => f.key === 'about.timeline.list')?.shipped).toBe('');
+  });
+});
+
+describe('every change can be undone', () => {
+  it('records what the change replaced, not what it wrote', async () => {
+    existing = [{ key: 'about.hero.heading', value: 'What it said before' }];
+    const { savePageCopy } = await load();
+    await savePageCopy('about', { 'about.hero.heading': 'What it says now' });
+
+    const [rows] = revisionInsert.mock.calls[0] as unknown as [Array<{ key: string; value: string }>];
+    expect(rows[0].value, 'undo would jump forwards, not back').toBe('What it said before');
+  });
+
+  it('treats a key with no row as showing its shipped wording', async () => {
+    // Nothing in site_copy means the page was rendering the registry default, so that is what the
+    // change replaced and that is where undo has to return to.
+    existing = [];
+    const { savePageCopy } = await load();
+    await savePageCopy('about', { 'about.hero.heading': 'Something new' });
+
+    const [rows] = revisionInsert.mock.calls[0] as unknown as [Array<{ value: string }>];
+    const { REGISTRIES } = await import('@/lib/copy');
+    const shipped = REGISTRIES.find((r) => r.page === 'about')!.entries['about.hero.heading'].value;
+    expect(rows[0].value).toBe(shipped);
+  });
+
+  it('records nothing when the save failed', async () => {
+    // An undo offering to restore a change that never landed is worse than no undo at all.
+    existing = [{ key: 'about.hero.heading', value: 'Untouched' }];
+    upsertFails = true;
+    const { savePageCopy } = await load();
+    expect((await savePageCopy('about', { 'about.hero.heading': 'Attempted' })).ok).toBe(false);
+    expect(revisionInsert).not.toHaveBeenCalled();
+  });
+
+  it('records nothing for a field that was saved without being changed', async () => {
+    existing = [{ key: 'about.hero.heading', value: 'The same' }];
+    const { savePageCopy } = await load();
+    await savePageCopy('about', { 'about.hero.heading': 'The same' });
+    expect(revisionInsert, 'undo would step over a change that never happened').not.toHaveBeenCalled();
+  });
+
+  it('puts the value back, then forgets it, so undoing twice goes further back', async () => {
+    newestRevision = { id: 42, value: 'The older wording' };
+    const { undoCopy } = await load();
+    expect(await undoCopy('about', 'about.hero.heading')).toEqual({ ok: true });
+
+    const [row] = upsert.mock.calls[0] as unknown as [{ value: string }];
+    expect(row.value).toBe('The older wording');
+    expect(revisionDelete, 'the revision must be popped or undo repeats itself').toHaveBeenCalled();
+  });
+
+  it('keeps the revision when putting the value back failed', async () => {
+    // Deleting first would lose the only copy of it.
+    newestRevision = { id: 42, value: 'The only copy of this' };
+    upsertFails = true;
+    const { undoCopy } = await load();
+    expect((await undoCopy('about', 'about.hero.heading')).ok).toBe(false);
+    expect(revisionDelete).not.toHaveBeenCalled();
+  });
+
+  it('says so plainly when there is nothing to undo', async () => {
+    newestRevision = null;
+    const { undoCopy } = await load();
+    expect(await undoCopy('about', 'about.hero.heading')).toEqual({ ok: false, error: 'There is nothing to undo here.' });
+  });
+
+  it('refuses a visitor, and a key the page does not read', async () => {
+    newestRevision = { id: 1, value: 'x' };
+    admin = false;
+    const { undoCopy } = await load();
+    expect((await undoCopy('about', 'about.hero.heading')).ok).toBe(false);
+    admin = true;
+    const fresh = await load();
+    expect((await fresh.undoCopy('about', 'made.up.key')).ok).toBe(false);
+    expect(upsert).not.toHaveBeenCalled();
   });
 });

@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Pencil, X, RotateCcw, Check, Loader2 } from 'lucide-react';
+import { Pencil, X, RotateCcw, Undo2, Check, Loader2 } from 'lucide-react';
 import { copyPageFor, CHROME_PAGE } from '@/lib/copy/routes';
-import { loadPageCopy, savePageCopy, resetCopy, type CopyField } from '@/app/actions/copy';
+import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from '@/app/actions/copy';
 
 // ============= Editing the site from the site =============
 //
@@ -79,6 +79,22 @@ export function EditThisPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       // The page is server-rendered: without this the admin sees the words they just replaced.
+      router.refresh();
+      setFields(await loadPageCopy(active));
+    });
+  };
+
+  const undo = (key: string) => {
+    setError(null);
+    startSaving(async () => {
+      const result = await undoCopy(active, key);
+      if (!result.ok) return setError(result.error);
+      // Drop any unsaved draft for this field: it would sit on top of the value just restored and
+      // read as though the undo had not worked.
+      setDrafts((d) => {
+        const { [key]: _dropped, ...rest } = d[active] ?? {};
+        return { ...d, [active]: rest };
+      });
       router.refresh();
       setFields(await loadPageCopy(active));
     });
@@ -164,18 +180,34 @@ export function EditThisPage() {
                 <label htmlFor={f.key} className="text-sm font-medium text-foreground">
                   {f.label}
                 </label>
+                {f.undo && (
+                  <button
+                    onClick={() => undo(f.key)}
+                    disabled={pending}
+                    className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    title={`Go back to: ${f.undo.value.slice(0, 120) || '(empty)'}`}
+                  >
+                    <Undo2 size={11} /> Undo
+                  </button>
+                )}
                 {canRestore && (
                   <button
                     onClick={() => putBack(f.key)}
                     disabled={pending}
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    title="Put back the wording this site came with"
+                    title="Back to the wording this site was built with, in one step"
                   >
-                    <RotateCcw size={11} /> Put back
+                    <RotateCcw size={11} /> Original
                   </button>
                 )}
               </div>
               <p className="mb-1.5 text-xs text-muted-foreground">{f.hint}</p>
+              {f.undo && (
+                <p className="mb-1.5 truncate text-xs text-muted-foreground/80">
+                  <span className="font-medium">Was:</span>{' '}
+                  {f.undo.value.trim() ? `“${f.undo.value.replace(/\n/g, ' ').slice(0, 90)}”` : 'empty'}
+                </p>
+              )}
               <textarea
                 id={f.key}
                 rows={rows}
