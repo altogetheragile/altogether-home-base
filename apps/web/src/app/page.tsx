@@ -8,7 +8,7 @@ import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
 import { sectionNodes } from '@/components/Sections';
-import { orderedSections, HOME_SECTIONS } from '@/lib/sections';
+import { orderedSections, HOME_SECTIONS } from '@altogether/ui/editor/sections';
 import { Icon } from '@/components/icons/Icon';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';

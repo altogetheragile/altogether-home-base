@@ -1,7 +1,5 @@
-'use client';
-
 import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
-import { orderedSections, type SectionChoice } from '@/lib/sections';
+import { orderedSections, type SectionChoice } from './sections';
 
 // ============= The order of a page, as a list you can move =============
 //

@@ -1,5 +1,3 @@
-'use client';
-
 /** A colour, as a swatch you click and a value you can paste.
  *
  *  Both, because these get chosen two ways: picked by eye when somebody is designing, and pasted

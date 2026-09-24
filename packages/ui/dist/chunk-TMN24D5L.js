@@ -1,4 +1,7 @@
-{
+import { colors } from './chunk-63HQX2YB.js';
+
+// src/editor/site.ts
+var siteRegistry = {
   "page": "site",
   "label": "This Site",
   "entries": {
@@ -64,7 +67,7 @@
       "path": "images.founderPortrait"
     },
     "site.brand.colors.orange": {
-      "value": "#FF9715",
+      "value": colors.orange,
       "label": "Accent colour",
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
@@ -72,7 +75,7 @@
       "path": "colors.orange"
     },
     "site.brand.colors.deepTeal": {
-      "value": "#004D4D",
+      "value": colors.deepTeal,
       "label": "Deep colour",
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
@@ -80,7 +83,7 @@
       "path": "colors.deepTeal"
     },
     "site.brand.colors.midTeal": {
-      "value": "#007A7A",
+      "value": colors.midTeal,
       "label": "Mid colour",
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
@@ -88,7 +91,7 @@
       "path": "colors.midTeal"
     },
     "site.brand.colors.skyTeal": {
-      "value": "#F0FAFA",
+      "value": colors.skyTeal,
       "label": "Pale colour",
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
@@ -96,7 +99,7 @@
       "path": "colors.skyTeal"
     },
     "site.brand.colors.paleTeal": {
-      "value": "#D9F2F2",
+      "value": colors.paleTeal,
       "label": "Palest colour",
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
@@ -121,7 +124,7 @@
     "site.founder_role": {
       "value": "",
       "label": "Founder job title",
-      "hint": "For search engines, for example \"Agile Coach\". Leave empty to claim none.",
+      "hint": 'For search engines, for example "Agile Coach". Leave empty to claim none.',
       "store": "column",
       "path": "founder_role"
     },
@@ -150,7 +153,7 @@
     "site.contact_location": {
       "value": "",
       "label": "Where you are",
-      "hint": "For example \"Manchester, United Kingdom\".",
+      "hint": 'For example "Manchester, United Kingdom".',
       "store": "column",
       "path": "contact_location"
     },
@@ -190,4 +193,6 @@
       "path": "social_github"
     }
   }
-}
+};
+
+export { siteRegistry };

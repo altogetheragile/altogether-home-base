@@ -27,6 +27,10 @@
     "./modules": {
       "types": "./dist/modules.d.ts",
       "import": "./dist/modules.js"
+    },
+    "./editor/*": {
+      "types": "./dist/editor/*.d.ts",
+      "import": "./dist/editor/*.js"
     }
   },
   "files": [

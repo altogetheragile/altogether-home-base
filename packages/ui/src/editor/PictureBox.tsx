@@ -1,9 +1,7 @@
-'use client';
-
 import { useRef, useState } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { picture } from '@/lib/copy/fields';
+
+import { picture } from './fields';
 
 // ============= A picture, and the words that stand in for it =============
 //
@@ -16,7 +14,16 @@ import { picture } from '@/lib/copy/fields';
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
-export function PictureBox({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+export function PictureBox({
+  value,
+  onChange,
+  upload: putFile,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  /** Stores the file and answers with the address to render it from. */
+  upload: (file: File) => Promise<string>;
+}) {
   const current = picture(value);
   const file = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -34,14 +41,7 @@ export function PictureBox({ value, onChange }: { value: string; onChange: (next
     }
     setBusy(true);
     try {
-      const supabase = createClient();
-      const ext = f.name.split('.').pop()?.toLowerCase() || 'bin';
-      const path = `site/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('assets').upload(path, f, { upsert: false, cacheControl: '31536000' });
-      if (upErr) throw upErr;
-      const { data } = supabase.storage.from('assets').getPublicUrl(path);
-      if (!data?.publicUrl) throw new Error('Uploaded, but no address came back for it.');
-      write(data.publicUrl, current?.alt ?? '');
+      write(await putFile(f), current?.alt ?? '');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'That upload did not work.');
     } finally {
@@ -54,7 +54,6 @@ export function PictureBox({ value, onChange }: { value: string; onChange: (next
       <div className="flex items-start gap-2">
         <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted/40">
           {current ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
             <img src={current.src} alt="" className="h-full w-full object-cover" />
           ) : (
             <span className="text-[10px] text-muted-foreground">No picture</span>

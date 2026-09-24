@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import type { SectionState } from '@/lib/sections';
+import type { SectionState } from '@altogether/ui/editor/sections';
 
 /** Renders a page's sections in the order this site has put them, skipping the hidden ones.
  *
