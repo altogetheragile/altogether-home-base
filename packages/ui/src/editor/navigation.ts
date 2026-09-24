@@ -48,25 +48,65 @@ export const navigationRegistry: CopyRegistry = {
       "label": "Knowledge base link",
       "hint": "Inside the Resources drop-down"
     },
+    "nav.knowledge.visible": {
+      "value": "",
+      "label": "Show it",
+      "hint": "Off, and the knowledge base leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_knowledge"
+    },
     "nav.blog": {
       "value": "Blog",
       "label": "Blog link",
       "hint": "Inside the Resources drop-down"
+    },
+    "nav.blog.visible": {
+      "value": "",
+      "label": "Show it",
+      "hint": "Off, and the blog leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_blog"
     },
     "nav.exams": {
       "value": "Practice Exams",
       "label": "Practice exams link",
       "hint": "Inside the Resources drop-down"
     },
+    "nav.exams.visible": {
+      "value": "",
+      "label": "Show it",
+      "hint": "Off, and the practice exams leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_exams"
+    },
     "nav.ai_tools": {
       "value": "AI Tools",
       "label": "AI tools link",
       "hint": "Inside the Resources drop-down"
     },
+    "nav.ai_tools.visible": {
+      "value": "",
+      "label": "Show it",
+      "hint": "Off, and the AI tools leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_ai_tools"
+    },
     "nav.flow_game": {
       "value": "Flow Game",
       "label": "Flow game link",
       "hint": "Inside the Resources drop-down"
+    },
+    "nav.flow_game.visible": {
+      "value": "",
+      "label": "Show it",
+      "hint": "Off, and the flow game leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_flow_game"
     },
     "nav.home": {
       "value": "Home",
