@@ -65,95 +65,75 @@
       "label": "Approach, third paragraph",
       "hint": "What you bring into the room, and what stays the client’s."
     },
-    "coaching.service.1.label": {
-      "value": "One-to-One",
-      "label": "Service 1 tag",
-      "hint": "Service 1: the one-to-one block. The word before \"Coaching\" in the pill"
-    },
-    "coaching.service.1.title": {
-      "value": "Professional Coaching",
-      "label": "Service 1 title",
-      "hint": "Service 1: the one-to-one block"
-    },
-    "coaching.service.1.tagline": {
-      "value": "Space to think. Clarity to act.",
-      "label": "Service 1 tagline",
-      "hint": "Service 1: the one-to-one block"
-    },
-    "coaching.service.1.description": {
-      "value": "One-to-one coaching for professionals navigating change - whether that's a new role, a difficult team dynamic, a career pivot, or the challenge of leading in an agile organisation without a map.",
-      "label": "Service 1 description",
-      "hint": "Service 1: the one-to-one block"
-    },
-    "coaching.service.1.detail": {
+    "coaching.services": {
       "value": "",
-      "label": "Service 1 detail",
-      "hint": "What this service is, and what it is not."
-    },
-    "coaching.service.1.includes": {
-      "value": "60-minute sessions via video call or in person (London)\nPre-session reflection prompts sent 48 hours before\nSession notes and agreed actions within 24 hours\nWhatsApp or email support between sessions\nICF-aligned approach throughout",
-      "label": "Service 1 what is included",
-      "hint": "Service 1: the one-to-one block. One per line, add or remove lines freely"
-    },
-    "coaching.service.1.price": {
-      "value": "On request",
-      "label": "Service 1 price",
-      "hint": "Service 1: the one-to-one block"
-    },
-    "coaching.service.1.packageNote": {
-      "value": "Pricing discussed during your free chemistry session",
-      "label": "Service 1 price note",
-      "hint": "Service 1: the one-to-one block"
-    },
-    "coaching.service.1.cta": {
-      "value": "Book a chemistry session",
-      "label": "Service 1 button",
-      "hint": "Service 1: the one-to-one block"
-    },
-    "coaching.service.2.label": {
-      "value": "Team",
-      "label": "Service 2 tag",
-      "hint": "Service 2: the team block. The word before \"Coaching\" in the pill"
-    },
-    "coaching.service.2.title": {
-      "value": "Agile Team Coaching",
-      "label": "Service 2 title",
-      "hint": "Service 2: the team block"
-    },
-    "coaching.service.2.tagline": {
-      "value": "Better teams don't happen by accident.",
-      "label": "Service 2 tagline",
-      "hint": "Service 2: the team block"
-    },
-    "coaching.service.2.description": {
-      "value": "Coaching for agile teams that are technically running the events but not getting the results - or for newly formed teams that want to build good habits from the start.",
-      "label": "Service 2 description",
-      "hint": "Service 2: the team block"
-    },
-    "coaching.service.2.detail": {
-      "value": "",
-      "label": "Service 2 detail",
-      "hint": "What this service is, and what it is not."
-    },
-    "coaching.service.2.includes": {
-      "value": "Initial team assessment and health check\nFortnightly team coaching sessions (90 minutes)\nOne-to-one sessions with team lead or Scrum Master\nRetrospective facilitation and coaching\nManagement 3.0 practices woven throughout",
-      "label": "Service 2 what is included",
-      "hint": "Service 2: the team block. One per line, add or remove lines freely"
-    },
-    "coaching.service.2.price": {
-      "value": "On request",
-      "label": "Service 2 price",
-      "hint": "Service 2: the team block"
-    },
-    "coaching.service.2.packageNote": {
-      "value": "Engagement length discussed during your free chemistry session",
-      "label": "Service 2 price note",
-      "hint": "Service 2: the team block"
-    },
-    "coaching.service.2.cta": {
-      "value": "Enquire about team coaching",
-      "label": "Service 2 button",
-      "hint": "Service 2: the team block"
+      "label": "Services",
+      "hint": "One block per service you offer. Add or remove as many as you like; leave it empty and the services section disappears. Each one alternates side and background down the page automatically.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "title",
+          "label": "Service name",
+          "placeholder": "Professional Coaching",
+          "required": true
+        },
+        {
+          "key": "label",
+          "label": "Short label for the badge",
+          "placeholder": "One-to-One"
+        },
+        {
+          "key": "tagline",
+          "label": "Tagline",
+          "placeholder": "Space to think. Clarity to act."
+        },
+        {
+          "key": "description",
+          "label": "Opening paragraph",
+          "type": "textarea"
+        },
+        {
+          "key": "detail",
+          "label": "More detail",
+          "type": "textarea"
+        },
+        {
+          "key": "includes",
+          "label": "What's included, one per line",
+          "type": "textarea"
+        },
+        {
+          "key": "price",
+          "label": "Price",
+          "placeholder": "On request"
+        },
+        {
+          "key": "packageNote",
+          "label": "Note under the price",
+          "type": "textarea"
+        },
+        {
+          "key": "cta",
+          "label": "Button wording",
+          "placeholder": "Book a chemistry session"
+        },
+        {
+          "key": "icon",
+          "label": "Icon for the badge",
+          "type": "icon"
+        },
+        {
+          "key": "colour",
+          "label": "Accent colour",
+          "type": "colour",
+          "placeholder": "Leave empty for the shipped colour"
+        },
+        {
+          "key": "image",
+          "label": "Picture",
+          "type": "image"
+        }
+      ]
     },
     "coaching.service.includesHeading": {
       "value": "What's included",
@@ -170,65 +150,24 @@
       "label": "Why heading",
       "hint": "The teal band listing why Altogether Agile"
     },
-    "coaching.why.1.label": {
-      "value": "ICF-accredited",
-      "label": "Credential 1 name",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.1.desc": {
-      "value": "Coaching approach aligned to International Coaching Federation standards",
-      "label": "Credential 1 description",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.2.label": {
-      "value": "STAR Manager Practitioner",
-      "label": "Credential 2 name",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.2.desc": {
-      "value": "Assessed portfolio across all nine management competencies",
-      "label": "Credential 2 description",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.3.label": {
+    "coaching.why.items": {
       "value": "",
-      "label": "Credential 3 name",
-      "hint": "The third reason. Leave empty and the card does not appear."
-    },
-    "coaching.why.3.desc": {
-      "value": "",
-      "label": "Credential 3 description",
-      "hint": "One line under the third reason."
-    },
-    "coaching.why.4.label": {
-      "value": "ABC Assessor",
-      "label": "Credential 4 name",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.4.desc": {
-      "value": "Interviews professional membership candidates for the Agile Business Consortium",
-      "label": "Credential 4 description",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.5.label": {
-      "value": "Management 3.0",
-      "label": "Credential 5 name",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.5.desc": {
-      "value": "Licensed Facilitator - energising people, teams, and organisations",
-      "label": "Credential 5 description",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.6.label": {
-      "value": "University Lecturer",
-      "label": "Credential 6 name",
-      "hint": "The teal band listing why Altogether Agile"
-    },
-    "coaching.why.6.desc": {
-      "value": "",
-      "label": "Credential 6 description",
-      "hint": "One line under the sixth reason. Keep it to a single short phrase; it sits in a narrow card."
+      "label": "Credentials",
+      "hint": "One per credential or reason to work with you. Leave it empty and the whole section disappears. These are checkable claims about a real person, so a new site starts with none.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "label",
+          "label": "Credential",
+          "placeholder": "ICF-accredited",
+          "required": true
+        },
+        {
+          "key": "desc",
+          "label": "What it means",
+          "type": "textarea"
+        }
+      ]
     },
     "coaching.chemistry.label": {
       "value": "Free chemistry session",

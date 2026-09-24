@@ -19,9 +19,6 @@ const BLANK_BY_DESIGN = [
   'about.timeline.list',
   'coaching.hero.intro',
   'coaching.approach.p3',
-  'coaching.service.1.detail',
-  'coaching.service.2.detail',
-  'coaching.why.6.desc',
   'home.founder.body',
   'home.founder.quote',
   // Somebody's qualifications. Worse than prose: these are checkable claims about a named person.
@@ -36,12 +33,16 @@ const BLANK_BY_DESIGN = [
   // Was eight numbered keys, fixed at four statistics. One list now, which a site can add to.
   'home.stats.items',
   'events.stats.trained.number',
-  'coaching.why.3.label',
-  'coaching.why.3.desc',
+  // Was twelve numbered keys, fixed at six credentials, two of which were this person's alone.
+  // Checkable claims about a named individual, so a new site makes none of them.
+  'coaching.why.items',
   // Lists rather than a fixed number of numbered keys. Empty means the section is not there,
   // which is the right thing for a site that has not said who it is for yet.
   'home.personas.items',
   'about.philosophy.items',
+  // Was eighteen numbered keys, fixed at exactly two services, each named after its position
+  // rather than what it was. Somebody else's offering and somebody else's prices either way.
+  'coaching.services',
   // The wave pattern is drawn in this site's colours. A second site gets a plain hero until it
   // chooses its own picture.
   'home.hero.background',
