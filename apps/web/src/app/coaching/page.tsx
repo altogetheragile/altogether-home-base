@@ -8,7 +8,9 @@ import { HomeTestimonials } from '../HomeTestimonials';
 import { CoachingEnquiryForm } from './CoachingEnquiryForm';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
-import { getCopy, lines, list } from '@/lib/copy';
+import { getCopy, lines, list, items, picture } from '@/lib/copy';
+import { Icon } from '@/components/icons/Icon';
+import { tint } from '@altogether/ui/brand';
 import { Prose } from '@/lib/copy/Prose';
 
 export const dynamic = 'force-dynamic';
@@ -40,17 +42,22 @@ const Heading = ({ label, title, light = false }: { label: string; title: string
   </div>
 );
 
-// Styling and images stay here; every word in these blocks is copy.
-const serviceStyles = [
-  { id: 'one-to-one', icon: <User />, colour: '#1A9090', lightBg: '#E6F5F5', img: '/images/coaching-one-to-one.webp', imgAlt: 'One-to-one coaching session in comfortable chairs', imgScale: 118, imgPos: 'center 35%' },
-  { id: 'team', icon: <Users />, colour: '#6B5FCC', lightBg: '#EEECF9', img: '/images/coaching-team.webp', imgAlt: 'Team coaching session at a desk with laptop', imgScale: 105, imgPos: 'center center' },
-];
+// The colours a service falls back to when it has not chosen one, by position down the page.
+//
+// Not a list of services any more. There used to be exactly two, here in code, with nine copy
+// keys each named after their position: adding a third was a code change, and the second one's
+// words lived under `coaching.service.2.*` whatever it was actually about.
+const serviceColours = ['#1A9090', '#6B5FCC', '#C2703D', '#3D7BC2'];
 
-function Illustration({ src, alt, height, scale = 105, position = 'center center' }: { src: string; alt: string; height: number; scale?: number; position?: string }) {
+function Illustration({ src, alt, height }: { src: string; alt: string; height: number }) {
+  // The zoom and focus point used to be set per picture, tuned by hand for the two illustrations
+  // this page shipped with. A service somebody adds themselves has no such tuning and no way to
+  // ask for it, so the framing has to be one that works for any picture: fill the box, keep the
+  // middle. Both shipped illustrations are drawn with margin around them and are unaffected.
   return (
     <div style={{ borderRadius: 16, overflow: 'hidden', height, position: 'relative' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} loading="lazy" style={{ width: `${scale}%`, height: `${scale}%`, objectFit: 'cover', objectPosition: position, display: 'block' }} />
+      <img src={src} alt={alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
     </div>
   );
 }
@@ -59,23 +66,27 @@ export default async function CoachingPage() {
   await requireModule('coaching');
   const [settings, testimonials, t] = await Promise.all([getSiteSettings(), getHomeTestimonials(), getCopy('coaching')]);
 
-  // Styling from serviceStyles, words from the registry.
-  const services = serviceStyles.map((style, i) => ({
-    ...style,
-    label: t(`coaching.service.${i + 1}.label`),
-    title: t(`coaching.service.${i + 1}.title`),
-    tagline: t(`coaching.service.${i + 1}.tagline`),
-    description: t(`coaching.service.${i + 1}.description`),
-    detail: t(`coaching.service.${i + 1}.detail`),
-    includes: list(t(`coaching.service.${i + 1}.includes`)),
-    price: t(`coaching.service.${i + 1}.price`),
-    packageNote: t(`coaching.service.${i + 1}.packageNote`),
-    cta: t(`coaching.service.${i + 1}.cta`),
-  }));
-  const credentials = Array.from({ length: 6 }, (_, i) => ({
-    label: t(`coaching.why.${i + 1}.label`),
-    desc: t(`coaching.why.${i + 1}.desc`),
-  })).filter((c) => c.label.trim());
+  // As many services as there are, in the order they are written. A service with no name is a
+  // row somebody is part way through typing, and is left off rather than rendered half-built.
+  type Service = {
+    title: string; label: string; tagline: string; description: string; detail: string;
+    includes: string; price: string; packageNote: string; cta: string;
+    icon: string; colour: string; image: string;
+  };
+  const services = items<Service>(t('coaching.services'), ['title']).map((s, i) => {
+    const colour = s.colour?.trim() || serviceColours[i % serviceColours.length];
+    return {
+      ...s,
+      colour,
+      // The pale panel behind "What's included" is the accent colour, lightened. Derived rather
+      // than a second box to fill in, because two colours that have to agree are two colours that
+      // eventually will not.
+      lightBg: tint(colour),
+      includes: list(s.includes ?? ''),
+      picture: picture(s.image ?? ''),
+    };
+  });
+  const credentials = items<{ label: string; desc: string }>(t('coaching.why.items'), ['label']);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
 
@@ -124,16 +135,20 @@ export default async function CoachingPage() {
             <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p2')}</p>
             <Prose text={t('coaching.approach.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }} />
           </div>
-          <Illustration src="/images/coaching-hero.webp" alt="Two people having a coaching conversation" height={320} position="center 40%" />
+          <Illustration src="/images/coaching-hero.webp" alt="Two people having a coaching conversation" height={320} />
         </div>
       </div>
 
       {/* SERVICES */}
       {services.map((service, si) => (
-        <div key={service.id} className="aa-section-pad" style={{ background: si % 2 === 0 ? p.white : p.skyTeal }}>
+        <div key={service.title} className="aa-section-pad" style={{ background: si % 2 === 0 ? p.white : p.skyTeal }}>
           <div className="aa-service-layout aa-service-flip" style={{ direction: si % 2 === 1 ? 'rtl' : 'ltr' }}>
             <div style={{ direction: 'ltr' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: service.lightBg, color: service.colour, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 20, marginBottom: 20 }}>{service.icon}{service.label} Coaching</div>
+              {service.label?.trim() && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: service.lightBg, color: service.colour, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 14px', borderRadius: 20, marginBottom: 20 }}>
+                  <Icon name={service.icon} size={14} />{service.label}
+                </div>
+              )}
               <h2 style={{ color: p.deepTeal, fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 6px', lineHeight: 1.2 }}>{service.title}</h2>
               <div style={{ color: service.colour, fontWeight: 700, fontSize: 16, marginBottom: 20 }}>{service.tagline}</div>
               <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 14px' }}>{service.description}</p>
@@ -157,7 +172,7 @@ export default async function CoachingPage() {
               </div>
             </div>
             <div style={{ direction: 'ltr' }}>
-              <Illustration src={service.img} alt={service.imgAlt} height={360} scale={service.imgScale} position={service.imgPos} />
+              {service.picture && <Illustration src={service.picture.src} alt={service.picture.alt} height={360} />}
             </div>
           </div>
         </div>
