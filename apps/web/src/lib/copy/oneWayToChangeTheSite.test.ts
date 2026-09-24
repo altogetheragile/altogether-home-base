@@ -26,16 +26,39 @@ describe('one way to change the site', () => {
     expect(wrong).toEqual([]);
   });
 
-  it('never points two fields at the same place', () => {
-    // Two boxes writing one value is the duplication this was meant to end.
-    const seen = new Map<string, string>();
+  it('never offers the same place twice in one tab', () => {
+    // Two boxes on one screen writing one value is a confusion, and nothing needs it.
     const clashes: string[] = [];
-    for (const [key, e] of offSite) {
-      const where = `${e.store}:${e.path}`;
-      if (seen.has(where)) clashes.push(`${key} and ${seen.get(where)} both write ${where}`);
-      seen.set(where, key);
+    for (const reg of REGISTRIES) {
+      const seen = new Map<string, string>();
+      for (const [key, e] of Object.entries(reg.entries)) {
+        if (!e.store || e.store === 'copy') continue;
+        const where = `${e.store}:${e.path}`;
+        if (seen.has(where)) clashes.push(`${reg.page}: ${key} and ${seen.get(where)} both write ${where}`);
+        seen.set(where, key);
+      }
     }
     expect(clashes).toEqual([]);
+  });
+
+  it('shows the same switch in two tabs only when it really is the same switch', () => {
+    // Across tabs is different, and deliberate. Whether the blog is published is a decision
+    // somebody makes on the blog page, and also while arranging the menu; refusing the second
+    // place means they go hunting for the first. What must not differ is the control: same type,
+    // same destination, or they are two things that look like one.
+    //
+    // This is not the duplication the editor was consolidating. That was two separate screens,
+    // in two apps, each with its own idea of how to write a value.
+    const byPlace = new Map<string, { key: string; type?: string }[]>();
+    for (const [key, e] of offSite) {
+      const where = `${e.store}:${e.path}`;
+      byPlace.set(where, [...(byPlace.get(where) ?? []), { key, type: e.type }]);
+    }
+    const inconsistent = [...byPlace.entries()]
+      .filter(([, fields]) => fields.length > 1)
+      .filter(([, fields]) => new Set(fields.map((f) => f.type)).size > 1)
+      .map(([where, fields]) => `${where}: ${fields.map((f) => `${f.key}(${f.type})`).join(' vs ')}`);
+    expect(inconsistent, 'the same value is edited by two different kinds of control').toEqual([]);
   });
 
   it('folds several brand changes into one object rather than losing all but the last', () => {

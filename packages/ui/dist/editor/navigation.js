@@ -1,1 +1,1 @@
-export { navigationRegistry } from '../chunk-23M3UFDP.js';
+export { navigationRegistry } from '../chunk-CNJZMHDX.js';
