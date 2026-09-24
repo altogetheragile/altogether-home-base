@@ -106,23 +106,27 @@ export default async function HomePage() {
           );
         })()}
 
-        {/* WHO IS THIS FOR */}
-        <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
-          <h2 className="aa-section-heading aa-section-heading--center">{t('home.personas.heading')}</h2>
-          <div className="aa-three-col">
-            {[
-              { heading: t('home.personas.1.heading'), body: t('home.personas.1.body') },
-              { heading: t('home.personas.2.heading'), body: t('home.personas.2.body') },
-              { heading: t('home.personas.3.heading'), body: t('home.personas.3.body') },
-            ].map((card) => (
-              <div key={card.heading} className="aa-persona-card">
-                <div className="aa-persona-card__icon"><Icons.ArrowRight /></div>
-                <div className="aa-persona-card__heading">{card.heading}</div>
-                <div className="aa-persona-card__body">{card.body}</div>
+        {/* WHO IS THIS FOR
+            However many kinds of person you work with, rather than exactly three. No cards means
+            no section: a heading asking "Who is this for?" over nothing answers itself badly. */}
+        {(() => {
+          const cards = items<{ heading: string; body: string }>(t('home.personas.items'), ['heading']);
+          if (cards.length === 0) return null;
+          return (
+            <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
+              <h2 className="aa-section-heading aa-section-heading--center">{t('home.personas.heading')}</h2>
+              <div className="aa-three-col">
+                {cards.map((card) => (
+                  <div key={card.heading} className="aa-persona-card">
+                    <div className="aa-persona-card__icon"><Icons.ArrowRight /></div>
+                    <div className="aa-persona-card__heading">{card.heading}</div>
+                    <div className="aa-persona-card__body">{card.body}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          );
+        })()}
 
         {/* TESTIMONIALS */}
         <HomeTestimonials items={testimonials} firstNameOnly={firstNameOnly} />

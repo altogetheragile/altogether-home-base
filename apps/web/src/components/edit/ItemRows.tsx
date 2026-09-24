@@ -86,12 +86,22 @@ export function ItemRows({
           {fields.map((f) => (
             <label key={f.key} className="mb-1.5 block last:mb-0">
               <span className="mb-0.5 block text-xs text-muted-foreground">{f.label}</span>
-              <input
-                value={row[f.key] ?? ''}
-                placeholder={f.placeholder}
-                onChange={(e) => set(i, f.key, e.target.value)}
-                className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+              {f.multiline ? (
+                <textarea
+                  value={row[f.key] ?? ''}
+                  placeholder={f.placeholder}
+                  rows={Math.min(7, Math.max(2, Math.ceil((row[f.key] ?? '').length / 48)))}
+                  onChange={(e) => set(i, f.key, e.target.value)}
+                  className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              ) : (
+                <input
+                  value={row[f.key] ?? ''}
+                  placeholder={f.placeholder}
+                  onChange={(e) => set(i, f.key, e.target.value)}
+                  className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              )}
             </label>
           ))}
         </div>

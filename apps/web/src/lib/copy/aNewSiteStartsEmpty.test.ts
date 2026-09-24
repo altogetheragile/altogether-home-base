@@ -38,6 +38,10 @@ const BLANK_BY_DESIGN = [
   'events.stats.trained.number',
   'coaching.why.3.label',
   'coaching.why.3.desc',
+  // Lists rather than a fixed number of numbered keys. Empty means the section is not there,
+  // which is the right thing for a site that has not said who it is for yet.
+  'home.personas.items',
+  'about.philosophy.items',
 ];
 
 /** Claims a site has to earn before it makes them. Checked against everything that DOES ship. */

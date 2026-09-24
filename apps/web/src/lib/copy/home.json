@@ -58,37 +58,26 @@
     "home.personas.heading": {
       "value": "Who is this for?",
       "label": "Who is this for, heading",
-      "hint": "Above the three cards"
+      "hint": "Above the cards"
     },
-    "home.personas.1.heading": {
-      "value": "Moving into agile",
-      "label": "Card 1 heading",
-      "hint": "One of the three Who is this for cards"
-    },
-    "home.personas.1.body": {
-      "value": "You're a project manager, BA, or team lead transitioning to agile ways of working and need grounded, practical guidance - not just theory.",
-      "label": "Card 1 body",
-      "hint": "One of the three Who is this for cards"
-    },
-    "home.personas.2.heading": {
-      "value": "Seeking certification",
-      "label": "Card 2 heading",
-      "hint": "One of the three Who is this for cards"
-    },
-    "home.personas.2.body": {
-      "value": "You want a grounded, framework-based course - Scrum, AgileBA, AgilePM, or Kanban - taught by somebody who has used it in earnest.",
-      "label": "Card 2 body",
-      "hint": "One of the three Who is this for cards"
-    },
-    "home.personas.3.heading": {
-      "value": "Building team agility",
-      "label": "Card 3 heading",
-      "hint": "One of the three Who is this for cards"
-    },
-    "home.personas.3.body": {
-      "value": "You're a leader trying to grow genuine organisational agility - and you need a coach who understands both the human and structural side of change.",
-      "label": "Card 3 body",
-      "hint": "One of the three Who is this for cards"
+    "home.personas.items": {
+      "value": "",
+      "label": "Who is this for, cards",
+      "hint": "One card per kind of person you work with. Add or remove as many as you like; leave it empty and the whole section disappears.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "heading",
+          "label": "Card heading",
+          "placeholder": "Moving into agile"
+        },
+        {
+          "key": "body",
+          "label": "Card body",
+          "multiline": true,
+          "placeholder": "Who they are and what they need."
+        }
+      ]
     },
     "home.courses.heading": {
       "value": "Courses, workshops and masterclasses",

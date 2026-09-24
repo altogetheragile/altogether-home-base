@@ -8,7 +8,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName
 import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
-import { getCopy, lines, list } from '@/lib/copy';
+import { getCopy, lines, list, items } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
 
 export const dynamic = 'force-dynamic';
@@ -229,19 +229,20 @@ export default async function AboutPage() {
         </div>
       </div>
 
-      {/* PHILOSOPHY */}
+      {/* PHILOSOPHY
+          Two cards was a layout decision that had become a content limit. The colours cycle, as
+          the statistics icons do, so a third card is a third card rather than a code change. */}
+      {(() => {
+        const cards = items<{ label: string; heading: string; body: string; principles: string }>(
+          t('about.philosophy.items'), ['heading'],
+        );
+        if (cards.length === 0) return null;
+        return (
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
         <Heading label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
         <div className="aa-two-col" style={{ gap: 24 }}>
-          {philosophyStyles.map((style, idx) => {
-            const n = idx + 1;
-            const card = {
-              label: t(`about.philosophy.${n}.label`),
-              heading: t(`about.philosophy.${n}.heading`),
-              body: t(`about.philosophy.${n}.body`),
-              principles: list(t(`about.philosophy.${n}.principles`)),
-              ...style,
-            };
+          {cards.map((entry, idx) => {
+            const card = { ...entry, principles: list(entry.principles ?? ''), ...philosophyStyles[idx % philosophyStyles.length] };
             return (
             <div key={card.label} style={{ background: p.white, borderRadius: 16, overflow: 'hidden' }}>
               <div style={{ background: card.lightBg, padding: '20px 28px' }}>
@@ -263,6 +264,8 @@ export default async function AboutPage() {
           })}
         </div>
       </div>
+        );
+      })()}
 
       {/* TIMELINE */}
       {(() => {

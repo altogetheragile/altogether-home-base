@@ -40,12 +40,12 @@
     "events.stats.courses": {
       "value": "Courses offered",
       "label": "Stat 1 label",
-      "hint": "The three figures under the hero. The first two are counted from the data"
+      "hint": "The figures under the hero. The first two are counted from the data"
     },
     "events.stats.scheduled": {
       "value": "Dates scheduled",
       "label": "Stat 2 label",
-      "hint": "The three figures under the hero. The first two are counted from the data"
+      "hint": "The figures under the hero. The first two are counted from the data"
     },
     "events.stats.trained.number": {
       "value": "",
@@ -55,7 +55,7 @@
     "events.stats.trained.label": {
       "value": "Practitioners trained",
       "label": "Stat 3 label",
-      "hint": "The three figures under the hero. The first two are counted from the data"
+      "hint": "The figures under the hero. The first two are counted from the data"
     },
     "events.bespoke.eyebrow": {
       "value": "In-house & bespoke",
