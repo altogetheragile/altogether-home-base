@@ -1,5 +1,5 @@
 export { ColorToken, colors, fontWeights, fonts, radii, space, tokens } from './tokens.js';
-export { BrandImageOverrides, BrandOverrides, ColorName, ImageName, Logo, Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, logoOf, resolveColors, resolveImages } from './brand.js';
+export { BrandImageOverrides, BrandOverrides, ColorName, ImageName, Logo, Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages } from './brand.js';
 export { MODULE_DEFAULTS, ModuleName, moduleIsOn } from './modules.js';
 import { ClassValue } from 'clsx';
 export { Button, ButtonProps, buttonVariants } from './components/ui/button.js';

@@ -14,6 +14,6 @@ export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 export { Input } from './chunk-DAV47KGU.js';
 export { Label } from './chunk-KMMRKWER.js';
 export { cn } from './chunk-7EOSDFS3.js';
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, logoOf, resolveColors, resolveImages } from './chunk-7XZ32ICL.js';
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages } from './chunk-H5N4DELY.js';
 export { MODULE_DEFAULTS, moduleIsOn } from './chunk-ULREI5W6.js';
 export { colors, fontWeights, fonts, radii, space, tokens } from './chunk-63HQX2YB.js';

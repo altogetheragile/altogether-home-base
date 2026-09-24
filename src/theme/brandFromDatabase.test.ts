@@ -84,9 +84,24 @@ describe('resolving a site logo, favicon and share image', () => {
     expect(r.favicon).toBe(defaultImages.favicon);
   });
 
-  it('refuses a relative path, which would resolve against whoever is rendering', () => {
-    // An Open Graph image especially: a crawler would fetch a path that does not exist.
-    for (const bad of ['/logo.svg', 'logo.svg', '//cdn/logo.svg', 'javascript:alert(1)', 'data:image/svg+xml,x', '', 42, null]) {
+  it('takes a path to a file this site serves', () => {
+    // This used to be refused, on the grounds that a relative path resolves against whoever is
+    // rendering. True of an Open Graph image, which a crawler fetches with nothing but the URL.
+    // Not true of anything drawn in a page on this site's own origin, which is how every file in
+    // /public is referenced.
+    //
+    // It cost the live founder photograph to find out: the rule discarded "/images/alun.webp",
+    // and nobody noticed for months because the shipped default WAS that file, so a rejected
+    // override fell back to the picture it was trying to set.
+    expect(resolveImages({ images: { logo: '/brand/lockup.svg' } }).logo).toBe('/brand/lockup.svg');
+  });
+
+  it('still refuses one for the social sharing image', () => {
+    expect(resolveImages({ images: { ogImage: '/og.png' } }).ogImage).toBe(defaultImages.ogImage);
+  });
+
+  it('refuses anything that is not an address at all', () => {
+    for (const bad of ['logo.svg', '//cdn/logo.svg', 'javascript:alert(1)', 'data:image/svg+xml,x', '', 42, null]) {
       expect(resolveImages({ images: { logo: bad } }).logo, `accepted ${JSON.stringify(bad)}`).toBe(defaultImages.logo);
     }
   });
@@ -108,7 +123,11 @@ describe('the logo a site has not chosen', () => {
     expect(logoOf(null, '   ')).toEqual({ mode: 'image', src: defaultImages.logo });
   });
 
-  it('ignores a relative path, as everywhere else', () => {
-    expect(logoOf({ images: { logo: '/logo.svg' } }, 'Co')).toEqual({ mode: 'wordmark', text: 'Co' });
+  it('takes a path, as everywhere else', () => {
+    expect(logoOf({ images: { logo: '/logo.svg' } }, 'Co')).toEqual({ mode: 'image', src: '/logo.svg' });
+  });
+
+  it('still falls back to the name for something that is not an address', () => {
+    expect(logoOf({ images: { logo: 'logo.svg' } }, 'Co')).toEqual({ mode: 'wordmark', text: 'Co' });
   });
 });
