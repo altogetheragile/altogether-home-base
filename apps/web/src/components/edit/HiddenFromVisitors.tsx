@@ -16,8 +16,9 @@ import { MODULE_FOR_PATH } from '@/lib/copy/routes';
 export function HiddenFromVisitors({ hidden }: { hidden: Record<string, boolean> }) {
   const pathname = usePathname();
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  const module = MODULE_FOR_PATH[clean];
-  if (!module || !hidden[module]) return null;
+  // Not `module`: Next forbids assigning that name, because it is CommonJS's own.
+  const gated = MODULE_FOR_PATH[clean];
+  if (!gated || !hidden[gated]) return null;
 
   return (
     <div className="sticky top-0 z-[55] flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-center text-sm font-medium text-amber-950">
