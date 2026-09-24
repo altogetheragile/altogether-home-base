@@ -2,6 +2,14 @@
   "page": "contact",
   "label": "Contact",
   "entries": {
+    "contact.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the contact page disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_contact"
+    },
     "contact.meta.description": {
       "value": "Get in touch about coaching and training, or to book a first conversation.",
       "label": "Search description",

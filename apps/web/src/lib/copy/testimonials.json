@@ -2,6 +2,46 @@
   "page": "testimonials",
   "label": "Testimonials",
   "entries": {
+    "testimonials.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the testimonials page disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_testimonials"
+    },
+    "testimonials.name.visible": {
+      "value": "",
+      "label": "Show who said it",
+      "hint": "Off, and every quote is anonymous.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_testimonial_name"
+    },
+    "testimonials.firstName.visible": {
+      "value": "",
+      "label": "First names only",
+      "hint": "On, and somebody who left their full name appears by their first name alone.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_testimonial_first_name_only"
+    },
+    "testimonials.company.visible": {
+      "value": "",
+      "label": "Show where they work",
+      "hint": "The job title and company under the name.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_testimonial_company"
+    },
+    "testimonials.rating.visible": {
+      "value": "",
+      "label": "Show the average rating",
+      "hint": "The score above the quotes.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_testimonial_rating_header"
+    },
     "testimonials.meta.description": {
       "value": "What people say about the courses, coaching and training here.",
       "label": "Search description",

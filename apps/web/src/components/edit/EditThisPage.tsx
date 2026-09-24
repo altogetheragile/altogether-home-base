@@ -251,7 +251,11 @@ export function EditThisPage() {
                     onChange={(e) => setField(f.key, e.target.checked ? 'on' : '')}
                     className="h-4 w-4 rounded border-border"
                   />
-                  {value === 'on' ? 'Shown' : 'Hidden'}
+                  {/* A status, not a label for the box. "Hidden" beside an unticked box reads
+                      as "hidden: no" to about half the people who see it. */}
+                  <span className={value === 'on' ? '' : 'font-medium text-amber-700'}>
+                    {value === 'on' ? 'Visible to everyone' : 'Hidden from visitors'}
+                  </span>
                 </label>
               ) : (
                 <textarea

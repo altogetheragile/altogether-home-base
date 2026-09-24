@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { MODULES, MODULE_GROUPS, NAV_FLAGS, flagOf } from '@/config/modules';
 import { Settings } from 'lucide-react';
-import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
 
 
 
@@ -23,15 +22,8 @@ import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDispla
 // the admin area is a way to lock yourself out of your own site.
 
 type Flags = Record<string, boolean>;
-type Brand = { colors?: Record<string, unknown> | null; images?: Record<string, unknown> | null } | null;
 
-const brandOf = (settings: unknown): Brand =>
-  ((settings as { brand?: Brand } | null | undefined)?.brand ?? null);
 
-const founderOf = (settings: unknown) => {
-  const s = settings as { show_founder?: boolean | null; founder_name?: string | null } | null | undefined;
-  return { show_founder: s?.show_founder !== false, founder_name: s?.founder_name ?? '' };
-};
 
 const defaults = (settings: Record<string, unknown> | null | undefined): Flags =>
   Object.fromEntries([...MODULES.map((m) => [flagOf(m), m.defaultOn] as const),
@@ -45,21 +37,17 @@ export default function AdminSettings() {
   const { settings, isLoading, updateSettings } = useSiteSettings();
   const [localSettings, setLocalSettings] = useState<Flags>(() => defaults(settings as unknown as Record<string, unknown>));
   // Held apart from the flags because it is not one. Flags is Record<string, boolean>.
-  const [brand, setBrand] = useState<Brand>(() => brandOf(settings));
-  const [founder, setFounder] = useState(() => founderOf(settings));
 
   useEffect(() => {
     if (settings) {
       setLocalSettings(defaults(settings as unknown as Record<string, unknown>));
-      setBrand(brandOf(settings));
-      setFounder(founderOf(settings));
     }
   }, [settings]);
 
   const handleToggle = (key: string) =>
     setLocalSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleSave = () => updateSettings({ ...localSettings, brand, ...founder } as Parameters<typeof updateSettings>[0]);
+  const handleSave = () => updateSettings({ ...localSettings } as Parameters<typeof updateSettings>[0]);
 
   if (isLoading) {
     return (
@@ -149,7 +137,6 @@ export default function AdminSettings() {
 
 
       {/* Saves immediately, not staged behind the button below. */}
-      <TestimonialDisplaySettings />
 
       <div className="flex justify-end">
         <Button onClick={handleSave} size="lg">Save Changes</Button>

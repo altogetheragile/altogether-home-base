@@ -2,6 +2,14 @@
   "page": "about",
   "label": "About",
   "entries": {
+    "about.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the about page disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_about"
+    },
     "about.meta.description": {
       "value": "Who is behind this practice, where the experience comes from, and how the work is approached.",
       "label": "Search description",

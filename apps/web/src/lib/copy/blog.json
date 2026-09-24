@@ -2,6 +2,14 @@
   "page": "blog",
   "label": "Blog",
   "entries": {
+    "blog.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the blog disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_blog"
+    },
     "blog.meta.description": {
       "value": "Expert insights, practical tips, and thought leadership on agile methodologies, team dynamics, and organizational transformation.",
       "label": "Search description",
