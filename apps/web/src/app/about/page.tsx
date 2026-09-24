@@ -333,21 +333,33 @@ export default async function AboutPage() {
       <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'About', path: '/about' }])} />
 
       <style>{`
-        .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+        /* Capped and centred, like the coaching page. Without a maximum these bands are as wide
+           as the window, so the body text grew to 948px at 1440 - about 110 characters a line. */
+        .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; max-width: 1200px; margin: 0 auto; }
         /* One child, one column. Otherwise the text sits in the left half of a banner. */
         .aa-two-col--alone { grid-template-columns: 1fr; }
-        .aa-two-col-wide { display: grid; grid-template-columns: 1fr 340px; gap: 56px; align-items: start; }
+        /* Tighter than the others on purpose. This one is prose beside a sidebar rather than two
+           equal halves, and the sidebar holds more than the story does: eleven credentials, three
+           badges and a card, against four paragraphs. The narrower the words, the taller that
+           column runs and the less of the row is left empty beneath it. At 1000 the words sit at
+           604, which is a comfortable measure in its own right. */
+        .aa-two-col-wide { display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 34%, 340px); gap: 56px; align-items: start; max-width: 1000px; margin: 0 auto; }
         /* With no story written, the left column is empty and the boxes on the right float beside
            a void. One column instead, at the width of the boxes. */
         .aa-two-col-wide--alone { grid-template-columns: 1fr; max-width: 420px; }
-        .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; }
         .aa-section-pad { padding: 64px 48px; }
         .aa-about-hero { padding: 72px 48px 60px; }
         .aa-about-cta { padding: 56px 48px; }
         .aa-hide-mobile { display: flex; }
+        /* Stacked before the phone breakpoint, like the coaching page and for the same reason:
+           the sidebar was the column that would not give way, so between a phone and a laptop the
+           story was squeezed to 276px while the credentials kept their full 340. */
+        @media (max-width: 999px) {
+          .aa-two-col-wide { grid-template-columns: 1fr; gap: 32px; max-width: 640px; }
+        }
         @media (max-width: 767px) {
           .aa-two-col { grid-template-columns: 1fr; gap: 32px; }
-          .aa-two-col-wide { grid-template-columns: 1fr; gap: 32px; }
           .aa-three-col { grid-template-columns: 1fr; }
           .aa-section-pad { padding: 40px 20px; }
           .aa-about-hero { padding: 48px 20px 40px; }
