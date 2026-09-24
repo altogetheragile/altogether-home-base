@@ -147,7 +147,14 @@ export function EditThisPage() {
         )}
         {fields?.map((f) => {
           const value = draft[f.key] ?? f.value;
-          const edited = f.value !== f.shipped;
+          // Only offer to put something back when there is something to put back.
+          //
+          // This read `f.value !== f.shipped`, from when every shipped value was this site's own
+          // wording. Now that a new site ships blank, the shipped value for the timeline, the
+          // badges and the credentials is the empty string, so on a site that has filled them in
+          // a button saying "Put back the wording this site came with" quietly meant "delete all
+          // of this", in one click, with nothing to undo it.
+          const canRestore = f.shipped.trim() !== '' && f.value !== f.shipped;
           // A heading is a line; an introduction is a paragraph. Guessing from the shipped length
           // beats asking every registry entry to declare which it is.
           const rows = Math.min(8, Math.max(2, Math.ceil(value.length / 60)));
@@ -157,7 +164,7 @@ export function EditThisPage() {
                 <label htmlFor={f.key} className="text-sm font-medium text-foreground">
                   {f.label}
                 </label>
-                {edited && (
+                {canRestore && (
                   <button
                     onClick={() => putBack(f.key)}
                     disabled={pending}

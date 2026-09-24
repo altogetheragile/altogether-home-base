@@ -95,3 +95,17 @@ describe('editing the words from the page they appear on', () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 });
+
+describe('putting a value back', () => {
+  it('is only offered when the shipped wording is something, not nothing', async () => {
+    // The editor decides this from the field it gets back, so the contract is that `shipped`
+    // carries the real shipped value rather than the resolved one.
+    const { loadPageCopy } = await load();
+    const fields = await loadPageCopy('about');
+    const blank = fields.filter((f) => !f.shipped.trim());
+    // Every blank-by-design key must be recognisable as blank from the field alone, or the editor
+    // cannot tell "put back the original" from "delete everything I have written".
+    expect(blank.every((f) => f.shipped === '')).toBe(true);
+    expect(fields.find((f) => f.key === 'about.timeline.list')?.shipped).toBe('');
+  });
+});
