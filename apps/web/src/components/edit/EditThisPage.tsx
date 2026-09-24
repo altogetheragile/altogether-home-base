@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2 } from 'lucide-react';
 import { copyPageFor, CHROME_PAGE } from '@/lib/copy/routes';
 import { ItemRows } from '@/components/edit/ItemRows';
+import { PictureBox } from '@/components/edit/PictureBox';
+import { IconPicker } from '@/components/edit/IconPicker';
 import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from '@/app/actions/copy';
 
 // ============= Editing the site from the site =============
@@ -233,6 +235,10 @@ export function EditThisPage() {
               )}
               {f.type === 'items' && f.fields ? (
                 <ItemRows value={value} fields={f.fields} onChange={(next) => setField(f.key, next)} />
+              ) : f.type === 'image' ? (
+                <PictureBox value={value} onChange={(next) => setField(f.key, next)} />
+              ) : f.type === 'icon' ? (
+                <IconPicker value={value} onChange={(next) => setField(f.key, next)} />
               ) : (
                 <textarea
                   id={f.key}

@@ -5,8 +5,9 @@ import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
-import { getCopy, lines, list, items } from '@/lib/copy';
+import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
+import { Icon } from '@/components/icons/Icon';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
 import { HomeCarousel } from './HomeCarousel';
@@ -45,6 +46,7 @@ export default async function HomePage() {
     getCopy('home'),
   ]);
   const founder = founderOf(settings);
+  const heroBg = picture(t('home.hero.background'));
   const showKnowledge = !!settings.show_knowledge;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
@@ -55,10 +57,29 @@ export default async function HomePage() {
       <main id="main-content">
         {/* HERO */}
         <div className="aa-hero">
-          <div className="aa-hero-bg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/hero-bg-1920.webp" srcSet="/images/hero-bg-1024.webp 1024w, /images/hero-bg-1920.webp 1920w, /images/hero-bg-2880.webp 2880w" sizes="100vw" alt="" fetchPriority="high" width={2400} height={1200} />
-          </div>
+          {/* The wave pattern is drawn in this site's colours, so it is not decoration a second
+              site should inherit: with no picture chosen the hero is a plain colour, which is a
+              fine way for a hero to look.
+
+              The shipped asset exists at three widths and a phone should not download the widest,
+              so the srcset is offered for that asset and not for an uploaded one, which has only
+              the size it was uploaded at. */}
+          {heroBg && (
+            <div className="aa-hero-bg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroBg.src}
+                srcSet={heroBg.src === '/images/hero-bg-1920.webp'
+                  ? '/images/hero-bg-1024.webp 1024w, /images/hero-bg-1920.webp 1920w, /images/hero-bg-2880.webp 2880w'
+                  : undefined}
+                sizes="100vw"
+                alt={heroBg.alt}
+                fetchPriority="high"
+                width={2400}
+                height={1200}
+              />
+            </div>
+          )}
           <div className="aa-hero-content">
             <div className="aa-hero-grid">
               <div>
@@ -87,17 +108,16 @@ export default async function HomePage() {
             nobody, so each stat needs its own number before it appears, and the bar goes entirely
             when none of them do. */}
         {(() => {
-          // However many there are, rather than exactly four. The icons cycle: a site with six
-          // statistics gets sensible icons rather than two blanks, and a site with two is not
-          // holding empty space for the ones it does not have.
-          const icons = [<Icons.Users key="u" />, <Icons.Books key="b" />, <Icons.GraduationCap key="g" />, <Icons.Star key="s" />];
-          const stats = items<{ number: string; label: string }>(t('home.stats.items'), ['number']);
+          // Each statistic carries its own icon. They used to cycle through four by position, so
+          // "Practitioners trained" got a people icon because it happened to be first, and a
+          // fifth statistic got the people icon again.
+          const stats = items<{ number: string; label: string; icon: string }>(t('home.stats.items'), ['number']);
           if (stats.length === 0) return null;
           return (
             <div className="aa-stats-bar">
-              {stats.map((s, i) => (
+              {stats.map((s) => (
                 <div key={`${s.number}-${s.label}`} className="aa-stat">
-                  <div className="aa-stat__icon">{icons[i % icons.length]}</div>
+                  <div className="aa-stat__icon"><Icon name={s.icon} size={22} /></div>
                   <div className="aa-stat__num">{s.number}</div>
                   <div className="aa-stat__label">{s.label}</div>
                 </div>
@@ -110,7 +130,7 @@ export default async function HomePage() {
             However many kinds of person you work with, rather than exactly three. No cards means
             no section: a heading asking "Who is this for?" over nothing answers itself badly. */}
         {(() => {
-          const cards = items<{ heading: string; body: string }>(t('home.personas.items'), ['heading']);
+          const cards = items<{ heading: string; body: string; icon: string }>(t('home.personas.items'), ['heading']);
           if (cards.length === 0) return null;
           return (
             <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
@@ -118,7 +138,9 @@ export default async function HomePage() {
               <div className="aa-three-col">
                 {cards.map((card) => (
                   <div key={card.heading} className="aa-persona-card">
-                    <div className="aa-persona-card__icon"><Icons.ArrowRight /></div>
+                    {/* Every card used to get the same arrow, which was a placeholder nobody
+                        went back to. */}
+                    {card.icon && <div className="aa-persona-card__icon"><Icon name={card.icon} size={18} /></div>}
                     <div className="aa-persona-card__heading">{card.heading}</div>
                     <div className="aa-persona-card__body">{card.body}</div>
                   </div>

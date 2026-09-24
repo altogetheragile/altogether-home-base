@@ -161,12 +161,12 @@
         {
           "key": "body",
           "label": "Paragraph",
-          "multiline": true
+          "type": "textarea"
         },
         {
           "key": "principles",
           "label": "Principles, one per line",
-          "multiline": true
+          "type": "textarea"
         }
       ]
     },
