@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isAdmin, getCurrentUser } from '@/lib/auth';
 import { REGISTRIES, type CopyEntry, type FieldType, type ItemField } from '@/lib/copy';
 import { readField, buildPatch } from '@/lib/settings-store';
+import { loadDrafts, saveDraft, publishDrafts, discardDrafts } from '@altogether/ui/editor/store';
 
 // ============= Editing the words from the page they appear on =============
 //
@@ -24,6 +25,8 @@ export type CopyField = {
   fields?: ItemField[];
   /** What this field would go back to, and when it was changed. Absent when it never has been. */
   undo?: { value: string; at: string };
+  /** A value saved but held back. `value` above is still what the site shows. */
+  draft?: { value: string; at: string };
 };
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
@@ -59,6 +62,16 @@ export async function loadPageCopy(page: string): Promise<CopyField[]> {
     /* the shipped wording is a fine thing to edit from */
   }
 
+  // Deliberately not inside the block above. If site_copy_drafts is missing because the migration
+  // has not run on this deployment yet, that must cost drafting alone, not every edited word on
+  // the page.
+  let drafts: Record<string, { value: string; at: string }> = {};
+  try {
+    drafts = await loadDrafts(await createClient(), page);
+  } catch {
+    /* no drafting here, then */
+  }
+
   return Object.entries(registry.entries).map(([key, e]) => ({
     key,
     label: e.label,
@@ -70,6 +83,7 @@ export async function loadPageCopy(page: string): Promise<CopyField[]> {
     ...(e.type ? { type: e.type } : {}),
     ...(e.fields ? { fields: e.fields } : {}),
     ...(undo[key] ? { undo: undo[key] } : {}),
+    ...(drafts[key] ? { draft: drafts[key] } : {}),
   }));
 }
 
@@ -243,4 +257,40 @@ export async function undoCopy(page: string, key: string): Promise<SaveResult> {
 
   revalidatePath('/', 'layout');
   return { ok: true };
+}
+
+// ============= Holding a change back =============
+//
+// The same three layers as every other action here: the editor only renders for an admin, this
+// file checks again because a Server Action is a public endpoint, and the write runs on the
+// caller's own session so the drafts policy decides. Only the third is load-bearing.
+//
+// The work itself is the shared editor store, the same module the App calls. Publishing a draft
+// goes through the ordinary save, so a published draft and a direct save are the same write, with
+// the same revision recorded behind them and the same undo afterwards.
+
+/** Saves without publishing. The live site carries on showing what it showed. */
+export async function saveDraftCopy(page: string, changes: Record<string, string>): Promise<SaveResult> {
+  if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
+  const user = await getCurrentUser();
+  return saveDraft(await createClient(), REGISTRIES, page, changes, user?.id ?? null);
+}
+
+/** Puts everything waiting on one page live. */
+export async function publishPageDrafts(page: string): Promise<SaveResult> {
+  if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
+  const user = await getCurrentUser();
+  const result = await publishDrafts(await createClient(), REGISTRIES, page, user?.id ?? null);
+  // Every page, because the navigation registry appears on all of them.
+  if (result.ok) revalidatePath('/', 'layout');
+  return result;
+}
+
+/** Throws away what is waiting. Changes nothing on the site, so there is nothing to revalidate,
+ *  except that a preview is showing these and should stop. */
+export async function discardPageDrafts(page: string, key?: string): Promise<SaveResult> {
+  if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
+  const result = await discardDrafts(await createClient(), page, key);
+  if (result.ok) revalidatePath('/', 'layout');
+  return result;
 }

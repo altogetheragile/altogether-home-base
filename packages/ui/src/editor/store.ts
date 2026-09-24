@@ -20,6 +20,8 @@ export type CopyField = {
   key: string; label: string; hint: string; value: string; shipped: string;
   type?: CopyEntry['type']; fields?: CopyEntry['fields'];
   undo?: { value: string; at: string };
+  /** A value saved but not published. `value` above is still what the site shows. */
+  draft?: { value: string; at: string };
 };
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
@@ -106,6 +108,12 @@ export async function loadPage(db: DataClient, registries: CopyRegistry[], page:
     /* the shipped wording is a fine thing to edit from */
   }
 
+  // Its own read, not part of the block above, because those two are not equally important. If
+  // the drafts table is missing - the migration has not run yet on this deployment - the page
+  // should lose drafting, not lose every word that has ever been edited. Sharing one try would
+  // have made an unapplied migration look like a site that had reverted to its shipped wording.
+  const drafts = await loadDrafts(db, page);
+
   return Object.entries(registry.entries).map(([key, e]) => ({
     key,
     label: e.label,
@@ -117,6 +125,7 @@ export async function loadPage(db: DataClient, registries: CopyRegistry[], page:
     ...(e.type ? { type: e.type } : {}),
     ...(e.fields ? { fields: e.fields } : {}),
     ...(undo[key] ? { undo: undo[key] } : {}),
+    ...(drafts[key] ? { draft: drafts[key] } : {}),
   }));
 }
 
@@ -228,5 +237,102 @@ export async function undoField(
   if (error) return { ok: false, error: error.message };
   // Only once the value is safely back; deleting first would lose the only copy of it.
   await db.from('site_copy_revisions').delete().eq('id', last.id);
+  return { ok: true };
+}
+
+// ============= An edit that is not ready to be seen =============
+//
+// Saving publishes, as it always did. These are the other path: the value goes to
+// site_copy_drafts, the site carries on showing what it showed, and publishing later hands the
+// draft to savePage, which already knows where each kind of field belongs.
+//
+// That indirection is the point. A draft is "this key should become this value" and nothing more,
+// so a drafted colour, a drafted logo and a drafted sentence all take the same route even though
+// they end up in three different places. Nothing here knows about site_settings or the brand
+// object, and it does not need to.
+
+/** What is waiting to be published on one page, as key to value and when it was written.
+ *
+ *  Answers {} rather than throwing if the table is not there. A deployment whose migration has
+ *  not run yet should lose drafting and nothing else. */
+export async function loadDrafts(
+  db: DataClient, page: string,
+): Promise<Record<string, { value: string; at: string }>> {
+  try {
+    const { data } = await db.from('site_copy_drafts').select('key, value, updated_at').eq('page', page);
+    return Object.fromEntries(
+      ((data ?? []) as { key: string; value: string; updated_at: string }[])
+        .map((r) => [r.key, { value: r.value, at: r.updated_at }]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+/** Holds changes back instead of publishing them. Same validation as a save, because a draft that
+ *  cannot be published is worse than a refused save: you find out later, having written more. */
+export async function saveDraft(
+  db: DataClient,
+  registries: CopyRegistry[],
+  page: string,
+  changes: Record<string, string>,
+  userId: string | null,
+): Promise<SaveResult> {
+  const registry = registryFor(registries, page);
+  if (!registry) return { ok: false, error: `There is no page called "${page}".` };
+
+  const unknown = Object.keys(changes).filter((k) => !(k in registry.entries));
+  if (unknown.length) return { ok: false, error: `Not part of this page: ${unknown.join(', ')}` };
+
+  const rows = Object.entries(changes).map(([key, value]) => ({
+    key, page,
+    value: value.trim(),
+    updated_at: new Date().toISOString(),
+    updated_by: userId,
+  }));
+  if (!rows.length) return { ok: true };
+
+  const tooLong = rows.find((r) => r.value.length > 20_000);
+  if (tooLong) return { ok: false, error: `"${registry.entries[tooLong.key].label}" is longer than a page should carry.` };
+
+  const { error } = await db.from('site_copy_drafts').upsert(rows, { onConflict: 'key' });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Publishes everything waiting on one page, then forgets the drafts.
+ *
+ *  Through savePage, so publishing a draft and saving directly are the same write: the same
+ *  validation, the same revision recorded, the same undo afterwards. A draft is never a second
+ *  way to change the site, only a delay before the one way. */
+export async function publishDrafts(
+  db: DataClient, registries: CopyRegistry[], page: string, userId: string | null,
+): Promise<SaveResult> {
+  const drafts = await loadDrafts(db, page);
+  const keys = Object.keys(drafts);
+  if (!keys.length) return { ok: false, error: 'There is nothing waiting to be published here.' };
+
+  const result = await savePage(
+    db, registries, page,
+    Object.fromEntries(keys.map((k) => [k, drafts[k].value])),
+    userId,
+  );
+  // Only once it is published. Clearing first would lose the draft and leave the site unchanged,
+  // which is the one outcome with nothing to recover from: the live value is still the old one
+  // and the new one is gone.
+  if (!result.ok) return result;
+
+  const { error } = await db.from('site_copy_drafts').delete().eq('page', page).in('key', keys);
+  if (error) return { ok: false, error: `Published, but the drafts did not clear: ${error.message}` };
+  return { ok: true };
+}
+
+/** Throws away what is waiting, changing nothing on the site. One key, or the whole page. */
+export async function discardDrafts(
+  db: DataClient, page: string, key?: string,
+): Promise<SaveResult> {
+  const query = db.from('site_copy_drafts').delete().eq('page', page);
+  const { error } = await (key ? query.eq('key', key) : query);
+  if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

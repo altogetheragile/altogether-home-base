@@ -17,6 +17,11 @@ type CopyField = {
         value: string;
         at: string;
     };
+    /** A value saved but not published. `value` above is still what the site shows. */
+    draft?: {
+        value: string;
+        at: string;
+    };
 };
 type SaveResult = {
     ok: true;
@@ -43,5 +48,24 @@ declare function resetField(db: DataClient, page: string, key: string, userId: s
 /** One step back: restore the newest previous value and forget it, so undoing again goes further.
  *  A pop, not another edit; recording it would make undo and redo the same button. */
 declare function undoField(db: DataClient, registries: CopyRegistry[], page: string, key: string, userId: string | null): Promise<SaveResult>;
+/** What is waiting to be published on one page, as key to value and when it was written.
+ *
+ *  Answers {} rather than throwing if the table is not there. A deployment whose migration has
+ *  not run yet should lose drafting and nothing else. */
+declare function loadDrafts(db: DataClient, page: string): Promise<Record<string, {
+    value: string;
+    at: string;
+}>>;
+/** Holds changes back instead of publishing them. Same validation as a save, because a draft that
+ *  cannot be published is worse than a refused save: you find out later, having written more. */
+declare function saveDraft(db: DataClient, registries: CopyRegistry[], page: string, changes: Record<string, string>, userId: string | null): Promise<SaveResult>;
+/** Publishes everything waiting on one page, then forgets the drafts.
+ *
+ *  Through savePage, so publishing a draft and saving directly are the same write: the same
+ *  validation, the same revision recorded, the same undo afterwards. A draft is never a second
+ *  way to change the site, only a delay before the one way. */
+declare function publishDrafts(db: DataClient, registries: CopyRegistry[], page: string, userId: string | null): Promise<SaveResult>;
+/** Throws away what is waiting, changing nothing on the site. One key, or the whole page. */
+declare function discardDrafts(db: DataClient, page: string, key?: string): Promise<SaveResult>;
 
-export { type CopyField, type DataClient, type SaveResult, buildPatch, loadPage, readField, resetField, savePage, undoField };
+export { type CopyField, type DataClient, type SaveResult, buildPatch, discardDrafts, loadDrafts, loadPage, publishDrafts, readField, resetField, saveDraft, savePage, undoField };

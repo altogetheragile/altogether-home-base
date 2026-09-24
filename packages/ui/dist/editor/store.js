@@ -58,6 +58,7 @@ async function loadPage(db, registries, page) {
     }
   } catch {
   }
+  const drafts = await loadDrafts(db, page);
   return Object.entries(registry.entries).map(([key, e]) => ({
     key,
     label: e.label,
@@ -68,7 +69,8 @@ async function loadPage(db, registries, page) {
     shipped: e.value,
     ...e.type ? { type: e.type } : {},
     ...e.fields ? { fields: e.fields } : {},
-    ...undo[key] ? { undo: undo[key] } : {}
+    ...undo[key] ? { undo: undo[key] } : {},
+    ...drafts[key] ? { draft: drafts[key] } : {}
   }));
 }
 async function savePage(db, registries, page, changes, userId) {
@@ -147,5 +149,56 @@ async function undoField(db, registries, page, key, userId) {
   await db.from("site_copy_revisions").delete().eq("id", last.id);
   return { ok: true };
 }
+async function loadDrafts(db, page) {
+  try {
+    const { data } = await db.from("site_copy_drafts").select("key, value, updated_at").eq("page", page);
+    return Object.fromEntries(
+      (data ?? []).map((r) => [r.key, { value: r.value, at: r.updated_at }])
+    );
+  } catch {
+    return {};
+  }
+}
+async function saveDraft(db, registries, page, changes, userId) {
+  const registry = registryFor(registries, page);
+  if (!registry) return { ok: false, error: `There is no page called "${page}".` };
+  const unknown = Object.keys(changes).filter((k) => !(k in registry.entries));
+  if (unknown.length) return { ok: false, error: `Not part of this page: ${unknown.join(", ")}` };
+  const rows = Object.entries(changes).map(([key, value]) => ({
+    key,
+    page,
+    value: value.trim(),
+    updated_at: (/* @__PURE__ */ new Date()).toISOString(),
+    updated_by: userId
+  }));
+  if (!rows.length) return { ok: true };
+  const tooLong = rows.find((r) => r.value.length > 2e4);
+  if (tooLong) return { ok: false, error: `"${registry.entries[tooLong.key].label}" is longer than a page should carry.` };
+  const { error } = await db.from("site_copy_drafts").upsert(rows, { onConflict: "key" });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+async function publishDrafts(db, registries, page, userId) {
+  const drafts = await loadDrafts(db, page);
+  const keys = Object.keys(drafts);
+  if (!keys.length) return { ok: false, error: "There is nothing waiting to be published here." };
+  const result = await savePage(
+    db,
+    registries,
+    page,
+    Object.fromEntries(keys.map((k) => [k, drafts[k].value])),
+    userId
+  );
+  if (!result.ok) return result;
+  const { error } = await db.from("site_copy_drafts").delete().eq("page", page).in("key", keys);
+  if (error) return { ok: false, error: `Published, but the drafts did not clear: ${error.message}` };
+  return { ok: true };
+}
+async function discardDrafts(db, page, key) {
+  const query = db.from("site_copy_drafts").delete().eq("page", page);
+  const { error } = await (key ? query.eq("key", key) : query);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
 
-export { buildPatch, loadPage, readField, resetField, savePage, undoField };
+export { buildPatch, discardDrafts, loadDrafts, loadPage, publishDrafts, readField, resetField, saveDraft, savePage, undoField };
