@@ -64,6 +64,96 @@ These steps are done by hand, once, and are not part of the wizard.
 
 Step 2 is the one that decides whether any of this is possible. See Section 6.
 
+### 3a. The Blocker Nobody Has Hit Yet: The Rewrites Name One Deployment
+
+**Found 24 September, before the first real second site. Nothing is broken today and this will
+break the next site on the day its domain goes live.**
+
+The root Vercel project serves the domain and `vercel.json` rewrites the Site-owned URLs to the
+Next deployment. All fourteen of those rewrites name it literally:
+
+```
+"destination": "https://altogether-home-base-web-next.vercel.app/about"
+```
+
+`vercel.json` is in this repository, and a second site is another deployment of this repository,
+so a second root project reads the same file and rewrites its `/`, `/about`, `/coaching` and the
+rest to **altogetheragile.com's Next deployment**. The new domain would serve this site's pages,
+under her name, with no error anywhere. It is the same shape as the Content Security Policy
+problem in step 3 and worse in its symptom: not an empty page, but a convincing wrong one.
+
+**The fix is `vercel.ts`.** Vercel supports a TypeScript config that runs at build time and can
+read environment variables, where `vercel.json` is static and cannot. One config file per project,
+so it replaces `vercel.json` rather than sitting beside it, and migrating is pasting the current
+contents into a `config` export. The Next deployment's host, and the Supabase host in the policy,
+then come from the Vercel project's own environment rather than from a constant.
+
+Until that is done, a second site needs its own `vercel.json`, which in practice means a
+long-lived branch differing by one file and a merge from `main` before each of its deploys.
+
+---
+
+### 3b. The Runbook
+
+Checked against the code on 24 September. Each step says what breaks if it is skipped.
+
+**1. Create the Supabase project.** Note its reference, which is the first part of its URL.
+
+**2. Build the schema.**
+
+```bash
+npx supabase link --project-ref <ref>
+npx supabase db push --linked
+```
+
+Nothing else creates the tables. `db push --dry-run` first tells you what it would apply.
+
+**3. Add its host to the security policy, and merge that before the domain goes anywhere.**
+Add the host to `src/config/supabaseHosts.ts`, run the tests, and paste the line the failure
+prints into all three policies in `vercel.json`. Skip it and the site loads, renders its layout,
+and shows no content at all: the browser refuses every request to a host the policy does not name,
+and the only evidence is a console warning.
+
+**4. Create the two Vercel projects**, both from this repository.
+
+| | Root directory | Serves | Environment |
+|---|---|---|---|
+| The App | repository root | tools, admin, dashboards | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SITE_URL` |
+| The Site | `apps/web` | the public pages | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL` |
+
+`NEXT_PUBLIC_SITE_URL` is not optional: without it every canonical link and share preview points
+at altogetheragile.com, which tells search engines the new site is a copy of this one.
+
+**See 3a before this step.** The root project's rewrites name this site's Next deployment.
+
+**5. Point the domain at the root Vercel project.**
+
+**6. Set the Supabase Auth Site URL and redirect allowlist** to the new domain, under
+Authentication. Until then a password reset link sends people to the wrong site.
+
+**7. Create the first account through the site, then grant it admin.** The signup trigger gives
+every new account the `user` role; nothing promotes anybody automatically. In the SQL editor:
+
+```sql
+insert into public.user_roles (user_id, role)
+select id, 'admin' from auth.users where email = 'her@example.com'
+on conflict (user_id, role) do nothing;
+```
+
+**8. Deploy the edge functions** if the site needs them, with
+`npx supabase functions deploy <name> --project-ref <ref>`. There are twenty. Their secrets are
+set per project and none of them carry over: `ANTHROPIC_API_KEY` for anything AI, `RESEND_API_KEY`
+and `MAIL_FROM` for email, the `BOOKING_GOOGLE_*` and `ZOOM_*` sets for bookings. A site that does
+not use a feature does not need its function or its secret.
+
+**9. Open `/setup`** and work through what it says. Everything from here is configuration, done
+from the site itself.
+
+**10. Redeploy once the content is in.** The sitemap is built at deploy time, not per request, so
+courses and posts added in Admin do not reach it until something deploys.
+
+---
+
 Step 3 is the one that fails in a way nobody recognises. `vercel.json` is in this repository, and
 every site is a deployment of this same repository, so its Content Security Policy has to name
 every site's database at once. Miss it and the new site loads, renders its layout, and then has
