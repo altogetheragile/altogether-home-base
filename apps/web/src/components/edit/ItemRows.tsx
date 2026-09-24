@@ -1,7 +1,9 @@
 'use client';
 
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
-import type { ItemField } from '@/lib/copy';
+import type { ItemField } from '@/lib/copy/fields';
+import { PictureBox } from '@/components/edit/PictureBox';
+import { IconPicker } from '@/components/edit/IconPicker';
 
 // ============= A list of things, edited as a list of things =============
 //
@@ -86,7 +88,11 @@ export function ItemRows({
           {fields.map((f) => (
             <label key={f.key} className="mb-1.5 block last:mb-0">
               <span className="mb-0.5 block text-xs text-muted-foreground">{f.label}</span>
-              {f.multiline ? (
+              {f.type === 'image' ? (
+                <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} />
+              ) : f.type === 'icon' ? (
+                <IconPicker value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} />
+              ) : f.type === 'textarea' ? (
                 <textarea
                   value={row[f.key] ?? ''}
                   placeholder={f.placeholder}

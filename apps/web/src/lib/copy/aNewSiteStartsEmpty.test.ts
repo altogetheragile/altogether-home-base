@@ -42,6 +42,9 @@ const BLANK_BY_DESIGN = [
   // which is the right thing for a site that has not said who it is for yet.
   'home.personas.items',
   'about.philosophy.items',
+  // The wave pattern is drawn in this site's colours. A second site gets a plain hero until it
+  // chooses its own picture.
+  'home.hero.background',
 ];
 
 /** Claims a site has to earn before it makes them. Checked against everything that DOES ship. */

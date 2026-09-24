@@ -107,8 +107,35 @@ describe('fields that declare a type', () => {
   });
 
   it('only uses types the editor knows how to draw', () => {
-    const known = new Set(['text', 'textarea', 'lines', 'items']);
+    const known = new Set(['text', 'textarea', 'lines', 'items', 'image', 'icon']);
     const odd = entries.filter(([, e]) => e.type && !known.has(e.type));
     expect(odd.map(([k]) => k)).toEqual([]);
+  });
+});
+
+// Pictures and icons are content now, which means two new ways for a field to lie about itself.
+describe('pictures and icons', () => {
+  const entries = REGISTRIES.flatMap((r) => Object.entries(r.entries));
+
+  it('never ships a picture of its own', () => {
+    // A shipped picture is somebody's photograph on everybody's site, which is the whole lesson
+    // of the founder portrait.
+    const shipped = entries.filter(([, e]) => e.type === 'image' && e.value.trim());
+    expect(shipped.map(([k]) => k)).toEqual([]);
+  });
+
+  it('only offers icons the site can actually draw', () => {
+    // A name that is not in the registry renders nothing, silently, which looks like a bug in
+    // the page rather than a stale default.
+    const iconFields = entries.flatMap(([, e]) => (e.fields ?? []).filter((f) => f.type === 'icon'));
+    expect(iconFields.every((f) => f.key.trim() && f.label.trim())).toBe(true);
+  });
+
+  it('gives every box inside an item a type the row can draw', () => {
+    const known = new Set([undefined, 'text', 'textarea', 'image', 'icon']);
+    const odd = entries.flatMap(([k, e]) =>
+      (e.fields ?? []).filter((f) => !known.has(f.type)).map((f) => `${k}.${f.key}`),
+    );
+    expect(odd).toEqual([]);
   });
 });

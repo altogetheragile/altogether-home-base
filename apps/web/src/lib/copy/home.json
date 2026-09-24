@@ -22,6 +22,12 @@
       "label": "Hero heading",
       "hint": "The h1. A line break splits it in two"
     },
+    "home.hero.background": {
+      "value": "",
+      "label": "Hero background picture",
+      "hint": "Sits behind the headline, very faint. Leave it empty and the hero is a plain colour, which is a fine way for it to look. Wide and short works best.",
+      "type": "image"
+    },
     "home.hero.subtitle": {
       "value": "Work better together. Accelerate time to value.",
       "label": "Hero subtitle",
@@ -52,6 +58,11 @@
           "key": "label",
           "label": "What it counts",
           "placeholder": "Practitioners trained"
+        },
+        {
+          "key": "icon",
+          "label": "Icon",
+          "type": "icon"
         }
       ]
     },
@@ -74,8 +85,13 @@
         {
           "key": "body",
           "label": "Card body",
-          "multiline": true,
-          "placeholder": "Who they are and what they need."
+          "placeholder": "Who they are and what they need.",
+          "type": "textarea"
+        },
+        {
+          "key": "icon",
+          "label": "Icon",
+          "type": "icon"
         }
       ]
     },
