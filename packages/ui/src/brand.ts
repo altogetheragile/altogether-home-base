@@ -145,3 +145,18 @@ export function logoOf(overrides: BrandImageOverrides, companyName?: string | nu
   const text = companyName?.trim();
   return text ? { mode: 'wordmark', text } : { mode: 'image', src: defaultImages.logo };
 }
+
+/** The same colour, mixed with white, for a card's header band.
+ *
+ *  Somebody picking a card colour should pick one colour, not two. Asking for the pale version as
+ *  well is asking them to do arithmetic to keep a pair in step, and the pair only ever goes out of
+ *  step in one direction: somebody changes the strong one and forgets.
+ *
+ *  Computed rather than CSS color-mix so it works the same everywhere and can be tested. */
+export function tint(hex: string, strength = 0.12): string {
+  const v = hex.trim().replace('#', '');
+  if (!/^[0-9a-f]{6}$/i.test(v)) return hex;
+  const mix = (c: number) => Math.round(c * strength + 255 * (1 - strength));
+  const [r, g, b] = [0, 2, 4].map((i) => mix(parseInt(v.slice(i, i + 2), 16)));
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}

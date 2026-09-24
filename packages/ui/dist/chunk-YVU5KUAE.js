@@ -75,5 +75,12 @@ function logoOf(overrides, companyName) {
   const text = companyName?.trim();
   return text ? { mode: "wordmark", text } : { mode: "image", src: defaultImages.logo };
 }
+function tint(hex, strength = 0.12) {
+  const v = hex.trim().replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(v)) return hex;
+  const mix = (c) => Math.round(c * strength + 255 * (1 - strength));
+  const [r, g, b] = [0, 2, 4].map((i) => mix(parseInt(v.slice(i, i + 2), 16)));
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
 
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages };
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, tint };

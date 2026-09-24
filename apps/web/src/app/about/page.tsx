@@ -7,6 +7,7 @@ import { getAllApprovedFeedback } from '@/lib/testimonials';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName } from '@/lib/seo';
 import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf } from '@/lib/brand';
+import { tint } from '@altogether/ui/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list, items } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
@@ -220,16 +221,26 @@ export default async function AboutPage() {
           Two cards was a layout decision that had become a content limit. The colours cycle, as
           the statistics icons do, so a third card is a third card rather than a code change. */}
       {(() => {
-        const cards = items<{ label: string; heading: string; body: string; principles: string }>(
+        const cards = items<{ label: string; heading: string; body: string; principles: string; colour: string }>(
           t('about.philosophy.items'), ['heading'],
         );
         if (cards.length === 0) return null;
         return (
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
         <Heading label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
-        <div className="aa-two-col" style={{ gap: 24 }}>
+        {/* A third card joins the row rather than dropping beneath the other two at half width. */}
+        <div className="aa-cards" style={{ ['--aa-card-min' as string]: '320px' }}>
           {cards.map((entry, idx) => {
-            const card = { ...entry, principles: list(entry.principles ?? ''), ...philosophyStyles[idx % philosophyStyles.length] };
+            // A card's own colour if it has one, otherwise one from the shipped set by position,
+            // which is what every card used before any of them could be chosen.
+            const fallback = philosophyStyles[idx % philosophyStyles.length];
+            const colour = entry.colour?.trim() || fallback.colour;
+            const card = {
+              ...entry,
+              principles: list(entry.principles ?? ''),
+              colour,
+              lightBg: entry.colour?.trim() ? tint(colour) : fallback.lightBg,
+            };
             return (
             <div key={card.label} style={{ background: p.white, borderRadius: 16, overflow: 'hidden' }}>
               <div style={{ background: card.lightBg, padding: '20px 28px' }}>

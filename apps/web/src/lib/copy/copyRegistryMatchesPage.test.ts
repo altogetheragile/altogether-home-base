@@ -142,10 +142,33 @@ describe('pictures and icons', () => {
   });
 
   it('gives every box inside an item a type the row can draw', () => {
-    const known = new Set([undefined, 'text', 'textarea', 'image', 'icon']);
+    // Read from the control rather than listed here. A hand-kept list is a second place to
+    // remember, and it was not remembered: a 'colour' box was declared, typed and seeded while
+    // ItemRows had no branch for it, so it would have rendered as a plain box asking somebody to
+    // type a hex code from memory. The list said it was fine, because the list was the thing that
+    // had gone stale.
+    const control = readFileSync('../../packages/ui/src/editor/ItemRows.tsx', 'utf8');
+    const drawn = new Set<string | undefined>([
+      undefined,
+      // No branch of its own: it is what the row falls through to.
+      'text',
+      ...[...control.matchAll(/f\.type === '([a-z]+)'/g)].map((m) => m[1]),
+    ]);
     const odd = entries.flatMap(([k, e]) =>
-      (e.fields ?? []).filter((f) => !known.has(f.type)).map((f) => `${k}.${f.key}`),
+      (e.fields ?? []).filter((f) => !drawn.has(f.type)).map((f) => `${k}.${f.key}`),
     );
-    expect(odd).toEqual([]);
+    expect(odd, `declared on an item but ItemRows has no branch for it`).toEqual([]);
+  });
+
+  it('draws every box type the field list allows', () => {
+    // The other direction: a type nameable in ItemFieldType that no branch draws is a trap
+    // waiting for whoever reaches for it next.
+    const control = readFileSync('../../packages/ui/src/editor/ItemRows.tsx', 'utf8');
+    const declared = readFileSync('../../packages/ui/src/editor/fields.ts', 'utf8')
+      .match(/export type ItemFieldType =([^;]+);/)?.[1] ?? '';
+    const nameable = [...declared.matchAll(/'([a-z]+)'/g)].map((m) => m[1]);
+    const drawn = new Set(['text', ...[...control.matchAll(/f\.type === '([a-z]+)'/g)].map((m) => m[1])]);
+    expect(nameable.filter((t) => !drawn.has(t)), 'nameable but nothing draws it').toEqual([]);
+    expect(nameable.length, 'ItemFieldType did not parse').toBeGreaterThan(3);
   });
 });

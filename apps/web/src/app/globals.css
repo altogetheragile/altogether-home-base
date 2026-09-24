@@ -41,3 +41,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ============= A list of cards shares the width it has =============
+ *
+ * The card grids were fixed counts: three personas, two philosophy cards. Add a fourth or a third
+ * and it dropped onto a row of its own, half or a third as wide as the ones above it, which reads
+ * as a mistake rather than a choice.
+ *
+ * auto-fit lets however many there are share one row until they would be too narrow to read, and
+ * only then wrap. Each use says how narrow is too narrow for its own content, because a persona
+ * card holds two sentences and a philosophy card holds a paragraph and a list. */
+.aa-cards {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--aa-card-min, 280px), 1fr));
+  align-items: start;
+}
+
+@media (max-width: 767px) {
+  /* One per row on a phone whatever the minimum says, so a card is never squeezed to fit. */
+  .aa-cards { grid-template-columns: 1fr; gap: 20px; }
+}

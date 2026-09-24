@@ -159,7 +159,7 @@
     "about.philosophy.items": {
       "value": "",
       "label": "Philosophy cards",
-      "hint": "One card per side of what you do. Each has a short tag, a heading, a paragraph and a list of principles, one per line. Leave it empty and the section disappears.",
+      "hint": "One card per side of what you do. Each has a short tag, a heading, a paragraph, a list of principles one per line, and a colour. Leave the colour empty and the card takes one from the set the site ships with. Leave the whole list empty and the section disappears.",
       "type": "items",
       "fields": [
         {
@@ -182,6 +182,12 @@
           "key": "principles",
           "label": "Principles, one per line",
           "type": "textarea"
+        },
+        {
+          "key": "colour",
+          "label": "Card colour",
+          "type": "colour",
+          "placeholder": "Leave empty for the shipped colour"
         }
       ]
     },

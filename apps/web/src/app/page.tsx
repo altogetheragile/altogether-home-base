@@ -143,7 +143,9 @@ export default async function HomePage() {
           return (
             <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
               <h2 className="aa-section-heading aa-section-heading--center">{t('home.personas.heading')}</h2>
-              <div className="aa-three-col">
+              {/* However many there are, sharing the row. Three was a layout decision that had
+                  become a limit on how many kinds of person you could name. */}
+              <div className="aa-cards" style={{ ['--aa-card-min' as string]: '260px' }}>
                 {cards.map((card) => (
                   <div key={card.heading} className="aa-persona-card">
                     {/* Every card used to get the same arrow, which was a placeholder nobody
