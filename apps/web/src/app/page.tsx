@@ -7,6 +7,8 @@ import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
+import { sectionNodes } from '@/components/Sections';
+import { orderedSections, HOME_SECTIONS } from '@/lib/sections';
 import { Icon } from '@/components/icons/Icon';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
@@ -47,14 +49,14 @@ export default async function HomePage() {
   ]);
   const founder = founderOf(settings);
   const heroBg = picture(t('home.hero.background'));
+  const order = orderedSections(t('home.sections'), HOME_SECTIONS);
   const showKnowledge = !!settings.show_knowledge;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
 
-  return (
-    <div className="aa-page">
-      <JsonLd data={await organizationJsonLd(brandImagesFor(settings.brand).ogImage)} />
-      <main id="main-content">
+  const SECTIONS: Record<string, React.ReactNode> = {
+    hero: (
+      <>
         {/* HERO */}
         <div className="aa-hero">
           {/* The wave pattern is drawn in this site's colours, so it is not decoration a second
@@ -102,7 +104,10 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-
+      </>
+    ),
+    stats: (
+      <>
         {/* STATS
             A figure with nothing behind it is not a placeholder, it is a claim. A new site counts
             nobody, so each stat needs its own number before it appears, and the bar goes entirely
@@ -125,7 +130,10 @@ export default async function HomePage() {
             </div>
           );
         })()}
-
+      </>
+    ),
+    personas: (
+      <>
         {/* WHO IS THIS FOR
             However many kinds of person you work with, rather than exactly three. No cards means
             no section: a heading asking "Who is this for?" over nothing answers itself badly. */}
@@ -149,10 +157,16 @@ export default async function HomePage() {
             </div>
           );
         })()}
-
+      </>
+    ),
+    testimonials: (
+      <>
         {/* TESTIMONIALS */}
         <HomeTestimonials items={testimonials} firstNameOnly={firstNameOnly} />
-
+      </>
+    ),
+    courses: (
+      <>
         {/* COURSES
             A site with no courses yet shows no courses section. The heading, the empty carousel
             and a "View all" button leading to an empty page are three ways of saying nothing. */}
@@ -175,10 +189,16 @@ export default async function HomePage() {
           </div>
         </div>
         )}
-
+      </>
+    ),
+    founder: (
+      <>
         {/* The founder, if this site has one. */}
         {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} />}
-
+      </>
+    ),
+    knowledge: (
+      <>
         {/* KNOWLEDGE BASE */}
         {showKnowledge && (
           <div className="aa-section-pad" style={{ background: 'var(--aa-deep-teal)' }}>
@@ -197,7 +217,10 @@ export default async function HomePage() {
             </div>
           </div>
         )}
-
+      </>
+    ),
+    cta: (
+      <>
         {/* CTA */}
         <div className="aa-section-pad" style={{ background: 'var(--aa-orange)' }}>
           <div className="aa-cta-banner">
@@ -219,6 +242,18 @@ export default async function HomePage() {
             )}
           </div>
         </div>
+      </>
+    ),
+  };
+
+  return (
+    <div className="aa-page">
+      <JsonLd data={await organizationJsonLd(brandImagesFor(settings.brand).ogImage)} />
+      <main id="main-content">
+        {/* The page is its sections, in whatever order this site has put them.
+            Each one is still a coded component with its words in the copy registry; what is
+            stored is only which appear and in what order. */}
+        {sectionNodes(order, SECTIONS)}
       </main>
     </div>
   );

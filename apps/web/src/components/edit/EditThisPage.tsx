@@ -8,6 +8,8 @@ import { ItemRows } from '@/components/edit/ItemRows';
 import { PictureBox } from '@/components/edit/PictureBox';
 import { IconPicker } from '@/components/edit/IconPicker';
 import { ColourBox } from '@/components/edit/ColourBox';
+import { SectionOrder } from '@/components/edit/SectionOrder';
+import { SECTIONS_FOR_PAGE } from '@/lib/sections';
 import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from '@/app/actions/copy';
 
 // ============= Editing the site from the site =============
@@ -26,6 +28,20 @@ import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from 
 // actions check again on arrival.
 
 type Tab = { page: string; label: string };
+
+/** Same reasoning as countItems: an order is only meaningful as an order, so say what it was
+ *  rather than printing the array. */
+function describeOrder(value: string): string {
+  try {
+    const rows = JSON.parse(value || '[]');
+    if (!Array.isArray(rows) || rows.length === 0) return 'the order the page was built in';
+    const hidden = rows.filter((r) => r && r.visible === false).length;
+    const first = rows.find((r) => r && r.visible !== false)?.section;
+    return `${rows.length} sections${first ? `, starting with ${first}` : ''}${hidden ? `, ${hidden} hidden` : ''}`;
+  } catch {
+    return 'the order the page was built in';
+  }
+}
 
 /** A JSON blob quoted back at somebody says nothing. How many there were says what undo will do. */
 function countItems(value: string): number {
@@ -228,14 +244,22 @@ export function EditThisPage() {
                   <span className="font-medium">Was:</span>{' '}
                   {/* A JSON blob quoted back at somebody says nothing. How many there were says
                       what pressing Undo will actually do. */}
-                  {f.type === 'items'
+                  {f.type === 'sections'
+                    ? describeOrder(f.undo.value)
+                    : f.type === 'items'
                     ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? '' : 's'}`
                     : f.undo.value.trim()
                       ? `“${f.undo.value.replace(/\n/g, ' ').slice(0, 90)}”`
                       : 'empty'}
                 </p>
               )}
-              {f.type === 'items' && f.fields ? (
+              {f.type === 'sections' ? (
+                <SectionOrder
+                  value={value}
+                  choices={SECTIONS_FOR_PAGE[active] ?? []}
+                  onChange={(next) => setField(f.key, next)}
+                />
+              ) : f.type === 'items' && f.fields ? (
                 <ItemRows value={value} fields={f.fields} onChange={(next) => setField(f.key, next)} />
               ) : f.type === 'image' ? (
                 <PictureBox value={value} onChange={(next) => setField(f.key, next)} />

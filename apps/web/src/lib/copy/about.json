@@ -10,6 +10,12 @@
       "store": "column",
       "path": "show_about"
     },
+    "about.sections": {
+      "value": "",
+      "label": "Sections, and their order",
+      "hint": "Move a section up or down, or untick it to leave it out. A section you leave out keeps everything in it, so ticking it again brings it back as it was.",
+      "type": "sections"
+    },
     "about.meta.description": {
       "value": "Who is behind this practice, where the experience comes from, and how the work is approached.",
       "label": "Search description",

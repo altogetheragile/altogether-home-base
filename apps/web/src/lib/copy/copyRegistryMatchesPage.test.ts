@@ -117,7 +117,7 @@ describe('fields that declare a type', () => {
   });
 
   it('only uses types the editor knows how to draw', () => {
-    const known = new Set(['text', 'textarea', 'lines', 'items', 'image', 'icon', 'colour', 'switch']);
+    const known = new Set(['text', 'textarea', 'lines', 'items', 'image', 'icon', 'colour', 'switch', 'sections']);
     const odd = entries.filter(([, e]) => e.type && !known.has(e.type));
     expect(odd.map(([k]) => k)).toEqual([]);
   });

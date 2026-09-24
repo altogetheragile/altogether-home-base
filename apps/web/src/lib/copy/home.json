@@ -2,6 +2,12 @@
   "page": "home",
   "label": "Home",
   "entries": {
+    "home.sections": {
+      "value": "",
+      "label": "Sections, and their order",
+      "hint": "Drag a section up or down to move it, or untick it to leave it out. A section you leave out keeps everything in it, so ticking it again brings it back as it was.",
+      "type": "sections"
+    },
     "home.meta.title": {
       "value": "Coaching and Training",
       "label": "Search title",
