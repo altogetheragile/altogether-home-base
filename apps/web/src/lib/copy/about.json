@@ -96,21 +96,6 @@
       "label": "Credential badges",
       "hint": "One badge per line, as: name | image address | link to the verification page. Leave empty and the badges do not appear. These are somebody’s own credentials, so they start empty on a new site."
     },
-    "about.work.label": {
-      "value": "Work with me",
-      "label": "Work with me eyebrow",
-      "hint": "The dark teal box under the credentials"
-    },
-    "about.work.body": {
-      "value": "Not sure where to start? A chemistry session is a free 30-minute conversation - no agenda, no commitment.",
-      "label": "Work with me body",
-      "hint": "The dark teal box under the credentials"
-    },
-    "about.work.cta": {
-      "value": "Book a chemistry session",
-      "label": "Work with me button",
-      "hint": "The dark teal box under the credentials"
-    },
     "about.feedback.label": {
       "value": "Feedback",
       "label": "Testimonials eyebrow",
