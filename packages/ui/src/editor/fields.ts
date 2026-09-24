@@ -18,7 +18,7 @@ export type FieldType =
 
 /** What a single box inside an item can be. No 'items' or 'lines': a list inside a list inside a
  *  drawer is a place people get lost. */
-export type ItemFieldType = 'text' | 'textarea' | 'image' | 'icon';
+export type ItemFieldType = 'text' | 'textarea' | 'image' | 'icon' | 'colour';
 
 /** One named box within an item.
  *

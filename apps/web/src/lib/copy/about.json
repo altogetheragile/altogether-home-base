@@ -186,7 +186,8 @@
         {
           "key": "colour",
           "label": "Card colour",
-          "type": "colour"
+          "type": "colour",
+          "placeholder": "Leave empty for the shipped colour"
         }
       ]
     },

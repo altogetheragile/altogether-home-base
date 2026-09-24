@@ -2,6 +2,7 @@ import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import type { ItemField } from './fields';
 import { PictureBox } from './PictureBox';
 import { IconPicker } from './IconPicker';
+import { ColourBox } from './ColourBox';
 
 // ============= A list of things, edited as a list of things =============
 //
@@ -110,6 +111,8 @@ export function ItemRows({
                 <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} upload={upload} />
               ) : f.type === 'icon' ? (
                 <IconPicker value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} />
+              ) : f.type === 'colour' ? (
+                <ColourBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} placeholder={f.placeholder} />
               ) : f.type === 'textarea' ? (
                 <textarea
                   value={row[f.key] ?? ''}

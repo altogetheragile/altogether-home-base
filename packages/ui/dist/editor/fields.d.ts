@@ -1,7 +1,7 @@
 type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch' | 'sections';
 /** What a single box inside an item can be. No 'items' or 'lines': a list inside a list inside a
  *  drawer is a place people get lost. */
-type ItemFieldType = 'text' | 'textarea' | 'image' | 'icon';
+type ItemFieldType = 'text' | 'textarea' | 'image' | 'icon' | 'colour';
 /** One named box within an item.
  *
  *  A box is not always a short string. A philosophy card carries a paragraph and its own list of

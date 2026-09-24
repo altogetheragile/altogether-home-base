@@ -1,4 +1,5 @@
 import { PictureBox } from './chunk-EMPC6OPA.js';
+import { ColourBox } from './chunk-M5XDZR2B.js';
 import { IconPicker } from './chunk-BLD3MESD.js';
 import { ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react';
 import { jsxs, jsx } from 'react/jsx-runtime';
@@ -81,7 +82,7 @@ function ItemRows({
           f.label,
           f.required && /* @__PURE__ */ jsx("span", { className: "ml-1 text-amber-600", title: "The page needs this", children: "needed" })
         ] }),
-        f.type === "image" ? /* @__PURE__ */ jsx(PictureBox, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v), upload }) : f.type === "icon" ? /* @__PURE__ */ jsx(IconPicker, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v) }) : f.type === "textarea" ? /* @__PURE__ */ jsx(
+        f.type === "image" ? /* @__PURE__ */ jsx(PictureBox, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v), upload }) : f.type === "icon" ? /* @__PURE__ */ jsx(IconPicker, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v) }) : f.type === "colour" ? /* @__PURE__ */ jsx(ColourBox, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v), placeholder: f.placeholder }) : f.type === "textarea" ? /* @__PURE__ */ jsx(
           "textarea",
           {
             value: row[f.key] ?? "",
