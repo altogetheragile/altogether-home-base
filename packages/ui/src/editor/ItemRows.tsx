@@ -26,6 +26,15 @@ function parse(value: string): Row[] {
   }
 }
 
+/** Which required boxes this row has left empty. The page drops such a row rather than rendering
+ *  it half-built, which is right, and used to happen in silence: a card was added, saved, shown in
+ *  the editor, and never appeared. */
+const emptyRequired = (row: Row, fields: ItemField[]) =>
+  fields.filter((f) => f.required && !(row[f.key] ?? '').trim()).map((f) => f.label);
+
+const readable = (names: string[]) =>
+  names.length <= 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+
 export function ItemRows({
   value,
   fields,
@@ -38,6 +47,7 @@ export function ItemRows({
   upload: (file: File) => Promise<string>;
 }) {
   const rows = parse(value);
+  const missing = (row: Row) => emptyRequired(row, fields);
   // Pretty-printed, because this lands in a database column somebody will read one day.
   const write = (next: Row[]) => onChange(next.length ? JSON.stringify(next, null, 2) : '');
 
@@ -85,9 +95,17 @@ export function ItemRows({
               </button>
             </div>
           </div>
+          {missing(row).length > 0 && (
+            <p className="mb-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              This one will not appear on the page until {readable(missing(row))} {missing(row).length === 1 ? 'is' : 'are'} filled in.
+            </p>
+          )}
           {fields.map((f) => (
             <label key={f.key} className="mb-1.5 block last:mb-0">
-              <span className="mb-0.5 block text-xs text-muted-foreground">{f.label}</span>
+              <span className="mb-0.5 block text-xs text-muted-foreground">
+                {f.label}
+                {f.required && <span className="ml-1 text-amber-600" title="The page needs this">needed</span>}
+              </span>
               {f.type === 'image' ? (
                 <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} upload={upload} />
               ) : f.type === 'icon' ? (

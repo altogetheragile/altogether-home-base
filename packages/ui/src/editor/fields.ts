@@ -26,7 +26,15 @@ export type ItemFieldType = 'text' | 'textarea' | 'image' | 'icon';
  *  principles; a statistic carries an icon; a service carries a photograph. Without a type per
  *  box these would have to become separate keys again, which is the shape this is getting away
  *  from. */
-export interface ItemField { key: string; label: string; placeholder?: string; type?: ItemFieldType }
+export interface ItemField {
+  key: string;
+  label: string;
+  placeholder?: string;
+  type?: ItemFieldType;
+  /** The page will not render a row without this. Declared here so the editor can say so, rather
+   *  than the row being accepted, saved, and silently dropped. */
+  required?: boolean;
+}
 
 export interface CopyEntry {
   value: string;

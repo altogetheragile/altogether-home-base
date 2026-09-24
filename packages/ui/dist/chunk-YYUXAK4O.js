@@ -12,6 +12,8 @@ function parse(value) {
     return [];
   }
 }
+var emptyRequired = (row, fields) => fields.filter((f) => f.required && !(row[f.key] ?? "").trim()).map((f) => f.label);
+var readable = (names) => names.length <= 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 function ItemRows({
   value,
   fields,
@@ -19,6 +21,7 @@ function ItemRows({
   upload
 }) {
   const rows = parse(value);
+  const missing = (row) => emptyRequired(row, fields);
   const write = (next) => onChange(next.length ? JSON.stringify(next, null, 2) : "");
   const set = (i, key, v) => write(rows.map((r, n) => n === i ? { ...r, [key]: v } : r));
   const remove = (i) => write(rows.filter((_, n) => n !== i));
@@ -66,8 +69,18 @@ function ItemRows({
           )
         ] })
       ] }),
+      missing(row).length > 0 && /* @__PURE__ */ jsxs("p", { className: "mb-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900", children: [
+        "This one will not appear on the page until ",
+        readable(missing(row)),
+        " ",
+        missing(row).length === 1 ? "is" : "are",
+        " filled in."
+      ] }),
       fields.map((f) => /* @__PURE__ */ jsxs("label", { className: "mb-1.5 block last:mb-0", children: [
-        /* @__PURE__ */ jsx("span", { className: "mb-0.5 block text-xs text-muted-foreground", children: f.label }),
+        /* @__PURE__ */ jsxs("span", { className: "mb-0.5 block text-xs text-muted-foreground", children: [
+          f.label,
+          f.required && /* @__PURE__ */ jsx("span", { className: "ml-1 text-amber-600", title: "The page needs this", children: "needed" })
+        ] }),
         f.type === "image" ? /* @__PURE__ */ jsx(PictureBox, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v), upload }) : f.type === "icon" ? /* @__PURE__ */ jsx(IconPicker, { value: row[f.key] ?? "", onChange: (v) => set(i, f.key, v) }) : f.type === "textarea" ? /* @__PURE__ */ jsx(
           "textarea",
           {

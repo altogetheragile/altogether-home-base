@@ -13,6 +13,9 @@ interface ItemField {
     label: string;
     placeholder?: string;
     type?: ItemFieldType;
+    /** The page will not render a row without this. Declared here so the editor can say so, rather
+     *  than the row being accepted, saved, and silently dropped. */
+    required?: boolean;
 }
 interface CopyEntry {
     value: string;
