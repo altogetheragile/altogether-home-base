@@ -51,5 +51,13 @@ type Logo = {
 };
 /** What to render where the logo goes. `companyName` is only used when no logo is configured. */
 declare function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo;
+/** The same colour, mixed with white, for a card's header band.
+ *
+ *  Somebody picking a card colour should pick one colour, not two. Asking for the pale version as
+ *  well is asking them to do arithmetic to keep a pair in step, and the pair only ever goes out of
+ *  step in one direction: somebody changes the strong one and forgets.
+ *
+ *  Computed rather than CSS color-mix so it works the same everywhere and can be tested. */
+declare function tint(hex: string, strength?: number): string;
 
-export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Logo, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages };
+export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Logo, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, tint };
