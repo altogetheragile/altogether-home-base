@@ -120,7 +120,7 @@ export function Navigation({
                       className="block px-4 py-2 text-sm text-foreground transition-colors hover:bg-accent hover:text-primary"
                       onClick={() => setResourcesOpen(false)}
                     >
-                      {label(l.key)}
+                      {label(l.key)}{isHidden(l) && <HiddenDot />}
                     </Link>
                   ))}
                 </div>
@@ -156,7 +156,7 @@ export function Navigation({
           <div className="flex flex-col gap-1">
             {topLinks.map((l) => (
               <Link key={l.href} href={l.href} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent" onClick={() => setMobileOpen(false)}>
-                {label(l.key)}
+                {label(l.key)}{isHidden(l) && <HiddenDot />}
               </Link>
             ))}
             {resourceLinks.length > 0 && (
@@ -164,7 +164,7 @@ export function Navigation({
                 <p className="px-3 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label('nav.resources')}</p>
                 {resourceLinks.map((l) => (
                   <Link key={l.href} href={l.href} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent" onClick={() => setMobileOpen(false)}>
-                    {label(l.key)}
+                    {label(l.key)}{isHidden(l) && <HiddenDot />}
                   </Link>
                 ))}
               </>
