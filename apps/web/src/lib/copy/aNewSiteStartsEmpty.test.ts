@@ -45,6 +45,10 @@ const BLANK_BY_DESIGN = [
   // The wave pattern is drawn in this site's colours. A second site gets a plain hero until it
   // chooses its own picture.
   'home.hero.background',
+  // Empty means "the order the code has them in", which is the right starting point and the
+  // thing a saved order is a departure from.
+  'home.sections',
+  'about.sections',
 ];
 
 /** Claims a site has to earn before it makes them. Checked against everything that DOES ship. */

@@ -10,6 +10,8 @@ import { colors as p , founderOf } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list, items } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
+import { sectionNodes } from '@/components/Sections';
+import { orderedSections, ABOUT_SECTIONS } from '@/lib/sections';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,42 +93,15 @@ export default async function AboutPage() {
   // Whether there is a left column at all in the story section. Without one the boxes on the
   // right were floating beside half a page of white space.
   const storyTold = has(t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4'));
+  const order = orderedSections(t('about.sections'), ABOUT_SECTIONS);
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
   const quotes = [...feedback].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3);
   const name = (f: { first_name: string; last_name: string }) => (firstNameOnly ? f.first_name : `${f.first_name} ${f.last_name}`.trim());
 
-  return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      {founder.shown && (
-        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
-      )}
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'About', path: '/about' }])} />
-
-      <style>{`
-        .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
-        /* One child, one column. Otherwise the text sits in the left half of a banner. */
-        .aa-two-col--alone { grid-template-columns: 1fr; }
-        .aa-two-col-wide { display: grid; grid-template-columns: 1fr 340px; gap: 56px; align-items: start; }
-        /* With no story written, the left column is empty and the boxes on the right float beside
-           a void. One column instead, at the width of the boxes. */
-        .aa-two-col-wide--alone { grid-template-columns: 1fr; max-width: 420px; }
-        .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-        .aa-section-pad { padding: 64px 48px; }
-        .aa-about-hero { padding: 72px 48px 60px; }
-        .aa-about-cta { padding: 56px 48px; }
-        .aa-hide-mobile { display: flex; }
-        @media (max-width: 767px) {
-          .aa-two-col { grid-template-columns: 1fr; gap: 32px; }
-          .aa-two-col-wide { grid-template-columns: 1fr; gap: 32px; }
-          .aa-three-col { grid-template-columns: 1fr; }
-          .aa-section-pad { padding: 40px 20px; }
-          .aa-about-hero { padding: 48px 20px 40px; }
-          .aa-about-cta { padding: 40px 20px; }
-          .aa-hide-mobile { display: none; }
-        }
-      `}</style>
-
+  const SECTIONS: Record<string, React.ReactNode> = {
+    hero: (
+      <>
       {/* HERO */}
       <div id="main-content" className="aa-about-hero" style={{ background: p.heroTeal }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
@@ -146,7 +121,10 @@ export default async function AboutPage() {
           </div>
         </div>
       </div>
-
+      </>
+    ),
+    story: (
+      <>
       {/* PERSONAL STORY */}
       <div className="aa-section-pad" style={{ background: p.white }}>
         <div className={`aa-two-col-wide${storyTold ? '' : ' aa-two-col-wide--alone'}`}>
@@ -199,7 +177,10 @@ export default async function AboutPage() {
           </div>
         </div>
       </div>
-
+      </>
+    ),
+    testimonials: (
+      <>
       {/* TESTIMONIALS */}
       {quotes.length > 0 && (
         <div className="aa-section-pad" style={{ background: p.skyTeal }}>
@@ -218,7 +199,10 @@ export default async function AboutPage() {
           </div>
         </div>
       )}
-
+      </>
+    ),
+    mission: (
+      <>
       {/* MISSION */}
       <div className="aa-section-pad" style={{ background: p.heroTeal }}>
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
@@ -228,7 +212,10 @@ export default async function AboutPage() {
           <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>{t('about.mission.p3')}</p>
         </div>
       </div>
-
+      </>
+    ),
+    philosophy: (
+      <>
       {/* PHILOSOPHY
           Two cards was a layout decision that had become a content limit. The colours cycle, as
           the statistics icons do, so a third card is a third card rather than a code change. */}
@@ -266,7 +253,10 @@ export default async function AboutPage() {
       </div>
         );
       })()}
-
+      </>
+    ),
+    timeline: (
+      <>
       {/* TIMELINE */}
       {(() => {
         const eras = timelineFrom(t('about.timeline.list'));
@@ -292,7 +282,10 @@ export default async function AboutPage() {
           </div>
         );
       })()}
-
+      </>
+    ),
+    cta: (
+      <>
       {/* CTA */}
       <div className="aa-about-cta" style={{ background: p.deepTeal }}>
         <div
@@ -317,6 +310,42 @@ export default async function AboutPage() {
           )}
         </div>
       </div>
+      </>
+    ),
+  };
+
+  return (
+    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+      {founder.shown && (
+        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
+      )}
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'About', path: '/about' }])} />
+
+      <style>{`
+        .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+        /* One child, one column. Otherwise the text sits in the left half of a banner. */
+        .aa-two-col--alone { grid-template-columns: 1fr; }
+        .aa-two-col-wide { display: grid; grid-template-columns: 1fr 340px; gap: 56px; align-items: start; }
+        /* With no story written, the left column is empty and the boxes on the right float beside
+           a void. One column instead, at the width of the boxes. */
+        .aa-two-col-wide--alone { grid-template-columns: 1fr; max-width: 420px; }
+        .aa-three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        .aa-section-pad { padding: 64px 48px; }
+        .aa-about-hero { padding: 72px 48px 60px; }
+        .aa-about-cta { padding: 56px 48px; }
+        .aa-hide-mobile { display: flex; }
+        @media (max-width: 767px) {
+          .aa-two-col { grid-template-columns: 1fr; gap: 32px; }
+          .aa-two-col-wide { grid-template-columns: 1fr; gap: 32px; }
+          .aa-three-col { grid-template-columns: 1fr; }
+          .aa-section-pad { padding: 40px 20px; }
+          .aa-about-hero { padding: 48px 20px 40px; }
+          .aa-about-cta { padding: 40px 20px; }
+          .aa-hide-mobile { display: none; }
+        }
+      `}</style>
+
+      {sectionNodes(order, SECTIONS)}
     </div>
   );
 }

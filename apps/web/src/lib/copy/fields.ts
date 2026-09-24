@@ -17,7 +17,8 @@
 // A field now says what it is, and the editor draws the right control. "items" is the one that
 // earns its keep: a list of objects, stored as JSON, which the editor shows as rows with named
 // boxes and Add and Remove buttons. Adding a fourth statistic stops being a code change.
-export type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch';
+export type FieldType =
+  | 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch' | 'sections';
 
 /** What a single box inside an item can be. No 'items' or 'lines': a list inside a list inside a
  *  drawer is a place people get lost. */
