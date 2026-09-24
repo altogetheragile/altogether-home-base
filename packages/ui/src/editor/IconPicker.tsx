@@ -1,8 +1,6 @@
-'use client';
-
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { ICONS, ICON_NAMES } from '@/components/icons/registry';
+import { ICONS, ICON_NAMES } from './icons';
 
 // A grid rather than a dropdown of names: nobody knows what "HeartHandshake" looks like, and
 // picking an icon is a visual decision made in a second by looking.

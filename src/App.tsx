@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes } from "react-router-dom";
+import { EditThisSite } from '@/components/edit/EditThisSite';
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -46,6 +47,8 @@ const App = () => (
           <BrowserRouter>
             <ScrollToTop />
             <AuthProvider>
+              {/* The same editor the Site mounts, so it does not vanish on the pages this app serves. */}
+              <EditThisSite />
               <Routes>
                 {/* Public Routes */}
                 {PublicRoutes()}

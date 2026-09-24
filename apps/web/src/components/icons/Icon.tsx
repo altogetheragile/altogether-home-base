@@ -1,4 +1,4 @@
-import { iconByName } from './registry';
+import { iconByName } from '@altogether/ui/editor/icons';
 
 /** Renders the icon a site chose, or nothing at all. Used wherever an icon is content rather
  *  than decoration the design insists on. */

@@ -11,7 +11,7 @@ import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list, items } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
 import { sectionNodes } from '@/components/Sections';
-import { orderedSections, ABOUT_SECTIONS } from '@/lib/sections';
+import { orderedSections, ABOUT_SECTIONS } from '@altogether/ui/editor/sections';
 
 export const dynamic = 'force-dynamic';
 

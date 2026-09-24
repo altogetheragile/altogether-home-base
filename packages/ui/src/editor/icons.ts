@@ -1,7 +1,7 @@
 import {
   Users, User, GraduationCap, BookOpen, Star, Award, Medal, Trophy,
   Target, Compass, Map, Route, Lightbulb, Sparkles, Rocket, TrendingUp,
-  MessageCircle, MessagesSquare, Handshake, HeartHandshake, Heart, Smile,
+  MessageCircle, MessagesSquare, HeartHandshake, Heart, Smile,
   Calendar, Clock, CheckCircle2, ListChecks, ClipboardCheck, Repeat,
   Briefcase, Building2, Globe, MapPin, Mail, Phone, Layers, Puzzle,
   Wrench, Settings, Gauge, BarChart3, PieChart, Presentation, Video, Camera,
@@ -14,6 +14,10 @@ import {
 // dynamic lookup defeats tree-shaking and drags every icon in the library into the bundle, which
 // for a marketing page is roughly a megabyte to let somebody pick a tick.
 //
+// Anything added here must exist in the lucide version this package pins, which is older than
+// the Site's: Handshake does not, HeartHandshake does. A name that is not there fails the build
+// rather than rendering nothing, which is the right way round.
+//
 // Forty-odd is a choice, not a limit of the technique: enough that a coach, a trainer, a
 // photographer and a therapist can all find something that means what they mean, few enough that
 // picking one is a decision rather than a search. Add more when somebody actually wants one.
@@ -21,7 +25,7 @@ import {
 export const ICONS: Record<string, LucideIcon> = {
   Users, User, GraduationCap, BookOpen, Star, Award, Medal, Trophy,
   Target, Compass, Map, Route, Lightbulb, Sparkles, Rocket, TrendingUp,
-  MessageCircle, MessagesSquare, Handshake, HeartHandshake, Heart, Smile,
+  MessageCircle, MessagesSquare, HeartHandshake, Heart, Smile,
   Calendar, Clock, CheckCircle2, ListChecks, ClipboardCheck, Repeat,
   Briefcase, Building2, Globe, MapPin, Mail, Phone, Layers, Puzzle,
   Wrench, Settings, Gauge, BarChart3, PieChart, Presentation, Video, Camera,

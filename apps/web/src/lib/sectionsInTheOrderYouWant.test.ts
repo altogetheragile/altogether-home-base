@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { orderedSections, HOME_SECTIONS, ABOUT_SECTIONS, SECTIONS_FOR_PAGE } from './sections';
+import { orderedSections, HOME_SECTIONS, ABOUT_SECTIONS, SECTIONS_FOR_PAGE } from '@altogether/ui/editor/sections';
 
 // The merge is the whole risk. A section added in code but absent from a saved order must still
 // appear, or shipping a new section silently does nothing on every site that has ever reordered.

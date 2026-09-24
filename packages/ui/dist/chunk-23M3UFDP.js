@@ -1,4 +1,5 @@
-{
+// src/editor/navigation.ts
+var navigationRegistry = {
   "page": "navigation",
   "label": "Navigation and Footer",
   "entries": {
@@ -81,4 +82,6 @@
       "hint": "The heading above the email address and phone number in the footer"
     }
   }
-}
+};
+
+export { navigationRegistry };

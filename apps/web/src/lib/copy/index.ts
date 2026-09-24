@@ -7,8 +7,7 @@ import testimonialsJson from './testimonials.json';
 import blogJson from './blog.json';
 import eventsJson from './events.json';
 import examsJson from './exams.json';
-import navigationJson from './navigation.json';
-import siteJson from './site.json';
+import { navigationRegistry, siteRegistry } from '@altogether/ui/editor/registries';
 
 // ============= The site's words, editable without a deploy =============
 //
@@ -30,8 +29,8 @@ import type { CopyRegistry } from './fields';
 
 export const REGISTRIES: CopyRegistry[] = [
   homeJson, aboutJson, coachingJson, contactJson, testimonialsJson, blogJson, eventsJson, examsJson,
-  navigationJson,
-  siteJson,
+  navigationRegistry,
+  siteRegistry,
 ] as CopyRegistry[];
 
 /** Reads a page's copy, with anything saved in `site_copy` laid over the shipped wording. */

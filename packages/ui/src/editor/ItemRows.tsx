@@ -1,9 +1,7 @@
-'use client';
-
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
-import type { ItemField } from '@/lib/copy/fields';
-import { PictureBox } from '@/components/edit/PictureBox';
-import { IconPicker } from '@/components/edit/IconPicker';
+import type { ItemField } from './fields';
+import { PictureBox } from './PictureBox';
+import { IconPicker } from './IconPicker';
 
 // ============= A list of things, edited as a list of things =============
 //
@@ -32,10 +30,12 @@ export function ItemRows({
   value,
   fields,
   onChange,
+  upload,
 }: {
   value: string;
   fields: ItemField[];
   onChange: (next: string) => void;
+  upload: (file: File) => Promise<string>;
 }) {
   const rows = parse(value);
   // Pretty-printed, because this lands in a database column somebody will read one day.
@@ -89,7 +89,7 @@ export function ItemRows({
             <label key={f.key} className="mb-1.5 block last:mb-0">
               <span className="mb-0.5 block text-xs text-muted-foreground">{f.label}</span>
               {f.type === 'image' ? (
-                <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} />
+                <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} upload={upload} />
               ) : f.type === 'icon' ? (
                 <IconPicker value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} />
               ) : f.type === 'textarea' ? (

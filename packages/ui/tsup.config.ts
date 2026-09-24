@@ -6,6 +6,8 @@ export default defineConfig({
     'src/tokens.ts',
     'src/brand.ts',
     'src/modules.ts',
+    'src/editor/*.ts',
+    'src/editor/*.tsx',
     'src/components/ui/*.tsx',
     '!src/components/ui/*.stories.tsx',
   ],
