@@ -55,7 +55,7 @@ function Illustration({ src, alt, height }: { src: string; alt: string; height: 
   // ask for it, so the framing has to be one that works for any picture: fill the box, keep the
   // middle. Both shipped illustrations are drawn with margin around them and are unaffected.
   return (
-    <div style={{ borderRadius: 16, overflow: 'hidden', height, position: 'relative' }}>
+    <div className="aa-service-picture" style={{ borderRadius: 16, overflow: 'hidden', height, position: 'relative' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
     </div>
@@ -97,14 +97,30 @@ export default async function CoachingPage() {
 
       <style>{`
         .aa-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-        .aa-service-layout { display: grid; grid-template-columns: 1fr 360px; gap: 56px; align-items: start; }
+        /* Centred and capped. Without a maximum the band is as wide as the window, so on a
+           large screen the body text ran to 928px - about 110 characters a line, well past
+           comfortable - while the picture stayed 360px and sat marooned at the top of a row half
+           again as tall as it was. The page already caps its hero at 680 and its form at 600;
+           this brings the rest into line. */
+        .aa-service-layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 35%, 440px); gap: 56px; align-items: center; max-width: 1200px; margin: 0 auto; }
         .aa-creds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .aa-section-pad { padding: 64px 48px; }
         .aa-coach-hero { padding: 72px 48px 60px; }
         .aa-coach-band { padding: 56px 48px; }
+        /* Stacked well before the phone breakpoint. Two columns need room for both: at tablet
+           width the picture kept its 360px and the words were squeezed to 262, four or five to a
+           line. Set at 1000 rather than 900 by looking at both: at 1024 the words still read
+           properly beside the picture, and at 900 they do not. Below this the picture goes under
+           the words at full width. */
+        @media (max-width: 999px) {
+          .aa-service-layout { grid-template-columns: 1fr; gap: 32px; }
+          /* Capped and centred once it is under the words rather than beside them. Left to run
+             the full width of the band it became a 2.2:1 letterbox and the crop took the tops of
+             people's heads off. */
+          .aa-service-picture { max-width: 520px; width: 100%; margin: 0 auto; }
+        }
         @media (max-width: 767px) {
           .aa-two-col { grid-template-columns: 1fr; gap: 24px; }
-          .aa-service-layout { grid-template-columns: 1fr; }
           .aa-creds-grid { grid-template-columns: 1fr 1fr; }
           .aa-section-pad { padding: 40px 20px; }
           .aa-coach-hero { padding: 48px 20px 40px; }
