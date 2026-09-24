@@ -54,9 +54,8 @@ These steps are done by hand, once, and are not part of the wizard.
 
 1. Create the Supabase project.
 2. Apply the migrations (`supabase db push`, or `db reset` against the new project).
-3. **Add the new project's host to `src/config/supabaseHosts.ts`, and paste the directive the
-   failing test prints into all three policies in `vercel.json`.** Merge that before the new site
-   is pointed at anything.
+3. **Set `SUPABASE_CSP_HOSTS` on both Vercel projects** to this project's Supabase host. No code
+   change: `vercel.ts` builds the policy from it.
 4. Create the Vercel projects, root and `apps/web`, from the same repository.
 5. Set the environment variables, and the Site URL and redirect allowlist in Supabase Auth.
 6. Point the domain at Vercel.

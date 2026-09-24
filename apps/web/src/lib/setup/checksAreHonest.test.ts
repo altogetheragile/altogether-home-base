@@ -113,7 +113,7 @@ describe('the steps outside the application', () => {
 
   it('names the security policy step, which is the one with no error message', () => {
     const csp = outsideTheApp().find((c) => c.id === 'csp-host');
-    expect(csp?.detail).toMatch(/supabaseHosts/);
+    expect(csp?.detail).toMatch(/SUPABASE_CSP_HOSTS/);
   });
 
   it('offers nowhere to click, because none of it is in this app', () => {

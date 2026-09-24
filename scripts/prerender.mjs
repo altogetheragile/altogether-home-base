@@ -24,7 +24,7 @@ const ROOT = resolve(__dirname, '..');
 const DIST = resolve(ROOT, 'dist');
 const SITE_URL = 'https://altogetheragile.com';
 
-// Routes the Next.js app serves via vercel.json rewrites. Skipped in the static-page loop
+// Routes the Next.js app serves via routing-config rewrites. Skipped in the static-page loop
 // below (writing a static file would shadow the rewrite) but kept in STATIC_PAGES so they
 // stay in the sitemap. Per-slug blog/exam/course pages are likewise Next-owned.
 const CUT_OVER = ['/exams', '/blog', '/events', '/about', '/coaching', '/testimonials', '/contact'];
@@ -524,7 +524,7 @@ const STATIC_PAGES = {
     description: 'How Altogether Agile uses cookies and similar technologies.',
   },
   // NOTE: there is no /courses listing route in the app (only /courses/:id detail
-  // pages). The catalogue lives at /events, and vercel.json 301-redirects
+  // pages). The catalogue lives at /events, and the routing config 301-redirects
   // /courses -> /events, so /courses is intentionally NOT prerendered here.
 };
 
@@ -669,10 +669,10 @@ async function main() {
   writeFileSync(resolve(DIST, 'sitemap.xml'), buildSitemap(sitemapEntries), 'utf-8');
   console.log(`  ok   /sitemap.xml (${sitemapEntries.length} urls)`);
 
-  // HOME CUTOVER: '/' is served by the Next.js app via a rewrite in vercel.json.
+  // HOME CUTOVER: '/' is served by the Next.js app via a rewrite in the routing config.
   // Vite emits dist/index.html, which the filesystem serves for '/' (shadowing the
   // rewrite). Move the SPA shell to dist/_spa.html - the catch-all fallback target in
-  // vercel.json - and remove dist/index.html so the '/' rewrite is reached. Every
+  // the routing config - and remove dist/index.html so the '/' rewrite is reached. Every
   // other SPA route still resolves: prerendered routes from their own dist/<route>/
   // index.html, the rest via the catch-all rewrite to /_spa.html (byte-identical to
   // the old index.html).
