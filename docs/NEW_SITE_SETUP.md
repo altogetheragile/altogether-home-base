@@ -52,12 +52,22 @@ These steps are done by hand, once, and are not part of the wizard.
 
 1. Create the Supabase project.
 2. Apply the migrations (`supabase db push`, or `db reset` against the new project).
-3. Create the Vercel projects, root and `apps/web`, from the same repository.
-4. Set the environment variables, and the Site URL and redirect allowlist in Supabase Auth.
-5. Point the domain at Vercel.
-6. Create the first admin account and grant it the `admin` role.
+3. **Add the new project's host to `src/config/supabaseHosts.ts`, and paste the directive the
+   failing test prints into all three policies in `vercel.json`.** Merge that before the new site
+   is pointed at anything.
+4. Create the Vercel projects, root and `apps/web`, from the same repository.
+5. Set the environment variables, and the Site URL and redirect allowlist in Supabase Auth.
+6. Point the domain at Vercel.
+7. Create the first admin account and grant it the `admin` role.
 
 Step 2 is the one that decides whether any of this is possible. See Section 6.
+
+Step 3 is the one that fails in a way nobody recognises. `vercel.json` is in this repository, and
+every site is a deployment of this same repository, so its Content Security Policy has to name
+every site's database at once. Miss it and the new site loads, renders its layout, and then has
+no content in it at all, because the browser is refusing every request to a host the policy does
+not name. The only evidence is a CSP violation in the console. The list and its test exist so
+this is one line and a paste rather than an afternoon.
 
 ## 4. The Walk-Through
 
