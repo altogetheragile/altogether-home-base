@@ -7,8 +7,8 @@ import { ColourBox } from '../chunk-M5XDZR2B.js';
 import { IconPicker } from '../chunk-BLD3MESD.js';
 import '../chunk-TWTRORN3.js';
 import { useState, useTransition, useEffect } from 'react';
-import { Pencil, X, Loader2, Undo2, RotateCcw, Check } from 'lucide-react';
-import { jsxs, jsx } from 'react/jsx-runtime';
+import { Pencil, X, EyeOff, Eye, Loader2, Undo2, RotateCcw, Check } from 'lucide-react';
+import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 
 function describeOrder(value) {
   try {
@@ -61,17 +61,48 @@ function EditDrawer({ host }) {
   const setField = (key, value) => setDrafts((d) => ({ ...d, [active]: { ...d[active] ?? {}, [key]: value } }));
   const clearDraft = () => setDrafts((d) => ({ ...d, [active]: {} }));
   const changed = Object.keys(draft).length > 0;
+  const waiting = (fields ?? []).filter((f) => f.draft);
+  const canDraft = Boolean(host.saveDraft);
+  const afterWriting = async (result, clearTyping) => {
+    if (!result.ok) return setError(result.error);
+    if (clearTyping) clearDraft();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2e3);
+    host.refresh();
+    setFields(await host.load(active));
+  };
   const save = () => {
     setError(null);
     startSaving(() => {
       void (async () => {
-        const result = await host.save(active, draft);
-        if (!result.ok) return setError(result.error);
-        clearDraft();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2e3);
-        host.refresh();
-        setFields(await host.load(active));
+        await afterWriting(await host.save(active, draft), true);
+      })();
+    });
+  };
+  const saveAsDraft = () => {
+    if (!host.saveDraft) return;
+    setError(null);
+    startSaving(() => {
+      void (async () => {
+        await afterWriting(await host.saveDraft(active, draft), true);
+      })();
+    });
+  };
+  const publish = () => {
+    if (!host.publishDrafts) return;
+    setError(null);
+    startSaving(() => {
+      void (async () => {
+        await afterWriting(await host.publishDrafts(active), false);
+      })();
+    });
+  };
+  const discard = (key) => {
+    if (!host.discardDrafts) return;
+    setError(null);
+    startSaving(() => {
+      void (async () => {
+        await afterWriting(await host.discardDrafts(active, key), false);
       })();
     });
   };
@@ -125,7 +156,54 @@ function EditDrawer({ host }) {
       ] }),
       /* @__PURE__ */ jsx("button", { onClick: () => setOpen(false), "aria-label": "Close the editor", className: "rounded p-1 hover:bg-muted", children: /* @__PURE__ */ jsx(X, { size: 18 }) })
     ] }),
-    /* @__PURE__ */ jsx("p", { className: "border-b border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground", children: "Changes save straight to the live site, and every one of them can be undone." }),
+    /* @__PURE__ */ jsx("p", { className: "border-b border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground", children: canDraft ? "Saving publishes straight away, and can be undone. Save as draft holds a change back until you publish it." : "Changes save straight to the live site, and every one of them can be undone." }),
+    waiting.length > 0 && /* @__PURE__ */ jsxs("div", { className: "border-b border-amber-200 bg-amber-50 px-4 py-2.5", children: [
+      /* @__PURE__ */ jsxs("p", { className: "text-xs font-medium text-amber-900", children: [
+        waiting.length,
+        " ",
+        waiting.length === 1 ? "change is" : "changes are",
+        " saved as a draft and not on the site yet."
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "mt-1.5 flex flex-wrap items-center gap-1.5", children: [
+        host.preview && /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => host.preview.set(!host.preview.on),
+            disabled: pending,
+            className: "rounded border border-amber-300 bg-background px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50",
+            children: host.preview.on ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(EyeOff, { size: 12, className: "mr-1 inline" }),
+              "Stop previewing"
+            ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Eye, { size: 12, className: "mr-1 inline" }),
+              "Preview them"
+            ] })
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: publish,
+            disabled: pending,
+            className: "rounded bg-amber-900 px-2 py-1 text-xs font-medium text-amber-50 hover:bg-amber-800 disabled:opacity-50",
+            children: [
+              "Publish ",
+              waiting.length === 1 ? "it" : "them"
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => discard(),
+            disabled: pending,
+            className: "rounded border border-amber-300 bg-background px-2 py-1 text-xs text-amber-900 hover:bg-amber-100 disabled:opacity-50",
+            children: "Discard"
+          }
+        )
+      ] })
+    ] }),
+    host.preview?.on && /* @__PURE__ */ jsx("p", { className: "border-b border-border bg-foreground px-4 py-1.5 text-xs font-medium text-background", children: "You are looking at drafts. Visitors still see the published site." }),
     tabs.length > 1 && /* @__PURE__ */ jsx("div", { className: "flex gap-1 border-b border-border px-3 py-2", children: tabs.map((t) => /* @__PURE__ */ jsxs(
       "button",
       {
@@ -179,6 +257,22 @@ function EditDrawer({ host }) {
             )
           ] }),
           /* @__PURE__ */ jsx("p", { className: "mb-1.5 text-xs text-muted-foreground", children: f.hint }),
+          f.draft && /* @__PURE__ */ jsxs("p", { className: "mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900", children: [
+            /* @__PURE__ */ jsxs("span", { className: "flex-1", children: [
+              /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Draft waiting:" }),
+              " ",
+              f.type === "sections" ? describeOrder(f.draft.value) : f.type === "items" ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? "" : "s"}` : f.draft.value.trim() ? `\u201C${f.draft.value.replace(/\n/g, " ").slice(0, 80)}\u201D` : "empty"
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => discard(f.key),
+                disabled: pending,
+                className: "shrink-0 underline hover:no-underline disabled:opacity-50",
+                children: "Discard"
+              }
+            )
+          ] }),
           f.undo && /* @__PURE__ */ jsxs("p", { className: "mb-1.5 truncate text-xs text-muted-foreground/80", children: [
             /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Was:" }),
             " ",
@@ -227,6 +321,15 @@ function EditDrawer({ host }) {
             pending ? /* @__PURE__ */ jsx(Loader2, { size: 15, className: "animate-spin" }) : saved ? /* @__PURE__ */ jsx(Check, { size: 15 }) : null,
             pending ? "Saving" : saved ? "Saved" : changed ? `Save ${Object.keys(draft).length} change${Object.keys(draft).length === 1 ? "" : "s"}` : "Nothing changed yet"
           ]
+        }
+      ),
+      canDraft && /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: saveAsDraft,
+          disabled: !changed || pending,
+          className: "mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40",
+          children: "Save as draft, do not publish yet"
         }
       )
     ] })

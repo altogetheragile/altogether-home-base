@@ -1,5 +1,5 @@
 import { useEffect, useState, useTransition } from 'react';
-import { Pencil, X, RotateCcw, Undo2, Check, Loader2 } from 'lucide-react';
+import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff } from 'lucide-react';
 import { ItemRows } from './ItemRows';
 import { PictureBox } from './PictureBox';
 import { IconPicker } from './IconPicker';
@@ -27,6 +27,22 @@ export type EditorHost = {
   reset: (page: string, key: string) => Promise<SaveResult>;
   undo: (page: string, key: string) => Promise<SaveResult>;
   upload: (file: File) => Promise<string>;
+
+  // ---- Holding a change back. Optional, so a host that cannot draft simply does not offer it,
+  // rather than offering a button that fails. ----
+
+  /** Save without publishing. The site carries on showing what it showed. */
+  saveDraft?: (page: string, changes: Record<string, string>) => Promise<SaveResult>;
+  /** Put everything waiting on this page live, in one go. */
+  publishDrafts?: (page: string) => Promise<SaveResult>;
+  /** Throw away what is waiting: one field, or the whole page. Changes nothing on the site. */
+  discardDrafts?: (page: string, key?: string) => Promise<SaveResult>;
+  /** Whether the page behind the drawer is currently showing drafts, and how to change that.
+   *
+   *  Only the app that renders the words can answer this, which is why it is the host's. The App
+   *  edits the menu and the footer but does not render them, so it leaves this out and the drawer
+   *  offers no preview there rather than a preview of nothing. */
+  preview?: { on: boolean; set: (on: boolean) => void };
 };
 
 // ============= Editing the site from the site =============
@@ -118,17 +134,52 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   const clearDraft = () => setDrafts((d) => ({ ...d, [active]: {} }));
   const changed = Object.keys(draft).length > 0;
 
+  // Two different things are called a draft here, and conflating them would be a mess. `draft`
+  // above is what has been typed into this drawer and not sent anywhere. `waiting` is what has
+  // been sent and deliberately not published. Only the second survives closing the browser.
+  const waiting = (fields ?? []).filter((f) => f.draft);
+  const canDraft = Boolean(host.saveDraft);
+
+  /** Every write goes through here, so one place clears the typing, reloads, and refreshes the
+   *  page behind the drawer. They had drifted apart once already. */
+  const afterWriting = async (result: SaveResult, clearTyping: boolean) => {
+    if (!result.ok) return setError(result.error);
+    if (clearTyping) clearDraft();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    // The page is server-rendered: without this the admin sees the words they just replaced.
+    host.refresh();
+    setFields(await host.load(active));
+  };
+
   const save = () => {
     setError(null);
     startSaving(() => { void (async () => {
-      const result = await host.save(active, draft);
-      if (!result.ok) return setError(result.error);
-      clearDraft();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-      // The page is server-rendered: without this the admin sees the words they just replaced.
-      host.refresh();
-      setFields(await host.load(active));
+      await afterWriting(await host.save(active, draft), true);
+    })(); });
+  };
+
+  const saveAsDraft = () => {
+    if (!host.saveDraft) return;
+    setError(null);
+    startSaving(() => { void (async () => {
+      await afterWriting(await host.saveDraft!(active, draft), true);
+    })(); });
+  };
+
+  const publish = () => {
+    if (!host.publishDrafts) return;
+    setError(null);
+    startSaving(() => { void (async () => {
+      await afterWriting(await host.publishDrafts!(active), false);
+    })(); });
+  };
+
+  const discard = (key?: string) => {
+    if (!host.discardDrafts) return;
+    setError(null);
+    startSaving(() => { void (async () => {
+      await afterWriting(await host.discardDrafts!(active, key), false);
     })(); });
   };
 
@@ -184,8 +235,54 @@ export function EditDrawer({ host }: { host: EditorHost }) {
       {/* Said once, permanently, rather than discovered after the first mistake. An undo that only
           announces itself once you have already used it is not a safety net anybody relies on. */}
       <p className="border-b border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
-        Changes save straight to the live site, and every one of them can be undone.
+        {canDraft
+          ? 'Saving publishes straight away, and can be undone. Save as draft holds a change back until you publish it.'
+          : 'Changes save straight to the live site, and every one of them can be undone.'}
       </p>
+
+      {/* What is waiting, and the three things you can do about it, in the drawer rather than on
+          some other screen. A draft you have to go and find is a draft you forget you left. */}
+      {waiting.length > 0 && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2.5">
+          <p className="text-xs font-medium text-amber-900">
+            {waiting.length} {waiting.length === 1 ? 'change is' : 'changes are'} saved as a draft and not on the site yet.
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {host.preview && (
+              <button
+                onClick={() => host.preview!.set(!host.preview!.on)}
+                disabled={pending}
+                className="rounded border border-amber-300 bg-background px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+              >
+                {host.preview.on ? <><EyeOff size={12} className="mr-1 inline" />Stop previewing</> : <><Eye size={12} className="mr-1 inline" />Preview them</>}
+              </button>
+            )}
+            <button
+              onClick={publish}
+              disabled={pending}
+              className="rounded bg-amber-900 px-2 py-1 text-xs font-medium text-amber-50 hover:bg-amber-800 disabled:opacity-50"
+            >
+              Publish {waiting.length === 1 ? 'it' : 'them'}
+            </button>
+            <button
+              onClick={() => discard()}
+              disabled={pending}
+              className="rounded border border-amber-300 bg-background px-2 py-1 text-xs text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Shown whenever the page behind is showing drafts, even with the band above scrolled past,
+          because the dangerous state is believing you are looking at the live site when you are
+          not. */}
+      {host.preview?.on && (
+        <p className="border-b border-border bg-foreground px-4 py-1.5 text-xs font-medium text-background">
+          You are looking at drafts. Visitors still see the published site.
+        </p>
+      )}
 
       {tabs.length > 1 && (
         <div className="flex gap-1 border-b border-border px-3 py-2">
@@ -256,6 +353,30 @@ export function EditDrawer({ host }: { host: EditorHost }) {
                 )}
               </div>
               <p className="mb-1.5 text-xs text-muted-foreground">{f.hint}</p>
+              {f.draft && (
+                <p className="mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                  <span className="flex-1">
+                    {/* The box below shows the published value, because that is what this field
+                        currently is. Saying what the draft would make it, rather than swapping
+                        the box's contents, keeps "what is live" answerable at a glance. */}
+                    <span className="font-medium">Draft waiting:</span>{' '}
+                    {f.type === 'sections'
+                      ? describeOrder(f.draft.value)
+                      : f.type === 'items'
+                      ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? '' : 's'}`
+                      : f.draft.value.trim()
+                        ? `“${f.draft.value.replace(/\n/g, ' ').slice(0, 80)}”`
+                        : 'empty'}
+                  </span>
+                  <button
+                    onClick={() => discard(f.key)}
+                    disabled={pending}
+                    className="shrink-0 underline hover:no-underline disabled:opacity-50"
+                  >
+                    Discard
+                  </button>
+                </p>
+              )}
               {f.undo && (
                 <p className="mb-1.5 truncate text-xs text-muted-foreground/80">
                   <span className="font-medium">Was:</span>{' '}
@@ -322,6 +443,18 @@ export function EditDrawer({ host }: { host: EditorHost }) {
           {pending ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : null}
           {pending ? 'Saving' : saved ? 'Saved' : changed ? `Save ${Object.keys(draft).length} change${Object.keys(draft).length === 1 ? '' : 's'}` : 'Nothing changed yet'}
         </button>
+        {/* Second, quieter, and never the default. Publishing is what this button did before
+            drafting existed and is still what most edits want; making drafting the prominent
+            choice would put a second step in front of fixing a typo. */}
+        {canDraft && (
+          <button
+            onClick={saveAsDraft}
+            disabled={!changed || pending}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+          >
+            Save as draft, do not publish yet
+          </button>
+        )}
       </footer>
     </aside>
   );

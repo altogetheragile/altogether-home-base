@@ -5,7 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { EditDrawer, type EditorHost } from '@altogether/ui/editor/EditDrawer';
 import { createClient } from '@/lib/supabase/client';
 import { copyPageFor, CHROME_PAGE, SITE_PAGE } from '@/lib/copy/routes';
-import { loadPageCopy, savePageCopy, resetCopy, undoCopy } from '@/app/actions/copy';
+import {
+  loadPageCopy, savePageCopy, resetCopy, undoCopy,
+  saveDraftCopy, publishPageDrafts, discardPageDrafts,
+} from '@/app/actions/copy';
 
 // ============= The Site's half of the editor =============
 //
@@ -14,7 +17,7 @@ import { loadPageCopy, savePageCopy, resetCopy, undoCopy } from '@/app/actions/c
 // router thinks we are, how to reach the database (server actions, so the write happens on the
 // server under the caller's own session), and how to make a server-rendered page show the change.
 
-export function EditThisPage() {
+export function EditThisPage({ previewing = false }: { previewing?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -31,6 +34,17 @@ export function EditThisPage() {
     save: savePageCopy,
     reset: resetCopy,
     undo: undoCopy,
+    saveDraft: saveDraftCopy,
+    publishDrafts: publishPageDrafts,
+    discardDrafts: discardPageDrafts,
+    preview: {
+      on: previewing,
+      // A whole navigation rather than a fetch: draft mode is a cookie, and the page behind the
+      // drawer has to be rendered again by the server for it to mean anything.
+      set: (on: boolean) => {
+        window.location.href = `/api/preview?on=${on ? '1' : '0'}&back=${encodeURIComponent(pathname)}`;
+      },
+    },
     upload: async (file: File) => {
       const supabase = createClient();
       const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
@@ -41,7 +55,7 @@ export function EditThisPage() {
       if (!data?.publicUrl) throw new Error('Uploaded, but no address came back for it.');
       return data.publicUrl;
     },
-  }), [pathname, router]);
+  }), [pathname, router, previewing]);
 
   return <EditDrawer host={host} />;
 }

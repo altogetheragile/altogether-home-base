@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { draftMode } from 'next/headers';
 import { SITE_NAME, SITE_URL } from '@/lib/seo';
 import { getSiteSettings } from '@/lib/site-settings';
 import { Navigation } from '@/components/Navigation';
@@ -50,6 +51,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hidden = Object.fromEntries(
     [...new Set(Object.values(MODULE_FOR_PATH))].map((m) => [m, !moduleIsShown(m as GatedModule, settings)]),
   );
+  // Read here rather than in the drawer, because the drawer runs in the browser and this is a
+  // cookie the browser is not meant to be able to read for itself.
+  const previewing = (await draftMode()).isEnabled && admin;
   const navKeys = REGISTRIES.find((r) => r.page === 'navigation')?.entries ?? {};
   const labels = Object.fromEntries(Object.keys(navKeys).map((k) => [k, t(k)]));
   return (
@@ -65,7 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} />
           {/* Not mounted at all for anyone else, so a visitor never downloads the editor. The
               actions it calls check again, because not mounting a component is not a permission. */}
-          {admin && <EditThisPage />}
+          {admin && <EditThisPage previewing={previewing} />}
         </div>
       </body>
     </html>

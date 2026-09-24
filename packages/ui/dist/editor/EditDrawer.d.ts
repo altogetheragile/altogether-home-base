@@ -24,6 +24,21 @@ type EditorHost = {
     reset: (page: string, key: string) => Promise<SaveResult>;
     undo: (page: string, key: string) => Promise<SaveResult>;
     upload: (file: File) => Promise<string>;
+    /** Save without publishing. The site carries on showing what it showed. */
+    saveDraft?: (page: string, changes: Record<string, string>) => Promise<SaveResult>;
+    /** Put everything waiting on this page live, in one go. */
+    publishDrafts?: (page: string) => Promise<SaveResult>;
+    /** Throw away what is waiting: one field, or the whole page. Changes nothing on the site. */
+    discardDrafts?: (page: string, key?: string) => Promise<SaveResult>;
+    /** Whether the page behind the drawer is currently showing drafts, and how to change that.
+     *
+     *  Only the app that renders the words can answer this, which is why it is the host's. The App
+     *  edits the menu and the footer but does not render them, so it leaves this out and the drawer
+     *  offers no preview there rather than a preview of nothing. */
+    preview?: {
+        on: boolean;
+        set: (on: boolean) => void;
+    };
 };
 declare function EditDrawer({ host }: {
     host: EditorHost;
