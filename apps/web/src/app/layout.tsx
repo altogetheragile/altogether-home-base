@@ -8,6 +8,9 @@ import { getCurrentUser, displayName } from '@/lib/auth';
 import { getCopy, REGISTRIES } from '@/lib/copy';
 import { isAdmin } from '@/lib/auth';
 import { EditThisPage } from '@/components/edit/EditThisPage';
+import { HiddenFromVisitors } from '@/components/edit/HiddenFromVisitors';
+import { MODULE_FOR_PATH } from '@/lib/copy/routes';
+import { moduleIsShown, type GatedModule } from '@/lib/module-gate';
 import './globals.css';
 
 /** Generated rather than static, because the favicon is now this site's rather than this
@@ -43,6 +46,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     getCopy('navigation'),
     isAdmin(),
   ]);
+  // Which pages are switched off, worked out once here rather than by each page for itself.
+  const hidden = Object.fromEntries(
+    [...new Set(Object.values(MODULE_FOR_PATH))].map((m) => [m, !moduleIsShown(m as GatedModule, settings)]),
+  );
   const navKeys = REGISTRIES.find((r) => r.page === 'navigation')?.entries ?? {};
   const labels = Object.fromEntries(Object.keys(navKeys).map((k) => [k, t(k)]));
   return (
@@ -51,7 +58,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Brand tokens from the shared design system (@altogether/ui), exposed as
             CSS variables for the whole Site. */}
         <div className="flex min-h-screen flex-col" style={brandCssVarsFor(settings.brand)}>
-          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} />
+          {/* Only an admin can be on a hidden page at all, so this only ever renders for one. */}
+          {admin && <HiddenFromVisitors hidden={hidden} />}
+          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} signedInAsAdmin={admin} />
           <div className="flex-1">{children}</div>
           <Footer settings={settings} year={new Date().getFullYear()} t={t} />
           {/* Not mounted at all for anyone else, so a visitor never downloads the editor. The

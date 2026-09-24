@@ -32,3 +32,18 @@ export const CHROME_PAGE = 'navigation';
  *  four separate admin pages in the other app, which meant knowing where each thing lived before
  *  you could change it. */
 export const SITE_PAGE = 'site';
+
+/** Which module switch decides whether a URL is shown. Same shape as COPY_ROUTES and for the same
+ *  reason: the client needs to answer "what am I looking at?" before asking the server anything.
+ *
+ *  Only pages with a switch of their own. The home page has none, deliberately: a site with no
+ *  front door is not a state worth being able to reach by accident. */
+export const MODULE_FOR_PATH: Record<string, string> = {
+  '/about': 'about',
+  '/coaching': 'coaching',
+  '/contact': 'contact',
+  '/testimonials': 'testimonials',
+  '/events': 'events',
+  '/blog': 'blog',
+  '/exams': 'exams',
+};

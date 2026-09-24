@@ -14,6 +14,8 @@ let upsertFails = false;
 let existing: { key: string; value: string }[] = [];
 /** The newest revision for a key, or null when there is none to undo to. */
 let newestRevision: { id: number; value: string } | null = null;
+/** What site_settings holds, for the fields that live there rather than in a copy row. */
+let settingsRow: Record<string, unknown> = {};
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/auth', () => ({
@@ -37,6 +39,15 @@ vi.mock('@/lib/supabase/server', () => ({
           ...chain,
           insert: (rows: unknown) => revisionInsert(rows as never),
           delete: () => ({ eq: () => revisionDelete() }),
+        };
+      }
+      if (table === 'site_settings') {
+        // The about page has a settings-backed field now (its visibility switch), so loading it
+        // reads site_settings too. Without this the whole read throws and silently falls back to
+        // the shipped wording, which is how this test started failing for a reason unrelated to it.
+        return {
+          select: () => ({ limit: () => ({ maybeSingle: async () => ({ data: settingsRow }) }) }),
+          update: () => ({ eq: async () => ({ error: null }) }),
         };
       }
       return {
@@ -63,6 +74,7 @@ beforeEach(() => {
   upsertFails = false;
   existing = [];
   newestRevision = null;
+  settingsRow = {};
   upsert.mockClear();
   del.mockClear();
   revisionInsert.mockClear();
@@ -208,6 +220,7 @@ describe('every change can be undone', () => {
 
   it('says so plainly when there is nothing to undo', async () => {
     newestRevision = null;
+  settingsRow = {};
     const { undoCopy } = await load();
     expect(await undoCopy('about', 'about.hero.heading')).toEqual({ ok: false, error: 'There is nothing to undo here.' });
   });

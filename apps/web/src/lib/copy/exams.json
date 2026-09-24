@@ -2,6 +2,14 @@
   "page": "exams",
   "label": "Practice Exams",
   "entries": {
+    "exams.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the practice exams disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_exams"
+    },
     "exams.meta.description": {
       "value": "Free AgilePM Foundation and Scrum Master practice exam questions with answers. Timed mock exams and revision mode to prepare for your agile certification.",
       "label": "Search description",

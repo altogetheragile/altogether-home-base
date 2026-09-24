@@ -29,6 +29,11 @@ const RESOURCE_LINKS = [
 ] as const;
 
 /** Shipped wording, so this renders correctly in a test and if the copy fetch fails. */
+/** Small and quiet: this is a reminder for the person who hid it, not a design feature. */
+const HiddenDot = () => (
+  <span title="Hidden from visitors" className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-500 align-middle" />
+);
+
 const FALLBACK: Record<string, string> = {
   'nav.events': 'Events', 'nav.coaching': 'Coaching', 'nav.about': 'About',
   'nav.contact': 'Contact', 'nav.testimonials': 'Testimonials', 'nav.resources': 'Resources',
@@ -41,6 +46,7 @@ export function Navigation({
   signedIn = false,
   name = null,
   labels,
+  signedInAsAdmin = false,
 }: {
   settings: SiteSettings;
   signedIn?: boolean;
@@ -48,6 +54,8 @@ export function Navigation({
   name?: string | null;
   /** Menu labels, resolved on the server because getCopy needs a server client. */
   labels?: Record<string, string>;
+  /** Whether to show hidden pages, marked. Only ever true for somebody who can unhide them. */
+  signedInAsAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,8 +71,12 @@ export function Navigation({
   const label = (key: string) => labels?.[key] || FALLBACK[key] || '';
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
-  const topLinks = TOP_LINKS.filter((l) => flag(l.flag));
-  const resourceLinks = settings.show_resources !== false ? RESOURCE_LINKS.filter((l) => flag(l.flag)) : [];
+  // A hidden page stays in an admin's menu, marked, because otherwise the only way back to it is
+  // to remember the URL. Visitors never see it at all.
+  const visible = (l: { flag: string }) => flag(l.flag) || signedInAsAdmin;
+  const isHidden = (l: { flag: string }) => !flag(l.flag);
+  const topLinks = TOP_LINKS.filter(visible);
+  const resourceLinks = settings.show_resources !== false ? RESOURCE_LINKS.filter(visible) : [];
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
@@ -86,6 +98,7 @@ export function Navigation({
               )}
             >
               {label(l.key)}
+              {isHidden(l) && <HiddenDot />}
             </Link>
           ))}
 

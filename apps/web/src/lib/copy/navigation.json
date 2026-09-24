@@ -2,6 +2,14 @@
   "page": "navigation",
   "label": "Navigation and Footer",
   "entries": {
+    "nav.resources.visible": {
+      "value": "",
+      "label": "Show the Resources menu",
+      "hint": "Off, and the drop-down goes, along with everything inside it. The pages themselves stay reachable by their own addresses.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_resources"
+    },
     "nav.events": {
       "value": "Events",
       "label": "Events link",

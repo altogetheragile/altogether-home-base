@@ -2,6 +2,14 @@
   "page": "events",
   "label": "Events",
   "entries": {
+    "events.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the events page disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_events"
+    },
     "events.meta.description": {
       "value": "Training courses and workshops, with dates, locations and booking.",
       "label": "Search description",

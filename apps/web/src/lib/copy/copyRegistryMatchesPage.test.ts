@@ -74,7 +74,11 @@ describe('each page registry', () => {
 
     it(`${registry.page}: declares nothing the page ignores`, () => {
       const read = keysRead(file, DELEGATES[registry.page] ?? []);
-      const unused = Object.keys(registry.entries).filter((k) => !isRead(k, read));
+      // A field stored on site_settings is not read through t() at all: the code that uses it
+      // reads the column. The registry only describes the box the editor draws for it.
+      const unused = Object.keys(registry.entries)
+        .filter((k) => !registry.entries[k].store || registry.entries[k].store === 'copy')
+        .filter((k) => !isRead(k, read));
       expect(unused, `declared but never read: ${unused.join(', ')}`).toEqual([]);
     });
 
