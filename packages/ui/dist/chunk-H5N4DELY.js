@@ -49,23 +49,31 @@ var defaultImages = {
   founderPhoto: "",
   founderPortrait: ""
 };
+var ABSOLUTE = /^https?:\/\/\S+$/i;
+var OWN_PATH = /^\/[^\s/][^\s]*$/;
+var mustBeAbsolute = (name) => name === "ogImage";
+function isPicture(value, name) {
+  const v = value.trim();
+  if (ABSOLUTE.test(v)) return true;
+  return name ? !mustBeAbsolute(name) && OWN_PATH.test(v) : OWN_PATH.test(v);
+}
 function resolveImages(overrides) {
   const out = { ...defaultImages };
   const given = overrides?.images;
   if (!given) return out;
   for (const name of Object.keys(defaultImages)) {
     const v = given[name];
-    if (typeof v === "string" && /^https?:\/\/\S+$/i.test(v.trim())) out[name] = v.trim();
+    if (typeof v === "string" && isPicture(v, name)) out[name] = v.trim();
   }
   return out;
 }
 function logoOf(overrides, companyName) {
   const given = overrides?.images?.logo;
-  if (typeof given === "string" && /^https?:\/\/\S+$/i.test(given.trim())) {
+  if (typeof given === "string" && isPicture(given, "logo")) {
     return { mode: "image", src: given.trim() };
   }
   const text = companyName?.trim();
   return text ? { mode: "wordmark", text } : { mode: "image", src: defaultImages.logo };
 }
 
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, logoOf, resolveColors, resolveImages };
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages };

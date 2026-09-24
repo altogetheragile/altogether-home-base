@@ -32,9 +32,15 @@ declare const defaultImages: Record<ImageName, string>;
 type BrandImageOverrides = {
     images?: Partial<Record<string, unknown>> | null;
 } | null | undefined;
-/** Only absolute http(s) URLs are accepted. An uploaded file has one; a relative path would be
- *  resolved against whichever site is rendering, which for an Open Graph image means a crawler
- *  fetching a path that does not exist. */
+/** Is this somewhere a picture can actually be?
+ *
+ *  The rule used to be "absolute http address only", for the Open Graph reason above, applied to
+ *  every image. That quietly discarded every path this site serves itself, and it did not show,
+ *  because the shipped defaults WERE this site's own files: a rejected override fell back to the
+ *  very picture it was trying to set. The moment those defaults went empty, so a second site would
+ *  not wear this one's face, the founder photograph disappeared from the live site and the
+ *  override meant to keep it turned out never to have been read. */
+declare function isPicture(value: string, name?: ImageName): boolean;
 declare function resolveImages(overrides?: BrandImageOverrides): Record<ImageName, string>;
 type Logo = {
     mode: 'image';
@@ -46,4 +52,4 @@ type Logo = {
 /** What to render where the logo goes. `companyName` is only used when no logo is configured. */
 declare function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo;
 
-export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Logo, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, logoOf, resolveColors, resolveImages };
+export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Logo, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages };

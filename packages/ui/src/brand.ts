@@ -87,16 +87,36 @@ export const defaultImages: Record<ImageName, string> = {
 
 export type BrandImageOverrides = { images?: Partial<Record<string, unknown>> | null } | null | undefined;
 
-/** Only absolute http(s) URLs are accepted. An uploaded file has one; a relative path would be
- *  resolved against whichever site is rendering, which for an Open Graph image means a crawler
- *  fetching a path that does not exist. */
+const ABSOLUTE = /^https?:\/\/\S+$/i;
+/** A path on this site: a leading slash and no spaces. Not "//host", which is a URL. */
+const OWN_PATH = /^\/[^\s/][^\s]*$/;
+
+/** The social sharing image is fetched by a crawler that has only the URL, so a path would send it
+ *  somewhere that does not exist. Everything else is rendered in a page on this site's own origin,
+ *  where a path is exactly right and is how every file in /public is referenced. */
+const mustBeAbsolute = (name: ImageName) => name === 'ogImage';
+
+/** Is this somewhere a picture can actually be?
+ *
+ *  The rule used to be "absolute http address only", for the Open Graph reason above, applied to
+ *  every image. That quietly discarded every path this site serves itself, and it did not show,
+ *  because the shipped defaults WERE this site's own files: a rejected override fell back to the
+ *  very picture it was trying to set. The moment those defaults went empty, so a second site would
+ *  not wear this one's face, the founder photograph disappeared from the live site and the
+ *  override meant to keep it turned out never to have been read. */
+export function isPicture(value: string, name?: ImageName): boolean {
+  const v = value.trim();
+  if (ABSOLUTE.test(v)) return true;
+  return name ? !mustBeAbsolute(name) && OWN_PATH.test(v) : OWN_PATH.test(v);
+}
+
 export function resolveImages(overrides?: BrandImageOverrides): Record<ImageName, string> {
   const out = { ...defaultImages };
   const given = overrides?.images;
   if (!given) return out;
   for (const name of Object.keys(defaultImages) as ImageName[]) {
     const v = given[name];
-    if (typeof v === 'string' && /^https?:\/\/\S+$/i.test(v.trim())) out[name] = v.trim();
+    if (typeof v === 'string' && isPicture(v, name)) out[name] = v.trim();
   }
   return out;
 }
@@ -119,7 +139,7 @@ export type Logo = { mode: 'image'; src: string } | { mode: 'wordmark'; text: st
 /** What to render where the logo goes. `companyName` is only used when no logo is configured. */
 export function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo {
   const given = overrides?.images?.logo;
-  if (typeof given === 'string' && /^https?:\/\/\S+$/i.test(given.trim())) {
+  if (typeof given === 'string' && isPicture(given, 'logo')) {
     return { mode: 'image', src: given.trim() };
   }
   const text = companyName?.trim();
