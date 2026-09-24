@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
@@ -8,17 +9,23 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'wqaplkypnetifpqrungv.supabase.co' }],
   },
-  // @altogether/ui is a file: dependency, so it is a symlink. Webpack resolves a symlinked file
-  // to its real path and then looks for that file's imports from THERE, which means
-  // packages/ui/node_modules and then the repository root. This project installs on its own, both
-  // in CI and on Vercel, so neither of those exists: the package's import of lucide-react
-  // resolved to nothing and the build failed with "Can't resolve 'lucide-react'".
+  // @altogether/ui is a file: dependency, so it is a symlink, and that causes two problems at
+  // once. Its own import of lucide-react resolves from the package's real path - which means
+  // packages/ui/node_modules and then the repository root, neither of which exists when this
+  // project installs on its own, in CI and on Vercel.
   //
-  // Not resolving symlinks keeps resolution inside this project's own node_modules, where
-  // lucide-react is a direct dependency. It also guarantees one copy of React rather than two,
-  // which is the other thing that goes wrong with linked packages.
+  // The first attempt at that was resolve.symlinks = false. It fixed resolution and broke
+  // something worse: webpack then snapshots the symlink rather than its target, so a change to
+  // packages/ui/dist is invisible to a build with a warm cache. The founder photograph stayed
+  // missing from the live site through a deploy that contained the fix, and nothing failed.
+  //
+  // Looking in this project's own node_modules for bare imports solves the resolution without
+  // touching how files are identified, so a changed package still invalidates the cache.
   webpack: (config) => {
-    config.resolve.symlinks = false;
+    config.resolve.modules = [
+      path.join(import.meta.dirname, 'node_modules'),
+      ...(config.resolve.modules ?? ['node_modules']),
+    ];
     return config;
   },
 };
