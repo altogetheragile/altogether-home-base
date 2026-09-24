@@ -7,7 +7,7 @@ import { SITE_OWNED, isSiteOwned } from './siteOwnedRoutes';
 // URL it owns perfectly well itself.
 
 const rewrites = (): string[] =>
-  JSON.parse(readFileSync('vercel.json', 'utf8')).rewrites
+  JSON.parse(readFileSync('config/vercel/routing.json', 'utf8')).rewrites
     .filter((r: { destination: string }) => r.destination.includes('web-next'))
     .map((r: { source: string }) => r.source);
 
@@ -15,7 +15,7 @@ const rewrites = (): string[] =>
 const base = (source: string) => source.replace(/\/:.*$/, '') || '/';
 
 describe('the list of Site-owned URLs', () => {
-  it('matches what vercel.json actually rewrites', () => {
+  it('matches what the routing config actually rewrites', () => {
     const rewritten = new Set(
       rewrites().filter((s) => !s.startsWith('/_next') && !s.startsWith('/api')).map(base),
     );
@@ -32,7 +32,7 @@ describe('the list of Site-owned URLs', () => {
     expect(isSiteOwned('/courses/agilepm-foundation')).toBe(true);
   });
 
-  // vercel.json rewrites `/events` alone, so the detail pages under it are still the App's. Getting
+  // the routing config rewrites `/events` alone, so the detail pages under it are still the App's. Getting
   // this wrong sends a working page on a full load to a URL the Site does not answer.
   it('leaves the event detail pages with the App', () => {
     expect(isSiteOwned('/events')).toBe(true);

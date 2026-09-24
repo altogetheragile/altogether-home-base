@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 // so this was most of the old site.
 
 const rules = (): { source: string; destination: string; statusCode?: number }[] =>
-  JSON.parse(readFileSync('vercel.json', 'utf8')).redirects;
+  JSON.parse(readFileSync('config/vercel/routing.json', 'utf8')).redirects;
 
 describe('the wildcard redirects', () => {
   it('each have a trailing-slash twin', () => {

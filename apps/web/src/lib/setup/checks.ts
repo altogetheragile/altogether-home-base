@@ -216,7 +216,7 @@ export function outsideTheApp(): Check[] {
     {
       id: 'csp-host',
       title: 'Add this database to the security policy',
-      detail: 'vercel.json names which databases a browser may contact, and it is shared by every site built from this repository. Add this project’s host to src/config/supabaseHosts.ts and paste the line the failing test prints. Miss it and the site loads, renders, and then shows no content at all, with only a console warning to say why.',
+      detail: 'The routing config names which databases a browser may contact. Set SUPABASE_CSP_HOSTS on this deployment to this project’s host, in the Vercel project settings, then redeploy. Miss it and the site loads, renders, and then shows no content at all, with only a console warning to say why.',
       status: 'todo',
     },
     {

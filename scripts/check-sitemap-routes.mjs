@@ -2,7 +2,7 @@
  * Soft-404 guard (Phase 0, route/sitemap guard).
  *
  * Every URL in the sitemap has to resolve to a real route, and two apps answer
- * them. `vercel.json` rewrites some paths to the Next Site and the App serves the
+ * them. The routing config rewrites some paths to the Next Site and the App serves the
  * rest, so this checks each URL against whichever one owns it:
  *
  *   App-owned   - rendered in a headless browser against dist/, failing if the
@@ -87,12 +87,12 @@ async function main() {
   const paths = sitemapPaths();
   if (extra) paths.push(extra); // for self-testing the guard catches an orphan
 
-  // Who answers what. vercel.json is the thing that actually decides, so it is the
+  // Who answers what. the routing config is the thing that actually decides, so it is the
   // thing that is read; src/config/siteOwnedRoutes.ts is checked against it by test.
   //
   // A source of "/blog" claims exactly /blog. A source of "/blog/:path*" claims
   // everything under it. Those are the only two shapes in use.
-  const rewrites = (JSON.parse(readFileSync(resolve(__dirname, '..', 'vercel.json'), 'utf8')).rewrites ?? [])
+  const rewrites = (JSON.parse(readFileSync(resolve(__dirname, '..', 'config', 'vercel', 'routing.json'), 'utf8')).rewrites ?? [])
     .filter((r) => r.destination.includes('web-next'))
     .map((r) => r.source)
     .filter((src) => !src.startsWith('/_next') && !src.startsWith('/api'));
