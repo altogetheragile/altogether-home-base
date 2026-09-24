@@ -17,7 +17,7 @@
 // A field now says what it is, and the editor draws the right control. "items" is the one that
 // earns its keep: a list of objects, stored as JSON, which the editor shows as rows with named
 // boxes and Add and Remove buttons. Adding a fourth statistic stops being a code change.
-export type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon';
+export type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch';
 
 /** What a single box inside an item can be. No 'items' or 'lines': a list inside a list inside a
  *  drawer is a place people get lost. */
@@ -35,6 +35,15 @@ export interface CopyEntry {
   value: string;
   label: string;
   hint: string;
+  /** Where this field's value actually lives.
+   *
+   *  The editor used to be the site_copy editor. It is the site editor now, and the words, the
+   *  brand and the founder live in different places: rows in site_copy, columns on site_settings,
+   *  keys inside the brand JSON. A field says which, and one code path handles all three, so
+   *  there is one thing to learn rather than an admin page per store. */
+  store?: 'copy' | 'column' | 'brand';
+  /** For 'column' and 'brand': where in that store. A brand path is dotted, e.g. images.logo. */
+  path?: string;
   /** Defaults to 'textarea', which is what every field was before this existed. */
   type?: FieldType;
   /** Required for 'items', ignored otherwise. */

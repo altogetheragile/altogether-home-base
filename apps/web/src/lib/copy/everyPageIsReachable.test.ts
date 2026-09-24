@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { REGISTRIES } from './index';
-import { COPY_ROUTES, copyPageFor, CHROME_PAGE } from './routes';
+import { COPY_ROUTES, copyPageFor, CHROME_PAGE, SITE_PAGE } from './routes';
 
 // The on-page editor decides what it is editing from the URL. Two ways for that to go quietly
 // wrong: a page whose words nobody can reach from the page itself, and a route claiming a registry
@@ -11,7 +11,8 @@ describe('every page can be edited from itself', () => {
   const editable = new Set(Object.values(COPY_ROUTES));
 
   it('offers every registry from somewhere', () => {
-    const unreachable = REGISTRIES.map((r) => r.page).filter((p) => p !== CHROME_PAGE && !editable.has(p));
+    const alwaysOffered = new Set([CHROME_PAGE, SITE_PAGE]);
+    const unreachable = REGISTRIES.map((r) => r.page).filter((p) => !alwaysOffered.has(p) && !editable.has(p));
     expect(unreachable, `no URL opens these: ${unreachable.join(', ')}`).toEqual([]);
   });
 

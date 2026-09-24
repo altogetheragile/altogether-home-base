@@ -1,10 +1,8 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import {
   Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
-  FolderOpen, BarChart3, Upload, Layers, LayoutDashboard,
-  Footprints, MessageSquare, Database, ExternalLink, FileText, ClipboardList, CalendarClock,
-  ChevronRight, Search, Inbox, Flag, PencilLine,
-} from 'lucide-react';
+  FolderOpen, BarChart3, Upload, Layers, LayoutDashboard, MessageSquare, Database, ExternalLink, FileText, ClipboardList, CalendarClock,
+  ChevronRight, Search, Inbox, Flag, } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -64,7 +62,6 @@ const navigation: NavGroup[] = [
         ],
       },
       { label: 'Assets', icon: Upload, href: '/admin/assets' },
-      { label: 'Site Copy', icon: PencilLine, href: '/admin/copy' },
       { label: 'SEO', icon: Search, href: '/admin/seo' },
     ],
   },
@@ -104,7 +101,6 @@ const navigation: NavGroup[] = [
     items: [
       { label: 'Audit Log', icon: Shield, href: '/admin/logs/audit' },
       { label: 'Backlog', icon: Database, href: '/admin/populate-backlog' },
-      { label: 'Footer', icon: Footprints, href: '/admin/footer' },
       { label: 'Site Settings', icon: Settings, href: '/admin/settings' },
     ],
   },

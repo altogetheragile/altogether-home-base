@@ -8,7 +8,7 @@ import { REGISTRIES } from './index';
 // carefully written, and changes nothing on the site. A key the page reads with no entry behind it
 // renders an empty string, so a heading silently disappears the first time the fetch misses.
 
-const PAGES: Record<string, string> = {
+const PAGES: Record<string, string | null> = {
   home: 'src/app/page.tsx',
   about: 'src/app/about/page.tsx',
   coaching: 'src/app/coaching/page.tsx',
@@ -20,6 +20,9 @@ const PAGES: Record<string, string> = {
   // Not a page: the menu and the footer, which share one registry because they name the same
   // links and a site that renames Coaching to Services should rename it once.
   navigation: 'src/components/Navigation.tsx',
+  // Not a page and not read through t() at all: these fields live on site_settings, and the code
+  // that reads them reads the column, not a copy key. The registry describes the editor's boxes.
+  site: null,
 };
 
 /** Components a page hands its `t` to, which therefore read its keys on its behalf. A page that
@@ -55,6 +58,9 @@ const isRead = (key: string, read: ReturnType<typeof keysRead>) =>
 describe('each page registry', () => {
   for (const registry of REGISTRIES) {
     const file = PAGES[registry.page];
+
+    // Settings-backed registries are checked by their own rules, below.
+    if (file === null) continue;
 
     it(`${registry.page}: is wired to a page this test knows about`, () => {
       expect(file, `no page file mapped for registry "${registry.page}"`).toBeTruthy();
@@ -107,7 +113,7 @@ describe('fields that declare a type', () => {
   });
 
   it('only uses types the editor knows how to draw', () => {
-    const known = new Set(['text', 'textarea', 'lines', 'items', 'image', 'icon']);
+    const known = new Set(['text', 'textarea', 'lines', 'items', 'image', 'icon', 'colour', 'switch']);
     const odd = entries.filter(([, e]) => e.type && !known.has(e.type));
     expect(odd.map(([k]) => k)).toEqual([]);
   });

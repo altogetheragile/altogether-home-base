@@ -106,8 +106,6 @@ const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 // Admin Pages - Configuration
 const AdminSelfPacedCourses = lazy(() => import('@/pages/admin/AdminSelfPacedCourses'));
 const AdminActivityDomains = lazy(() => import('@/pages/admin/AdminActivityDomains'));
-const AdminFooter = lazy(() => import('@/pages/admin/AdminFooter'));
-const AdminCopy = lazy(() => import('@/pages/admin/AdminCopy'));
 const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
 
 // Admin Pages - Users & Logs
@@ -678,12 +676,6 @@ export const AdminRoutes = () => {
             <AdminActivityDomains />
           </Suspense>
         } />
-        <Route path="footer" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminFooter />
-          </Suspense>
-        } />
-        <Route path="copy" element={<Suspense fallback={<LoadingFallback />}><AdminCopy /></Suspense>} />
         <Route path="settings" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminSettings />
