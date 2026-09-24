@@ -5,7 +5,7 @@ import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
-import { getCopy, lines, list } from '@/lib/copy';
+import { getCopy, lines, list, items } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
@@ -87,19 +87,18 @@ export default async function HomePage() {
             nobody, so each stat needs its own number before it appears, and the bar goes entirely
             when none of them do. */}
         {(() => {
-          const stats = [
-            { icon: <Icons.Users />, num: t('home.stats.1.number'), label: t('home.stats.1.label') },
-            { icon: <Icons.Books />, num: t('home.stats.2.number'), label: t('home.stats.2.label') },
-            { icon: <Icons.GraduationCap />, num: t('home.stats.3.number'), label: t('home.stats.3.label') },
-            { icon: <Icons.Star />, num: t('home.stats.4.number'), label: t('home.stats.4.label') },
-          ].filter((s) => s.num.trim());
+          // However many there are, rather than exactly four. The icons cycle: a site with six
+          // statistics gets sensible icons rather than two blanks, and a site with two is not
+          // holding empty space for the ones it does not have.
+          const icons = [<Icons.Users key="u" />, <Icons.Books key="b" />, <Icons.GraduationCap key="g" />, <Icons.Star key="s" />];
+          const stats = items<{ number: string; label: string }>(t('home.stats.items'), ['number']);
           if (stats.length === 0) return null;
           return (
             <div className="aa-stats-bar">
-              {stats.map((s) => (
-                <div key={s.label} className="aa-stat">
-                  <div className="aa-stat__icon">{s.icon}</div>
-                  <div className="aa-stat__num">{s.num}</div>
+              {stats.map((s, i) => (
+                <div key={`${s.number}-${s.label}`} className="aa-stat">
+                  <div className="aa-stat__icon">{icons[i % icons.length]}</div>
+                  <div className="aa-stat__num">{s.number}</div>
                   <div className="aa-stat__label">{s.label}</div>
                 </div>
               ))}

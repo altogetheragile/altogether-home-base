@@ -80,3 +80,35 @@ describe('each page registry', () => {
     });
   }
 });
+
+// A field that says what it is has to say it correctly, because the editor draws whatever the
+// entry claims. An "items" field with no fields declared renders rows of nothing.
+describe('fields that declare a type', () => {
+  const entries = REGISTRIES.flatMap((r) => Object.entries(r.entries));
+
+  it('gives every items field a set of named boxes', () => {
+    const broken = entries
+      .filter(([, e]) => e.type === 'items')
+      .filter(([, e]) => !e.fields?.length || e.fields.some((f) => !f.key?.trim() || !f.label?.trim()));
+    expect(broken.map(([k]) => k), 'declared as items with no usable fields').toEqual([]);
+  });
+
+  it('does not declare fields on anything that is not a list of items', () => {
+    // Otherwise the fields are written, reviewed, and silently ignored.
+    const stray = entries.filter(([, e]) => e.fields && e.type !== 'items');
+    expect(stray.map(([k]) => k), 'fields declared but nothing draws them').toEqual([]);
+  });
+
+  it('ships items fields empty, because JSON is not something to hand somebody as a default', () => {
+    const seeded = entries.filter(([, e]) => e.type === 'items' && e.value.trim());
+    for (const [key, e] of seeded) {
+      expect(() => JSON.parse(e.value), `${key} ships unparseable JSON`).not.toThrow();
+    }
+  });
+
+  it('only uses types the editor knows how to draw', () => {
+    const known = new Set(['text', 'textarea', 'lines', 'items']);
+    const odd = entries.filter(([, e]) => e.type && !known.has(e.type));
+    expect(odd.map(([k]) => k)).toEqual([]);
+  });
+});

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin, getCurrentUser } from '@/lib/auth';
-import { REGISTRIES } from '@/lib/copy';
+import { REGISTRIES, type FieldType, type ItemField } from '@/lib/copy';
 
 // ============= Editing the words from the page they appear on =============
 //
@@ -18,6 +18,9 @@ import { REGISTRIES } from '@/lib/copy';
 
 export type CopyField = {
   key: string; label: string; hint: string; value: string; shipped: string;
+  /** What kind of control the editor should draw. Defaults to a textarea, as everything was. */
+  type?: FieldType;
+  fields?: ItemField[];
   /** What this field would go back to, and when it was changed. Absent when it never has been. */
   undo?: { value: string; at: string };
 };
@@ -54,6 +57,8 @@ export async function loadPageCopy(page: string): Promise<CopyField[]> {
     hint: e.hint,
     value: saved[key] ?? e.value,
     shipped: e.value,
+    ...(e.type ? { type: e.type } : {}),
+    ...(e.fields ? { fields: e.fields } : {}),
     ...(undo[key] ? { undo: undo[key] } : {}),
   }));
 }

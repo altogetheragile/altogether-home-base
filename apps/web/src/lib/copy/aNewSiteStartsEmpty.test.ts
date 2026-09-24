@@ -33,14 +33,8 @@ const BLANK_BY_DESIGN = [
   // a new site has trained nobody and has no average rating.
   'about.hero.tags',
   'home.hero.eyebrow',
-  'home.stats.1.number',
-  'home.stats.1.label',
-  'home.stats.2.number',
-  'home.stats.2.label',
-  'home.stats.3.number',
-  'home.stats.3.label',
-  'home.stats.4.number',
-  'home.stats.4.label',
+  // Was eight numbered keys, fixed at four statistics. One list now, which a site can add to.
+  'home.stats.items',
   'events.stats.trained.number',
   'coaching.why.3.label',
   'coaching.why.3.desc',

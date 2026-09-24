@@ -37,45 +37,23 @@
       "label": "Hero button, booking",
       "hint": "Right button in the hero"
     },
-    "home.stats.1.number": {
+    "home.stats.items": {
       "value": "",
-      "label": "Stat 1 number",
-      "hint": "The figure itself, for example 1,500+. Leave every figure empty and the whole bar disappears."
-    },
-    "home.stats.1.label": {
-      "value": "",
-      "label": "Stat 1 label",
-      "hint": "What the figure counts."
-    },
-    "home.stats.2.number": {
-      "value": "",
-      "label": "Stat 2 number",
-      "hint": "The figure itself. Leave every figure empty and the whole bar disappears."
-    },
-    "home.stats.2.label": {
-      "value": "",
-      "label": "Stat 2 label",
-      "hint": "What the figure counts."
-    },
-    "home.stats.3.number": {
-      "value": "",
-      "label": "Stat 3 number",
-      "hint": "The figure itself. Leave every figure empty and the whole bar disappears."
-    },
-    "home.stats.3.label": {
-      "value": "",
-      "label": "Stat 3 label",
-      "hint": "What the figure counts."
-    },
-    "home.stats.4.number": {
-      "value": "",
-      "label": "Stat 4 number",
-      "hint": "The figure itself. Leave every figure empty and the whole bar disappears."
-    },
-    "home.stats.4.label": {
-      "value": "",
-      "label": "Stat 4 label",
-      "hint": "What the figure counts."
+      "label": "Statistics",
+      "hint": "The bar under the hero. Add as many or as few as you like; leave it empty and the bar does not appear. A figure with nothing behind it is a claim, so only add the ones you can stand behind.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "number",
+          "label": "Figure",
+          "placeholder": "1,500+"
+        },
+        {
+          "key": "label",
+          "label": "What it counts",
+          "placeholder": "Practitioners trained"
+        }
+      ]
     },
     "home.personas.heading": {
       "value": "Who is this for?",
