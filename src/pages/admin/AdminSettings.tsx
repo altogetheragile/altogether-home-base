@@ -1,3 +1,4 @@
+import { onlyWhatChanged, type Flags } from './settingsChanges';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -21,7 +22,8 @@ import { Settings } from 'lucide-react';
 // `show_admin_routes` is deliberately not here. A switch that can hide the admin area from inside
 // the admin area is a way to lock yourself out of your own site.
 
-type Flags = Record<string, boolean>;
+
+
 
 
 
@@ -36,18 +38,32 @@ const defaults = (settings: Record<string, unknown> | null | undefined): Flags =
 export default function AdminSettings() {
   const { settings, isLoading, updateSettings } = useSiteSettings();
   const [localSettings, setLocalSettings] = useState<Flags>(() => defaults(settings as unknown as Record<string, unknown>));
+  // What was on screen when this was last loaded, so a save can tell a decision from a default.
+  const [saved, setSaved] = useState<Flags>(() => defaults(settings as unknown as Record<string, unknown>));
   // Held apart from the flags because it is not one. Flags is Record<string, boolean>.
 
   useEffect(() => {
     if (settings) {
       setLocalSettings(defaults(settings as unknown as Record<string, unknown>));
+      setSaved(defaults(settings as unknown as Record<string, unknown>));
     }
   }, [settings]);
 
   const handleToggle = (key: string) =>
     setLocalSettings((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleSave = () => updateSettings({ ...localSettings } as Parameters<typeof updateSettings>[0]);
+  // Only what actually changed.
+  //
+  // This sent every flag, which looks harmless and is not. A column that is null means nobody has
+  // decided yet, and the page renders it using the code's default. Sending the whole form turns
+  // every one of those into an explicit value, so switching AI Tools off also wrote
+  // show_knowledge=false and show_exams=false, because those are off by default for a new site
+  // and had never been set here. The Resources menu emptied itself and nothing said why.
+  const handleSave = () => {
+    const changed = onlyWhatChanged(localSettings, saved);
+    if (Object.keys(changed).length === 0) return;
+    updateSettings(changed as Parameters<typeof updateSettings>[0]);
+  };
 
   if (isLoading) {
     return (
