@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { EditDrawer, type EditorHost } from '@altogether/ui/editor/EditDrawer';
 import { createClient } from '@/lib/supabase/client';
 import { copyPageFor, CHROME_PAGE, SITE_PAGE } from '@/lib/copy/routes';
@@ -20,6 +20,9 @@ import {
 export function EditThisPage({ previewing = false }: { previewing?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  // `?edit=site` opens the drawer on the This Site tab. The setup checklist links this way, so
+  // "go and set your business name" lands on the box rather than on the page it is somewhere on.
+  const openAt = useSearchParams().get('edit');
 
   // Stable, so the drawer can depend on it without reloading itself on every render.
   const host: EditorHost = useMemo(() => ({
@@ -37,6 +40,8 @@ export function EditThisPage({ previewing = false }: { previewing?: boolean }) {
     saveDraft: saveDraftCopy,
     publishDrafts: publishPageDrafts,
     discardDrafts: discardPageDrafts,
+    openAt,
+    setupHref: '/setup',
     preview: {
       on: previewing,
       // A whole navigation rather than a fetch: draft mode is a cookie, and the page behind the
@@ -55,7 +60,7 @@ export function EditThisPage({ previewing = false }: { previewing?: boolean }) {
       if (!data?.publicUrl) throw new Error('Uploaded, but no address came back for it.');
       return data.publicUrl;
     },
-  }), [pathname, router, previewing]);
+  }), [pathname, router, previewing, openAt]);
 
   return <EditDrawer host={host} />;
 }

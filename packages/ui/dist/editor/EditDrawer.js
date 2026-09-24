@@ -6,7 +6,7 @@ import '../chunk-JOXPSQS6.js';
 import { ColourBox } from '../chunk-M5XDZR2B.js';
 import { IconPicker } from '../chunk-BLD3MESD.js';
 import '../chunk-TWTRORN3.js';
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { Pencil, X, EyeOff, Eye, Loader2, Undo2, RotateCcw, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 
@@ -31,7 +31,7 @@ function countItems(value) {
 }
 function EditDrawer({ host }) {
   const { pathname } = host;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(host.openAt));
   const [tab, setTab] = useState(null);
   const [fields, setFields] = useState(null);
   const [drafts, setDrafts] = useState({});
@@ -39,11 +39,12 @@ function EditDrawer({ host }) {
   const [saved, setSaved] = useState(false);
   const [pending, startSaving] = useTransition();
   const pageHere = host.pageForPath(pathname);
+  const asked = host.openAt && (host.openAt === pageHere || host.alwaysOffered.some((t) => t.page === host.openAt)) ? host.openAt : null;
   const tabs = [
     ...pageHere ? [{ page: pageHere, label: "This Page" }] : [],
     ...host.alwaysOffered
   ];
-  const active = tab ?? tabs[0].page;
+  const active = tab ?? asked ?? tabs[0].page;
   useEffect(() => {
     if (!open) return;
     let alive = true;
@@ -53,7 +54,10 @@ function EditDrawer({ host }) {
       alive = false;
     };
   }, [open, active, host]);
+  const arrivedAt = useRef(pathname);
   useEffect(() => {
+    if (arrivedAt.current === pathname) return;
+    arrivedAt.current = pathname;
     setOpen(false);
     setTab(null);
   }, [pathname]);
@@ -330,6 +334,14 @@ function EditDrawer({ host }) {
           disabled: !changed || pending,
           className: "mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40",
           children: "Save as draft, do not publish yet"
+        }
+      ),
+      host.setupHref && /* @__PURE__ */ jsx(
+        "a",
+        {
+          href: host.setupHref,
+          className: "mt-3 block text-center text-xs text-muted-foreground underline hover:text-foreground",
+          children: "What is left to set up on this site"
         }
       )
     ] })

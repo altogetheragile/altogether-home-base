@@ -1,9 +1,11 @@
 # Standing Up A New Site
 
-**Version:** 1.0 (23 September 2026).
-**Status:** Specification, mostly implemented. Brand, modules and identity are configuration now;
-the walk-through and the remaining prose are not. Section 6's blocker is fixed: the database can
-be built from this repository, and CI proves it on every change under `supabase/`.
+**Version:** 1.2 (24 September 2026).
+**Status:** Specification, implemented apart from the prose. Brand, modules and identity are
+configuration; the walk-through is built, as a checklist over the on-page editor rather than as a
+wizard (Section 4). Section 6's blocker is fixed: the database can be built from this repository,
+and CI proves it on every change under `supabase/`. What is left is the writing, which is a
+content job rather than a plumbing one.
 
 **Version 1.1 (23 September 2026)**, after #745 to #751.
 
@@ -71,6 +73,35 @@ this is one line and a paste rather than an afternoon.
 
 ## 4. The Walk-Through
 
+**Built on 24 September, and not as a wizard.** `/setup` on the Site, admin only, 404 to everybody
+else, reached from the editor drawer on any page.
+
+The five steps below were specified as a form over the configuration. By the time they came to be
+built the form already existed: the editor opens on every page and covers the name, the brand, the
+founder, the contact details, the module switches and every word, writing to all three stores. A
+wizard would have been a second way to set the same things, which is what the editor spent a month
+replacing.
+
+So it works the other way round. `/setup` reads what is actually there, works out what has not
+been decided, and links to the place that already edits it, with `?edit=<tab>` opening the drawer
+at the right tab. That has three properties a wizard does not: it cannot fall out of step with the
+editor, it is re-runnable by its nature because it only ever reports, and it is as true on a site
+three years old as on a new one.
+
+Two rules it keeps, both in `apps/web/src/lib/setup/checks.ts` and both tested:
+
+- **Done means chosen, not merely non-empty.** A site still called `AltogetherAgile` has inherited
+  a name rather than picked one, so that reads as outstanding.
+- **It does not cry wolf.** The shipped palette is this repository's own palette, correctly in use
+  here, so "no colour overrides" is optional with wording that asks rather than asserts. A
+  checklist that told its author he had not chosen his colours is one he would learn to skim.
+
+The four steps outside the application are listed and never ticked, because nothing in the
+database can confirm them and a ticked box somebody has not done costs them a site that does not
+work.
+
+The original five steps follow, as the record of what it covers.
+
 Five steps. Each is skippable and re-runnable, and the whole thing is re-openable from Admin
 afterwards, because none of it is one-time truth.
 
@@ -127,6 +158,7 @@ Updated 23 September, after #745 to #751.
 | Brand, colours | **Ready.** Both apps render from CSS custom properties, and the values come from `site_settings.brand` with the tokens as fallback (#745, #748, #749). Twelve fields in Admin. Proved by setting a purple brand in the database and watching both apps repaint. |
 | Brand, images | **Ready.** Logo, favicon and share image, in the same `brand` column, uploaded to the existing `assets` bucket (#750). Reaches five places, including `prerender.mjs`, which writes `og:image` into every page the App serves. |
 | Modules | **Ready.** 39 flags, enforced on both routers. |
+| Walk-through | **Built.** `/setup`, as a checklist over the editor rather than a wizard. See Section 4. |
 | Words | **The remaining work.** `site_copy` holds 153 entries covering body copy on eight Site pages, and the company *name* is now configuration everywhere it is used as a name. What is left is 49 mentions that say more than the name, such as "founder of Altogether Agile", across the App's pages and tool descriptions, plus per-page descriptions. These get rewritten on a new site rather than templated, so this is a content job, not a plumbing one. |
 | Content | **Ready enough.** The tables exist and Admin manages them. |
 

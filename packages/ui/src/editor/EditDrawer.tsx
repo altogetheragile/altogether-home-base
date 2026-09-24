@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff } from 'lucide-react';
 import { ItemRows } from './ItemRows';
 import { PictureBox } from './PictureBox';
@@ -43,6 +43,12 @@ export type EditorHost = {
    *  edits the menu and the footer but does not render them, so it leaves this out and the drawer
    *  offers no preview there rather than a preview of nothing. */
   preview?: { on: boolean; set: (on: boolean) => void };
+  /** Open on arrival, at this tab. Set from the URL, so something elsewhere can send somebody
+   *  straight to the right box rather than to the right page and a hunt. */
+  openAt?: string | null;
+  /** Where the setup checklist lives, if this app can reach it. A plain address rather than a
+   *  callback: it is a page, and both apps should leave to it properly. */
+  setupHref?: string;
 };
 
 // ============= Editing the site from the site =============
@@ -88,7 +94,7 @@ function countItems(value: string): number {
 
 export function EditDrawer({ host }: { host: EditorHost }) {
   const { pathname } = host;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(host.openAt));
   const [tab, setTab] = useState<string | null>(null);
   const [fields, setFields] = useState<CopyField[] | null>(null);
   // Drafts are kept per registry, not per drawer. Switching from This Page to Menu and Footer
@@ -100,13 +106,18 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   const [pending, startSaving] = useTransition();
 
   const pageHere = host.pageForPath(pathname);
+  // Asked for a tab that is not on this page: open anyway, on the first one. Better than a link
+  // that silently does nothing.
+  const asked = host.openAt && (host.openAt === pageHere || host.alwaysOffered.some((t) => t.page === host.openAt))
+    ? host.openAt
+    : null;
   // The menu and footer are on every page, so they are always offered. On a page with nothing else
   // to edit, they are the only thing offered, which is why the button still appears there.
   const tabs: Tab[] = [
     ...(pageHere ? [{ page: pageHere, label: 'This Page' }] : []),
     ...host.alwaysOffered,
   ];
-  const active = tab ?? tabs[0].page;
+  const active = tab ?? asked ?? tabs[0].page;
 
   useEffect(() => {
     if (!open) return;
@@ -123,7 +134,14 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   // Changing page with the drawer open would leave it editing the page you just left. Unsaved
   // drafts are deliberately not cleared here either: navigating away and back should not cost
   // somebody a paragraph they had written.
+  //
+  // Not on the first render, which is not a change of page. It ran on mount as well as on
+  // navigation, so a link that asked for the drawer to be open got it opened and then shut again
+  // in the same tick, and the link looked broken.
+  const arrivedAt = useRef(pathname);
   useEffect(() => {
+    if (arrivedAt.current === pathname) return;
+    arrivedAt.current = pathname;
     setOpen(false);
     setTab(null);
   }, [pathname]);
@@ -454,6 +472,16 @@ export function EditDrawer({ host }: { host: EditorHost }) {
           >
             Save as draft, do not publish yet
           </button>
+        )}
+        {/* The way in to the checklist. It has to be somewhere somebody stumbles on, and this
+            drawer is the one thing already on every page and already only theirs. */}
+        {host.setupHref && (
+          <a
+            href={host.setupHref}
+            className="mt-3 block text-center text-xs text-muted-foreground underline hover:text-foreground"
+          >
+            What is left to set up on this site
+          </a>
         )}
       </footer>
     </aside>

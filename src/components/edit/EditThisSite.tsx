@@ -52,6 +52,7 @@ export function EditThisSite() {
     saveDraft: (page, changes) => saveDraft(supabase, REGISTRIES, page, changes, user?.id ?? null),
     publishDrafts: (page) => publishDrafts(supabase, REGISTRIES, page, user?.id ?? null),
     discardDrafts: (page, key) => discardDrafts(supabase, page, key),
+    setupHref: '/setup',
     // No preview offered here, deliberately. This app edits the menu, the footer and the brand
     // but does not render any of them: the Site does. A preview button here would put the page
     // into a state where nothing visible changed, which reads as a broken button.

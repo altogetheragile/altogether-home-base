@@ -61,6 +61,10 @@ function pages(dir = APP, route = ''): { route: string; file: string }[] {
 /** Routes with no module behind them, and why. */
 const UNGATED = new Set([
   '/',        // the home page. A site without one is not a configuration anyone wants.
+  // The setup checklist. Gated harder than any module: it 404s unless you are an admin, so there
+  // is nothing for a switch to hide from. A module flag would also be the wrong shape, since it
+  // would be one more thing to configure in the page that exists to tell you what to configure.
+  '/setup',
 ]);
 
 describe('every page the Site serves', () => {
