@@ -3,10 +3,11 @@
 import { useEffect, useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2 } from 'lucide-react';
-import { copyPageFor, CHROME_PAGE } from '@/lib/copy/routes';
+import { copyPageFor, CHROME_PAGE, SITE_PAGE } from '@/lib/copy/routes';
 import { ItemRows } from '@/components/edit/ItemRows';
 import { PictureBox } from '@/components/edit/PictureBox';
 import { IconPicker } from '@/components/edit/IconPicker';
+import { ColourBox } from '@/components/edit/ColourBox';
 import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from '@/app/actions/copy';
 
 // ============= Editing the site from the site =============
@@ -56,6 +57,7 @@ export function EditThisPage() {
   const tabs: Tab[] = [
     ...(pageHere ? [{ page: pageHere, label: 'This Page' }] : []),
     { page: CHROME_PAGE, label: 'Menu and Footer' },
+    { page: SITE_PAGE, label: 'This Site' },
   ];
   const active = tab ?? tabs[0].page;
 
@@ -239,6 +241,18 @@ export function EditThisPage() {
                 <PictureBox value={value} onChange={(next) => setField(f.key, next)} />
               ) : f.type === 'icon' ? (
                 <IconPicker value={value} onChange={(next) => setField(f.key, next)} />
+              ) : f.type === 'colour' ? (
+                <ColourBox value={value} onChange={(next) => setField(f.key, next)} />
+              ) : f.type === 'switch' ? (
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={value === 'on'}
+                    onChange={(e) => setField(f.key, e.target.checked ? 'on' : '')}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  {value === 'on' ? 'Shown' : 'Hidden'}
+                </label>
               ) : (
                 <textarea
                   id={f.key}

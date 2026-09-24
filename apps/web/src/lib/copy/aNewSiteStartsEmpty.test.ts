@@ -51,7 +51,15 @@ const BLANK_BY_DESIGN = [
 const UNEARNED = /\d[\d,]*\s*\+|★|\bco-author\b|\b\d+\s*years?\b|contributed to the frameworks/i;
 
 describe('a new site starts empty', () => {
-  const shipped = new Map(REGISTRIES.flatMap((r) => Object.entries(r.entries).map(([k, e]) => [k, e.value])));
+  // Settings-backed fields have no shipped value at all: what they show comes from
+  // site_settings, and the registry only describes the box the editor draws.
+  const shipped = new Map(
+    REGISTRIES.flatMap((r) =>
+      Object.entries(r.entries)
+        .filter(([, e]) => !e.store || e.store === 'copy')
+        .map(([k, e]) => [k, e.value] as const),
+    ),
+  );
 
   it('ships nothing personal', () => {
     const wrong = BLANK_BY_DESIGN.filter((k) => (shipped.get(k) ?? '').trim() !== '');

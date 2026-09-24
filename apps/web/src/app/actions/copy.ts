@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin, getCurrentUser } from '@/lib/auth';
-import { REGISTRIES, type FieldType, type ItemField } from '@/lib/copy';
+import { REGISTRIES, type CopyEntry, type FieldType, type ItemField } from '@/lib/copy';
+import { readField, buildPatch } from '@/lib/settings-store';
 
 // ============= Editing the words from the page they appear on =============
 //
@@ -35,8 +36,15 @@ export async function loadPageCopy(page: string): Promise<CopyField[]> {
 
   let saved: Record<string, string> = {};
   let undo: Record<string, { value: string; at: string }> = {};
+  // Fields that live on site_settings rather than in a copy row read from there instead.
+  const needsSettings = Object.values(registry.entries).some((e) => e.store && e.store !== 'copy');
+  let settings: Record<string, unknown> = {};
   try {
     const supabase = await createClient();
+    if (needsSettings) {
+      const { data } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
+      settings = (data ?? {}) as Record<string, unknown>;
+    }
     const [current, history] = await Promise.all([
       supabase.from('site_copy').select('key, value').eq('page', page),
       // Newest first, so the first row seen for a key is the one undo would restore.
@@ -55,7 +63,9 @@ export async function loadPageCopy(page: string): Promise<CopyField[]> {
     key,
     label: e.label,
     hint: e.hint,
-    value: saved[key] ?? e.value,
+    // A settings field that has never been set shows the shipped value, so a colour box shows
+    // the colour actually in use rather than black, and "Original" has somewhere to go back to.
+    value: e.store && e.store !== 'copy' ? readField(e, settings) || e.value : saved[key] ?? e.value,
     shipped: e.value,
     ...(e.type ? { type: e.type } : {}),
     ...(e.fields ? { fields: e.fields } : {}),
@@ -82,16 +92,49 @@ export async function savePageCopy(page: string, changes: Record<string, string>
   const user = await getCurrentUser();
   const supabase = await createClient();
 
+  // Fields that live on site_settings take a different route: one patch, built so that several
+  // brand changes in one save fold into a single object rather than the last one winning.
+  const settingsChanges = Object.entries(changes)
+    .map(([key, value]) => ({ key, value, entry: registry.entries[key] as CopyEntry }))
+    .filter((c) => c.entry.store && c.entry.store !== 'copy');
+
+  if (settingsChanges.length) {
+    const supabase = await createClient();
+    const { data: before } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
+    const current = (before ?? {}) as Record<string, unknown>;
+    const patch = buildPatch(settingsChanges, current.brand);
+
+    const { error: settingsErr } = await supabase
+      .from('site_settings')
+      .update(patch)
+      .eq('id', '00000000-0000-0000-0000-000000000001');
+    if (settingsErr) return { ok: false, error: settingsErr.message };
+
+    // Recorded the same way as a word, so undo works the same way too.
+    const user0 = await getCurrentUser();
+    const rows = settingsChanges
+      .map((c) => ({ key: c.key, page, value: readField(c.entry, current), replaced_by: user0?.id ?? null }))
+      .filter((r, i) => r.value !== settingsChanges[i].value);
+    if (rows.length) await supabase.from('site_copy_revisions').insert(rows);
+  }
+
   // What each key says right now, read before writing. A key with no row is showing its shipped
   // default, so that is what the change is replacing and that is what undo has to return to.
-  const keys = Object.keys(changes);
+  const keys = Object.keys(changes).filter((k) => {
+    const e = registry.entries[k] as CopyEntry;
+    return !e.store || e.store === 'copy';
+  });
+  if (!keys.length) {
+    revalidatePath('/', 'layout');
+    return { ok: true };
+  }
   const { data: before } = await supabase.from('site_copy').select('key, value').in('key', keys);
   const current = Object.fromEntries((before ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
 
-  const rows = Object.entries(changes).map(([key, value]) => ({
+  const rows = keys.map((key) => ({
     page,
     key,
-    value: value.trim(),
+    value: changes[key].trim(),
     label: registry.entries[key].label,
     hint: registry.entries[key].hint,
     updated_at: new Date().toISOString(),
@@ -165,6 +208,23 @@ export async function undoCopy(page: string, key: string): Promise<SaveResult> {
     .maybeSingle();
 
   if (!last) return { ok: false, error: 'There is nothing to undo here.' };
+
+  const entry = registry.entries[key] as CopyEntry;
+
+  // A field that lives on site_settings is put back there, not into a copy row that nothing
+  // reads. Undo has to follow the value home.
+  if (entry.store && entry.store !== 'copy') {
+    const { data: before } = await supabase.from('site_settings').select('brand').limit(1).maybeSingle();
+    const patch = buildPatch([{ entry, value: last.value }], (before ?? {}).brand);
+    const { error: sErr } = await supabase
+      .from('site_settings')
+      .update(patch)
+      .eq('id', '00000000-0000-0000-0000-000000000001');
+    if (sErr) return { ok: false, error: sErr.message };
+    await supabase.from('site_copy_revisions').delete().eq('id', last.id);
+    revalidatePath('/', 'layout');
+    return { ok: true };
+  }
 
   const { error } = await supabase.from('site_copy').upsert(
     {

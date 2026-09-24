@@ -8,9 +8,9 @@ import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { MODULES, MODULE_GROUPS, NAV_FLAGS, flagOf } from '@/config/modules';
 import { Settings } from 'lucide-react';
 import { TestimonialDisplaySettings } from '@/components/admin/TestimonialDisplaySettings';
-import { BrandColours } from '@/components/admin/BrandColours';
-import { BrandImages } from '@/components/admin/BrandImages';
-import { FounderSettings } from '@/components/admin/FounderSettings';
+
+
+
 
 // ============= Which parts of the site are switched on =============
 //
@@ -145,11 +145,8 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      <BrandColours value={brand} onChange={setBrand} />
 
-      <BrandImages value={brand} onChange={setBrand} />
 
-      <FounderSettings shown={founder.show_founder} name={founder.founder_name} onChange={setFounder} />
 
       {/* Saves immediately, not staged behind the button below. */}
       <TestimonialDisplaySettings />

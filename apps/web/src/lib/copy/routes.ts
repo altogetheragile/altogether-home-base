@@ -27,3 +27,8 @@ export function copyPageFor(pathname: string): string | null {
 
 /** Always offered, on every page, because the menu and footer are on every page. */
 export const CHROME_PAGE = 'navigation';
+
+/** Also always offered: the name, the brand, the founder and how to reach you. These used to be
+ *  four separate admin pages in the other app, which meant knowing where each thing lived before
+ *  you could change it. */
+export const SITE_PAGE = 'site';
