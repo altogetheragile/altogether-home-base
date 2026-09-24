@@ -170,11 +170,6 @@ export default async function AboutPage() {
                 )}
               </div>
             </When>
-            <div style={{ background: p.deepTeal, borderRadius: 14, padding: 24 }}>
-              <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('about.work.label')}</div>
-              <p style={{ color: '#fff', fontSize: 13, lineHeight: 1.65, margin: '0 0 16px' }}>{t('about.work.body')}</p>
-              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '11px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, width: '100%', textDecoration: 'none', boxSizing: 'border-box', justifyContent: 'center' }}><Chat />{t('about.work.cta')}</a>
-            </div>
           </div>
         </div>
       </div>
