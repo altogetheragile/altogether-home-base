@@ -8,6 +8,19 @@ const nextConfig = {
   images: {
     remotePatterns: [{ protocol: 'https', hostname: 'wqaplkypnetifpqrungv.supabase.co' }],
   },
+  // @altogether/ui is a file: dependency, so it is a symlink. Webpack resolves a symlinked file
+  // to its real path and then looks for that file's imports from THERE, which means
+  // packages/ui/node_modules and then the repository root. This project installs on its own, both
+  // in CI and on Vercel, so neither of those exists: the package's import of lucide-react
+  // resolved to nothing and the build failed with "Can't resolve 'lucide-react'".
+  //
+  // Not resolving symlinks keeps resolution inside this project's own node_modules, where
+  // lucide-react is a direct dependency. It also guarantees one copy of React rather than two,
+  // which is the other thing that goes wrong with linked packages.
+  webpack: (config) => {
+    config.resolve.symlinks = false;
+    return config;
+  },
 };
 
 // Only wrap with Sentry when a DSN is configured. Until NEXT_PUBLIC_SENTRY_DSN is set in
