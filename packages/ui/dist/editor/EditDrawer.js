@@ -1,7 +1,7 @@
 import { SectionOrder } from '../chunk-7W7E3UZ3.js';
 import { SECTIONS_FOR_PAGE } from '../chunk-6VYT3VGP.js';
 import { ColourBox } from '../chunk-GMS5HY7T.js';
-import { ItemRows } from '../chunk-SHDZKI2W.js';
+import { ItemRows } from '../chunk-YYUXAK4O.js';
 import { PictureBox } from '../chunk-EMPC6OPA.js';
 import '../chunk-JOXPSQS6.js';
 import { IconPicker } from '../chunk-BLD3MESD.js';

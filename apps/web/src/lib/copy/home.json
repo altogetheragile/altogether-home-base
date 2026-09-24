@@ -58,7 +58,8 @@
         {
           "key": "number",
           "label": "Figure",
-          "placeholder": "1,500+"
+          "placeholder": "1,500+",
+          "required": true
         },
         {
           "key": "label",
@@ -86,7 +87,8 @@
         {
           "key": "heading",
           "label": "Card heading",
-          "placeholder": "Moving into agile"
+          "placeholder": "Moving into agile",
+          "required": true
         },
         {
           "key": "body",
