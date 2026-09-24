@@ -100,12 +100,12 @@
     "about.feedback.label": {
       "value": "Feedback",
       "label": "Testimonials eyebrow",
-      "hint": "Above the three quotes, which come from the database"
+      "hint": "Above the quotes, which come from the database"
     },
     "about.feedback.heading": {
       "value": "What people say.",
       "label": "Testimonials heading",
-      "hint": "Above the three quotes"
+      "hint": "Above the quotes"
     },
     "about.mission.label": {
       "value": "Why This Practice Exists",
@@ -135,52 +135,40 @@
     "about.philosophy.label": {
       "value": "How I work",
       "label": "Philosophy eyebrow",
-      "hint": "The two philosophy cards"
+      "hint": "Above the philosophy cards"
     },
     "about.philosophy.heading": {
       "value": "Training and coaching philosophy.",
       "label": "Philosophy heading",
-      "hint": "The two philosophy cards"
+      "hint": "Above the philosophy cards"
     },
-    "about.philosophy.1.label": {
-      "value": "Training",
-      "label": "Card 1 tag",
-      "hint": "The two philosophy cards. The left card"
-    },
-    "about.philosophy.1.heading": {
-      "value": "Learning that transfers.",
-      "label": "Card 1 heading",
-      "hint": "The two philosophy cards. The left card"
-    },
-    "about.philosophy.1.body": {
-      "value": "Most agile training fails not because people don't understand the concepts - but because they've never had to apply them under real conditions. Good training puts people in those conditions safely, with a facilitator who's been in the room for real.",
-      "label": "Card 1 body",
-      "hint": "The two philosophy cards. The left card"
-    },
-    "about.philosophy.1.principles": {
-      "value": "Scenario-led from the first session\nFrameworks as tools, not religions\nCertification as a by-product of learning, not the goal\nEvery technique connected to a real business problem",
-      "label": "Card 1 principles",
-      "hint": "The two philosophy cards. One per line, add or remove lines freely"
-    },
-    "about.philosophy.2.label": {
-      "value": "Coaching",
-      "label": "Card 2 tag",
-      "hint": "The two philosophy cards. The right card"
-    },
-    "about.philosophy.2.heading": {
-      "value": "Questions, not answers.",
-      "label": "Card 2 heading",
-      "hint": "The two philosophy cards. The right card"
-    },
-    "about.philosophy.2.body": {
-      "value": "The best coaching conversations don't end with a solution handed over. They end with the person finding their own clarity - which means they own it, and they're more likely to act on it. My job is to ask the right questions, hold the space, and get out of the way.",
-      "label": "Card 2 body",
-      "hint": "The two philosophy cards. The right card"
-    },
-    "about.philosophy.2.principles": {
-      "value": "ICF-aligned approach throughout\nExperience in the room, but not imposing it\nThe coachee's agenda, not mine\nHonest feedback when it's asked for",
-      "label": "Card 2 principles",
-      "hint": "The two philosophy cards. One per line, add or remove lines freely"
+    "about.philosophy.items": {
+      "value": "",
+      "label": "Philosophy cards",
+      "hint": "One card per side of what you do. Each has a short tag, a heading, a paragraph and a list of principles, one per line. Leave it empty and the section disappears.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "label",
+          "label": "Tag",
+          "placeholder": "Training"
+        },
+        {
+          "key": "heading",
+          "label": "Heading",
+          "placeholder": "Learning that transfers."
+        },
+        {
+          "key": "body",
+          "label": "Paragraph",
+          "multiline": true
+        },
+        {
+          "key": "principles",
+          "label": "Principles, one per line",
+          "multiline": true
+        }
+      ]
     },
     "about.timeline.label": {
       "value": "Career",

@@ -33,8 +33,12 @@ import navigationJson from './navigation.json';
 // boxes and Add and Remove buttons. Adding a fourth statistic stops being a code change.
 export type FieldType = 'text' | 'textarea' | 'lines' | 'items';
 
-/** One named box within an item. */
-export interface ItemField { key: string; label: string; placeholder?: string }
+/** One named box within an item.
+ *
+ *  `multiline` is there because an item is not always a row of short strings. A philosophy card
+ *  carries a paragraph and its own list of principles; without it those would have to become
+ *  separate keys again, which is the shape this whole thing is getting away from. */
+export interface ItemField { key: string; label: string; placeholder?: string; multiline?: boolean }
 
 export interface CopyEntry {
   value: string;
