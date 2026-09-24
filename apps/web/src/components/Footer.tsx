@@ -6,16 +6,20 @@ import { moduleIsOn } from '@altogether/ui/modules';
 
 // Server component (no interactivity). The auth-only links (Dashboard, Admin) from
 // the Vite footer are intentionally dropped - this is the public content surface.
-export function Footer({ settings, year, t }: {
+export function Footer({ settings, year, t, signedInAsAdmin = false }: {
   settings: SiteSettings;
   year: number;
+  /** Keep hidden pages listed, marked, for somebody who can unhide them. The menu does the same;
+   *  the footer used to drop them, so a page hidden from the menu vanished from here entirely and
+   *  looked deleted rather than hidden. */
+  signedInAsAdmin?: boolean;
   /** The navigation registry's reader, so the footer and the menu agree on what a page is called. */
   t: (key: string) => string;
 }) {
   // The shared list, not a fourth copy. This was the last place still carrying its own.
   const on = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
 
-  // Same copy keys as the menu. A site that renames Coaching to Services renames it once.
+  // Same copy keys as the menu, and the same rule about hidden pages.
   const quickLinks = [
     { label: t('nav.home'), href: '/', show: true },
     { label: t('nav.events'), href: '/events', show: on('show_events') },
@@ -25,7 +29,8 @@ export function Footer({ settings, year, t }: {
     { label: t('nav.exams'), href: '/exams', show: on('show_exams') },
     { label: t('nav.contact'), href: '/contact', show: on('show_contact') },
     { label: t('nav.testimonials'), href: '/testimonials', show: on('show_testimonials') },
-  ].filter((l) => l.show);
+  ].map((l) => ({ ...l, hidden: !l.show }))
+    .filter((l) => l.show || signedInAsAdmin);
 
   const social = [
     { icon: Linkedin, url: settings.social_linkedin, label: 'LinkedIn' },
@@ -55,6 +60,12 @@ export function Footer({ settings, year, t }: {
                 <li key={l.href}>
                   <Link href={l.href} className="text-muted-foreground transition-colors hover:text-primary">
                     {l.label}
+                    {l.hidden && (
+                      <span
+                        title="Hidden from visitors"
+                        className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-500 align-middle"
+                      />
+                    )}
                   </Link>
                 </li>
               ))}

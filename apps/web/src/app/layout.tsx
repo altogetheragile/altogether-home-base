@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {admin && <HiddenFromVisitors hidden={hidden} />}
           <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} signedInAsAdmin={admin} />
           <div className="flex-1">{children}</div>
-          <Footer settings={settings} year={new Date().getFullYear()} t={t} />
+          <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} />
           {/* Not mounted at all for anyone else, so a visitor never downloads the editor. The
               actions it calls check again, because not mounting a component is not a permission. */}
           {admin && <EditThisPage />}
