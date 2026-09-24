@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2 } from 'lucide-react';
 import { copyPageFor, CHROME_PAGE } from '@/lib/copy/routes';
+import { ItemRows } from '@/components/edit/ItemRows';
 import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from '@/app/actions/copy';
 
 // ============= Editing the site from the site =============
@@ -22,6 +23,16 @@ import { loadPageCopy, savePageCopy, resetCopy, undoCopy, type CopyField } from 
 // actions check again on arrival.
 
 type Tab = { page: string; label: string };
+
+/** A JSON blob quoted back at somebody says nothing. How many there were says what undo will do. */
+function countItems(value: string): number {
+  try {
+    const out = JSON.parse(value || '[]');
+    return Array.isArray(out) ? out.length : 0;
+  } catch {
+    return 0;
+  }
+}
 
 export function EditThisPage() {
   const pathname = usePathname();
@@ -133,6 +144,12 @@ export function EditThisPage() {
         </button>
       </header>
 
+      {/* Said once, permanently, rather than discovered after the first mistake. An undo that only
+          announces itself once you have already used it is not a safety net anybody relies on. */}
+      <p className="border-b border-border bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
+        Changes save straight to the live site, and every one of them can be undone.
+      </p>
+
       {tabs.length > 1 && (
         <div className="flex gap-1 border-b border-border px-3 py-2">
           {tabs.map((t) => (
@@ -205,16 +222,26 @@ export function EditThisPage() {
               {f.undo && (
                 <p className="mb-1.5 truncate text-xs text-muted-foreground/80">
                   <span className="font-medium">Was:</span>{' '}
-                  {f.undo.value.trim() ? `“${f.undo.value.replace(/\n/g, ' ').slice(0, 90)}”` : 'empty'}
+                  {/* A JSON blob quoted back at somebody says nothing. How many there were says
+                      what pressing Undo will actually do. */}
+                  {f.type === 'items'
+                    ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? '' : 's'}`
+                    : f.undo.value.trim()
+                      ? `“${f.undo.value.replace(/\n/g, ' ').slice(0, 90)}”`
+                      : 'empty'}
                 </p>
               )}
-              <textarea
-                id={f.key}
-                rows={rows}
-                value={value}
-                onChange={(e) => setField(f.key, e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+              {f.type === 'items' && f.fields ? (
+                <ItemRows value={value} fields={f.fields} onChange={(next) => setField(f.key, next)} />
+              ) : (
+                <textarea
+                  id={f.key}
+                  rows={rows}
+                  value={value}
+                  onChange={(e) => setField(f.key, e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              )}
             </div>
           );
         })}
