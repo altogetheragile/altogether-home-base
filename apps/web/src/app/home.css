@@ -131,17 +131,27 @@
 }
 
 /* ─── Stats bar ───────────────────────────────────────────────────────────── */
+/* Each stat used to shrink-wrap its own words, so the row was as wide as the words happened to
+   be and sat in a huddle in the middle of the bar. Long labels hid it; a site whose stats are
+   still called "Stat 1" showed three icons clustered in the centre of an empty band.
+
+   Equal shares instead, so the spacing comes from the bar rather than from the length of the
+   text, and three stats look as deliberate as five. The padding holds the row to a readable
+   measure while the background stays edge to edge. */
 .aa-stats-bar {
   display: flex;
   align-items: stretch;
   justify-content: center;
+  gap: 16px;
   background: var(--aa-sky-teal);
-  padding: 40px 48px;
+  padding: 40px max(24px, calc((100% - 1100px) / 2));
 }
 
 .aa-stat {
+  flex: 1 1 0;
+  min-width: 0;
   text-align: center;
-  padding: 8px 40px;
+  padding: 8px 12px;
 }
 
 .aa-stat__icon {
@@ -486,8 +496,9 @@
 @media (max-width: 767px) {
   .aa-hero-grid { grid-template-columns: 1fr; }
   .aa-three-col { grid-template-columns: 1fr; }
-  .aa-stats-bar { flex-wrap: wrap; }
-  .aa-stats-bar > div { width: 50%; border-right: none !important; }
+  .aa-stats-bar { flex-wrap: wrap; padding-left: 20px; padding-right: 20px; }
+  /* flex-basis: 0 above would beat a width, so the two-up wrap is said in flex terms. */
+  .aa-stats-bar > div { flex: 0 0 calc(50% - 8px); border-right: none !important; }
   .aa-section-pad { padding: 40px 20px; }
   .aa-hero-h1 { font-size: 38px !important; }
   .aa-hide-mobile { display: none; }
