@@ -1,10 +1,11 @@
-import { SectionOrder } from '../chunk-7W7E3UZ3.js';
-import { SECTIONS_FOR_PAGE } from '../chunk-6VYT3VGP.js';
-import { ItemRows } from '../chunk-7ZDCJ4HW.js';
-import { PictureBox } from '../chunk-EMPC6OPA.js';
+import { FieldControl } from '../chunk-FQWBLCUF.js';
+import '../chunk-7ZDCJ4HW.js';
+import '../chunk-EMPC6OPA.js';
+import '../chunk-7W7E3UZ3.js';
 import '../chunk-JOXPSQS6.js';
-import { ColourBox } from '../chunk-M5XDZR2B.js';
-import { IconPicker } from '../chunk-BLD3MESD.js';
+import '../chunk-6VYT3VGP.js';
+import '../chunk-M5XDZR2B.js';
+import '../chunk-BLD3MESD.js';
 import '../chunk-TWTRORN3.js';
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { Pencil, X, EyeOff, Eye, Loader2, Undo2, RotateCcw, Check } from 'lucide-react';
@@ -229,7 +230,6 @@ function EditDrawer({ host }) {
       fields?.map((f) => {
         const value = draft[f.key] ?? f.value;
         const canRestore = f.shipped.trim() !== "" && f.value !== f.shipped;
-        const rows = Math.min(8, Math.max(2, Math.ceil(value.length / 60)));
         return /* @__PURE__ */ jsxs("div", { className: "mb-5", children: [
           /* @__PURE__ */ jsxs("div", { className: "mb-1 flex items-baseline justify-between gap-2", children: [
             /* @__PURE__ */ jsx("label", { htmlFor: f.key, className: "text-sm font-medium text-foreground", children: f.label }),
@@ -282,32 +282,14 @@ function EditDrawer({ host }) {
             " ",
             f.type === "sections" ? describeOrder(f.undo.value) : f.type === "items" ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? "" : "s"}` : f.undo.value.trim() ? `\u201C${f.undo.value.replace(/\n/g, " ").slice(0, 90)}\u201D` : "empty"
           ] }),
-          f.type === "sections" ? /* @__PURE__ */ jsx(
-            SectionOrder,
+          /* @__PURE__ */ jsx(
+            FieldControl,
             {
+              field: f,
               value,
-              choices: SECTIONS_FOR_PAGE[active] ?? [],
-              onChange: (next) => setField(f.key, next)
-            }
-          ) : f.type === "items" && f.fields ? /* @__PURE__ */ jsx(ItemRows, { value, fields: f.fields, onChange: (next) => setField(f.key, next), upload: host.upload }) : f.type === "image" ? /* @__PURE__ */ jsx(PictureBox, { value, onChange: (next) => setField(f.key, next), upload: host.upload }) : f.type === "icon" ? /* @__PURE__ */ jsx(IconPicker, { value, onChange: (next) => setField(f.key, next) }) : f.type === "colour" ? /* @__PURE__ */ jsx(ColourBox, { value, onChange: (next) => setField(f.key, next) }) : f.type === "switch" ? /* @__PURE__ */ jsxs("label", { className: "flex cursor-pointer items-center gap-2 text-sm", children: [
-            /* @__PURE__ */ jsx(
-              "input",
-              {
-                type: "checkbox",
-                checked: value === "on",
-                onChange: (e) => setField(f.key, e.target.checked ? "on" : ""),
-                className: "h-4 w-4 rounded border-border"
-              }
-            ),
-            /* @__PURE__ */ jsx("span", { className: value === "on" ? "" : "font-medium text-amber-700", children: value === "on" ? "Visible to everyone" : "Hidden from visitors" })
-          ] }) : /* @__PURE__ */ jsx(
-            "textarea",
-            {
-              id: f.key,
-              rows,
-              value,
-              onChange: (e) => setField(f.key, e.target.value),
-              className: "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              page: active,
+              onChange: (next) => setField(f.key, next),
+              upload: host.upload
             }
           )
         ] }, f.key);

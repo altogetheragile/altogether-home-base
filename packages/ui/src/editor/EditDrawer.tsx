@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff } from 'lucide-react';
-import { ItemRows } from './ItemRows';
-import { PictureBox } from './PictureBox';
-import { IconPicker } from './IconPicker';
-import { ColourBox } from './ColourBox';
-import { SectionOrder } from './SectionOrder';
-import { SECTIONS_FOR_PAGE } from './sections';
+import { FieldControl } from './FieldControl';
 import type { CopyField, SaveResult } from './store';
 
 /** Everything the drawer cannot know for itself.
@@ -340,9 +335,6 @@ export function EditDrawer({ host }: { host: EditorHost }) {
           // a button saying "Put back the wording this site came with" quietly meant "delete all
           // of this", in one click, with nothing to undo it.
           const canRestore = f.shipped.trim() !== '' && f.value !== f.shipped;
-          // A heading is a line; an introduction is a paragraph. Guessing from the shipped length
-          // beats asking every registry entry to declare which it is.
-          const rows = Math.min(8, Math.max(2, Math.ceil(value.length / 60)));
           return (
             <div key={f.key} className="mb-5">
               <div className="mb-1 flex items-baseline justify-between gap-2">
@@ -409,43 +401,13 @@ export function EditDrawer({ host }: { host: EditorHost }) {
                       : 'empty'}
                 </p>
               )}
-              {f.type === 'sections' ? (
-                <SectionOrder
-                  value={value}
-                  choices={SECTIONS_FOR_PAGE[active] ?? []}
-                  onChange={(next) => setField(f.key, next)}
-                />
-              ) : f.type === 'items' && f.fields ? (
-                <ItemRows value={value} fields={f.fields} onChange={(next) => setField(f.key, next)} upload={host.upload} />
-              ) : f.type === 'image' ? (
-                <PictureBox value={value} onChange={(next) => setField(f.key, next)} upload={host.upload} />
-              ) : f.type === 'icon' ? (
-                <IconPicker value={value} onChange={(next) => setField(f.key, next)} />
-              ) : f.type === 'colour' ? (
-                <ColourBox value={value} onChange={(next) => setField(f.key, next)} />
-              ) : f.type === 'switch' ? (
-                <label className="flex cursor-pointer items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={value === 'on'}
-                    onChange={(e) => setField(f.key, e.target.checked ? 'on' : '')}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  {/* A status, not a label for the box. "Hidden" beside an unticked box reads
-                      as "hidden: no" to about half the people who see it. */}
-                  <span className={value === 'on' ? '' : 'font-medium text-amber-700'}>
-                    {value === 'on' ? 'Visible to everyone' : 'Hidden from visitors'}
-                  </span>
-                </label>
-              ) : (
-                <textarea
-                  id={f.key}
-                  rows={rows}
-                  value={value}
-                  onChange={(e) => setField(f.key, e.target.value)}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              )}
+              <FieldControl
+                field={f}
+                value={value}
+                page={active}
+                onChange={(next) => setField(f.key, next)}
+                upload={host.upload}
+              />
             </div>
           );
         })}
