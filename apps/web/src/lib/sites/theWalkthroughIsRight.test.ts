@@ -288,3 +288,20 @@ describe('the preset that cannot be typed in', () => {
     }
   });
 });
+
+describe('the root directory on the second project', () => {
+  // It deployed packages/ui instead of the website: the picker remembered apps/web from step 4,
+  // and packages/ui has a dist of its own, so Vercel found something to publish and did. The
+  // address then served the design system's JavaScript as its home page.
+  const step5 = steps.find((s) => s.n === 5)!;
+
+  it('says to put it back to the repository root, not merely to leave it', () => {
+    expect(`${step5.body} ${step5.watch}`).toMatch(/repository root/i);
+    expect(step5.body, 'says leave it alone, which is what the picker will not do')
+      .not.toMatch(/leave Root Directory alone/i);
+  });
+
+  it('warns what a wrong folder looks like, since it deploys successfully', () => {
+    expect(step5.watch).toMatch(/raw JavaScript|serves raw/i);
+  });
+});
