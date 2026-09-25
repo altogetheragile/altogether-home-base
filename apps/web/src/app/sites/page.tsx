@@ -6,6 +6,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { colors as p } from '@/lib/brand';
 import { statusOf, isThisSite, type ManagedSite, type SiteStatus } from '@/lib/sites/managed';
 import { SITE_URL } from '@/lib/seo';
+import { WalkMeThrough } from '@/components/sites/WalkMeThrough';
 
 // ============= Every site you look after, in one place =============
 //
@@ -67,6 +68,8 @@ export default async function SitesPage() {
           makes it something its owner can take back.
         </p>
 
+        <WalkMeThrough />
+
         {statuses.map((s) => (
           <section key={s.site.domain} style={{ background: p.white, borderRadius: 16, padding: '22px 26px', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -115,9 +118,11 @@ export default async function SitesPage() {
         ))}
 
         <p style={{ color: p.muted, fontSize: 13.5, lineHeight: 1.7, marginTop: 24 }}>
-          Add a site from the editor on any page, under <strong>This Site</strong>, in
-          {' '}<em>Sites you look after</em>. A new one is stood up with{' '}
-          <code style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 5px', borderRadius: 4 }}>node scripts/new-site.mjs</code>.
+          The walk-through above asks for nothing secret: it tells you where to go and what to
+          paste, and you do it. If you would rather have it done for you in one command, the same
+          job is{' '}
+          <code style={{ background: 'rgba(0,0,0,0.05)', padding: '1px 5px', borderRadius: 4 }}>node scripts/new-site.mjs</code>,
+          which needs two tokens in your terminal and keeps them nowhere.
         </p>
       </div>
     </div>
