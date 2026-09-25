@@ -62,8 +62,9 @@ describe('the shell says whose site it is', () => {
   });
 
   it('follows the name into the logo’s alt text, which is spelled with a space', () => {
-    // One replaceAll of 'AltogetherAgile' misses alt="Altogether Agile" entirely.
-    const out = withIdentity(shell, hers);
+    // One replaceAll of 'AltogetherAgile' misses alt="Altogether Agile" entirely. Checked with an
+    // uploaded logo, since that is the case where an <img> survives at all.
+    const out = withIdentity(shell, { ...hers, logo: 'https://cdn.example/logo.svg' });
     expect(out).toContain('alt="Stream Strategy"');
   });
 
@@ -84,9 +85,45 @@ describe('the shell says whose site it is', () => {
     expect(out).not.toContain(SHIPPED.heroBody);
   });
 
-  it('uses her uploaded logo, and ignores a wordmark that is not a URL', () => {
+  it('uses her uploaded logo when there is one', () => {
     expect(withIdentity(shell, { ...hers, logo: 'https://cdn.example/logo.svg' })).toContain('https://cdn.example/logo.svg');
-    expect(withIdentity(shell, { ...hers, logo: 'Stream Strategy' })).toContain(SHIPPED.logo);
+  });
+
+  /** The header's picture is this repository's lockup until somebody uploads their own. React
+   *  swaps it for the site's name a moment later, so leaving it means every first load of her
+   *  site opens with our logo and then corrects itself in front of her visitors. */
+  it('sets her name where the logo goes rather than showing ours', () => {
+    const out = withIdentity(shell, hers);
+    expect(out).not.toContain(SHIPPED.logo);
+    expect(out).toContain('>Stream Strategy</span>');
+  });
+
+  it('ignores a logo that is a name rather than a picture', () => {
+    const out = withIdentity(shell, { ...hers, logo: 'Stream Strategy' });
+    expect(out).not.toContain('src="Stream Strategy"');
+    expect(out).not.toContain(SHIPPED.logo);
+  });
+
+  it('sets the wordmark in two colours when the site asks, and in one when it does not', () => {
+    const two = withIdentity(shell, { ...hers, wordmark: { first: 'Stream', second: 'Strategy', gap: false, twoTone: true } });
+    expect(two).toContain('text-transform:uppercase');
+    expect(two).toContain('var(--aa-orange');
+    expect(two).toContain('>Strategy</span>');
+
+    const one = withIdentity(shell, { ...hers, wordmark: { first: 'Stream', second: 'Strategy', gap: false, twoTone: false } });
+    expect(one).not.toContain('var(--aa-orange');
+  });
+
+  it('keeps the space a two-word name had, and adds none to a name that had not', () => {
+    const spaced = withIdentity(shell, { ...hers, company: 'Bramble Fern', wordmark: { first: 'Bramble', second: 'Fern', gap: true, twoTone: true } });
+    expect(spaced).toContain('Bramble&nbsp;<span');
+    const joined = withIdentity(shell, { ...hers, wordmark: { first: 'Stream', second: 'Strategy', gap: false, twoTone: true } });
+    expect(joined).toContain('Stream<span');
+  });
+
+  it('leaves our own header picture alone', () => {
+    // The shipped site has an uploaded lockup and must keep it.
+    expect(withIdentity(shell, { url: SHIPPED.url })).toContain(SHIPPED.logo);
   });
 
   it('escapes a name that would otherwise break the markup', () => {

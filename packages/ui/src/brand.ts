@@ -87,6 +87,17 @@ export const defaultImages: Record<ImageName, string> = {
 
 export type BrandImageOverrides = { images?: Partial<Record<string, unknown>> | null } | null | undefined;
 
+/** The same brand column, read for the wordmark rather than for a picture. */
+export type BrandWordmarkOverrides = { wordmark?: { twoTone?: unknown } | null } | null | undefined;
+
+/** The brand column as a header reads it: the pictures and the wordmark are one object, and a
+ *  component that renders a logo needs both to decide what to draw. Not BrandOverrides, which is
+ *  already the colours. */
+export type BrandLogoOverrides =
+  | { images?: Partial<Record<string, unknown>> | null; wordmark?: { twoTone?: unknown } | null }
+  | null
+  | undefined;
+
 const ABSOLUTE = /^https?:\/\/\S+$/i;
 /** A path on this site: a leading slash and no spaces. Not "//host", which is a URL. */
 const OWN_PATH = /^\/[^\s/][^\s]*$/;
@@ -135,6 +146,54 @@ export function resolveImages(overrides?: BrandImageOverrides): Record<ImageName
 // which it is, rather than looking like somebody else's.
 
 export type Logo = { mode: 'image'; src: string } | { mode: 'wordmark'; text: string };
+
+/** A wordmark in two parts, so the second can be set in the accent colour.
+ *
+ *  The two-tone look is two rules, not a design: set the name in capitals, and put the last word
+ *  in the accent colour against the rest in the darkest one. It is the whole of this site's own
+ *  lettering, and a site that has a name and a palette already has everything it needs for it,
+ *  with no file to commission and none to keep up to date.
+ *
+ *  Off unless asked for. It is this site's typographic signature, and a second site should look
+ *  like itself by default rather than like ours. */
+export type Wordmark = { first: string; second: string; gap: boolean; twoTone: boolean };
+
+/** Where a name comes apart.
+ *
+ *  On the last space, so "Bramble & Fern" keeps "Bramble &" together and accents "Fern". With no
+ *  space at all, on the capital letter that starts the second half, which is how a name like
+ *  StreamStrategy is read aloud even though it is written as one word.
+ *
+ *  It gets some names wrong. "McKenzie" comes apart into "Mc" and "Kenzie", and there is no rule
+ *  that tells that apart from "StreamStrategy" without knowing the words. That is why this is a
+ *  setting somebody turns on once and looks at, rather than something applied to every site. */
+export function splitWordmark(text: string): { first: string; second: string; gap: boolean } {
+  const name = text.trim().replace(/\s+/g, ' ');
+  const space = name.lastIndexOf(' ');
+  // `gap` carries the space the split consumed. Without it "Altogether Agile" renders as
+  // AltogetherAgile, and "StreamStrategy" would gain a space it never had.
+  if (space > 0) return { first: name.slice(0, space), second: name.slice(space + 1), gap: true };
+
+  // A capital that follows a lower-case letter: the join in StreamStrategy, and not the S it
+  // starts with. Searched from the end so AltogetherAgileCoaching accents only the last part.
+  for (let i = name.length - 1; i > 0; i--) {
+    if (/[A-Z]/.test(name[i]) && /[a-z]/.test(name[i - 1])) {
+      return { first: name.slice(0, i), second: name.slice(i), gap: false };
+    }
+  }
+  return { first: name, second: '', gap: false };
+}
+
+/** The wordmark this site renders where a logo would go, and whether it is set in two colours. */
+export function wordmarkOf(overrides: BrandWordmarkOverrides, companyName?: string | null): Wordmark {
+  const name = companyName?.trim() ?? '';
+  // Stored as a string because the brand column holds strings, which is what the editor writes
+  // and what readField gives back. A boolean here would read as empty and silently stay off.
+  const twoTone = overrides?.wordmark?.twoTone === 'on';
+  const parts = splitWordmark(name);
+  // One word and no join means nothing to set in a second colour, so it stays in one.
+  return { ...parts, twoTone: twoTone && parts.second.length > 0 };
+}
 
 /** What to render where the logo goes. `companyName` is only used when no logo is configured. */
 export function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo {

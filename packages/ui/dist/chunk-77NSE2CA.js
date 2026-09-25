@@ -67,6 +67,23 @@ function resolveImages(overrides) {
   }
   return out;
 }
+function splitWordmark(text) {
+  const name = text.trim().replace(/\s+/g, " ");
+  const space = name.lastIndexOf(" ");
+  if (space > 0) return { first: name.slice(0, space), second: name.slice(space + 1), gap: true };
+  for (let i = name.length - 1; i > 0; i--) {
+    if (/[A-Z]/.test(name[i]) && /[a-z]/.test(name[i - 1])) {
+      return { first: name.slice(0, i), second: name.slice(i), gap: false };
+    }
+  }
+  return { first: name, second: "", gap: false };
+}
+function wordmarkOf(overrides, companyName) {
+  const name = companyName?.trim() ?? "";
+  const twoTone = overrides?.wordmark?.twoTone === "on";
+  const parts = splitWordmark(name);
+  return { ...parts, twoTone: twoTone && parts.second.length > 0 };
+}
 function logoOf(overrides, companyName) {
   const given = overrides?.images?.logo;
   if (typeof given === "string" && isPicture(given, "logo")) {
@@ -83,4 +100,4 @@ function tint(hex, strength = 0.12) {
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, tint };
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };

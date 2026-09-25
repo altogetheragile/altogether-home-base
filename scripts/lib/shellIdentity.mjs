@@ -43,8 +43,10 @@ const escapeHtml = (s) =>
  *  @param {string} [identity.tagline]  its one-line description
  *  @param {string} [identity.ogImage]  absolute URL of its share image
  *  @param {string} [identity.logo]     absolute URL of an uploaded logo, if it has one
+ *  @param {{first: string, second: string, gap: boolean, twoTone: boolean}} [identity.wordmark]
+ *         what to set where the logo goes when there is no uploaded one, from wordmarkOf
  */
-export function withIdentity(html, { url, company, tagline, ogImage, logo } = {}) {
+export function withIdentity(html, { url, company, tagline, ogImage, logo, wordmark } = {}) {
   const site = (url || SHIPPED.url).replace(/\/$/, '');
   // The one question everything else hangs off. Left alone, a site with nothing configured is
   // byte-for-byte what it is today, which is what altogetheragile.com wants.
@@ -67,9 +69,8 @@ export function withIdentity(html, { url, company, tagline, ogImage, logo } = {}
 
   out = out.replaceAll(SHIPPED.url, escapeHtml(site));
 
-  if (logo?.trim() && /^https?:\/\//i.test(logo.trim())) {
-    out = out.replaceAll(SHIPPED.logo, escapeHtml(logo.trim()));
-  }
+  const uploaded = logo?.trim() && /^https?:\/\//i.test(logo.trim()) ? logo.trim() : null;
+  if (uploaded) out = out.replaceAll(SHIPPED.logo, escapeHtml(uploaded));
 
   if (!ours) {
     // A Twitter handle is an account, not a style. There is no setting for one, and guessing is
@@ -87,7 +88,35 @@ export function withIdentity(html, { url, company, tagline, ogImage, logo } = {}
       new RegExp(`(<p[^>]*>)${SHIPPED.heroBody.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(</p>)`),
       tagline?.trim() ? `$1${escapeHtml(tagline.trim())}$2` : '',
     );
+
+    // The header's picture, which is this repository's lockup and stays that until somebody
+    // uploads their own. React swaps it for the site's name a moment later, so leaving it means
+    // every first load of her site opens with our logo and then corrects itself. The markup below
+    // is the same rule SiteLogo renders, written out, so the swap is not visible either.
+    if (!uploaded && name) {
+      out = out.replace(/<img\s+src="[^"]*lockup-horizontal-tight\.svg"[^>]*>/, markup(name, wordmark));
+    }
   }
 
   return out;
+}
+
+/** The header wordmark as static HTML, for the shell that is painted before React exists.
+ *
+ *  Kept next to the replacement rather than in the brand module because it is markup, not a
+ *  rule, and because the shell cannot import TypeScript. The colours are the brand custom
+ *  properties withBrand writes into the same head, with this repository's values as the fallback
+ *  for the moment before that style is parsed. */
+function markup(name, wordmark) {
+  const common = "display:inline-flex;align-items:center;height:38px;font-family:'DM Sans',system-ui,sans-serif;font-weight:800;white-space:nowrap";
+  const teal = 'var(--aa-deep-teal,#004D4D)';
+  if (!wordmark?.twoTone || !wordmark.second) {
+    return `<span style="${common};font-size:20px;letter-spacing:-0.02em;color:${teal}">${name}</span>`;
+  }
+  const first = escapeHtml(wordmark.first);
+  const second = escapeHtml(wordmark.second);
+  return (
+    `<span style="${common};font-size:17px;letter-spacing:0.01em;text-transform:uppercase;color:${teal}">` +
+    `${first}${wordmark.gap ? '&nbsp;' : ''}<span style="color:var(--aa-orange,#FF9715)">${second}</span></span>`
+  );
 }
