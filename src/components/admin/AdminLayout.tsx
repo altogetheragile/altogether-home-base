@@ -101,7 +101,6 @@ const navigation: NavGroup[] = [
     items: [
       { label: 'Audit Log', icon: Shield, href: '/admin/logs/audit' },
       { label: 'Backlog', icon: Database, href: '/admin/populate-backlog' },
-      { label: 'Site Settings', icon: Settings, href: '/admin/settings' },
     ],
   },
 ];

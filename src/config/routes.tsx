@@ -105,7 +105,6 @@ const AdminAssets = lazy(() => import('@/pages/admin/AdminAssets'));
 // Admin Pages - Configuration
 const AdminSelfPacedCourses = lazy(() => import('@/pages/admin/AdminSelfPacedCourses'));
 const AdminActivityDomains = lazy(() => import('@/pages/admin/AdminActivityDomains'));
-const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'));
 
 // Admin Pages - Users & Logs
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
@@ -667,11 +666,11 @@ export const AdminRoutes = () => {
             <AdminActivityDomains />
           </Suspense>
         } />
-        <Route path="settings" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <AdminSettings />
-          </Suspense>
-        } />
+        {/* Site Settings was a second place to switch a page on or off, and eleven of its
+            switches also existed in the editor drawer. Two of them existed in three places. The
+            switches live in the drawer now, on the page each one affects, so this address sends
+            you there rather than answering Not Found for something that used to work. */}
+        <Route path="settings" element={<Navigate to="/?edit=site" replace />} />
         
         {/* Bookings */}
         <Route path="bookings" element={

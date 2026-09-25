@@ -39,6 +39,63 @@ export const siteRegistry: CopyRegistry = {
       "store": "column",
       "path": "copyright_text"
     },
+    "site.show_bookings": {
+      "value": "",
+      "label": "Bookings",
+      "hint": "Taking appointments against your availability. Off unless you actually want people booking time with you from the site.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_bookings"
+    },
+    "site.show_dynamic_pages": {
+      "value": "",
+      "label": "Extra pages",
+      "hint": "Pages you build yourself from content blocks, each at its own address. Off, and only the pages listed above exist.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_dynamic_pages"
+    },
+    "site.show_protected_projects": {
+      "value": "",
+      "label": "Projects",
+      "hint": "Projects, their artifacts and the backlog, for working with a client rather than for visitors to read.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_protected_projects"
+    },
+    "site.show_dashboard": {
+      "value": "",
+      "label": "Dashboard",
+      "hint": "The page somebody lands on after signing in. Off, and signing in takes them back to where they were.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_dashboard"
+    },
+    "site.show_zoo_game": {
+      "value": "",
+      "label": "Zoo Game",
+      "hint": "The Scrum teaching game, at /zoo-game.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_zoo_game"
+    },
+    "site.show_scrum_game": {
+      "value": "",
+      "label": "Scrum Game",
+      "hint": "The earlier Scrum simulation.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_scrum_game"
+    },
+    "site.show_recommendations": {
+      "value": "",
+      "label": "Suggested reading",
+      "hint": "The \"you might also like\" panel under blog posts and techniques. A page with nothing to suggest shows nothing either way.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_recommendations",
+      "says": { "on": "Shown under posts", "off": "Not shown" }
+    },
     "site.brand.images.logo": {
       "value": "",
       "label": "Logo",
