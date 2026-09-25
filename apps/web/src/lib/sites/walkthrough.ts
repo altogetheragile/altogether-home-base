@@ -121,14 +121,14 @@ export function walkthrough(answers: Answers): Step[] {
     {
       n: 5,
       title: 'Make the part that answers the address',
-      body: `Import the same repository a second time, the same way: the "Import Git Repository" panel, not the prompt box. Name this one "${appProject}". Root Directory is left alone this time, at the repository root, and Framework Preset should then say Vite rather than Next.js. Vercel detects it from the folder: if it is right, it will be greyed out, which is correct rather than broken. Add the five environment variables below.`,
+      body: `Import the same repository a second time, the same way: the "Import Git Repository" panel, not the prompt box. Name this one "${appProject}". Root Directory must be the repository root this time. If the picker opens showing apps/web from last time, go back up and choose the top entry, the one named after the repository itself with a lightning bolt beside it. Framework Preset should then say Vite rather than Next.js. Vercel detects it from the folder: if it is right, it will be greyed out, which is correct rather than broken. Add the five environment variables below.`,
       go: { label: 'Vercel, New Project again', href: 'https://vercel.com/new' },
       copy: [
         { label: 'Project name', value: appProject },
         { label: 'Framework Preset', value: 'Vite' },
         ...envList(app),
       ],
-      watch: `Two things. SITE_DEPLOYMENT_HOST must be exactly ${siteProject}.vercel.app: get it wrong and the new site shows this site's pages instead of its own, with no error to tell you. And as in step 4, the prompt box at the top of that page is v0, which makes new apps rather than importing yours.`,
+      watch: `Three things, and all of them look like something else when they go wrong. Root Directory: leave it as the repository root. Pointing it at a folder that happens to contain a dist, such as packages/ui, deploys that folder as the website and the address then serves raw JavaScript. SITE_DEPLOYMENT_HOST must be exactly ${siteProject}.vercel.app, or the new site shows this site's pages instead of its own with no error at all. And as in step 4, the prompt box at the top of that page is v0, which makes new apps rather than importing yours.`,
     },
     {
       n: 6,
