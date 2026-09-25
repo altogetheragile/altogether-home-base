@@ -25,9 +25,23 @@ export type Step = {
   copy?: { label: string; value: string; secret?: boolean }[];
   /** Said when it is easy to do the right thing and still get it wrong. */
   watch?: string;
+  /** Things only the person can find, asked for here so no later step has to show a placeholder
+   *  and hope somebody notices it is one. */
+  asks?: { field: 'ref' | 'anonKey'; label: string; placeholder: string; help: string }[];
 };
 
-export type Answers = { name: string; domain: string; email: string };
+export type Answers = {
+  name: string; domain: string; email: string;
+  /** Found in step 2, and needed by every command after it. Not secret: it is in the address of
+   *  every request the site makes. */
+  ref?: string;
+  /** Also step 2, also not secret: it ships in the JavaScript of every page. */
+  anonKey?: string;
+};
+
+/** What to show when the answer is not known yet. Never pasted into a command: the step that
+ *  would use it asks for it first. */
+export const UNKNOWN_REF = 'YOUR-PROJECT-REF';
 
 /** Everything derived from the two answers, so no step has to work it out again. */
 export function namesFor(answers: Answers) {
@@ -42,10 +56,11 @@ export function walkthrough(answers: Answers): Step[] {
   const { domain, slug, siteProject, appProject } = namesFor(answers);
   // The environment variables cannot be known until the database exists, so the steps that need
   // them are written to be filled in by the person, with the shape given.
+  const ref = answers.ref?.trim() || UNKNOWN_REF;
   const specs = vercelProjects({
     slug, domain, repo: REPO,
-    supabaseUrl: 'https://YOUR-PROJECT-REF.supabase.co',
-    anonKey: 'YOUR-ANON-KEY',
+    supabaseUrl: `https://${ref}.supabase.co`,
+    anonKey: answers.anonKey?.trim() || 'YOUR-ANON-KEY',
   });
   const site = specs.find((s) => s.role === 'site')!;
   const app = specs.find((s) => s.role === 'app')!;
@@ -53,7 +68,7 @@ export function walkthrough(answers: Answers): Step[] {
   // your-project-ref.supabase.co beside a URL saying YOUR-PROJECT-REF. Two spellings of the same
   // thing, which reads as two different values to somebody who has not done this before.
   const envList = (spec: typeof site) =>
-    Object.entries(spec.env).map(([k, v]) => ({ label: k, value: v.replace(/your-project-ref/gi, 'YOUR-PROJECT-REF') }));
+    Object.entries(spec.env).map(([k, v]) => ({ label: k, value: v.replace(/your-project-ref/gi, UNKNOWN_REF) }));
 
   return [
     {
@@ -66,19 +81,26 @@ export function walkthrough(answers: Answers): Step[] {
     },
     {
       n: 2,
-      title: 'Find its two addresses',
-      body: 'In that new project, open Project Settings, then API. You need two things from that page: the Project URL, and the key labelled anon public. Keep this tab open, because the next steps ask for both.',
+      title: 'Find its two addresses, and paste them here',
+      body: 'In that new project, open Project Settings, then API. Copy the Reference ID and the key labelled anon public, and paste both into the boxes below. Every step after this one then gives you commands and settings you can use as they are, with nothing left to fill in.',
       go: { label: 'Supabase project settings', href: 'https://supabase.com/dashboard/project/_/settings/api' },
-      watch: 'The anon key is the long one that is safe to put in a website. Do not use the service_role key anywhere in these steps.',
+      // The only step that asks for anything. Both are public: the reference is in the address of
+      // every request the site makes, and the anon key ships in the JavaScript of every page.
+      // Neither is stored: they are held while the walk-through is open and forgotten after.
+      asks: [
+        { field: 'ref', label: 'Reference ID', placeholder: 'abcdefghijklmnopqrst', help: 'Twenty lowercase letters. Also the code in this project\u2019s web address.' },
+        { field: 'anonKey', label: 'anon public key', placeholder: 'eyJhbGciOi...', help: 'The long one. Safe to put in a website, which is why it is asked for here.' },
+      ],
+      watch: 'Do not use the service_role key. It is on the same page, it bypasses every security rule, and it must never go into a website.',
     },
     {
       n: 3,
       title: 'Build the tables',
-      body: `This is the one step that needs a terminal, because Supabase offers no way to do it from a web page. It works on its own copy of the code, in a new folder called ${slug}, so that nothing happens to the one you already have. Open Terminal and run these four lines. The last asks for the database password from step 1. YOUR-PROJECT-REF is the code in the project URL from step 2, the part before .supabase.co.`,
+      body: `This is the one step that needs a terminal, because Supabase offers no way to do it from a web page. It works on its own copy of the code, in a new folder called ${slug}, so that nothing happens to the one you already have. Open Terminal and run these four lines. The last asks for the database password from step 1.`,
       copy: [
         { label: 'Get a fresh copy of the code', value: `git clone https://github.com/${REPO}.git ~/${slug}` },
         { label: 'Go into it', value: `cd ~/${slug}` },
-        { label: 'Point it at the new database', value: 'npx supabase link --project-ref YOUR-PROJECT-REF' },
+        { label: 'Point it at the new database', value: `npx supabase link --project-ref ${ref}` },
         { label: 'Create the tables', value: 'npx supabase db push --linked' },
       ],
       watch: `Use a new folder, not the one your own site lives in. Linking changes which database that folder points at, and doing it in ~/altogether-home-base would leave your own site's folder aimed at ${answers.name.trim() || 'the new site'}, so the next change you made would go to the wrong database with nothing to say so.`,
