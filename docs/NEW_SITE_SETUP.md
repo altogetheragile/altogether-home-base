@@ -92,6 +92,25 @@ long-lived branch differing by one file and a merge from `main` before each of i
 
 ---
 
+### 3a2. When A Route Is Live In The Repository And Not On The Site
+
+Seen on 25 September with `/sites`. The rewrite was on `main`, `vercel.ts` produced it, and
+Vercel reported the root project deployed successfully. The live site served the App's shell at
+that address anyway: the deployment had succeeded carrying older routing.
+
+**How to tell**, since an admin-only page answers 404 either way:
+
+```
+curl -so /dev/null -w "%{http_code}" https://<site>/<route>          # 200 means the App answered
+curl -so /dev/null -w "%{http_code}" https://<next-project>/<route>  # what the Site itself says
+```
+
+A Site-owned route answered by the App returns 200 with the SPA shell, because the App answers
+every address. That is the signal: **200 through the domain on a route the Site owns means the
+rewrite is not live**, whatever the deployment says.
+
+**The fix is a redeploy of the root project**, not of the Next one. Any push to `main` causes it.
+
 ### 3b. The Script
 
 Most of the runbook below is now one command.
