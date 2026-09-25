@@ -18,11 +18,21 @@ import { fileURLToPath } from 'url';
 import { createClient } from '@supabase/supabase-js';
 import { Resvg } from '@resvg/resvg-js';
 import { withBrand } from './lib/brandShell.mjs';
+import { withIdentity, SHIPPED } from './lib/shellIdentity.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const DIST = resolve(ROOT, 'dist');
-const SITE_URL = 'https://altogetheragile.com';
+/** This deployment's public address.
+ *
+ *  A second site sets VITE_SITE_URL. Without it every canonical link, og:url and sitemap entry
+ *  this script writes points at altogetheragile.com from somebody else's domain, which tells a
+ *  crawler the site it is reading is a copy of ours. It was a const for long enough that the
+ *  line meant to fix the shell, replaceAll(SHIPPED.url, SITE_URL), was replacing the address
+ *  with itself and reporting success.
+ *
+ *  Matches apps/web/src/lib/seo.tsx, which has read its own env var all along. */
+const SITE_URL = (process.env.VITE_SITE_URL || SHIPPED.url).replace(/\/$/, '');
 
 // Routes the Next.js app serves via routing-config rewrites. Skipped in the static-page loop
 // below (writing a static file would shadow the rewrite) but kept in STATIC_PAGES so they
@@ -95,7 +105,7 @@ let BRAND_OG_IMAGE = `${SITE_URL}/og-image.png`;
  *  them, and that head is what a browser shows before any JavaScript runs, on every page the App
  *  serves. A second site announced itself as AltogetherAgile in the tab for as long as it took
  *  React to hydrate, and in every link preview of an App page. */
-let SITE_COMPANY = 'AltogetherAgile';
+let SITE_COMPANY = SHIPPED.company;
 let SITE_TAGLINE = null;
 
 /** This site's palette and logo, written into the shell as CSS custom properties.
@@ -109,6 +119,28 @@ let SITE_TAGLINE = null;
 let BRAND_CSS = '';
 let BRAND_LOGO = null;
 const brandHead = (html) => withBrand(html, { css: BRAND_CSS, logo: BRAND_LOGO });
+
+/** The same shell, told whose site it is. Applied to both copies: dist/_spa.html, which serves
+ *  every route nothing else claims, and the base every prerendered route is built from. Only the
+ *  second was ever branded, so a prerendered page kept this repository's logo and slogan.
+ *
+ *  A name equal to the shipped one is passed as nothing rather than replaced with itself, so a
+ *  site that has set no name keeps the shell exactly as it is today. */
+/** A shipped string with this site's name in it instead of ours. Titles and descriptions below
+ *  are written as "<Thing> - Altogether Agile", which on a second site names the wrong company
+ *  in the browser tab and in every search result. Only the name is swapped, never a claim. */
+const asThisSite = (text) =>
+  SITE_COMPANY === SHIPPED.company
+    ? text
+    : text.replaceAll(SHIPPED.companySpaced, SITE_COMPANY).replaceAll(SHIPPED.company, SITE_COMPANY);
+
+const identityHead = (html) => withIdentity(html, {
+  url: SITE_URL,
+  company: SITE_COMPANY === SHIPPED.company ? null : SITE_COMPANY,
+  tagline: SITE_TAGLINE,
+  ogImage: BRAND_OG_IMAGE,
+  logo: BRAND_LOGO,
+});
 
 /** Build meta tag block to inject into <head>. */
 function buildMetaTags({ title, description, canonical, ogType = 'website', ogImage, jsonLd }) {
@@ -564,7 +596,7 @@ async function main() {
   }
 
   // Read the base HTML shell
-  const baseHtml = brandHead(readFileSync(resolve(DIST, 'index.html'), 'utf-8'));
+  const baseHtml = brandHead(identityHead(readFileSync(resolve(DIST, 'index.html'), 'utf-8')));
 
   // Fetch all dynamic content in parallel
   const [postsRes, examsRes, templatesRes] = await Promise.all([
@@ -624,8 +656,8 @@ async function main() {
   for (const [route, meta] of Object.entries(STATIC_PAGES)) {
     if (CUT_OVER.includes(route)) continue; // Next-owned route — skip so it does not shadow the rewrite
     const tags = buildMetaTags({
-      title: meta.title,
-      description: meta.description,
+      title: asThisSite(meta.title),
+      description: asThisSite(meta.description),
       canonical: `${SITE_URL}${route === '/' ? '' : route}`,
       ogType: meta.ogType,
       jsonLd: dynamicJsonLd[route] || meta.jsonLd,
@@ -679,17 +711,8 @@ async function main() {
   const indexHtmlPath = resolve(DIST, 'index.html');
   if (existsSync(indexHtmlPath)) {
     // The shell carries this site's name, not this repository's, before it is put in place.
-    let shell = readFileSync(indexHtmlPath, 'utf-8');
-    const before = shell;
-    shell = shell.replaceAll('AltogetherAgile', SITE_COMPANY);
-    if (SITE_TAGLINE) {
-      shell = shell.replace(
-        /content="Expert agile coaching, training, and transformation services to help your organization achieve sustainable success through collaborative practices\."/g,
-        `content="${SITE_TAGLINE.replace(/"/g, '&quot;')}"`,
-      );
-    }
-    shell = shell.replaceAll('https://altogetheragile.com/og-image.png', BRAND_OG_IMAGE);
-    shell = shell.replaceAll('https://altogetheragile.com', SITE_URL);
+    const before = readFileSync(indexHtmlPath, 'utf-8');
+    let shell = identityHead(before);
     shell = brandHead(shell);
     writeFileSync(resolve(DIST, '_spa.html'), shell, 'utf-8');
     if (shell !== before) console.log(`  ok   SPA shell head rewritten for ${SITE_COMPANY}`);
