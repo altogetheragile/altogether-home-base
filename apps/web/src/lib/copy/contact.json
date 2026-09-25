@@ -29,6 +29,31 @@
       "value": "Whether you have a question about our courses, want to discuss coaching, or just want to say hello - we'd love to hear from you.",
       "label": "Hero introduction",
       "hint": "The pale hero above the form"
+    },
+    "contact.cards.email": {
+      "value": "Email",
+      "label": "Email card heading",
+      "hint": "Above your email address. The address itself is not typed here: it comes from the contact email on the This Site tab, so it is the same everywhere it appears. Leave that empty and this card does not show."
+    },
+    "contact.cards.phone": {
+      "value": "Phone",
+      "label": "Phone card heading",
+      "hint": "Only shown when a phone number is set on the This Site tab."
+    },
+    "contact.cards.location": {
+      "value": "Location",
+      "label": "Location card heading",
+      "hint": "Only shown when a location is set on the This Site tab."
+    },
+    "contact.cards.booking": {
+      "value": "Book a Call",
+      "label": "Booking card heading",
+      "hint": "The card that links to your booking page."
+    },
+    "contact.cards.bookingNote": {
+      "value": "Free 30-min chemistry session",
+      "label": "What the call is",
+      "hint": "One short line under the booking heading. Say how long it takes and what it costs, because that is what somebody hesitating wants to know."
     }
   }
 }
