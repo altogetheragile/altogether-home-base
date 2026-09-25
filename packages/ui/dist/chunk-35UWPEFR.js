@@ -1,5 +1,5 @@
-import { ItemRows } from './chunk-7ZDCJ4HW.js';
-import { PictureBox } from './chunk-EMPC6OPA.js';
+import { ItemRows } from './chunk-45RCNCX5.js';
+import { PictureBox } from './chunk-CXINH5NJ.js';
 import { SectionOrder } from './chunk-7W7E3UZ3.js';
 import { SECTIONS_FOR_PAGE } from './chunk-6VYT3VGP.js';
 import { ColourBox } from './chunk-M5XDZR2B.js';

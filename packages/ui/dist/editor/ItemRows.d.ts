@@ -1,5 +1,7 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { ItemField } from './fields.js';
+import '../brand.js';
+import '../tokens.js';
 
 declare function ItemRows({ value, fields, onChange, upload, }: {
     value: string;

@@ -13,6 +13,12 @@
 // A field now says what it is, and the editor draws the right control. "items" is the one that
 // earns its keep: a list of objects, stored as JSON, which the editor shows as rows with named
 // boxes and Add and Remove buttons. Adding a fourth statistic stops being a code change.
+// `picture` and `Picture` live in brand.ts now, beside the code that reads a stored image back.
+// They were here, next to the box that writes them, and the readers on the other side of the
+// application never saw them: every uploaded brand image was written as {src, alt} and read as
+// though it were a bare URL, so it was dropped.
+export { picture, type Picture } from '../brand';
+
 export type FieldType =
   | 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch' | 'sections';
 
@@ -77,26 +83,6 @@ export const list = (text: string) => text.split('\n').map((l) => l.trim()).filt
  *
  *  Entries missing a required field are dropped rather than rendered half-built, for the same
  *  reason the pipe parser dropped short lines: a row typed by a person is a row mid-typing. */
-/** A picture and the words that stand in for it.
- *
- *  Stored together, as one value, deliberately. Alt text kept in a separate key beside the image
- *  is alt text that goes stale the first time somebody changes the picture and not the sentence,
- *  and nobody notices because the only people who read it cannot see the picture. */
-export type Picture = { src: string; alt: string };
-
-export function picture(text: string): Picture | null {
-  if (!text?.trim()) return null;
-  try {
-    const p = JSON.parse(text);
-    if (p && typeof p === 'object' && typeof p.src === 'string' && p.src.trim()) {
-      return { src: p.src.trim(), alt: typeof p.alt === 'string' ? p.alt : '' };
-    }
-  } catch {
-    // A bare URL, which is what a hand-edited value tends to be.
-    if (/^(https?:\/\/|\/)\S+$/.test(text.trim())) return { src: text.trim(), alt: '' };
-  }
-  return null;
-}
 
 export function items<T extends Record<string, string>>(text: string, required: string[] = []): T[] {
   if (!text?.trim()) return [];

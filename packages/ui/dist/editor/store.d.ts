@@ -1,4 +1,6 @@
 import { CopyEntry, CopyRegistry } from './fields.js';
+import '../brand.js';
+import '../tokens.js';
 
 /** The slice of a Supabase client this needs. Typed structurally so both apps' clients fit
  *  without either of them having to agree on a version. */

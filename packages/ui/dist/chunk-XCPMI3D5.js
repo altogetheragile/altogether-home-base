@@ -52,6 +52,18 @@ var defaultImages = {
 var ABSOLUTE = /^https?:\/\/\S+$/i;
 var OWN_PATH = /^\/[^\s/][^\s]*$/;
 var mustBeAbsolute = (name) => name === "ogImage";
+function picture(text) {
+  if (!text?.trim()) return null;
+  try {
+    const p = JSON.parse(text);
+    if (p && typeof p === "object" && typeof p.src === "string" && p.src.trim()) {
+      return { src: p.src.trim(), alt: typeof p.alt === "string" ? p.alt : "" };
+    }
+  } catch {
+    if (/^(https?:\/\/|\/)\S+$/.test(text.trim())) return { src: text.trim(), alt: "" };
+  }
+  return null;
+}
 function isPicture(value, name) {
   const v = value.trim();
   if (ABSOLUTE.test(v)) return true;
@@ -63,7 +75,8 @@ function resolveImages(overrides) {
   if (!given) return out;
   for (const name of Object.keys(defaultImages)) {
     const v = given[name];
-    if (typeof v === "string" && isPicture(v, name)) out[name] = v.trim();
+    const src = typeof v === "string" ? picture(v)?.src : void 0;
+    if (src && isPicture(src, name)) out[name] = src;
   }
   return out;
 }
@@ -86,8 +99,9 @@ function wordmarkOf(overrides, companyName) {
 }
 function logoOf(overrides, companyName) {
   const given = overrides?.images?.logo;
-  if (typeof given === "string" && isPicture(given, "logo")) {
-    return { mode: "image", src: given.trim() };
+  const src = typeof given === "string" ? picture(given)?.src : void 0;
+  if (src && isPicture(src, "logo")) {
+    return { mode: "image", src };
   }
   const text = companyName?.trim();
   return text ? { mode: "wordmark", text } : { mode: "image", src: defaultImages.logo };
@@ -100,4 +114,4 @@ function tint(hex, strength = 0.12) {
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };
+export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };

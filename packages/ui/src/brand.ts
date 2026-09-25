@@ -115,6 +115,27 @@ const mustBeAbsolute = (name: ImageName) => name === 'ogImage';
  *  very picture it was trying to set. The moment those defaults went empty, so a second site would
  *  not wear this one's face, the founder photograph disappeared from the live site and the
  *  override meant to keep it turned out never to have been read. */
+/** A picture and the words that stand in for it.
+ *
+ *  Stored together, as one value, deliberately. Alt text kept in a separate key beside the image
+ *  is alt text that goes stale the first time somebody changes the picture and not the sentence,
+ *  and nobody notices because the only people who read it cannot see the picture. */
+export type Picture = { src: string; alt: string };
+
+export function picture(text: string): Picture | null {
+  if (!text?.trim()) return null;
+  try {
+    const p = JSON.parse(text);
+    if (p && typeof p === 'object' && typeof p.src === 'string' && p.src.trim()) {
+      return { src: p.src.trim(), alt: typeof p.alt === 'string' ? p.alt : '' };
+    }
+  } catch {
+    // A bare URL, which is what a hand-edited value tends to be.
+    if (/^(https?:\/\/|\/)\S+$/.test(text.trim())) return { src: text.trim(), alt: '' };
+  }
+  return null;
+}
+
 export function isPicture(value: string, name?: ImageName): boolean {
   const v = value.trim();
   if (ABSOLUTE.test(v)) return true;
@@ -127,7 +148,11 @@ export function resolveImages(overrides?: BrandImageOverrides): Record<ImageName
   if (!given) return out;
   for (const name of Object.keys(defaultImages) as ImageName[]) {
     const v = given[name];
-    if (typeof v === 'string' && isPicture(v, name)) out[name] = v.trim();
+    // Either shape: the {src, alt} the picture box writes, or the bare URL a hand-edited value
+    // and everything seeded before the box existed still is. Reading only the second is why an
+    // uploaded founder photograph went in, came back, and was thrown away without a word.
+    const src = typeof v === 'string' ? picture(v)?.src : undefined;
+    if (src && isPicture(src, name)) out[name] = src;
   }
   return out;
 }
@@ -198,8 +223,9 @@ export function wordmarkOf(overrides: BrandWordmarkOverrides, companyName?: stri
 /** What to render where the logo goes. `companyName` is only used when no logo is configured. */
 export function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo {
   const given = overrides?.images?.logo;
-  if (typeof given === 'string' && isPicture(given, 'logo')) {
-    return { mode: 'image', src: given.trim() };
+  const src = typeof given === 'string' ? picture(given)?.src : undefined;
+  if (src && isPicture(src, 'logo')) {
+    return { mode: 'image', src };
   }
   const text = companyName?.trim();
   return text ? { mode: 'wordmark', text } : { mode: 'image', src: defaultImages.logo };
