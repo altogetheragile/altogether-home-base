@@ -29,7 +29,9 @@ describe('the list of Site-owned URLs', () => {
   it('claims the pages under a prefix rewrite', () => {
     expect(isSiteOwned('/blog/pdca-cycle-explained')).toBe(true);
     expect(isSiteOwned('/exams/agilepm-practitioner-paper-1')).toBe(true);
-    expect(isSiteOwned('/courses/agilepm-foundation')).toBe(true);
+    // Courses and workshops alike: '/courses' was wrong for half of them and is now a redirect.
+    expect(isSiteOwned('/training/agilepm-foundation')).toBe(true);
+    expect(isSiteOwned('/courses/agilepm-foundation')).toBe(false);
   });
 
   // the routing config rewrites `/events` alone, so the detail pages under it are still the App's. Getting

@@ -78,6 +78,26 @@
       "statusCode": 301
     },
     {
+      "source": "/courses/:path*",
+      "destination": "/training/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/courses/:path*/",
+      "destination": "/training/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/events/learn/:path*",
+      "destination": "/training/:path*",
+      "statusCode": 301
+    },
+    {
+      "source": "/events/learn/:path*/",
+      "destination": "/training/:path*",
+      "statusCode": 301
+    },
+    {
       "source": "/schedule",
       "destination": "/events",
       "statusCode": 301
@@ -633,8 +653,8 @@
       "destination": "https://altogether-home-base-web-next.vercel.app/events"
     },
     {
-      "source": "/courses/:path*",
-      "destination": "https://altogether-home-base-web-next.vercel.app/courses/:path*"
+      "source": "/training/:path*",
+      "destination": "https://altogether-home-base-web-next.vercel.app/training/:path*"
     },
     {
       "source": "/about",

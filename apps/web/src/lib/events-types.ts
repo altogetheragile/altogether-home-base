@@ -107,7 +107,7 @@ export function toCardModel(t: EventTemplate, feedback: CourseFeedback[], now: n
     // Scheduled courses link to the SPA registration page; unscheduled to the Next course page.
     // By slug, falling back to the uuid: a row with no slug still has to be reachable, and the
     // page resolves either.
-    href: first ? `/events/${first.eventId}` : `/courses/${t.slug || t.id}`,
+    href: first ? `/events/${first.eventId}` : `/training/${t.slug || t.id}`,
     testimonial: topFeedbackFor(t.title, feedback),
   };
 }
