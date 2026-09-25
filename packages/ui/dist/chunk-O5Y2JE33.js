@@ -3,14 +3,6 @@ var navigationRegistry = {
   "page": "navigation",
   "label": "Navigation and Footer",
   "entries": {
-    "nav.resources.visible": {
-      "value": "",
-      "label": "Show the Resources menu",
-      "hint": "Off, and the drop-down goes, along with everything inside it. The pages themselves stay reachable by their own addresses.",
-      "type": "switch",
-      "store": "column",
-      "path": "show_resources"
-    },
     "nav.events": {
       "value": "Events",
       "label": "Events link",
@@ -41,6 +33,14 @@ var navigationRegistry = {
       "label": "Resources menu",
       "hint": "The drop-down that gathers the blog, the knowledge base and anything else switched on"
     },
+    "nav.resources.visible": {
+      "value": "",
+      "label": "Show the Resources menu, and everything in it",
+      "hint": "The whole drop-down, not one page in it. Off, and all five go at once, along with the menu itself. To hide a single page, use the switch under that page's own label below. The pages stay reachable by their own addresses either way.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_resources"
+    },
     "nav.knowledge": {
       "value": "Knowledge Base",
       "label": "Knowledge base link",
@@ -48,7 +48,7 @@ var navigationRegistry = {
     },
     "nav.knowledge.visible": {
       "value": "",
-      "label": "Show it",
+      "label": "Show the knowledge base",
       "hint": "Off, and the knowledge base leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
@@ -61,7 +61,7 @@ var navigationRegistry = {
     },
     "nav.blog.visible": {
       "value": "",
-      "label": "Show it",
+      "label": "Show the blog",
       "hint": "Off, and the blog leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
@@ -74,7 +74,7 @@ var navigationRegistry = {
     },
     "nav.exams.visible": {
       "value": "",
-      "label": "Show it",
+      "label": "Show the practice exams",
       "hint": "Off, and the practice exams leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
@@ -87,7 +87,7 @@ var navigationRegistry = {
     },
     "nav.ai_tools.visible": {
       "value": "",
-      "label": "Show it",
+      "label": "Show the AI tools",
       "hint": "Off, and the AI tools leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
@@ -100,7 +100,7 @@ var navigationRegistry = {
     },
     "nav.flow_game.visible": {
       "value": "",
-      "label": "Show it",
+      "label": "Show the flow game",
       "hint": "Off, and the flow game leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
