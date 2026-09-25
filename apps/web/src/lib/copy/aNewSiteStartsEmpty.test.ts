@@ -40,6 +40,8 @@ const BLANK_BY_DESIGN = [
   // which is the right thing for a site that has not said who it is for yet.
   'home.personas.items',
   'about.philosophy.items',
+  // The other sites you look after. A new site looks after nothing, and certainly not this one.
+  'site.managed',
   // Was eighteen numbered keys, fixed at exactly two services, each named after its position
   // rather than what it was. Somebody else's offering and somebody else's prices either way.
   'coaching.services',

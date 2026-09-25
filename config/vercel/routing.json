@@ -29,7 +29,7 @@
       ]
     },
     {
-      "source": "/((?!exams|blog|events|courses|about|coaching|testimonials|contact|setup).+)",
+      "source": "/((?!exams|blog|events|courses|about|coaching|testimonials|contact|setup|sites).+)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -38,7 +38,7 @@
       ]
     },
     {
-      "source": "/(exams|blog|events|courses|about|coaching|testimonials|contact|setup)(/.*)?",
+      "source": "/(exams|blog|events|courses|about|coaching|testimonials|contact|setup|sites)(/.*)?",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -675,6 +675,10 @@
     {
       "source": "/setup",
       "destination": "https://altogether-home-base-web-next.vercel.app/setup"
+    },
+    {
+      "source": "/sites",
+      "destination": "https://altogether-home-base-web-next.vercel.app/sites"
     },
     {
       "source": "/_next/:path*",
