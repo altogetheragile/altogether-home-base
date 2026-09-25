@@ -125,7 +125,7 @@ describe('every menu flag', () => {
 
 // ============= The two routers must agree =============
 //
-// The Site answers /about, /coaching, /events, /blog, /exams and /courses; the App answers the
+// The Site answers /about, /coaching, /events, /blog, /exams and /training; the App answers the
 // rest. Both gate on the same site_settings columns, and neither can import the other's source, so
 // the Site repeats the defaults in apps/web/src/lib/module-gate.ts.
 //
