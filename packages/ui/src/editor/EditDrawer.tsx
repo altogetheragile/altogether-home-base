@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { FieldControl } from './FieldControl';
 import type { CopyField, SaveResult } from './store';
+import { groupFields, filterGroups } from './grouping';
 
 /** Everything the drawer cannot know for itself.
  *
@@ -98,6 +99,15 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  /** What somebody has typed to find a field. For thirty-eight boxes this beats any amount of
+   *  well-organised scrolling, so it sits above the groups rather than inside them. */
+  const [query, setQuery] = useState('');
+  /** Groups the person has folded away. Closed rather than open, so reopening the drawer leaves
+   *  everything where they put it; the initial state is decided once, when the fields arrive. */
+  const [closed, setClosed] = useState<Set<string>>(new Set());
+  /** Which tab's folds have been set up, so a person's own folding survives a save and a reload
+   *  and is only redecided when they move to a different tab. */
+  const foldedFor = useRef<string | null>(null);
   const [pending, startSaving] = useTransition();
 
   const pageHere = host.pageForPath(pathname);
@@ -141,6 +151,17 @@ export function EditDrawer({ host }: { host: EditorHost }) {
     setTab(null);
   }, [pathname]);
 
+  // A long page opens folded except for its first part, because a column of thirty-eight boxes
+  // with headings in it is still a column of thirty-eight boxes. A short one opens as it always
+  // did: folding four fields into two groups hides things for no gain.
+  useEffect(() => {
+    if (!fields || foldedFor.current === active) return;
+    foldedFor.current = active;
+    setQuery('');
+    const all = groupFields(fields);
+    setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : new Set());
+  }, [fields, active]);
+
   const draft = drafts[active] ?? {};
   const setField = (key: string, value: string) =>
     setDrafts((d) => ({ ...d, [active]: { ...(d[active] ?? {}), [key]: value } }));
@@ -163,6 +184,103 @@ export function EditDrawer({ host }: { host: EditorHost }) {
     // The page is server-rendered: without this the admin sees the words they just replaced.
     host.refresh();
     setFields(await host.load(active));
+  };
+
+  // Grouped by the middle of each key, which is where the registry already says a field belongs.
+  // A page with too few fields to get lost in is left as one list: a single heading over
+  // everything is a landmark that marks nothing.
+  const groups = groupFields(fields ?? []);
+  const shown = filterGroups(groups, query);
+  const hits = shown.reduce((n, g) => n + g.fields.length, 0);
+  const searchable = (fields?.length ?? 0) > 8;
+
+  /** One field, wherever it is shown: inside a group, or flat when a page has too few to be
+   *  worth grouping, or in a list of search results. Three callers, one appearance. */
+  const renderField = (f: CopyField) => {
+          const value = draft[f.key] ?? f.value;
+          // Only offer to put something back when there is something to put back.
+          //
+          // This read `f.value !== f.shipped`, from when every shipped value was this site's own
+          // wording. Now that a new site ships blank, the shipped value for the timeline, the
+          // badges and the credentials is the empty string, so on a site that has filled them in
+          // a button saying "Put back the wording this site came with" quietly meant "delete all
+          // of this", in one click, with nothing to undo it.
+          const canRestore = f.shipped.trim() !== '' && f.value !== f.shipped;
+          return (
+            <div key={f.key} className="mb-5">
+              <div className="mb-1 flex items-baseline justify-between gap-2">
+                <label htmlFor={f.key} className="text-sm font-medium text-foreground">
+                  {f.label}
+                </label>
+                {f.undo && (
+                  <button
+                    onClick={() => undo(f.key)}
+                    disabled={pending}
+                    className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    title={`Go back to: ${f.undo.value.slice(0, 120) || '(empty)'}`}
+                  >
+                    <Undo2 size={11} /> Undo
+                  </button>
+                )}
+                {canRestore && (
+                  <button
+                    onClick={() => putBack(f.key)}
+                    disabled={pending}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    title="Back to the wording this site was built with, in one step"
+                  >
+                    <RotateCcw size={11} /> Original
+                  </button>
+                )}
+              </div>
+              <p className="mb-1.5 text-xs text-muted-foreground">{f.hint}</p>
+              {f.draft && (
+                <p className="mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                  <span className="flex-1">
+                    {/* The box below shows the published value, because that is what this field
+                        currently is. Saying what the draft would make it, rather than swapping
+                        the box's contents, keeps "what is live" answerable at a glance. */}
+                    <span className="font-medium">Draft waiting:</span>{' '}
+                    {f.type === 'sections'
+                      ? describeOrder(f.draft.value)
+                      : f.type === 'items'
+                      ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? '' : 's'}`
+                      : f.draft.value.trim()
+                        ? `“${f.draft.value.replace(/\n/g, ' ').slice(0, 80)}”`
+                        : 'empty'}
+                  </span>
+                  <button
+                    onClick={() => discard(f.key)}
+                    disabled={pending}
+                    className="shrink-0 underline hover:no-underline disabled:opacity-50"
+                  >
+                    Discard
+                  </button>
+                </p>
+              )}
+              {f.undo && (
+                <p className="mb-1.5 truncate text-xs text-muted-foreground/80">
+                  <span className="font-medium">Was:</span>{' '}
+                  {/* A JSON blob quoted back at somebody says nothing. How many there were says
+                      what pressing Undo will actually do. */}
+                  {f.type === 'sections'
+                    ? describeOrder(f.undo.value)
+                    : f.type === 'items'
+                    ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? '' : 's'}`
+                    : f.undo.value.trim()
+                      ? `“${f.undo.value.replace(/\n/g, ' ').slice(0, 90)}”`
+                      : 'empty'}
+                </p>
+              )}
+              <FieldControl
+                field={f}
+                value={value}
+                page={active}
+                onChange={(next) => setField(f.key, next)}
+                upload={host.upload}
+              />
+            </div>
+          );
   };
 
   const save = () => {
@@ -325,92 +443,64 @@ export function EditDrawer({ host }: { host: EditorHost }) {
         {fields?.length === 0 && (
           <p className="text-sm text-muted-foreground">There is nothing editable on this page yet.</p>
         )}
-        {fields?.map((f) => {
-          const value = draft[f.key] ?? f.value;
-          // Only offer to put something back when there is something to put back.
-          //
-          // This read `f.value !== f.shipped`, from when every shipped value was this site's own
-          // wording. Now that a new site ships blank, the shipped value for the timeline, the
-          // badges and the credentials is the empty string, so on a site that has filled them in
-          // a button saying "Put back the wording this site came with" quietly meant "delete all
-          // of this", in one click, with nothing to undo it.
-          const canRestore = f.shipped.trim() !== '' && f.value !== f.shipped;
-          return (
-            <div key={f.key} className="mb-5">
-              <div className="mb-1 flex items-baseline justify-between gap-2">
-                <label htmlFor={f.key} className="text-sm font-medium text-foreground">
-                  {f.label}
-                </label>
-                {f.undo && (
-                  <button
-                    onClick={() => undo(f.key)}
-                    disabled={pending}
-                    className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    title={`Go back to: ${f.undo.value.slice(0, 120) || '(empty)'}`}
-                  >
-                    <Undo2 size={11} /> Undo
-                  </button>
-                )}
-                {canRestore && (
-                  <button
-                    onClick={() => putBack(f.key)}
-                    disabled={pending}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                    title="Back to the wording this site was built with, in one step"
-                  >
-                    <RotateCcw size={11} /> Original
-                  </button>
-                )}
-              </div>
-              <p className="mb-1.5 text-xs text-muted-foreground">{f.hint}</p>
-              {f.draft && (
-                <p className="mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-                  <span className="flex-1">
-                    {/* The box below shows the published value, because that is what this field
-                        currently is. Saying what the draft would make it, rather than swapping
-                        the box's contents, keeps "what is live" answerable at a glance. */}
-                    <span className="font-medium">Draft waiting:</span>{' '}
-                    {f.type === 'sections'
-                      ? describeOrder(f.draft.value)
-                      : f.type === 'items'
-                      ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? '' : 's'}`
-                      : f.draft.value.trim()
-                        ? `“${f.draft.value.replace(/\n/g, ' ').slice(0, 80)}”`
-                        : 'empty'}
-                  </span>
-                  <button
-                    onClick={() => discard(f.key)}
-                    disabled={pending}
-                    className="shrink-0 underline hover:no-underline disabled:opacity-50"
-                  >
-                    Discard
-                  </button>
-                </p>
-              )}
-              {f.undo && (
-                <p className="mb-1.5 truncate text-xs text-muted-foreground/80">
-                  <span className="font-medium">Was:</span>{' '}
-                  {/* A JSON blob quoted back at somebody says nothing. How many there were says
-                      what pressing Undo will actually do. */}
-                  {f.type === 'sections'
-                    ? describeOrder(f.undo.value)
-                    : f.type === 'items'
-                    ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? '' : 's'}`
-                    : f.undo.value.trim()
-                      ? `“${f.undo.value.replace(/\n/g, ' ').slice(0, 90)}”`
-                      : 'empty'}
-                </p>
-              )}
-              <FieldControl
-                field={f}
-                value={value}
-                page={active}
-                onChange={(next) => setField(f.key, next)}
-                upload={host.upload}
+        {searchable && fields && fields.length > 0 && (
+          <div className="mb-4">
+            <div className="relative">
+              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Find among ${fields.length} things you can change`}
+                aria-label="Find a field"
+                className="w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-7 text-sm"
               />
+              {query && (
+                <button
+                  onClick={() => setQuery('')}
+                  aria-label="Clear"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                >
+                  <X size={12} />
+                </button>
+              )}
             </div>
-          );
-        })}
+            {query && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {hits === 0 ? 'Nothing here matches that.' : `${hits} of ${fields.length}`}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* One list when there is nothing to group, groups when there is. While somebody is
+            searching every group stands open: folding away a result is hiding the thing they
+            just asked for. */}
+        {groups.length === 0
+          ? fields?.map(renderField)
+          : shown.map((g) => {
+              const open = query.trim() !== '' || !closed.has(g.name);
+              const unsaved = g.fields.some((f) => f.key in draft);
+              return (
+                <section key={g.name} className="mb-2 border-b border-border/60 last:border-b-0">
+                  <button
+                    onClick={() => setClosed((c) => {
+                      const next = new Set(c);
+                      if (next.has(g.name)) next.delete(g.name); else next.add(g.name);
+                      return next;
+                    })}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-2 py-2.5 text-left text-sm font-medium text-foreground"
+                  >
+                    <ChevronDown size={13} className={`shrink-0 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+                    <span className="flex-1">{g.name}</span>
+                    {/* So a folded group cannot quietly hold something you typed and forgot. */}
+                    {unsaved && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="unsaved changes" />}
+                    <span className="shrink-0 text-xs font-normal text-muted-foreground">{g.fields.length}</span>
+                  </button>
+                  {open && <div className="pb-1 pl-5">{g.fields.map(renderField)}</div>}
+                </section>
+              );
+            })}
       </div>
 
       <footer className="border-t border-border px-4 py-3">

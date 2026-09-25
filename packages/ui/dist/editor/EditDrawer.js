@@ -1,16 +1,17 @@
+import { groupFields, filterGroups } from '../chunk-UKMXV4ZJ.js';
 import { FieldControl } from '../chunk-35UWPEFR.js';
 import '../chunk-45RCNCX5.js';
 import '../chunk-CXINH5NJ.js';
 import '../chunk-7W7E3UZ3.js';
-import '../chunk-VMPF3FHA.js';
 import '../chunk-6VYT3VGP.js';
+import '../chunk-VMPF3FHA.js';
 import '../chunk-XCPMI3D5.js';
 import '../chunk-63HQX2YB.js';
 import '../chunk-M5XDZR2B.js';
 import '../chunk-BLD3MESD.js';
 import '../chunk-TWTRORN3.js';
-import { useState, useTransition, useEffect, useRef } from 'react';
-import { Pencil, X, EyeOff, Eye, Loader2, Undo2, RotateCcw, Check } from 'lucide-react';
+import { useState, useRef, useTransition, useEffect } from 'react';
+import { Pencil, X, EyeOff, Eye, Loader2, Search, ChevronDown, Check, Undo2, RotateCcw } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 
 function describeOrder(value) {
@@ -40,6 +41,9 @@ function EditDrawer({ host }) {
   const [drafts, setDrafts] = useState({});
   const [error, setError] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [query, setQuery] = useState("");
+  const [closed, setClosed] = useState(/* @__PURE__ */ new Set());
+  const foldedFor = useRef(null);
   const [pending, startSaving] = useTransition();
   const pageHere = host.pageForPath(pathname);
   const asked = host.openAt && (host.openAt === pageHere || host.alwaysOffered.some((t) => t.page === host.openAt)) ? host.openAt : null;
@@ -64,6 +68,13 @@ function EditDrawer({ host }) {
     setOpen(false);
     setTab(null);
   }, [pathname]);
+  useEffect(() => {
+    if (!fields || foldedFor.current === active) return;
+    foldedFor.current = active;
+    setQuery("");
+    const all = groupFields(fields);
+    setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : /* @__PURE__ */ new Set());
+  }, [fields, active]);
   const draft = drafts[active] ?? {};
   const setField = (key, value) => setDrafts((d) => ({ ...d, [active]: { ...d[active] ?? {}, [key]: value } }));
   const clearDraft = () => setDrafts((d) => ({ ...d, [active]: {} }));
@@ -77,6 +88,77 @@ function EditDrawer({ host }) {
     setTimeout(() => setSaved(false), 2e3);
     host.refresh();
     setFields(await host.load(active));
+  };
+  const groups = groupFields(fields ?? []);
+  const shown = filterGroups(groups, query);
+  const hits = shown.reduce((n, g) => n + g.fields.length, 0);
+  const searchable = (fields?.length ?? 0) > 8;
+  const renderField = (f) => {
+    const value = draft[f.key] ?? f.value;
+    const canRestore = f.shipped.trim() !== "" && f.value !== f.shipped;
+    return /* @__PURE__ */ jsxs("div", { className: "mb-5", children: [
+      /* @__PURE__ */ jsxs("div", { className: "mb-1 flex items-baseline justify-between gap-2", children: [
+        /* @__PURE__ */ jsx("label", { htmlFor: f.key, className: "text-sm font-medium text-foreground", children: f.label }),
+        f.undo && /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: () => undo(f.key),
+            disabled: pending,
+            className: "flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground",
+            title: `Go back to: ${f.undo.value.slice(0, 120) || "(empty)"}`,
+            children: [
+              /* @__PURE__ */ jsx(Undo2, { size: 11 }),
+              " Undo"
+            ]
+          }
+        ),
+        canRestore && /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: () => putBack(f.key),
+            disabled: pending,
+            className: "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground",
+            title: "Back to the wording this site was built with, in one step",
+            children: [
+              /* @__PURE__ */ jsx(RotateCcw, { size: 11 }),
+              " Original"
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx("p", { className: "mb-1.5 text-xs text-muted-foreground", children: f.hint }),
+      f.draft && /* @__PURE__ */ jsxs("p", { className: "mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900", children: [
+        /* @__PURE__ */ jsxs("span", { className: "flex-1", children: [
+          /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Draft waiting:" }),
+          " ",
+          f.type === "sections" ? describeOrder(f.draft.value) : f.type === "items" ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? "" : "s"}` : f.draft.value.trim() ? `\u201C${f.draft.value.replace(/\n/g, " ").slice(0, 80)}\u201D` : "empty"
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => discard(f.key),
+            disabled: pending,
+            className: "shrink-0 underline hover:no-underline disabled:opacity-50",
+            children: "Discard"
+          }
+        )
+      ] }),
+      f.undo && /* @__PURE__ */ jsxs("p", { className: "mb-1.5 truncate text-xs text-muted-foreground/80", children: [
+        /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Was:" }),
+        " ",
+        f.type === "sections" ? describeOrder(f.undo.value) : f.type === "items" ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? "" : "s"}` : f.undo.value.trim() ? `\u201C${f.undo.value.replace(/\n/g, " ").slice(0, 90)}\u201D` : "empty"
+      ] }),
+      /* @__PURE__ */ jsx(
+        FieldControl,
+        {
+          field: f,
+          value,
+          page: active,
+          onChange: (next) => setField(f.key, next),
+          upload: host.upload
+        }
+      )
+    ] }, f.key);
   };
   const save = () => {
     setError(null);
@@ -229,72 +311,56 @@ function EditDrawer({ host }) {
         " Reading this page\u2019s words"
       ] }),
       fields?.length === 0 && /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "There is nothing editable on this page yet." }),
-      fields?.map((f) => {
-        const value = draft[f.key] ?? f.value;
-        const canRestore = f.shipped.trim() !== "" && f.value !== f.shipped;
-        return /* @__PURE__ */ jsxs("div", { className: "mb-5", children: [
-          /* @__PURE__ */ jsxs("div", { className: "mb-1 flex items-baseline justify-between gap-2", children: [
-            /* @__PURE__ */ jsx("label", { htmlFor: f.key, className: "text-sm font-medium text-foreground", children: f.label }),
-            f.undo && /* @__PURE__ */ jsxs(
-              "button",
-              {
-                onClick: () => undo(f.key),
-                disabled: pending,
-                className: "flex shrink-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground",
-                title: `Go back to: ${f.undo.value.slice(0, 120) || "(empty)"}`,
-                children: [
-                  /* @__PURE__ */ jsx(Undo2, { size: 11 }),
-                  " Undo"
-                ]
-              }
-            ),
-            canRestore && /* @__PURE__ */ jsxs(
-              "button",
-              {
-                onClick: () => putBack(f.key),
-                disabled: pending,
-                className: "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground",
-                title: "Back to the wording this site was built with, in one step",
-                children: [
-                  /* @__PURE__ */ jsx(RotateCcw, { size: 11 }),
-                  " Original"
-                ]
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsx("p", { className: "mb-1.5 text-xs text-muted-foreground", children: f.hint }),
-          f.draft && /* @__PURE__ */ jsxs("p", { className: "mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900", children: [
-            /* @__PURE__ */ jsxs("span", { className: "flex-1", children: [
-              /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Draft waiting:" }),
-              " ",
-              f.type === "sections" ? describeOrder(f.draft.value) : f.type === "items" ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? "" : "s"}` : f.draft.value.trim() ? `\u201C${f.draft.value.replace(/\n/g, " ").slice(0, 80)}\u201D` : "empty"
-            ] }),
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                onClick: () => discard(f.key),
-                disabled: pending,
-                className: "shrink-0 underline hover:no-underline disabled:opacity-50",
-                children: "Discard"
-              }
-            )
-          ] }),
-          f.undo && /* @__PURE__ */ jsxs("p", { className: "mb-1.5 truncate text-xs text-muted-foreground/80", children: [
-            /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Was:" }),
-            " ",
-            f.type === "sections" ? describeOrder(f.undo.value) : f.type === "items" ? `${countItems(f.undo.value)} item${countItems(f.undo.value) === 1 ? "" : "s"}` : f.undo.value.trim() ? `\u201C${f.undo.value.replace(/\n/g, " ").slice(0, 90)}\u201D` : "empty"
-          ] }),
+      searchable && fields && fields.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mb-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "relative", children: [
+          /* @__PURE__ */ jsx(Search, { size: 13, className: "pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" }),
           /* @__PURE__ */ jsx(
-            FieldControl,
+            "input",
             {
-              field: f,
-              value,
-              page: active,
-              onChange: (next) => setField(f.key, next),
-              upload: host.upload
+              value: query,
+              onChange: (e) => setQuery(e.target.value),
+              placeholder: `Find among ${fields.length} things you can change`,
+              "aria-label": "Find a field",
+              className: "w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-7 text-sm"
+            }
+          ),
+          query && /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => setQuery(""),
+              "aria-label": "Clear",
+              className: "absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground",
+              children: /* @__PURE__ */ jsx(X, { size: 12 })
             }
           )
-        ] }, f.key);
+        ] }),
+        query && /* @__PURE__ */ jsx("p", { className: "mt-1.5 text-xs text-muted-foreground", children: hits === 0 ? "Nothing here matches that." : `${hits} of ${fields.length}` })
+      ] }),
+      groups.length === 0 ? fields?.map(renderField) : shown.map((g) => {
+        const open2 = query.trim() !== "" || !closed.has(g.name);
+        const unsaved = g.fields.some((f) => f.key in draft);
+        return /* @__PURE__ */ jsxs("section", { className: "mb-2 border-b border-border/60 last:border-b-0", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => setClosed((c) => {
+                const next = new Set(c);
+                if (next.has(g.name)) next.delete(g.name);
+                else next.add(g.name);
+                return next;
+              }),
+              "aria-expanded": open2,
+              className: "flex w-full items-center gap-2 py-2.5 text-left text-sm font-medium text-foreground",
+              children: [
+                /* @__PURE__ */ jsx(ChevronDown, { size: 13, className: `shrink-0 text-muted-foreground transition-transform ${open2 ? "" : "-rotate-90"}` }),
+                /* @__PURE__ */ jsx("span", { className: "flex-1", children: g.name }),
+                unsaved && /* @__PURE__ */ jsx("span", { className: "h-1.5 w-1.5 shrink-0 rounded-full bg-primary", "aria-label": "unsaved changes" }),
+                /* @__PURE__ */ jsx("span", { className: "shrink-0 text-xs font-normal text-muted-foreground", children: g.fields.length })
+              ]
+            }
+          ),
+          open2 && /* @__PURE__ */ jsx("div", { className: "pb-1 pl-5", children: g.fields.map(renderField) })
+        ] }, g.name);
       })
     ] }),
     /* @__PURE__ */ jsxs("footer", { className: "border-t border-border px-4 py-3", children: [

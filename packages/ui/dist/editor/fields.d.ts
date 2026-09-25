@@ -37,6 +37,12 @@ interface CopyEntry {
     type?: FieldType;
     /** Required for 'items', ignored otherwise. */
     fields?: ItemField[];
+    /** Which part of the page this belongs to, for the drawer's headings.
+     *
+     *  Normally read from the middle of the key, so there is nothing to keep in step. Said here
+     *  only where that reading would be wrong: a key with no middle part, or one whose middle is
+     *  the field rather than the section it sits in. */
+    group?: string;
     /** For 'switch': what on and off actually mean here.
      *
      *  Every switch was a visibility switch once, so the control says "Visible to everyone" and

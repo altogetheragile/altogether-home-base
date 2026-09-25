@@ -14,28 +14,32 @@ var siteRegistry = {
         { "key": "name", "label": "What you call it", "placeholder": "Her Business", "required": true },
         { "key": "domain", "label": "Address", "placeholder": "herbusiness.com", "required": true },
         { "key": "note", "label": "Note to self", "placeholder": "Whose it is, or what is still to do" }
-      ]
+      ],
+      "group": "Sites you look after"
     },
     "site.company_name": {
       "value": "",
       "label": "Business name",
       "hint": "Shown in the menu when there is no logo, in the footer, in the browser tab and in what Google indexes.",
       "store": "column",
-      "path": "company_name"
+      "path": "company_name",
+      "group": "What this site is called"
     },
     "site.company_description": {
       "value": "",
       "label": "One-line description",
       "hint": "The sentence under the name in the footer, and what search engines quote. One sentence works best.",
       "store": "column",
-      "path": "company_description"
+      "path": "company_description",
+      "group": "What this site is called"
     },
     "site.copyright_text": {
       "value": "",
       "label": "Copyright line",
       "hint": "After the year and the business name at the very bottom.",
       "store": "column",
-      "path": "copyright_text"
+      "path": "copyright_text",
+      "group": "What this site is called"
     },
     "site.show_bookings": {
       "value": "",
@@ -43,7 +47,8 @@ var siteRegistry = {
       "hint": "Taking appointments against your availability. Off unless you actually want people booking time with you from the site.",
       "type": "switch",
       "store": "column",
-      "path": "show_bookings"
+      "path": "show_bookings",
+      "group": "What this site includes"
     },
     "site.show_dynamic_pages": {
       "value": "",
@@ -51,7 +56,8 @@ var siteRegistry = {
       "hint": "Pages you build yourself from content blocks, each at its own address. Off, and only the pages listed above exist.",
       "type": "switch",
       "store": "column",
-      "path": "show_dynamic_pages"
+      "path": "show_dynamic_pages",
+      "group": "What this site includes"
     },
     "site.show_protected_projects": {
       "value": "",
@@ -59,7 +65,8 @@ var siteRegistry = {
       "hint": "Projects, their artifacts and the backlog, for working with a client rather than for visitors to read.",
       "type": "switch",
       "store": "column",
-      "path": "show_protected_projects"
+      "path": "show_protected_projects",
+      "group": "What this site includes"
     },
     "site.show_dashboard": {
       "value": "",
@@ -67,7 +74,8 @@ var siteRegistry = {
       "hint": "The page somebody lands on after signing in. Off, and signing in takes them back to where they were.",
       "type": "switch",
       "store": "column",
-      "path": "show_dashboard"
+      "path": "show_dashboard",
+      "group": "What this site includes"
     },
     "site.show_zoo_game": {
       "value": "",
@@ -75,7 +83,8 @@ var siteRegistry = {
       "hint": "The Scrum teaching game, at /zoo-game.",
       "type": "switch",
       "store": "column",
-      "path": "show_zoo_game"
+      "path": "show_zoo_game",
+      "group": "What this site includes"
     },
     "site.show_scrum_game": {
       "value": "",
@@ -83,7 +92,8 @@ var siteRegistry = {
       "hint": "The earlier Scrum simulation.",
       "type": "switch",
       "store": "column",
-      "path": "show_scrum_game"
+      "path": "show_scrum_game",
+      "group": "What this site includes"
     },
     "site.show_recommendations": {
       "value": "",
@@ -92,7 +102,8 @@ var siteRegistry = {
       "type": "switch",
       "store": "column",
       "path": "show_recommendations",
-      "says": { "on": "Shown under posts", "off": "Not shown" }
+      "says": { "on": "Shown under posts", "off": "Not shown" },
+      "group": "What this site includes"
     },
     "site.brand.images.logo": {
       "value": "",
@@ -100,7 +111,8 @@ var siteRegistry = {
       "hint": "Top left of every page. Leave it empty and the business name is used as words, which often looks better than a stretched image.",
       "type": "image",
       "store": "brand",
-      "path": "images.logo"
+      "path": "images.logo",
+      "group": "Logo and pictures"
     },
     "site.brand.wordmark.twoTone": {
       "value": "",
@@ -109,7 +121,8 @@ var siteRegistry = {
       "type": "switch",
       "store": "brand",
       "path": "wordmark.twoTone",
-      "says": { "on": "Name set in two colours", "off": "Name set plainly" }
+      "says": { "on": "Name set in two colours", "off": "Name set plainly" },
+      "group": "Logo and pictures"
     },
     "site.brand.images.favicon": {
       "value": "",
@@ -117,7 +130,8 @@ var siteRegistry = {
       "hint": "The small square in the browser tab and in a bookmark.",
       "type": "image",
       "store": "brand",
-      "path": "images.favicon"
+      "path": "images.favicon",
+      "group": "Logo and pictures"
     },
     "site.brand.images.ogImage": {
       "value": "",
@@ -125,7 +139,8 @@ var siteRegistry = {
       "hint": "What appears when somebody pastes a link to this site into Slack, LinkedIn or a message. Wide, around 1200 by 630.",
       "type": "image",
       "store": "brand",
-      "path": "images.ogImage"
+      "path": "images.ogImage",
+      "group": "Logo and pictures"
     },
     "site.brand.images.founderPhoto": {
       "value": "",
@@ -133,7 +148,8 @@ var siteRegistry = {
       "hint": "The photograph on the home page and the about page.",
       "type": "image",
       "store": "brand",
-      "path": "images.founderPhoto"
+      "path": "images.founderPhoto",
+      "group": "The founder"
     },
     "site.brand.images.founderPortrait": {
       "value": "",
@@ -141,7 +157,8 @@ var siteRegistry = {
       "hint": "The smaller cut-out used beside the closing call to action.",
       "type": "image",
       "store": "brand",
-      "path": "images.founderPortrait"
+      "path": "images.founderPortrait",
+      "group": "The founder"
     },
     "site.brand.colors.orange": {
       "value": colors.orange,
@@ -149,7 +166,8 @@ var siteRegistry = {
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.orange"
+      "path": "colors.orange",
+      "group": "Colours"
     },
     "site.brand.colors.deepTeal": {
       "value": colors.deepTeal,
@@ -157,7 +175,8 @@ var siteRegistry = {
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.deepTeal"
+      "path": "colors.deepTeal",
+      "group": "Colours"
     },
     "site.brand.colors.midTeal": {
       "value": colors.midTeal,
@@ -165,7 +184,8 @@ var siteRegistry = {
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.midTeal"
+      "path": "colors.midTeal",
+      "group": "Colours"
     },
     "site.brand.colors.skyTeal": {
       "value": colors.skyTeal,
@@ -173,7 +193,8 @@ var siteRegistry = {
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.skyTeal"
+      "path": "colors.skyTeal",
+      "group": "Colours"
     },
     "site.brand.colors.paleTeal": {
       "value": colors.paleTeal,
@@ -181,7 +202,8 @@ var siteRegistry = {
       "hint": "Used across the whole site. Changing it changes every page at once.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.paleTeal"
+      "path": "colors.paleTeal",
+      "group": "Colours"
     },
     "site.show_founder": {
       "value": "",
@@ -189,21 +211,24 @@ var siteRegistry = {
       "hint": "Off, and no photograph, biography or Person data appears anywhere. A business that does not lead with a person should leave this off.",
       "type": "switch",
       "store": "column",
-      "path": "show_founder"
+      "path": "show_founder",
+      "group": "The founder"
     },
     "site.founder_name": {
       "value": "",
       "label": "Founder name",
       "hint": "Used in the alt text of the photograph and in the structured data search engines read.",
       "store": "column",
-      "path": "founder_name"
+      "path": "founder_name",
+      "group": "The founder"
     },
     "site.founder_role": {
       "value": "",
       "label": "Founder job title",
       "hint": 'For search engines, for example "Agile Coach". Leave empty to claim none.',
       "store": "column",
-      "path": "founder_role"
+      "path": "founder_role",
+      "group": "The founder"
     },
     "site.founder_expertise": {
       "value": "",
@@ -211,63 +236,72 @@ var siteRegistry = {
       "hint": "One per line, for search engines. These are claims about a named person, so only list what is true.",
       "type": "textarea",
       "store": "column",
-      "path": "founder_expertise"
+      "path": "founder_expertise",
+      "group": "The founder"
     },
     "site.contact_email": {
       "value": "",
       "label": "Email address",
       "hint": "Shown in the footer and on the contact page.",
       "store": "column",
-      "path": "contact_email"
+      "path": "contact_email",
+      "group": "How to reach you"
     },
     "site.contact_phone": {
       "value": "",
       "label": "Telephone",
       "hint": "Leave empty and no number appears.",
       "store": "column",
-      "path": "contact_phone"
+      "path": "contact_phone",
+      "group": "How to reach you"
     },
     "site.contact_location": {
       "value": "",
       "label": "Where you are",
       "hint": 'For example "Manchester, United Kingdom".',
       "store": "column",
-      "path": "contact_location"
+      "path": "contact_location",
+      "group": "How to reach you"
     },
     "site.social_linkedin": {
       "value": "",
       "label": "LinkedIn address",
       "hint": "The full web address. Leave empty and the icon does not appear.",
       "store": "column",
-      "path": "social_linkedin"
+      "path": "social_linkedin",
+      "group": "Social links"
     },
     "site.social_twitter": {
       "value": "",
       "label": "Twitter address",
       "hint": "The full web address. Leave empty and the icon does not appear.",
       "store": "column",
-      "path": "social_twitter"
+      "path": "social_twitter",
+      "group": "Social links"
     },
     "site.social_facebook": {
       "value": "",
       "label": "Facebook address",
       "hint": "The full web address. Leave empty and the icon does not appear.",
       "store": "column",
-      "path": "social_facebook"
+      "path": "social_facebook",
+      "group": "Social links"
     },
     "site.social_youtube": {
       "value": "",
       "label": "YouTube address",
       "hint": "The full web address. Leave empty and the icon does not appear.",
       "store": "column",
-      "path": "social_youtube"
+      "path": "social_youtube",
+      "group": "Social links"
     },
     "site.social_github": {
       "value": "",
       "label": "GitHub address",
       "hint": "The full web address. Leave empty and the icon does not appear.",
       "store": "column",
-      "path": "social_github"
+      "path": "social_github",
+      "group": "Social links"
     }
   }
 };
