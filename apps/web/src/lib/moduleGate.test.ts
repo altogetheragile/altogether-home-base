@@ -65,6 +65,8 @@ const UNGATED = new Set([
   // is nothing for a switch to hide from. A module flag would also be the wrong shape, since it
   // would be one more thing to configure in the page that exists to tell you what to configure.
   '/setup',
+  // The same: admin only, 404 to everybody else, so there is nothing for a switch to hide.
+  '/sites',
 ]);
 
 describe('every page the Site serves', () => {

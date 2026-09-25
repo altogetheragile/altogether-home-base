@@ -51,9 +51,24 @@ describe('what the first three steps cover', () => {
   const asked = new Set(STEPS.flatMap((s) => (s.page === 'site' ? s.keys : [])));
   const all = Object.keys(entriesFor('site'));
 
+  /** Fields on that tab which are deliberately not part of setting a site up, with the reason. */
+  const NOT_SETUP = new Set([
+    // A list of other sites you look after. Nothing to do with making this one yours, and asking
+    // a new owner about it during their first ten minutes would be baffling.
+    'site.managed',
+  ]);
+
   it('asks for every field on the site registry', () => {
-    const skipped = all.filter((k) => !asked.has(k));
+    const skipped = all.filter((k) => !asked.has(k) && !NOT_SETUP.has(k));
     expect(skipped, `on the This Site tab but never asked for: ${skipped.join(', ')}`).toEqual([]);
+  });
+
+  it('has a reason written down for anything it skips', () => {
+    // The exception list is the place that decision is made, so it cannot grow by accident.
+    for (const key of NOT_SETUP) {
+      expect(all, `${key} is excused but is not on the tab at all`).toContain(key);
+    }
+    expect(NOT_SETUP.size, 'too much of the tab is being skipped for this test to mean anything').toBeLessThan(3);
   });
 
   it('is asking for a real number of things, so a passing result means something', () => {

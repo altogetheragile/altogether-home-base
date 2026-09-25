@@ -24,9 +24,10 @@ export const SITE_OWNED = [
   // Courses, workshops and webinars. Not '/courses': a workshop is not a course, and the
   // catalogue holds both. Every old /courses/<slug> address redirects here.
   '/training',
-  // Admin only, and 404 to everybody else. Listed here because the Site answers it, not because
-  // it is public.
+  // Admin only, and 404 to everybody else. Listed here because the Site answers them, not
+  // because they are public.
   '/setup',
+  '/sites',
 ] as const;
 
 /** Whether the Site answers this path. Prefix match, so /blog/a-post counts, but /events/:id does

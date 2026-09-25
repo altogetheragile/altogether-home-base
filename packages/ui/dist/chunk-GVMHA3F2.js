@@ -5,6 +5,17 @@ var siteRegistry = {
   "page": "site",
   "label": "This Site",
   "entries": {
+    "site.managed": {
+      "value": "",
+      "label": "Sites you look after",
+      "hint": "This site and any other built from the same software. Listed on the Sites page, which only you can see. Nothing here reaches those sites: it is a list of addresses.",
+      "type": "items",
+      "fields": [
+        { "key": "name", "label": "What you call it", "placeholder": "Her Business", "required": true },
+        { "key": "domain", "label": "Address", "placeholder": "herbusiness.com", "required": true },
+        { "key": "note", "label": "Note to self", "placeholder": "Whose it is, or what is still to do" }
+      ]
+    },
     "site.company_name": {
       "value": "",
       "label": "Business name",
