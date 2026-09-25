@@ -42,7 +42,16 @@ function CopyLine({ label: name, value }: { label: string; value: string }) {
   );
 }
 
-function OneStep({ step, of, at, back, on }: { step: Step; of: number; at: number; back: () => void; on: () => void }) {
+function OneStep({
+  step, of, at, back, on, answers, answer,
+}: {
+  step: Step; of: number; at: number; back: () => void; on: () => void;
+  answers: Answers; answer: (field: 'ref' | 'anonKey', value: string) => void;
+}) {
+  // A step that asks for something will not let you past without it, because every command after
+  // this one is built from what is typed here. Going on without it is how somebody ends up
+  // pasting YOUR-PROJECT-REF into a terminal.
+  const missing = (step.asks ?? []).filter((a) => !(answers[a.field] ?? '').trim());
   return (
     <div>
       <div style={{ color: '#5A6B72', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
@@ -61,6 +70,28 @@ function OneStep({ step, of, at, back, on }: { step: Step; of: number; at: numbe
         >
           {step.go.label} <ExternalLink size={13} />
         </a>
+      )}
+
+      {step.asks && step.asks.length > 0 && (
+        <div style={{ background: '#F4F8F8', borderRadius: 10, padding: '14px 16px', marginBottom: 14 }}>
+          {step.asks.map((a) => (
+            <div key={a.field} style={{ marginBottom: 12 }}>
+              <label style={{ ...label, marginBottom: 2 }} htmlFor={a.field}>{a.label}</label>
+              <p style={{ fontSize: 12.5, color: '#5A6B72', margin: '0 0 6px' }}>{a.help}</p>
+              <input
+                id={a.field}
+                value={answers[a.field] ?? ''}
+                onChange={(e) => answer(a.field, e.target.value)}
+                placeholder={a.placeholder}
+                style={{ ...box, fontFamily: 'ui-monospace, monospace', fontSize: 13 }}
+              />
+            </div>
+          ))}
+          <p style={{ fontSize: 12.5, color: '#5A6B72', margin: 0 }}>
+            Neither is secret and neither is kept: they are used to fill in the rest of these
+            steps and forgotten when you close this.
+          </p>
+        </div>
       )}
 
       {step.copy && step.copy.length > 0 && (
@@ -91,14 +122,22 @@ function OneStep({ step, of, at, back, on }: { step: Step; of: number; at: numbe
         </button>
         <button
           onClick={on}
+          disabled={missing.length > 0}
           style={{
-            display: 'flex', alignItems: 'center', gap: 7, background: '#F5A623', color: '#0C4A4A',
-            border: 'none', borderRadius: 9, padding: '11px 20px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 7,
+            background: missing.length ? 'rgba(0,0,0,0.08)' : '#F5A623',
+            color: missing.length ? '#8A9499' : '#0C4A4A',
+            border: 'none', borderRadius: 9, padding: '11px 20px', fontSize: 15, fontWeight: 700,
+            cursor: missing.length ? 'not-allowed' : 'pointer',
           }}
         >
           {at === of - 1 ? 'Finished' : 'Done, next'} <ArrowRight size={14} />
         </button>
-        <span style={{ color: '#5A6B72', fontSize: 13 }}>Take as long as you like. Nothing is waiting on you.</span>
+        <span style={{ color: '#5A6B72', fontSize: 13 }}>
+          {missing.length
+            ? `Fill in the ${missing.map((m) => m.label).join(' and the ')} first: the rest of the steps are built from ${missing.length === 1 ? 'it' : 'them'}.`
+            : 'Take as long as you like. Nothing is waiting on you.'}
+        </span>
       </div>
     </div>
   );
@@ -204,6 +243,8 @@ export function WalkMeThrough() {
           step={steps[at]}
           of={steps.length}
           at={at}
+          answers={answers}
+          answer={(field, value) => setAnswers((a) => (a ? { ...a, [field]: value } : a))}
           back={() => setAt((i) => Math.max(0, i - 1))}
           on={() => setAt((i) => i + 1)}
         />
