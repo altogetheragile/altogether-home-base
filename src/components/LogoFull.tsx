@@ -1,5 +1,5 @@
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { logoOf } from '@altogether/ui/brand';
+import { logoOf, wordmarkOf } from '@altogether/ui/brand';
 import { colors } from '@/theme/colors';
 
 /** The mark in the App's header.
@@ -15,14 +15,32 @@ const LogoFull = ({ height = 48 }: { height?: number; light?: boolean }) => {
   if (logo.mode === 'image') {
     return <img src={logo.src} alt={s?.company_name ?? 'Home'} style={{ height }} className="w-auto" />;
   }
+  // The same wordmark as the Site's header (apps/web SiteLogo). Two components because the two
+  // apps do not share a React tree, one rule because they share @altogether/ui/brand.
+  const mark = wordmarkOf(s?.brand as Parameters<typeof wordmarkOf>[0], s?.company_name);
+  const base: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', height,
+    fontFamily: "'DM Sans', system-ui, sans-serif",
+    fontWeight: 800, whiteSpace: 'nowrap',
+  };
+
+  if (mark.twoTone) {
+    return (
+      <span
+        style={{
+          ...base,
+          fontSize: Math.round(height * 0.40), letterSpacing: '0.01em', textTransform: 'uppercase',
+          color: colors.deepTeal,
+        }}
+      >
+        {mark.first}{mark.gap ? '\u00a0' : ''}<span style={{ color: colors.orange }}>{mark.second}</span>
+      </span>
+    );
+  }
+
   return (
     <span
-      style={{
-        display: 'inline-flex', alignItems: 'center', height,
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-        fontWeight: 800, fontSize: Math.round(height * 0.44), letterSpacing: '-0.02em',
-        color: colors.deepTeal, whiteSpace: 'nowrap',
-      }}
+      style={{ ...base, fontSize: Math.round(height * 0.44), letterSpacing: '-0.02em', color: colors.deepTeal }}
     >
       {logo.text}
     </span>

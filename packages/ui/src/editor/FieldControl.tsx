@@ -56,9 +56,15 @@ export function FieldControl({
           className="h-4 w-4 rounded border-border"
         />
         {/* A status, not a label for the box. "Hidden" beside an unticked box reads as
-            "hidden: no" to about half the people who see it. */}
-        <span className={value === 'on' ? '' : 'font-medium text-amber-700'}>
-          {value === 'on' ? 'Visible to everyone' : 'Hidden from visitors'}
+            "hidden: no" to about half the people who see it.
+
+            Not every switch decides visibility. One that picks a style says its own words, and
+            says them in plain type: amber is for a page the public cannot see, not for a choice
+            somebody has made. */}
+        <span className={value === 'on' || field.says ? '' : 'font-medium text-amber-700'}>
+          {value === 'on'
+            ? (field.says?.on ?? 'Visible to everyone')
+            : (field.says?.off ?? 'Hidden from visitors')}
         </span>
       </label>
     );

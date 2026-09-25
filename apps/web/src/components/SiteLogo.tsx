@@ -1,4 +1,4 @@
-import { logoOf } from '@altogether/ui/brand';
+import { logoOf, wordmarkOf, type BrandLogoOverrides } from '@altogether/ui/brand';
 import { colors as c } from '@/lib/brand';
 
 /** The mark in the header and the footer.
@@ -9,7 +9,7 @@ import { colors as c } from '@/lib/brand';
 export function SiteLogo({
   brand, companyName, height, className,
 }: {
-  brand: Parameters<typeof logoOf>[0];
+  brand: BrandLogoOverrides;
   companyName?: string | null;
   height: number;
   className?: string;
@@ -21,15 +21,34 @@ export function SiteLogo({
     return <img src={logo.src} alt={companyName ?? 'Home'} className={className} style={{ height, width: 'auto' }} />;
   }
 
+  const mark = wordmarkOf(brand, companyName);
+  const base: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', height,
+    fontFamily: "'DM Sans', system-ui, sans-serif",
+    fontWeight: 800, whiteSpace: 'nowrap',
+  };
+
+  if (mark.twoTone) {
+    return (
+      <span
+        className={className}
+        style={{
+          ...base,
+          // Capitals and open spacing: the same two rules as this site's own lettering, taken
+          // from the name and the palette rather than from a file somebody has to commission.
+          fontSize: Math.round(height * 0.46), letterSpacing: '0.01em', textTransform: 'uppercase',
+          color: c.deepTeal,
+        }}
+      >
+        {mark.first}{mark.gap ? '\u00a0' : ''}<span style={{ color: c.orange }}>{mark.second}</span>
+      </span>
+    );
+  }
+
   return (
     <span
       className={className}
-      style={{
-        display: 'inline-flex', alignItems: 'center', height,
-        fontFamily: "'DM Sans', system-ui, sans-serif",
-        fontWeight: 800, fontSize: Math.round(height * 0.52), letterSpacing: '-0.02em',
-        color: c.deepTeal, whiteSpace: 'nowrap',
-      }}
+      style={{ ...base, fontSize: Math.round(height * 0.52), letterSpacing: '-0.02em', color: c.deepTeal }}
     >
       {logo.text}
     </span>

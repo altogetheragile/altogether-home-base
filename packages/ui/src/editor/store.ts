@@ -18,7 +18,7 @@ export type DataClient = {
 
 export type CopyField = {
   key: string; label: string; hint: string; value: string; shipped: string;
-  type?: CopyEntry['type']; fields?: CopyEntry['fields'];
+  type?: CopyEntry['type']; fields?: CopyEntry['fields']; says?: CopyEntry['says'];
   undo?: { value: string; at: string };
   /** A value saved but not published. `value` above is still what the site shows. */
   draft?: { value: string; at: string };
@@ -124,6 +124,7 @@ export async function loadPage(db: DataClient, registries: CopyRegistry[], page:
     shipped: e.value,
     ...(e.type ? { type: e.type } : {}),
     ...(e.fields ? { fields: e.fields } : {}),
+    ...(e.says ? { says: e.says } : {}),
     ...(undo[key] ? { undo: undo[key] } : {}),
     ...(drafts[key] ? { draft: drafts[key] } : {}),
   }));

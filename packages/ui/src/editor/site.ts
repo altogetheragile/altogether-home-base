@@ -47,6 +47,15 @@ export const siteRegistry: CopyRegistry = {
       "store": "brand",
       "path": "images.logo"
     },
+    "site.brand.wordmark.twoTone": {
+      "value": "",
+      "label": "Two-tone wordmark",
+      "hint": "Only used when no logo is uploaded. Sets the business name in capitals with the last word in your accent colour, which reads as a designed mark rather than as text. Check it before leaving it on: a one-word name written as two, like StreamStrategy, comes apart correctly, but so does a name like McKenzie.",
+      "type": "switch",
+      "store": "brand",
+      "path": "wordmark.twoTone",
+      "says": { "on": "Name set in two colours", "off": "Name set plainly" }
+    },
     "site.brand.images.favicon": {
       "value": "",
       "label": "Browser tab icon",

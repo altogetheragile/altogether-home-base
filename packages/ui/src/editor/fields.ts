@@ -53,6 +53,12 @@ export interface CopyEntry {
   type?: FieldType;
   /** Required for 'items', ignored otherwise. */
   fields?: ItemField[];
+  /** For 'switch': what on and off actually mean here.
+   *
+   *  Every switch was a visibility switch once, so the control says "Visible to everyone" and
+   *  "Hidden from visitors". On a switch that chooses a style those words describe nothing, and a
+   *  status that describes nothing is worse than no status at all. */
+  says?: { on: string; off: string };
 }
 export interface CopyRegistry { page: string; label: string; entries: Record<string, CopyEntry> }
 
