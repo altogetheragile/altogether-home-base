@@ -92,9 +92,42 @@ long-lived branch differing by one file and a merge from `main` before each of i
 
 ---
 
-### 3b. The Runbook
+### 3b. The Script
 
-Checked against the code on 24 September. Each step says what breaks if it is skipped.
+Most of the runbook below is now one command.
+
+```bash
+node scripts/new-site.mjs --name "Her Business" --domain herbusiness.com --org <supabase org id>
+node scripts/new-site.mjs --name "Her Business" --domain herbusiness.com --org <id> --apply
+```
+
+Without `--apply` it creates nothing and prints what it would do. With it: the Supabase project,
+every migration, the auth site URL and redirect allowlist, both Vercel projects with their
+environment variables, the domain claimed, and the first admin account. Then it prints the DNS
+records and the address of the wizard.
+
+Two tokens in the environment, both revocable and neither stored:
+`SUPABASE_ACCESS_TOKEN` and `VERCEL_TOKEN`.
+
+**A script and not a page in Admin, on purpose.** A web tool that provisions other sites needs
+those tokens kept somewhere and makes Admin on one site a way into all of them, which Section 2
+rules out. A script reads them from the shell, uses them once, and forgets them.
+
+**Two steps it cannot do**, and it says so rather than pretending: the DNS records at your
+registrar, which are in nobody's API, and the wizard itself, which is a person making decisions.
+
+It is idempotent where it can be. Each step looks for what it would create before creating it, so
+a run that stopped halfway can be run again rather than leaving a second of everything.
+
+The planning is `scripts/new-site/plan.mjs`, pure and tested in
+`src/config/newSitePlan.test.ts`, because the alternative is finding out the plan was wrong by
+watching it create half a site. The test that matters most: the Site project is created before
+the App, since the App's routing config reads `SITE_DEPLOYMENT_HOST` at build time and without it
+every public URL on the new site rewrites to altogetheragile.com.
+
+### 3c. The Runbook, By Hand
+
+What the script does, for when it does not fit. Checked against the code on 24 September. Each step says what breaks if it is skipped.
 
 **1. Create the Supabase project.** Note its reference, which is the first part of its URL.
 
