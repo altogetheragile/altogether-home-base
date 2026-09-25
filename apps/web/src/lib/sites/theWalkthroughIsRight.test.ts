@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { walkthrough, namesFor } from './walkthrough';
+import { walkthrough, namesFor, UNKNOWN_REF } from './walkthrough';
 import { vercelProjects, slugFrom } from './plan';
 
 // Somebody following this has no way to tell a right instruction from a wrong one: that is the
 // point of being walked through something. So the instructions have to be checked here, because
 // the cost of a wrong one is a stranded half-built site and an evening lost.
 
-const answers = { name: 'Bramble & Fern', domain: 'brambleandfern.com', email: 'al@example.com' };
+const answers = {
+  name: 'Bramble & Fern', domain: 'brambleandfern.com', email: 'al@example.com',
+  ref: 'abcdefghijklmnopqrst', anonKey: 'eyJhbGciOiJIUzI1NiJ9.test',
+};
 const steps = walkthrough(answers);
 const all = JSON.stringify(steps);
 
@@ -85,12 +88,15 @@ describe('the environment variables it asks for', () => {
     expect(step4.watch).toMatch(/Root Directory/i);
   });
 
-  it('spells the placeholder one way throughout', () => {
+  it('spells the placeholder one way, before the real value is known', () => {
     // Parsing a URL lowercases its host, so SUPABASE_CSP_HOSTS came back as
     // your-project-ref.supabase.co beside a URL saying YOUR-PROJECT-REF. To somebody who has not
     // done this before, that reads as two different values.
-    const placeholders = [...steps.flatMap((s) => s.copy ?? [])]
-      .map((c) => c.value)
+    //
+    // Checked against a walk-through nobody has answered yet, since once the reference is typed
+    // in there are no placeholders left to spell either way.
+    const early = walkthrough({ name: 'X', domain: 'x.com', email: 'a@b.c' });
+    const placeholders = early.flatMap((s) => s.copy ?? []).map((c) => c.value)
       .filter((v) => /your-project-ref/i.test(v));
     expect(placeholders.length).toBeGreaterThan(1);
     for (const v of placeholders) {
@@ -178,5 +184,45 @@ describe('making yourself an admin', () => {
     const without = walkthrough({ ...answers, email: '' }).find((s) => s.n === 8)!;
     expect(without.copy![0].value).not.toMatch(/=\s*''/);
     expect(without.copy![0].value).toContain('you@example.com');
+  });
+});
+
+describe('nothing is handed over with a gap in it', () => {
+  // The failure this exists for: the command was copied and run exactly as given, placeholder
+  // and all, and Supabase answered "Cannot resolve YOUR-PROJECT-REF". Following an instruction
+  // literally is what being walked through something means.
+
+  it('puts the real project reference into every command', () => {
+    const commands = steps.flatMap((s) => s.copy ?? []).map((c) => c.value).join('\n');
+    expect(commands).toContain('abcdefghijklmnopqrst');
+    expect(commands, 'a placeholder survived into something copyable').not.toContain(UNKNOWN_REF);
+  });
+
+  it('puts the real key into the settings it tells you to paste', () => {
+    const values = steps.flatMap((s) => s.copy ?? []).map((c) => c.value).join('\n');
+    expect(values).toContain('eyJhbGciOiJIUzI1NiJ9.test');
+    expect(values).not.toContain('YOUR-ANON-KEY');
+  });
+
+  it('asks for both, once, on the step that finds them', () => {
+    const asking = steps.filter((s) => (s.asks ?? []).length > 0);
+    expect(asking.map((s) => s.n), 'asked for somewhere other than step 2').toEqual([2]);
+    expect(asking[0].asks!.map((a) => a.field).sort()).toEqual(['anonKey', 'ref']);
+  });
+
+  it('says what each one looks like, so the right thing gets pasted', () => {
+    for (const a of steps.find((s) => s.n === 2)!.asks!) {
+      expect(a.placeholder.trim().length, `${a.field} has no example`).toBeGreaterThan(5);
+      expect(a.help.trim().length, `${a.field} has no explanation`).toBeGreaterThan(20);
+    }
+  });
+
+  it('still shows a placeholder before they are known, rather than an empty command', () => {
+    // Somebody may look ahead. A command reading "--project-ref" with nothing after it would be
+    // worse than one that visibly has a gap.
+    const early = walkthrough({ name: 'X', domain: 'x.com', email: 'a@b.c' });
+    const link = early.find((s) => s.n === 3)!.copy!.find((c) => c.value.includes('link'))!;
+    expect(link.value).toContain(UNKNOWN_REF);
+    expect(link.value).not.toMatch(/--project-ref\s*$/);
   });
 });
