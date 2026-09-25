@@ -108,10 +108,11 @@ export function walkthrough(answers: Answers): Step[] {
     {
       n: 4,
       title: 'Make the part that shows the pages',
-      body: `On the Vercel page that opens, ignore the big prompt box at the top: that is v0, which builds brand new apps and is not what you want. Look further down for the panel headed "Import Git Repository", find ${REPO}, and press Import. Then, before you press Deploy: set the project name to "${siteProject}", set Root Directory to "apps/web", and add the three environment variables below.`,
+      body: `On the Vercel page that opens, ignore the big prompt box at the top: that is v0, which builds brand new apps and is not what you want. Look further down for the panel headed "Import Git Repository", find ${REPO}, and press Import. Then, before you press Deploy: set the project name to "${siteProject}", check Framework Preset says Next.js, which Vercel works out from the folder and then locks, so there is nothing to change if it is already right, set Root Directory to "apps/web", and add the three environment variables below.`,
       go: { label: 'Open Vercel, New Project', href: 'https://vercel.com/new' },
       copy: [
         { label: 'Project name', value: siteProject },
+        { label: 'Framework Preset', value: 'Next.js' },
         { label: 'Root Directory', value: 'apps/web' },
         ...envList(site),
       ],
@@ -120,10 +121,11 @@ export function walkthrough(answers: Answers): Step[] {
     {
       n: 5,
       title: 'Make the part that answers the address',
-      body: `Import the same repository a second time, the same way: the "Import Git Repository" panel, not the prompt box. Name this one "${appProject}". Leave Root Directory alone this time. Add the five environment variables below.`,
+      body: `Import the same repository a second time, the same way: the "Import Git Repository" panel, not the prompt box. Name this one "${appProject}". Root Directory is left alone this time, at the repository root, and Framework Preset should then say Vite rather than Next.js. Vercel detects it from the folder: if it is right, it will be greyed out, which is correct rather than broken. Add the five environment variables below.`,
       go: { label: 'Vercel, New Project again', href: 'https://vercel.com/new' },
       copy: [
         { label: 'Project name', value: appProject },
+        { label: 'Framework Preset', value: 'Vite' },
         ...envList(app),
       ],
       watch: `Two things. SITE_DEPLOYMENT_HOST must be exactly ${siteProject}.vercel.app: get it wrong and the new site shows this site's pages instead of its own, with no error to tell you. And as in step 4, the prompt box at the top of that page is v0, which makes new apps rather than importing yours.`,

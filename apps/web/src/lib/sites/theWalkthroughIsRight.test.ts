@@ -250,3 +250,41 @@ describe('the two Vercel steps', () => {
     expect(steps.find((s) => s.n === 4)!.watch).toMatch(/Root Directory/);
   });
 });
+
+describe('the framework each project is built as', () => {
+  // Asked for, because the walk-through listed the project name, the root directory and the
+  // environment variables and said nothing about the field sitting between them. Vercel usually
+  // detects it, and "usually" is not something to leave somebody guessing about halfway through.
+
+  it('tells the public pages project it is Next.js', () => {
+    const preset = steps.find((s) => s.n === 4)!.copy!.find((c) => c.label === 'Framework Preset');
+    expect(preset?.value).toBe('Next.js');
+  });
+
+  it('tells the other project it is Vite, which is a different framework in the same repository', () => {
+    const preset = steps.find((s) => s.n === 5)!.copy!.find((c) => c.label === 'Framework Preset');
+    expect(preset?.value).toBe('Vite');
+  });
+
+  it('agrees with what the two projects are actually built with', () => {
+    const specs = vercelProjects({
+      slug: 'x', domain: 'x.com', repo: 'r', supabaseUrl: 'https://a.supabase.co', anonKey: 'k',
+    });
+    expect(specs.find((s) => s.role === 'site')!.framework).toBe('nextjs');
+    expect(specs.find((s) => s.role === 'app')!.framework).toBe('vite');
+  });
+});
+
+describe('the preset that cannot be typed in', () => {
+  // Asked twice: first what to set it to, then why it could not be changed. Vercel detects the
+  // framework from the chosen folder and locks the field, so an instruction to "set" it sends
+  // somebody hunting for a control that is deliberately greyed out.
+
+  it('says the framework is detected rather than chosen', () => {
+    for (const n of [4, 5]) {
+      const step = steps.find((s) => s.n === n)!;
+      expect(`${step.body} ${step.watch ?? ''}`, `step ${n} implies you set it by hand`)
+        .toMatch(/works it out|detects it|greyed out|locks/i);
+    }
+  });
+});
