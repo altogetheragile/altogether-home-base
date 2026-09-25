@@ -117,9 +117,26 @@ describe('fields that declare a type', () => {
   });
 
   it('only uses types the editor knows how to draw', () => {
-    const known = new Set(['text', 'textarea', 'lines', 'items', 'image', 'icon', 'colour', 'switch', 'sections']);
+    // Read from the union rather than listed here. A hand-kept copy of a list is a list that
+    // falls behind: this one said nine types while the editor drew ten, so adding a type failed
+    // a test about registries rather than telling anybody the list needed a line.
+    const source = readFileSync('../../packages/ui/src/editor/fields.ts', 'utf8');
+    const union = source.slice(source.indexOf('export type FieldType ='));
+    const known = new Set([...union.slice(0, union.indexOf(';')).matchAll(/'([a-z]+)'/g)].map((m) => m[1]));
+    expect(known.size, 'no field types found; the union has moved').toBeGreaterThan(5);
     const odd = entries.filter(([, e]) => e.type && !known.has(e.type));
     expect(odd.map(([k]) => k)).toEqual([]);
+  });
+
+  it('draws every type it declares', () => {
+    // The other half of the same promise: a type in the union that FieldControl does not handle
+    // falls through to a textarea, so a colour or a choice silently becomes a box of raw text.
+    const control = readFileSync('../../packages/ui/src/editor/FieldControl.tsx', 'utf8');
+    const used = new Set(entries.map(([, e]) => e.type).filter(Boolean) as string[]);
+    for (const type of used) {
+      if (type === 'textarea') continue; // the fall-through, drawn by having no branch at all
+      expect(control, `FieldControl has no branch for '${type}'`).toContain(`field.type === '${type}'`);
+    }
   });
 });
 

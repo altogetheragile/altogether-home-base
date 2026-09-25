@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
-import { colors as p } from '@/lib/brand';
+import { colors as p, fonts } from '@/lib/brand';
 import { lines, list } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
 
@@ -46,7 +46,7 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
         @media (max-width: 767px) { .aa-about-grid { grid-template-columns: 1fr; gap: 40px; } }
       `}</style>
 
-      <section style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: p.white, padding: '96px 0 80px', overflow: 'hidden' }}>
+      <section style={{ fontFamily: fonts.sans, background: p.white, padding: '96px 0 80px', overflow: 'hidden' }}>
         <div
           style={{ maxWidth: 1200, margin: '0 auto', padding: '0 48px' }}
           className={`aa-about-grid${hasLeftColumn ? '' : ' aa-about-grid--alone'}`}
@@ -72,7 +72,7 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
             <div style={{ marginTop: founder.photo ? 28 : 0, background: p.deepTeal, borderRadius: 20, padding: '28px 32px', position: 'relative', zIndex: 1 }}>
               <When any={[t('home.founder.years')]}>
                 <div style={{ position: 'absolute', top: 20, right: 20, background: p.orange, borderRadius: 12, padding: '10px 14px', textAlign: 'center', boxShadow: '0 4px 16px rgba(255,151,21,0.3)', minWidth: 72 }}>
-                  <div style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 26, fontWeight: 400, lineHeight: 1 }}>{t('home.founder.years')}</div>
+                  <div style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 26, fontWeight: 400, lineHeight: 1 }}>{t('home.founder.years')}</div>
                   <div style={{ color: p.deepTeal, opacity: 0.85, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 3 }}>years<br />experience</div>
                 </div>
               </When>
@@ -98,7 +98,7 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
           {/* RIGHT - text */}
           <div style={{ paddingTop: 40 }}>
             <p style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>{t('home.founder.eyebrow')}</p>
-            <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 48, fontWeight: 400, lineHeight: 1.1, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
+            <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 48, fontWeight: 400, lineHeight: 1.1, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
               {/* Two lines, the second in italics. Splitting on the newline keeps that shape while
                   letting a site write its own words into it. */}
               {lines(t('home.founder.heading')).map((line, i) => (

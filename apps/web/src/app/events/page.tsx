@@ -5,7 +5,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseListJsonLd } from '@/lib/seo';
 import { EventsList } from './EventsList';
-import { colors as c } from '@/lib/brand';
+import { colors as c, fonts } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
@@ -46,7 +46,7 @@ export default async function EventsPage() {
   ].filter((s) => s.n.trim());
 
   return (
-    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: c.white }}>
+    <div style={{ fontFamily: fonts.sans, background: c.white }}>
       <JsonLd
         data={await courseListJsonLd(
           'Agile Training Courses and Workshops',

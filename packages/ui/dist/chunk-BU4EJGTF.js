@@ -1,4 +1,4 @@
-import { picture } from './chunk-XCPMI3D5.js';
+import { picture } from './chunk-L2W3NJKO.js';
 import { useRef, useState } from 'react';
 import { Loader2, Upload, X } from 'lucide-react';
 import { jsxs, jsx } from 'react/jsx-runtime';

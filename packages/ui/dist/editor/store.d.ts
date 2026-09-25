@@ -17,6 +17,7 @@ type CopyField = {
     fields?: CopyEntry['fields'];
     says?: CopyEntry['says'];
     group?: CopyEntry['group'];
+    options?: CopyEntry['options'];
     undo?: {
         value: string;
         at: string;

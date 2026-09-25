@@ -46,6 +46,28 @@ export function FieldControl({
   if (field.type === 'colour') {
     return <ColourBox value={value} onChange={set} />;
   }
+  if (field.type === 'choice') {
+    const options = field.options ?? [];
+    const chosen = options.find((o) => o.value === value) ?? options[0];
+    return (
+      <div>
+        <select
+          id={field.key}
+          value={chosen?.value ?? ''}
+          onChange={(e) => set(e.target.value)}
+          className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {/* What it looks like, said plainly. Most people cannot pick a typeface from its name,
+            and a list of names is a list of guesses. */}
+        {chosen?.note && <p className="mt-1 text-xs text-muted-foreground">{chosen.note}</p>}
+      </div>
+    );
+  }
+
   if (field.type === 'switch') {
     return (
       <label className="flex cursor-pointer items-center gap-2 text-sm">

@@ -1,5 +1,5 @@
-import { ItemRows } from './chunk-45RCNCX5.js';
-import { PictureBox } from './chunk-CXINH5NJ.js';
+import { ItemRows } from './chunk-M7LVVDUY.js';
+import { PictureBox } from './chunk-BU4EJGTF.js';
 import { SectionOrder } from './chunk-7W7E3UZ3.js';
 import { SECTIONS_FOR_PAGE } from './chunk-6VYT3VGP.js';
 import { ColourBox } from './chunk-M5XDZR2B.js';
@@ -28,6 +28,23 @@ function FieldControl({
   }
   if (field.type === "colour") {
     return /* @__PURE__ */ jsx(ColourBox, { value, onChange: set });
+  }
+  if (field.type === "choice") {
+    const options = field.options ?? [];
+    const chosen = options.find((o) => o.value === value) ?? options[0];
+    return /* @__PURE__ */ jsxs("div", { children: [
+      /* @__PURE__ */ jsx(
+        "select",
+        {
+          id: field.key,
+          value: chosen?.value ?? "",
+          onChange: (e) => set(e.target.value),
+          className: "w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm",
+          children: options.map((o) => /* @__PURE__ */ jsx("option", { value: o.value, children: o.label }, o.value))
+        }
+      ),
+      chosen?.note && /* @__PURE__ */ jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: chosen.note })
+    ] });
   }
   if (field.type === "switch") {
     return /* @__PURE__ */ jsxs("label", { className: "flex cursor-pointer items-center gap-2 text-sm", children: [

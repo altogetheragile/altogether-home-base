@@ -1,5 +1,5 @@
 import { colors } from '@altogether/ui/tokens';
-import { resolveColors, cssVarsFor, hexToHslTriplet, type BrandOverrides } from '@altogether/ui/brand';
+import { resolveColors, cssVarsFor, fontVarsFor, hexToHslTriplet, type BrandOverrides } from '@altogether/ui/brand';
 
 export { hexToHslTriplet };
 
@@ -11,7 +11,7 @@ export { hexToHslTriplet };
  *  carries the same triplets as static defaults so the first paint is right; these override them,
  *  which is what lets the palette change without a rebuild. brandHslMatchesTokens.test.ts holds
  *  the two in step. */
-export const brandCssVars = cssVarsFor(colors) as Record<`--aa-${string}`, string>;
+export const brandCssVars = { ...cssVarsFor(colors), ...fontVarsFor(null) } as Record<`--aa-${string}`, string>;
 
 /** Put them on :root, not on a wrapper.
  *
@@ -29,7 +29,7 @@ export const brandCssVars = cssVarsFor(colors) as Record<`--aa-${string}`, strin
  *  because its brand IS the tokens. */
 export function applyBrandCssVars(overrides?: BrandOverrides) {
   if (typeof document === 'undefined') return;
-  for (const [name, value] of Object.entries(cssVarsFor(resolveColors(overrides)))) {
+  for (const [name, value] of Object.entries({ ...cssVarsFor(resolveColors(overrides)), ...fontVarsFor(overrides) })) {
     document.documentElement.style.setProperty(name, value);
   }
 }

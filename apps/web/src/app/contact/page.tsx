@@ -3,7 +3,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd , siteName } from '@/lib/seo';
 import { ContactForm } from './ContactForm';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
-import { colors as p } from '@/lib/brand';
+import { colors as p, fonts } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
@@ -54,7 +54,7 @@ export default async function ContactPage() {
   const cards = buildCards(settings, t, bookingHref(settings.show_bookings));
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+    <div style={{ fontFamily: fonts.sans, background: p.white }}>
       <JsonLd data={breadcrumbJsonLd(await pageCrumbs('contact', '/contact', 'Contact'))} />
 
       <style>{`

@@ -46,13 +46,17 @@ export const STEPS: Step[] = [
   {
     id: 'brand',
     title: 'What it looks like',
-    blurb: 'Leave the logo empty and your business name is used as words, which often looks better than a stretched image, and the switch under it decides how those words are set. The colours are used throughout: the first is the one people notice.',
+    blurb: 'Leave the logo empty and your business name is used as words, which often looks better than a stretched image, and the switch under it decides how those words are set. The two typefaces and the colours are used throughout: the first colour is the one people notice.',
     page: 'site',
     keys: [
       'site.brand.images.logo',
       // Directly under the logo, because it only does anything when that is empty. On its own
       // elsewhere it reads as a setting that has stopped working.
       'site.brand.wordmark.twoTone',
+      // Type is the same kind of decision as colour, made once and applied everywhere, so it is
+      // asked for in the same breath rather than left to be discovered.
+      'site.brand.fonts.heading',
+      'site.brand.fonts.body',
       'site.brand.colors.orange',
       'site.brand.colors.deepTeal',
       'site.brand.colors.midTeal',

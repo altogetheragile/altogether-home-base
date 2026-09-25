@@ -583,7 +583,7 @@ async function main() {
   // place, which is what altogetheragile.com wants.
   try {
     const { data: settings } = await supabase.from('site_settings').select('brand, company_name, company_description').limit(1).maybeSingle();
-    const { resolveColors, cssVarsFor, logoOf, wordmarkOf, picture } = await import('@altogether/ui/brand');
+    const { resolveColors, cssVarsFor, fontVarsFor, logoOf, wordmarkOf, picture } = await import('@altogether/ui/brand');
 
     // Both shapes: the {src, alt} the editor's picture box writes, and the bare URL that
     // everything seeded before it still is. This read only the second, so an uploaded share
@@ -597,7 +597,7 @@ async function main() {
     if (settings?.company_name?.trim()) SITE_COMPANY = settings.company_name.trim();
     if (settings?.company_description?.trim()) SITE_TAGLINE = settings.company_description.trim();
 
-    const vars = cssVarsFor(resolveColors(settings?.brand));
+    const vars = { ...cssVarsFor(resolveColors(settings?.brand)), ...fontVarsFor(settings?.brand) };
     BRAND_CSS = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
     const logo = logoOf(settings?.brand, settings?.company_name);
     BRAND_LOGO = logo.mode === 'image' ? logo.src : null;

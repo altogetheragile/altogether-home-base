@@ -162,6 +162,36 @@ export const siteRegistry: CopyRegistry = {
       "path": "images.founderPortrait",
       "group": "The founder"
     },
+    "site.brand.fonts.heading": {
+      "value": "dm-serif",
+      "label": "Heading typeface",
+      "hint": "Headings, and the wordmark when no logo is uploaded.",
+      "type": "choice",
+      "store": "brand",
+      "path": "fonts.heading",
+      "group": "Type",
+      "options": [
+        { "value": "dm-serif", "label": "DM Serif Display", "note": "Warm and editorial. Good for headings, heavy going for paragraphs." },
+        { "value": "dm-sans", "label": "DM Sans", "note": "Plain and modern. Reads well at any size." },
+        { "value": "georgia", "label": "Georgia", "note": "A classic serif, already on nearly every device. Steady and unshowy." },
+        { "value": "system", "label": "The reader\u2019s own", "note": "Whatever their device uses. The fastest to load and the least distinctive." }
+      ]
+    },
+    "site.brand.fonts.body": {
+      "value": "dm-sans",
+      "label": "Body typeface",
+      "hint": "Everything that is not a heading. Worth choosing the plainer of two: this is the one people actually read.",
+      "type": "choice",
+      "store": "brand",
+      "path": "fonts.body",
+      "group": "Type",
+      "options": [
+        { "value": "dm-sans", "label": "DM Sans", "note": "Plain and modern. Reads well at any size." },
+        { "value": "georgia", "label": "Georgia", "note": "A classic serif, already on nearly every device. Steady and unshowy." },
+        { "value": "system", "label": "The reader\u2019s own", "note": "Whatever their device uses. The fastest to load and the least distinctive." },
+        { "value": "dm-serif", "label": "DM Serif Display", "note": "Warm and editorial. Good for headings, heavy going for paragraphs." }
+      ]
+    },
     "site.brand.colors.orange": {
       "value": COLOURS.orange,
       "label": "Accent colour",

@@ -1,7 +1,7 @@
 export { Picture, picture } from '../brand.js';
 import '../tokens.js';
 
-type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch' | 'sections';
+type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch' | 'sections' | 'choice';
 /** What a single box inside an item can be. No 'items' or 'lines': a list inside a list inside a
  *  drawer is a place people get lost. */
 type ItemFieldType = 'text' | 'textarea' | 'image' | 'icon' | 'colour';
@@ -37,6 +37,13 @@ interface CopyEntry {
     type?: FieldType;
     /** Required for 'items', ignored otherwise. */
     fields?: ItemField[];
+    /** Required for 'choice', ignored otherwise. The `note` is shown under the chosen option,
+     *  because most people cannot pick a typeface from its name alone. */
+    options?: {
+        value: string;
+        label: string;
+        note?: string;
+    }[];
     /** Which part of the page this belongs to, for the drawer's headings.
      *
      *  Normally read from the middle of the key, so there is nothing to keep in step. Said here

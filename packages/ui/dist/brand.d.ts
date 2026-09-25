@@ -115,5 +115,33 @@ declare function logoOf(overrides: BrandImageOverrides, companyName?: string | n
  *
  *  Computed rather than CSS color-mix so it works the same everywhere and can be tested. */
 declare function tint(hex: string, strength?: number): string;
+type FontRole = 'heading' | 'body';
+type Typeface = {
+    id: string;
+    /** What it is called in the drawer. */
+    label: string;
+    /** What it looks like, said plainly, because most people cannot pick a typeface from its name. */
+    note: string;
+    stack: string;
+};
+declare const TYPEFACES: Typeface[];
+/** What this repository uses, and what a site that has chosen nothing gets. */
+declare const DEFAULT_TYPEFACES: Record<FontRole, string>;
+/** The brand column, read for its type.
+ *
+ *  Deliberately loose. Every caller already holds the whole brand object, typed for whichever
+ *  part of it that caller cares about, and a narrow type here would mean each of them naming a
+ *  shape it does not use. The values inside are checked rather than trusted, which is what the
+ *  images do too. */
+type BrandFontOverrides = unknown;
+/** The two stacks this site sets its type in. An unknown name falls back rather than failing:
+ *  this runs on every page render, and a typeface that has been withdrawn should cost the site
+ *  its look, not its text. */
+declare function resolveFonts(overrides?: BrandFontOverrides): Record<FontRole, string>;
+/** The type as custom properties, to sit beside the colours in the same block.
+ *
+ *  Two names rather than one per element. A heading font and a body font are the whole of the
+ *  decision; anything finer belongs to the design rather than to the site's owner. */
+declare function fontVarsFor(overrides?: BrandFontOverrides): Record<string, string>;
 
-export { type BrandImageOverrides, type BrandLogoOverrides, type BrandOverrides, type BrandWordmarkOverrides, type ColorName, type ImageName, type Logo, type Palette, type Picture, type Wordmark, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };
+export { type BrandFontOverrides, type BrandImageOverrides, type BrandLogoOverrides, type BrandOverrides, type BrandWordmarkOverrides, type ColorName, DEFAULT_TYPEFACES, type FontRole, type ImageName, type Logo, type Palette, type Picture, TYPEFACES, type Typeface, type Wordmark, cssVarName, cssVarsFor, defaultImages, fontVarsFor, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveFonts, resolveImages, splitWordmark, tint, wordmarkOf };

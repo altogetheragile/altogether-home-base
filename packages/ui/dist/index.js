@@ -15,5 +15,5 @@ export { Checkbox } from './chunk-27BXNG2G.js';
 export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from './chunk-36NKOQDQ.js';
 export { cn } from './chunk-7EOSDFS3.js';
 export { MODULE_DEFAULTS, moduleIsOn } from './chunk-ULREI5W6.js';
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf } from './chunk-XCPMI3D5.js';
-export { colors, fontWeights, fonts, radii, space, tokens } from './chunk-63HQX2YB.js';
+export { DEFAULT_TYPEFACES, TYPEFACES, cssVarName, cssVarsFor, defaultImages, fontVarsFor, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveFonts, resolveImages, splitWordmark, tint, wordmarkOf } from './chunk-L2W3NJKO.js';
+export { colors, fontWeights, fonts, radii, space, tokens } from './chunk-J6O7U55M.js';

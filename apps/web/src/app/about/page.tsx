@@ -6,7 +6,7 @@ import { bookingHref } from '@/lib/booking';
 import { getAllApprovedFeedback } from '@/lib/testimonials';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName } from '@/lib/seo';
 import { FounderPortrait } from '@/components/FounderPortrait';
-import { colors as p , founderOf } from '@/lib/brand';
+import { colors as p , founderOf, fonts } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list, items } from '@/lib/copy';
@@ -322,7 +322,7 @@ export default async function AboutPage() {
   };
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+    <div style={{ fontFamily: fonts.sans, background: p.white }}>
       {founder.shown && (
         <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
       )}

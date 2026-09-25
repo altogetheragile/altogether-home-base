@@ -1,4 +1,4 @@
-import { colors } from './chunk-63HQX2YB.js';
+import { colors } from './chunk-J6O7U55M.js';
 
 // src/brand.ts
 var HEX = /^#[0-9a-fA-F]{6}$/;
@@ -113,5 +113,44 @@ function tint(hex, strength = 0.12) {
   const [r, g, b] = [0, 2, 4].map((i) => mix(parseInt(v.slice(i, i + 2), 16)));
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
+var TYPEFACES = [
+  {
+    id: "dm-serif",
+    label: "DM Serif Display",
+    note: "Warm and editorial. Good for headings, heavy going for paragraphs.",
+    stack: "'DM Serif Display', Georgia, serif"
+  },
+  {
+    id: "dm-sans",
+    label: "DM Sans",
+    note: "Plain and modern. Reads well at any size.",
+    stack: "'DM Sans', system-ui, sans-serif"
+  },
+  {
+    id: "georgia",
+    label: "Georgia",
+    note: "A classic serif, already on nearly every device. Steady and unshowy.",
+    stack: "Georgia, 'Times New Roman', serif"
+  },
+  {
+    id: "system",
+    label: "The reader\u2019s own",
+    note: "Whatever their device uses. The fastest to load and the least distinctive.",
+    stack: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+  }
+];
+var DEFAULT_TYPEFACES = { heading: "dm-serif", body: "dm-sans" };
+var faceById = (id) => typeof id === "string" ? TYPEFACES.find((f) => f.id === id.trim()) : void 0;
+function resolveFonts(overrides) {
+  const given = overrides?.fonts;
+  return {
+    heading: (faceById(given?.heading) ?? faceById(DEFAULT_TYPEFACES.heading)).stack,
+    body: (faceById(given?.body) ?? faceById(DEFAULT_TYPEFACES.body)).stack
+  };
+}
+function fontVarsFor(overrides) {
+  const { heading, body } = resolveFonts(overrides);
+  return { "--aa-font-heading": heading, "--aa-font-body": body };
+}
 
-export { cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };
+export { DEFAULT_TYPEFACES, TYPEFACES, cssVarName, cssVarsFor, defaultImages, fontVarsFor, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveFonts, resolveImages, splitWordmark, tint, wordmarkOf };
