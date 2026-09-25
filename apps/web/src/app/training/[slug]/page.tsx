@@ -8,12 +8,13 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText , s
 import { InterestForm } from './InterestForm';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
+import { pageName } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug: id } = await params;
   const course = await getCourse(id);
   if (!course) return { title: `Course Not Found - ${await siteName()}` };
   const description = course.seo_description || truncateText(course.description || `Agile training course: ${course.title}.`, 160);
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     // The slug, whatever was asked for. A uuid request is redirected below, but metadata is built
     // first and a canonical pointing at the address we are redirecting AWAY from is a canonical
     // that argues with itself.
-    path: `/courses/${course.slug || id}`,
+    path: `/training/${course.slug || id}`,
   });
 }
 
@@ -39,9 +40,9 @@ function renderDescription(text: string | null): string {
   return html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
 }
 
-export default async function CoursePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CoursePage({ params }: { params: Promise<{ slug: string }> }) {
   await requireModule('events');
-  const { id } = await params;
+  const { slug: id } = await params;
   const course = await getCourse(id);
   if (!course) notFound();
 
@@ -51,7 +52,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   // search for, in a result that has to compete with Reed and The Knowledge Academy. Four of those
   // uuids are indexed, so they still resolve and are sent here permanently rather than dropped:
   // Google has to fetch the old address to learn where it went.
-  if (course.slug && id !== course.slug) permanentRedirect(`/courses/${course.slug}`);
+  if (course.slug && id !== course.slug) permanentRedirect(`/training/${course.slug}`);
 
   const now = Date.now();
   const dates = upcomingEvents(course, now);
@@ -71,14 +72,16 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
         data={await courseJsonLd({
           name: course.title,
           description: truncateText(course.description || `Agile training course: ${course.title}.`, 300),
-          path: `/courses/${id}`,
+          path: `/training/${id}`,
         })}
       />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Home', path: '/' },
-          { name: 'Courses', path: '/events' },
-          { name: course.title, path: `/courses/${id}` },
+          // The catalogue, by whatever this site calls it in its menu. It said "Courses" while
+          // the menu said "Courses and Workshops" and half of these are workshops.
+          { name: await pageName('events', 'Courses and Workshops'), path: '/events' },
+          { name: course.title, path: `/training/${id}` },
         ])}
       />
 

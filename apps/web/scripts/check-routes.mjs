@@ -52,7 +52,7 @@ async function dynamicRoutes() {
   ]);
   if (posts[0]) out.push({ path: `/blog/${posts[0].slug}`, module: 'blog' });
   if (exams[0]) out.push({ path: `/exams/${exams[0].slug}`, module: 'exams' });
-  if (courses[0]) out.push({ path: `/courses/${courses[0].slug}`, module: 'events' });
+  if (courses[0]) out.push({ path: `/training/${courses[0].slug}`, module: 'events' });
   return out;
 }
 

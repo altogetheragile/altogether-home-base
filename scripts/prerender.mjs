@@ -235,7 +235,7 @@ function courseJsonLd(course) {
     '@type': 'Course',
     name: course.title,
     description: truncate(course.description, 300),
-    url: `${SITE_URL}/courses/${course.slug || course.id}`,
+    url: `${SITE_URL}/training/${course.slug || course.id}`,
     provider: { '@type': 'Organization', name: 'Altogether Agile', url: SITE_URL },
   };
 }
@@ -375,7 +375,7 @@ function courseItemListJsonLd(templates) {
         '@type': 'Course',
         name: course.title,
         description: truncate(course.description, 300),
-        url: `${SITE_URL}/courses/${course.slug || course.id}`,
+        url: `${SITE_URL}/training/${course.slug || course.id}`,
         provider: {
           '@type': 'Organization',
           name: 'Altogether Agile',
@@ -523,9 +523,9 @@ const STATIC_PAGES = {
     title: 'Cookie Policy - Altogether Agile',
     description: 'How Altogether Agile uses cookies and similar technologies.',
   },
-  // NOTE: there is no /courses listing route in the app (only /courses/:id detail
+  // NOTE: there is no /training listing route in the app (only /training/<slug> detail
   // pages). The catalogue lives at /events, and the routing config 301-redirects
-  // /courses -> /events, so /courses is intentionally NOT prerendered here.
+  // /courses -> /events, so neither /courses nor /training is prerendered here.
 };
 
 // ── Main ─────────────────────────────────────────────────────────────
@@ -637,7 +637,7 @@ async function main() {
   }
 
   // Per-slug pages — blog posts (/blog/<slug>), exams (/exams/<slug>) and courses
-  // (/courses/<id>) — are Next-owned via rewrites, so their HTML is no longer prerendered
+  // (/training/<slug>) — are Next-owned via rewrites, so their HTML is no longer prerendered
   // here; they still feed the sitemap below. The SPA build does still own the per-exam OG
   // image, which the Next exam pages reference at /og/exams/<slug>.png.
   for (const exam of exams) {
@@ -662,7 +662,7 @@ async function main() {
       lastmod: fmtDate(exam.updated_at),
     })),
     ...templates.map((course) => ({
-      loc: `${SITE_URL}/courses/${course.slug || course.id}`,
+      loc: `${SITE_URL}/training/${course.slug || course.id}`,
       lastmod: fmtDate(course.created_at),
     })),
   ];

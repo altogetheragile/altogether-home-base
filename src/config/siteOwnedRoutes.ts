@@ -21,7 +21,9 @@ export const SITE_OWNED = [
   '/events',
   '/blog',
   '/exams',
-  '/courses',
+  // Courses, workshops and webinars. Not '/courses': a workshop is not a course, and the
+  // catalogue holds both. Every old /courses/<slug> address redirects here.
+  '/training',
   // Admin only, and 404 to everybody else. Listed here because the Site answers it, not because
   // it is public.
   '/setup',

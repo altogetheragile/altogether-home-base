@@ -50,7 +50,6 @@ const JourneyMap = lazy(() => import('@/pages/JourneyMap'));
 const StoryMap = lazy(() => import('@/pages/StoryMap'));
 const CanvasCatalogue = lazy(() => import('@/pages/CanvasCatalogue'));
 const CoachedCanvasPage = lazy(() => import('@/pages/CoachedCanvasPage'));
-const CoursePage = lazy(() => import('@/pages/CoursePage'));
 const Terms = lazy(() => import('@/pages/Terms'));
 const CookiePolicy = lazy(() => import('@/pages/CookiePolicy'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
@@ -307,14 +306,6 @@ export const PublicRoutes = () => {
             <CoachedCanvasPage />
           </Suspense>
         </ErrorBoundary>
-    
-      </SiteSettingsRouteGuard>
-    } />
-    <Route path="/events/learn/:slug" element={
-      <SiteSettingsRouteGuard feature="events">
-        <Suspense fallback={<LoadingFallback />}>
-          <CoursePage />
-        </Suspense>
     
       </SiteSettingsRouteGuard>
     } />
