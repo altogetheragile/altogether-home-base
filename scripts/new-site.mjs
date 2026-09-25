@@ -21,6 +21,8 @@
 // run that stopped halfway can be run again rather than leaving a second of everything.
 
 import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { validate, vercelProjects, steps, dnsInstructions, generatePassword } from './new-site/plan.mjs';
 
@@ -138,11 +140,27 @@ const keys = await api('supabase', `/v1/projects/${ref}/api-keys`);
 const anonKey = (keys.find((k) => k.name === 'anon') ?? keys[0]).api_key;
 
 // 2. The schema. Through the CLI: the Management API has no endpoint that runs SQL.
+//
+// `supabase link` writes the project reference into supabase/.temp/ in whichever folder it runs
+// in, which is how `db push --linked` knows where to push. Running it here would leave THIS
+// checkout pointed at the new site's database, and the next migration meant for this site would
+// go to the wrong one with nothing to say so. So the link is put back afterwards, whatever
+// happens in between.
 step(++n, total, 'Applying the migrations');
-execFileSync('npx', ['supabase', 'link', '--project-ref', ref, '--password', input.dbPassword],
-  { stdio: 'inherit', env: { ...process.env, SUPABASE_ACCESS_TOKEN: tokens.supabase } });
-execFileSync('npx', ['supabase', 'db', 'push', '--linked', '--password', input.dbPassword],
-  { stdio: 'inherit', env: { ...process.env, SUPABASE_ACCESS_TOKEN: tokens.supabase } });
+const linkFile = resolve(process.cwd(), 'supabase/.temp/project-ref');
+const wasLinkedTo = existsSync(linkFile) ? readFileSync(linkFile, 'utf8').trim() : null;
+try {
+  execFileSync('npx', ['supabase', 'link', '--project-ref', ref, '--password', input.dbPassword],
+    { stdio: 'inherit', env: { ...process.env, SUPABASE_ACCESS_TOKEN: tokens.supabase } });
+  execFileSync('npx', ['supabase', 'db', 'push', '--linked', '--password', input.dbPassword],
+    { stdio: 'inherit', env: { ...process.env, SUPABASE_ACCESS_TOKEN: tokens.supabase } });
+} finally {
+  if (wasLinkedTo && wasLinkedTo !== ref) {
+    execFileSync('npx', ['supabase', 'link', '--project-ref', wasLinkedTo],
+      { stdio: 'inherit', env: { ...process.env, SUPABASE_ACCESS_TOKEN: tokens.supabase } });
+    say(`  this folder put back to ${wasLinkedTo}`);
+  }
+}
 
 // 3. Where a sign-in link is allowed to land.
 step(++n, total, 'Auth site URL and redirect allowlist');
