@@ -1,0 +1,154 @@
+import { vercelProjects, slugFrom } from './plan';
+
+// ============= Being walked through it =============
+//
+// Ten steps, one at a time, each saying what to do, where to click, and what to paste. It holds
+// nothing: no tokens, no keys, no session with anybody else's account. Everything it knows it
+// worked out from two things somebody typed, a name and a domain.
+//
+// That is why this exists rather than a button that does it all. A button would need a Supabase
+// token and a Vercel token kept somewhere, and the only place to keep them is a database whose
+// settings row is readable by the public. This asks for nothing, so there is nothing to leak and
+// nothing to revoke afterwards.
+//
+// Written for somebody who has not done it before. Every step names the exact page to open and
+// the exact words on the button to press, because "create a project" is obvious only once.
+
+export type Step = {
+  n: number;
+  title: string;
+  /** What to do, in plain words. */
+  body: string;
+  /** Straight to the page this step happens on. */
+  go?: { label: string; href: string };
+  /** Things to copy. A label and the exact value, so nothing has to be typed out. */
+  copy?: { label: string; value: string; secret?: boolean }[];
+  /** Said when it is easy to do the right thing and still get it wrong. */
+  watch?: string;
+};
+
+export type Answers = { name: string; domain: string; email: string };
+
+/** Everything derived from the two answers, so no step has to work it out again. */
+export function namesFor(answers: Answers) {
+  const domain = answers.domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const slug = slugFrom(domain);
+  return { domain, slug, siteProject: `${slug}-web-next`, appProject: slug };
+}
+
+const REPO = 'altogetheragile/altogether-home-base';
+
+export function walkthrough(answers: Answers): Step[] {
+  const { domain, slug, siteProject, appProject } = namesFor(answers);
+  // The environment variables cannot be known until the database exists, so the steps that need
+  // them are written to be filled in by the person, with the shape given.
+  const specs = vercelProjects({
+    slug, domain, repo: REPO,
+    supabaseUrl: 'https://YOUR-PROJECT-REF.supabase.co',
+    anonKey: 'YOUR-ANON-KEY',
+  });
+  const site = specs.find((s) => s.role === 'site')!;
+  const app = specs.find((s) => s.role === 'app')!;
+  // Parsing a URL lowercases its host, so the placeholder came back as
+  // your-project-ref.supabase.co beside a URL saying YOUR-PROJECT-REF. Two spellings of the same
+  // thing, which reads as two different values to somebody who has not done this before.
+  const envList = (spec: typeof site) =>
+    Object.entries(spec.env).map(([k, v]) => ({ label: k, value: v.replace(/your-project-ref/gi, 'YOUR-PROJECT-REF') }));
+
+  return [
+    {
+      n: 1,
+      title: 'Make the database',
+      body: `Sign in to Supabase and press New project. Call it "${slug}". Choose a region near you, such as London. It will make up a database password for you: copy it somewhere safe now, because this is the only time it is shown and you will need it in step 3.`,
+      go: { label: 'Open Supabase', href: 'https://supabase.com/dashboard/projects' },
+      copy: [{ label: 'Project name', value: slug }],
+      watch: 'It takes a couple of minutes to start. Wait until it stops saying "Setting up project".',
+    },
+    {
+      n: 2,
+      title: 'Find its two addresses',
+      body: 'In that new project, open Project Settings, then API. You need two things from that page: the Project URL, and the key labelled anon public. Keep this tab open, because the next steps ask for both.',
+      go: { label: 'Supabase project settings', href: 'https://supabase.com/dashboard/project/_/settings/api' },
+      watch: 'The anon key is the long one that is safe to put in a website. Do not use the service_role key anywhere in these steps.',
+    },
+    {
+      n: 3,
+      title: 'Build the tables',
+      body: 'This is the one step that needs a terminal, because Supabase offers no way to do it from a web page. Open Terminal on your Mac, go to the project folder, and run these two lines. The second asks for the database password from step 1.',
+      copy: [
+        { label: 'Go to the folder', value: 'cd ~/altogether-home-base' },
+        { label: 'Link to the new project', value: 'npx supabase link --project-ref YOUR-PROJECT-REF' },
+        { label: 'Create the tables', value: 'npx supabase db push --linked' },
+      ],
+      watch: 'YOUR-PROJECT-REF is the code in the project URL from step 2, the part before .supabase.co.',
+    },
+    {
+      n: 4,
+      title: 'Make the part that shows the pages',
+      body: `In Vercel, press Add New, then Project, and choose the repository ${REPO}. Before you press Deploy: set the project name to "${siteProject}", set Root Directory to "apps/web", and add the three environment variables below.`,
+      go: { label: 'Open Vercel', href: 'https://vercel.com/new' },
+      copy: [
+        { label: 'Project name', value: siteProject },
+        { label: 'Root Directory', value: 'apps/web' },
+        ...envList(site),
+      ],
+      watch: 'Root Directory is easy to miss and the deployment fails without it. It is under Build and Output Settings.',
+    },
+    {
+      n: 5,
+      title: 'Make the part that answers the address',
+      body: `Add a second Vercel project from the same repository. Name it "${appProject}". Leave Root Directory alone this time. Add the five environment variables below.`,
+      go: { label: 'Add another Vercel project', href: 'https://vercel.com/new' },
+      copy: [
+        { label: 'Project name', value: appProject },
+        ...envList(app),
+      ],
+      watch: `SITE_DEPLOYMENT_HOST must be exactly ${siteProject}.vercel.app. Get it wrong and the new site shows this site's pages instead of its own, with no error to tell you.`,
+    },
+    {
+      n: 6,
+      title: 'Give it its address',
+      body: `In the "${appProject}" project, open Settings, then Domains, and add ${domain}. Vercel will show you one or two records to add wherever you bought the domain. Add them there, then come back.`,
+      go: { label: 'Vercel domains', href: `https://vercel.com/dashboard` },
+      copy: [{ label: 'Domain', value: domain }],
+      watch: 'Add the domain to the project named after the business, not the one ending in -web-next. Only one of them answers the address.',
+    },
+    {
+      n: 7,
+      title: 'Let people sign in',
+      body: `Back in Supabase, open Authentication, then URL Configuration. Set the Site URL to https://${domain} and add https://${domain}/** to the redirect list.`,
+      go: { label: 'Supabase authentication', href: 'https://supabase.com/dashboard/project/_/auth/url-configuration' },
+      copy: [
+        { label: 'Site URL', value: `https://${domain}` },
+        { label: 'Redirect URL', value: `https://${domain}/**` },
+      ],
+      watch: 'Skip this and a password reset email sends people to the wrong website.',
+    },
+    {
+      n: 8,
+      title: 'Make yourself an administrator',
+      body: `Go to https://${domain} and sign up with ${answers.email.trim() || 'your email address'}. That gives you an ordinary account. Then, in Supabase, open the SQL Editor and run the line below to turn it into an admin.`,
+      go: { label: 'Supabase SQL editor', href: 'https://supabase.com/dashboard/project/_/sql/new' },
+      copy: [{
+        label: 'Run this',
+        value: `insert into public.user_roles (user_id, role)\nselect id, 'admin' from auth.users where email = '${answers.email.trim() || 'you@example.com'}'\non conflict (user_id, role) do nothing;`,
+      }],
+      watch: 'Signing up alone is not enough. Nothing makes anybody an admin automatically, which is deliberate.',
+    },
+    {
+      n: 9,
+      title: 'Make it theirs',
+      body: `Open the setup wizard on the new site and work through its five steps: the name, the colours, whose site it is, what it does, and the words.`,
+      go: { label: `Open ${domain}/setup`, href: `https://${domain}/setup` },
+    },
+    {
+      n: 10,
+      title: 'Add it to this list',
+      body: `Last thing. On this site, open the editor on any page, choose This Site, and add ${answers.name.trim() || 'the new site'} under "Sites you look after". It will then appear above with a green light when it is up.`,
+      copy: [
+        { label: 'What you call it', value: answers.name.trim() },
+        { label: 'Address', value: domain },
+      ],
+    },
+  ];
+}
