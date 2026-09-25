@@ -1,18 +1,6 @@
 // src/editor/fields.ts
 var lines = (text) => text.split("\n");
 var list = (text) => text.split("\n").map((l) => l.trim()).filter(Boolean);
-function picture(text) {
-  if (!text?.trim()) return null;
-  try {
-    const p = JSON.parse(text);
-    if (p && typeof p === "object" && typeof p.src === "string" && p.src.trim()) {
-      return { src: p.src.trim(), alt: typeof p.alt === "string" ? p.alt : "" };
-    }
-  } catch {
-    if (/^(https?:\/\/|\/)\S+$/.test(text.trim())) return { src: text.trim(), alt: "" };
-  }
-  return null;
-}
 function items(text, required = []) {
   if (!text?.trim()) return [];
   let parsed;
@@ -27,4 +15,4 @@ function items(text, required = []) {
   );
 }
 
-export { items, lines, list, picture };
+export { items, lines, list };

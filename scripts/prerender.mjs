@@ -583,15 +583,20 @@ async function main() {
   // place, which is what altogetheragile.com wants.
   try {
     const { data: settings } = await supabase.from('site_settings').select('brand, company_name, company_description').limit(1).maybeSingle();
+    const { resolveColors, cssVarsFor, logoOf, wordmarkOf, picture } = await import('@altogether/ui/brand');
+
+    // Both shapes: the {src, alt} the editor's picture box writes, and the bare URL that
+    // everything seeded before it still is. This read only the second, so an uploaded share
+    // image was ignored and a crawler kept being handed this repository's picture.
     const given = settings?.brand?.images?.ogImage;
-    if (typeof given === 'string' && /^https?:\/\/\S+$/i.test(given.trim())) {
-      BRAND_OG_IMAGE = given.trim();
+    const ogSrc = typeof given === 'string' ? picture(given)?.src : null;
+    if (ogSrc && /^https?:\/\/\S+$/i.test(ogSrc)) {
+      BRAND_OG_IMAGE = ogSrc;
       console.log(`  ok   share image from site_settings.brand`);
     }
     if (settings?.company_name?.trim()) SITE_COMPANY = settings.company_name.trim();
     if (settings?.company_description?.trim()) SITE_TAGLINE = settings.company_description.trim();
 
-    const { resolveColors, cssVarsFor, logoOf, wordmarkOf } = await import('@altogether/ui/brand');
     const vars = cssVarsFor(resolveColors(settings?.brand));
     BRAND_CSS = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
     const logo = logoOf(settings?.brand, settings?.company_name);

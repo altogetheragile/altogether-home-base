@@ -1,4 +1,4 @@
-import { PictureBox } from './chunk-EMPC6OPA.js';
+import { PictureBox } from './chunk-CXINH5NJ.js';
 import { ColourBox } from './chunk-M5XDZR2B.js';
 import { IconPicker } from './chunk-BLD3MESD.js';
 import { ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react';

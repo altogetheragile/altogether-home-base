@@ -1,6 +1,8 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { CopyField, SaveResult } from './store.js';
 import './fields.js';
+import '../brand.js';
+import '../tokens.js';
 
 /** Everything the drawer cannot know for itself.
  *

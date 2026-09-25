@@ -55,6 +55,16 @@ type BrandLogoOverrides = {
  *  very picture it was trying to set. The moment those defaults went empty, so a second site would
  *  not wear this one's face, the founder photograph disappeared from the live site and the
  *  override meant to keep it turned out never to have been read. */
+/** A picture and the words that stand in for it.
+ *
+ *  Stored together, as one value, deliberately. Alt text kept in a separate key beside the image
+ *  is alt text that goes stale the first time somebody changes the picture and not the sentence,
+ *  and nobody notices because the only people who read it cannot see the picture. */
+type Picture = {
+    src: string;
+    alt: string;
+};
+declare function picture(text: string): Picture | null;
 declare function isPicture(value: string, name?: ImageName): boolean;
 declare function resolveImages(overrides?: BrandImageOverrides): Record<ImageName, string>;
 type Logo = {
@@ -106,4 +116,4 @@ declare function logoOf(overrides: BrandImageOverrides, companyName?: string | n
  *  Computed rather than CSS color-mix so it works the same everywhere and can be tested. */
 declare function tint(hex: string, strength?: number): string;
 
-export { type BrandImageOverrides, type BrandLogoOverrides, type BrandOverrides, type BrandWordmarkOverrides, type ColorName, type ImageName, type Logo, type Palette, type Wordmark, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };
+export { type BrandImageOverrides, type BrandLogoOverrides, type BrandOverrides, type BrandWordmarkOverrides, type ColorName, type ImageName, type Logo, type Palette, type Picture, type Wordmark, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, picture, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };

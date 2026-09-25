@@ -1,3 +1,6 @@
+export { Picture, picture } from '../brand.js';
+import '../tokens.js';
+
 type FieldType = 'text' | 'textarea' | 'lines' | 'items' | 'image' | 'icon' | 'colour' | 'switch' | 'sections';
 /** What a single box inside an item can be. No 'items' or 'lines': a list inside a list inside a
  *  drawer is a place people get lost. */
@@ -62,16 +65,6 @@ declare const list: (text: string) => string[];
  *
  *  Entries missing a required field are dropped rather than rendered half-built, for the same
  *  reason the pipe parser dropped short lines: a row typed by a person is a row mid-typing. */
-/** A picture and the words that stand in for it.
- *
- *  Stored together, as one value, deliberately. Alt text kept in a separate key beside the image
- *  is alt text that goes stale the first time somebody changes the picture and not the sentence,
- *  and nobody notices because the only people who read it cannot see the picture. */
-type Picture = {
-    src: string;
-    alt: string;
-};
-declare function picture(text: string): Picture | null;
 declare function items<T extends Record<string, string>>(text: string, required?: string[]): T[];
 
-export { type CopyEntry, type CopyRegistry, type FieldType, type ItemField, type ItemFieldType, type Picture, items, lines, list, picture };
+export { type CopyEntry, type CopyRegistry, type FieldType, type ItemField, type ItemFieldType, items, lines, list };

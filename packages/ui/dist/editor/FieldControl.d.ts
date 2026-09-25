@@ -1,6 +1,8 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { CopyField } from './store.js';
 import './fields.js';
+import '../brand.js';
+import '../tokens.js';
 
 declare function FieldControl({ field, value, page, onChange, upload, }: {
     field: CopyField;
