@@ -133,38 +133,49 @@ export function walkthrough(answers: Answers): Step[] {
     {
       n: 6,
       title: 'Give it its address',
-      body: `In the "${appProject}" project, open Settings, then Domains, and add ${domain}. Vercel will show you one or two records to add wherever you bought the domain. Add them there, then come back.`,
+      body: `In the "${appProject}" project, open Settings, then Domains, and add ${domain}, and add www.${domain} as well. Vercel will then show you the records to add wherever you bought the domain: an A record for the domain itself, and usually a CNAME for www. Change only those two. Use the values Vercel shows rather than any you have seen elsewhere, including in a guide like this one, because they differ between accounts.`,
       go: { label: 'Vercel domains', href: `https://vercel.com/dashboard` },
-      copy: [{ label: 'Domain', value: domain }],
-      watch: 'Add the domain to the project named after the business, not the one ending in -web-next. Only one of them answers the address.',
+      copy: [
+        { label: 'Domain', value: domain },
+        { label: 'And this one too', value: `www.${domain}` },
+      ],
+      watch: `Three things. Add the domain to "${appProject}" and not to ${siteProject}: only one of them answers the address. Leave every mail record alone, which means MX and anything named mail, smtp, webmail, exchange or autodiscover, because Vercel does not handle email and changing those stops it arriving. And expect the site to look dead from your own computer for a while afterwards: your machine remembers the old address for up to a day, and will keep trying it long after everybody else has moved on. Check from a phone with wifi turned off instead.`,
     },
     {
       n: 7,
       title: 'Let people sign in',
-      body: `Back in Supabase, open Authentication, then URL Configuration. Set the Site URL to https://${domain} and add https://${domain}/** to the redirect list.`,
+      body: `Back in Supabase, open Authentication, then URL Configuration. Set the Site URL to https://${domain} and add both of the redirect entries below to the list. Do this before the next step, not after: a new Supabase project sends its confirmation emails to localhost until you change this, so signing up first gives you an account you cannot finish and no sign that anything went wrong.`,
       go: { label: 'Supabase authentication', href: 'https://supabase.com/dashboard/project/_/auth/url-configuration' },
       copy: [
         { label: 'Site URL', value: `https://${domain}` },
         { label: 'Redirect URL', value: `https://${domain}/**` },
+        { label: 'And this one, for the www spelling', value: `https://www.${domain}/**` },
       ],
-      watch: 'Skip this and a password reset email sends people to the wrong website.',
+      watch: 'Skip this and a password reset email sends people to the wrong website. Add both spellings: Vercel redirects one to the other, and whichever it settles on is the one people will be signed in to.',
     },
     {
       n: 8,
       title: 'Make yourself an administrator',
-      body: `Go to https://${domain} and sign up with ${answers.email.trim() || 'your email address'}. That gives you an ordinary account. Then, in Supabase, open the SQL Editor and run the line below to turn it into an admin.`,
+      body: `Go to https://${domain} and sign up with ${answers.email.trim() || 'your email address'}, then click the link in the email that arrives. That gives you an ordinary account. Now, in Supabase, open the SQL Editor and run the two below in order: the first checks the account really is there, the second turns it into an admin.`,
       go: { label: 'Supabase SQL editor', href: 'https://supabase.com/dashboard/project/_/sql/new' },
-      copy: [{
-        label: 'Run this',
-        value: `insert into public.user_roles (user_id, role)\nselect id, 'admin' from auth.users where email = '${answers.email.trim() || 'you@example.com'}'\non conflict (user_id, role) do nothing;`,
-      }],
-      watch: 'Signing up alone is not enough. Nothing makes anybody an admin automatically, which is deliberate.',
+      copy: [
+        {
+          label: 'First, check the account exists',
+          value: 'select id, email, email_confirmed_at from auth.users order by created_at desc;',
+        },
+        {
+          label: 'Then, using the email exactly as that printed it',
+          value: `insert into public.user_roles (user_id, role)\nselect id, 'admin' from auth.users where email = '${answers.email.trim() || 'you@example.com'}'\non conflict (user_id, role) do nothing\nreturning user_id;`,
+        },
+      ],
+      watch: 'Signing up alone is not enough. Nothing makes anybody an admin automatically, which is deliberate. Run the first query first, because the second one matches on the email and quietly does nothing when nobody matches: no error, no rows, and no way to tell that apart from having already been an admin. That is what the returning line is for, so a row coming back means it worked.',
     },
     {
       n: 9,
       title: 'Make it theirs',
-      body: `Open the setup wizard on the new site and work through its five steps: the name, the colours, whose site it is, what it does, and the words.`,
+      body: `Open the setup wizard on the new site and work through its five steps: the name, the colours, whose site it is, what it does, and the words. Use the same browser you signed up in, because the page checks who you are signed in as.`,
       go: { label: `Open ${domain}/setup`, href: `https://${domain}/setup` },
+      watch: 'If this gives you a 404, the site is not broken. That page is deliberately invisible to everybody except an administrator, so a 404 here means step 8 has not taken: either you are not signed in on this browser, or the role was not added. Go back and run the first query in step 8, which says whether the account is there at all.',
     },
     {
       n: 10,

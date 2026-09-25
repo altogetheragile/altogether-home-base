@@ -41,7 +41,7 @@ describe('the brand reaches the first paint', () => {
   it('is actually wired into both copies of the shell', () => {
     // dist/index.html and dist/_spa.html are separate files and both are somebody's first load.
     const src = readFileSync(resolve(__dirname, '../scripts/prerender.mjs'), 'utf-8');
-    expect(src).toContain('brandHead(readFileSync');
+    expect(src).toContain('brandHead(identityHead(readFileSync');
     expect(src).toContain('shell = brandHead(shell)');
   });
 });

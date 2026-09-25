@@ -172,8 +172,12 @@ describe('the step that cannot be done in a browser', () => {
 describe('making yourself an admin', () => {
   const step8 = steps.find((s) => s.n === 8)!;
 
+  /** Found by what it does rather than by its position, so adding a step before it does not
+   *  quietly move the assertion onto a different query. */
+  const promote = (list = step8) => list.copy!.find((c) => c.value.includes('insert into'))!;
+
   it('uses the email that was given', () => {
-    expect(step8.copy![0].value).toContain('al@example.com');
+    expect(promote().value).toContain('al@example.com');
   });
 
   it('says that signing up is not enough on its own', () => {
@@ -182,8 +186,36 @@ describe('making yourself an admin', () => {
 
   it('falls back to a placeholder rather than an empty quoted string', () => {
     const without = walkthrough({ ...answers, email: '' }).find((s) => s.n === 8)!;
-    expect(without.copy![0].value).not.toMatch(/=\s*''/);
-    expect(without.copy![0].value).toContain('you@example.com');
+    expect(promote(without).value).not.toMatch(/=\s*''/);
+    expect(promote(without).value).toContain('you@example.com');
+  });
+
+  /** The failure that sent somebody looking for a broken deployment: the insert matches on an
+   *  email, so with nobody signed up it succeeds, changes nothing and prints nothing. */
+  it('has you check the account exists before trying to promote it', () => {
+    const check = step8.copy!.find((c) => c.value.includes('from auth.users') && !c.value.includes('insert into'));
+    expect(check).toBeDefined();
+    expect(step8.copy!.indexOf(check!)).toBeLessThan(step8.copy!.indexOf(promote()));
+  });
+
+  it('asks the insert to report what it did, so no rows means something', () => {
+    expect(promote().value).toContain('returning');
+    expect(step8.watch).toMatch(/no rows|quietly does nothing/i);
+  });
+});
+
+describe('the wizard at the end', () => {
+  const step9 = steps.find((s) => s.n === 9)!;
+
+  /** It is admin-only and 404s to everybody else, which looks exactly like a broken deploy to
+   *  somebody who has just spent an hour deploying. */
+  it('says a 404 there is the page working, not the site being broken', () => {
+    expect(step9.watch).toMatch(/404/);
+    expect(step9.watch).toMatch(/administrator|admin/i);
+  });
+
+  it('says to use the browser you signed up in', () => {
+    expect(step9.body).toMatch(/same browser/i);
   });
 });
 
@@ -286,6 +318,52 @@ describe('the preset that cannot be typed in', () => {
       expect(`${step.body} ${step.watch ?? ''}`, `step ${n} implies you set it by hand`)
         .toMatch(/works it out|detects it|greyed out|locks/i);
     }
+  });
+});
+
+describe('the step that happens at the registrar', () => {
+  const step6 = steps.find((s) => s.n === 6)!;
+
+  it('puts the domain on the project that answers it, named rather than described', () => {
+    expect(step6.watch).toContain('brambleandfern');
+    expect(step6.watch).toContain('brambleandfern-web-next');
+  });
+
+  /** The records around the one being changed belong to her email. Vercel does not do email, so
+   *  nothing in this process ever needs them touched, and touching them is silent. */
+  it('says to leave the mail records alone', () => {
+    expect(step6.watch).toMatch(/MX/);
+    expect(step6.watch).toMatch(/email/i);
+  });
+
+  /** A resolver holds the old address for as long as its TTL says, so the person who just made
+   *  the change is the last to see it. Without this it reads as a failed deployment. */
+  it('warns that it will look dead from your own computer first', () => {
+    expect(step6.watch).toMatch(/remembers the old address|your own computer/i);
+    expect(step6.watch).toMatch(/phone/i);
+  });
+
+  it('tells you to use the values Vercel shows rather than any written here', () => {
+    // They differ between accounts, and a guide that hardcodes one is wrong for somebody.
+    expect(step6.body).toMatch(/values Vercel shows/i);
+    expect(JSON.stringify(step6)).not.toMatch(/\b\d{1,3}(\.\d{1,3}){3}\b/);
+  });
+});
+
+describe('letting people sign in', () => {
+  const step7 = steps.find((s) => s.n === 7)!;
+
+  /** A new Supabase project points its confirmation emails at localhost. Signing up before this
+   *  is set gives an account that cannot be confirmed, and nothing says so. */
+  it('says to do it before signing up, and why', () => {
+    expect(step7.body).toMatch(/before the next step/i);
+    expect(step7.body).toMatch(/localhost/);
+  });
+
+  it('covers both spellings of the address, since one redirects to the other', () => {
+    const values = step7.copy!.map((c) => c.value);
+    expect(values).toContain('https://brambleandfern.com/**');
+    expect(values).toContain('https://www.brambleandfern.com/**');
   });
 });
 
