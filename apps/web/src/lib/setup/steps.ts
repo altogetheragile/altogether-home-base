@@ -1,0 +1,113 @@
+// ============= The order somebody is asked things in =============
+//
+// Five steps, as docs/NEW_SITE_SETUP.md specified. The wizard asks for them one screen at a time;
+// the same fields are also reachable from the editor on any page, because a site is set up once
+// and edited for years.
+//
+// Each step names the fields it wants by key. Pure data, so a test can check every key exists and
+// that nothing important was left out of every step.
+
+export type StepId = 'identity' | 'brand' | 'founder' | 'modules' | 'words';
+
+export type Step = {
+  id: StepId;
+  title: string;
+  /** Said once at the top of the step. What this is for, not what to type. */
+  blurb: string;
+  /** Which registry the fields come from. */
+  page: string;
+  /** The fields, in the order they should be asked for. */
+  keys: string[];
+  /** Shown under the step when there is more to it than the wizard asks for. */
+  footnote?: string;
+};
+
+export const STEPS: Step[] = [
+  {
+    id: 'identity',
+    title: 'Who this site belongs to',
+    blurb: 'The name and how somebody reaches you. These appear in the menu, the footer, the browser tab and every search result, so they are worth getting right before anything else.',
+    page: 'site',
+    keys: [
+      'site.company_name',
+      'site.company_description',
+      'site.contact_email',
+      'site.contact_phone',
+      'site.contact_location',
+      'site.social_linkedin',
+      'site.social_twitter',
+      'site.social_facebook',
+      'site.social_youtube',
+      'site.social_github',
+      'site.copyright_text',
+    ],
+    footnote: 'Leave any social link empty and its icon does not appear in the footer. Most sites use one or two.',
+  },
+  {
+    id: 'brand',
+    title: 'What it looks like',
+    blurb: 'Leave the logo empty and your business name is used as words, which often looks better than a stretched image. The colours are used throughout: the first is the one people notice.',
+    page: 'site',
+    keys: [
+      'site.brand.images.logo',
+      'site.brand.colors.orange',
+      'site.brand.colors.deepTeal',
+      'site.brand.colors.midTeal',
+      'site.brand.colors.skyTeal',
+      'site.brand.colors.paleTeal',
+      'site.brand.images.favicon',
+      'site.brand.images.ogImage',
+    ],
+    footnote: 'The share image is what appears when somebody posts a link to this site. Worth setting before you start sharing links, and easy to forget afterwards.',
+  },
+  {
+    id: 'founder',
+    title: 'Whose site it is',
+    blurb: 'Some sites are a person and some are a company. Switch this off and the founder sections disappear entirely, which is a complete answer rather than an unfinished one.',
+    page: 'site',
+    keys: [
+      'site.show_founder',
+      'site.founder_name',
+      'site.founder_role',
+      'site.founder_expertise',
+      'site.brand.images.founderPhoto',
+      'site.brand.images.founderPortrait',
+    ],
+  },
+  {
+    id: 'modules',
+    title: 'What this site does',
+    blurb: 'Switch off anything this site is not for. A page that is off is not hidden, it is gone: the address returns Not Found to everybody but you.',
+    page: '',
+    // Filled from whichever pages have a visibility switch, since that list is the registries'
+    // to decide rather than this file's.
+    keys: [],
+  },
+  {
+    id: 'words',
+    title: 'The words',
+    blurb: 'The opening of each page you have switched on. Everything else on a page is edited from the page itself, with the button in the corner.',
+    page: '',
+    keys: [],
+    footnote: 'There is much more copy on each page than this. These are the pieces somebody reads first.',
+  },
+];
+
+/** The fields a step asks for, in the order the step names them, dropping any the registry does
+ *  not have. A key that has been renamed should cost that box, not the whole step. */
+export function fieldsForStep<T extends { key: string }>(step: Step, available: T[]): T[] {
+  const byKey = new Map(available.map((f) => [f.key, f]));
+  return step.keys.map((k) => byKey.get(k)).filter((f): f is T => Boolean(f));
+}
+
+/** The headline pieces of one page: what somebody reads first.
+ *
+ *  Chosen by shape rather than by a list per page, so a new page needs no edit here. A heading
+ *  and the sentence under it are what a visitor sees before they decide to stay. */
+export function headlineKeys(page: string, keys: string[]): string[] {
+  const wanted = [`${page}.hero.heading`, `${page}.hero.eyebrow`, `${page}.hero.intro`, `${page}.meta.description`];
+  const found = wanted.filter((k) => keys.includes(k));
+  if (found.length) return found;
+  // A page with no hero: take its first two plain entries rather than showing nothing.
+  return keys.filter((k) => !k.endsWith('.visible')).slice(0, 2);
+}

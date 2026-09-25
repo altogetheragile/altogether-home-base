@@ -11,6 +11,8 @@ import {
   identityChecks, brandChecks, founderChecks, wordChecks, legalChecks, outsideTheApp,
   progress, type Section, type Check,
 } from '@/lib/setup/checks';
+import { SetupWizard } from '@/components/setup/SetupWizard';
+import { headlineKeys } from '@/lib/setup/steps';
 
 // ============= Setting up this site =============
 //
@@ -143,6 +145,24 @@ export default async function SetupPage() {
   const { done, todo, optional } = progress(sections);
   const outside = outsideTheApp();
 
+  // What the wizard needs, worked out here because this is where the settings and the registries
+  // already are. A page with a visibility switch can be turned off; a page that is on has words.
+  const modulePages = Object.entries(COPY_ROUTES)
+    .filter(([href]) => MODULE_FOR_PATH[href])
+    .map(([, page]) => ({
+      page,
+      label: REGISTRIES.find((r) => r.page === page)?.label ?? page,
+      key: `${page}.visible`,
+    }))
+    .filter(({ page, key }) => REGISTRIES.find((r) => r.page === page)?.entries[key]);
+
+  const wordPages = pagesOn.map(({ page, href, label }) => ({
+    page,
+    href,
+    label,
+    keys: headlineKeys(page, Object.keys(REGISTRIES.find((r) => r.page === page)?.entries ?? {})),
+  }));
+
   return (
     <div style={{ background: p.skyTeal, minHeight: '70vh' }}>
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px 72px' }}>
@@ -153,13 +173,21 @@ export default async function SetupPage() {
           Setting up this site
         </h1>
         <p style={{ color: p.body, fontSize: 15, lineHeight: 1.75, margin: '0 0 8px' }}>
-          Everything here is edited from the page it appears on, so each item sends you there with
-          the editor already open. Nothing is a form you have to finish in order, and you can leave
-          and come back.
+          Five steps, in the order that makes sense to answer them. Each one saves as you go, so
+          you can stop anywhere and pick it up later, and nothing here is compulsory. Everything
+          can also be changed from the page it appears on, for the rest of this site&rsquo;s life.
         </p>
-        <p style={{ color: p.muted, fontSize: 14, lineHeight: 1.7, margin: '0 0 32px' }}>
+
+        <SetupWizard modulePages={modulePages} wordPages={wordPages} />
+
+        <h2 style={{ color: p.deepTeal, fontSize: 22, fontWeight: 800, margin: '44px 0 6px' }}>
+          Where this site has got to
+        </h2>
+        <p style={{ color: p.muted, fontSize: 14, lineHeight: 1.7, margin: '0 0 24px' }}>
+          Read from what is actually saved rather than from which steps you clicked through, so it
+          is as true in a year as it is today.{' '}
           {todo === 0
-            ? 'Nothing is outstanding. The optional items below are choices rather than gaps.'
+            ? 'Nothing is outstanding: the optional items are choices rather than gaps.'
             : `${todo} ${todo === 1 ? 'thing still needs' : 'things still need'} deciding, ${done} ${done === 1 ? 'is' : 'are'} done, and ${optional} ${optional === 1 ? 'is' : 'are'} optional.`}
         </p>
 
