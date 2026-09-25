@@ -6,6 +6,7 @@ import { bookingHref } from '@/lib/booking';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
+import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +16,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy('contact');
   return {
   ...(await buildMetadata({
-    title: `Contact - ${await siteName()}`,
+    title: `${t('contact.meta.titlePrefix')} - ${await siteName()}`,
     description: t('contact.meta.description'),
     path: '/contact',
   })),
-  title: { absolute: `Contact - ${await siteName()}` },
+  title: { absolute: `${t('contact.meta.titlePrefix')} - ${await siteName()}` },
   };
 }
 
@@ -43,7 +44,7 @@ export default async function ContactPage() {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Contact', path: '/contact' }])} />
+      <JsonLd data={breadcrumbJsonLd(await pageCrumbs('contact', '/contact', 'Contact'))} />
 
       <style>{`
         .aa-contact-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }

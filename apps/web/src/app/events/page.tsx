@@ -8,6 +8,7 @@ import { EventsList } from './EventsList';
 import { colors as c } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines } from '@/lib/copy';
+import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy('events');
   return buildMetadata({
-  title: 'Agile Training Courses in London & the UK',
+  title: t('events.meta.titlePrefix'),
   description: t('events.meta.description'),
   path: '/events',
 });
@@ -52,7 +53,7 @@ export default async function EventsPage() {
           courses.map((m) => ({ name: m.title, description: m.description, path: m.href })),
         )}
       />
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Courses and Workshops', path: '/events' }])} />
+      <JsonLd data={breadcrumbJsonLd(await pageCrumbs('events', '/events', 'Courses and Workshops'))} />
 
       <style>{`
         .aa-page-intro { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: end; }

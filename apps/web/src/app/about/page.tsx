@@ -10,6 +10,7 @@ import { colors as p , founderOf } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list, items } from '@/lib/copy';
+import { pageCrumbs } from '@/lib/copy/pageName';
 import { Prose, When, has } from '@/lib/copy/Prose';
 import { sectionNodes } from '@/components/Sections';
 import { orderedSections, ABOUT_SECTIONS } from '@altogether/ui/editor/sections';
@@ -325,7 +326,7 @@ export default async function AboutPage() {
       {founder.shown && (
         <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
       )}
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'About', path: '/about' }])} />
+      <JsonLd data={breadcrumbJsonLd(await pageCrumbs('about', '/about', 'About'))} />
 
       <style>{`
         /* Capped and centred, like the coaching page. Without a maximum these bands are as wide
