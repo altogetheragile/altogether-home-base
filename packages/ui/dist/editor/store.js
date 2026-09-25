@@ -70,6 +70,7 @@ async function loadPage(db, registries, page) {
     ...e.type ? { type: e.type } : {},
     ...e.fields ? { fields: e.fields } : {},
     ...e.says ? { says: e.says } : {},
+    ...e.group ? { group: e.group } : {},
     ...undo[key] ? { undo: undo[key] } : {},
     ...drafts[key] ? { draft: drafts[key] } : {}
   }));

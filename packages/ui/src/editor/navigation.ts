@@ -8,32 +8,38 @@ export const navigationRegistry: CopyRegistry = {
     "nav.events": {
       "value": "Events",
       "label": "Events link",
-      "hint": "The menu label for the events listing. The page lives at /events whatever you call it here."
+      "hint": "The menu label for the events listing. The page lives at /events whatever you call it here.",
+      "group": "The top-level menu"
     },
     "nav.coaching": {
       "value": "Coaching",
       "label": "Coaching link",
-      "hint": "What you call the service you sell. Many freelancers prefer Services or Consulting. The page lives at /coaching whatever you call it here."
+      "hint": "What you call the service you sell. Many freelancers prefer Services or Consulting. The page lives at /coaching whatever you call it here.",
+      "group": "The top-level menu"
     },
     "nav.about": {
       "value": "About",
       "label": "About link",
-      "hint": "The menu label for the about page"
+      "hint": "The menu label for the about page",
+      "group": "The top-level menu"
     },
     "nav.contact": {
       "value": "Contact",
       "label": "Contact link",
-      "hint": "The menu label for the contact page"
+      "hint": "The menu label for the contact page",
+      "group": "The top-level menu"
     },
     "nav.testimonials": {
       "value": "Testimonials",
       "label": "Testimonials link",
-      "hint": "The menu label for the testimonials page"
+      "hint": "The menu label for the testimonials page",
+      "group": "The top-level menu"
     },
     "nav.resources": {
       "value": "Resources",
       "label": "Resources menu",
-      "hint": "The drop-down that gathers the blog, the knowledge base and anything else switched on"
+      "hint": "The drop-down that gathers the blog, the knowledge base and anything else switched on",
+      "group": "The Resources menu"
     },
     "nav.resources.visible": {
       "value": "",
@@ -41,12 +47,14 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "The whole drop-down, not one page in it. Off, and all five go at once, along with the menu itself. To hide a single page, use the switch under that page's own label below. The pages stay reachable by their own addresses either way.",
       "type": "switch",
       "store": "column",
-      "path": "show_resources"
+      "path": "show_resources",
+      "group": "The Resources menu"
     },
     "nav.knowledge": {
       "value": "Knowledge Base",
       "label": "Knowledge base link",
-      "hint": "Inside the Resources drop-down"
+      "hint": "Inside the Resources drop-down",
+      "group": "Inside Resources"
     },
     "nav.knowledge.visible": {
       "value": "",
@@ -54,12 +62,14 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "Off, and the knowledge base leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
-      "path": "show_knowledge"
+      "path": "show_knowledge",
+      "group": "Inside Resources"
     },
     "nav.blog": {
       "value": "Blog",
       "label": "Blog link",
-      "hint": "Inside the Resources drop-down"
+      "hint": "Inside the Resources drop-down",
+      "group": "Inside Resources"
     },
     "nav.blog.visible": {
       "value": "",
@@ -67,12 +77,14 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "Off, and the blog leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
-      "path": "show_blog"
+      "path": "show_blog",
+      "group": "Inside Resources"
     },
     "nav.exams": {
       "value": "Practice Exams",
       "label": "Practice exams link",
-      "hint": "Inside the Resources drop-down"
+      "hint": "Inside the Resources drop-down",
+      "group": "Inside Resources"
     },
     "nav.exams.visible": {
       "value": "",
@@ -80,12 +92,14 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "Off, and the practice exams leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
-      "path": "show_exams"
+      "path": "show_exams",
+      "group": "Inside Resources"
     },
     "nav.ai_tools": {
       "value": "AI Tools",
       "label": "AI tools link",
-      "hint": "Inside the Resources drop-down"
+      "hint": "Inside the Resources drop-down",
+      "group": "Inside Resources"
     },
     "nav.ai_tools.visible": {
       "value": "",
@@ -93,12 +107,14 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "Off, and the AI tools leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
-      "path": "show_ai_tools"
+      "path": "show_ai_tools",
+      "group": "Inside Resources"
     },
     "nav.flow_game": {
       "value": "Flow Game",
       "label": "Flow game link",
-      "hint": "Inside the Resources drop-down"
+      "hint": "Inside the Resources drop-down",
+      "group": "Inside Resources"
     },
     "nav.flow_game.visible": {
       "value": "",
@@ -106,22 +122,26 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "Off, and the flow game leaves the menu and answers Not Found for everybody except you. The other items in Resources are unaffected.",
       "type": "switch",
       "store": "column",
-      "path": "show_flow_game"
+      "path": "show_flow_game",
+      "group": "Inside Resources"
     },
     "nav.home": {
       "value": "Home",
       "label": "Home link",
-      "hint": "Shown in the footer's quick links"
+      "hint": "Shown in the footer's quick links",
+      "group": "The footer"
     },
     "footer.quicklinks": {
       "value": "Quick Links",
       "label": "Footer links heading",
-      "hint": "The heading above the list of links in the footer"
+      "hint": "The heading above the list of links in the footer",
+      "group": "The footer"
     },
     "footer.contact": {
       "value": "Contact",
       "label": "Footer contact heading",
-      "hint": "The heading above the email address and phone number in the footer"
+      "hint": "The heading above the email address and phone number in the footer",
+      "group": "The footer"
     }
   }
 } as CopyRegistry;

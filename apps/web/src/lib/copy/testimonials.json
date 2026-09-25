@@ -16,7 +16,8 @@
       "hint": "Off, and every quote is anonymous.",
       "type": "switch",
       "store": "column",
-      "path": "show_testimonial_name"
+      "path": "show_testimonial_name",
+      "group": "What each quote shows"
     },
     "testimonials.firstName.visible": {
       "value": "",
@@ -24,7 +25,8 @@
       "hint": "On, and somebody who left their full name appears by their first name alone.",
       "type": "switch",
       "store": "column",
-      "path": "show_testimonial_first_name_only"
+      "path": "show_testimonial_first_name_only",
+      "group": "What each quote shows"
     },
     "testimonials.company.visible": {
       "value": "",
@@ -32,7 +34,8 @@
       "hint": "The job title and company under the name.",
       "type": "switch",
       "store": "column",
-      "path": "show_testimonial_company"
+      "path": "show_testimonial_company",
+      "group": "What each quote shows"
     },
     "testimonials.rating.visible": {
       "value": "",
@@ -40,7 +43,8 @@
       "hint": "The score above the quotes.",
       "type": "switch",
       "store": "column",
-      "path": "show_testimonial_rating_header"
+      "path": "show_testimonial_rating_header",
+      "group": "What each quote shows"
     },
     "testimonials.meta.description": {
       "value": "What people say about the courses, coaching and training here.",
