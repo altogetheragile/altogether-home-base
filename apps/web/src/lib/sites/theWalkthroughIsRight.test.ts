@@ -124,6 +124,7 @@ describe('what it must never tell somebody to do', () => {
 
 describe('the step that cannot be done in a browser', () => {
   const step3 = steps.find((s) => s.n === 3)!;
+  const commands = step3.copy!.map((c) => c.value).join('\n');
 
   it('says plainly why it needs a terminal', () => {
     expect(step3.body).toMatch(/terminal/i);
@@ -131,10 +132,34 @@ describe('the step that cannot be done in a browser', () => {
   });
 
   it('gives the commands complete, including where to run them', () => {
-    const values = step3.copy!.map((c) => c.value).join('\n');
-    expect(values).toMatch(/cd /);
-    expect(values).toMatch(/supabase link/);
-    expect(values).toMatch(/supabase db push/);
+    expect(commands).toMatch(/git clone/);
+    expect(commands).toMatch(/cd /);
+    expect(commands).toMatch(/supabase link/);
+    expect(commands).toMatch(/supabase db push/);
+  });
+
+  it('never tells somebody to link inside the folder their own site lives in', () => {
+    // `supabase link` writes the project reference into supabase/.temp/ in whatever folder it
+    // runs in, and `db push --linked` reads it back. Linking in the existing checkout would
+    // leave this site's folder pointed at the new site's database, so the next migration meant
+    // for this site would go to the wrong one, silently. It cost nothing to catch and would have
+    // cost a great deal to discover.
+    // The clone URL names the repository, which is fine. What must never appear is a cd into
+    // the folder this site already lives in.
+    expect(commands, 'step 3 changes into the existing checkout').not.toMatch(/cd\s+~\/altogether-home-base/);
+    expect(commands).toMatch(/cd ~\/brambleandfern/);
+  });
+
+  it('warns why the folder matters, rather than only saying which one', () => {
+    expect(step3.watch).toMatch(/new folder/i);
+    expect(step3.watch).toMatch(/wrong database|aimed at|points at/i);
+  });
+
+  it('clones into a folder named after the new site, so two sites never share one', () => {
+    const other = walkthrough({ name: 'Other', domain: 'otherplace.co.uk', email: 'x@y.z' })
+      .find((s) => s.n === 3)!.copy!.map((c) => c.value).join('\n');
+    expect(other).toMatch(/~\/otherplace/);
+    expect(other).not.toMatch(/~\/brambleandfern/);
   });
 });
 
