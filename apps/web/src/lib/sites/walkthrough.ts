@@ -74,13 +74,14 @@ export function walkthrough(answers: Answers): Step[] {
     {
       n: 3,
       title: 'Build the tables',
-      body: 'This is the one step that needs a terminal, because Supabase offers no way to do it from a web page. Open Terminal on your Mac, go to the project folder, and run these two lines. The second asks for the database password from step 1.',
+      body: `This is the one step that needs a terminal, because Supabase offers no way to do it from a web page. It works on its own copy of the code, in a new folder called ${slug}, so that nothing happens to the one you already have. Open Terminal and run these four lines. The last asks for the database password from step 1. YOUR-PROJECT-REF is the code in the project URL from step 2, the part before .supabase.co.`,
       copy: [
-        { label: 'Go to the folder', value: 'cd ~/altogether-home-base' },
-        { label: 'Link to the new project', value: 'npx supabase link --project-ref YOUR-PROJECT-REF' },
+        { label: 'Get a fresh copy of the code', value: `git clone https://github.com/${REPO}.git ~/${slug}` },
+        { label: 'Go into it', value: `cd ~/${slug}` },
+        { label: 'Point it at the new database', value: 'npx supabase link --project-ref YOUR-PROJECT-REF' },
         { label: 'Create the tables', value: 'npx supabase db push --linked' },
       ],
-      watch: 'YOUR-PROJECT-REF is the code in the project URL from step 2, the part before .supabase.co.',
+      watch: `Use a new folder, not the one your own site lives in. Linking changes which database that folder points at, and doing it in ~/altogether-home-base would leave your own site's folder aimed at ${answers.name.trim() || 'the new site'}, so the next change you made would go to the wrong database with nothing to say so.`,
     },
     {
       n: 4,
