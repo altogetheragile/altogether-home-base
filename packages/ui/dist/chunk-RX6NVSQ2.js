@@ -40,7 +40,7 @@ function FieldControl({
           className: "h-4 w-4 rounded border-border"
         }
       ),
-      /* @__PURE__ */ jsx("span", { className: value === "on" ? "" : "font-medium text-amber-700", children: value === "on" ? "Visible to everyone" : "Hidden from visitors" })
+      /* @__PURE__ */ jsx("span", { className: value === "on" || field.says ? "" : "font-medium text-amber-700", children: value === "on" ? field.says?.on ?? "Visible to everyone" : field.says?.off ?? "Hidden from visitors" })
     ] });
   }
   return /* @__PURE__ */ jsx(

@@ -69,6 +69,7 @@ async function loadPage(db, registries, page) {
     shipped: e.value,
     ...e.type ? { type: e.type } : {},
     ...e.fields ? { fields: e.fields } : {},
+    ...e.says ? { says: e.says } : {},
     ...undo[key] ? { undo: undo[key] } : {},
     ...drafts[key] ? { draft: drafts[key] } : {}
   }));

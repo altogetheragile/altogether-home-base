@@ -118,6 +118,11 @@ let SITE_TAGLINE = null;
  *  Putting the values in the shell's own <style> means the first paint is already right. */
 let BRAND_CSS = '';
 let BRAND_LOGO = null;
+
+/** What the header sets where a logo would go, for a site that has not uploaded one. Worked out
+ *  from the same rule the two React headers use, so the static shell and the hydrated page agree
+ *  and nothing visibly changes when React arrives. */
+let WORDMARK = null;
 const brandHead = (html) => withBrand(html, { css: BRAND_CSS, logo: BRAND_LOGO });
 
 /** The same shell, told whose site it is. Applied to both copies: dist/_spa.html, which serves
@@ -140,6 +145,7 @@ const identityHead = (html) => withIdentity(html, {
   tagline: SITE_TAGLINE,
   ogImage: BRAND_OG_IMAGE,
   logo: BRAND_LOGO,
+  wordmark: WORDMARK,
 });
 
 /** Build meta tag block to inject into <head>. */
@@ -585,11 +591,12 @@ async function main() {
     if (settings?.company_name?.trim()) SITE_COMPANY = settings.company_name.trim();
     if (settings?.company_description?.trim()) SITE_TAGLINE = settings.company_description.trim();
 
-    const { resolveColors, cssVarsFor, logoOf } = await import('@altogether/ui/brand');
+    const { resolveColors, cssVarsFor, logoOf, wordmarkOf } = await import('@altogether/ui/brand');
     const vars = cssVarsFor(resolveColors(settings?.brand));
     BRAND_CSS = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
     const logo = logoOf(settings?.brand, settings?.company_name);
     BRAND_LOGO = logo.mode === 'image' ? logo.src : null;
+    WORDMARK = wordmarkOf(settings?.brand, settings?.company_name);
     console.log(`  ok   brand inlined into the shell (${Object.keys(vars).length / 2} colours)`);
   } catch {
     // Never fail a build over a brand lookup.

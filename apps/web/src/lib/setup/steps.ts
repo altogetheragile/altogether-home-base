@@ -46,10 +46,13 @@ export const STEPS: Step[] = [
   {
     id: 'brand',
     title: 'What it looks like',
-    blurb: 'Leave the logo empty and your business name is used as words, which often looks better than a stretched image. The colours are used throughout: the first is the one people notice.',
+    blurb: 'Leave the logo empty and your business name is used as words, which often looks better than a stretched image, and the switch under it decides how those words are set. The colours are used throughout: the first is the one people notice.',
     page: 'site',
     keys: [
       'site.brand.images.logo',
+      // Directly under the logo, because it only does anything when that is empty. On its own
+      // elsewhere it reads as a setting that has stopped working.
+      'site.brand.wordmark.twoTone',
       'site.brand.colors.orange',
       'site.brand.colors.deepTeal',
       'site.brand.colors.midTeal',

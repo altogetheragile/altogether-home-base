@@ -13,6 +13,7 @@ type CopyField = {
     shipped: string;
     type?: CopyEntry['type'];
     fields?: CopyEntry['fields'];
+    says?: CopyEntry['says'];
     undo?: {
         value: string;
         at: string;

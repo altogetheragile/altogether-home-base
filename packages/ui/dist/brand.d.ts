@@ -32,6 +32,21 @@ declare const defaultImages: Record<ImageName, string>;
 type BrandImageOverrides = {
     images?: Partial<Record<string, unknown>> | null;
 } | null | undefined;
+/** The same brand column, read for the wordmark rather than for a picture. */
+type BrandWordmarkOverrides = {
+    wordmark?: {
+        twoTone?: unknown;
+    } | null;
+} | null | undefined;
+/** The brand column as a header reads it: the pictures and the wordmark are one object, and a
+ *  component that renders a logo needs both to decide what to draw. Not BrandOverrides, which is
+ *  already the colours. */
+type BrandLogoOverrides = {
+    images?: Partial<Record<string, unknown>> | null;
+    wordmark?: {
+        twoTone?: unknown;
+    } | null;
+} | null | undefined;
 /** Is this somewhere a picture can actually be?
  *
  *  The rule used to be "absolute http address only", for the Open Graph reason above, applied to
@@ -49,6 +64,37 @@ type Logo = {
     mode: 'wordmark';
     text: string;
 };
+/** A wordmark in two parts, so the second can be set in the accent colour.
+ *
+ *  The two-tone look is two rules, not a design: set the name in capitals, and put the last word
+ *  in the accent colour against the rest in the darkest one. It is the whole of this site's own
+ *  lettering, and a site that has a name and a palette already has everything it needs for it,
+ *  with no file to commission and none to keep up to date.
+ *
+ *  Off unless asked for. It is this site's typographic signature, and a second site should look
+ *  like itself by default rather than like ours. */
+type Wordmark = {
+    first: string;
+    second: string;
+    gap: boolean;
+    twoTone: boolean;
+};
+/** Where a name comes apart.
+ *
+ *  On the last space, so "Bramble & Fern" keeps "Bramble &" together and accents "Fern". With no
+ *  space at all, on the capital letter that starts the second half, which is how a name like
+ *  StreamStrategy is read aloud even though it is written as one word.
+ *
+ *  It gets some names wrong. "McKenzie" comes apart into "Mc" and "Kenzie", and there is no rule
+ *  that tells that apart from "StreamStrategy" without knowing the words. That is why this is a
+ *  setting somebody turns on once and looks at, rather than something applied to every site. */
+declare function splitWordmark(text: string): {
+    first: string;
+    second: string;
+    gap: boolean;
+};
+/** The wordmark this site renders where a logo would go, and whether it is set in two colours. */
+declare function wordmarkOf(overrides: BrandWordmarkOverrides, companyName?: string | null): Wordmark;
 /** What to render where the logo goes. `companyName` is only used when no logo is configured. */
 declare function logoOf(overrides: BrandImageOverrides, companyName?: string | null): Logo;
 /** The same colour, mixed with white, for a card's header band.
@@ -60,4 +106,4 @@ declare function logoOf(overrides: BrandImageOverrides, companyName?: string | n
  *  Computed rather than CSS color-mix so it works the same everywhere and can be tested. */
 declare function tint(hex: string, strength?: number): string;
 
-export { type BrandImageOverrides, type BrandOverrides, type ColorName, type ImageName, type Logo, type Palette, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, tint };
+export { type BrandImageOverrides, type BrandLogoOverrides, type BrandOverrides, type BrandWordmarkOverrides, type ColorName, type ImageName, type Logo, type Palette, type Wordmark, cssVarName, cssVarsFor, defaultImages, hexToHslTriplet, isPicture, logoOf, resolveColors, resolveImages, splitWordmark, tint, wordmarkOf };
