@@ -15,6 +15,11 @@
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
+    "exams.meta.titlePrefix": {
+      "value": "Practice Exams",
+      "label": "Browser tab and search result title",
+      "hint": "What comes before the business name in the browser tab and in a search result. The page name on its own is fine; something a person would search for is better."
+    },
     "exams.empty": {
       "value": "No exams available yet. Check back soon.",
       "label": "Empty state",

@@ -47,6 +47,11 @@
       "label": "Search description",
       "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
     },
+    "testimonials.meta.titlePrefix": {
+      "value": "Testimonials",
+      "label": "Browser tab and search result title",
+      "hint": "What comes before the business name in the browser tab and in a search result. The page name on its own is fine; something a person would search for is better."
+    },
     "testimonials.hero.heading": {
       "value": "What Our Attendees Say",
       "label": "Hero heading",

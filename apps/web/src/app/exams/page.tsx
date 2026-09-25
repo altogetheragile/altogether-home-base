@@ -7,6 +7,7 @@ import { EXAM_FAQS } from '@/lib/exam-faqs';
 import { colors as c } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, list } from '@/lib/copy';
+import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy('exams');
   return buildMetadata({
-  title: 'AgilePM & Scrum Practice Exam Questions',
+  title: t('exams.meta.titlePrefix'),
   description: t('exams.meta.description'),
   path: '/exams',
 });
@@ -50,7 +51,7 @@ export default async function ExamsPage() {
   return (
     <>
       <JsonLd data={faqPageJsonLd(EXAM_FAQS)} />
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Practice Exams', path: '/exams' }])} />
+      <JsonLd data={breadcrumbJsonLd(await pageCrumbs('exams', '/exams', 'Practice Exams'))} />
       <JsonLd data={itemListJsonLd(exams.map((e) => ({ name: e.title, path: `/exams/${e.slug}` })))} />
 
       {/* Teal gradient hero */}

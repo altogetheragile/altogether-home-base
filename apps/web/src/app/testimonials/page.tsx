@@ -6,6 +6,7 @@ import { TestimonialsGrid } from './TestimonialsGrid';
 import { colors as p } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
+import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,11 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getCopy('testimonials');
   return {
   ...(await buildMetadata({
-    title: `Testimonials - ${await siteName()}`,
+    title: `${t('testimonials.meta.titlePrefix')} - ${await siteName()}`,
     description: t('testimonials.meta.description'),
     path: '/testimonials',
   })),
-  title: { absolute: `Testimonials - ${await siteName()}` },
+  title: { absolute: `${t('testimonials.meta.titlePrefix')} - ${await siteName()}` },
   };
 }
 
@@ -32,7 +33,7 @@ export default async function TestimonialsPage() {
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
-      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Testimonials', path: '/testimonials' }])} />
+      <JsonLd data={breadcrumbJsonLd(await pageCrumbs('testimonials', '/testimonials', 'Testimonials'))} />
 
       {/* HERO */}
       <div id="main-content" style={{ background: p.paleTeal, padding: '56px 24px', textAlign: 'center' }}>
