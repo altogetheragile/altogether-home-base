@@ -47,7 +47,9 @@ export function SetupWizard({
   // Which registries this step needs. The first three are all the site registry; the last two
   // span every page that is switched on.
   const pagesNeeded = useMemo(() => {
-    if (step.id === 'modules') return modulePages.map((m) => m.page);
+    // The modules step spans every page with a visibility switch, plus the site registry, which
+    // holds the parts that have no page of their own.
+    if (step.id === 'modules') return [...modulePages.map((m) => m.page), step.page];
     if (step.id === 'words') return wordPages.map((w) => w.page);
     return [step.page];
   }, [step, modulePages, wordPages]);
@@ -67,12 +69,17 @@ export function SetupWizard({
    *  two that span pages. */
   const groups: Group[] = useMemo(() => {
     if (step.id === 'modules') {
-      return modulePages
-        .map(({ page, label, key }) => ({
+      return [
+        ...modulePages.map(({ page, label, key }) => ({
           step, page, title: label,
           fields: (loaded[page] ?? []).filter((f) => f.key === key),
-        }))
-        .filter((g) => g.fields.length);
+        })),
+        // Last, under its own heading: the parts with no page to be switched from.
+        {
+          step, page: step.page, title: 'Everything else',
+          fields: fieldsForStep(step, loaded[step.page] ?? []),
+        },
+      ].filter((g) => g.fields.length);
     }
     if (step.id === 'words') {
       return wordPages

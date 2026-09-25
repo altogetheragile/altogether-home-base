@@ -81,10 +81,20 @@ export const STEPS: Step[] = [
     id: 'modules',
     title: 'What this site does',
     blurb: 'Switch off anything this site is not for. A page that is off is not hidden, it is gone: the address returns Not Found to everybody but you.',
-    page: '',
-    // Filled from whichever pages have a visibility switch, since that list is the registries'
-    // to decide rather than this file's.
-    keys: [],
+    // The public pages are filled in from whichever registries have a visibility switch, since
+    // that list is theirs to decide rather than this file's. The keys below are the parts with no
+    // page of their own to be switched from, which is how they came to live on an admin screen
+    // nobody could find and half the switches were offered in two places.
+    page: 'site',
+    keys: [
+      'site.show_bookings',
+      'site.show_dynamic_pages',
+      'site.show_protected_projects',
+      'site.show_dashboard',
+      'site.show_zoo_game',
+      'site.show_scrum_game',
+      'site.show_recommendations',
+    ],
   },
   {
     id: 'words',
