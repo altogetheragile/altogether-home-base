@@ -108,25 +108,25 @@ export function walkthrough(answers: Answers): Step[] {
     {
       n: 4,
       title: 'Make the part that shows the pages',
-      body: `In Vercel, press Add New, then Project, and choose the repository ${REPO}. Before you press Deploy: set the project name to "${siteProject}", set Root Directory to "apps/web", and add the three environment variables below.`,
-      go: { label: 'Open Vercel', href: 'https://vercel.com/new' },
+      body: `On the Vercel page that opens, ignore the big prompt box at the top: that is v0, which builds brand new apps and is not what you want. Look further down for the panel headed "Import Git Repository", find ${REPO}, and press Import. Then, before you press Deploy: set the project name to "${siteProject}", set Root Directory to "apps/web", and add the three environment variables below.`,
+      go: { label: 'Open Vercel, New Project', href: 'https://vercel.com/new' },
       copy: [
         { label: 'Project name', value: siteProject },
         { label: 'Root Directory', value: 'apps/web' },
         ...envList(site),
       ],
-      watch: 'Root Directory is easy to miss and the deployment fails without it. It is under Build and Output Settings.',
+      watch: 'Two easy mistakes here. Typing into the prompt box at the top starts v0 building a new app from nothing, which is not this. And Root Directory, under Build and Output Settings, is easy to miss: the deployment fails without it.',
     },
     {
       n: 5,
       title: 'Make the part that answers the address',
-      body: `Add a second Vercel project from the same repository. Name it "${appProject}". Leave Root Directory alone this time. Add the five environment variables below.`,
-      go: { label: 'Add another Vercel project', href: 'https://vercel.com/new' },
+      body: `Import the same repository a second time, the same way: the "Import Git Repository" panel, not the prompt box. Name this one "${appProject}". Leave Root Directory alone this time. Add the five environment variables below.`,
+      go: { label: 'Vercel, New Project again', href: 'https://vercel.com/new' },
       copy: [
         { label: 'Project name', value: appProject },
         ...envList(app),
       ],
-      watch: `SITE_DEPLOYMENT_HOST must be exactly ${siteProject}.vercel.app. Get it wrong and the new site shows this site's pages instead of its own, with no error to tell you.`,
+      watch: `Two things. SITE_DEPLOYMENT_HOST must be exactly ${siteProject}.vercel.app: get it wrong and the new site shows this site's pages instead of its own, with no error to tell you. And as in step 4, the prompt box at the top of that page is v0, which makes new apps rather than importing yours.`,
     },
     {
       n: 6,

@@ -226,3 +226,27 @@ describe('nothing is handed over with a gap in it', () => {
     expect(link.value).not.toMatch(/--project-ref\s*$/);
   });
 });
+
+describe('the two Vercel steps', () => {
+  // Following "press Add New, then Project" landed somebody in v0, which builds new apps with
+  // AI, and it cheerfully started making one called "Streamstrategy web application". The page
+  // puts a prompt box above the import panel, and the obvious thing to do with a box is type in
+  // it. An instruction that is right and still leads somewhere wrong is a wrong instruction.
+
+  for (const n of [4, 5]) {
+    it(`step ${n} names the panel to use, not just the page`, () => {
+      const step = steps.find((s) => s.n === n)!;
+      expect(step.body, `step ${n} never says Import Git Repository`).toMatch(/Import Git Repository/);
+    });
+
+    it(`step ${n} says what the prompt box at the top is`, () => {
+      const step = steps.find((s) => s.n === n)!;
+      const said = `${step.body} ${step.watch ?? ''}`;
+      expect(said, `step ${n} does not mention v0`).toMatch(/v0/);
+    });
+  }
+
+  it('still says the thing that made the first deployment fail', () => {
+    expect(steps.find((s) => s.n === 4)!.watch).toMatch(/Root Directory/);
+  });
+});
