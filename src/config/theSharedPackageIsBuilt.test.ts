@@ -17,9 +17,20 @@ describe('the shared package is built, not committed', () => {
     expect(readFileSync('.gitignore', 'utf8')).toMatch(/^packages\/ui\/dist\/?$/m);
   });
 
-  it('is built after any install at the root', () => {
-    // Covers a fresh clone, the root CI job, and the App's own deploy, whose root is this one.
-    expect(pkg('package.json').scripts.prepare).toContain('--workspace @altogether/ui');
+  it('is built after any install at the root, and never fails one', () => {
+    // A convenience, so a fresh clone has it without being told. Not fatal: Vercel installs with
+    // NODE_ENV=production, which omits the very devDependencies this needs, and the first preview
+    // deploy died on "tsup: command not found" during npm ci.
+    const prepare = pkg('package.json').scripts.prepare ?? '';
+    expect(prepare).toContain('--workspace @altogether/ui');
+    expect(prepare, 'prepare can fail an install').toMatch(/\|\|/);
+  });
+
+  it('is built before this project builds, where it has to be there', () => {
+    // How the App's deploy gets it: its root directory is this one and it runs npm run build.
+    const prebuild = pkg('package.json').scripts.prebuild ?? '';
+    expect(prebuild).toContain('npm run build --workspace @altogether/ui');
+    expect(prebuild, 'must be fatal here').not.toMatch(/\|\|/);
   });
 
   it('is built by the Site before the Site builds', () => {
@@ -27,6 +38,8 @@ describe('the shared package is built, not committed', () => {
     // build tools nor anything that would run the root's prepare.
     const build = pkg('apps/web/vercel.json').buildCommand ?? '';
     expect(build).toContain('npm run build --workspace @altogether/ui');
+    // Vercel builds with NODE_ENV=production, and npm then omits the build tools entirely.
+    expect(build, 'the install would omit devDependencies').toContain('--include=dev');
     expect(build.indexOf('@altogether/ui')).toBeLessThan(build.indexOf('next build'));
   });
 
