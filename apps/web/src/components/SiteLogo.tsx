@@ -1,5 +1,5 @@
 import { logoOf, wordmarkOf, type BrandLogoOverrides } from '@altogether/ui/brand';
-import { colors as c } from '@/lib/brand';
+import { colors as c, fonts } from '@/lib/brand';
 
 /** The mark in the header and the footer.
  *
@@ -24,7 +24,7 @@ export function SiteLogo({
   const mark = wordmarkOf(brand, companyName);
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', height,
-    fontFamily: "'DM Sans', system-ui, sans-serif",
+    fontFamily: fonts.sans,
     fontWeight: 800, whiteSpace: 'nowrap',
   };
 

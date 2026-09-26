@@ -2,9 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Self-hosted brand fonts (same-origin, CSP font-src 'self'). Real family names so
-   the inline `font-family: 'DM Serif Display'` / 'DM Sans' references across the app
-   resolve correctly. */
+/* Self-hosted brand faces: same origin, so they load under CSP font-src 'self' with no
+   third-party host to trust or to wait for.
+
+   Nothing in the app names a family directly any more. Type is chosen per site and arrives as
+   --aa-font-heading and --aa-font-body alongside the colours; these declarations are what those
+   properties resolve to when a site has chosen what this repository ships. A site that picks a
+   face needing a file adds it here, or the choice quietly renders in the fallback. */
 @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(/fonts/dm-sans-latin.woff2) format('woff2'); }
 @font-face { font-family: 'DM Serif Display'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/dm-serif-display-latin.woff2) format('woff2'); }
 @font-face { font-family: 'DM Serif Display'; font-style: italic; font-weight: 400; font-display: swap; src: url(/fonts/dm-serif-display-italic-latin.woff2) format('woff2'); }

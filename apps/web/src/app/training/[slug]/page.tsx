@@ -6,7 +6,7 @@ import { getCourse } from '@/lib/events';
 import { durationLong, formatPrice, formatDateRange, type EventTemplate, type ScheduledEvent } from '@/lib/events-types';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText , siteName } from '@/lib/seo';
 import { InterestForm } from './InterestForm';
-import { colors as p } from '@/lib/brand';
+import { colors as p, fonts } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { pageName } from '@/lib/copy/pageName';
 
@@ -67,7 +67,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
   const difficultyLabel = difficulty ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 'Beginner';
 
   return (
-    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: p.white }}>
+    <div style={{ fontFamily: fonts.sans, background: p.white }}>
       <JsonLd
         data={await courseJsonLd({
           name: course.title,
@@ -89,7 +89,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
         .cd-body-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; align-items: start; max-width: 1000px; margin: 0 auto; padding: 40px 24px 64px; }
         .cd-benefits-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .cd-meta-strip { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
-        .cd-md h2 { font-family: 'DM Serif Display', serif; color: ${p.deepTeal}; font-size: 22px; font-weight: 400; margin: 28px 0 12px; }
+        .cd-md h2 { font-family: ${fonts.serif}; color: ${p.deepTeal}; font-size: 22px; font-weight: 400; margin: 28px 0 12px; }
         .cd-md h3 { color: ${p.deepTeal}; font-size: 18px; font-weight: 700; margin: 24px 0 8px; }
         .cd-md p { margin: 0 0 16px; }
         .cd-md ul, .cd-md ol { padding-left: 24px; margin: 0 0 16px; }
@@ -112,7 +112,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
               ))}
             </div>
           )}
-          <h1 style={{ fontFamily: "'DM Serif Display', serif", color: p.white, fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 400, lineHeight: 1.15, margin: '0 0 20px', letterSpacing: '-0.01em' }}>{course.title}</h1>
+          <h1 style={{ fontFamily: fonts.serif, color: p.white, fontSize: 'clamp(32px, 5vw, 44px)', fontWeight: 400, lineHeight: 1.15, margin: '0 0 20px', letterSpacing: '-0.01em' }}>{course.title}</h1>
           <div className="cd-meta-strip">
             {duration && <span style={{ color: p.lightTeal, fontSize: 14 }}>{duration}</span>}
             {level && <span style={{ color: p.lightTeal, fontSize: 14 }}>{level}</span>}
@@ -129,13 +129,13 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
         {/* Main column */}
         <div>
           <section style={{ marginBottom: 40 }}>
-            <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 16px' }}>About This Course</h2>
+            <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 16px' }}>About This Course</h2>
             <div className="cd-md" style={{ color: p.body, fontSize: 16, lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: renderDescription(course.description) }} />
           </section>
 
           {outcomes.length > 0 && (
             <section style={{ marginBottom: 40 }}>
-              <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>What You&apos;ll Learn</h2>
+              <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>What You&apos;ll Learn</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {outcomes.map((o, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -149,7 +149,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
 
           {benefits.length > 0 && (
             <section style={{ marginBottom: 40 }}>
-              <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>Why This Course</h2>
+              <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>Why This Course</h2>
               <div className="cd-benefits-grid">
                 {benefits.map((b, i) => (
                   <div key={i} style={{ background: p.skyTeal, borderLeft: `3px solid ${p.orange}`, borderRadius: 8, padding: '16px 20px' }}>
@@ -164,7 +164,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
             <section style={{ marginBottom: 40, display: 'grid', gridTemplateColumns: course.target_audience && prereqs.length > 0 ? '1fr 1fr' : '1fr', gap: 24 }}>
               {course.target_audience && (
                 <div>
-                  <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>Who Is This For</h2>
+                  <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>Who Is This For</h2>
                   <div style={{ background: p.paleTeal, borderRadius: 10, padding: '20px 24px' }}>
                     <p style={{ color: p.body, fontSize: 15, lineHeight: 1.7, margin: 0 }}>{course.target_audience}</p>
                   </div>
@@ -172,7 +172,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
               )}
               {prereqs.length > 0 && (
                 <div>
-                  <h2 style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>Prerequisites</h2>
+                  <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>Prerequisites</h2>
                   <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
                     {prereqs.map((pr, i) => (
                       <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
@@ -197,7 +197,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           {dates.length > 0 ? (
             <div style={{ border: `1px solid ${p.lightTeal}`, borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ background: p.deepTeal, padding: '20px 24px' }}>
-                <div style={{ fontFamily: "'DM Serif Display', serif", color: p.white, fontSize: 22, fontWeight: 400 }}>Upcoming dates</div>
+                <div style={{ fontFamily: fonts.serif, color: p.white, fontSize: 22, fontWeight: 400 }}>Upcoming dates</div>
               </div>
               <div style={{ padding: '12px 24px 24px' }}>
                 {dates.map((e) => (
@@ -222,7 +222,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           ) : (
             <div style={{ border: `2px dashed ${p.lightTeal}`, borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ background: p.skyTeal, padding: '24px 24px 20px' }}>
-                <div style={{ fontFamily: "'DM Serif Display', serif", color: p.deepTeal, fontSize: 22, fontWeight: 400, marginBottom: 8 }}>No Dates Scheduled Yet</div>
+                <div style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 22, fontWeight: 400, marginBottom: 8 }}>No Dates Scheduled Yet</div>
                 <p style={{ color: p.muted, fontSize: 14, lineHeight: 1.6, margin: 0 }}>This course is available for private or scheduled delivery. Get in touch and we&apos;ll arrange dates that work for your team.</p>
               </div>
               <div style={{ padding: '20px 24px 24px' }}>

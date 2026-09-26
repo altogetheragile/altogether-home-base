@@ -1,5 +1,5 @@
 import { colors as tokenColors } from '@altogether/ui/tokens';
-import { resolveColors, cssVarsFor, resolveImages, type BrandOverrides } from '@altogether/ui/brand';
+import { resolveColors, cssVarsFor, fontVarsFor, resolveImages, type BrandOverrides } from '@altogether/ui/brand';
 
 // ============= The palette, and why these are not hex values =============
 //
@@ -34,7 +34,7 @@ export { fonts, radii, fontWeights, space, tokens } from '@altogether/ui/tokens'
 /** What the references above resolve to, for a site with no brand of its own. Spread onto a root
  *  element's `style`. Built from the literal values, never from `colors`, or each property would
  *  define itself. */
-export const brandCssVars = cssVarsFor(tokenColors) as Record<`--aa-${string}`, string>;
+export const brandCssVars = { ...cssVarsFor(tokenColors), ...fontVarsFor(null) } as Record<`--aa-${string}`, string>;
 
 /** The same, for a site that has set some colours of its own in `site_settings.brand`.
  *
@@ -42,7 +42,9 @@ export const brandCssVars = cssVarsFor(tokenColors) as Record<`--aa-${string}`, 
  *  server-rendered with these already resolved, so a site with a different brand paints correctly
  *  on the first frame rather than changing colour once JavaScript arrives. */
 export function brandCssVarsFor(overrides: BrandOverrides): Record<`--aa-${string}`, string> {
-  return cssVarsFor(resolveColors(overrides)) as Record<`--aa-${string}`, string>;
+  // Type travels with colour. Emitted together so a site that has chosen a face paints in it
+  // on the first frame, rather than changing typeface once JavaScript arrives.
+  return { ...cssVarsFor(resolveColors(overrides)), ...fontVarsFor(overrides) } as Record<`--aa-${string}`, string>;
 }
 
 /** The logo, favicon and share image this site uses. Defaults to the files in `public/`. */

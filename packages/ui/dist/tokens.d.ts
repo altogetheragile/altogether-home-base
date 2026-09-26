@@ -18,11 +18,17 @@ declare const colors: {
     readonly muted: "#6B7280";
     readonly danger: "#DC2626";
 };
+/** The two faces a page sets its type in.
+ *
+ *  Custom properties, so a site can choose its own the way it chooses its colours, with this
+ *  repository's own as the fallback for the moment before the brand block is parsed. Written as
+ *  var(--x, a, b, c): everything after the first comma is the fallback, commas included. */
 declare const fonts: {
-    readonly serif: "'DM Serif Display', Georgia, serif";
-    readonly sans: "'DM Sans', system-ui, sans-serif";
-    /** The Vite App's historical body font. */
-    readonly ui: "'Segoe UI', system-ui, sans-serif";
+    readonly serif: "var(--aa-font-heading, 'DM Serif Display', Georgia, serif)";
+    readonly sans: "var(--aa-font-body, 'DM Sans', system-ui, sans-serif)";
+    /** The Vite App's historical body font. Follows the site's body face now, rather than being a
+     *  third voice on the same site. */
+    readonly ui: "var(--aa-font-body, 'Segoe UI', system-ui, sans-serif)";
 };
 declare const radii: {
     readonly sm: 8;
@@ -59,10 +65,11 @@ declare const tokens: {
         readonly danger: "#DC2626";
     };
     readonly fonts: {
-        readonly serif: "'DM Serif Display', Georgia, serif";
-        readonly sans: "'DM Sans', system-ui, sans-serif";
-        /** The Vite App's historical body font. */
-        readonly ui: "'Segoe UI', system-ui, sans-serif";
+        readonly serif: "var(--aa-font-heading, 'DM Serif Display', Georgia, serif)";
+        readonly sans: "var(--aa-font-body, 'DM Sans', system-ui, sans-serif)";
+        /** The Vite App's historical body font. Follows the site's body face now, rather than being a
+         *  third voice on the same site. */
+        readonly ui: "var(--aa-font-body, 'Segoe UI', system-ui, sans-serif)";
     };
     readonly radii: {
         readonly sm: 8;

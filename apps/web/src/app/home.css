@@ -6,7 +6,7 @@
 
 /* ─── Layout / page ──────────────────────────────────────────────────────── */
 .aa-page {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--aa-font-body, 'DM Sans', system-ui, sans-serif);
   background: var(--aa-white);
 }
 
@@ -60,7 +60,7 @@
 
 .aa-hero-h1 {
   color: var(--aa-deep-teal);
-  font-family: 'DM Serif Display', Georgia, serif;
+  font-family: var(--aa-font-heading, 'DM Serif Display', Georgia, serif);
   font-weight: 400;
   line-height: 1.2;
   margin: 0 0 20px;

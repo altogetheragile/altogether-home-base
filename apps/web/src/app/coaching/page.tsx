@@ -6,7 +6,7 @@ import { getHomeTestimonials } from '@/lib/home';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName } from '@/lib/seo';
 import { HomeTestimonials } from '../HomeTestimonials';
 import { CoachingEnquiryForm } from './CoachingEnquiryForm';
-import { colors as p } from '@/lib/brand';
+import { colors as p, fonts } from '@/lib/brand';
 import { requireModule } from '@/lib/module-gate';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
@@ -92,7 +92,7 @@ export default async function CoachingPage() {
   const bookingUrl = bookingHref(settings.show_bookings);
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: p.white }}>
+    <div style={{ fontFamily: fonts.sans, background: p.white }}>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Service', serviceType: 'Agile Coaching', name: 'Agile Coaching and One-to-One Coaching', description: 'Professional one-to-one coaching and agile team coaching using an ICF-aligned approach, drawing on 25 years of hands-on experience.', url: `${SITE_URL}/coaching`, provider: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL }, areaServed: ['London', 'United Kingdom'] }} />
       <JsonLd data={breadcrumbJsonLd(await pageCrumbs('coaching', '/coaching', 'Coaching'))} />
 

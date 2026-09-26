@@ -245,3 +245,89 @@ export function tint(hex: string, strength = 0.12): string {
   const [r, g, b] = [0, 2, 4].map((i) => mix(parseInt(v.slice(i, i + 2), 16)));
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 }
+
+// ============= The type =============
+//
+// Colour was made a site's own and type was not, so every second site said what it wanted in
+// somebody else's voice. Asked for as "how do I change the font", which is a fair question with
+// no answer until now.
+//
+// A named choice rather than a free-form field, for the same reason colour is five tokens rather
+// than a colour picker per heading: the site holds together because the decisions are few and
+// made once. Every face below either ships in this repository or is already on the reader's
+// device, so choosing one adds no download, needs no third-party host, and works under the
+// stricter of the two content security policies. Adding a family means shipping its files.
+
+export type FontRole = 'heading' | 'body';
+
+export type Typeface = {
+  id: string;
+  /** What it is called in the drawer. */
+  label: string;
+  /** What it looks like, said plainly, because most people cannot pick a typeface from its name. */
+  note: string;
+  stack: string;
+};
+
+export const TYPEFACES: Typeface[] = [
+  {
+    id: 'dm-serif',
+    label: 'DM Serif Display',
+    note: 'Warm and editorial. Good for headings, heavy going for paragraphs.',
+    stack: "'DM Serif Display', Georgia, serif",
+  },
+  {
+    id: 'dm-sans',
+    label: 'DM Sans',
+    note: 'Plain and modern. Reads well at any size.',
+    stack: "'DM Sans', system-ui, sans-serif",
+  },
+  {
+    id: 'georgia',
+    label: 'Georgia',
+    note: 'A classic serif, already on nearly every device. Steady and unshowy.',
+    stack: "Georgia, 'Times New Roman', serif",
+  },
+  {
+    id: 'system',
+    label: 'The reader’s own',
+    note: 'Whatever their device uses. The fastest to load and the least distinctive.',
+    stack: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+  },
+];
+
+/** What this repository uses, and what a site that has chosen nothing gets. */
+export const DEFAULT_TYPEFACES: Record<FontRole, string> = { heading: 'dm-serif', body: 'dm-sans' };
+
+/** The brand column, read for its type.
+ *
+ *  Deliberately loose. Every caller already holds the whole brand object, typed for whichever
+ *  part of it that caller cares about, and a narrow type here would mean each of them naming a
+ *  shape it does not use. The values inside are checked rather than trusted, which is what the
+ *  images do too. */
+export type BrandFontOverrides = unknown;
+
+type FontsShape = { fonts?: { heading?: unknown; body?: unknown } | null } | null | undefined;
+
+const faceById = (id: unknown): Typeface | undefined =>
+  typeof id === 'string' ? TYPEFACES.find((f) => f.id === id.trim()) : undefined;
+
+/** The two stacks this site sets its type in. An unknown name falls back rather than failing:
+ *  this runs on every page render, and a typeface that has been withdrawn should cost the site
+ *  its look, not its text. */
+export function resolveFonts(overrides?: BrandFontOverrides): Record<FontRole, string> {
+  const given = (overrides as FontsShape)?.fonts;
+  return {
+    heading: (faceById(given?.heading) ?? faceById(DEFAULT_TYPEFACES.heading)!).stack,
+    body: (faceById(given?.body) ?? faceById(DEFAULT_TYPEFACES.body)!).stack,
+  };
+}
+
+/** The type as custom properties, to sit beside the colours in the same block.
+ *
+ *  Two names rather than one per element. A heading font and a body font are the whole of the
+ *  decision; anything finer belongs to the design rather than to the site's owner. */
+export function fontVarsFor(overrides?: BrandFontOverrides): Record<string, string> {
+  const { heading, body } = resolveFonts(overrides);
+  return { '--aa-font-heading': heading, '--aa-font-body': body };
+}

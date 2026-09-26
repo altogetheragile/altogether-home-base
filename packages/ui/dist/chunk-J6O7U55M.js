@@ -15,10 +15,11 @@ var colors = {
   danger: "#DC2626"
 };
 var fonts = {
-  serif: "'DM Serif Display', Georgia, serif",
-  sans: "'DM Sans', system-ui, sans-serif",
-  /** The Vite App's historical body font. */
-  ui: "'Segoe UI', system-ui, sans-serif"
+  serif: "var(--aa-font-heading, 'DM Serif Display', Georgia, serif)",
+  sans: "var(--aa-font-body, 'DM Sans', system-ui, sans-serif)",
+  /** The Vite App's historical body font. Follows the site's body face now, rather than being a
+   *  third voice on the same site. */
+  ui: "var(--aa-font-body, 'Segoe UI', system-ui, sans-serif)"
 };
 var radii = {
   sm: 8,
