@@ -73,6 +73,7 @@ export default async function HomePage() {
               so the srcset is offered for that asset and not for an uploaded one, which has only
               the size it was uploaded at. */}
           {heroBg && (
+            <Editable k="home.hero.background" label="the background picture" as="div" block>
             <div className="aa-hero-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -87,6 +88,7 @@ export default async function HomePage() {
                 height={1200}
               />
             </div>
+            </Editable>
           )}
           <div className="aa-hero-content">
             <div className="aa-hero-grid">
@@ -109,8 +111,8 @@ export default async function HomePage() {
                 {/* Both of these used to be BROWSE actions, and the first "Book a Chemistry Session"
                     on this page sat about three and a half screens below the fold. */}
                 <div className="aa-hero-actions">
-                  <Link href={heroCta} className="aa-btn aa-btn--primary">{t('home.hero.cta.events')} <Icons.ArrowRight /></Link>
-                  <a href={bookingUrl} className="aa-btn aa-btn--ghost">{t('home.hero.cta.booking')} <Icons.ArrowRight /></a>
+                  <Editable k="home.hero.cta.events" label="this button" outside><Link href={heroCta} className="aa-btn aa-btn--primary">{t('home.hero.cta.events')} <Icons.ArrowRight /></Link></Editable>
+                  <Editable k="home.hero.cta.booking" label="this button" outside><a href={bookingUrl} className="aa-btn aa-btn--ghost">{t('home.hero.cta.booking')} <Icons.ArrowRight /></a></Editable>
                 </div>
               </div>
             </div>
@@ -243,7 +245,7 @@ export default async function HomePage() {
                   ))}
                 </div>
               </Editable>
-              <Link href="/knowledge" className="aa-btn aa-btn--primary-sm">{t('home.kb.cta')} <Icons.ArrowRight /></Link>
+              <Editable k="home.kb.cta" label="this button" outside><Link href="/knowledge" className="aa-btn aa-btn--primary-sm">{t('home.kb.cta')} <Icons.ArrowRight /></Link></Editable>
             </div>
           </div>
         )}
@@ -264,14 +266,16 @@ export default async function HomePage() {
               <p className="aa-cta-banner__body">{t('home.cta.body')}</p>
               </Editable>
               <div className="aa-cta-banner__actions">
-                <Link href={closingCta} className="aa-btn aa-btn--deep">{t('home.cta.events')} <Icons.ArrowRight /></Link>
-                <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />{t('home.cta.booking')}</a>
+                <Editable k="home.cta.events" label="this button" outside><Link href={closingCta} className="aa-btn aa-btn--deep">{t('home.cta.events')} <Icons.ArrowRight /></Link></Editable>
+                <Editable k="home.cta.booking" label="this button" outside><a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />{t('home.cta.booking')}</a></Editable>
               </div>
             </div>
             {/* The column existed to hold the portrait. Without one it is half a banner of nothing. */}
             {founder.shown && founder.portrait && (
               <div className="aa-hide-mobile">
-                <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+                <Editable k="site.brand.images.founderPortrait" label="the founder portrait" as="div" block>
+                  <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+                </Editable>
               </div>
             )}
           </div>

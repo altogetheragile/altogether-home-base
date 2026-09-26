@@ -60,11 +60,15 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
             {founder.photo && (
               <>
                 <div style={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%', background: p.paleTeal, top: -40, left: -60, zIndex: 0 }} />
+                {/* Its key says This Site, so the pen goes there rather than to this page. That
+                    split is why it was hard to find at all. */}
+                <Editable k="site.brand.images.founderPhoto" label="the founder photograph">
                 <div className="aa-photo-wrap" style={{ position: 'relative', zIndex: 1, width: 320, height: 380, boxShadow: '0 24px 64px rgba(0,77,77,0.15)', cursor: 'default' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', borderRadius: 24 }} />
                   <div className="aa-photo-overlay" style={{ position: 'absolute', inset: 0, borderRadius: 24, background: 'linear-gradient(to top, rgba(0,77,77,0.5) 0%, transparent 60%)', opacity: 0, transition: 'opacity 0.3s ease' }} />
                 </div>
+                </Editable>
               </>
             )}
             {/* The panel held the years badge and the credentials. Emptied of both it was a dark
@@ -125,12 +129,16 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
               </div>
             </When>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <Editable k="home.founder.bookCta" label="this button" outside>
               <a href={bookingUrl} className="aa-cta-primary" style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 {t('home.founder.bookCta')} <ArrowRight />
               </a>
+              </Editable>
+              <Editable k="home.founder.cta" label="this link" outside>
               <Link href="/about" className="aa-cta-secondary" style={{ background: 'none', border: 'none', color: p.midTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease', padding: 0, textDecoration: 'none' }}>
                 {t('home.founder.cta')} <ArrowRight />
               </Link>
+              </Editable>
             </div>
           </div>
         </div>
