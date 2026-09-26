@@ -18,6 +18,9 @@ type CopyField = {
     says?: CopyEntry['says'];
     group?: CopyEntry['group'];
     options?: CopyEntry['options'];
+    /** True when this field's section is switched off, so the page it belongs to does not render
+     *  it. The words are still editable: somebody may be writing them before turning it on. */
+    notShown?: boolean;
     undo?: {
         value: string;
         at: string;

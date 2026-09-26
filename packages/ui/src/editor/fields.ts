@@ -66,6 +66,13 @@ export interface CopyEntry {
   /** Required for 'choice', ignored otherwise. The `note` is shown under the chosen option,
    *  because most people cannot pick a typeface from its name alone. */
   options?: { value: string; label: string; note?: string }[];
+  /** The module this field's section needs, where the page renders it conditionally.
+   *
+   *  Without it the editor offers words for a section that is not on the page. Somebody with the
+   *  knowledge base switched off was shown its heading, its body and its examples while looking
+   *  at a home page that has no such section, with nothing to say why. Named as the module rather
+   *  than as the column, so it is read by the same rule the page uses. */
+  shownWhen?: string;
   /** Which part of the page this belongs to, for the drawer's headings.
    *
    *  Normally read from the middle of the key, so there is nothing to keep in step. Said here

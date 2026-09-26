@@ -107,3 +107,48 @@ describe('the drawer folds and finds', () => {
     expect(screen.queryByLabelText('Statistics')).toBeTruthy();
   });
 });
+
+// Looking at the home page with the knowledge base switched off, the drawer offered its heading,
+// its body and its examples for a section that is not on the page, with nothing to say why.
+describe('the drawer says what is not on the page', () => {
+  const OFF: CopyField[] = [
+    field('home.hero.heading', 'Hero heading'),
+    field('home.hero.intro', 'Hero intro'),
+    field('home.hero.button', 'Hero button'),
+    { ...field('home.kb.heading', 'Knowledge heading'), notShown: true },
+    { ...field('home.kb.body', 'Knowledge body'), notShown: true },
+  ];
+
+  const openWith = async (fields: CopyField[]) => {
+    render(<EditDrawer host={{ ...host(), load: vi.fn(async () => fields) }} />);
+    await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
+  };
+
+  it('marks a section that is switched off', async () => {
+    await openWith(OFF);
+    expect(screen.getByText('not on this page')).toBeTruthy();
+  });
+
+  it('says what that means, rather than leaving a label to be puzzled over', async () => {
+    await openWith(OFF);
+    expect(screen.getByText(/switched off/)).toBeTruthy();
+    expect(screen.getByText(/switch it back on/)).toBeTruthy();
+  });
+
+  it('keeps the words editable, because they can be written before it is switched on', async () => {
+    await openWith(OFF);
+    expect(screen.queryByLabelText('Knowledge heading')).toBeTruthy();
+  });
+
+  it('says nothing about a section that is on', async () => {
+    await openWith(OFF);
+    const hero = screen.getByText('Hero').closest('button')!;
+    expect(within(hero).queryByText('not on this page')).toBeNull();
+  });
+
+  it('does not mark a group where only some of it is off', async () => {
+    // Half a section missing is a different thing, and saying the whole group is gone is wrong.
+    await openWith([...OFF.slice(0, 3), { ...field('home.kb.heading', 'Knowledge heading'), notShown: true }, field('home.kb.body', 'Knowledge body')]);
+    expect(screen.queryByText('not on this page')).toBeNull();
+  });
+});

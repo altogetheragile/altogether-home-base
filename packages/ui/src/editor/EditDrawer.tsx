@@ -480,6 +480,10 @@ export function EditDrawer({ host }: { host: EditorHost }) {
           : shown.map((g) => {
               const open = query.trim() !== '' || !closed.has(g.name);
               const unsaved = g.fields.some((f) => f.key in draft);
+              // Said at the group rather than on every field: it is one fact about a section, and
+              // repeating it under each box is noise. The fields stay editable, because writing
+              // the words before switching a section on is a reasonable way to work.
+              const offPage = g.fields.length > 0 && g.fields.every((f) => f.notShown);
               return (
                 <section key={g.name} className="mb-2 border-b border-border/60 last:border-b-0">
                   <button
@@ -492,12 +496,28 @@ export function EditDrawer({ host }: { host: EditorHost }) {
                     className="flex w-full items-center gap-2 py-2.5 text-left text-sm font-medium text-foreground"
                   >
                     <ChevronDown size={13} className={`shrink-0 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
-                    <span className="flex-1">{g.name}</span>
+                    <span className="flex-1">
+                      {g.name}
+                      {offPage && (
+                        <span className="ml-2 font-normal text-amber-700">not on this page</span>
+                      )}
+                    </span>
                     {/* So a folded group cannot quietly hold something you typed and forgot. */}
                     {unsaved && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="unsaved changes" />}
                     <span className="shrink-0 text-xs font-normal text-muted-foreground">{g.fields.length}</span>
                   </button>
-                  {open && <div className="pb-1 pl-5">{g.fields.map(renderField)}</div>}
+                  {open && (
+                    <div className="pb-1 pl-5">
+                      {offPage && (
+                        <p className="mb-3 rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
+                          This part of the page is switched off, so none of it is showing at the
+                          moment. The words are kept, and appear as soon as you switch it back on
+                          from the This Site tab.
+                        </p>
+                      )}
+                      {g.fields.map(renderField)}
+                    </div>
+                  )}
                 </section>
               );
             })}
