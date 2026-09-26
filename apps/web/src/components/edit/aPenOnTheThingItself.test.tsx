@@ -117,3 +117,48 @@ describe('every pen shows while the drawer is open', () => {
     expect(container.innerHTML).toBe('<h1>Headline</h1>');
   });
 });
+
+describe('buttons and pictures', () => {
+  it('puts a button’s pen outside it, not on top of its arrow', () => {
+    // Inside, it covers the arrow, and a click near it follows the link instead of opening the
+    // drawer. Safe outside because a button sits in the middle of its section, not against an edge.
+    render(
+      <EditableArea on>
+        <Editable k="home.hero.cta.events" label="this button" outside>
+          <a href="/events">Browse Events</a>
+        </Editable>
+      </EditableArea>,
+    );
+    const pen = screen.getByRole('button');
+    expect(pen.style.top).toBe('-10px');
+    expect(pen.style.right).toBe('-10px');
+  });
+
+  it('keeps a block’s pen inside, where nothing clips it', () => {
+    render(
+      <EditableArea on>
+        <Editable k="home.hero.heading" as="div" block><h1>Headline</h1></Editable>
+      </EditableArea>,
+    );
+    expect(screen.getByRole('button').style.top).toBe('2px');
+  });
+
+  it('sends a picture that lives on This Site to This Site', () => {
+    // The founder photograph is a brand image, not page copy, which is exactly why nobody could
+    // find it. The key names its own tab, so the pen needs no special case.
+    const heard = vi.fn();
+    window.addEventListener('aa:edit', heard);
+    render(
+      <EditableArea on>
+        <Editable k="site.brand.images.founderPhoto" label="the founder photograph">
+          <img src="/x.jpg" alt="" />
+        </Editable>
+      </EditableArea>,
+    );
+    screen.getByRole('button').click();
+    window.removeEventListener('aa:edit', heard);
+    expect((heard.mock.calls[0][0] as CustomEvent).detail).toEqual({
+      page: 'site', key: 'site.brand.images.founderPhoto',
+    });
+  });
+});

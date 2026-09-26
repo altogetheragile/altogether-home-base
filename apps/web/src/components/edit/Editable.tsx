@@ -54,7 +54,7 @@ export function tabFor(key: string): string {
 }
 
 export function Editable({
-  k, label, as: Tag = 'span', block = false, children,
+  k, label, as: Tag = 'span', block = false, outside = false, children,
 }: {
   /** The copy key these words came from. */
   k: string;
@@ -63,6 +63,10 @@ export function Editable({
   as?: 'span' | 'div';
   /** Block content needs a block wrapper, or the pen sits beside a paragraph rather than on it. */
   block?: boolean;
+  /** Just outside the top-right corner rather than inside it. For a button, where inside means
+   *  on top of the arrow, and where a click near the pen would follow the link instead. Safe
+   *  here because a button sits in the middle of its section rather than against its edge. */
+  outside?: boolean;
   children: React.ReactNode;
 }) {
   const on = useContext(CanEdit);
@@ -92,7 +96,8 @@ export function Editable({
         style={{
           // Inside the block, not beside it. Several sections on this site are overflow: hidden,
           // and a pen hanging past the right edge is simply not there on those.
-          position: 'absolute', top: 2, right: 2, zIndex: 20,
+          position: 'absolute', zIndex: 20,
+          ...(outside ? { top: -10, right: -10 } : { top: 2, right: 2 }),
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: 24, height: 24, borderRadius: 12, cursor: 'pointer',
           border: '1px solid rgba(0,0,0,0.12)', background: '#fff', color: '#0C4A4A',
