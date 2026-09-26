@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { Pencil } from 'lucide-react';
 
 // ============= A pen on the thing itself =============
@@ -22,8 +22,28 @@ import { Pencil } from 'lucide-react';
  *  rendered: a visitor's page should not carry a map of the editor in its markup. */
 const CanEdit = createContext(false);
 
+/** Whether to show every pen at once rather than one under the cursor.
+ *
+ *  On while the drawer is open, because that is exactly when somebody is asking "what can I
+ *  change here". One pen at a time means sweeping the page to find out, which is the problem this
+ *  was meant to solve rather than a smaller version of it. */
+const ShowAll = createContext(false);
+
 export function EditableArea({ on, children }: { on: boolean; children: React.ReactNode }) {
-  return <CanEdit.Provider value={on}>{children}</CanEdit.Provider>;
+  const [editorOpen, setEditorOpen] = useState(false);
+
+  useEffect(() => {
+    if (!on) return;
+    const heard = (e: Event) => setEditorOpen(Boolean((e as CustomEvent<{ open: boolean }>).detail?.open));
+    window.addEventListener('aa:editor', heard);
+    return () => window.removeEventListener('aa:editor', heard);
+  }, [on]);
+
+  return (
+    <CanEdit.Provider value={on}>
+      <ShowAll.Provider value={editorOpen}>{children}</ShowAll.Provider>
+    </CanEdit.Provider>
+  );
 }
 
 /** Which tab a key belongs to, from the key itself. */
@@ -46,7 +66,9 @@ export function Editable({
   children: React.ReactNode;
 }) {
   const on = useContext(CanEdit);
+  const all = useContext(ShowAll);
   const [over, setOver] = useState(false);
+  const showing = over || all;
 
   // Nothing at all for a visitor: no wrapper, no attribute, no change to the page.
   if (!on) return <>{children}</>;
@@ -76,9 +98,9 @@ export function Editable({
           border: '1px solid rgba(0,0,0,0.12)', background: '#fff', color: '#0C4A4A',
           // Kept in the markup rather than mounted on hover, so the first hover has nothing to
           // wait for and the layout never moves.
-          opacity: over ? 1 : 0,
+          opacity: showing ? 1 : 0,
           transition: 'opacity 120ms ease',
-          pointerEvents: over ? 'auto' : 'none',
+          pointerEvents: showing ? 'auto' : 'none',
           boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
         }}
       >

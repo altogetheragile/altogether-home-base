@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Editable, EditableArea, tabFor } from './Editable';
 
@@ -67,5 +67,53 @@ describe('a pen on the thing itself', () => {
     // The menu and the footer share one registry called navigation.
     expect(tabFor('nav.events')).toBe('navigation');
     expect(tabFor('footer.contact')).toBe('navigation');
+  });
+});
+
+// One pen at a time means sweeping the page to find out what is editable, which is a smaller
+// version of the problem this was built for rather than a solution to it. Reported as "I only see
+// the pen on one thing".
+describe('every pen shows while the drawer is open', () => {
+  const editor = (open: boolean) =>
+    act(() => { window.dispatchEvent(new CustomEvent('aa:editor', { detail: { open } })); });
+
+  const two = () =>
+    render(
+      <EditableArea on>
+        <Editable k="home.hero.heading" label="the headline"><h1>Headline</h1></Editable>
+        <Editable k="home.hero.subtitle" label="the sentence"><p>Subtitle</p></Editable>
+      </EditableArea>,
+    );
+
+  it('shows all of them when it opens, without anything being hovered', () => {
+    two();
+    expect(screen.getAllByRole('button').every((b) => b.style.opacity === '0')).toBe(true);
+    editor(true);
+    expect(screen.getAllByRole('button').every((b) => b.style.opacity === '1')).toBe(true);
+  });
+
+  it('makes them clickable, not merely visible', () => {
+    two();
+    editor(true);
+    expect(screen.getAllByRole('button').every((b) => b.style.pointerEvents === 'auto')).toBe(true);
+  });
+
+  it('puts them away again when it closes', () => {
+    two();
+    editor(true);
+    editor(false);
+    expect(screen.getAllByRole('button').every((b) => b.style.opacity === '0')).toBe(true);
+  });
+
+  it('tells a visitor nothing, whatever the drawer says', () => {
+    // The event is a window event and anything can fire it. It must not be a way to make the
+    // editor visible on a page that is not being edited.
+    const { container } = render(
+      <EditableArea on={false}>
+        <Editable k="home.hero.heading"><h1>Headline</h1></Editable>
+      </EditableArea>,
+    );
+    editor(true);
+    expect(container.innerHTML).toBe('<h1>Headline</h1>');
   });
 });

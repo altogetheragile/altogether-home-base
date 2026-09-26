@@ -77,6 +77,13 @@ function EditDrawer({ host }) {
     setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : /* @__PURE__ */ new Set());
   }, [fields, active]);
   useEffect(() => {
+    window.dispatchEvent(new CustomEvent("aa:editor", { detail: { open } }));
+    const root = document.documentElement;
+    if (open) root.setAttribute("data-editor-open", "true");
+    else root.removeAttribute("data-editor-open");
+    return () => root.removeAttribute("data-editor-open");
+  }, [open]);
+  useEffect(() => {
     const asked2 = (e) => {
       const { page, key } = e.detail ?? {};
       if (!key) return;

@@ -66,3 +66,16 @@
   /* One per row on a phone whatever the minimum says, so a card is never squeezed to fit. */
   .aa-cards { grid-template-columns: 1fr; gap: 20px; }
 }
+
+/* The editor is a panel fixed to the right, 28rem wide, and it simply covered whatever was under
+   it: half the page on a laptop, including anything you wanted to click a pen on. The drawer sets
+   data-editor-open on <html> while it is open and the page moves over by exactly its width.
+
+   Only where there is room. On a narrow screen the drawer is full width and shifting the page
+   would leave nothing to shift it onto. */
+@media (min-width: 1024px) {
+  html[data-editor-open='true'] body {
+    padding-right: 28rem;
+    transition: padding-right 160ms ease;
+  }
+}

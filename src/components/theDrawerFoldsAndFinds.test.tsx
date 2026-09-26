@@ -209,3 +209,30 @@ describe('the drawer opens where the pen pointed', () => {
     expect(screen.queryByLabelText('home.invented.key')).toBeNull();
   });
 });
+
+// The drawer is a panel fixed to the right, 28rem wide, and it covered whatever was under it:
+// half the page on a laptop, including anything you wanted to click a pen on.
+describe('the drawer says it is open', () => {
+  it('marks the document while open, so the page can move over', async () => {
+    render(<EditDrawer host={host()} />);
+    await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
+    expect(document.documentElement.getAttribute('data-editor-open')).toBe('true');
+  });
+
+  it('tells the pens too, so they all show while somebody is editing', async () => {
+    const heard: boolean[] = [];
+    const listen = (e: Event) => heard.push(Boolean((e as CustomEvent<{ open: boolean }>).detail?.open));
+    window.addEventListener('aa:editor', listen);
+    render(<EditDrawer host={host()} />);
+    await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
+    window.removeEventListener('aa:editor', listen);
+    expect(heard).toContain(true);
+  });
+
+  it('clears the mark when it closes, or the page stays shoved across', async () => {
+    render(<EditDrawer host={host()} />);
+    await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
+    await userEvent.setup().click(screen.getByLabelText('Close the editor'));
+    await waitFor(() => expect(document.documentElement.getAttribute('data-editor-open')).toBeNull());
+  });
+});
