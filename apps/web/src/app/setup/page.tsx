@@ -12,6 +12,7 @@ import {
   progress, type Section, type Check,
 } from '@/lib/setup/checks';
 import { SetupWizard } from '@/components/setup/SetupWizard';
+import { CopySheet } from '@/components/setup/CopySheet';
 import { headlineKeys } from '@/lib/setup/steps';
 
 // ============= Setting up this site =============
@@ -186,6 +187,8 @@ export default async function SetupPage() {
         </p>
 
         <SetupWizard modulePages={modulePages} wordPages={wordPages} />
+
+        <CopySheet />
 
         <h2 style={{ color: p.deepTeal, fontSize: 22, fontWeight: 800, margin: '44px 0 6px' }}>
           Where this site has got to
