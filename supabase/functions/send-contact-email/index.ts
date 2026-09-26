@@ -1,9 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { mailFrom } from "../_shared/mailFrom.ts";
+import { mailer } from "../_shared/mailer.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.5";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -114,6 +113,16 @@ const handler = async (req: Request): Promise<Response> => {
     const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@altogetheragile.com";
     const companyName = Deno.env.get("COMPANY_NAME") || "Altogether Agile";
     const from = mailFrom(Deno.env);
+    const resend = mailer(Deno.env);
+    if (!resend) {
+      // Deployed but never given a key. Said plainly, and with a 200, because the enquiry is
+      // already saved and this is a fact about the site's configuration rather than about the
+      // person who just wrote in.
+      console.error("No RESEND_API_KEY on this project: the enquiry is saved, no email sent.");
+      return new Response(JSON.stringify({ sent: false, reason: "no-key" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!from) {
       // Said out loud rather than sent from somebody else’s domain, which Resend refuses
       // anyway. The enquiry is already saved; this only decides whether anybody is told.
