@@ -5,7 +5,7 @@ import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { ctaHref } from '@/lib/cta';
-import { Editable } from '@/components/edit/Editable';
+import { Editable, AddAPicture } from '@/components/edit/Editable';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
@@ -90,6 +90,9 @@ export default async function HomePage() {
             </div>
             </Editable>
           )}
+          {/* No picture chosen leaves a plain band, which is a fine way for a hero to look and an
+              impossible thing to change from the page: there is nothing to hover. */}
+          {!heroBg && <AddAPicture k="home.hero.background" label="the background picture" fill />}
           <div className="aa-hero-content">
             <div className="aa-hero-grid">
               <div>
