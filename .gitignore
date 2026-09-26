@@ -58,3 +58,7 @@ art-src/.work/
 
 # TypeScript incremental build state. Committed by mistake in #745.
 *.tsbuildinfo
+
+# Build output of packages/ui. Built on install by the root prepare script, and by each app
+# before it builds, so nothing needs it in the repository.
+packages/ui/dist/

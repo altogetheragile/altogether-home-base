@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "export:kb": "node scripts/export-kb-json.mjs",
-    "prebuild": "node scripts/export-kb-json.mjs",
+    "prebuild": "npm run build --workspace @altogether/ui && node scripts/export-kb-json.mjs",
     "build": "tsc -b && vite build && node scripts/check-tailwind-opacity.mjs && node scripts/prerender.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint . --max-warnings 134",
@@ -40,7 +40,8 @@
     "animal-art": "node scripts/extract-animal-art.mjs",
     "iso-art": "node scripts/extract-iso-art.mjs",
     "vehicle-art": "node scripts/extract-vehicle-art.mjs",
-    "art-check": "node scripts/check-art-sheet.mjs"
+    "art-check": "node scripts/check-art-sheet.mjs",
+    "prepare": "npm run build --workspace @altogether/ui || echo \"packages/ui not built: no build tools in this install, the build itself will do it\""
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
