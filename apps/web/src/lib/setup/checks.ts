@@ -232,6 +232,12 @@ export function outsideTheApp(): Check[] {
       status: 'todo',
     },
     {
+      id: 'mail-secrets',
+      title: 'Give the mail function its keys',
+      detail: 'Deploying send-contact-email is not enough: it needs RESEND_API_KEY, ADMIN_EMAIL and MAIL_FROM set on the Supabase project. MAIL_FROM has to be an address on a domain your Resend account has verified, or every send is refused and nothing on the site says so.',
+      status: 'todo',
+    },
+    {
       id: 'redeploy',
       title: 'Redeploy once the content is in',
       detail: 'The sitemap is built at deploy time, not per request, so courses and posts added here do not appear in it until something deploys. Nothing warns you: the pages are live and correct while the sitemap still lists the old ones.',
@@ -248,4 +254,61 @@ export function progress(sections: Section[]): { done: number; todo: number; opt
     todo: all.filter((c) => c.status === 'todo').length,
     optional: all.filter((c) => c.status === 'optional').length,
   };
+}
+
+// ============= Whether the site can tell anybody it has been written to =============
+//
+// An enquiry is saved to the contacts table and then a function is asked to send the email. The
+// asking is deliberately fire-and-forget, because the message is safe either way and a visitor
+// should not be shown a failure that is not theirs. The cost of that is silence: on a site where
+// the function was never deployed, somebody fills the form in, reads "Message Sent", and nobody
+// is ever told. It was working that way on a live site for a day.
+//
+// Edge functions are deployed per project, so a new site starts without them. That is worth
+// checking rather than listing, and it can be checked without sending anything: the preflight a
+// browser makes before calling a function answers only if the function is there.
+
+/** Is the function that sends enquiries actually deployed to this site's project? */
+export async function enquiryEmailCheck(): Promise<Check> {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const where = { label: 'How this is done', href: 'https://supabase.com/dashboard/project/_/functions' };
+
+  if (!base) {
+    return {
+      id: 'enquiry-email', status: 'todo', title: 'Let the site send you its enquiries',
+      detail: 'This deployment has no database address set, so nothing can be checked from here.',
+      where,
+    };
+  }
+
+  // OPTIONS, not POST: the preflight says whether the function exists and sends no mail. A
+  // network error is reported as unknown rather than as missing, because "your email is broken"
+  // is a bad thing to say on the strength of one timed-out request.
+  try {
+    const url = `${base.replace(/\/$/, '')}/functions/v1/send-contact-email`;
+    const res = await fetch(url, {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://example.com', 'Access-Control-Request-Method': 'POST' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      return {
+        id: 'enquiry-email', status: 'done', title: 'The site can send you its enquiries',
+        detail: 'send-contact-email is deployed to this project. It still needs RESEND_API_KEY, ADMIN_EMAIL and MAIL_FROM set on it, which cannot be checked from here: MAIL_FROM has to be an address on a domain your Resend account owns, or every send is refused.',
+        where,
+      };
+    }
+    return {
+      id: 'enquiry-email', status: 'todo', title: 'Let the site send you its enquiries',
+      detail: 'send-contact-email is not deployed to this project, so every enquiry is saved and nobody is told. The contact form still says "Message Sent", because the message is safely in the database. Deploy it, then set RESEND_API_KEY, ADMIN_EMAIL and MAIL_FROM on the project.',
+      where,
+    };
+  } catch {
+    return {
+      id: 'enquiry-email', status: 'optional', title: 'Whether the site can send you its enquiries',
+      detail: 'Could not reach the functions for this project just now, so this is unknown rather than missing. Worth checking by hand if enquiries are not arriving.',
+      where,
+    };
+  }
 }

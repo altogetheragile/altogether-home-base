@@ -14,8 +14,8 @@ const steps = walkthrough(answers);
 const all = JSON.stringify(steps);
 
 describe('the shape of it', () => {
-  it('is ten steps, numbered from one', () => {
-    expect(steps.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  it('is eleven steps, numbered from one', () => {
+    expect(steps.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   });
 
   it('says something useful at every step', () => {
@@ -27,7 +27,7 @@ describe('the shape of it', () => {
 
   it('never leaves somebody wondering which website they are on', () => {
     // Every step that happens somewhere else links there.
-    for (const s of steps.filter((x) => [1, 2, 4, 5, 6, 7, 8, 9].includes(x.n))) {
+    for (const s of steps.filter((x) => [1, 2, 4, 5, 6, 7, 8, 9, 10].includes(x.n))) {
       expect(s.go?.href, `step ${s.n} says to go somewhere but does not link it`).toMatch(/^https:\/\//);
     }
   });
@@ -205,7 +205,7 @@ describe('making yourself an admin', () => {
 });
 
 describe('the wizard at the end', () => {
-  const step9 = steps.find((s) => s.n === 9)!;
+  const step9 = steps.find((s) => s.n === 10)!;
 
   /** It is admin-only and 404s to everybody else, which looks exactly like a broken deploy to
    *  somebody who has just spent an hour deploying. */
@@ -381,5 +381,44 @@ describe('the root directory on the second project', () => {
 
   it('warns what a wrong folder looks like, since it deploys successfully', () => {
     expect(step5.watch).toMatch(/raw JavaScript|serves raw/i);
+  });
+});
+
+describe('letting the site send its own email', () => {
+  const step = steps.find((s) => s.n === 9)!;
+  const said = `${step.body} ${step.watch ?? ''}`;
+
+  /** Functions belong to a project, not to the code, so a new project has none. Nothing on the
+   *  site says so: the form saves the enquiry and deliberately does not trouble the visitor when
+   *  the email fails, which makes a misconfigured site look like a quiet one. */
+  it('says why a new site has no email at all', () => {
+    expect(said).toMatch(/function/i);
+    expect(said).toMatch(/Message Sent|nobody is told/i);
+  });
+
+  it('deploys both of the functions that send email, not just the obvious one', () => {
+    const commands = step.copy!.map((c) => c.value).join('\n');
+    expect(commands).toMatch(/functions deploy send-contact-email/);
+    expect(commands).toMatch(/functions deploy booking-create/);
+    // With the real project reference, like every other command in this walk-through.
+    expect(commands).toContain('abcdefghijklmnopqrst');
+  });
+
+  it('asks for every secret the functions actually read', () => {
+    const labels = step.copy!.map((c) => c.label);
+    for (const key of ['RESEND_API_KEY', 'ADMIN_EMAIL', 'MAIL_FROM', 'COMPANY_NAME']) {
+      expect(labels, `nothing mentions ${key}`).toContain(key);
+    }
+  });
+
+  it('sends from this site’s own domain, never from the one that shipped the code', () => {
+    const from = step.copy!.find((c) => c.label === 'MAIL_FROM')!.value;
+    expect(from).toContain('brambleandfern.com');
+    expect(from).not.toContain('altogetheragile.com');
+  });
+
+  it('warns that a wrong sender fails silently, which is the whole trap', () => {
+    expect(step.watch).toMatch(/verified|owns|does not own/i);
+    expect(step.watch).toMatch(/refuses|nothing on the site will say/i);
   });
 });

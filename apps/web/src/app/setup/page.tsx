@@ -8,7 +8,7 @@ import { COPY_ROUTES, MODULE_FOR_PATH } from '@/lib/copy/routes';
 import { moduleIsShown, type GatedModule } from '@/lib/module-gate';
 import { colors as p } from '@/lib/brand';
 import {
-  identityChecks, brandChecks, founderChecks, wordChecks, legalChecks, outsideTheApp,
+  identityChecks, brandChecks, founderChecks, wordChecks, legalChecks, outsideTheApp, enquiryEmailCheck,
   progress, type Section, type Check,
 } from '@/lib/setup/checks';
 import { SetupWizard } from '@/components/setup/SetupWizard';
@@ -90,7 +90,9 @@ function CheckRow({ check }: { check: Check }) {
 export default async function SetupPage() {
   if (!(await isAdmin())) notFound();
 
-  const [settings, written] = await Promise.all([getSiteSettings(), writtenByPage()]);
+  const [settings, written, enquiryEmail] = await Promise.all([
+    getSiteSettings(), writtenByPage(), enquiryEmailCheck(),
+  ]);
 
   // Only the pages this site actually shows. A checklist that asked somebody to write the words
   // on a page they had switched off would be asking for work with no purpose.
@@ -134,6 +136,11 @@ export default async function SetupPage() {
       title: 'The words on each page',
       blurb: 'Every page still showing the wording this software shipped with is describing somebody else’s business. These are the pages you have switched on.',
       checks: wordChecks(pagesOn, written, totals),
+    },
+    {
+      title: 'Whether anybody hears from it',
+      blurb: 'An enquiry is always saved. Whether you are told about it is a separate thing, and on a new site it is off until the function that sends the email is deployed to this project.',
+      checks: [enquiryEmail],
     },
     {
       title: 'The pages that are somebody else’s',
@@ -203,7 +210,7 @@ export default async function SetupPage() {
 
         <section style={{ background: p.deepTeal, borderRadius: 16, padding: '24px 28px' }}>
           <h2 style={{ color: '#fff', fontSize: 19, fontWeight: 800, margin: '0 0 6px' }}>
-            Four things this page cannot do for you
+            Things this page cannot do for you
           </h2>
           <p style={{ color: p.lightTeal, fontSize: 13.5, lineHeight: 1.65, margin: '0 0 12px' }}>
             These live outside the site, so nothing here can check them. They are listed rather

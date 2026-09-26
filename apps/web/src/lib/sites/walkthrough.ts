@@ -172,13 +172,27 @@ export function walkthrough(answers: Answers): Step[] {
     },
     {
       n: 9,
+      title: 'Let it send you its enquiries',
+      body: `An enquiry is always saved to the database, but the email telling you about it is sent by a function, and functions belong to a project rather than to the code. A new project has none, so until this is done somebody fills in the contact form, reads "Message Sent", and nobody is told. Run the first line in the folder from step 3. Then, on the Supabase page that opens, add the four secrets below.`,
+      go: { label: 'Supabase edge functions', href: 'https://supabase.com/dashboard/project/_/functions' },
+      copy: [
+        { label: 'Deploy the two that send email', value: `npx supabase functions deploy send-contact-email --project-ref ${ref}\nnpx supabase functions deploy booking-create --project-ref ${ref}` },
+        { label: 'RESEND_API_KEY', value: 'from resend.com, after verifying the domain below' },
+        { label: 'ADMIN_EMAIL', value: answers.email.trim() || 'you@example.com' },
+        { label: 'MAIL_FROM', value: `${answers.name.trim() || 'Your Business'} <noreply@${domain}>` },
+        { label: 'COMPANY_NAME', value: answers.name.trim() || 'Your Business' },
+      ],
+      watch: `MAIL_FROM has to be an address on a domain your Resend account has verified, and that is ${domain}, not anybody else's. Send from a domain the account does not own and Resend refuses every message. Nothing on the site will say so: the form is deliberately built to save the enquiry and not trouble the visitor if the email fails, so a misconfigured key looks exactly like a working site with no enquiries. The setup page checks whether these functions are deployed and says so.`,
+    },
+    {
+      n: 10,
       title: 'Make it theirs',
       body: `Open the setup wizard on the new site and work through its five steps: the name, the colours, whose site it is, what it does, and the words. Use the same browser you signed up in, because the page checks who you are signed in as.`,
       go: { label: `Open ${domain}/setup`, href: `https://${domain}/setup` },
       watch: 'If this gives you a 404, the site is not broken. That page is deliberately invisible to everybody except an administrator, so a 404 here means step 8 has not taken: either you are not signed in on this browser, or the role was not added. Go back and run the first query in step 8, which says whether the account is there at all.',
     },
     {
-      n: 10,
+      n: 11,
       title: 'Add it to this list',
       body: `Last thing. On this site, open the editor on any page, choose This Site, and add ${answers.name.trim() || 'the new site'} under "Sites you look after". It will then appear above with a green light when it is up.`,
       copy: [

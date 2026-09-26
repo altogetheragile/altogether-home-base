@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { mailFrom } from "../_shared/mailFrom.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.5";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -104,12 +105,26 @@ const handler = async (req: Request): Promise<Response> => {
     const enquiry_type = escapeHtml(body.enquiry_type);
     const preferred_contact_method = body.preferred_contact_method ? escapeHtml(body.preferred_contact_method) : '';
 
-    // Send email to admin
+    // Who this site is, and who its enquiries belong to.
+    //
+    // The sender was written in: `noreply@altogetheragile.com`, on every site built from this
+    // repository. Resend refuses to send from a domain the account does not own, so a second
+    // site's enquiries failed at the API with nobody to see it, because the caller throws the
+    // whole invocation away. MAIL_FROM is the same variable booking-create has always read.
     const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@altogetheragile.com";
     const companyName = Deno.env.get("COMPANY_NAME") || "Altogether Agile";
+    const from = mailFrom(Deno.env);
+    if (!from) {
+      // Said out loud rather than sent from somebody else’s domain, which Resend refuses
+      // anyway. The enquiry is already saved; this only decides whether anybody is told.
+      console.error("No MAIL_FROM and no SITE_URL: cannot send, the enquiry is saved only.");
+      return new Response(JSON.stringify({ sent: false, reason: "no-sender" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     await resend.emails.send({
-      from: `${companyName} <noreply@altogetheragile.com>`,
+      from,
       to: [adminEmail],
       replyTo: email,
       subject: `New Contact Form: ${subject}`,
@@ -128,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to user — use only the escaped name, no other user content
     await resend.emails.send({
-      from: `${companyName} <noreply@altogetheragile.com>`,
+      from,
       to: [email],
       subject: `Thank you for contacting ${companyName}`,
       html: `
