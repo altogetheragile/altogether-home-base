@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { Editable } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -35,10 +36,18 @@ const Chat = () => <svg width="16" height="16" viewBox="0 0 256 256" fill="curre
 const CheckCircle = () => <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z" /></svg>;
 const GraduationCap = () => <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M251.76,88.94l-120-64a8,8,0,0,0-7.52,0l-120,64a8,8,0,0,0,0,14.12L32,117.87V200a8,8,0,0,0,8,8H216a8,8,0,0,0,8-8V117.87l16-8.81V192a8,8,0,0,0,16,0V96A8,8,0,0,0,251.76,88.94ZM128,175.89,41.91,128.39,128,80.13l86.09,48.26ZM208,192H48V127l72,40h0a8,8,0,0,0,3.76,1h.48A8,8,0,0,0,128,167l72-40Z" /></svg>;
 
-const Heading = ({ label, title, light = false }: { label: string; title: string; light?: boolean }) => (
+// Two keys, so each half carries its own pen: the small line above and the heading itself are
+// separate fields and somebody clicking one should not be sent to the other.
+const Heading = ({ label, title, light = false, labelKey, titleKey }: {
+  label: string; title: string; light?: boolean; labelKey?: string; titleKey?: string;
+}) => (
   <div style={{ marginBottom: 28 }}>
-    <div style={{ color: light ? p.lightTeal : p.orange, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>{label}</div>
-    <h2 style={{ color: light ? '#fff' : p.deepTeal, fontSize: 28, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{title}</h2>
+    <Editable k={labelKey ?? ''} label="the small line above" as="div" block>
+      <div style={{ color: light ? p.lightTeal : p.orange, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>{label}</div>
+    </Editable>
+    <Editable k={titleKey ?? ''} label="this heading" as="div" block>
+      <h2 style={{ color: light ? '#fff' : p.deepTeal, fontSize: 28, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{title}</h2>
+    </Editable>
   </div>
 );
 
@@ -108,9 +117,11 @@ export default async function AboutPage() {
       <div id="main-content" className="aa-about-hero" style={{ background: p.heroTeal }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
           <div>
-            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('about.hero.eyebrow')}</div>
+            <Editable k="about.hero.eyebrow" label="this text" as="div" block>
+              <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('about.hero.eyebrow')}</div>
+            </Editable>
             <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 48px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('about.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
-            <Prose text={t('about.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }} />
+            <Prose k="about.hero.intro" text={t('about.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {list(t('about.hero.tags')).map((tag) => (
                 <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
@@ -133,11 +144,11 @@ export default async function AboutPage() {
           {storyTold && (
           <div>
             <When any={[t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4')]}>
-              <Heading label={t('about.story.label')} title={t('about.story.heading')} />
-              <Prose text={t('about.story.p1')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
-              <Prose text={t('about.story.p2')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
-              <Prose text={t('about.story.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
-              <Prose text={t('about.story.p4')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }} />
+              <Heading labelKey="about.story.label" titleKey="about.story.heading" label={t('about.story.label')} title={t('about.story.heading')} />
+              <Prose k="about.story.p1" text={t('about.story.p1')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
+              <Prose k="about.story.p2" text={t('about.story.p2')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
+              <Prose k="about.story.p3" text={t('about.story.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: '0 0 18px' }} />
+              <Prose k="about.story.p4" text={t('about.story.p4')} style={{ color: p.body, fontSize: 15, lineHeight: 1.85, margin: 0 }} />
             </When>
           </div>
           )}
@@ -147,7 +158,9 @@ export default async function AboutPage() {
             <When any={[t('about.credentials.list'), t('about.badges.list')]}>
               <div style={{ background: p.skyTeal, borderRadius: 14, padding: 24 }}>
                 <When any={[t('about.credentials.list')]}>
-                  <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />{t('about.credentials.heading')}</div>
+                  <Editable k="about.credentials.heading" label="this text" as="div" block>
+                    <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />{t('about.credentials.heading')}</div>
+                  </Editable>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {list(t('about.credentials.list')).map((cred) => (
                       <div key={cred} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 13, lineHeight: 1.5 }}>
@@ -158,7 +171,9 @@ export default async function AboutPage() {
                 </When>
                 {badgesFrom(t('about.badges.list')).length > 0 && (
                   <div style={{ marginTop: has(t('about.credentials.list')) ? 20 : 0, paddingTop: has(t('about.credentials.list')) ? 16 : 0, borderTop: has(t('about.credentials.list')) ? `1px solid ${p.paleTeal}` : undefined }}>
-                    <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>{t('about.badges.heading')}</div>
+                    <Editable k="about.badges.heading" label="this text" as="div" block>
+                      <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>{t('about.badges.heading')}</div>
+                    </Editable>
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
                       {badgesFrom(t('about.badges.list')).map((badge) => (
                         <a key={badge.src} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
@@ -181,7 +196,7 @@ export default async function AboutPage() {
       {/* TESTIMONIALS */}
       {quotes.length > 0 && (
         <div className="aa-section-pad" style={{ background: p.skyTeal }}>
-          <Heading label={t('about.feedback.label')} title={t('about.feedback.heading')} />
+          <Heading labelKey="about.feedback.label" titleKey="about.feedback.heading" label={t('about.feedback.label')} title={t('about.feedback.heading')} />
           <div className="aa-three-col">
             {quotes.map((q) => (
               <div key={q.id} style={{ background: p.white, borderRadius: 14, padding: '24px 26px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -203,10 +218,14 @@ export default async function AboutPage() {
       {/* MISSION */}
       <div className="aa-section-pad" style={{ background: p.heroTeal }}>
         <div style={{ maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
-          <Heading label={t('about.mission.label')} title={t('about.mission.heading')} light />
-          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>{t('about.mission.p1')}</p>
-          <Prose text={t('about.mission.p2')} style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }} />
-          <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>{t('about.mission.p3')}</p>
+          <Heading labelKey="about.mission.label" titleKey="about.mission.heading" label={t('about.mission.label')} title={t('about.mission.heading')} light />
+          <Editable k="about.mission.p1" label="this text" as="div" block>
+            <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: '0 0 20px' }}>{t('about.mission.p1')}</p>
+          </Editable>
+          <Prose k="about.mission.p2" text={t('about.mission.p2')} style={{ color: '#fff', fontSize: 16, lineHeight: 1.85, margin: '0 0 20px', fontWeight: 500 }} />
+          <Editable k="about.mission.p3" label="this text" as="div" block>
+            <p style={{ color: p.lightTeal, fontSize: 16, lineHeight: 1.85, margin: 0 }}>{t('about.mission.p3')}</p>
+          </Editable>
         </div>
       </div>
       </>
@@ -223,7 +242,7 @@ export default async function AboutPage() {
         if (cards.length === 0) return null;
         return (
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
-        <Heading label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
+        <Heading labelKey="about.philosophy.label" titleKey="about.philosophy.heading" label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
         {/* A third card joins the row rather than dropping beneath the other two at half width. */}
         <div className="aa-cards" style={{ ['--aa-card-min' as string]: '320px' }}>
           {cards.map((entry, idx) => {
@@ -270,7 +289,7 @@ export default async function AboutPage() {
         if (eras.length === 0) return null;
         return (
           <div className="aa-section-pad" style={{ background: p.white }}>
-            <Heading label={t('about.timeline.label')} title={t('about.timeline.heading')} />
+            <Heading labelKey="about.timeline.label" titleKey="about.timeline.heading" label={t('about.timeline.label')} title={t('about.timeline.heading')} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 680 }}>
               {eras.map((item, i) => (
                 <div key={item.year} style={{ display: 'flex', gap: 24, position: 'relative' }}>
@@ -300,9 +319,15 @@ export default async function AboutPage() {
           style={{ alignItems: 'center', gap: 40 }}
         >
           <div>
-            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('about.cta.label')}</div>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('about.cta.heading')}</h2>
-            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('about.cta.body')}</p>
+            <Editable k="about.cta.label" label="this text" as="div" block>
+              <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('about.cta.label')}</div>
+            </Editable>
+            <Editable k="about.cta.heading" label="this text" as="div" block>
+              <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('about.cta.heading')}</h2>
+            </Editable>
+            <Editable k="about.cta.body" label="this text" as="div" block>
+              <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('about.cta.body')}</p>
+            </Editable>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('about.cta.booking')}</a>
               {settings.show_events !== false && <Link href="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.events')} <ArrowRight /></Link>}

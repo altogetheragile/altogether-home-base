@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Editable } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import { ClipboardList, Clock, Award, HelpCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
@@ -87,29 +88,41 @@ export default async function ExamsPage() {
               </div>
             </div>
           ))}
-          {exams.length === 0 && <p style={{ color: c.muted }}>{t('exams.empty')}</p>}
+          {exams.length === 0 && <Editable k="exams.empty" label="this text" as="div" block>
+                                   <p style={{ color: c.muted }}>{t('exams.empty')}</p>
+                                 </Editable>}
         </div>
       </div>
 
       {/* About + How to prepare + FAQ (content parity with the live page) */}
       <div style={{ background: c.white, borderTop: '1px solid #E5E7EB' }}>
         <div style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px' }}>
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.25 }}>{t('exams.about.heading')}</h2>
-          <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
-            {t('exams.about.p1')}
-          </p>
-          <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
-            {t('exams.about.p2')}
-          </p>
+          <Editable k="exams.about.heading" label="this text" as="div" block>
+            <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '0 0 16px', lineHeight: 1.25 }}>{t('exams.about.heading')}</h2>
+          </Editable>
+          <Editable k="exams.about.p1" label="this text" as="div" block>
+            <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
+              {t('exams.about.p1')}
+            </p>
+          </Editable>
+          <Editable k="exams.about.p2" label="this text" as="div" block>
+            <p style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: '0 0 16px' }}>
+              {t('exams.about.p2')}
+            </p>
+          </Editable>
 
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>{t('exams.prepare.heading')}</h2>
+          <Editable k="exams.prepare.heading" label="this text" as="div" block>
+            <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>{t('exams.prepare.heading')}</h2>
+          </Editable>
           <ul style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: 0, paddingLeft: 22 }}>
             {list(t('exams.prepare.steps')).map((step) => (
               <li key={step}>{step}</li>
             ))}
           </ul>
 
-          <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>{t('exams.faq.heading')}</h2>
+          <Editable k="exams.faq.heading" label="this text" as="div" block>
+            <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>{t('exams.faq.heading')}</h2>
+          </Editable>
           {EXAM_FAQS.map((f) => (
             <div key={f.q} style={{ marginBottom: 20 }}>
               <h3 style={{ color: c.deepTeal, fontSize: 17, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.4 }}>{f.q}</h3>

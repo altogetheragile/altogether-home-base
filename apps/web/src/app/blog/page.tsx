@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Editable } from '@/components/edit/Editable';
 import { getPosts } from '@/lib/blog';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { BlogList } from './BlogList';
@@ -28,10 +29,14 @@ export default async function BlogPage() {
       <JsonLd data={itemListJsonLd(posts.map((p) => ({ name: p.title, path: `/blog/${p.slug}` })))} />
 
       <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, ${c.heroTeal} 100%)`, padding: '48px 24px', textAlign: 'center' }}>
-        <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{t('blog.hero.heading')}</h1>
-        <p style={{ color: c.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginInline: 'auto' }}>
-          {t('blog.hero.intro')}
-        </p>
+        <Editable k="blog.hero.heading" label="this text" as="div" block>
+          <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{t('blog.hero.heading')}</h1>
+        </Editable>
+        <Editable k="blog.hero.intro" label="this text" as="div" block>
+          <p style={{ color: c.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginInline: 'auto' }}>
+            {t('blog.hero.intro')}
+          </p>
+        </Editable>
       </div>
 
       <BlogList posts={posts} />

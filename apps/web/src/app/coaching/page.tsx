@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { Editable } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
@@ -133,9 +134,11 @@ export default async function CoachingPage() {
       {/* HERO */}
       <div id="main-content" className="aa-coach-hero" style={{ background: p.heroTeal }}>
         <div style={{ maxWidth: 680 }}>
-          <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('coaching.hero.eyebrow')}</div>
+          <Editable k="coaching.hero.eyebrow" label="this text" as="div" block>
+            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('coaching.hero.eyebrow')}</div>
+          </Editable>
           <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 50px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('coaching.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
-          <Prose text={t('coaching.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }} />
+          <Prose k="coaching.hero.intro" text={t('coaching.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 32px', maxWidth: 540 }} />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
             <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '13px 26px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('coaching.hero.cta')}</a>
             <a href="#enquiry" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>{t('coaching.hero.jump')} <ArrowRight /></a>
@@ -148,9 +151,13 @@ export default async function CoachingPage() {
         <div className="aa-service-layout">
           <div>
             <Heading label={t('coaching.approach.label')} title={t('coaching.approach.heading')} />
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p1')}</p>
-            <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p2')}</p>
-            <Prose text={t('coaching.approach.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }} />
+            <Editable k="coaching.approach.p1" label="this text" as="div" block>
+              <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p1')}</p>
+            </Editable>
+            <Editable k="coaching.approach.p2" label="this text" as="div" block>
+              <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 16px' }}>{t('coaching.approach.p2')}</p>
+            </Editable>
+            <Prose k="coaching.approach.p3" text={t('coaching.approach.p3')} style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: 0 }} />
           </div>
           <Illustration src="/images/coaching-hero.webp" alt="Two people having a coaching conversation" height={320} />
         </div>
@@ -171,7 +178,9 @@ export default async function CoachingPage() {
               <p style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 14px' }}>{service.description}</p>
               <Prose text={service.detail} style={{ color: p.body, fontSize: 15, lineHeight: 1.8, margin: '0 0 28px' }} />
               <div style={{ background: service.lightBg, borderRadius: 14, padding: '20px 24px', marginBottom: 28 }}>
-                <div style={{ color: service.colour, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{t('coaching.service.includesHeading')}</div>
+                <Editable k="coaching.service.includesHeading" label="this text" as="div" block>
+                  <div style={{ color: service.colour, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{t('coaching.service.includesHeading')}</div>
+                </Editable>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {service.includes.map((item) => (
                     <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 14, lineHeight: 1.6 }}>
@@ -215,9 +224,17 @@ export default async function CoachingPage() {
       <div className="aa-coach-band" style={{ background: p.deepTeal }}>
         <div className="aa-two-col" style={{ alignItems: 'center' }}>
           <div>
-            <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('coaching.chemistry.label')}</div>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('coaching.chemistry.heading')}</h2>
-            <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('coaching.chemistry.body')}</p>
+            <Editable k="coaching.chemistry.label" label="this text" as="div" block>
+              <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('coaching.chemistry.label')}</div>
+            </Editable>
+            <Editable k="coaching.chemistry.heading" label="this text" as="div" block>
+              <Editable k="coaching.chemistry.heading" label="this text" as="div" block>
+                <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 14px', lineHeight: 1.2 }}>{t('coaching.chemistry.heading')}</h2>
+              </Editable>
+            </Editable>
+            <Editable k="coaching.chemistry.body" label="this text" as="div" block>
+              <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('coaching.chemistry.body')}</p>
+            </Editable>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {['30 minutes', 'No commitment', 'Video or phone', 'Free'].map((tag) => (
                 <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
@@ -225,10 +242,14 @@ export default async function CoachingPage() {
             </div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: '32px 28px' }}>
-            <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>{t('coaching.chemistry.boxHeading')}</div>
+            <Editable k="coaching.chemistry.boxHeading" label="this text" as="div" block>
+              <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>{t('coaching.chemistry.boxHeading')}</div>
+            </Editable>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <a href={bookingUrl} style={{ background: p.orange, color: p.deepTeal, padding: '14px 20px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Calendar />{t('coaching.chemistry.cta')}</a>
-              <div style={{ color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>{t('coaching.chemistry.orForm')}</div>
+              <Editable k="coaching.chemistry.orForm" label="this text" as="div" block>
+                <div style={{ color: p.lightTeal, fontSize: 12, textAlign: 'center' }}>{t('coaching.chemistry.orForm')}</div>
+              </Editable>
             </div>
           </div>
         </div>
