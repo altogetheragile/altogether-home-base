@@ -116,3 +116,79 @@ export function Editable({
     </Tag>
   );
 }
+
+// Where a missing picture has to change the layout - a column that exists to hold a photograph
+// and has nothing else in it - the page works that out on the server from isAdmin() and passes it
+// down. Not from this context: every page that needs it renders on the server, where a hook
+// cannot run, and a hook here builds fine and then throws on the first request.
+//
+// ============= A picture nobody has chosen =============
+//
+// A pen is drawn on something that was rendered, so a picture field with nothing in it has no
+// pen. That is not a faint slot, it is an absent one: the hero, the founder photograph and the
+// service illustrations simply are not there, and the only way to put one back is to know the
+// drawer has a row called "Hero background picture".
+//
+// This is how the second site lost its hero. The picture stopped being written into the page and
+// became a field with an empty default, the first site had a saved value and carried on, and the
+// new one rendered a plain band that looked like a mistake nobody could reach.
+//
+// So an empty picture draws its own outline, for an administrator and for nobody else. A visitor
+// gets exactly what they got before: no markup, no space, no hint that a picture was possible.
+//
+// Always drawn rather than shown on hover, unlike the pen. A pen is found by pointing at the
+// thing it edits; there is nothing here to point at, which is the whole problem.
+export function AddAPicture({
+  k, label, fill = false, width, height = 180, radius = 16,
+}: {
+  /** The field this slot fills. May be an `items` field, where the drawer opens at the rows. */
+  k: string;
+  /** Named as the thing that is missing: the slot says "Add" and then this. */
+  label: string;
+  /** Fills its nearest positioned ancestor, for a background that sits behind other content. */
+  fill?: boolean;
+  width?: number;
+  height?: number;
+  radius?: number;
+}) {
+  const on = useContext(CanEdit);
+  if (!on || !k?.trim()) return null;
+
+  return (
+    <button
+      type="button"
+      aria-label={`Add ${label}`}
+      title={`Add ${label}`}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent('aa:edit', { detail: { page: tabFor(k), key: k } }));
+      }}
+      style={{
+        // A background sits under the words that are already there, so its own label goes in the
+        // corner rather than under the headline.
+        ...(fill
+          ? { position: 'absolute', inset: 0, zIndex: 1, alignItems: 'flex-end', justifyContent: 'flex-end', padding: 16, borderRadius: 0 }
+          : { position: 'relative', width: width ?? '100%', height, alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: radius }),
+        display: 'flex',
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        border: '1px dashed rgba(12,74,74,0.35)',
+        background: 'rgba(12,74,74,0.035)',
+        color: '#0C4A4A',
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: '#fff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 14,
+          padding: '6px 12px', fontSize: 13, fontWeight: 600, lineHeight: 1,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.18)',
+        }}
+      >
+        <Pencil size={12} />
+        Add {label}
+      </span>
+    </button>
+  );
+}

@@ -5,7 +5,7 @@ import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { ctaHref } from '@/lib/cta';
-import { Editable } from '@/components/edit/Editable';
+import { Editable, AddAPicture } from '@/components/edit/Editable';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
@@ -14,6 +14,7 @@ import { orderedSections, HOME_SECTIONS } from '@altogether/ui/editor/sections';
 import { Icon } from '@/components/icons/Icon';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
+import { isAdmin } from '@/lib/auth';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
 import AboutSection from '@/components/AboutSection';
@@ -43,11 +44,12 @@ const Icons = {
 };
 
 export default async function HomePage() {
-  const [settings, courses, testimonials, t] = await Promise.all([
+  const [settings, courses, testimonials, t, admin] = await Promise.all([
     getSiteSettings(),
     getHomeCourseCards(),
     getHomeTestimonials(),
     getCopy('home'),
+    isAdmin(),
   ]);
   const founder = founderOf(settings);
   const heroBg = picture(t('home.hero.background'));
@@ -90,6 +92,9 @@ export default async function HomePage() {
             </div>
             </Editable>
           )}
+          {/* No picture chosen leaves a plain band, which is a fine way for a hero to look and an
+              impossible thing to change from the page: there is nothing to hover. */}
+          {!heroBg && <AddAPicture k="home.hero.background" label="the background picture" fill />}
           <div className="aa-hero-content">
             <div className="aa-hero-grid">
               <div>
@@ -216,7 +221,7 @@ export default async function HomePage() {
     founder: (
       <>
         {/* The founder, if this site has one. */}
-        {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} />}
+        {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} canEdit={admin} />}
       </>
     ),
     knowledge: (

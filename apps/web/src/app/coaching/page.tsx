@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Editable } from '@/components/edit/Editable';
+import { Editable, AddAPicture } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
@@ -198,7 +198,11 @@ export default async function CoachingPage() {
               </div>
             </div>
             <div style={{ direction: 'ltr' }}>
-              {service.picture && <Illustration src={service.picture.src} alt={service.picture.alt} height={360} />}
+              {service.picture
+                ? <Illustration src={service.picture.src} alt={service.picture.alt} height={360} />
+                // The picture lives in a column of a row of the services field, so the slot opens
+                // the rows rather than one box. Still shorter than finding it from the label.
+                : <AddAPicture k="coaching.services" label="a picture for this service" height={360} />}
             </div>
           </div>
         </div>

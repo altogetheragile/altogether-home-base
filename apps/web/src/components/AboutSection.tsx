@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { colors as p, fonts } from '@/lib/brand';
 import { lines, list } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
-import { Editable } from '@/components/edit/Editable';
+import { Editable, AddAPicture } from '@/components/edit/Editable';
 
 
 const ArrowRight = () => (
@@ -17,15 +17,23 @@ const ArrowRight = () => (
  * client-side component with no access to site settings, and the parent already
  * has them.
  */
-export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: string;
+export default function AboutSection({ bookingUrl, founder, t, canEdit = false }: { bookingUrl: string;
   /** Who this site's founder is. The words come from the copy registry; these are the two facts
    *  that are not sentences. */
   founder: { name: string; photo: string };
   t: (key: string) => string;
+  /** Whether whoever is looking can edit the page. Passed down rather than read from context:
+   *  this renders on the server, where a hook cannot run, and the page above it already knows. */
+  canEdit?: boolean;
 }) {
   // The photograph, the years badge and the credentials all live in the left column. A site that
   // has supplied none of them gets one column, not an empty half.
-  const hasLeftColumn = Boolean(founder.photo) || has(t('home.founder.years'), t('home.founder.credentials'));
+  //
+  // Except for an administrator, who gets the column back so the empty photograph has somewhere
+  // to be. That does mean the page is laid out differently for the person editing it than for the
+  // people reading it, which is a thing to do sparingly and worth it here: a site with no photo,
+  // no years and no credentials had no way at all to add the first of them from this page.
+  const hasLeftColumn = Boolean(founder.photo) || canEdit || has(t('home.founder.years'), t('home.founder.credentials'));
   return (
     <>
       <style>{`
@@ -70,6 +78,9 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
                 </div>
                 </Editable>
               </>
+            )}
+            {!founder.photo && (
+              <AddAPicture k="site.brand.images.founderPhoto" label="the founder photograph" width={320} height={380} radius={24} />
             )}
             {/* The panel held the years badge and the credentials. Emptied of both it was a dark
                 teal bar sitting under the photograph, which is how it looked: a bug. */}

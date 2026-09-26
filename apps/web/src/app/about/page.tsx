@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Editable } from '@/components/edit/Editable';
+import { Editable, AddAPicture } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -10,6 +10,7 @@ import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf, fonts } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
 import { requireModule } from '@/lib/module-gate';
+import { isAdmin } from '@/lib/auth';
 import { getCopy, lines, list, items } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 import { Prose, When, has } from '@/lib/copy/Prose';
@@ -99,8 +100,12 @@ function Stars({ rating }: { rating: number | null }) {
 
 export default async function AboutPage() {
   await requireModule('about');
-  const [settings, feedback, t] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about')]);
+  const [settings, feedback, t, admin] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about'), isAdmin()]);
   const founder = founderOf(settings);
+  // The portrait column, and the empty slot that stands in for it while nobody has chosen one.
+  // Worked out here rather than in the markup because the band is one column or two, and an
+  // administrator looking at an empty slot needs the second column as much as a portrait does.
+  const portraitSlot = founder.shown && !founder.portrait && admin;
   // Whether there is a left column at all in the story section. Without one the boxes on the
   // right were floating beside half a page of white space.
   const storyTold = has(t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4'));
@@ -315,7 +320,7 @@ export default async function AboutPage() {
       {/* CTA */}
       <div className="aa-about-cta" style={{ background: p.deepTeal }}>
         <div
-          className={`aa-two-col${founder.shown && founder.portrait ? '' : ' aa-two-col--alone'}`}
+          className={`aa-two-col${founder.shown && (founder.portrait || portraitSlot) ? '' : ' aa-two-col--alone'}`}
           style={{ alignItems: 'center', gap: 40 }}
         >
           <div>
@@ -338,6 +343,11 @@ export default async function AboutPage() {
           {founder.shown && founder.portrait && (
             <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
               <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+            </div>
+          )}
+          {portraitSlot && (
+            <div className="aa-hide-mobile" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AddAPicture k="site.brand.images.founderPortrait" label="the founder portrait" width={300} height={420} radius={30} />
             </div>
           )}
         </div>
