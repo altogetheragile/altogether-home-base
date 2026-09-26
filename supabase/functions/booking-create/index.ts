@@ -26,6 +26,7 @@
 // which locked them out for a day over our own failure.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { mailFrom } from '../_shared/mailFrom.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@2.0.0';
 import { isSlotAvailable, type DateOverride, type WeeklyWindow } from '../_shared/bookingSlots.ts';
@@ -55,7 +56,7 @@ const corsHeaders = {
 // COMPANY_NAME. The sending address has to be a verified domain in the mail provider anyway, so
 // it is deployment configuration either way.
 const COMPANY = Deno.env.get('COMPANY_NAME') || 'Altogether Agile';
-const FROM = Deno.env.get('MAIL_FROM') || `${COMPANY} <noreply@altogetheragile.com>`;
+const FROM = mailFrom(Deno.env);
 const OWNER_EMAIL = Deno.env.get('ADMIN_EMAIL') || 'info@altogetheragile.com';
 const SITE = Deno.env.get('SITE_URL') || 'https://altogetheragile.com';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -380,7 +381,12 @@ serve(async (req) => {
     const guestWhen = inZone(slot.startsAt, guestTimezone);
     const ownerWhen = inZone(slot.startsAt, 'Europe/London');
 
-    try {
+    // No sender configured means no site address to send from, and sending from another site's
+    // domain is refused by Resend anyway. The booking itself is already made: this block only
+    // decides whether anybody is written to about it.
+    if (!FROM) {
+      console.error('No MAIL_FROM and no SITE_URL: the booking is made, no email sent.');
+    } else try {
       await resend.emails.send({
         from: FROM,
         to: [email],
