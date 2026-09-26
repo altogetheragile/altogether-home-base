@@ -28,6 +28,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # packages/ui/dist is committed, because both apps install on their own and cannot build it.
+      # A committed build output is a promise that it matches its source, and twice it did not:
+      # four editor features shipped, passed their tests and did nothing, because the tests read
+      # the source and the apps read a dist nobody had rebuilt. Rebuilding here and failing on any
+      # difference is what makes the promise true.
+      - name: The built package matches its source
+        run: |
+          npm run build --workspace @altogether/ui
+          if ! git diff --quiet -- packages/ui/dist; then
+            echo "::error::packages/ui/dist is out of date. Run: npm run build --workspace @altogether/ui"
+            git --no-pager diff --stat -- packages/ui/dist
+            exit 1
+          fi
+
       - name: Lint
         run: npm run lint
 
