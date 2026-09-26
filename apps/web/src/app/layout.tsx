@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             CSS variables for the whole Site. */}
         <div className="flex min-h-screen flex-col" style={brandCssVarsFor(settings.brand)}>
           {holding ? (
-            <HoldingPage settings={settings} heading={t('site.construction.heading')} body={t('site.construction.body')} />
+            <HoldingPage settings={settings} heading={siteWords('site.construction.heading')} body={siteWords('site.construction.body')} />
           ) : (
           <>
           {/* Only an admin can be on a hidden page at all, so this only ever renders for one. */}
