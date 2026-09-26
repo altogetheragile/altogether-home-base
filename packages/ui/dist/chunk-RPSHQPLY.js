@@ -1,9 +1,9 @@
-import { ItemRows } from './chunk-M7LVVDUY.js';
+import { ItemRows } from './chunk-RWBHVQ5Z.js';
+import { IconPicker } from './chunk-BLD3MESD.js';
 import { PictureBox } from './chunk-BU4EJGTF.js';
 import { SectionOrder } from './chunk-7W7E3UZ3.js';
 import { SECTIONS_FOR_PAGE } from './chunk-6VYT3VGP.js';
 import { ColourBox } from './chunk-M5XDZR2B.js';
-import { IconPicker } from './chunk-BLD3MESD.js';
 import { jsx, jsxs } from 'react/jsx-runtime';
 
 function FieldControl({

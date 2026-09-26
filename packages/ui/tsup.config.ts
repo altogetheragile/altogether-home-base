@@ -2,6 +2,7 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: [
+    'src/HoldingPage.tsx',
     'src/index.ts',
     'src/tokens.ts',
     'src/brand.ts',

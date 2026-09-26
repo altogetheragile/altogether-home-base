@@ -1,6 +1,6 @@
+import { IconPicker } from './chunk-BLD3MESD.js';
 import { PictureBox } from './chunk-BU4EJGTF.js';
 import { ColourBox } from './chunk-M5XDZR2B.js';
-import { IconPicker } from './chunk-BLD3MESD.js';
 import { ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react';
 import { jsxs, jsx } from 'react/jsx-runtime';
 
