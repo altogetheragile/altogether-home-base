@@ -27,8 +27,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { mailFrom } from '../_shared/mailFrom.ts';
+import { mailer } from '../_shared/mailer.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from 'npm:resend@2.0.0';
 import { isSlotAvailable, type DateOverride, type WeeklyWindow } from '../_shared/bookingSlots.ts';
 import { fetchBusy, createCalendarEvent } from '../_shared/googleCalendar.ts';
 import { createZoomMeeting, deleteZoomMeeting } from '../_shared/zoom.ts';
@@ -36,7 +36,6 @@ import {
   callerIp, hashIp, checkBookingGuards, recordAttempt, escapeHtml,
 } from '../_shared/bookingGuards.ts';
 
-const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 /** The shapes read back from Postgres, named so the mapping below is checkable. */
 interface AvailabilityRow { weekday: number; start_local: string; end_local: string }
@@ -384,8 +383,14 @@ serve(async (req) => {
     // No sender configured means no site address to send from, and sending from another site's
     // domain is refused by Resend anyway. The booking itself is already made: this block only
     // decides whether anybody is written to about it.
-    if (!FROM) {
-      console.error('No MAIL_FROM and no SITE_URL: the booking is made, no email sent.');
+    const resend = mailer(Deno.env);
+    if (!resend || !FROM) {
+      // The booking is made either way. This block only decides whether anybody is written to.
+      console.error(
+        !resend
+          ? 'No RESEND_API_KEY on this project: the booking is made, no email sent.'
+          : 'No MAIL_FROM and no SITE_URL: the booking is made, no email sent.',
+      );
     } else try {
       await resend.emails.send({
         from: FROM,

@@ -299,9 +299,20 @@ export async function enquiryEmailCheck(): Promise<Check> {
         where,
       };
     }
+    // Not there and there-but-broken are different jobs, and saying the wrong one sends somebody
+    // to redeploy a function that is already deployed. A function that cannot start answers its
+    // own preflight with a 500, which is how a missing key used to look exactly like a missing
+    // function.
+    if (res.status === 404) {
+      return {
+        id: 'enquiry-email', status: 'todo', title: 'Let the site send you its enquiries',
+        detail: 'send-contact-email is not deployed to this project, so every enquiry is saved and nobody is told. The contact form still says "Message Sent", because the message is safely in the database. Deploy it, then set RESEND_API_KEY, ADMIN_EMAIL and MAIL_FROM on the project.',
+        where,
+      };
+    }
     return {
-      id: 'enquiry-email', status: 'todo', title: 'Let the site send you its enquiries',
-      detail: 'send-contact-email is not deployed to this project, so every enquiry is saved and nobody is told. The contact form still says "Message Sent", because the message is safely in the database. Deploy it, then set RESEND_API_KEY, ADMIN_EMAIL and MAIL_FROM on the project.',
+      id: 'enquiry-email', status: 'todo', title: 'The enquiry email is deployed but not working',
+      detail: `send-contact-email is there but answered ${res.status}, which usually means it cannot start: most often RESEND_API_KEY has not been set on the project. Enquiries are still saved; nobody is told about them.`,
       where,
     };
   } catch {

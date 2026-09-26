@@ -29,12 +29,22 @@ describe('the site can send its own email', () => {
   });
 
   it('says plainly what is happening when the function is not there', async () => {
-    fetchReturning({ ok: false });
+    fetchReturning({ ok: false, status: 404 });
     const check = await enquiryEmailCheck();
     expect(check.status).toBe('todo');
     expect(check.detail).toMatch(/nobody is told/i);
     // The confusing part, said out loud: the visitor is told it worked, because it did.
     expect(check.detail).toMatch(/Message Sent/);
+  });
+
+  it('tells a function that is missing from one that cannot start', async () => {
+    // A function with no RESEND_API_KEY used to crash before its handler ran, so it answered its
+    // own preflight with a 500 and looked exactly like a function nobody had deployed. Saying
+    // "deploy it" then sends somebody to redeploy what is already there.
+    fetchReturning({ ok: false, status: 500 });
+    const check = await enquiryEmailCheck();
+    expect(check.detail).toMatch(/RESEND_API_KEY/);
+    expect(check.detail).not.toMatch(/is not deployed/);
   });
 
   it('calls OPTIONS, because asking properly would send somebody an email', async () => {
@@ -71,6 +81,16 @@ describe('the functions that send email', () => {
       for (const value of sends) {
         expect(value, `${name} sends from a written-in address`).not.toContain('altogetheragile.com');
       }
+    }
+  });
+
+  it('never builds the mail client when the file is read', () => {
+    // The Resend constructor throws without a key, so a project that had not been given one
+    // crashed the function before a line of the handler ran: deployed, listed in the dashboard,
+    // and answering 500 to everything including its own preflight.
+    for (const [name, src] of [['send-contact-email', contact], ['booking-create', booking]] as const) {
+      expect(src, `${name} builds Resend at module load`).not.toMatch(/^const resend = new Resend/m);
+      expect(src, `${name} does not use the shared mailer`).toContain('mailer(Deno.env)');
     }
   });
 
