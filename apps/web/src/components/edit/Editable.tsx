@@ -74,8 +74,10 @@ export function Editable({
   const [over, setOver] = useState(false);
   const showing = over || all;
 
-  // Nothing at all for a visitor: no wrapper, no attribute, no change to the page.
-  if (!on) return <>{children}</>;
+  // Nothing at all for a visitor: no wrapper, no attribute, no change to the page. And nothing
+  // for a caller that had no key to give: a pen that opens the drawer at nothing is worse than
+  // no pen, and a shared component may be used both with and without one.
+  if (!on || !k?.trim()) return <>{children}</>;
 
   return (
     <Tag

@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { Editable } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import { getEventTemplates, getApprovedFeedback, toCardModel, type CourseCardModel } from '@/lib/events';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -70,18 +71,26 @@ export default async function EventsPage() {
       <div style={{ background: c.heroTeal }} className="aa-hero-pad">
         <div className="aa-page-intro" style={{ paddingBottom: 48, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div>
-            <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('events.hero.eyebrow')}</div>
+            <Editable k="events.hero.eyebrow" label="this text" as="div" block>
+              <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('events.hero.eyebrow')}</div>
+            </Editable>
             <h1 style={{ color: '#fff', fontSize: 'clamp(32px, 5vw, 46px)', fontWeight: 800, lineHeight: 1.15, margin: '0 0 20px' }}>
               {lines(t('events.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}
             </h1>
-            <p style={{ color: c.lightTeal, fontSize: 16, lineHeight: 1.7, margin: 0, maxWidth: 440 }}>
-              {t('events.hero.intro')}
-            </p>
+            <Editable k="events.hero.intro" label="this text" as="div" block>
+              <p style={{ color: c.lightTeal, fontSize: 16, lineHeight: 1.7, margin: 0, maxWidth: 440 }}>
+                {t('events.hero.intro')}
+              </p>
+            </Editable>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, justifyContent: 'flex-end' }}>
             <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px' }}>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>{t('events.help.heading')}</div>
-              <p style={{ color: c.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>{t('events.help.body')}</p>
+              <Editable k="events.help.heading" label="this text" as="div" block>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>{t('events.help.heading')}</div>
+              </Editable>
+              <Editable k="events.help.body" label="this text" as="div" block>
+                <p style={{ color: c.lightTeal, fontSize: 13, lineHeight: 1.6, margin: '0 0 14px' }}>{t('events.help.body')}</p>
+              </Editable>
               <a href={bookingUrl} style={{ background: c.orange, color: '#fff', padding: '10px 18px', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', width: 'fit-content', display: 'inline-block' }}>
                 {t('events.help.cta')}
               </a>
@@ -105,17 +114,25 @@ export default async function EventsPage() {
       <div style={{ background: c.heroTeal, padding: '56px 48px' }}>
         <div className="aa-bespoke" style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div>
-            <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('events.bespoke.eyebrow')}</div>
-            <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>{t('events.bespoke.heading')}</h2>
-            <p style={{ color: c.lightTeal, fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
-              {t('events.bespoke.body')}
-            </p>
+            <Editable k="events.bespoke.eyebrow" label="this text" as="div" block>
+              <div style={{ color: c.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>{t('events.bespoke.eyebrow')}</div>
+            </Editable>
+            <Editable k="events.bespoke.heading" label="this text" as="div" block>
+              <h2 style={{ color: '#fff', fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.2 }}>{t('events.bespoke.heading')}</h2>
+            </Editable>
+            <Editable k="events.bespoke.body" label="this text" as="div" block>
+              <p style={{ color: c.lightTeal, fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>
+                {t('events.bespoke.body')}
+              </p>
+            </Editable>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
             <a href="/contact" style={{ background: c.orange, color: c.deepTeal, padding: '13px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, textDecoration: 'none', whiteSpace: 'nowrap', textAlign: 'center' }}>
               {t('events.bespoke.cta')}
             </a>
-            <div style={{ color: c.lightTeal, fontSize: 12, textAlign: 'center' }}>{t('events.bespoke.reassurance')}</div>
+            <Editable k="events.bespoke.reassurance" label="this text" as="div" block>
+              <div style={{ color: c.lightTeal, fontSize: 12, textAlign: 'center' }}>{t('events.bespoke.reassurance')}</div>
+            </Editable>
           </div>
         </div>
       </div>

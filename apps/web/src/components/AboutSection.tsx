@@ -118,9 +118,7 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
             </h2>
             </Editable>
             <div style={{ width: 48, height: 3, background: p.orange, borderRadius: 2, marginBottom: 32 }} />
-            <Editable k="home.founder.body" label="the founder introduction" as="div" block>
-            <Prose text={t('home.founder.body')} style={{ color: p.body, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }} />
-            </Editable>
+            <Prose k="home.founder.body" text={t('home.founder.body')} style={{ color: p.body, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }} />
             <When any={[t('home.founder.quote')]}>
               <div style={{ borderLeft: `3px solid ${p.orange}`, paddingLeft: 20, marginBottom: 44 }}>
                 <p style={{ color: p.midTeal, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>

@@ -94,9 +94,7 @@ export default async function HomePage() {
             <div className="aa-hero-grid">
               <div>
                 {/* The credential first: it is the one thing on this page nobody else can claim. */}
-                <Editable k="home.hero.eyebrow" label="the line above the headline" as="div" block>
-                <Prose as="p" className="aa-hero-eyebrow" text={t('home.hero.eyebrow')} />
-                </Editable>
+                <Prose k="home.hero.eyebrow" as="p" className="aa-hero-eyebrow" text={t('home.hero.eyebrow')} />
                 {/* What he sells in the heading, the slogan underneath. It was the other way round,
                     and "Work better together. Accelerate time to value." is true of any consultancy
                     that has ever existed. */}

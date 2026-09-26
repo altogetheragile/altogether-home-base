@@ -1,4 +1,5 @@
 import type { CSSProperties, ElementType, ReactNode } from 'react';
+import { Editable } from '@/components/edit/Editable';
 
 // ============= Words that are not there yet =============
 //
@@ -12,15 +13,25 @@ import type { CSSProperties, ElementType, ReactNode } from 'react';
 export function Prose({
   text,
   as: Tag = 'p',
+  k,
+  label,
   ...rest
 }: {
   text: string;
   as?: ElementType;
+  /** The copy key this came from. Given one, the words carry their own pen, which is a great
+   *  deal less work than wrapping every call site by hand and a great deal safer: nothing about
+   *  the markup moves, because the wrapper is inside the component that already renders it. */
+  k?: string;
+  label?: string;
   style?: CSSProperties;
   className?: string;
 }) {
+  // Nothing to show, nothing to hover. An unwritten field is reached from the drawer; a pen
+  // floating over a zero-height gap is not a way to find anything.
   if (!text?.trim()) return null;
-  return <Tag {...rest}>{text}</Tag>;
+  const words = <Tag {...rest}>{text}</Tag>;
+  return k ? <Editable k={k} label={label ?? 'this text'} as="div" block>{words}</Editable> : words;
 }
 
 /** Anything to show? Used to drop a whole section, its heading with it. A heading over nothing is
