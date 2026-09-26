@@ -1,6 +1,14 @@
-import { fonts, colors } from './chunk-J6O7U55M.js';
 import { jsxs, jsx } from 'react/jsx-runtime';
 
+// src/tokens.ts
+var colors = {
+  skyTeal: "#F0FAFA",
+  deepTeal: "#004D4D",
+  orange: "#FF9715",
+  body: "#374151"};
+var fonts = {
+  serif: "var(--aa-font-heading, 'DM Serif Display', Georgia, serif)",
+  sans: "var(--aa-font-body, 'DM Sans', system-ui, sans-serif)"};
 function HoldingPage({
   logo,
   heading,

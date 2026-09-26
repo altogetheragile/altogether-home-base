@@ -1,0 +1,5 @@
+
+# Build output, committed because both apps install on their own and cannot build it themselves.
+# Marked generated so a pull request touching the package does not open with four thousand lines
+# of bundler output in front of the twelve lines that were actually written.
+packages/ui/dist/** linguist-generated=true
