@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { colors as p, fonts } from '@/lib/brand';
 import { lines, list } from '@/lib/copy';
 import { Prose, When, has } from '@/lib/copy/Prose';
+import { Editable } from '@/components/edit/Editable';
 
 
 const ArrowRight = () => (
@@ -97,7 +98,9 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
 
           {/* RIGHT - text */}
           <div style={{ paddingTop: 40 }}>
+            <Editable k="home.founder.eyebrow" label="the small line above the founder heading" as="div" block>
             <p style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>{t('home.founder.eyebrow')}</p>
+            </Editable>
             <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 48, fontWeight: 400, lineHeight: 1.1, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
               {/* Two lines, the second in italics. Splitting on the newline keeps that shape while
                   letting a site write its own words into it. */}
@@ -109,7 +112,9 @@ export default function AboutSection({ bookingUrl, founder, t}: { bookingUrl: st
               ))}
             </h2>
             <div style={{ width: 48, height: 3, background: p.orange, borderRadius: 2, marginBottom: 32 }} />
+            <Editable k="home.founder.body" label="the founder introduction" as="div" block>
             <Prose text={t('home.founder.body')} style={{ color: p.body, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }} />
+            </Editable>
             <When any={[t('home.founder.quote')]}>
               <div style={{ borderLeft: `3px solid ${p.orange}`, paddingLeft: 20, marginBottom: 44 }}>
                 <p style={{ color: p.midTeal, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>

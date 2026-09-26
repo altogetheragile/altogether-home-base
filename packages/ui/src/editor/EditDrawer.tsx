@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { FieldControl } from './FieldControl';
 import type { CopyField, SaveResult } from './store';
-import { groupFields, filterGroups } from './grouping';
+import { groupFields, filterGroups, groupOf } from './grouping';
 
 /** Everything the drawer cannot know for itself.
  *
@@ -108,6 +108,10 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   /** Which tab's folds have been set up, so a person's own folding survives a save and a reload
    *  and is only redecided when they move to a different tab. */
   const foldedFor = useRef<string | null>(null);
+  /** A field the page has asked to edit, held until its page has loaded and there is something
+   *  to scroll to. The pen that sends this is on the thing itself, so arriving at the right tab
+   *  and leaving somebody to find the box again would be most of the problem still there. */
+  const [wanted, setWanted] = useState<string | null>(null);
   const [pending, startSaving] = useTransition();
 
   const pageHere = host.pageForPath(pathname);
@@ -162,6 +166,43 @@ export function EditDrawer({ host }: { host: EditorHost }) {
     setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : new Set());
   }, [fields, active]);
 
+  // The page tells the drawer which field was clicked. A window event rather than props: the
+  // pens are scattered through server-rendered pages that never see this component, and threading
+  // a callback to each of them would be the same mapping problem in a different place.
+  useEffect(() => {
+    const asked = (e: Event) => {
+      const { page, key } = (e as CustomEvent<{ page: string; key: string }>).detail ?? {};
+      if (!key) return;
+      setOpen(true);
+      if (page) { setTab(page); foldedFor.current = null; }
+      // Cleared here rather than once the field arrives: asking twice for the same field is not a
+      // state change, so an effect keyed on it would not run and a search would keep it hidden.
+      setQuery('');
+      setWanted(key);
+    };
+    window.addEventListener('aa:edit', asked);
+    return () => window.removeEventListener('aa:edit', asked);
+  }, []);
+
+  // Once the fields are there: unfold whatever holds it, clear any search hiding it, and put the
+  // cursor in it. Done in an effect because none of that can happen before the page has loaded.
+  useEffect(() => {
+    if (!wanted || !fields) return;
+    const field = fields.find((f) => f.key === wanted);
+    if (!field) { setWanted(null); return; }
+    setClosed((c) => { const next = new Set(c); next.delete(groupOf(field)); return next; });
+    const id = window.setTimeout(() => {
+      const row = document.getElementById(`field-${wanted}`);
+      // Optional call: this runs in a timeout, where a throw is an unhandled error rather than
+      // a render that fails visibly, and not every environment has it.
+      row?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      const box = document.getElementById(wanted) as HTMLElement | null;
+      (box ?? row?.querySelector('textarea, input, select'))?.focus?.();
+      setWanted(null);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [wanted, fields]);
+
   const draft = drafts[active] ?? {};
   const setField = (key: string, value: string) =>
     setDrafts((d) => ({ ...d, [active]: { ...(d[active] ?? {}), [key]: value } }));
@@ -207,7 +248,7 @@ export function EditDrawer({ host }: { host: EditorHost }) {
           // of this", in one click, with nothing to undo it.
           const canRestore = f.shipped.trim() !== '' && f.value !== f.shipped;
           return (
-            <div key={f.key} className="mb-5">
+            <div key={f.key} id={`field-${f.key}`} className="mb-5 scroll-mt-4">
               <div className="mb-1 flex items-baseline justify-between gap-2">
                 <label htmlFor={f.key} className="text-sm font-medium text-foreground">
                   {f.label}

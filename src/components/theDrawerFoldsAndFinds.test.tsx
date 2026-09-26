@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { EditDrawer, type EditorHost } from '@altogether/ui/editor/EditDrawer';
 import type { CopyField } from '@altogether/ui/editor/store';
@@ -150,5 +150,62 @@ describe('the drawer says what is not on the page', () => {
     // Half a section missing is a different thing, and saying the whole group is gone is wrong.
     await openWith([...OFF.slice(0, 3), { ...field('home.kb.heading', 'Knowledge heading'), notShown: true }, field('home.kb.body', 'Knowledge body')]);
     expect(screen.queryByText('not on this page')).toBeNull();
+  });
+});
+
+// The pen is on the words; the drawer has to arrive at the right box. Landing on the right tab and
+// leaving somebody to find the field again would be most of the problem still there.
+describe('the drawer opens where the pen pointed', () => {
+  const FIELDS: CopyField[] = [
+    field('home.hero.heading', 'Hero heading'),
+    field('home.hero.intro', 'Hero intro'),
+    field('home.hero.button', 'Hero button'),
+    field('home.stats.items', 'Statistics'),
+    field('home.founder.years', 'Years of experience'),
+    field('home.founder.credentials', 'Credentials'),
+    field('home.cta.heading', 'Closing heading'),
+    field('home.cta.button', 'Closing button'),
+    field('home.meta.description', 'Search description'),
+  ];
+
+  // Dispatched inside act: it is a window event that sets React state, which is exactly the
+  // thing React wants wrapped.
+  const ask = (key: string) =>
+    act(() => { window.dispatchEvent(new CustomEvent('aa:edit', { detail: { page: 'home', key } })); });
+
+  const mounted = async () => {
+    render(<EditDrawer host={{ ...host(), openAt: null, load: vi.fn(async () => FIELDS) }} />);
+    // Closed to begin with: the pen is what opens it.
+    await waitFor(() => expect(screen.queryByText('Hero')).toBeNull());
+  };
+
+  it('opens a closed drawer', async () => {
+    await mounted();
+    ask('home.hero.heading');
+    await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
+  });
+
+  it('unfolds the group holding it, even one that was folded away', async () => {
+    await mounted();
+    ask('home.stats.items');
+    // Stats is not the first group, so on a long page it opens folded.
+    await waitFor(() => expect(screen.getByLabelText('Statistics')).toBeTruthy());
+  });
+
+  it('clears a search that would be hiding it', async () => {
+    await mounted();
+    ask('home.hero.heading');
+    await waitFor(() => expect(screen.getByLabelText('Find a field')).toBeTruthy());
+    await userEvent.setup().type(screen.getByLabelText('Find a field'), 'statistics');
+    expect(screen.queryByLabelText('Hero heading')).toBeNull();
+    ask('home.hero.heading');
+    await waitFor(() => expect(screen.getByLabelText('Hero heading')).toBeTruthy());
+  });
+
+  it('ignores a key this page does not have, rather than opening at nothing', async () => {
+    await mounted();
+    ask('home.invented.key');
+    await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
+    expect(screen.queryByLabelText('home.invented.key')).toBeNull();
   });
 });

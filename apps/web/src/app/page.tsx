@@ -5,6 +5,7 @@ import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { ctaHref } from '@/lib/cta';
+import { Editable } from '@/components/edit/Editable';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
@@ -91,14 +92,20 @@ export default async function HomePage() {
             <div className="aa-hero-grid">
               <div>
                 {/* The credential first: it is the one thing on this page nobody else can claim. */}
+                <Editable k="home.hero.eyebrow" label="the line above the headline" as="div" block>
                 <Prose as="p" className="aa-hero-eyebrow" text={t('home.hero.eyebrow')} />
+                </Editable>
                 {/* What he sells in the heading, the slogan underneath. It was the other way round,
                     and "Work better together. Accelerate time to value." is true of any consultancy
                     that has ever existed. */}
+                <Editable k="home.hero.heading" label="the headline" as="div" block>
                 <h1 className="aa-hero-h1">{lines(t('home.hero.heading')).map((l, i) => (
                   <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
                 ))}</h1>
+                </Editable>
+                <Editable k="home.hero.subtitle" label="the sentence under the headline" as="div" block>
                 <p className="aa-hero-subtitle">{t('home.hero.subtitle')}</p>
+                </Editable>
                 {/* Both of these used to be BROWSE actions, and the first "Book a Chemistry Session"
                     on this page sat about three and a half screens below the fold. */}
                 <div className="aa-hero-actions">
@@ -147,7 +154,9 @@ export default async function HomePage() {
           if (cards.length === 0) return null;
           return (
             <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
+              <Editable k="home.personas.heading" label="this heading" as="div" block>
               <h2 className="aa-section-heading aa-section-heading--center">{t('home.personas.heading')}</h2>
+              </Editable>
               {/* However many there are, sharing the row. Three was a layout decision that had
                   become a limit on how many kinds of person you could name. */}
               <div className="aa-cards" style={{ ['--aa-card-min' as string]: '260px' }}>
@@ -180,7 +189,9 @@ export default async function HomePage() {
         {courses?.length !== 0 && (
         <div className="aa-section-pad" style={{ background: 'var(--aa-sky-teal)' }}>
           <div className="aa-mb-32">
+            <Editable k="home.courses.heading" label="this heading" as="div" block>
             <h2 className="aa-section-heading aa-section-heading--lg">{t('home.courses.heading')}</h2>
+            </Editable>
           </div>
           {courses === null ? (
             // The query failed. Worth saying, because refreshing might genuinely help.
@@ -211,10 +222,14 @@ export default async function HomePage() {
           <div className="aa-section-pad" style={{ background: 'var(--aa-deep-teal)' }}>
             <div>
               <div className="aa-kb-badge"><Icons.Books />{t('home.kb.badge')}</div>
+              <Editable k="home.kb.heading" label="this heading" as="div" block>
               <h2 className="aa-kb-heading">{lines(t('home.kb.heading')).map((l, i) => (
                 <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
               ))}</h2>
+              </Editable>
+              <Editable k="home.kb.body" label="this paragraph" as="div" block>
               <p className="aa-kb-body">{t('home.kb.body')}</p>
+              </Editable>
               <div className="aa-kb-tags">
                 {list(t('home.kb.tags')).map((tag) => (
                   <span key={tag} className="aa-kb-tag"><Icons.Tag />{tag}</span>
@@ -232,10 +247,14 @@ export default async function HomePage() {
         <div className="aa-section-pad" style={{ background: 'var(--aa-orange)' }}>
           <div className="aa-cta-banner">
             <div className="aa-cta-banner__text">
+              <Editable k="home.cta.heading" label="this heading" as="div" block>
               <h2 className="aa-cta-banner__heading">{lines(t('home.cta.heading')).map((l, i) => (
                 <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
               ))}</h2>
+              </Editable>
+              <Editable k="home.cta.body" label="this paragraph" as="div" block>
               <p className="aa-cta-banner__body">{t('home.cta.body')}</p>
+              </Editable>
               <div className="aa-cta-banner__actions">
                 <Link href={closingCta} className="aa-btn aa-btn--deep">{t('home.cta.events')} <Icons.ArrowRight /></Link>
                 <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />{t('home.cta.booking')}</a>

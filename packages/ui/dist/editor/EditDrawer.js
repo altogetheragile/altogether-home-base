@@ -1,4 +1,4 @@
-import { groupFields, filterGroups } from '../chunk-UKMXV4ZJ.js';
+import { groupFields, groupOf, filterGroups } from '../chunk-UKMXV4ZJ.js';
 import { FieldControl } from '../chunk-RPSHQPLY.js';
 import '../chunk-RWBHVQ5Z.js';
 import '../chunk-BLD3MESD.js';
@@ -44,6 +44,7 @@ function EditDrawer({ host }) {
   const [query, setQuery] = useState("");
   const [closed, setClosed] = useState(/* @__PURE__ */ new Set());
   const foldedFor = useRef(null);
+  const [wanted, setWanted] = useState(null);
   const [pending, startSaving] = useTransition();
   const pageHere = host.pageForPath(pathname);
   const asked = host.openAt && (host.openAt === pageHere || host.alwaysOffered.some((t) => t.page === host.openAt)) ? host.openAt : null;
@@ -75,6 +76,42 @@ function EditDrawer({ host }) {
     const all = groupFields(fields);
     setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : /* @__PURE__ */ new Set());
   }, [fields, active]);
+  useEffect(() => {
+    const asked2 = (e) => {
+      const { page, key } = e.detail ?? {};
+      if (!key) return;
+      setOpen(true);
+      if (page) {
+        setTab(page);
+        foldedFor.current = null;
+      }
+      setQuery("");
+      setWanted(key);
+    };
+    window.addEventListener("aa:edit", asked2);
+    return () => window.removeEventListener("aa:edit", asked2);
+  }, []);
+  useEffect(() => {
+    if (!wanted || !fields) return;
+    const field = fields.find((f) => f.key === wanted);
+    if (!field) {
+      setWanted(null);
+      return;
+    }
+    setClosed((c) => {
+      const next = new Set(c);
+      next.delete(groupOf(field));
+      return next;
+    });
+    const id = window.setTimeout(() => {
+      const row = document.getElementById(`field-${wanted}`);
+      row?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+      const box = document.getElementById(wanted);
+      (box ?? row?.querySelector("textarea, input, select"))?.focus?.();
+      setWanted(null);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [wanted, fields]);
   const draft = drafts[active] ?? {};
   const setField = (key, value) => setDrafts((d) => ({ ...d, [active]: { ...d[active] ?? {}, [key]: value } }));
   const clearDraft = () => setDrafts((d) => ({ ...d, [active]: {} }));
@@ -96,7 +133,7 @@ function EditDrawer({ host }) {
   const renderField = (f) => {
     const value = draft[f.key] ?? f.value;
     const canRestore = f.shipped.trim() !== "" && f.value !== f.shipped;
-    return /* @__PURE__ */ jsxs("div", { className: "mb-5", children: [
+    return /* @__PURE__ */ jsxs("div", { id: `field-${f.key}`, className: "mb-5 scroll-mt-4", children: [
       /* @__PURE__ */ jsxs("div", { className: "mb-1 flex items-baseline justify-between gap-2", children: [
         /* @__PURE__ */ jsx("label", { htmlFor: f.key, className: "text-sm font-medium text-foreground", children: f.label }),
         f.undo && /* @__PURE__ */ jsxs(
