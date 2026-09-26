@@ -1,4 +1,5 @@
 import type { CopyEntry, CopyRegistry } from './fields';
+import { moduleIsOn } from '../modules';
 
 // ============= Reading and writing the site, once =============
 //
@@ -20,6 +21,9 @@ export type CopyField = {
   key: string; label: string; hint: string; value: string; shipped: string;
   type?: CopyEntry['type']; fields?: CopyEntry['fields']; says?: CopyEntry['says'];
   group?: CopyEntry['group']; options?: CopyEntry['options'];
+  /** True when this field's section is switched off, so the page it belongs to does not render
+   *  it. The words are still editable: somebody may be writing them before turning it on. */
+  notShown?: boolean;
   undo?: { value: string; at: string };
   /** A value saved but not published. `value` above is still what the site shows. */
   draft?: { value: string; at: string };
@@ -89,7 +93,9 @@ export async function loadPage(db: DataClient, registries: CopyRegistry[], page:
   let saved: Record<string, string> = {};
   const undo: Record<string, { value: string; at: string }> = {};
   let settings: Record<string, unknown> = {};
-  const needsSettings = Object.values(registry.entries).some((e) => e.store && e.store !== 'copy');
+  // Settings are needed for a field stored outside site_copy, and for one whose section is
+  // switched on and off, because that is what decides whether to say it is not on the page.
+  const needsSettings = Object.values(registry.entries).some((e) => (e.store && e.store !== 'copy') || e.shownWhen);
 
   try {
     if (needsSettings) {
@@ -128,6 +134,7 @@ export async function loadPage(db: DataClient, registries: CopyRegistry[], page:
     ...(e.says ? { says: e.says } : {}),
     ...(e.group ? { group: e.group } : {}),
     ...(e.options ? { options: e.options } : {}),
+    ...(e.shownWhen && !moduleIsOn(e.shownWhen, settings) ? { notShown: true } : {}),
     ...(undo[key] ? { undo: undo[key] } : {}),
     ...(drafts[key] ? { draft: drafts[key] } : {}),
   }));

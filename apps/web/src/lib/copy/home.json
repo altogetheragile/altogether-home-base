@@ -126,27 +126,32 @@
     "home.kb.badge": {
       "value": "Knowledge Base",
       "label": "Knowledge badge",
-      "hint": "The teal Knowledge Base section, hidden unless that module is on"
+      "hint": "The teal Knowledge Base section, hidden unless that module is on",
+      "shownWhen": "knowledge"
     },
     "home.kb.heading": {
       "value": "Agile techniques,\nready to use",
       "label": "Knowledge heading",
-      "hint": "A line break splits it in two"
+      "hint": "A line break splits it in two",
+      "shownWhen": "knowledge"
     },
     "home.kb.body": {
       "value": "From Story Mapping to OKRs - every technique explained with purpose, usage, origins, and real examples. Searchable, filterable, and built for practitioners.",
       "label": "Knowledge body",
-      "hint": "The teal Knowledge Base section"
+      "hint": "The teal Knowledge Base section",
+      "shownWhen": "knowledge"
     },
     "home.kb.tags": {
       "value": "Story Mapping\nOKRs\n5 Whys\nBusiness Model Canvas\nImpact Mapping\nRetrospectives",
       "label": "Knowledge base examples",
-      "hint": "The small tags under the knowledge base blurb, one per line. Examples of what is in there. Leave empty and no tags appear."
+      "hint": "The small tags under the knowledge base blurb, one per line. Examples of what is in there. Leave empty and no tags appear.",
+      "shownWhen": "knowledge"
     },
     "home.kb.cta": {
       "value": "Browse Techniques",
       "label": "Knowledge button",
-      "hint": "The teal Knowledge Base section"
+      "hint": "The teal Knowledge Base section",
+      "shownWhen": "knowledge"
     },
     "home.cta.heading": {
       "value": "Ready to work with someone\nwho's been in the room?",
@@ -171,7 +176,7 @@
     "home.founder.eyebrow": {
       "value": "About The Founder",
       "label": "Founder section, small heading",
-      "hint": "The small line above the founder heading."
+      "hint": "The small line above the founder heading. Who the founder is, rather than what this section says about them, lives on the This Site tab: the name, the job title and the two photographs."
     },
     "home.founder.years": {
       "value": "",

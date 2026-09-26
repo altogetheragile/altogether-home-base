@@ -247,7 +247,7 @@ var siteRegistry = {
     "site.founder_name": {
       "value": "",
       "label": "Founder name",
-      "hint": "Used in the alt text of the photograph and in the structured data search engines read.",
+      "hint": "Used in the alt text of the photograph and in the structured data search engines read. The words about the founder are edited where they appear: open the home page or the about page and look under Founder on the This Page tab.",
       "store": "column",
       "path": "founder_name",
       "group": "The founder"

@@ -339,6 +339,7 @@ function EditDrawer({ host }) {
       groups.length === 0 ? fields?.map(renderField) : shown.map((g) => {
         const open2 = query.trim() !== "" || !closed.has(g.name);
         const unsaved = g.fields.some((f) => f.key in draft);
+        const offPage = g.fields.length > 0 && g.fields.every((f) => f.notShown);
         return /* @__PURE__ */ jsxs("section", { className: "mb-2 border-b border-border/60 last:border-b-0", children: [
           /* @__PURE__ */ jsxs(
             "button",
@@ -353,13 +354,19 @@ function EditDrawer({ host }) {
               className: "flex w-full items-center gap-2 py-2.5 text-left text-sm font-medium text-foreground",
               children: [
                 /* @__PURE__ */ jsx(ChevronDown, { size: 13, className: `shrink-0 text-muted-foreground transition-transform ${open2 ? "" : "-rotate-90"}` }),
-                /* @__PURE__ */ jsx("span", { className: "flex-1", children: g.name }),
+                /* @__PURE__ */ jsxs("span", { className: "flex-1", children: [
+                  g.name,
+                  offPage && /* @__PURE__ */ jsx("span", { className: "ml-2 font-normal text-amber-700", children: "not on this page" })
+                ] }),
                 unsaved && /* @__PURE__ */ jsx("span", { className: "h-1.5 w-1.5 shrink-0 rounded-full bg-primary", "aria-label": "unsaved changes" }),
                 /* @__PURE__ */ jsx("span", { className: "shrink-0 text-xs font-normal text-muted-foreground", children: g.fields.length })
               ]
             }
           ),
-          open2 && /* @__PURE__ */ jsx("div", { className: "pb-1 pl-5", children: g.fields.map(renderField) })
+          open2 && /* @__PURE__ */ jsxs("div", { className: "pb-1 pl-5", children: [
+            offPage && /* @__PURE__ */ jsx("p", { className: "mb-3 rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-900", children: "This part of the page is switched off, so none of it is showing at the moment. The words are kept, and appear as soon as you switch it back on from the This Site tab." }),
+            g.fields.map(renderField)
+          ] })
         ] }, g.name);
       })
     ] }),

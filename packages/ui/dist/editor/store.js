@@ -1,3 +1,5 @@
+import { moduleIsOn } from '../chunk-ULREI5W6.js';
+
 // src/editor/store.ts
 var SETTINGS_ROW = "00000000-0000-0000-0000-000000000001";
 var dig = (obj, path) => path.split(".").reduce(
@@ -42,7 +44,7 @@ async function loadPage(db, registries, page) {
   let saved = {};
   const undo = {};
   let settings = {};
-  const needsSettings = Object.values(registry.entries).some((e) => e.store && e.store !== "copy");
+  const needsSettings = Object.values(registry.entries).some((e) => e.store && e.store !== "copy" || e.shownWhen);
   try {
     if (needsSettings) {
       const { data } = await db.from("site_settings").select("*").limit(1).maybeSingle();
@@ -72,6 +74,7 @@ async function loadPage(db, registries, page) {
     ...e.says ? { says: e.says } : {},
     ...e.group ? { group: e.group } : {},
     ...e.options ? { options: e.options } : {},
+    ...e.shownWhen && !moduleIsOn(e.shownWhen, settings) ? { notShown: true } : {},
     ...undo[key] ? { undo: undo[key] } : {},
     ...drafts[key] ? { draft: drafts[key] } : {}
   }));
