@@ -4,6 +4,7 @@ import Link from 'next/link';
 import './home.css';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
+import { ctaHref } from '@/lib/cta';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
@@ -53,6 +54,10 @@ export default async function HomePage() {
   const showKnowledge = !!settings.show_knowledge;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const bookingUrl = bookingHref(settings.show_bookings);
+  // Where the two main buttons point. Chosen in the editor, and resolved against what this site
+  // has switched on, so neither can end up addressing a page that answers Not Found.
+  const heroCta = ctaHref(t('home.hero.cta.target'), settings as Record<string, unknown>);
+  const closingCta = ctaHref(t('home.cta.target'), settings as Record<string, unknown>);
 
   const SECTIONS: Record<string, React.ReactNode> = {
     hero: (
@@ -97,7 +102,7 @@ export default async function HomePage() {
                 {/* Both of these used to be BROWSE actions, and the first "Book a Chemistry Session"
                     on this page sat about three and a half screens below the fold. */}
                 <div className="aa-hero-actions">
-                  <Link href="/events" className="aa-btn aa-btn--primary">{t('home.hero.cta.events')} <Icons.ArrowRight /></Link>
+                  <Link href={heroCta} className="aa-btn aa-btn--primary">{t('home.hero.cta.events')} <Icons.ArrowRight /></Link>
                   <a href={bookingUrl} className="aa-btn aa-btn--ghost">{t('home.hero.cta.booking')} <Icons.ArrowRight /></a>
                 </div>
               </div>
@@ -187,7 +192,7 @@ export default async function HomePage() {
             <HomeCarousel courses={courses} />
           )}
           <div className="aa-text-center aa-mt-32">
-            <Link href="/events" className="aa-btn aa-btn--primary-sm">{t('home.courses.viewAll')}</Link>
+            <Link href={ctaHref('events', settings as Record<string, unknown>)} className="aa-btn aa-btn--primary-sm">{t('home.courses.viewAll')}</Link>
           </div>
         </div>
         )}
@@ -232,7 +237,7 @@ export default async function HomePage() {
               ))}</h2>
               <p className="aa-cta-banner__body">{t('home.cta.body')}</p>
               <div className="aa-cta-banner__actions">
-                <Link href="/events" className="aa-btn aa-btn--deep">{t('home.cta.events')} <Icons.ArrowRight /></Link>
+                <Link href={closingCta} className="aa-btn aa-btn--deep">{t('home.cta.events')} <Icons.ArrowRight /></Link>
                 <a href={bookingUrl} className="aa-btn aa-btn--ghost-light"><Icons.Chat />{t('home.cta.booking')}</a>
               </div>
             </div>
