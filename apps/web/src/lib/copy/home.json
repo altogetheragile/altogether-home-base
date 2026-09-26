@@ -44,6 +44,39 @@
       "label": "Hero button, browse",
       "hint": "Left button in the hero"
     },
+    "home.hero.cta.target": {
+      "value": "events",
+      "label": "Where the first button goes",
+      "hint": "The button beside it always offers a conversation, so this one is usually the thing you want people to look at. A page that is switched off is not offered here, and choosing one that you later switch off sends people to the next best page rather than to Not Found.",
+      "type": "choice",
+      "options": [
+        {
+          "value": "events",
+          "label": "Events",
+          "note": "The schedule of courses and workshops."
+        },
+        {
+          "value": "coaching",
+          "label": "Services",
+          "note": "The page describing what you offer."
+        },
+        {
+          "value": "contact",
+          "label": "Contact",
+          "note": "The enquiry form."
+        },
+        {
+          "value": "booking",
+          "label": "Book a call",
+          "note": "The booking page, or the contact form if bookings are off."
+        },
+        {
+          "value": "about",
+          "label": "About",
+          "note": "The page about you."
+        }
+      ]
+    },
     "home.hero.cta.booking": {
       "value": "Book a Chemistry Session",
       "label": "Hero button, booking",
@@ -167,6 +200,39 @@
       "value": "Browse Events",
       "label": "Closing button, browse",
       "hint": "The orange band at the foot of the page"
+    },
+    "home.cta.target": {
+      "value": "events",
+      "label": "Where the closing button goes",
+      "hint": "The same choice for the band at the bottom of the page. It does not have to match the one at the top.",
+      "type": "choice",
+      "options": [
+        {
+          "value": "events",
+          "label": "Events",
+          "note": "The schedule of courses and workshops."
+        },
+        {
+          "value": "coaching",
+          "label": "Services",
+          "note": "The page describing what you offer."
+        },
+        {
+          "value": "contact",
+          "label": "Contact",
+          "note": "The enquiry form."
+        },
+        {
+          "value": "booking",
+          "label": "Book a call",
+          "note": "The booking page, or the contact form if bookings are off."
+        },
+        {
+          "value": "about",
+          "label": "About",
+          "note": "The page about you."
+        }
+      ]
     },
     "home.cta.booking": {
       "value": "Book a Chemistry Session",
