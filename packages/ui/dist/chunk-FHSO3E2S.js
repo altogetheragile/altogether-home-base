@@ -41,6 +41,29 @@ var siteRegistry = {
       "path": "copyright_text",
       "group": "What this site is called"
     },
+    "site.under_construction": {
+      "value": "",
+      "label": "Show visitors a holding page",
+      "hint": "On, and anybody who is not signed in as an administrator sees the holding page below instead of the site. You still see the real site, so it can be finished while it is hidden. Search engines are told not to index it while this is on.",
+      "type": "switch",
+      "store": "column",
+      "path": "under_construction",
+      "group": "Not ready yet",
+      "says": { "on": "Visitors see a holding page", "off": "The site is public" }
+    },
+    "site.construction.heading": {
+      "value": "Something is on its way",
+      "label": "Holding page heading",
+      "hint": "Shown only while the switch above is on.",
+      "group": "Not ready yet"
+    },
+    "site.construction.body": {
+      "value": "This site is being put together. Do come back soon.",
+      "label": "Holding page message",
+      "hint": "A sentence or two under the heading. If you have set a contact email on this tab, it is offered underneath so somebody who needs you now still can reach you.",
+      "type": "textarea",
+      "group": "Not ready yet"
+    },
     "site.show_bookings": {
       "value": "",
       "label": "Bookings",

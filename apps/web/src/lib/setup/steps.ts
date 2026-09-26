@@ -7,7 +7,7 @@
 // Each step names the fields it wants by key. Pure data, so a test can check every key exists and
 // that nothing important was left out of every step.
 
-export type StepId = 'identity' | 'brand' | 'founder' | 'modules' | 'words';
+export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'words';
 
 export type Step = {
   id: StepId;
@@ -23,6 +23,21 @@ export type Step = {
 };
 
 export const STEPS: Step[] = [
+  {
+    // First, because everything after it is work done in public otherwise. A site is reachable
+    // the moment its domain resolves, and the one before this spent a day live with inherited
+    // words, placeholder statistics and a main button pointing at a page that answered Not Found.
+    id: 'notready',
+    title: 'Hide it while you work',
+    blurb: 'A site is public as soon as its address works, which is usually long before it is ready. Switch this on and visitors see a holding page while you get on with the rest of this. You will still see the real site, because you are signed in.',
+    page: 'site',
+    keys: [
+      'site.under_construction',
+      'site.construction.heading',
+      'site.construction.body',
+    ],
+    footnote: 'Search engines are asked not to index the site while this is on, so a half-written page does not end up in results.',
+  },
   {
     id: 'identity',
     title: 'Who this site belongs to',

@@ -18,6 +18,8 @@ export type SiteSettings = {
   show_about?: boolean | null;
   show_contact?: boolean | null;
   show_testimonials?: boolean | null;
+  /** Whether visitors see a holding page instead of the site. Administrators never do. */
+  under_construction?: boolean | null;
   show_resources?: boolean | null;
   show_knowledge?: boolean | null;
   show_blog?: boolean | null;
