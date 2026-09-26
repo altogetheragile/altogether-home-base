@@ -3,9 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin, getCurrentUser } from '@/lib/auth';
-import { REGISTRIES, type CopyEntry, type FieldType, type ItemField } from '@/lib/copy';
+import { REGISTRIES, type CopyEntry } from '@/lib/copy';
 import { readField, buildPatch } from '@/lib/settings-store';
-import { loadDrafts, saveDraft, publishDrafts, discardDrafts } from '@altogether/ui/editor/store';
+import { loadPage, loadDrafts, saveDraft, publishDrafts, discardDrafts, type CopyField } from '@altogether/ui/editor/store';
 
 // ============= Editing the words from the page they appear on =============
 //
@@ -18,73 +18,22 @@ import { loadDrafts, saveDraft, publishDrafts, discardDrafts } from '@altogether
 // pages are server-rendered and cached. A write that does not revalidate leaves the admin looking
 // at the words they just replaced, concluding it did not save, and doing it again.
 
-export type CopyField = {
-  key: string; label: string; hint: string; value: string; shipped: string;
-  /** What kind of control the editor should draw. Defaults to a textarea, as everything was. */
-  type?: FieldType;
-  fields?: ItemField[];
-  /** What this field would go back to, and when it was changed. Absent when it never has been. */
-  undo?: { value: string; at: string };
-  /** A value saved but held back. `value` above is still what the site shows. */
-  draft?: { value: string; at: string };
-};
+// The shape of a field is the editor's to define, not this app's. This was a second copy of it,
+// and it fell four properties behind: a choice with no options drew an empty list, a switch could
+// not say its own words, a group heading had nothing to group by, and a section that is not on
+// the page said nothing. All four shipped and did nothing here, because the Site has its own
+// loader and only the App's carried them.
+export type { CopyField };
 export type SaveResult = { ok: true } | { ok: false; error: string };
 
-/** Everything the drawer shows for one page: the shipped wording, with any edit laid over it. */
+/** Everything the drawer shows for one page.
+ *
+ *  The work is the editor's, shared with the App, so the two drawers cannot drift apart again.
+ *  What is this app's is the two things around it: only an administrator may ask, and the answer
+ *  comes from the server because these pages are server-rendered and cached. */
 export async function loadPageCopy(page: string): Promise<CopyField[]> {
   if (!(await isAdmin())) return [];
-
-  const registry = REGISTRIES.find((r) => r.page === page);
-  if (!registry) return [];
-
-  let saved: Record<string, string> = {};
-  let undo: Record<string, { value: string; at: string }> = {};
-  // Fields that live on site_settings rather than in a copy row read from there instead.
-  const needsSettings = Object.values(registry.entries).some((e) => e.store && e.store !== 'copy');
-  let settings: Record<string, unknown> = {};
-  try {
-    const supabase = await createClient();
-    if (needsSettings) {
-      const { data } = await supabase.from('site_settings').select('*').limit(1).maybeSingle();
-      settings = (data ?? {}) as Record<string, unknown>;
-    }
-    const [current, history] = await Promise.all([
-      supabase.from('site_copy').select('key, value').eq('page', page),
-      // Newest first, so the first row seen for a key is the one undo would restore.
-      supabase.from('site_copy_revisions').select('key, value, replaced_at')
-        .eq('page', page).order('replaced_at', { ascending: false }),
-    ]);
-    saved = Object.fromEntries((current.data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
-    for (const r of (history.data ?? []) as { key: string; value: string; replaced_at: string }[]) {
-      if (!(r.key in undo)) undo[r.key] = { value: r.value, at: r.replaced_at };
-    }
-  } catch {
-    /* the shipped wording is a fine thing to edit from */
-  }
-
-  // Deliberately not inside the block above. If site_copy_drafts is missing because the migration
-  // has not run on this deployment yet, that must cost drafting alone, not every edited word on
-  // the page.
-  let drafts: Record<string, { value: string; at: string }> = {};
-  try {
-    drafts = await loadDrafts(await createClient(), page);
-  } catch {
-    /* no drafting here, then */
-  }
-
-  return Object.entries(registry.entries).map(([key, e]) => ({
-    key,
-    label: e.label,
-    hint: e.hint,
-    // A settings field that has never been set shows the shipped value, so a colour box shows
-    // the colour actually in use rather than black, and "Original" has somewhere to go back to.
-    value: e.store && e.store !== 'copy' ? readField(e, settings) || e.value : saved[key] ?? e.value,
-    shipped: e.value,
-    ...(e.type ? { type: e.type } : {}),
-    ...(e.fields ? { fields: e.fields } : {}),
-    ...(undo[key] ? { undo: undo[key] } : {}),
-    ...(drafts[key] ? { draft: drafts[key] } : {}),
-  }));
+  return loadPage(await createClient(), REGISTRIES, page);
 }
 
 /** Writes the changed fields. Sends only what changed, so two admins editing different parts of
