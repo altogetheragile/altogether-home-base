@@ -24,6 +24,10 @@
       "types": "./dist/brand.d.ts",
       "import": "./dist/brand.js"
     },
+    "./HoldingPage": {
+      "types": "./dist/HoldingPage.d.ts",
+      "import": "./dist/HoldingPage.js"
+    },
     "./modules": {
       "types": "./dist/modules.d.ts",
       "import": "./dist/modules.js"

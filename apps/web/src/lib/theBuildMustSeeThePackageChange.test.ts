@@ -41,3 +41,22 @@ describe('the build must see the package change', () => {
     expect(config).toMatch(/warm cache|invisible/i);
   });
 });
+
+// The same package, the same problem, a different tool. A test that renders a component from
+// @altogether/ui failed only in CI: the component's own `react/jsx-runtime` resolves from the
+// package's real path, and packages/ui/node_modules does not exist when this project installs on
+// its own. It passed locally, where the repository root has React, every single time.
+describe('the test runner looks in this project for React', () => {
+  const vitestConfig = readFileSync('vitest.config.ts', 'utf8');
+
+  it('resolves the JSX runtime from here rather than from the package', () => {
+    expect(vitestConfig).toContain('createRequire');
+    expect(vitestConfig).toMatch(/react\/jsx-runtime/);
+  });
+
+  it('keeps one React, whichever path reaches it', () => {
+    // Two copies is how a shared component gets a null useState instead of a hook, which is the
+    // other half of this and cost an afternoon on the drawer.
+    expect(vitestConfig).toMatch(/dedupe: \['react', 'react-dom'\]/);
+  });
+});
