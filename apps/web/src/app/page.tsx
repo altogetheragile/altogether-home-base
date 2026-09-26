@@ -131,15 +131,17 @@ export default async function HomePage() {
           const stats = items<{ number: string; label: string; icon: string }>(t('home.stats.items'), ['number']);
           if (stats.length === 0) return null;
           return (
-            <div className="aa-stats-bar">
-              {stats.map((s) => (
-                <div key={`${s.number}-${s.label}`} className="aa-stat">
-                  <div className="aa-stat__icon"><Icon name={s.icon} size={22} /></div>
-                  <div className="aa-stat__num">{s.number}</div>
-                  <div className="aa-stat__label">{s.label}</div>
-                </div>
-              ))}
-            </div>
+            <Editable k="home.stats.items" label="the statistics" as="div" block>
+              <div className="aa-stats-bar">
+                {stats.map((s) => (
+                  <div key={`${s.number}-${s.label}`} className="aa-stat">
+                    <div className="aa-stat__icon"><Icon name={s.icon} size={22} /></div>
+                    <div className="aa-stat__num">{s.number}</div>
+                    <div className="aa-stat__label">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </Editable>
           );
         })()}
       </>
@@ -203,7 +205,9 @@ export default async function HomePage() {
             <HomeCarousel courses={courses} />
           )}
           <div className="aa-text-center aa-mt-32">
+            <Editable k="home.courses.viewAll" label="this button" as="div" block>
             <Link href={ctaHref('events', settings as Record<string, unknown>)} className="aa-btn aa-btn--primary-sm">{t('home.courses.viewAll')}</Link>
+            </Editable>
           </div>
         </div>
         )}
@@ -221,7 +225,9 @@ export default async function HomePage() {
         {showKnowledge && (
           <div className="aa-section-pad" style={{ background: 'var(--aa-deep-teal)' }}>
             <div>
+              <Editable k="home.kb.badge" label="this label" as="div" block>
               <div className="aa-kb-badge"><Icons.Books />{t('home.kb.badge')}</div>
+              </Editable>
               <Editable k="home.kb.heading" label="this heading" as="div" block>
               <h2 className="aa-kb-heading">{lines(t('home.kb.heading')).map((l, i) => (
                 <Fragment key={l}>{i > 0 && <br />}{l}</Fragment>
@@ -230,11 +236,13 @@ export default async function HomePage() {
               <Editable k="home.kb.body" label="this paragraph" as="div" block>
               <p className="aa-kb-body">{t('home.kb.body')}</p>
               </Editable>
-              <div className="aa-kb-tags">
-                {list(t('home.kb.tags')).map((tag) => (
-                  <span key={tag} className="aa-kb-tag"><Icons.Tag />{tag}</span>
-                ))}
-              </div>
+              <Editable k="home.kb.tags" label="the tags" as="div" block>
+                <div className="aa-kb-tags">
+                  {list(t('home.kb.tags')).map((tag) => (
+                    <span key={tag} className="aa-kb-tag"><Icons.Tag />{tag}</span>
+                  ))}
+                </div>
+              </Editable>
               <Link href="/knowledge" className="aa-btn aa-btn--primary-sm">{t('home.kb.cta')} <Icons.ArrowRight /></Link>
             </div>
           </div>

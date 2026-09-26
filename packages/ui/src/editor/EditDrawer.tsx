@@ -166,6 +166,17 @@ export function EditDrawer({ host }: { host: EditorHost }) {
     setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : new Set());
   }, [fields, active]);
 
+  // Two things the page needs to know while this is open, and no way to tell it but the window:
+  // that it should show every pen rather than one at a time, and that it should move over, since
+  // this panel is fixed to the right and simply covers whatever is under it.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('aa:editor', { detail: { open } }));
+    const root = document.documentElement;
+    if (open) root.setAttribute('data-editor-open', 'true');
+    else root.removeAttribute('data-editor-open');
+    return () => root.removeAttribute('data-editor-open');
+  }, [open]);
+
   // The page tells the drawer which field was clicked. A window event rather than props: the
   // pens are scattered through server-rendered pages that never see this component, and threading
   // a callback to each of them would be the same mapping problem in a different place.
