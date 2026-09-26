@@ -689,6 +689,10 @@
       "destination": "https://altogether-home-base-web-next.vercel.app/api/health"
     },
     {
+      "source": "/api/preview",
+      "destination": "https://altogether-home-base-web-next.vercel.app/api/preview"
+    },
+    {
       "source": "/",
       "destination": "https://altogether-home-base-web-next.vercel.app/"
     },
