@@ -40,6 +40,21 @@ describe('the holding page', () => {
     const { container } = render(<HoldingPage settings={settings()} heading="Soon" body="   " />);
     expect(container.querySelectorAll('p').length).toBe(0);
   });
+
+  /** It shipped reading its words from the navigation registry, which has no site.construction
+   *  keys, so both came back empty. An empty h1 renders as nothing: the live page was a logo, a
+   *  button, and silence between them, for as long as it took somebody to look at it. */
+  it('says something even when it is handed nothing', () => {
+    render(<HoldingPage settings={settings()} heading="" body="" />);
+    expect(screen.getByRole('heading').textContent?.trim()).toBeTruthy();
+  });
+
+  it('reads its words from the registry that actually holds them', () => {
+    const layout = readFileSync('src/app/layout.tsx', 'utf8');
+    // `t` on that line is getCopy('navigation'). The site words are a separate reader.
+    expect(layout).toMatch(/heading=\{siteWords\('site\.construction\.heading'\)\}/);
+    expect(layout).toMatch(/body=\{siteWords\('site\.construction\.body'\)\}/);
+  });
 });
 
 describe('who sees it', () => {

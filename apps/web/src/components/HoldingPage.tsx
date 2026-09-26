@@ -30,13 +30,17 @@ export function HoldingPage({
       }}
     >
       <SiteLogo brand={settings.brand} companyName={settings.company_name} height={44} />
+      {/* A heading read from the wrong registry came back empty, and an empty h1 renders as
+          nothing at all: the live page showed a logo, a button, and silence between them. A
+          holding page with no words is worse than one with the shipped words, so there is
+          something to fall back to. */}
       <h1
         style={{
           fontFamily: fonts.serif, color: p.deepTeal, fontWeight: 400,
           fontSize: 'clamp(30px, 6vw, 46px)', lineHeight: 1.15, margin: 0, maxWidth: 680,
         }}
       >
-        {heading}
+        {heading.trim() || 'Something is on its way'}
       </h1>
       {body.trim() && (
         <p style={{ color: p.body, fontSize: 17, lineHeight: 1.7, margin: 0, maxWidth: 520 }}>{body}</p>
