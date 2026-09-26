@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AddAPicture, EditableArea, OnlyWhenEditing } from './Editable';
+import { AddAPicture, EditableArea } from './Editable';
 
 // A pen is drawn on something that was rendered, so a picture field with nothing in it had no pen
 // and no outline: the hero simply was not there. The second site lost its hero exactly this way,
@@ -78,16 +78,5 @@ describe('a picture nobody has chosen', () => {
     // nothing is worse than no slot.
     const { container } = render(<EditableArea on><AddAPicture k="  " label="a picture" /></EditableArea>);
     expect(container.innerHTML).toBe('');
-  });
-});
-
-describe('a column that only exists to be edited', () => {
-  it('is there for an administrator and gone for a visitor', () => {
-    // The about page's portrait column holds one thing. Empty, it is half a teal banner of
-    // nothing to a visitor and the only place to put a portrait for everybody else.
-    const both = (on: boolean) =>
-      render(<EditableArea on={on}><OnlyWhenEditing><div data-testid="column" /></OnlyWhenEditing></EditableArea>);
-    expect(both(true).container.querySelector('[data-testid="column"]')).toBeTruthy();
-    expect(both(false).container.innerHTML).toBe('');
   });
 });

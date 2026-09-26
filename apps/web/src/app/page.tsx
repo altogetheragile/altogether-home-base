@@ -14,6 +14,7 @@ import { orderedSections, HOME_SECTIONS } from '@altogether/ui/editor/sections';
 import { Icon } from '@/components/icons/Icon';
 import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
+import { isAdmin } from '@/lib/auth';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
 import AboutSection from '@/components/AboutSection';
@@ -43,11 +44,12 @@ const Icons = {
 };
 
 export default async function HomePage() {
-  const [settings, courses, testimonials, t] = await Promise.all([
+  const [settings, courses, testimonials, t, admin] = await Promise.all([
     getSiteSettings(),
     getHomeCourseCards(),
     getHomeTestimonials(),
     getCopy('home'),
+    isAdmin(),
   ]);
   const founder = founderOf(settings);
   const heroBg = picture(t('home.hero.background'));
@@ -219,7 +221,7 @@ export default async function HomePage() {
     founder: (
       <>
         {/* The founder, if this site has one. */}
-        {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} />}
+        {founder.shown && <AboutSection bookingUrl={bookingUrl} founder={founder} t={t} canEdit={admin} />}
       </>
     ),
     knowledge: (

@@ -117,20 +117,11 @@ export function Editable({
   );
 }
 
-/** Whether this page is being looked at by somebody who can edit it.
- *
- *  For the handful of places where a missing picture should change the layout - a column that
- *  exists to hold a photograph, and has nothing else in it - so the slot has somewhere to be. */
-export function useCanEdit(): boolean {
-  return useContext(CanEdit);
-}
-
-/** Renders its children only for somebody who can edit the page. Nothing at all for a visitor,
- *  who should not be able to tell from the markup that there was a decision here. */
-export function OnlyWhenEditing({ children }: { children: React.ReactNode }) {
-  return useContext(CanEdit) ? <>{children}</> : null;
-}
-
+// Where a missing picture has to change the layout - a column that exists to hold a photograph
+// and has nothing else in it - the page works that out on the server from isAdmin() and passes it
+// down. Not from this context: every page that needs it renders on the server, where a hook
+// cannot run, and a hook here builds fine and then throws on the first request.
+//
 // ============= A picture nobody has chosen =============
 //
 // A pen is drawn on something that was rendered, so a picture field with nothing in it has no
