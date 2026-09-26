@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toCsv, parseCsv, readSheet, rowsFor, byPage, isWords, COLUMNS, type SheetRow } from './sheet';
+import { toCsv, parseCsv, readSheet, rowsFor, byPage, isWords, whyNothing, separatorOf, COLUMNS, type SheetRow } from './sheet';
 import type { CopyField } from '@altogether/ui/editor/store';
 
 // Filling a site in the drawer is 204 boxes behind three tabs, one page at a time, signed in as an
@@ -127,5 +127,50 @@ describe('reading one back', () => {
       ['about.story.p1', 'Old story', 'B'],
     ]), known);
     expect(byPage(read.changes)).toEqual({ home: { 'home.hero.heading': 'A' }, about: { 'about.story.p1': 'B' } });
+  });
+});
+
+// "Nothing in that file is different from what the site already says" was the only answer for four
+// different situations, three of which are a file that did not work rather than a file with no
+// edits. Somebody who has just spent ten minutes typing deserves better than that.
+describe('why nothing happened', () => {
+  const known = new Map([['home.hero.heading', { page: 'home', value: 'Old heading' }]]);
+  const read = (text: string) => readSheet(text, known);
+
+  it('spots a spreadsheet that wrote semicolons', () => {
+    // Excel does this wherever the system list separator is one. The file still says .csv and
+    // still opens correctly for whoever saved it.
+    const semi = '"key";"page";"where";"label";"hint";"current words";"new words"\r\n'
+      + '"home.hero.heading";"home";"Home";"Heading";"";"Old heading";"New heading"\r\n';
+    expect(read(semi).changes).toEqual([
+      { key: 'home.hero.heading', page: 'home', from: 'Old heading', to: 'New heading' },
+    ]);
+  });
+
+  it('says so when the columns did not survive', () => {
+    const short = 'key,page\nhome.hero.heading,home\n';
+    expect(whyNothing(read(short))).toMatch(/column/i);
+  });
+
+  it('says so when nothing in the file names anything here', () => {
+    const wrong = toCsv([{ key: 'not.a.key', page: '', where: '', label: '', hint: '', current: '', fresh: 'x' }]);
+    expect(whyNothing(read(wrong))).toMatch(/names anything this site has/i);
+  });
+
+  it('says so when the last column was never filled in', () => {
+    // The commonest mistake: typing into "current words", which is what the site says now.
+    const untouched = toCsv([{ key: 'home.hero.heading', page: 'home', where: '', label: '', hint: '', current: 'Old heading', fresh: '' }]);
+    expect(whyNothing(read(untouched))).toMatch(/last column/i);
+    expect(whyNothing(read(untouched))).toMatch(/new words/);
+  });
+
+  it('says so when the words came back the same', () => {
+    const same = toCsv([{ key: 'home.hero.heading', page: 'home', where: '', label: '', hint: '', current: 'Old heading', fresh: 'Old heading' }]);
+    expect(whyNothing(read(same))).toMatch(/same words/i);
+  });
+
+  it('says nothing at all when there is something to save', () => {
+    const good = toCsv([{ key: 'home.hero.heading', page: 'home', where: '', label: '', hint: '', current: 'Old heading', fresh: 'New' }]);
+    expect(whyNothing(read(good))).toBeNull();
   });
 });

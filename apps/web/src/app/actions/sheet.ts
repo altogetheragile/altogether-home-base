@@ -5,7 +5,7 @@ import { isAdmin, getCurrentUser } from '@/lib/auth';
 import { REGISTRIES } from '@/lib/copy';
 import { loadPage, saveDraft } from '@altogether/ui/editor/store';
 import { moduleIsOn } from '@altogether/ui/modules';
-import { toCsv, rowsFor, readSheet, byPage, isWords, type SheetReading } from '@/lib/copy/sheet';
+import { toCsv, rowsFor, readSheet, byPage, isWords, whyNothing, type SheetReading } from '@/lib/copy/sheet';
 
 // ============= The words, out and back =============
 //
@@ -81,9 +81,7 @@ export async function applyCopySheet(csv: string): Promise<
   if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
 
   const reading = readSheet(csv, await whatIsThereNow());
-  if (!reading.changes.length) {
-    return { ok: false, error: 'Nothing in that file is different from what the site already says.' };
-  }
+  if (!reading.changes.length) return { ok: false, error: whyNothing(reading) ?? 'Nothing to save.' };
 
   const db = await createClient();
   const user = await getCurrentUser();

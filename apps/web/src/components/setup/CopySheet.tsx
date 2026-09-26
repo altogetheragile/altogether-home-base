@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from 'react';
 import { Download, Upload, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { colors as p } from '@/lib/brand';
 import { exportCopySheet, reviewCopySheet, applyCopySheet } from '@/app/actions/sheet';
-import type { SheetReading } from '@/lib/copy/sheet';
+import { whyNothing, type SheetReading } from '@/lib/copy/sheet';
 
 // ============= Writing a site somewhere other than here =============
 //
@@ -46,9 +46,10 @@ export function CopySheet() {
     const csv = await f.text();
     const out = await reviewCopySheet(csv);
     if (!out.ok) return setError(out.error);
-    if (!out.reading.changes.length) {
-      return setError('Nothing in that file is different from what the site already says.');
-    }
+    // Four different nothings, and only one of them is "no edits". The others are a file that
+    // did not work, and saying the same sentence for all four sends somebody back to a
+    // spreadsheet they have already filled in correctly.
+    if (!out.reading.changes.length) return setError(whyNothing(out.reading) ?? 'Nothing to save.');
     setPending({ csv, reading: out.reading });
   })(); });
 
