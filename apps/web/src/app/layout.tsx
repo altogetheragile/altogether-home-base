@@ -11,6 +11,7 @@ import { isAdmin } from '@/lib/auth';
 import { EditThisPage } from '@/components/edit/EditThisPage';
 import { HiddenFromVisitors } from '@/components/edit/HiddenFromVisitors';
 import { HoldingPage } from '@/components/HoldingPage';
+import { EditableArea } from '@/components/edit/Editable';
 import { MODULE_FOR_PATH } from '@/lib/copy/routes';
 import { moduleIsShown, type GatedModule } from '@/lib/module-gate';
 import './globals.css';
@@ -88,7 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </p>
           )}
           <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} signedInAsAdmin={admin} />
-          <div className="flex-1">{children}</div>
+          <div className="flex-1"><EditableArea on={admin}>{children}</EditableArea></div>
           <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} />
           </>
           )}
