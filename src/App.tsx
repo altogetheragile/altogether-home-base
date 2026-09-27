@@ -72,9 +72,12 @@ const App = () => (
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
+        {/* Inside the provider, because it reads the site's settings with a query. Mounted
+            outside it, the hook throws "No QueryClient set" during render, React unmounts the
+            tree, and every page this app serves goes white - which is what it did. */}
+        <SiteIcon />
       </QueryClientProvider>
     </ErrorBoundary>
-    <SiteIcon />
     <Analytics scriptSrc="/va/script.js" />
   </HelmetProvider>
 );
