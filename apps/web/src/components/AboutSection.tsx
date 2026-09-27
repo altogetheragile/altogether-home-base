@@ -55,7 +55,7 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
         @media (max-width: 767px) { .aa-about-grid { grid-template-columns: 1fr; gap: 40px; } }
       `}</style>
 
-      <section style={{ fontFamily: fonts.sans, background: `var(--aa-band-bg, ${p.white})`, padding: '96px 0 80px', overflow: 'hidden' }}>
+      <section style={{ fontFamily: fonts.sans, background: `var(--aa-band-bg, ${p.white})`, padding: 'calc(var(--aa-space, 1) * 96px) 0 calc(var(--aa-space, 1) * 80px)', overflow: 'hidden' }}>
         <div
           style={{ maxWidth: 1200, margin: '0 auto', padding: '0 48px' }}
           className={`aa-about-grid${hasLeftColumn ? '' : ' aa-about-grid--alone'}`}
