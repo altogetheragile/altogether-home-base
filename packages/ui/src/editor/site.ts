@@ -215,50 +215,113 @@ export const siteRegistry: CopyRegistry = {
         { "value": "dm-serif", "label": "DM Serif Display", "note": "Warm and editorial. Good for headings, heavy going for paragraphs." }
       ]
     },
-    "site.brand.colors.orange": {
-      "value": COLOURS.orange,
-      "label": "Accent colour",
-      "hint": "Used across the whole site. Changing it changes every page at once.",
+                        "site.brand.colors.body": {
+      "value": COLOURS.body,
+      "label": "Body text",
+      "hint": "Every paragraph on the site. The most-read colour on it, and until now the only one that could not be changed.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.orange",
-      "group": "Colours"
+      "path": "colors.body",
+      "group": "Text"
     },
-    "site.brand.colors.deepTeal": {
-      "value": COLOURS.deepTeal,
-      "label": "Deep colour",
-      "hint": "Used across the whole site. Changing it changes every page at once.",
+    "site.brand.colors.muted": {
+      "value": COLOURS.muted,
+      "label": "Quiet text",
+      "hint": "Captions, dates, the small print under a heading.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.deepTeal",
-      "group": "Colours"
+      "path": "colors.muted",
+      "group": "Text"
     },
-    "site.brand.colors.midTeal": {
-      "value": COLOURS.midTeal,
-      "label": "Mid colour",
-      "hint": "Used across the whole site. Changing it changes every page at once.",
+    "site.brand.colors.lightTeal": {
+      "value": COLOURS.lightTeal,
+      "label": "Light",
+      "hint": "Text and badges on a deep band, where white would be too loud.",
       "type": "colour",
       "store": "brand",
-      "path": "colors.midTeal",
-      "group": "Colours"
+      "path": "colors.lightTeal",
+      "group": "Text"
+    },
+    "site.brand.colors.white": {
+      "value": COLOURS.white,
+      "label": "Page",
+      "hint": "The ground the whole site sits on, and the colour of a card. Rarely anything but white.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.white",
+      "group": "Backgrounds"
     },
     "site.brand.colors.skyTeal": {
       "value": COLOURS.skyTeal,
-      "label": "Pale colour",
-      "hint": "Used across the whole site. Changing it changes every page at once.",
+      "label": "Pale",
+      "hint": "The pale bands: the statistics bar, the cards naming who you work with.",
       "type": "colour",
       "store": "brand",
       "path": "colors.skyTeal",
-      "group": "Colours"
+      "group": "Backgrounds"
     },
     "site.brand.colors.paleTeal": {
       "value": COLOURS.paleTeal,
-      "label": "Palest colour",
-      "hint": "Used across the whole site. Changing it changes every page at once.",
+      "label": "Palest",
+      "hint": "Soft circles and backings behind photographs, and the loading placeholders.",
       "type": "colour",
       "store": "brand",
       "path": "colors.paleTeal",
-      "group": "Colours"
+      "group": "Backgrounds"
+    },
+    "site.brand.colors.deepTeal": {
+      "value": COLOURS.deepTeal,
+      "label": "Deep",
+      "hint": "The dark bands, the headings and the dark buttons. The colour the site is built around.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.deepTeal",
+      "group": "Backgrounds"
+    },
+    "site.brand.colors.heroTeal": {
+      "value": COLOURS.heroTeal,
+      "label": "Hero band",
+      "hint": "The teal behind the about page heading. Between deep and mid.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.heroTeal",
+      "group": "Backgrounds"
+    },
+    "site.brand.colors.orange": {
+      "value": COLOURS.orange,
+      "label": "Accent",
+      "hint": "The buttons, the statistic icons and every other highlight. The loudest colour on the site.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.orange",
+      "group": "Accents"
+    },
+    "site.brand.colors.orangeHover": {
+      "value": COLOURS.orangeHover,
+      "label": "Accent, hovered",
+      "hint": "What a button turns when the pointer is on it. Usually a shade darker than the accent.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.orangeHover",
+      "group": "Accents"
+    },
+    "site.brand.colors.midTeal": {
+      "value": COLOURS.midTeal,
+      "label": "Mid",
+      "hint": "Between deep and pale. Date badges, and the link colour on a card.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.midTeal",
+      "group": "Accents"
+    },
+    "site.brand.colors.danger": {
+      "value": COLOURS.danger,
+      "label": "Warning",
+      "hint": "Errors and anything that has gone wrong. Leave it red unless you have a reason.",
+      "type": "colour",
+      "store": "brand",
+      "path": "colors.danger",
+      "group": "Accents"
     },
     "site.show_founder": {
       "value": "",

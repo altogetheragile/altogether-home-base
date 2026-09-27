@@ -1,5 +1,5 @@
 import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
-import { orderedSections, type SectionChoice } from './sections';
+import { orderedSections, BANDS, type BandName, type SectionChoice } from './sections';
 
 // ============= The order of a page, as a list you can move =============
 //
@@ -33,6 +33,14 @@ export function SectionOrder({
     write(next);
   };
   const toggle = (i: number) => write(rows.map((r, n) => (n === i ? { ...r, visible: !r.visible } : r)));
+  // An empty choice removes the band rather than storing a fifth name for "as it was", so a
+  // section that has never been touched and one that has been set back are the same thing.
+  const band = (i: number, next: string) =>
+    write(rows.map((r, n) => {
+      if (n !== i) return r;
+      const { band: _was, ...rest } = r;
+      return next ? { ...rest, band: next as BandName } : rest;
+    }));
 
   return (
     <div className="divide-y divide-border rounded-md border border-border">
@@ -56,6 +64,18 @@ export function SectionOrder({
               <span className="mt-0.5 block pl-5 text-xs text-muted-foreground">{hint(row.section)}</span>
             )}
           </label>
+          {row.visible && (
+            <select
+              value={row.band ?? ''}
+              onChange={(e) => band(i, e.target.value)}
+              aria-label={`Colour of ${label(row.section)}`}
+              title="The colour behind this section. The text colour comes with it."
+              className="mt-0.5 shrink-0 rounded border border-border bg-background px-1.5 py-1 text-xs focus:border-primary focus:outline-none"
+            >
+              <option value="">As designed</option>
+              {BANDS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+            </select>
+          )}
           <div className="flex shrink-0 flex-col">
             <button
               onClick={() => move(i, -1)}

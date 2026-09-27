@@ -26,7 +26,9 @@ describe('the stats share the bar', () => {
   it('keeps the row to a readable measure while the band stays edge to edge', () => {
     // Without this four stats drift absurdly far apart on a wide screen.
     expect(rule('.aa-stats-bar')).toMatch(/padding:[^;]*calc\(/);
-    expect(rule('.aa-stats-bar')).toMatch(/background:\s*var\(--aa-sky-teal\)/);
+    // The band still reaches the edges, and still starts pale: the section can now choose a
+    // ground, so the colour is the fallback rather than the whole declaration.
+    expect(rule('.aa-stats-bar')).toMatch(/background:\s*var\(--aa-band-bg,\s*var\(--aa-sky-teal\)\)/);
   });
 
   it('says the two-up phone layout in flex terms, since a width would lose', () => {

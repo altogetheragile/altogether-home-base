@@ -79,3 +79,54 @@
     transition: padding-right 160ms ease;
   }
 }
+
+/* ============= The colour of a band =============
+ *
+ * A section chooses a ground by name, and the text colours that go with it come with it. Four
+ * names, because these four combinations are the ones the site already uses and each one is in
+ * front of somebody today and reads.
+ *
+ * Not a colour picker per element. A picker lets somebody put deep teal text on a deep teal band,
+ * or orange text on white at 2.17:1, and what comes out is not a design choice. Pairing the ink
+ * with the ground means the unreadable combinations cannot be expressed.
+ *
+ * Every rule that reads these does so with a fallback to the colour it already had, so a section
+ * with no band is unchanged and these variables are simply never set.
+ *
+ *   --aa-band-bg        the ground
+ *   --aa-band-ink       headings and figures on that ground
+ *   --aa-band-ink-soft  body text and labels on that ground
+ *   --aa-band-accent    the highlight colour that still shows against that ground
+ *
+ * The accent is here for one reason: the statistic icons are drawn in the accent colour, and on
+ * an accent band they were accent on accent and simply were not there. Found by rendering all
+ * four and looking at them. A ground carries everything that has to survive it.
+ */
+
+.aa-band--white {
+  --aa-band-bg: var(--aa-white);
+  --aa-band-ink: var(--aa-deep-teal);
+  --aa-band-ink-soft: var(--aa-body);
+  --aa-band-accent: var(--aa-orange);
+}
+
+.aa-band--pale {
+  --aa-band-bg: var(--aa-sky-teal);
+  --aa-band-ink: var(--aa-deep-teal);
+  --aa-band-ink-soft: var(--aa-body);
+  --aa-band-accent: var(--aa-orange);
+}
+
+.aa-band--deep {
+  --aa-band-bg: var(--aa-deep-teal);
+  --aa-band-ink: var(--aa-white);
+  --aa-band-ink-soft: var(--aa-light-teal);
+  --aa-band-accent: var(--aa-orange);
+}
+
+.aa-band--accent {
+  --aa-band-bg: var(--aa-orange);
+  --aa-band-ink: var(--aa-deep-teal);
+  --aa-band-ink-soft: var(--aa-deep-teal);
+  --aa-band-accent: var(--aa-deep-teal);
+}
