@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Analytics } from "@vercel/analytics/react";
+import { SiteIcon } from "@/components/SiteIcon";
 import { applyBrandCssVars } from '@/theme/brandCssVars';
 import { BrandFromSettings } from '@/theme/BrandFromSettings';
 import {
@@ -73,6 +74,7 @@ const App = () => (
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
+    <SiteIcon />
     <Analytics scriptSrc="/va/script.js" />
   </HelmetProvider>
 );

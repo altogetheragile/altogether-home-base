@@ -105,6 +105,24 @@ describe('the shell says whose site it is', () => {
       expect(out).not.toMatch(/<link\s+rel="icon"/);
     });
 
+    it('announces the type the file actually is', () => {
+      // The shell's link says image/svg+xml because this repository's icon is an SVG. Swapping
+      // only the address left an .ico or a PNG announced as an SVG, and a browser handed a file
+      // that is not what it was told to expect may skip it. One reason a new icon "did nothing".
+      for (const [icon, type] of [['https://cdn.example/a.ico', 'image/x-icon'],
+        ['https://cdn.example/a.png', 'image/png'],
+        ['https://cdn.example/a.svg', 'image/svg+xml']] as const) {
+        const tag = withIdentity(shell, { ...hers, favicon: icon }).match(/<link rel="icon"[^>]*>/)![0];
+        expect(tag, `${icon} announced wrongly`).toContain(`type="${type}"`);
+        expect(tag).toContain(icon);
+      }
+    });
+
+    it('says nothing about a type it cannot name from the address', () => {
+      const tag = withIdentity(shell, { ...hers, favicon: 'https://cdn.example/icon' }).match(/<link rel="icon"[^>]*>/)![0];
+      expect(tag).not.toContain('type=');
+    });
+
     it('is left alone on our own site', () => {
       const out = withIdentity(shell, { url: SHIPPED.url, favicon: SHIPPED.favicon });
       expect(out).toContain(`href="${SHIPPED.favicon}"`);
