@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { Pencil, X, RotateCcw, Undo2, Check, Loader2, Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { FieldControl } from './FieldControl';
+import type { StoredPicture } from './PictureBox';
 import type { CopyField, SaveResult } from './store';
 import { groupFields, filterGroups, groupOf } from './grouping';
 
@@ -23,6 +24,9 @@ export type EditorHost = {
   reset: (page: string, key: string) => Promise<SaveResult>;
   undo: (page: string, key: string) => Promise<SaveResult>;
   upload: (file: File) => Promise<string>;
+  /** Lists the pictures this site has already uploaded, so a field can reuse one instead of
+   *  only ever adding another. Optional: a host that cannot list them simply does not offer it. */
+  pictures?: () => Promise<StoredPicture[]>;
 
   // ---- Holding a change back. Optional, so a host that cannot draft simply does not offer it,
   // rather than offering a button that fails. ----
@@ -334,6 +338,7 @@ export function EditDrawer({ host }: { host: EditorHost }) {
                 page={active}
                 onChange={(next) => setField(f.key, next)}
                 upload={host.upload}
+                pictures={host.pictures}
               />
             </div>
           );

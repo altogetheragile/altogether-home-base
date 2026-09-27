@@ -1,6 +1,6 @@
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import type { ItemField } from './fields';
-import { PictureBox } from './PictureBox';
+import { PictureBox, type StoredPicture } from './PictureBox';
 import { IconPicker } from './IconPicker';
 import { ColourBox } from './ColourBox';
 
@@ -41,11 +41,14 @@ export function ItemRows({
   fields,
   onChange,
   upload,
+  pictures,
 }: {
   value: string;
   fields: ItemField[];
   onChange: (next: string) => void;
   upload: (file: File) => Promise<string>;
+  /** Passed through to any picture column, so a row can reuse a picture the site already has. */
+  pictures?: () => Promise<StoredPicture[]>;
 }) {
   const rows = parse(value);
   const missing = (row: Row) => emptyRequired(row, fields);
@@ -108,7 +111,7 @@ export function ItemRows({
                 {f.required && <span className="ml-1 text-amber-600" title="The page needs this">needed</span>}
               </span>
               {f.type === 'image' ? (
-                <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} upload={upload} />
+                <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} upload={upload} pictures={pictures} />
               ) : f.type === 'icon' ? (
                 <IconPicker value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} />
               ) : f.type === 'colour' ? (

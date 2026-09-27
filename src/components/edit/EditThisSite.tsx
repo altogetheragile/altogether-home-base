@@ -63,7 +63,33 @@ export function EditThisSite() {
       if (error) throw error;
       const { data } = supabase.storage.from('assets').getPublicUrl(path);
       if (!data?.publicUrl) throw new Error('Uploaded, but no address came back for it.');
+      // Recorded in the library as well as put in the bucket, so a picture added from the drawer
+      // appears in Admin and can be found again. Not fatal if it does not: the file is already
+      // uploaded and the field is about to hold it.
+      await supabase.from('media_assets').insert({
+        url: data.publicUrl,
+        title: file.name,
+        type: file.type.startsWith('image/') ? 'image' : 'document',
+        file_type: file.type || null,
+        file_size: file.size,
+        original_filename: file.name,
+        is_public: true,
+        created_by: user?.id ?? null,
+      });
       return data.publicUrl;
+    },
+
+    // What this site has already uploaded, newest first. Images only: every field that offers
+    // this is a picture field.
+    pictures: async () => {
+      const { data, error } = await supabase
+        .from('media_assets')
+        .select('url, title, description')
+        .eq('type', 'image')
+        .order('created_at', { ascending: false })
+        .limit(60);
+      if (error) throw error;
+      return (data ?? []) as { url: string; title: string | null; description: string | null }[];
     },
   }), [pathname, user?.id, queryClient]);
 
