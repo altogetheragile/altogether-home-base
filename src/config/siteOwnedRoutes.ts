@@ -24,6 +24,9 @@ export const SITE_OWNED = [
   // Courses, workshops and webinars. Not '/courses': a workshop is not a course, and the
   // catalogue holds both. Every old /courses/<slug> address redirects here.
   '/training',
+  // Every browser asks for this whether or not a page names an icon. It fell through to the
+  // SPA catch-all and answered 200 with a page of HTML; the Site answers it per site now.
+  '/favicon.ico',
   // Admin only, and 404 to everybody else. Listed here because the Site answers them, not
   // because they are public.
   '/setup',

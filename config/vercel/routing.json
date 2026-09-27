@@ -685,6 +685,10 @@
       "destination": "https://altogether-home-base-web-next.vercel.app/_next/:path*"
     },
     {
+      "source": "/favicon.ico",
+      "destination": "https://altogether-home-base-web-next.vercel.app/site-icon"
+    },
+    {
       "source": "/api/health",
       "destination": "https://altogether-home-base-web-next.vercel.app/api/health"
     },

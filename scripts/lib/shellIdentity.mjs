@@ -60,6 +60,15 @@ const escapeHtml = (s) =>
  *
  *  Anchoring to a quote, a bracket or whitespace cannot match mid-URL, so running it any number
  *  of times gives the same answer as running it once. */
+/** The media type of an icon, from its address, or nothing when it is not one we can name.
+ *
+ *  Saying nothing is safe: a browser sniffs the file. Saying the wrong thing is not. */
+export function iconType(url) {
+  const ext = url.split('?')[0].split('#')[0].toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
+  const types = { svg: 'image/svg+xml', png: 'image/png', ico: 'image/x-icon', gif: 'image/gif', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' };
+  return types[ext] ? ` type="${types[ext]}"` : '';
+}
+
 function swapPath(html, shippedPath, replacement) {
   const escaped = shippedPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return html.replace(new RegExp(`(["'(\\s])${escaped}`, 'g'), (_m, edge) => `${edge}${escapeHtml(replacement)}`);
@@ -99,8 +108,15 @@ export function withIdentity(html, { url, company, tagline, ogImage, logo, favic
   // With no icon of its own a site that is not ours gets no link at all, rather than ours. That
   // is the rule the lockup and the founder photograph already follow: unfinished beats borrowed.
   const ownIcon = favicon?.trim() ? favicon.trim() : null;
-  if (ownIcon && ownIcon !== SHIPPED.favicon) out = swapPath(out, SHIPPED.favicon, ownIcon);
-  else if (!ours && !ownIcon) out = out.replace(/\n?\s*<link\s+rel="icon"[^>]*>/g, '');
+  if (ownIcon && ownIcon !== SHIPPED.favicon) {
+    // The whole tag, not just the address. The shell's link says type="image/svg+xml" because
+    // this repository's icon is an SVG, and swapping only the href left a PNG or an .ico
+    // announced as an SVG. A browser handed a file that is not what it was told to expect may
+    // simply skip it, which is one of the reasons a new icon appeared not to take.
+    out = out.replace(/<link\s+rel="icon"[^>]*>/, `<link rel="icon"${iconType(ownIcon)} href="${escapeHtml(ownIcon)}" />`);
+  } else if (!ours && !ownIcon) {
+    out = out.replace(/\n?\s*<link\s+rel="icon"[^>]*>/g, '');
+  }
 
   if (!ours) {
     // The wave behind the hero is this site's pattern, in this site's colours, and it is the
