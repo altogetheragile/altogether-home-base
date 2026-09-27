@@ -135,3 +135,42 @@
   --aa-band-accent: var(--aa-deep-teal);
   --aa-band-accent-ink: var(--aa-white);
 }
+
+/* ============= The shape of a band =============
+ *
+ * Three questions with a handful of answers each, alongside the ground. Not a layout editor: a
+ * named answer cannot overlap two columns, leave text four characters wide, or set a card grid to
+ * a width nothing fits in, and a free number could do all three.
+ *
+ * Every rule that reads these has a fallback to what the section already did, so a section that
+ * has chosen nothing gets no wrapper, no class, and no change.
+ *
+ *   --aa-space      a multiplier on the padding a section already had, not a padding
+ * A card row normally fits as many as it can at its own minimum width. That is right as a
+ * default and wrong as an answer to "how many across": at 1280px a 260px minimum fits four, so
+ * a control labelled "3 across" produced four of them. Seen by rendering it. A chosen number is
+ * therefore a real number of columns, and the staircase below keeps it readable on the way down:
+ * one column on a phone, two on a tablet whatever was chosen, the chosen number above that.
+ */
+
+.aa-space--tight { --aa-space: 0.55; }
+.aa-space--roomy { --aa-space: 1.5; }
+
+@media (min-width: 768px) {
+  .aa-across--two .aa-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .aa-across--three .aa-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .aa-across--four .aa-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Three or four cards in the width of a tablet is four or five words to a line. */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .aa-across--three .aa-cards,
+  .aa-across--four .aa-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* The picture and the words swap places. Only above the phone breakpoint: in one column there
+   are no sides, and ordering the picture below the words there would be a different decision
+   made by accident. */
+@media (min-width: 768px) {
+  .aa-side--right .aa-about-grid > :first-child { order: 2; }
+}

@@ -1,5 +1,8 @@
 import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
-import { orderedSections, BANDS, type BandName, type SectionChoice } from './sections';
+import {
+  orderedSections, BANDS, SPACES, ACROSS, SIDES,
+  type BandName, type SpaceName, type AcrossName, type SideName, type SectionChoice, type ShapeName,
+} from './sections';
 
 // ============= The order of a page, as a list you can move =============
 //
@@ -42,6 +45,35 @@ export function SectionOrder({
       return next ? { ...rest, band: next as BandName } : rest;
     }));
 
+  /** The shape settings work the same way as the band: an empty choice removes the setting rather
+   *  than storing a name meaning "as it was", so untouched and set-back are the same thing. */
+  const shape = (i: number, what: ShapeName, next: string) =>
+    write(rows.map((r, n) => {
+      if (n !== i) return r;
+      const { [what]: _was, ...rest } = r as Record<string, unknown>;
+      return (next ? { ...rest, [what]: next } : rest) as typeof r;
+    }));
+
+  const can = (key: string, what: ShapeName) =>
+    (choices.find((c) => c.key === key)?.shape ?? []).includes(what);
+
+  /** One dropdown, wherever it appears. Four of these differing slightly is how a row of controls
+   *  stops looking like a row of controls. */
+  const chooser = (
+    label: string, value: string, empty: string,
+    options: { key: string; label: string }[], onPick: (next: string) => void,
+  ) => (
+    <select
+      value={value}
+      onChange={(e) => onPick(e.target.value)}
+      aria-label={label}
+      className="mt-0.5 shrink-0 rounded border border-border bg-background px-1.5 py-1 text-xs focus:border-primary focus:outline-none"
+    >
+      <option value="">{empty}</option>
+      {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+    </select>
+  );
+
   return (
     <div className="divide-y divide-border rounded-md border border-border">
       {rows.map((row, i) => (
@@ -65,16 +97,30 @@ export function SectionOrder({
             )}
           </label>
           {row.visible && (
-            <select
-              value={row.band ?? ''}
-              onChange={(e) => band(i, e.target.value)}
-              aria-label={`Colour of ${label(row.section)}`}
-              title="The colour behind this section. The text colour comes with it."
-              className="mt-0.5 shrink-0 rounded border border-border bg-background px-1.5 py-1 text-xs focus:border-primary focus:outline-none"
-            >
-              <option value="">As designed</option>
-              {BANDS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
-            </select>
+            <div className="flex shrink-0 flex-wrap justify-end gap-1">
+              <select
+                value={row.band ?? ''}
+                onChange={(e) => band(i, e.target.value)}
+                aria-label={`Colour of ${label(row.section)}`}
+                title="The colour behind this section. The text colour comes with it."
+                className="mt-0.5 shrink-0 rounded border border-border bg-background px-1.5 py-1 text-xs focus:border-primary focus:outline-none"
+              >
+                <option value="">As designed</option>
+                {BANDS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+              </select>
+              {can(row.section, 'space') && chooser(
+                `Space around ${label(row.section)}`, row.space ?? '', 'Normal space',
+                SPACES, (next) => shape(i, 'space', next),
+              )}
+              {can(row.section, 'across') && chooser(
+                `Cards across in ${label(row.section)}`, row.across ?? '', 'As designed',
+                ACROSS, (next) => shape(i, 'across', next),
+              )}
+              {can(row.section, 'side') && chooser(
+                `Which side the picture sits on in ${label(row.section)}`, row.side ?? '', 'Picture on the left',
+                SIDES, (next) => shape(i, 'side', next),
+              )}
+            </div>
           )}
           <div className="flex shrink-0 flex-col">
             <button
