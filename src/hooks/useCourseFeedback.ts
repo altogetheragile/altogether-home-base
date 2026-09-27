@@ -162,6 +162,53 @@ export const useSubmitFeedback = () => {
   });
 };
 
+/** One testimonial, typed in by an administrator.
+ *
+ *  Separate from useSubmitFeedback, which is somebody leaving feedback about a course they went
+ *  on: that one thanks them and says it will be reviewed. This is a recommendation arriving the
+ *  way recommendations actually arrive - one at a time, by email or on LinkedIn - being copied in
+ *  by the person who received it. Nothing to thank and nobody to review it: whoever typed it has
+ *  already decided it is real.
+ *
+ *  Before this, the only way in was a spreadsheet. Adding one recommendation meant building a
+ *  file with the right column headings, which is why it was asked for. */
+export const useAddFeedback = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (feedback: Partial<CourseFeedback>) => {
+      const { data, error } = await supabase
+        .from('course_feedback')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert({
+          ...feedback,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (row) => {
+      toast({
+        title: 'Testimonial added',
+        description: (row as { is_approved?: boolean })?.is_approved
+          ? 'It is approved, so it is on the site now.'
+          : 'Saved, but not approved yet, so it is not on the site.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['course-feedback'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-feedback'] });
+      queryClient.invalidateQueries({ queryKey: ['feedback-stats'] });
+    },
+    onError: (error: Error) => {
+      // The message, not a generic one: a constraint or a policy saying no is worth reading.
+      toast({ title: 'Could not add it', description: error.message, variant: 'destructive' });
+    },
+  });
+};
+
 export const useUpdateFeedback = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
