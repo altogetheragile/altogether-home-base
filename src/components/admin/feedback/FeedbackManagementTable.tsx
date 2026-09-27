@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useCourseFeedback, useBulkApproveFeedback, useUpdateFeedback, useDeleteFeedback } from "@/hooks/useCourseFeedback";
 import { CheckCircle, XCircle, Star, Trash2, ExternalLink } from "lucide-react";
+import AddFeedbackDialog from "@/components/admin/feedback/AddFeedbackDialog";
 
 type FeedbackItem = {
   id: string;
@@ -183,6 +184,7 @@ const FeedbackManagementTable = () => {
           emptyMessage="No feedback found"
           toolbar={
             <>
+              <AddFeedbackDialog />
               <Select value={approvalFilter} onValueChange={setApprovalFilter}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by status" />
