@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pointTheIconAt, iconType } from './tabIcon';
+import { pointTheIconAt, removeTheIcon, iconType } from './tabIcon';
 import { rewritesFor, SHIPPED_SITE_HOST } from '../../vercel';
 import { SITE_OWNED } from '@/config/siteOwnedRoutes';
 
@@ -72,6 +72,22 @@ describe('the icon follows the editor', () => {
     const before = doc.head.innerHTML;
     pointTheIconAt(doc, 'https://cdn.example/same.png');
     expect(doc.head.innerHTML).toBe(before);
+  });
+});
+
+describe('an icon taken away is taken away', () => {
+  it('removes every link the shell was built with', () => {
+    // Setting one could already be followed at runtime. Removing one could not: the shell's link
+    // is built in at deploy time, so an icon taken out in the editor went on showing on every
+    // page this app serves until something deployed. Reported as "I removed the favicon image...
+    // I still see the AA favicon".
+    const doc = withHead('<link rel="shortcut icon" href="/a.svg"><link rel="icon" href="/a.svg">');
+    expect(removeTheIcon(doc)).toBe(2);
+    expect(icons(doc)).toEqual([]);
+  });
+
+  it('says how many it took, so nothing to do is not mistaken for doing nothing', () => {
+    expect(removeTheIcon(withHead(''))).toBe(0);
   });
 });
 

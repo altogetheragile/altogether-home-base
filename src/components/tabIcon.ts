@@ -46,3 +46,15 @@ export function pointTheIconAt(doc: Document, href: string): boolean {
   }
   return true;
 }
+
+/** Takes the shell's icon away, for a site that has chosen none.
+ *
+ *  Needed because the shell's link is built in at deploy time. Setting an icon could already be
+ *  followed at runtime; removing one could not, so an icon taken out in the editor went on
+ *  showing on every page this app serves until something deployed. Answers how many it removed,
+ *  so a caller can tell the difference between doing nothing and there being nothing to do. */
+export function removeTheIcon(doc: Document): number {
+  const links = [...doc.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')];
+  for (const link of links) link.remove();
+  return links.length;
+}
