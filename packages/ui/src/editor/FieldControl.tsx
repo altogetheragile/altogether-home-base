@@ -1,5 +1,5 @@
 import { ItemRows } from './ItemRows';
-import { PictureBox } from './PictureBox';
+import { PictureBox, type StoredPicture } from './PictureBox';
 import { IconPicker } from './IconPicker';
 import { ColourBox } from './ColourBox';
 import { SectionOrder } from './SectionOrder';
@@ -20,6 +20,7 @@ export function FieldControl({
   page,
   onChange,
   upload,
+  pictures,
 }: {
   field: CopyField;
   value: string;
@@ -28,6 +29,8 @@ export function FieldControl({
   page: string;
   onChange: (next: string) => void;
   upload: (file: File) => Promise<string>;
+  /** What this site has already uploaded, where the host can list it. */
+  pictures?: () => Promise<StoredPicture[]>;
 }) {
   const set = (next: string) => onChange(next);
 
@@ -35,10 +38,10 @@ export function FieldControl({
     return <SectionOrder value={value} choices={SECTIONS_FOR_PAGE[page] ?? []} onChange={set} />;
   }
   if (field.type === 'items' && field.fields) {
-    return <ItemRows value={value} fields={field.fields} onChange={set} upload={upload} />;
+    return <ItemRows value={value} fields={field.fields} onChange={set} upload={upload} pictures={pictures} />;
   }
   if (field.type === 'image') {
-    return <PictureBox value={value} onChange={set} upload={upload} />;
+    return <PictureBox value={value} onChange={set} upload={upload} pictures={pictures} />;
   }
   if (field.type === 'icon') {
     return <IconPicker value={value} onChange={set} />;
