@@ -55,14 +55,24 @@ describe('the drawer folds and finds', () => {
     expect(within(hero).getByText('3')).toBeTruthy();
   });
 
-  it('folds a group away and brings it back', async () => {
+  it('opens with every section folded, so the drawer is a list of what this page has', async () => {
+    // Eight headings on eight lines, rather than a column of thirty-eight boxes to scroll past.
+    // Nothing is buried by it: a search stands every group open, and a pen unfolds the group
+    // holding the field it was pressed on.
+    await open();
+    for (const name of ['Hero', 'Stats', 'Founder', 'Call to action', 'Search and sharing']) {
+      expect(screen.getByText(name).closest('button')!.getAttribute('aria-expanded'), `${name} is open`).toBe('false');
+    }
+    expect(screen.queryByLabelText('Hero heading')).toBeNull();
+  });
+
+  it('brings a group back and folds it away again', async () => {
     await open();
     const user = userEvent.setup();
+    await user.click(screen.getByText('Hero').closest('button')!);
     expect(screen.queryByLabelText('Hero heading')).toBeTruthy();
     await user.click(screen.getByText('Hero').closest('button')!);
     expect(screen.queryByLabelText('Hero heading')).toBeNull();
-    await user.click(screen.getByText('Hero').closest('button')!);
-    expect(screen.queryByLabelText('Hero heading')).toBeTruthy();
   });
 
   it('shows only what matches, and says how many that is', async () => {
@@ -91,20 +101,23 @@ describe('the drawer folds and finds', () => {
   });
 
   it('opens a folded group while searching, so a result is never hidden', async () => {
+    // Every group starts folded now, so this is the ordinary case rather than an awkward one:
+    // searching has to reach inside them or it finds nothing at all.
     await open();
-    const user = userEvent.setup();
-    await user.click(screen.getByText('Stats').closest('button')!);
     expect(screen.queryByLabelText('Statistics')).toBeNull();
-    await user.type(screen.getByLabelText('Find a field'), 'statistics');
+    await userEvent.setup().type(screen.getByLabelText('Find a field'), 'statistics');
     expect(screen.queryByLabelText('Statistics')).toBeTruthy();
   });
 
-  it('clears the search and puts everything back', async () => {
+  it('clears the search and folds everything away again', async () => {
     await open();
     const user = userEvent.setup();
     await user.type(screen.getByLabelText('Find a field'), 'button');
+    expect(screen.queryByLabelText('Hero button')).toBeTruthy();
     await user.click(screen.getByLabelText('Clear'));
-    expect(screen.queryByLabelText('Statistics')).toBeTruthy();
+    // Back to the list of headings, not left standing open because a search had been run.
+    expect(screen.queryByLabelText('Hero button')).toBeNull();
+    expect(screen.getByText('Hero')).toBeTruthy();
   });
 });
 
@@ -124,6 +137,10 @@ describe('the drawer says what is not on the page', () => {
     await waitFor(() => expect(screen.getByText('Hero')).toBeTruthy());
   };
 
+  /** Groups open folded, so anything being asserted about what is inside one has to unfold it. */
+  const unfold = async (group: string) =>
+    userEvent.setup().click(screen.getByText(group).closest('button')!);
+
   it('marks a section that is switched off', async () => {
     await openWith(OFF);
     expect(screen.getByText('not on this page')).toBeTruthy();
@@ -131,12 +148,14 @@ describe('the drawer says what is not on the page', () => {
 
   it('says what that means, rather than leaving a label to be puzzled over', async () => {
     await openWith(OFF);
+    await unfold('Knowledge base');
     expect(screen.getByText(/switched off/)).toBeTruthy();
     expect(screen.getByText(/switch it back on/)).toBeTruthy();
   });
 
   it('keeps the words editable, because they can be written before it is switched on', async () => {
     await openWith(OFF);
+    await unfold('Knowledge base');
     expect(screen.queryByLabelText('Knowledge heading')).toBeTruthy();
   });
 

@@ -6,6 +6,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { ctaHref } from '@/lib/cta';
 import { Editable, AddAPicture } from '@/components/edit/Editable';
+import { EmptySection } from '@/components/edit/EmptySection';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { Prose } from '@/lib/copy/Prose';
@@ -134,7 +135,13 @@ export default async function HomePage() {
           // "Practitioners trained" got a people icon because it happened to be first, and a
           // fifth statistic got the people icon again.
           const stats = items<{ number: string; label: string; icon: string }>(t('home.stats.items'), ['number']);
-          if (stats.length === 0) return null;
+          if (stats.length === 0) return (
+            <EmptySection
+              name="Statistics bar"
+              why="No statistic has a figure against it yet. A number with nothing behind it is not a placeholder, it is a claim, so the bar stays off the page until one does."
+              fills={{ kind: 'field', k: 'home.stats.items', label: 'the statistics' }}
+            />
+          );
           return (
             <Editable k="home.stats.items" label="the statistics" as="div" block>
               <div className="aa-stats-bar">
@@ -158,7 +165,13 @@ export default async function HomePage() {
             no section: a heading asking "Who is this for?" over nothing answers itself badly. */}
         {(() => {
           const cards = items<{ heading: string; body: string; icon: string }>(t('home.personas.items'), ['heading']);
-          if (cards.length === 0) return null;
+          if (cards.length === 0) return (
+            <EmptySection
+              name="Who is this for"
+              why="No cards yet. A heading asking who this is for, over nothing, answers itself badly."
+              fills={{ kind: 'field', k: 'home.personas.items', label: 'the cards' }}
+            />
+          );
           return (
             <div className="aa-section-pad" style={{ background: 'var(--aa-band-bg, var(--aa-white))', paddingTop: 56, paddingBottom: 48 }}>
               <Editable k="home.personas.heading" label="this heading" as="div" block>
@@ -193,6 +206,13 @@ export default async function HomePage() {
         {/* COURSES
             A site with no courses yet shows no courses section. The heading, the empty carousel
             and a "View all" button leading to an empty page are three ways of saying nothing. */}
+        {courses?.length === 0 && (
+          <EmptySection
+            name="Courses"
+            why="No published course yet, so the carousel and a View all button would lead to an empty page."
+            fills={{ kind: 'elsewhere', where: 'Courses come from what is published under Events, not from this drawer.' }}
+          />
+        )}
         {courses?.length !== 0 && (
         <div className="aa-section-pad" style={{ background: 'var(--aa-band-bg, var(--aa-sky-teal))' }}>
           <div className="aa-mb-32">

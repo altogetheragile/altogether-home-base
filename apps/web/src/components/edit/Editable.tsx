@@ -19,8 +19,11 @@ import { Pencil } from 'lucide-react';
 // problem people actually have.
 
 /** Whether to draw pens at all. False for everybody but an administrator, and then nothing is
- *  rendered: a visitor's page should not carry a map of the editor in its markup. */
-const CanEdit = createContext(false);
+ *  rendered: a visitor's page should not carry a map of the editor in its markup.
+ *
+ *  Exported for the empty-section placeholder, which is the same question asked about a whole
+ *  section rather than about one field. */
+export const CanEdit = createContext(false);
 
 /** Whether to show every pen at once rather than one under the cursor.
  *

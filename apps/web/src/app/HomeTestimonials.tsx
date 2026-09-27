@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { HomeTestimonial } from '@/lib/home';
 import { colors as p } from '@/lib/brand';
+import { EmptySection } from '@/components/edit/EmptySection';
 
 
 function Stars({ rating, size = 12 }: { rating: number; size?: number }) {
@@ -66,7 +67,13 @@ export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimon
   }, []);
 
   const visibleItems = useMemo(() => items.slice(startIndex, startIndex + visibleCount), [items, startIndex, visibleCount]);
-  if (!items.length) return null;
+  if (!items.length) return (
+    <EmptySection
+      name="Testimonials"
+      why="Nobody has left an approved testimonial yet, so there is nothing to quote."
+      fills={{ kind: 'elsewhere', where: 'Testimonials come from the feedback people leave, once it is approved, not from this drawer.' }}
+    />
+  );
 
   const handlePrev = () => setStartIndex((i) => Math.max(0, i - 1));
   const handleNext = () => setStartIndex((i) => (i + visibleCount >= items.length ? 0 : i + 1));

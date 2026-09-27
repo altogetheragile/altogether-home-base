@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { Editable, AddAPicture } from '@/components/edit/Editable';
+import { EmptySection } from '@/components/edit/EmptySection';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -199,6 +200,13 @@ export default async function AboutPage() {
     testimonials: (
       <>
       {/* TESTIMONIALS */}
+      {quotes.length === 0 && (
+        <EmptySection
+          name="Testimonials"
+          why="Nobody has left an approved testimonial yet, so there is nothing to quote."
+          fills={{ kind: 'elsewhere', where: 'Testimonials come from the feedback people leave, once it is approved, not from this drawer.' }}
+        />
+      )}
       {quotes.length > 0 && (
         <div className="aa-section-pad" style={{ background: p.skyTeal }}>
           <Heading labelKey="about.feedback.label" titleKey="about.feedback.heading" label={t('about.feedback.label')} title={t('about.feedback.heading')} />
@@ -244,7 +252,14 @@ export default async function AboutPage() {
         const cards = items<{ label: string; heading: string; body: string; principles: string; colour: string }>(
           t('about.philosophy.items'), ['heading'],
         );
-        if (cards.length === 0) return null;
+        if (cards.length === 0) return (
+          <EmptySection
+            name="Philosophy cards"
+            why="No cards yet."
+            fills={{ kind: 'field', k: 'about.philosophy.items', label: 'the philosophy cards' }}
+            cards={2}
+          />
+        );
         return (
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
         <Heading labelKey="about.philosophy.label" titleKey="about.philosophy.heading" label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
@@ -291,7 +306,14 @@ export default async function AboutPage() {
       {/* TIMELINE */}
       {(() => {
         const eras = timelineFrom(t('about.timeline.list'));
-        if (eras.length === 0) return null;
+        if (eras.length === 0) return (
+          <EmptySection
+            name="Timeline"
+            why="Nothing on the timeline yet."
+            fills={{ kind: 'field', k: 'about.timeline.list', label: 'the timeline' }}
+            cards={4}
+          />
+        );
         return (
           <div className="aa-section-pad" style={{ background: p.white }}>
             <Heading labelKey="about.timeline.label" titleKey="about.timeline.heading" label={t('about.timeline.label')} title={t('about.timeline.heading')} />
