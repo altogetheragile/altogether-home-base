@@ -72,7 +72,7 @@ export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimon
   const handleNext = () => setStartIndex((i) => (i + visibleCount >= items.length ? 0 : i + 1));
 
   return (
-    <div style={{ background: p.heroTeal, padding: '56px 48px' }}>
+    <div style={{ background: `var(--aa-band-bg, ${p.heroTeal})`, padding: '56px 48px' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h2 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0 }}>What practitioners say</h2>
       </div>
