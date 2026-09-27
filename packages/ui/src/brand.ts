@@ -76,7 +76,11 @@ export type ImageName = 'logo' | 'favicon' | 'ogImage' | 'founderPhoto' | 'found
  *  the home page's portrait block. A site with `show_founder` off never asks for either. */
 export const defaultImages: Record<ImageName, string> = {
   logo: '/brand/lockup-horizontal-tight.svg',
-  favicon: '/favicon.svg',
+  // No default icon, for the same reason there is no default logo. The kanji in public/ is this
+  // repository's mark, it is built into every site made from here, and a site that had not
+  // chosen one wore it in the tab, in bookmarks and in search results. Reported as "how is this
+  // icon updated", about somebody else's site showing our face.
+  favicon: '',
   ogImage: '/og-image.png',
   // No default face. These were one person's photograph and portrait, so every site built from
   // this repository showed him wherever a founder appeared. A site that has not uploaded a
@@ -159,8 +163,14 @@ export function resolveImages(overrides?: BrandImageOverrides): Record<ImageName
 
 // ============= The logo a site has not chosen =============
 //
-// `resolveImages` falls back to the files in public/, which is right for a favicon and a share
-// image: a placeholder is better than nothing and nobody reads a favicon as a claim.
+// `resolveImages` falls back to the files in public/, which is right for a share image: it is an
+// illustration rather than a mark, and a link shared with no picture at all looks worse than one
+// shared with a generic picture.
+//
+// It was written here that the same was true of a favicon, because nobody reads one as a claim.
+// That turned out to be wrong in the only way that counts: a second site wore our kanji in its
+// tab and in its owner's bookmarks, and the way it came to light was somebody asking what that
+// icon was. A favicon is small, but it is the mark a browser repeats everywhere it names a site.
 //
 // A logo is different. Falling back to this repository's lockup means a site that has not chosen
 // one renders Altogether Agile's name in Altogether Agile's colours, in its header and its footer,
