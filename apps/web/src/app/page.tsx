@@ -75,7 +75,7 @@ export default async function HomePage() {
               so the srcset is offered for that asset and not for an uploaded one, which has only
               the size it was uploaded at. */}
           {heroBg && (
-            <Editable k="home.hero.background" label="the background picture" as="div" block>
+            <Editable k="home.hero.background" label="the background picture" as="div" fill>
             <div className="aa-hero-bg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
