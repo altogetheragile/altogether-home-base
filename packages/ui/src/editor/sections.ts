@@ -11,7 +11,32 @@
 // writing twenty lines.
 
 export type SectionChoice = { key: string; label: string; hint?: string };
-export type SectionState = { section: string; visible: boolean };
+export type SectionState = { section: string; visible: boolean; band?: BandName };
+
+// ============= What colour a band is =============
+//
+// A named ground rather than a colour picker, and the difference is the whole point. A picker
+// lets somebody put deep teal text on a deep teal band, or 2.17:1 orange on white, and the page
+// that results is not a design choice, it is unreadable. This site has already shipped that bug
+// once, in the hero eyebrow.
+//
+// So a band chooses a ground, and the text colours that go with it come with it. These four are
+// the combinations the site already uses, which is why they are the four: each one is in front of
+// somebody today and reads.
+//
+// A section with no band chosen renders exactly as it did before, because every rule falls back
+// to the colour it already had. Nothing moves until somebody moves it.
+
+export type BandName = 'white' | 'pale' | 'deep' | 'accent';
+
+export const BANDS: { key: BandName; label: string; note: string }[] = [
+  { key: 'white', label: 'White', note: 'The page colour. Dark text.' },
+  { key: 'pale', label: 'Pale', note: 'Your palest colour. Dark text.' },
+  { key: 'deep', label: 'Deep', note: 'Your deep colour. Light text.' },
+  { key: 'accent', label: 'Accent', note: 'Your accent colour. Dark text.' },
+];
+
+const isBand = (v: unknown): v is BandName => BANDS.some((b) => b.key === v);
 
 /** What a page should render, given what was saved and what the code offers.
  *
@@ -30,7 +55,13 @@ export function orderedSections(stored: string | undefined, declared: SectionCho
         saved = parsed
           .filter((s): s is SectionState => !!s && typeof s === 'object' && typeof s.section === 'string')
           .filter((s) => known.has(s.section))
-          .map((s) => ({ section: s.section, visible: s.visible !== false }));
+          // A band that is not one of the four is dropped rather than carried: an unknown name
+          // would render a class nothing defines, which is a section with no ground at all.
+          .map((s) => ({
+            section: s.section,
+            visible: s.visible !== false,
+            ...(isBand((s as { band?: unknown }).band) ? { band: (s as { band: BandName }).band } : {}),
+          }));
       }
     } catch {
       // A hand-mangled value falls back to the page as the code has it, which is always safe.

@@ -160,7 +160,7 @@ export default async function HomePage() {
           const cards = items<{ heading: string; body: string; icon: string }>(t('home.personas.items'), ['heading']);
           if (cards.length === 0) return null;
           return (
-            <div className="aa-section-pad" style={{ background: 'var(--aa-white)', paddingTop: 56, paddingBottom: 48 }}>
+            <div className="aa-section-pad" style={{ background: 'var(--aa-band-bg, var(--aa-white))', paddingTop: 56, paddingBottom: 48 }}>
               <Editable k="home.personas.heading" label="this heading" as="div" block>
               <h2 className="aa-section-heading aa-section-heading--center">{t('home.personas.heading')}</h2>
               </Editable>
@@ -194,7 +194,7 @@ export default async function HomePage() {
             A site with no courses yet shows no courses section. The heading, the empty carousel
             and a "View all" button leading to an empty page are three ways of saying nothing. */}
         {courses?.length !== 0 && (
-        <div className="aa-section-pad" style={{ background: 'var(--aa-sky-teal)' }}>
+        <div className="aa-section-pad" style={{ background: 'var(--aa-band-bg, var(--aa-sky-teal))' }}>
           <div className="aa-mb-32">
             <Editable k="home.courses.heading" label="this heading" as="div" block>
             <h2 className="aa-section-heading aa-section-heading--lg">{t('home.courses.heading')}</h2>
@@ -228,7 +228,7 @@ export default async function HomePage() {
       <>
         {/* KNOWLEDGE BASE */}
         {showKnowledge && (
-          <div className="aa-section-pad" style={{ background: 'var(--aa-deep-teal)' }}>
+          <div className="aa-section-pad" style={{ background: 'var(--aa-band-bg, var(--aa-deep-teal))' }}>
             <div>
               <Editable k="home.kb.badge" label="this label" as="div" block>
               <div className="aa-kb-badge"><Icons.Books />{t('home.kb.badge')}</div>
@@ -257,7 +257,7 @@ export default async function HomePage() {
     cta: (
       <>
         {/* CTA */}
-        <div className="aa-section-pad" style={{ background: 'var(--aa-orange)' }}>
+        <div className="aa-section-pad" style={{ background: 'var(--aa-band-bg, var(--aa-orange))' }}>
           <div className="aa-cta-banner">
             <div className="aa-cta-banner__text">
               <Editable k="home.cta.heading" label="this heading" as="div" block>
