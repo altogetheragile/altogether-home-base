@@ -55,7 +55,7 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
         @media (max-width: 767px) { .aa-about-grid { grid-template-columns: 1fr; gap: 40px; } }
       `}</style>
 
-      <section style={{ fontFamily: fonts.sans, background: p.white, padding: '96px 0 80px', overflow: 'hidden' }}>
+      <section style={{ fontFamily: fonts.sans, background: `var(--aa-band-bg, ${p.white})`, padding: '96px 0 80px', overflow: 'hidden' }}>
         <div
           style={{ maxWidth: 1200, margin: '0 auto', padding: '0 48px' }}
           className={`aa-about-grid${hasLeftColumn ? '' : ' aa-about-grid--alone'}`}
@@ -114,10 +114,10 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
           {/* RIGHT - text */}
           <div style={{ paddingTop: 40 }}>
             <Editable k="home.founder.eyebrow" label="the small line above the founder heading" as="div" block>
-            <p style={{ color: p.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>{t('home.founder.eyebrow')}</p>
+            <p style={{ color: `var(--aa-band-ink, ${p.deepTeal})`, fontSize: 28, fontWeight: 800, margin: '0 0 28px' }}>{t('home.founder.eyebrow')}</p>
             </Editable>
             <Editable k="home.founder.heading" label="the founder heading" as="div" block>
-            <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 48, fontWeight: 400, lineHeight: 1.1, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
+            <h2 style={{ fontFamily: fonts.serif, color: `var(--aa-band-ink, ${p.deepTeal})`, fontSize: 48, fontWeight: 400, lineHeight: 1.1, margin: '0 0 32px', letterSpacing: '-0.01em' }}>
               {/* Two lines, the second in italics. Splitting on the newline keeps that shape while
                   letting a site write its own words into it. */}
               {lines(t('home.founder.heading')).map((line, i) => (
@@ -128,23 +128,23 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
               ))}
             </h2>
             </Editable>
-            <div style={{ width: 48, height: 3, background: p.orange, borderRadius: 2, marginBottom: 32 }} />
-            <Prose k="home.founder.body" text={t('home.founder.body')} style={{ color: p.body, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }} />
+            <div style={{ width: 48, height: 3, background: `var(--aa-band-accent, ${p.orange})`, borderRadius: 2, marginBottom: 32 }} />
+            <Prose k="home.founder.body" text={t('home.founder.body')} style={{ color: `var(--aa-band-ink-soft, ${p.body})`, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }} />
             <When any={[t('home.founder.quote')]}>
               <div style={{ borderLeft: `3px solid ${p.orange}`, paddingLeft: 20, marginBottom: 44 }}>
-                <p style={{ color: p.midTeal, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>
+                <p style={{ color: `var(--aa-band-ink-soft, ${p.midTeal})`, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>
                   &ldquo;{t('home.founder.quote')}&rdquo;
                 </p>
               </div>
             </When>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
               <Editable k="home.founder.bookCta" label="this button" outside>
-              <a href={bookingUrl} className="aa-cta-primary" style={{ background: p.orange, color: p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <a href={bookingUrl} className="aa-cta-primary" style={{ background: `var(--aa-band-accent, ${p.orange})`, color: `var(--aa-band-accent-ink, ${p.deepTeal})`, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
                 {t('home.founder.bookCta')} <ArrowRight />
               </a>
               </Editable>
               <Editable k="home.founder.cta" label="this link" outside>
-              <Link href="/about" className="aa-cta-secondary" style={{ background: 'none', border: 'none', color: p.midTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease', padding: 0, textDecoration: 'none' }}>
+              <Link href="/about" className="aa-cta-secondary" style={{ background: 'none', border: 'none', color: `var(--aa-band-ink, ${p.midTeal})`, fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease', padding: 0, textDecoration: 'none' }}>
                 {t('home.founder.cta')} <ArrowRight />
               </Link>
               </Editable>

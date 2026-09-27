@@ -66,6 +66,50 @@ describe('a band chooses its colours', () => {
   it('paints the statistics bar from the band, which is where this started', () => {
     expect(home).toContain('background: var(--aa-band-bg, var(--aa-sky-teal));');
   });
+
+  it('offers a band only where choosing one does something', () => {
+    // A row in the editor that moves nothing is worse than no row: it reads as broken. Two
+    // sections shipped that way, the testimonials strip and the founder block, because both
+    // paint their ground inline in a component of their own rather than in the stylesheet.
+    const sources: Record<string, string[]> = {
+      hero: [home], stats: [home], personas: [page], courses: [page], knowledge: [page], cta: [page],
+      testimonials: [readFileSync('src/app/HomeTestimonials.tsx', 'utf8')],
+      founder: [readFileSync('src/components/AboutSection.tsx', 'utf8')],
+    };
+    for (const section of HOME_SECTIONS) {
+      const where = sources[section.key];
+      expect(where, `${section.key} is offered a band and nothing says where its ground comes from`).toBeTruthy();
+      expect(where.some((f) => f.includes('--aa-band-bg')), `${section.key} ignores the band it offers`).toBe(true);
+    }
+  });
+});
+
+// A button is a colour decision sitting inside somebody else's ground, which is the shape that
+// goes wrong: an accent button on an accent band, or a deep button on a deep one, is not a faint
+// button, it is an invisible one.
+describe('a button reads against the band it sits on', () => {
+  it('never draws a filled button in the ground it stands on', () => {
+    for (const band of BANDS) {
+      const block = css.match(new RegExp(`\\.aa-band--${band.key}\\s*\\{([^}]*)\\}`))![1];
+      const read = (p: string) => block.match(new RegExp(`${p}:\\s*var\\(--aa-([a-z-]+)\\)`))![1];
+      expect(read('--aa-band-accent'), `${band.label}: a filled button is its own ground`)
+        .not.toBe(read('--aa-band-bg'));
+      expect(read('--aa-band-accent-ink'), `${band.label}: a filled button's text is its own ground`)
+        .not.toBe(read('--aa-band-accent'));
+    }
+  });
+
+  it('takes every button colour from the band, with the shipped colour as the fallback', () => {
+    const rule = (sel: string) => home.match(new RegExp(`\\${sel}\\s*\\{([^}]*)\\}`))![1];
+    for (const sel of ['.aa-btn--primary', '.aa-btn--primary-sm', '.aa-btn--deep']) {
+      expect(rule(sel), `${sel} has a fixed ground`).toMatch(/background:\s*var\(--aa-band-accent,/);
+      expect(rule(sel), `${sel} has fixed text`).toMatch(/color:\s*var\(--aa-band-accent-ink,/);
+    }
+    // A button with no ground of its own is text on the band, so it takes the band's own ink.
+    for (const sel of ['.aa-btn--ghost', '.aa-btn--ghost-light']) {
+      expect(rule(sel), `${sel} would vanish on a dark band`).toMatch(/color:\s*var\(--aa-band-ink,/);
+    }
+  });
 });
 
 describe('every colour has an owner', () => {

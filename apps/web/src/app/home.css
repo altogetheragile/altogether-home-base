@@ -97,29 +97,29 @@
 }
 
 .aa-btn--primary {
-  background: var(--aa-orange);
-  color: var(--aa-deep-teal);
+  background: var(--aa-band-accent, var(--aa-orange));
+  color: var(--aa-band-accent-ink, var(--aa-deep-teal));
   padding: 13px 26px;
   font-size: 15px;
 }
 
 .aa-btn--primary-sm {
-  background: var(--aa-orange);
-  color: var(--aa-deep-teal);
+  background: var(--aa-band-accent, var(--aa-orange));
+  color: var(--aa-band-accent-ink, var(--aa-deep-teal));
   padding: 12px 24px;
   font-size: 14px;
 }
 
 .aa-btn--deep {
-  background: var(--aa-deep-teal);
-  color: var(--aa-white);
+  background: var(--aa-band-accent, var(--aa-deep-teal));
+  color: var(--aa-band-accent-ink, var(--aa-white));
   padding: 13px 28px;
   font-size: 15px;
 }
 
 .aa-btn--ghost {
   background: none;
-  color: var(--aa-deep-teal);
+  color: var(--aa-band-ink, var(--aa-deep-teal));
   padding: 0;
   font-size: 15px;
   gap: 6px;
@@ -127,7 +127,7 @@
 
 .aa-btn--ghost-light {
   background: none;
-  color: var(--aa-deep-teal);
+  color: var(--aa-band-ink, var(--aa-deep-teal));
   padding: 0;
   font-size: 15px;
   gap: 6px;
