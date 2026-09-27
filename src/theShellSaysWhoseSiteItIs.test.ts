@@ -29,6 +29,59 @@ describe('the shell says whose site it is', () => {
     }
   });
 
+  // Running it twice is not hypothetical: prerender builds the base head with it and then builds
+  // the SPA shell with it again. A plain replaceAll found the shipped path inside the absolute
+  // URL the first pass had written and prefixed it a second time, which reached production as
+  // href="https://altogetheragile.comhttps://altogetheragile.com/brand/lockup-horizontal-tight.svg"
+  // on every SPA route: a broken preload and a broken image on the live site.
+  describe('running twice says the same thing as running once', () => {
+    const ours = {
+      url: SHIPPED.url,
+      logo: `${SHIPPED.url}${SHIPPED.logo}`,
+      favicon: SHIPPED.favicon,
+    };
+
+    it('does not prefix an address it has already written', () => {
+      const once = withIdentity(shell, ours);
+      expect(withIdentity(once, ours)).toBe(once);
+    });
+
+    it('leaves no doubled address behind', () => {
+      const twice = withIdentity(withIdentity(shell, ours), ours);
+      expect(twice).not.toContain(`${SHIPPED.url}${SHIPPED.url}`);
+      expect(twice).not.toMatch(/https?:\/\/[^"']*https?:\/\//);
+    });
+
+    it('is idempotent for a second site too', () => {
+      const her = { ...hers, logo: 'https://cdn.example/hers.svg', favicon: 'https://cdn.example/hers.png' };
+      const once = withIdentity(shell, her);
+      expect(withIdentity(once, her)).toBe(once);
+    });
+  });
+
+  // A tab icon is a face, like the lockup. The shell declared ours as a path, that file ships to
+  // every site built from here, and nothing rewrote the link, so a second site served our kanji
+  // on every page this app answers. Reported as somebody else's mark in her bookmarks.
+  describe('the tab icon', () => {
+    it('is hers when she has one', () => {
+      const out = withIdentity(shell, { ...hers, favicon: 'https://cdn.example/dandelion.png' });
+      expect(out).toContain('https://cdn.example/dandelion.png');
+      expect(out).not.toContain(`href="${SHIPPED.favicon}"`);
+    });
+
+    it('is nothing at all when she has not chosen one, rather than ours', () => {
+      // Unfinished beats borrowed: the same rule the lockup and the founder photograph follow.
+      const out = withIdentity(shell, hers);
+      expect(out).not.toContain(SHIPPED.favicon);
+      expect(out).not.toMatch(/<link\s+rel="icon"/);
+    });
+
+    it('is left alone on our own site', () => {
+      const out = withIdentity(shell, { url: SHIPPED.url, favicon: SHIPPED.favicon });
+      expect(out).toContain(`href="${SHIPPED.favicon}"`);
+    });
+  });
+
   it('leaves our own site exactly as it is', () => {
     // Nothing configured, or configured to what we ship, must not change a byte.
     expect(withIdentity(shell, { url: SHIPPED.url })).toBe(shell);

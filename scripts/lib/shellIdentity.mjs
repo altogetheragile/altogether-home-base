@@ -25,6 +25,7 @@ export const SHIPPED = {
   heroBody:
     'Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.',
   logo: '/brand/lockup-horizontal-tight.svg',
+  favicon: '/favicon.svg',
   twitter: '@altogetheragile',
 };
 
@@ -43,10 +44,27 @@ const escapeHtml = (s) =>
  *  @param {string} [identity.tagline]  its one-line description
  *  @param {string} [identity.ogImage]  absolute URL of its share image
  *  @param {string} [identity.logo]     absolute URL of an uploaded logo, if it has one
+ *  @param {string} [identity.favicon]  this site's tab icon, if it has one of its own
  *  @param {{first: string, second: string, gap: boolean, twoTone: boolean}} [identity.wordmark]
  *         what to set where the logo goes when there is no uploaded one, from wordmarkOf
  */
-export function withIdentity(html, { url, company, tagline, ogImage, logo, wordmark } = {}) {
+/** Swaps a shipped path for this site's address, anchored to the start of an attribute value.
+ *
+ *  Not a replaceAll, because withIdentity runs over the same shell twice: prerender builds the
+ *  base head with it and then builds the SPA shell with it again. A plain replaceAll is not
+ *  idempotent - the second pass finds the path sitting inside the absolute URL the first pass
+ *  wrote and prefixes it a second time. That shipped, and is live as
+ *  href="https://altogetheragile.comhttps://altogetheragile.com/brand/lockup-horizontal-tight.svg"
+ *  on every SPA route: a broken preload and a broken image.
+ *
+ *  Anchoring to a quote, a bracket or whitespace cannot match mid-URL, so running it any number
+ *  of times gives the same answer as running it once. */
+function swapPath(html, shippedPath, replacement) {
+  const escaped = shippedPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return html.replace(new RegExp(`(["'(\\s])${escaped}`, 'g'), (_m, edge) => `${edge}${escapeHtml(replacement)}`);
+}
+
+export function withIdentity(html, { url, company, tagline, ogImage, logo, favicon, wordmark } = {}) {
   const site = (url || SHIPPED.url).replace(/\/$/, '');
   // The one question everything else hangs off. Left alone, a site with nothing configured is
   // byte-for-byte what it is today, which is what altogetheragile.com wants.
@@ -70,7 +88,18 @@ export function withIdentity(html, { url, company, tagline, ogImage, logo, wordm
   out = out.replaceAll(SHIPPED.url, escapeHtml(site));
 
   const uploaded = logo?.trim() && /^https?:\/\//i.test(logo.trim()) ? logo.trim() : null;
-  if (uploaded) out = out.replaceAll(SHIPPED.logo, escapeHtml(uploaded));
+  if (uploaded) out = swapPath(out, SHIPPED.logo, uploaded);
+
+  // The tab icon, the same way. The shell declares this repository's kanji as a path, that file
+  // is deployed to every site built from here, and nothing rewrote the link: a second site served
+  // our icon on every page this app answers. Visible as somebody else's mark in her bookmarks,
+  // which is where it was reported.
+  //
+  // With no icon of its own a site that is not ours gets no link at all, rather than ours. That
+  // is the rule the lockup and the founder photograph already follow: unfinished beats borrowed.
+  const ownIcon = favicon?.trim() ? favicon.trim() : null;
+  if (ownIcon && ownIcon !== SHIPPED.favicon) out = swapPath(out, SHIPPED.favicon, ownIcon);
+  else if (!ours && !ownIcon) out = out.replace(/\n?\s*<link\s+rel="icon"[^>]*>/g, '');
 
   if (!ours) {
     // A Twitter handle is an account, not a style. There is no setting for one, and guessing is
