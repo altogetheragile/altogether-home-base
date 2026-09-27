@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Resvg } from '@resvg/resvg-js';
 import { withBrand } from './lib/brandShell.mjs';
 import { withIdentity, SHIPPED } from './lib/shellIdentity.mjs';
+import { removeOurFace } from './lib/ourFace.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -740,6 +741,10 @@ async function main() {
     rmSync(indexHtmlPath);
     console.log('  ok   home cutover: dist/index.html -> dist/_spa.html (/ served by Next)');
   }
+
+  // Last, so nothing above can be reading a file this takes away.
+  const gone = removeOurFace(DIST, SITE_URL === SHIPPED.url, { join: resolve, existsSync, rmSync });
+  if (gone.length) console.log(`  ok   this repository's own face left out of the build (${gone.join(', ')})`);
 
   console.log(`\nPrerendered meta tags for ${succeeded} pages\n`);
 }
