@@ -32,10 +32,17 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
-    icons: {
-      icon: [{ url: favicon, type: favicon.endsWith('.svg') ? 'image/svg+xml' : undefined }],
-      shortcut: favicon,
-    },
+    // No icon declared at all when this site has not chosen one. An empty href is a broken link
+    // rather than an absent one, and the shipped kanji is this repository's face: a site that has
+    // not chosen an icon should look unfinished rather than look like Altogether Agile.
+    ...(favicon
+      ? {
+        icons: {
+          icon: [{ url: favicon, type: favicon.endsWith('.svg') ? 'image/svg+xml' : undefined }],
+          shortcut: favicon,
+        },
+      }
+      : {}),
     // A crawler is never an administrator, so while the holding page is up there is nothing here
     // worth indexing, and a half-written page indexed once is hard to take back.
     ...(settings.under_construction ? { robots: { index: false, follow: false } } : {}),
