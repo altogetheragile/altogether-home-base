@@ -143,6 +143,34 @@ describe('buttons and pictures', () => {
     expect(screen.getByRole('button').style.top).toBe('2px');
   });
 
+  it('does not flatten a background it wraps', () => {
+    // The wrapper has to be positioned for the pen to sit on it. Relative makes it an in-flow
+    // block whose only child is absolute, so it is nought pixels tall and the background resolves
+    // top and bottom against nothing. A hero picture that was uploaded, saved and served fine was
+    // invisible to the only person who could edit it, and visible to everybody else.
+    const { container } = render(
+      <EditableArea on>
+        <Editable k="home.hero.background" label="the background picture" as="div" fill>
+          <div className="aa-hero-bg"><img src="/hero.png" alt="" /></div>
+        </Editable>
+      </EditableArea>,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.position).toBe('absolute');
+    expect(wrapper.style.inset).toBe('0px');
+  });
+
+  it('still wraps ordinary block content in flow', () => {
+    const { container } = render(
+      <EditableArea on>
+        <Editable k="home.hero.heading" as="div" block><h1>Headline</h1></Editable>
+      </EditableArea>,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.position).toBe('relative');
+    expect(wrapper.style.display).toBe('block');
+  });
+
   it('sends a picture that lives on This Site to This Site', () => {
     // The founder photograph is a brand image, not page copy, which is exactly why nobody could
     // find it. The key names its own tab, so the pen needs no special case.

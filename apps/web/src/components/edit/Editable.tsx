@@ -54,7 +54,7 @@ export function tabFor(key: string): string {
 }
 
 export function Editable({
-  k, label, as: Tag = 'span', block = false, outside = false, children,
+  k, label, as: Tag = 'span', block = false, outside = false, fill = false, children,
 }: {
   /** The copy key these words came from. */
   k: string;
@@ -67,6 +67,16 @@ export function Editable({
    *  on top of the arrow, and where a click near the pen would follow the link instead. Safe
    *  here because a button sits in the middle of its section rather than against its edge. */
   outside?: boolean;
+  /** For content that is itself absolutely positioned and fills its section: a hero background.
+   *
+   *  The wrapper has to be positioned for the pen to sit on it, and `position: relative` makes it
+   *  an in-flow block whose only child is absolute, so it is nought pixels tall. The background
+   *  then resolves top and bottom against nothing and collapses. It happened: a hero picture that
+   *  was uploaded, saved and served correctly was invisible to the one person who could edit it,
+   *  and perfectly visible to everybody else, because only an administrator gets this wrapper.
+   *
+   *  Filling instead means the wrapper takes the place the content was going to take. */
+  fill?: boolean;
   children: React.ReactNode;
 }) {
   const on = useContext(CanEdit);
@@ -81,7 +91,9 @@ export function Editable({
 
   return (
     <Tag
-      style={{ position: 'relative', display: block ? 'block' : 'inline-block' }}
+      style={fill
+        ? { position: 'absolute', inset: 0, display: 'block' }
+        : { position: 'relative', display: block ? 'block' : 'inline-block' }}
       onMouseEnter={() => setOver(true)}
       onMouseLeave={() => setOver(false)}
     >
