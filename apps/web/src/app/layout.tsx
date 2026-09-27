@@ -12,6 +12,7 @@ import { EditThisPage } from '@/components/edit/EditThisPage';
 import { HiddenFromVisitors } from '@/components/edit/HiddenFromVisitors';
 import { HoldingPage } from '@/components/HoldingPage';
 import { EditableArea } from '@/components/edit/Editable';
+import { Analytics } from '@vercel/analytics/react';
 import { MODULE_FOR_PATH } from '@/lib/copy/routes';
 import { moduleIsShown, type GatedModule } from '@/lib/module-gate';
 import './globals.css';
@@ -99,6 +100,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               and how the holding page itself is switched off. */}
           {admin && <EditThisPage previewing={previewing} />}
         </div>
+        {/* Nothing measured this app at all. The SPA has carried Vercel Analytics for a long
+            time, and every public page moved out of it and into here, so the pages that exist to
+            be found by strangers were the only ones nobody was counting.
+
+            Served from /va/script.js, the same same-origin proxy the SPA uses, because the
+            script's own host is on every ad blocker's list and a blocked script measures nothing.
+            That rewrite lives in the SPA's vercel.json, which owns both domains, so it answers
+            for pages served from here too: verified 200 on altogetheragile.com and on
+            streamstrategy.co.uk before relying on it.
+
+            Cookieless and carries no identifier, so it needs no consent banner. */}
+        <Analytics scriptSrc="/va/script.js" />
       </body>
     </html>
   );
