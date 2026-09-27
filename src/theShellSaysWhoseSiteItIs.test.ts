@@ -59,6 +59,35 @@ describe('the shell says whose site it is', () => {
     });
   });
 
+  // The wave is the biggest thing on the first paint and it is fetchpriority="high", so a second
+  // site downloaded our picture first and flashed it up before React replaced the shell. Reported
+  // as "it flashes up the AltogetherAgile hero image before navigating to the dashboard".
+  describe('the picture behind the hero', () => {
+    it('is gone from somebody else’s shell', () => {
+      const out = withIdentity(shell, hers);
+      expect(out).not.toContain('hero-bg');
+    });
+
+    it('takes its layer with it, rather than leaving an empty box', () => {
+      const out = withIdentity(shell, hers);
+      expect(out).not.toMatch(/<div style="position:absolute;[^"]*">\s*<\/div>/);
+    });
+
+    it('leaves the hero itself standing', () => {
+      // A hero with no picture is a plain colour, which is how the site treats one anyway.
+      const out = withIdentity(shell, hers);
+      expect(out).toContain('sh-hero-h1');
+      expect(out).toContain('Stream Strategy');
+    });
+
+    it('is untouched on our own site', () => {
+      const out = withIdentity(shell, { url: SHIPPED.url, favicon: SHIPPED.favicon });
+      expect(out).toContain(SHIPPED.heroPicture);
+      // The srcset too: three widths, so a phone does not fetch the widest.
+      expect((out.match(/hero-bg/g) ?? []).length).toBeGreaterThan(3);
+    });
+  });
+
   // A tab icon is a face, like the lockup. The shell declared ours as a path, that file ships to
   // every site built from here, and nothing rewrote the link, so a second site served our kanji
   // on every page this app answers. Reported as somebody else's mark in her bookmarks.

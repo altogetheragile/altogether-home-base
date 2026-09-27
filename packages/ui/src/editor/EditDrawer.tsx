@@ -109,9 +109,12 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   /** Groups the person has folded away. Closed rather than open, so reopening the drawer leaves
    *  everything where they put it; the initial state is decided once, when the fields arrive. */
   const [closed, setClosed] = useState<Set<string>>(new Set());
-  /** Which tab's folds have been set up, so a person's own folding survives a save and a reload
-   *  and is only redecided when they move to a different tab. */
-  const foldedFor = useRef<string | null>(null);
+  /** Which tab's folds have been worked out, so a person's own folding survives a save and a
+   *  reload and is only redecided when they move to a different tab.
+   *
+   *  State rather than a ref because the folding is worked out while rendering, not afterwards.
+   *  See below. */
+  const [foldedFor, setFoldedFor] = useState<string | null>(null);
   /** A field the page has asked to edit, held until its page has loaded and there is something
    *  to scroll to. The pen that sends this is on the thing itself, so arriving at the right tab
    *  and leaving somebody to find the box again would be most of the problem still there. */
@@ -167,12 +170,21 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   // somebody just asked for is the opposite of answering, and a pen unfolds whatever holds the
   // field it was pressed on. A page with too few fields to group has no groups to fold, and
   // groupFields says so by returning none.
-  useEffect(() => {
-    if (!fields || foldedFor.current === active) return;
-    foldedFor.current = active;
+  //
+  // Worked out while rendering rather than in an effect. An effect runs after the browser has
+  // already been given a frame to paint, so the groups appeared open and then snapped shut: a
+  // flash of the whole page of fields, every time the drawer was opened. It also made the test
+  // for this racy, which is how it was noticed - green on a fast machine, red on CI.
+  //
+  // Setting state during a render is React's own answer to deriving state from something that
+  // changed: it re-runs this component before anything is shown, so there is no frame in which
+  // the groups are open. The guard is what makes it terminate - foldedFor matches active on the
+  // second run, and nothing is set again.
+  if (fields && foldedFor !== active) {
+    setFoldedFor(active);
     setQuery('');
     setClosed(new Set(groupFields(fields).map((g) => g.name)));
-  }, [fields, active]);
+  }
 
   // Two things the page needs to know while this is open, and no way to tell it but the window:
   // that it should show every pen rather than one at a time, and that it should move over, since
@@ -193,7 +205,7 @@ export function EditDrawer({ host }: { host: EditorHost }) {
       const { page, key } = (e as CustomEvent<{ page: string; key: string }>).detail ?? {};
       if (!key) return;
       setOpen(true);
-      if (page) { setTab(page); foldedFor.current = null; }
+      if (page) { setTab(page); setFoldedFor(null); }
       // Cleared here rather than once the field arrives: asking twice for the same field is not a
       // state change, so an effect keyed on it would not run and a search would keep it hidden.
       setQuery('');

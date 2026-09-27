@@ -26,6 +26,7 @@ export const SHIPPED = {
     'Practical agile training and coaching, grounded in 25 years of real experience. Still delivered personally, every time.',
   logo: '/brand/lockup-horizontal-tight.svg',
   favicon: '/favicon.svg',
+  heroPicture: '/images/hero-bg-1920.webp',
   twitter: '@altogetheragile',
 };
 
@@ -102,6 +103,19 @@ export function withIdentity(html, { url, company, tagline, ogImage, logo, favic
   else if (!ours && !ownIcon) out = out.replace(/\n?\s*<link\s+rel="icon"[^>]*>/g, '');
 
   if (!ours) {
+    // The wave behind the hero is this site's pattern, in this site's colours, and it is the
+    // biggest thing on the first paint. It is fetchpriority="high", so a second site downloaded
+    // our picture first and flashed it up before React replaced the whole shell: reported as
+    // "it flashes up the AltogetherAgile hero image before navigating to the dashboard".
+    //
+    // The whole layer goes, not just the src. An empty positioned div would still be there, and
+    // the hero behind it is a plain colour, which the site itself already treats as a perfectly
+    // good way for a hero to look.
+    out = out.replace(
+      /\n?\s*<div style="position:absolute;[^"]*">\s*<img src="\/images\/hero-bg-[^>]*>\s*<\/div>/,
+      '',
+    );
+
     // A Twitter handle is an account, not a style. There is no setting for one, and guessing is
     // worse than silence: left in place, every share of her site credits ours.
     out = out.replace(/\n?\s*<meta\s+name="twitter:site"[^>]*>/g, '');
