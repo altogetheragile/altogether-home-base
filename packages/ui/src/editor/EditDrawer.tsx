@@ -155,15 +155,19 @@ export function EditDrawer({ host }: { host: EditorHost }) {
     setTab(null);
   }, [pathname]);
 
-  // A long page opens folded except for its first part, because a column of thirty-eight boxes
-  // with headings in it is still a column of thirty-eight boxes. A short one opens as it always
-  // did: folding four fields into two groups hides things for no gain.
+  // Every section opens folded, so the drawer opens as a list of what this page has rather than
+  // as a column of thirty-eight boxes. One heading is one line; finding the right one is reading
+  // eight lines instead of scrolling past everything between them.
+  //
+  // Nothing is lost by folding: a search stands every group open, because hiding the thing
+  // somebody just asked for is the opposite of answering, and a pen unfolds whatever holds the
+  // field it was pressed on. A page with too few fields to group has no groups to fold, and
+  // groupFields says so by returning none.
   useEffect(() => {
     if (!fields || foldedFor.current === active) return;
     foldedFor.current = active;
     setQuery('');
-    const all = groupFields(fields);
-    setClosed(all.length > 2 && fields.length > 12 ? new Set(all.slice(1).map((g) => g.name)) : new Set());
+    setClosed(new Set(groupFields(fields).map((g) => g.name)));
   }, [fields, active]);
 
   // Two things the page needs to know while this is open, and no way to tell it but the window:
