@@ -118,6 +118,10 @@ let SITE_TAGLINE = null;
  *  Putting the values in the shell's own <style> means the first paint is already right. */
 let BRAND_CSS = '';
 let BRAND_LOGO = null;
+/** This site's own tab icon, if it has stored one. Deliberately the stored value rather than the
+ *  resolved one: resolveImages falls back to this repository's kanji, and handing that to the
+ *  shell is how a second site came to serve our mark on every page this app answers. */
+let BRAND_FAVICON = null;
 
 /** What the header sets where a logo would go, for a site that has not uploaded one. Worked out
  *  from the same rule the two React headers use, so the static shell and the hydrated page agree
@@ -145,6 +149,7 @@ const identityHead = (html) => withIdentity(html, {
   tagline: SITE_TAGLINE,
   ogImage: BRAND_OG_IMAGE,
   logo: BRAND_LOGO,
+  favicon: BRAND_FAVICON,
   wordmark: WORDMARK,
 });
 
@@ -599,6 +604,10 @@ async function main() {
 
     const vars = { ...cssVarsFor(resolveColors(settings?.brand)), ...fontVarsFor(settings?.brand) };
     BRAND_CSS = Object.entries(vars).map(([k, v]) => `${k}:${v}`).join(';');
+    const ownIcon = settings?.brand?.images?.favicon;
+    BRAND_FAVICON = (typeof ownIcon === 'string' ? picture(ownIcon)?.src : null) || null;
+    if (BRAND_FAVICON) console.log('  ok   tab icon from site_settings.brand');
+
     const logo = logoOf(settings?.brand, settings?.company_name);
     BRAND_LOGO = logo.mode === 'image' ? logo.src : null;
     WORDMARK = wordmarkOf(settings?.brand, settings?.company_name);
