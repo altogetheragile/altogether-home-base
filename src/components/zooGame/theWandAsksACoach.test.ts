@@ -90,6 +90,17 @@ describe('the wand asks a coach', () => {
     expect(out.note).toMatch(/only understands a single sentence/i);
   });
 
+  it('will not flatten a goal written over several lines, whatever the shape says', async () => {
+    // The shape is only set when a chip is clicked, so somebody who typed an objective and three
+    // measures into the box is marked "outcome". This is exactly what was reported: an OKR typed
+    // into the field came back as one sentence.
+    const written = 'Open a zoo that visitors love and come back to\n\n80% return within 1 year\nAverage NPS of 9\nVisitor numbers double within 6 months';
+    invoke.mockResolvedValue({ data: null, error: { message: 'Unauthorized' } });
+    const out = await reword(written, 'outcome');
+    expect(out.goal, 'the measures were thrown away').toBe(written);
+    expect(out.coached).toBe(false);
+  });
+
   it('still tidies a plain outcome when the coach cannot be reached', async () => {
     invoke.mockResolvedValue({ data: null, error: { message: 'Unauthorized' } });
     const out = await reword('lions', 'outcome');

@@ -51,7 +51,13 @@ export async function rewordWithCoach(goal: string, shape: GoalShape = 'outcome'
   // The fallback can only handle one sentence. It splits on full stops and newlines and keeps the
   // first part, which on an objective with key results throws the measures away - the part worth
   // having. So it does not touch those shapes; it says why instead.
-  if (shape !== 'outcome') {
+  // The selected shape is a hint and is often wrong: it is only set when the player clicks a
+  // shape chip, so somebody who typed an objective and three measures straight into the box is
+  // marked "outcome". The coach reads the text and decides for itself; the fallback cannot, so it
+  // uses the one signal it can trust - more than one line means more than one sentence's worth,
+  // and the tidy-up would keep the first line and throw the rest away.
+  const moreThanASentence = /\n/.test(said);
+  if (shape !== 'outcome' || moreThanASentence) {
     return {
       goal: said,
       note: 'I could not reach the coach, and the tidy-up here only understands a single sentence - '
