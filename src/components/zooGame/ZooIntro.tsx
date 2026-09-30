@@ -108,14 +108,29 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           </p>
           <label className="block">
             <span className="sr-only">Product Goal</span>
-            <span className="flex items-center gap-2 rounded-md border-2 border-primary/50 bg-background px-3 py-2 focus-within:border-primary">
-              <Pencil className="h-4 w-4 shrink-0 text-primary/70" />
-              <input
+            {/* A textarea rather than one line. A Product Goal is usually a sentence, but the
+                shapes offered below it are not: an objective with key results runs to several
+                lines, and on one line it scrolled out of sight while being typed - the player
+                could not read the thing they were being asked to think hardest about.
+
+                It grows to what is in it rather than scrolling, up to a point, and can be
+                dragged taller after that. `items-start` so the pencil and the wand stay at the
+                top as it grows, instead of drifting down beside the middle of the text. */}
+            <span className="flex items-start gap-2 rounded-md border-2 border-primary/50 bg-background px-3 py-2 focus-within:border-primary">
+              <Pencil className="mt-1 h-4 w-4 shrink-0 text-primary/70" />
+              <textarea
                 value={goal}
+                rows={1}
                 onChange={(e) => { setGoal(e.target.value); setReworded(null); }}
+                onInput={(e) => {
+                  // Height from content, so it is as tall as what has been written and no taller.
+                  const box = e.currentTarget;
+                  box.style.height = 'auto';
+                  box.style.height = `${Math.min(box.scrollHeight, 200)}px`;
+                }}
                 placeholder="Open a zoo that visitors love and come back to"
                 aria-label="Product Goal"
-                className="w-full bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-muted-foreground/70"
+                className="min-h-[1.75rem] w-full resize-y bg-transparent text-base font-medium leading-snug outline-none placeholder:font-normal placeholder:text-muted-foreground/70"
               />
               {/* The same wand the Sprint Goal has, and deliberately only half of it. That one will
                   write a Sprint Goal from nothing, because by then there is a forecast to write it

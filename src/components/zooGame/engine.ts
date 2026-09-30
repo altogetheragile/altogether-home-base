@@ -17,7 +17,7 @@ import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
+import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -2686,6 +2686,27 @@ const GOAL_A_THING = /\b(enclosure|habitat|paddock|tank|aviary|pen|path(way)?s?|
 /** Words that put a goal at the scale of the whole product rather than one part of it. */
 const GOAL_THE_WHOLE = /\b(zoo|park|visitors?|families|people|everyone)\b/i;
 
+// Is this goal about the zoo at all?
+//
+// Deliberately NOT GOAL_THE_WHOLE, which counts "people", "families" and "everyone" - words in
+// every goal ever written about anything. An objective and key results pasted in from work
+// matched "people" on its first word, sailed through, and came back as "Open the people who start
+// BestU carry on after an initial two-week period ... so that visitors love it and come back."
+// Nonsense, and confidently phrased nonsense, which is worse.
+//
+// So: evidence that this is the zoo. The furniture of the park, or the park itself. A goal with
+// none of it is not refused - it is handed back untouched, with the reason. Getting this wrong
+// costs somebody a note they can ignore; inventing a zoo outcome for a goal about a fitness app
+// costs them their own words.
+const GOAL_ZOO_WORDS = /\b(zoo|park|animals?|exhibits?|keepers?|visitors?|species|creatures?)\b/i;
+
+/** The animals, areas and facilities this zoo has, from the catalogue the game is built from.
+ *  See ZOO_VOCABULARY: kept beside the lists so adding a species cannot leave this behind. */
+const GOAL_ZOO_THINGS = new RegExp(`\\b(${ZOO_VOCABULARY.join('|')})\\b`, 'i');
+
+const aboutThisZoo = (said: string) =>
+  GOAL_ZOO_WORDS.test(said) || GOAL_A_THING.test(said) || GOAL_ZOO_THINGS.test(said);
+
 /** The same wand, at product scale: it rewords the Product Goal the player wrote, and says what it
  *  changed.
  *
@@ -2712,6 +2733,20 @@ const GOAL_THE_WHOLE = /\b(zoo|park|visitors?|families|people|everyone)\b/i;
 export function rewordProductGoal(theirs: string): { goal: string; note: string } {
   const said = theirs.trim().replace(/\s+/g, ' ');
   if (!said) return { goal: said, note: '' };
+
+  // Before anything is reshaped: is this about the zoo? A goal from somewhere else gets its own
+  // words back, because the alternative is dressing an objective about a fitness app in zoo
+  // clothing and calling it reworded.
+  if (!aboutThisZoo(said)) {
+    return {
+      goal: said,
+      note: 'That does not look like it is about this zoo, so I have left it exactly as you wrote it. '
+        + 'This game is a zoo you are building for visitors, and a Product Goal here describes what '
+        + 'the park is like once it is true. If you meant to bring a goal in from work, keep it and '
+        + 'write the zoo one underneath - or say what the park would have to become for that goal to '
+        + 'be met.',
+    };
+  }
 
   const first = said.split(GOAL_SPLIT)[0].trim().replace(/[,\s]+$/, '');
   const trimmed = first.length < said.replace(/\.$/, '').length;

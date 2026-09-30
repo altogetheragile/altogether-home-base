@@ -28,7 +28,7 @@ const intro = (goal = '') => render(
     onSetGoalShape={() => {}} /></MemoryRouter>,
 );
 const wand = (c: HTMLElement) => c.querySelector('[data-part="goal-wand"]') as HTMLButtonElement;
-const field = (c: HTMLElement) => c.querySelector('input[aria-label="Product Goal"]') as HTMLInputElement;
+const field = (c: HTMLElement) => c.querySelector('[aria-label="Product Goal"]') as HTMLTextAreaElement;
 const note = (c: HTMLElement) => c.querySelector('[data-part="goal-reworded"]')?.textContent ?? '';
 
 describe('the wand on the Product Goal field', () => {
