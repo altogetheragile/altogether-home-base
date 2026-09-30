@@ -65,9 +65,35 @@ describe('the wand asks a coach', () => {
     expect(out).toEqual({ goal: '', note: '', coached: false });
   });
 
-  it('sends the goal, and nothing else', async () => {
+  it('tells the coach which shape they are writing in', async () => {
+    // Without it the coach answered a plain sentence to an objective with key results, throwing
+    // the measures away. The measures are the part worth having.
     invoke.mockResolvedValue({ data: { success: true, data: { verdict: 'good', goal: 'A zoo.', note: 'Tidied.' } }, error: null });
-    await reword('  a zoo  ');
-    expect(invoke).toHaveBeenCalledWith('zoo-goal-coach', { body: { goal: 'a zoo' } });
+    await reword('  a zoo  ', 'okr');
+    expect(invoke).toHaveBeenCalledWith('zoo-goal-coach', { body: { goal: 'a zoo', shape: 'okr' } });
+  });
+
+  it('defaults to a plain outcome when no shape is given', async () => {
+    invoke.mockResolvedValue({ data: { success: true, data: { verdict: 'good', goal: 'A zoo.', note: 'Tidied.' } }, error: null });
+    await reword('a zoo');
+    expect(invoke).toHaveBeenCalledWith('zoo-goal-coach', { body: { goal: 'a zoo', shape: 'outcome' } });
+  });
+
+  it('leaves an OKR alone when the coach cannot be reached', async () => {
+    // The fallback keeps only the first sentence, which on an objective with key results keeps
+    // the objective and drops every measure. Better to hand it back untouched and say so.
+    const okr = 'Objective: a zoo families cross the county for.\n\nKey results: 80% come back within a year; dwell time over three hours.';
+    invoke.mockResolvedValue({ data: null, error: { message: 'Unauthorized' } });
+    const out = await reword(okr, 'okr');
+    expect(out.goal, 'the measures were thrown away').toBe(okr);
+    expect(out.coached).toBe(false);
+    expect(out.note).toMatch(/only understands a single sentence/i);
+  });
+
+  it('still tidies a plain outcome when the coach cannot be reached', async () => {
+    invoke.mockResolvedValue({ data: null, error: { message: 'Unauthorized' } });
+    const out = await reword('lions', 'outcome');
+    expect(out.goal).not.toBe('lions');
+    expect(out.coached).toBe(false);
   });
 });

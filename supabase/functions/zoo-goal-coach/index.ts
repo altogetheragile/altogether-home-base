@@ -31,6 +31,18 @@ The 2020 Scrum Guide: the Product Goal describes a FUTURE STATE OF THE PRODUCT. 
 long-term objective the Scrum Team plans against, held until it is met or abandoned. It says
 nothing about the shape of the sentence, so a plain outcome is enough. Do not invent Scrum rules.
 
+THE SHAPE THEY ARE WRITING IN matters. The game offers three, and the player has chosen one:
+
+- "outcome": one sentence describing the future state of the product. All the Guide asks for.
+- "okr": an objective, then the observable measures that would tell you it had happened. Several
+  lines. Usually "Objective: ..." then "Key results: ...".
+- "epic": "As a ... I want ... so that ...", with the measures as acceptance criteria.
+
+ANSWER IN THE SHAPE THEY ARE USING. If they wrote an objective with key results, give back an
+objective with key results - keeping every measure they wrote, in their words. Flattening an OKR
+into one sentence throws away the measures, which are the part worth having and the part a Sprint
+Review can hold the product up against. Only "outcome" is a single sentence.
+
 Judge what they wrote and answer as JSON:
 
 {
@@ -83,11 +95,14 @@ serve(async (req) => {
     // document cannot run up a bill.
     const goal = String(body.goal ?? '').slice(0, 1200).trim();
     if (!goal) return fail('No goal to reword', 400);
+    const shapes = ['outcome', 'okr', 'epic'];
+    const shape = shapes.includes(body.shape) ? body.shape : 'outcome';
 
     const raw = await callClaudeJSON({
       system: SYSTEM,
-      prompt: `The Product Owner wrote this Product Goal:\n\n${goal}\n\nCoach it. Answer with the JSON object only.`,
-      maxTokens: 700,
+      prompt: `The Product Owner is writing in the "${shape}" shape.\n\nThey wrote this Product `
+        + `Goal:\n\n${goal}\n\nCoach it, answering in that same shape. Answer with the JSON object only.`,
+      maxTokens: 1000,
       temperature: 0.3,
     });
 

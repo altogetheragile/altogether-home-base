@@ -157,7 +157,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                 className={cn(WIZARD, 'h-7 shrink-0 gap-1 px-2.5 text-[11px] font-semibold')}
                 disabled={!goal.trim() || isCoaching}
                 onClick={async () => {
-                  const out = await reword(goal);
+                  const out = await reword(goal, goalShape ?? 'outcome');
                   setGoal(out.goal);
                   setReworded(out.note);
                   setCoached(out.coached);
