@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { PRODUCT_GOAL } from './config';
 import { Pencil, FolderOpen, Trophy, Wand2 } from 'lucide-react';
 import { TeachingCard } from './ScrumTeaching';
 import { INTRO_COPY } from './scrumContent';
 import { GoalShapes } from './GoalShapes';
-import { rewordProductGoal } from './engine';
+import { useGoalCoach } from './useGoalCoach';
 import type { GoalShape, GoalMeasure } from './types';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { GameLinks } from './GameLinks';
@@ -49,6 +49,12 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
   // What the wand changed, cleared the moment they type again - the note was about the sentence
   // that was there.
   const [reworded, setReworded] = useState<string | null>(null);
+  const [coached, setCoached] = useState(false);
+  const { reword, isCoaching } = useGoalCoach();
+  const goalBox = useRef<HTMLTextAreaElement>(null);
+  /** Set once the box has been dragged, after which its height is theirs and not ours. */
+  const dragged = useRef(false);
+  const height = useRef(0);
   // ...and what is committed is what is in the field, or the suggestion if it was left alone.
   const chosen = () => goal.trim() || PRODUCT_GOAL;
 
@@ -122,11 +128,21 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                 value={goal}
                 rows={1}
                 onChange={(e) => { setGoal(e.target.value); setReworded(null); }}
+                ref={goalBox}
                 onInput={(e) => {
                   // Height from content, so it is as tall as what has been written and no taller.
+                  // Stops the moment it has been dragged: auto-sizing that overrides a deliberate
+                  // drag snaps the box back on the next keystroke, which reads as a bug.
+                  if (dragged.current) return;
                   const box = e.currentTarget;
                   box.style.height = 'auto';
-                  box.style.height = `${Math.min(box.scrollHeight, 200)}px`;
+                  box.style.height = `${Math.min(box.scrollHeight, 260)}px`;
+                }}
+                onMouseUp={(e) => {
+                  // A drag is the only way the height changes without typing.
+                  const box = e.currentTarget;
+                  if (Math.abs(box.clientHeight - height.current) > 2) dragged.current = true;
+                  height.current = box.clientHeight;
                 }}
                 placeholder="Open a zoo that visitors love and come back to"
                 aria-label="Product Goal"
@@ -137,17 +153,25 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                   from. Here there is nothing but the player, and a button that writes their Product
                   Goal for them does the one piece of thinking this screen exists for - so it waits
                   until they have had a go, and then rewords what they wrote. */}
-              <Button type="button" size="sm" data-part="goal-wand" disabled={!goal.trim()}
+              <Button type="button" size="sm" data-part="goal-wand"
                 className={cn(WIZARD, 'h-7 shrink-0 gap-1 px-2.5 text-[11px] font-semibold')}
-                onClick={() => {
-                  const out = rewordProductGoal(goal);
+                disabled={!goal.trim() || isCoaching}
+                onClick={async () => {
+                  const out = await reword(goal);
                   setGoal(out.goal);
                   setReworded(out.note);
+                  setCoached(out.coached);
+                  // The box may now hold several lines it did not before.
+                  const box = goalBox.current;
+                  if (box && !dragged.current) {
+                    box.style.height = 'auto';
+                    box.style.height = `${Math.min(box.scrollHeight, 260)}px`;
+                  }
                 }}
                 title={goal.trim()
                   ? 'Puts what you wrote into the shape of a Product Goal, and says what it changed. Your words, the Goal’s shape.'
                   : 'Write a rough one first and I will shape it. The Product Goal is the Product Owner’s to decide.'}>
-                <Wand2 className="h-3.5 w-3.5" /> Reword mine
+                <Wand2 className={cn('h-3.5 w-3.5', isCoaching && 'animate-spin')} /> {isCoaching ? 'Reading it' : 'Reword mine'}
               </Button>
             </span>
           </label>
@@ -155,7 +179,12 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
               handed over, but the reason theirs was not one yet. */}
           {reworded && (
             <p data-part="goal-reworded" className="rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-xs leading-snug">
-              <span className="font-semibold">Reworded.</span> {reworded}
+              <span className="font-semibold">{coached ? 'Coached.' : 'Reworded.'}</span> {reworded}
+              {!coached && (
+                <span className="mt-1 block text-[11px] text-muted-foreground">
+                  Tidied here rather than read by a coach - sign in for the coached version.
+                </span>
+              )}
             </p>
           )}
           <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
