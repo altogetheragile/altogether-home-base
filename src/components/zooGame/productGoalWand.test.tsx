@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ZooIntro } from './ZooIntro';
@@ -6,6 +6,17 @@ import { rewordProductGoal } from './engine';
 import { reducer } from './useZooGame';
 import { initialZooState, PRODUCT_GOAL } from './config';
 import type { ZooGameState, GoalShape, GoalMeasure } from './types';
+
+// The wand asks a coach over the network before falling back to the mechanical reword. A unit
+// test of this screen has no business making that call: left real it reached for Supabase, which
+// fails instantly on a developer's machine and hangs in CI until waitFor gives up at one second -
+// green here, red there, for a reason that has nothing to do with the wand.
+//
+// Refused outright, so every test below exercises the fallback, which is what a signed-out player
+// gets and what these tests were always about.
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: { functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: { message: 'Unauthorized' } }) } },
+}));
 
 // A wand on the Product Goal field, and only the half of it that teaches.
 //

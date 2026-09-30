@@ -43,6 +43,13 @@ objective with key results - keeping every measure they wrote, in their words. F
 into one sentence throws away the measures, which are the part worth having and the part a Sprint
 Review can hold the product up against. Only "outcome" is a single sentence.
 
+THE SHAPE OF WHAT THEY WROTE WINS. You are told which shape is selected, but that is a hint and
+it is often wrong: the selector is only set when the player clicks it, so somebody who simply
+typed an objective and three measures into the box is marked "outcome". READ WHAT THEY WROTE. If
+it is plainly an objective followed by measures, treat it as "okr" whatever the hint says, keep
+every measure, and say in the note that you kept their measures. The same for an epic user story.
+Never take a shape away from somebody who has clearly written in it.
+
 Judge what they wrote and answer as JSON:
 
 {
@@ -100,8 +107,9 @@ serve(async (req) => {
 
     const raw = await callClaudeJSON({
       system: SYSTEM,
-      prompt: `The Product Owner is writing in the "${shape}" shape.\n\nThey wrote this Product `
-        + `Goal:\n\n${goal}\n\nCoach it, answering in that same shape. Answer with the JSON object only.`,
+      prompt: `The shape selected in the game is "${shape}", which is only a hint - read what they `
+        + `actually wrote and keep that shape if it differs.\n\nThe Product Owner wrote this Product `
+        + `Goal:\n\n${goal}\n\nCoach it. Answer with the JSON object only.`,
       maxTokens: 1000,
       temperature: 0.3,
     });
