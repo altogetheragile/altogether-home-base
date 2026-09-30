@@ -97,7 +97,7 @@ describe('the Product Goal field', () => {
       <MemoryRouter><ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
         onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}} /></MemoryRouter>,
     );
-    const field = container.querySelector('input[aria-label="Product Goal"]') as HTMLInputElement;
+    const field = container.querySelector('[aria-label="Product Goal"]') as HTMLTextAreaElement;
     expect(field.value, 'the field is pre-filled, so typing appends to it').toBe('');
     expect(field.placeholder, 'and nothing suggests what a Product Goal looks like').toBeTruthy();
   });

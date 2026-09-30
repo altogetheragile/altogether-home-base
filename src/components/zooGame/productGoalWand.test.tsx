@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ZooIntro } from './ZooIntro';
 import { rewordProductGoal } from './engine';
@@ -28,7 +28,7 @@ const intro = (goal = '') => render(
     onSetGoalShape={() => {}} /></MemoryRouter>,
 );
 const wand = (c: HTMLElement) => c.querySelector('[data-part="goal-wand"]') as HTMLButtonElement;
-const field = (c: HTMLElement) => c.querySelector('input[aria-label="Product Goal"]') as HTMLInputElement;
+const field = (c: HTMLElement) => c.querySelector('[aria-label="Product Goal"]') as HTMLTextAreaElement;
 const note = (c: HTMLElement) => c.querySelector('[data-part="goal-reworded"]')?.textContent ?? '';
 
 describe('the wand on the Product Goal field', () => {
@@ -48,22 +48,26 @@ describe('the wand on the Product Goal field', () => {
     expect(wand(container).getAttribute('title') ?? '').toMatch(/write a rough one first/i);
   });
 
-  it('rewords what is in the field, in place', () => {
+  it('rewords what is in the field, in place', async () => {
+    // Asynchronous now: the wand asks a coach, and falls back to the mechanical reword when it
+    // cannot - which is what happens here, with no network and nobody signed in. That fallback is
+    // the thing being tested, and it is the thing a signed-out player actually gets.
     const { container } = intro();
     fireEvent.change(field(container), { target: { value: 'lions' } });
     fireEvent.click(wand(container));
+    await waitFor(() => expect(field(container).value).not.toBe('lions'));
     expect(field(container).value, 'it left their words alone').not.toBe('lions');
     expect(field(container).value, 'their idea did not survive').toMatch(/lions/i);
     expect(note(container), 'it reworded and said nothing about why').toMatch(/\w/);
   });
 
-  it('drops the note the moment they type again', () => {
+  it('drops the note the moment they type again', async () => {
     // The note was about the sentence that was there. Left up, it reads as a verdict on the one
     // they are typing now.
     const { container } = intro();
     fireEvent.change(field(container), { target: { value: 'lions' } });
     fireEvent.click(wand(container));
-    expect(note(container)).toMatch(/\w/);
+    await waitFor(() => expect(note(container)).toMatch(/\w/));
     fireEvent.change(field(container), { target: { value: 'lions and tigers' } });
     expect(note(container), 'the old note is still up').toBe('');
   });

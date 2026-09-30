@@ -225,6 +225,29 @@ const FLAGSHIP: Record<string, { id: string; name: string; appeal: [number, numb
   Forest: { id: 'monkey', name: 'Monkey', appeal: [8, 6, 6], footprint: 'medium' },
 };
 
+/** Every word this zoo is made of: its areas, its animals and its facilities, both singular and
+ *  plural. Derived from the catalogues above rather than written out again, so adding a species
+ *  adds it here too.
+ *
+ *  Used to tell a Product Goal about this zoo from one pasted in from somewhere else. It lives
+ *  beside the lists because a copy kept anywhere else misses whatever was added last - which it
+ *  did: a hand-written version had no lion in it, and the lion is the animal the game opens with. */
+export const ZOO_VOCABULARY: string[] = (() => {
+  const words = new Set<string>();
+  const add = (text: string) => {
+    for (const part of text.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2)) {
+      words.add(part);
+      words.add(part.endsWith('s') ? part.slice(0, -1) : `${part}s`);
+    }
+  };
+  for (const area of ZOO_AREAS) {
+    add(area.zone);
+    for (const member of area.members) add(member.name);
+  }
+  for (const [zone, flagship] of Object.entries(FLAGSHIP)) { add(zone); add(flagship.name); }
+  return [...words].filter(Boolean).sort();
+})();
+
 /** Stable ids per area, so a saved game and the ids the rest of the game knows survive. */
 const ZONE_ID: Record<string, string> = { 'Big Cats': 'bigcats', Waterside: 'waterside', Savanna: 'savanna', Forest: 'forest' };
 const slug = (zone: string) => ZONE_ID[zone] ?? zone.toLowerCase().replace(/[^a-z]+/g, '-');
