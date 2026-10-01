@@ -22,6 +22,9 @@ Rules:
 - Do not be agreeable. Dead ends, duplicate controls, words you do not understand, two things that
   look like the same kind of thing but are not - those are the point.
 - One action per turn.
+- A field is a box you type in. To put words in it, use "type" with its ref: you do not need to
+  click it first, and clicking it only moves the cursor. Each field below says what is already in
+  it, so you never have to guess whether somebody has filled it in for you.
 
 Answer with JSON only:
 
@@ -36,6 +39,17 @@ Answer with JSON only:
 Use "stop" when you have nothing sensible left to try, or you believe you have finished.
 Plain British English. No em dashes.`;
 
+/** A control as a person would see it. A field says what is in it, because "is this box empty or
+ *  has it been filled in for me" was the single most repeated complaint of the first two runs, and
+ *  it was the harness that could not tell them - the screen could. */
+const describe = (c) => {
+  if (c.role !== 'field') return `- [${c.ref}] ${c.role}: ${c.name}`;
+  const state = c.value
+    ? `contains "${c.value}"`
+    : c.hint ? `empty, showing the grey suggestion "${c.hint}"` : 'empty';
+  return `- [${c.ref}] field: ${c.name} - ${state}${c.focused ? ', cursor is here' : ''}`;
+};
+
 /** One step's worth of judgement. Returns null if the model cannot be reached or answers oddly,
  *  and the caller stops rather than inventing a player. */
 export async function askTheNewcomer({ apiKey, screen, history, step, maxSteps }) {
@@ -43,7 +57,7 @@ export async function askTheNewcomer({ apiKey, screen, history, step, maxSteps }
     `Step ${step} of at most ${maxSteps}.`,
     history.length ? `\nWhat you have done so far:\n${history.map((h, i) => `${i + 1}. ${h}`).join('\n')}` : '',
     `\nThe screen now:\n\n${screen.text}`,
-    `\nThings you can act on:\n${screen.controls.map((c) => `- [${c.ref}] ${c.role}: ${c.name}`).join('\n')}`,
+    `\nThings you can act on:\n${screen.controls.map(describe).join('\n')}`,
     '\nWhat do you do? JSON only.',
   ].join('\n');
 

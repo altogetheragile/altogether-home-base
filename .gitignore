@@ -64,4 +64,4 @@ art-src/.work/
 packages/ui/dist/
 
 # A playtest run writes screenshots and a report.
-playtest-report/
+playtest-report*/
