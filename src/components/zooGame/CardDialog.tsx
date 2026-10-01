@@ -140,7 +140,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
               <p data-part="outgrown" className={cn(TONE.attention.text, 'mt-1.5 flex items-start gap-1.5 text-xs font-medium')}>
                 <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>
-                  Sized as {moved.was} points of work; it is {moved.now} now &middot; worth raising at the Daily Scrum
+                  Sized as {moved.was} point{moved.was === 1 ? '' : 's'} of work; it is {moved.now} now &middot; worth raising at the Daily Scrum
                 </span>
               </p>
             );

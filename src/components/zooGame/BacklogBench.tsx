@@ -156,7 +156,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
           <p data-part="outgrown" className={cn(TONE.attention.text, 'flex items-start gap-1.5 text-[11px] font-medium')}>
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
-              Sized when this was {moved.was} points of work; it is {moved.now} now.
+              Sized when this was {moved.was} point{moved.was === 1 ? '' : 's'} of work; it is {moved.now} now.
               The size is the Developers' - size it again if it should change.
             </span>
           </p>
