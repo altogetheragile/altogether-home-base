@@ -101,9 +101,15 @@ const run = async () => {
       break;
     }
 
-    const did = await doAction(page, said.action);
+    let did = await doAction(page, said.action);
     // Settle, because a decision taken on a half-rendered screen is not the screen's fault.
     await page.waitForTimeout(900);
+
+    // Say so when the screen did not move. A person sees that for themselves in an instant; the
+    // newcomer here only gets the next screen, and two screens that read the same are the thing
+    // that sent it round in circles for ten steps.
+    const after = await readScreen(page);
+    if (after.text === screen.text && said.action.kind !== 'type') did += ', and the screen looks exactly as it did before';
 
     log.push({ step, shot, url: page.url(), ...said, did });
     history.push(`${said.action.kind}${said.action.ref ? ` the "${screen.controls.find((c) => c.ref === said.action.ref)?.name ?? said.action.ref}"` : ''} - ${did}`);
