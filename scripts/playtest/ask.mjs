@@ -22,6 +22,9 @@ Rules:
 - Do not be agreeable. Dead ends, duplicate controls, words you do not understand, two things that
   look like the same kind of thing but are not - those are the point.
 - One action per turn.
+- Some things are moved with the keyboard. If a control tells you which keys to press, press them:
+  use "key" with the key's name in "text" ("ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+  "Enter", "Escape", "Tab"), and its ref, so the key reaches the right thing.
 - A field is a box you type in. To put words in it, use "type" with its ref: you do not need to
   click it first, and clicking it only moves the cursor. Each field below says what is already in
   it, so you never have to guess whether somebody has filled it in for you.
@@ -33,7 +36,7 @@ Answer with JSON only:
   "confused_by": "anything on this screen you cannot make sense of, or null",
   "thinking": "one or two sentences of what you make of this screen",
   "expect": "what you think your action will do",
-  "action": { "kind": "click" | "type" | "scroll" | "stop", "ref": "the ref from the list", "text": "only for type" }
+  "action": { "kind": "click" | "type" | "key" | "scroll" | "stop", "ref": "the ref from the list", "text": "the words for type, the key's name for key" }
 }
 
 Use "stop" when you have nothing sensible left to try, or you believe you have finished.
