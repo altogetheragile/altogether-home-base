@@ -19,7 +19,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { askTheNewcomer } from './ask.mjs';
-import { readScreen, doAction } from './screen.mjs';
+import { readScreen, readPark, doAction } from './screen.mjs';
 
 const arg = (name, fallback) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -89,15 +89,22 @@ const run = async () => {
     const shot = `step-${String(step).padStart(2, '0')}.png`;
     await page.screenshot({ path: resolve(OUT, shot) });
 
-    let said;
-    try {
-      said = has('dry') ? dryStep(step, screen) : await askTheNewcomer({ apiKey: KEY, screen, history, step, maxSteps: MAX_STEPS });
-    } catch (e) {
-      console.error(`\nStopped at step ${step}: ${e.message}`);
-      break;
+    const park = has('dry') ? '' : await readPark(page);
+
+    // One bad answer in a hundred and fifty should not end the game. A person who misreads a
+    // screen looks again; so does this.
+    let said = null;
+    for (let go = 1; go <= 3 && !said?.action; go += 1) {
+      try {
+        said = has('dry') ? dryStep(step, screen) : await askTheNewcomer({ apiKey: KEY, screen, history, step, maxSteps: MAX_STEPS, park });
+      } catch (e) {
+        console.error(`    (step ${step}, try ${go}: ${e.message.slice(0, 120)})`);
+        if (go === 3) break;
+        await page.waitForTimeout(3000 * go);
+      }
     }
     if (!said?.action) {
-      console.error(`\nStopped at step ${step}: the answer was not in the shape expected.`);
+      console.error(`\nStopped at step ${step}: no usable answer after three tries.`);
       break;
     }
 
@@ -114,6 +121,7 @@ const run = async () => {
     log.push({ step, shot, url: page.url(), ...said, did });
     history.push(`${said.action.kind}${said.action.ref ? ` the "${screen.controls.find((c) => c.ref === said.action.ref)?.name ?? said.action.ref}"` : ''} - ${did}`);
 
+    if (step % 25 === 0) console.log(`    --- step ${step} of ${MAX_STEPS} ---`);
     const mark = said.confused_by ? 'x' : said.surprised_by ? '!' : '.';
     console.log(`${mark} ${step}. ${said.thinking}`);
     if (said.confused_by) console.log(`    confused: ${said.confused_by}`);
