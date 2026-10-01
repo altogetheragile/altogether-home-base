@@ -8,6 +8,7 @@ import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail, recordEverything } from './trail';
 import { aiDesign } from './aiSeats';
 import { readTaught, writeTaught } from './whatYouHaveRead';
+import { useTabAway } from './useTabAway';
 
 // The zoo game's Sprint loop, built slice by slice on the same reducer shape as the
 // /scrum-game. This slice is the core loop: plan, build, open (release), review
@@ -375,7 +376,12 @@ export function useZooGame(gameSeed?: number, runClock = true) {
   // browser would have run its own and every one of them would have ended the day. The
   // reducer decides whether a tick means anything, so this stays a dumb heartbeat.
   // `runClock` is how a shared session will let a single owner drive it.
-  const ticking = runClock && state.phase === 'sprint' && !state.learnMode;
+  // ...and not while nobody is looking at it. A hidden tab's interval is throttled to about once a
+  // minute rather than stopped, so the day crawled instead of holding: "It has been Sprint 3 for a
+  // few hours now with minimal changes to the clock." A day that lasts as long as somebody's power
+  // settings say is not a timebox, which is the one thing this clock is for.
+  const { hidden } = useTabAway();
+  const ticking = runClock && !hidden && state.phase === 'sprint' && !state.learnMode;
   useEffect(() => {
     if (!ticking) return;
     const id = setInterval(() => dispatch(

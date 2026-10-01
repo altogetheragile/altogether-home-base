@@ -1,6 +1,7 @@
 import { Pause, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { clocks, clockText } from './header';
+import { useTabAway, awayText } from './useTabAway';
 import { FOCUS } from './ui/tokens';
 import type { ZooGameState } from './types';
 
@@ -16,12 +17,19 @@ import type { ZooGameState } from './types';
 //
 // Holding it is a decision somebody takes. It is game state, not one browser's idea, so in a shared
 // game everybody is held at the same second - the trainer's pause-all, in miniature.
+//
+// Stepping away is NOT that, and is not drawn as that. The day stops while the tab is in the
+// background, because a throttled interval made a day last as long as somebody's power settings
+// rather than as long as a day - "it has been Sprint 3 for a few hours now with minimal changes to
+// the clock". Coming back, it says what it did and for how long, because a thing that silently
+// stops is a thing you stop trusting, and because the message could not be read while it applied.
 
 export function DayClock({ state, onPause }: {
   state: ZooGameState;
   onPause?: (paused: boolean) => void;
 }) {
   const { big, small, note } = clocks(state);
+  const { awayFor } = useTabAway();
   const held = !!state.clockPaused || state.learnMode;
   const pct = big ? Math.max(0, Math.min(100, (big.seconds / Math.max(1, big.total)) * 100)) : 0;
   const low = !!big && pct <= 25;
@@ -72,7 +80,11 @@ export function DayClock({ state, onPause }: {
             held || !big ? 'bg-white/30' : low ? 'bg-amber-300' : 'bg-white/80')}
             style={{ width: `${!big || held ? 100 : pct}%` }} />
         </div>
-        {small && <div className="mt-0.5 text-[10px] leading-none text-white/60">{small}</div>}
+        {awayFor != null && !state.learnMode ? (
+          <div data-part="clock-was-held" className="mt-0.5 text-[10px] leading-none text-amber-200">
+            held for {awayText(awayFor)} while you were away
+          </div>
+        ) : small ? <div className="mt-0.5 text-[10px] leading-none text-white/60">{small}</div> : null}
       </div>
     </div>
   );
