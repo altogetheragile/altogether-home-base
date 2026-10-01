@@ -9,6 +9,7 @@ import { mayTake, refusal, type SeatContext } from './seatRules';
 import { aiTurn } from './aiSeats';
 import { teamIsBusy } from './engine';
 import type { SeatName } from './useZooSessions';
+import { useTabAway } from './useTabAway';
 
 // One shared game, kept in step across several browsers with no server code.
 //
@@ -207,7 +208,11 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
 export function useSharedClock(session: ZooSession) {
   const { state, send, drivesClock } = session;
   const stage = state?.dayStage;
-  const ticking = drivesClock && state?.phase === 'sprint' && !state.learnMode;
+  // Only the browser that drives the clock is asked whether it is being looked at. One player
+  // switching tabs must not stop the Sprint for the room, and does not: they were never dispatching
+  // the ticks.
+  const { hidden } = useTabAway();
+  const ticking = drivesClock && !hidden && state?.phase === 'sprint' && !state.learnMode;
   useEffect(() => {
     if (!ticking) return;
     const id = setInterval(() => send({ type: stage === 'dailyScrum' ? 'TICK_SCRUM' : 'TICK_DAY' }), 1000);
