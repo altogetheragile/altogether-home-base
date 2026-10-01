@@ -49,7 +49,10 @@ describe('the Product Goal', () => {
     const start = [...container.querySelectorAll('button')].find((b) => /Start building/.test(b.textContent ?? ''))!;
     expect(start, 'there is no way to start at all').toBeTruthy();
     expect(start.disabled, 'the game started with no Product Goal to aim at').toBe(true);
-    expect(container.textContent, 'nothing said why the button was dead').toMatch(/Write a Product Goal first/i);
+    // The wording changed when the hint stopped sitting beside a greyed button labelled "Write
+    // the Product Backlog first", which read as a second, contradictory instruction. What is
+    // being tested is that something says why both ways in are shut, not the sentence itself.
+    expect(container.textContent, 'nothing said why the button was dead').toMatch(/Write a Product Goal/i);
   });
 });
 

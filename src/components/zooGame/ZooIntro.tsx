@@ -190,7 +190,12 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
           {onSetGoalShape && (
             <div className="mt-2">
-              <GoalShapes goal={chosen()} shape={goalShape} measures={goalMeasures}
+              {/* `goal`, not `chosen()`. chosen() falls back to the shipped Product Goal, so with
+                  the field above empty this box arrived pre-filled with it - and for a plain
+                  outcome the shipped goal IS the worked example, so "For example" and "Your
+                  Product Goal" showed the same sentence and a newcomer appeared to have written
+                  something they had not. Found by playing it as somebody arriving cold. */}
+              <GoalShapes goal={goal} shape={goalShape} measures={goalMeasures}
                 onSet={(shape, text, ms) => { setGoal(text); onSetGoalShape(shape, text, ms); }} />
             </div>
           )}
@@ -226,8 +231,15 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           {/* The two ways in, kept together as one group so a phone stacks the bar rather than
               splitting this pair across two rows of it. */}
           <span className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+            {/* One line for the pair, not a hint beside a button that reads like another hint.
+                "Write a Product Goal first." sat next to a greyed button labelled "Write the
+                Product Backlog first", and the two were different kinds of thing wearing the same
+                clothes: one an instruction, one a route. A newcomer read them as contradictory
+                instructions. */}
             {!goal.trim() && (
-              <span className="hidden text-[11px] text-muted-foreground sm:block">Write a Product Goal first.</span>
+              <span className="text-[11px] text-muted-foreground">
+                Write a Product Goal above to begin, either way.
+              </span>
             )}
             {/* The other way in, kept quiet. Sprint 1 arrives planned, which is how a Sprint arrives
                 on somebody's first day - but a group that wants to write the Product Backlog and

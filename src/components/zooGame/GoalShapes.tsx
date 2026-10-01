@@ -28,9 +28,14 @@ const SHAPES: { key: GoalShape; label: string; blurb: string }[] = [
 ];
 
 /** The worked examples from the training deck, so a learner sees what good looks like before writing
- *  their own. Deliberately from another product entirely - copying a zoo answer teaches nothing. */
+ *  their own. Deliberately from another product entirely - copying a zoo answer teaches nothing.
+ *
+ *  The plain outcome used to break that rule: it was the shipped zoo goal, word for word, sitting
+ *  directly above a box labelled "Your Product Goal" that was pre-filled with the same sentence.
+ *  A newcomer arrived, saw their goal already written, and had done none of the thinking this
+ *  screen exists for. All three are about the same other product now. */
 const EXAMPLE: Record<GoalShape, string> = {
-  outcome: 'Open a zoo that visitors love and come back to.',
+  outcome: 'People who start BestU keep eating well and exercising long after the first fortnight.',
   okr: 'People who start BestU carry on after an initial two-week period to maintain healthy eating and exercise habits.\n\nKey results: 80% of people who start using it continue to; they interact at least 3 times a week; we lose less than 10% of customers after 3 months.',
   epic: 'As a dieter I want to eat healthily and take regular exercise so that I can feel better about myself and improve my well-being.\n\nAcceptance criteria: 80% who start continue; interact at least 3 times a week; less than 10% lost after 3 months; achieved by the end of Q4.',
 };
