@@ -52,6 +52,7 @@ Plain British English. No em dashes.`;
  *  has it been filled in for me" was the single most repeated complaint of the first two runs, and
  *  it was the harness that could not tell them - the screen could. */
 const describe = (c) => {
+  if (c.role === 'tick box') return `- [${c.ref}] tick box: ${c.name} - ${c.value}`;
   if (c.role !== 'field') return `- [${c.ref}] ${c.role}: ${c.name}`;
   const state = c.value
     ? `contains "${c.value}"`
