@@ -645,7 +645,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         tabIndex={placing ? 0 : undefined}
         aria-label={placing
           ? `Putting down ${state.backlog.find((it) => it.id === placing.id)?.name ?? 'it'}: arrow keys move it, Enter puts it down`
-          : `The zoo from above: ${boxes.length} things standing on it`}
+          : `The zoo from above: ${boxes.length} thing${boxes.length === 1 ? '' : 's'} standing on it`}
         onKeyDown={placing ? (e) => {
           // Where the ghost starts, before any arrow has been pressed. A pointer starts it under
           // the pointer, which is always somewhere the player chose; a keyboard has to be given a
@@ -997,7 +997,22 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               // does, so the rules about zones, water and standing on things are one rule, not two.
               tabIndex={placing || tool === 'path' ? -1 : 0}
               role="button"
-              aria-label={`${b.item.name}${on ? ', picked up' : ''}${onPlaceItem ? ' - arrow keys move it' : ''}`}
+              // Named for what is true of it, and for what the keys actually do.
+              //
+              // It said ", picked up", and `on` is `selected === b.item.id` - the thing is standing
+              // on the grass, selected. Nothing is in anybody's hands. A newcomer played the whole
+              // game cold and read that the only way it can be read: as something held, that has to
+              // be put down. It nudged with the arrows, pressed Enter to drop it, read "picked up"
+              // again and decided the drop had failed - and Enter does not drop anything here, it
+              // OPENS the item, so the state never changed and it tried again.
+              //
+              // Four Sprints that way. Nothing was ever finished, every Review showed an empty park
+              // and nought happiness, and the word was the whole of it.
+              //
+              // There IS a putting-down mode, and it announces itself properly - but on the park
+              // (role="application", "arrow keys move it, Enter puts it down"), not on the item,
+              // and the item is the thing wearing the item's name.
+              aria-label={`${b.item.name}${on ? ', selected' : ''}${onPlaceItem ? ' - arrow keys nudge it, Enter opens it' : ''}`}
               onKeyDown={placing || tool === 'path' ? undefined : (e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(b.item.id); return; }
                 const step = e.shiftKey ? PACE * 10 : PACE;

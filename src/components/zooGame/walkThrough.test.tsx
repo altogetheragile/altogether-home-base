@@ -43,7 +43,7 @@ function afterASprint(): ZooGameState {
 }
 
 const walked = (s: ZooGameState) => render(
-  <FlyThrough state={s}>{(camera) => (
+  <FlyThrough state={s} of="the zoo">{(camera) => (
     <div data-part="picture" data-camera={camera ? `${Math.round(camera.x)},${Math.round(camera.y)},${camera.zoom}` : ''} />
   )}</FlyThrough>,
 );

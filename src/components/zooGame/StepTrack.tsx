@@ -26,12 +26,21 @@ export function StepTrack<K extends string>({ steps, current, done, onGo, captio
         return (
           <div key={s.key} className="flex items-center gap-1.5">
             <button type="button" disabled={locked} onClick={() => onGo(s.key)}
+              // Which one you are on, said rather than only coloured.
+              aria-current={active ? 'step' : undefined}
               title={locked ? 'Finish the step before this one' : s.label}
               className={cn(FOCUS, 'flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-sm font-medium transition-colors',
                 active ? 'bg-primary font-semibold text-primary-foreground shadow-sm'
                   : complete ? 'text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400'
                     : 'text-muted-foreground')}>
-              <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold',
+              {/* The number in its circle is a picture of where you are in the row, and the step's
+                  name is right beside it. Read out, it adds nothing and takes something away: the
+                  button announced itself as "5 Adapt", and anything reading the page as text found
+                  a bare "5" floating next to the label with no relationship to it. A newcomer
+                  playing the game cold stopped on exactly that: "The '5' sitting on its own just
+                  above the 'Next' button - I have no idea what that refers to." */}
+              <span aria-hidden
+                className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold',
                 active ? 'bg-primary-foreground/20' : complete ? 'bg-emerald-500 text-white' : 'bg-muted')}>
                 {complete ? <Check className="h-3 w-3" /> : i + 1}
               </span>

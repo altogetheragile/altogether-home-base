@@ -15,17 +15,24 @@ export const SIDES = ['Front', 'Left', 'Behind', 'Right'] as const;
  *  Its own component because it is offered in two places now - on the Increment tab, beside the
  *  zoom, and on the Review's picture, which is where somebody is presenting the thing to a room and
  *  most wants to turn it. Two of these would have drifted apart by the second report.
+ *
+ *  Which is why it has to say which picture it turns. At the Review both are on screen at once, so
+ *  the page carried two controls with the same name and nothing to tell them apart. A newcomer
+ *  playing the game cold stopped on it: "There are two 'Walk it' buttons and two 'Turn the park a
+ *  quarter' buttons visible, which seems like duplication." A screen reader reads the same.
  */
-export function TurnControl({ turn, onTurn, className }: {
+export function TurnControl({ turn, onTurn, className, of: what }: {
   turn: number;
   onTurn: (turn: number) => void;
   className?: string;
+  /** The picture this one turns, named so two of them can be told apart. */
+  of: string;
 }) {
   const side = SIDES[((turn % 4) + 4) % 4];
   return (
     <button type="button" data-part="turn-park" onClick={() => onTurn((turn + 1) % 4)}
-      title="Walk round the park - a quarter turn each press"
-      aria-label={`Turn the park a quarter - now looking from ${side.toLowerCase() === 'behind' ? 'behind' : `the ${side.toLowerCase()}`}`}
+      title={`Walk round ${what} - a quarter turn each press`}
+      aria-label={`Turn ${what} a quarter - now looking from ${side.toLowerCase() === 'behind' ? 'behind' : `the ${side.toLowerCase()}`}`}
       className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-border bg-background/90 px-1.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground',
         className)}>
       <RotateCw className="h-3.5 w-3.5" />
