@@ -41,24 +41,31 @@ const ON_THE_MARK = 'text-[#2a1405]';
 const STEPS = [1, 1.5, 2, 3];
 
 /** A zoom, in the shape the game's own park controls already use. */
-function Closer({ at, onZoom }: { at: number; onZoom: (z: number) => void }) {
+/** The zoom on one picture, named after the picture it is on.
+ *
+ *  All three used to be named for the direction alone - "Closer", "Further out", "Back to the whole
+ *  example" - and there are two pictures side by side, so the page carried two of each. Every
+ *  newcomer who has played this game cold has said the same thing on the first screen: "There are
+ *  two 'Closer' buttons but I cannot tell what they are close to." A screen reader hears exactly
+ *  the same list. */
+function Closer({ at, onZoom, of: what }: { at: number; onZoom: (z: number) => void; of: string }) {
   const i = STEPS.indexOf(at);
   const step = (dir: -1 | 1) => onZoom(STEPS[Math.max(0, Math.min(STEPS.length - 1, (i < 0 ? 0 : i) + dir))]);
   const btn = 'flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm transition-colors hover:text-foreground disabled:opacity-40';
   return (
     <div className="absolute right-2 top-2 z-20 flex items-center gap-1" data-part="example-zoom">
       {at !== 1 && (
-        <button type="button" onClick={() => onZoom(1)} title="Back to the whole example"
-          aria-label="Back to the whole example" className={cn(FOCUS, btn)}>
+        <button type="button" onClick={() => onZoom(1)} title={`Back to the whole of ${what}`}
+          aria-label={`Back to the whole of ${what}`} className={cn(FOCUS, btn)}>
           <Maximize2 className="h-3 w-3" />
         </button>
       )}
       <button type="button" onClick={() => step(-1)} disabled={at <= STEPS[0]}
-        title="Further out" aria-label="Further out" className={cn(FOCUS, btn)}>
+        title={`Further out from ${what}`} aria-label={`Further out from ${what}`} className={cn(FOCUS, btn)}>
         <Minus className="h-3 w-3" />
       </button>
       <button type="button" onClick={() => step(1)} disabled={at >= STEPS[STEPS.length - 1]}
-        title="Closer" aria-label="Closer" className={cn(FOCUS, btn)}>
+        title={`Closer into ${what}`} aria-label={`Closer into ${what}`} className={cn(FOCUS, btn)}>
         <Plus className="h-3 w-3" />
       </button>
     </div>
@@ -175,7 +182,7 @@ function Pinned({ title, note, labels, zoom, children }: {
       <div ref={box} data-part="labelled-park"
         className="relative overflow-hidden rounded-lg border border-border bg-muted/20">
         {children}
-        {zoom && <Closer at={zoom.at} onZoom={zoom.onZoom} />}
+        {zoom && <Closer at={zoom.at} onZoom={zoom.onZoom} of={title} />}
         {pins.map((p) => (
           <span key={p.n} data-part={`pin-${p.n}`} aria-hidden
             style={{ left: `${p.x}%`, top: `${p.y}%` }}

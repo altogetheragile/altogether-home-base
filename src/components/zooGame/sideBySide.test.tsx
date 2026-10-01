@@ -98,8 +98,11 @@ describe('walking closer into the example', () => {
   // became a picture rather than a workbench. A picture somebody wants to look INTO is still worth
   // a zoom.
   const zooms = (c: HTMLElement) => [...c.querySelectorAll('[data-part="example-zoom"]')];
+  // Matched on the direction, because the label now also names the picture it is on.
   const btn = (within: Element, label: string) =>
-    [...within.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === label)!;
+    [...within.querySelectorAll('button')].find((b) => (b.getAttribute('aria-label') ?? '').startsWith(label))!;
+  const back = (z: Element) =>
+    [...z.querySelectorAll('button')].find((b) => /^Back to the whole of /.test(b.getAttribute('aria-label') ?? '')) ?? null;
 
   it('offers one on each picture', () => {
     // One each, not one for both: looking closer at the plan and looking closer at the Increment
@@ -111,16 +114,14 @@ describe('walking closer into the example', () => {
     const c = render(<LabelledPark />).container;
     for (const z of zooms(c)) {
       expect(btn(z, 'Further out').disabled, 'it opens already zoomed').toBe(true);
-      expect(z.querySelector('[aria-label="Back to the whole example"]'),
-        'it offers to go back before anybody has gone anywhere').toBeNull();
+      expect(back(z), 'it offers to go back before anybody has gone anywhere').toBeNull();
     }
   });
 
   it('offers the way back once you have walked in', () => {
     const c = render(<LabelledPark />).container;
     fireEvent.click(btn(zooms(c)[0], 'Closer'));
-    expect(zooms(c)[0].querySelector('[aria-label="Back to the whole example"]'),
-      'there is no way back to the framed shot').toBeTruthy();
+    expect(back(zooms(c)[0]), 'there is no way back to the framed shot').toBeTruthy();
     expect(btn(zooms(c)[0], 'Further out').disabled).toBe(false);
   });
 
@@ -130,10 +131,22 @@ describe('walking closer into the example', () => {
     expect(btn(zooms(c)[0], 'Closer').disabled, 'it can be walked into indefinitely').toBe(true);
   });
 
+  it('says which picture each one is for', () => {
+    // Two pictures side by side meant two buttons called "Closer" and two called "Further out", and
+    // nothing on either to say which was which. Every newcomer who has played this game cold has
+    // stopped on it: "There are two 'Closer' buttons but I cannot tell what they are close to."
+    // A screen reader reads out the same undifferentiated list.
+    const c = render(<LabelledPark />).container;
+    const names = zooms(c).map((z) => btn(z, 'Closer').getAttribute('aria-label') ?? '');
+    expect(names, 'one of the pictures has no zoom').toHaveLength(2);
+    expect(names[0], 'the zoom does not say what it is zooming').not.toBe('Closer');
+    expect(names[0] === names[1], 'both pictures claim the same button').toBe(false);
+    for (const n of names) expect(n, 'it no longer says which way it goes').toMatch(/^Closer into \S/);
+  });
+
   it('walks one picture without moving the other', () => {
     const c = render(<LabelledPark />).container;
     fireEvent.click(btn(zooms(c)[0], 'Closer'));
-    expect(zooms(c)[1].querySelector('[aria-label="Back to the whole example"]'),
-      'zooming the plan moved the Increment too').toBeNull();
+    expect(back(zooms(c)[1]), 'zooming the plan moved the Increment too').toBeNull();
   });
 });
