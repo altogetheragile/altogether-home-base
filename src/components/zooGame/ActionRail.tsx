@@ -144,7 +144,11 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
     ? null
     : building.length
       ? `Building ${building.map((it) => it.name).join(' and ')}.`
-      : 'Nothing in hand. Drag a card to Doing to start building.';
+      // Both ways in, because only one of them was ever named. A newcomer read "drag a card to
+      // Doing", could not drag, and spent fifteen steps hunting for the other way without ever
+      // being told there was one: "I cannot drag with these controls. There is no obvious way to
+      // move a card into the Doing column."
+      : 'Nothing in hand. Drag a card to Doing to start building, or open the card and start it from there.';
 
   return (
     <div data-part="action-rail"

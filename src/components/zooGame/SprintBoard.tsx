@@ -611,20 +611,31 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                           overlap where two real ones do not. So these are real 44s, side by side, in
                           the corner of the card where nothing else is: what is small is the coloured
                           glyph inside them, which is all there is to see. */}
+                      {/* The layer takes no clicks of its own; the two buttons do.
+
+                          Without that it was an 88 by 44 dead patch in the corner of a card whose
+                          own title says "open it" - and over the CENTRE of the card, which is where
+                          a pointer lands by default. A disabled arrow made it worse rather than
+                          better: `disabled:pointer-events-none` drops its half through to this
+                          layer, which then swallowed the click instead of the card having it. First
+                          and last card in the column, every time.
+
+                          Found by a newcomer playing the live game, who clicked the Lion Enclosure
+                          eight times across fifteen steps and never once opened it. */}
                       {onReorderSprint && todo.length > 1 && (
-                        <div className="absolute bottom-0 right-0 flex">
+                        <div className="pointer-events-none absolute bottom-0 right-0 flex">
                           <button type="button" data-part="sprint-up" disabled={i === 0}
                             onClick={() => onReorderSprint(it.id, 'up')}
                             aria-label={`Take ${it.name} up the Sprint Backlog`}
                             title="Pick this up sooner"
-                            className={cn(FOCUS, TAP, 'group flex items-center justify-center disabled:pointer-events-none')}>
+                            className={cn(FOCUS, TAP, 'pointer-events-auto group flex items-center justify-center disabled:pointer-events-none')}>
                             <span className={cn(ARROW, 'group-disabled:opacity-25')}><ChevronUp className="h-4 w-4" /></span>
                           </button>
                           <button type="button" data-part="sprint-down" disabled={i === todo.length - 1}
                             onClick={() => onReorderSprint(it.id, 'down')}
                             aria-label={`Take ${it.name} down the Sprint Backlog`}
                             title="Pick this up later"
-                            className={cn(FOCUS, TAP, 'group flex items-center justify-center disabled:pointer-events-none')}>
+                            className={cn(FOCUS, TAP, 'pointer-events-auto group flex items-center justify-center disabled:pointer-events-none')}>
                             <span className={cn(ARROW, 'group-disabled:opacity-25')}><ChevronDown className="h-4 w-4" /></span>
                           </button>
                         </div>
