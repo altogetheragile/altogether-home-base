@@ -424,7 +424,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
               )}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
               {/* Walk round it. Beside the zoom, because they are the same question asked twice. */}
-              <TurnControl turn={turn} onTurn={setTurn} />
+              <TurnControl turn={turn} onTurn={setTurn} of="the zoo" />
               {/* ...and take it away. Beside those two because it exports what they have set up:
                   the zoom you chose and the side you walked round to. */}
               <ExportPark state={state} caption={exportCaption(state)} />
@@ -555,7 +555,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   The drawing itself is marked `park-drawing`, because marking the whole view was
                   not enough: the first svg inside a ParkView is an icon on its toolbar, so the
                   export took a picture of a 14px download arrow, very crisply. */}
-              <FlyThrough state={state}>{(camera) => (
+              <FlyThrough state={state} of="the zoo">{(camera) => (
               <div data-part="park-drawing" style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
                 <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly} camera={camera}
                   onPlaceItem={onPlaceItem} placing={placing} onPlace={onPlace} selected={building} onSelect={onOpenBuild}

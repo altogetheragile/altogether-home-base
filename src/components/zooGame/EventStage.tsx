@@ -77,7 +77,7 @@ export function EventStage({ state, title, note, at, walk, children }: {
             {note && <span className="text-[11px] text-muted-foreground">{note}</span>}
             {/* In the strip above the picture rather than over it: the walk's own controls have the
                 corners, and a room watching a presentation does not need two things in one corner. */}
-            <TurnControl turn={turn} onTurn={setTurn} />
+            <TurnControl turn={turn} onTurn={setTurn} of="the Increment" />
             <button type="button" data-part="picture-size" onClick={() => setBig((b) => !b)}
               aria-label={big ? 'Show the zoo smaller' : 'Show the zoo bigger'}
               className={cn(FOCUS, 'inline-flex items-center gap-1 rounded-full border border-border bg-background/90 px-2 py-1 text-[11px] font-semibold hover:bg-background')}>
@@ -90,7 +90,7 @@ export function EventStage({ state, title, note, at, walk, children }: {
           {/* At the Review, "here is what we built" is the event. So the park walks the room round
               it, and the same walk is offered on the Increment tab - one component, one walk. */}
           {walk ? (
-            <FlyThrough state={state} className="px-3 pb-2">
+            <FlyThrough state={state} className="px-3 pb-2" of="the Increment">
               {(camera) => <IsoZoo state={state} height={picture.h} width={picture.w} turn={turn} camera={camera} />}
             </FlyThrough>
           ) : (

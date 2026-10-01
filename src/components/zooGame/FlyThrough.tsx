@@ -20,9 +20,12 @@ import { Footprints, X } from 'lucide-react';
 // One component, used on the Increment tab and at the Review, because it is the same walk - and
 // because two of these would drift apart by the second report.
 
-export function FlyThrough({ state, className, children }: {
+export function FlyThrough({ state, className, children, of: what }: {
   state: ZooGameState;
   className?: string;
+  /** The picture this walk is of. Both pictures are on screen at the Review, and two buttons both
+   *  called "Walk it" is what a newcomer playing cold reported as duplication. */
+  of: string;
   /** The picture, given where the camera is looking. Nothing here draws a park. */
   children: (camera: { x: number; y: number; zoom: number } | null) => ReactNode;
 }) {
@@ -36,14 +39,16 @@ export function FlyThrough({ state, className, children }: {
         <div className="absolute right-2 top-2 z-20">
           {walk.walking ? (
             <Button size="sm" variant="secondary" data-part="walk-stop"
-              className={cn(FOCUS, 'h-7 gap-1 px-2 text-xs shadow-sm')} onClick={walk.end}>
+              className={cn(FOCUS, 'h-7 gap-1 px-2 text-xs shadow-sm')} onClick={walk.end}
+              aria-label={`Stop walking ${what}`}>
               <X className="h-3.5 w-3.5" /> Stop
             </Button>
           ) : (
             <Button size="sm" variant="secondary" data-part="walk-start"
               className={cn(FOCUS, 'h-7 gap-1 px-2 text-xs shadow-sm')} onClick={walk.start}
-              title="Walk the zoo the way a visitor would, stopping at everything this Sprint delivered">
-              <Footprints className="h-3.5 w-3.5" /> Walk it
+              aria-label={`Walk ${what}`}
+              title={`Walk ${what} the way a visitor would, stopping at everything this Sprint delivered`}>
+              <Footprints className="h-3.5 w-3.5" /> Walk {what}
             </Button>
           )}
         </div>
