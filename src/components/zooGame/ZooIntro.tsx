@@ -144,7 +144,9 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                   if (Math.abs(box.clientHeight - height.current) > 2) dragged.current = true;
                   height.current = box.clientHeight;
                 }}
-                placeholder="Open a zoo that visitors love and come back to"
+                placeholder={goalShape === 'epic' ? 'As a … I want … so that …'
+                  : goalShape === 'okr' ? 'The objective: the future state you are aiming at'
+                  : 'Open a zoo that visitors love and come back to'}
                 aria-label="Product Goal"
                 className="min-h-[1.75rem] w-full resize-y bg-transparent text-base font-medium leading-snug outline-none placeholder:font-normal placeholder:text-muted-foreground/70"
               />
@@ -236,11 +238,11 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                 Product Backlog first", and the two were different kinds of thing wearing the same
                 clothes: one an instruction, one a route. A newcomer read them as contradictory
                 instructions. */}
-            {!goal.trim() && (
-              <span className="text-[11px] text-muted-foreground">
-                Write a Product Goal above to begin, either way.
-              </span>
-            )}
+            <span className="text-[11px] text-muted-foreground">
+              {!goal.trim()
+                ? 'Write a Product Goal above to begin, either way.'
+                : 'Sprint 1 arrives planned. Or write the Product Backlog yourself first.'}
+            </span>
             {/* The other way in, kept quiet. Sprint 1 arrives planned, which is how a Sprint arrives
                 on somebody's first day - but a group that wants to write the Product Backlog and
                 plan the Sprint themselves is doing the exercise the long way round on purpose, and
@@ -248,8 +250,9 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             {onStartFromTheBrief && (
               <button type="button" onClick={() => { onSetGoal(chosen()); onStartFromTheBrief(); }}
                 disabled={!goal.trim()} data-part="start-from-brief"
+                title="Start with an empty Product Backlog and plan Sprint 1 yourself. The longer way round, on purpose."
                 className={cn(FOCUS, BAR_ACTION, 'rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40')}>
-                Write the Product Backlog first
+                Write the Product Backlog myself
               </button>
             )}
             <Button size="lg" className={cn(BAR_ACTION, 'rounded-full px-6')} disabled={!goal.trim()}
