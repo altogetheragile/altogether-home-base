@@ -94,7 +94,7 @@ export function checkDodLine(state: ZooGameState, item: BacklogItem, line: strin
   if (/signpost|signage|find it|signed so/.test(s)) {
     if (item.category === 'amenity') {
       const signed = design.parts.sign !== 'off' && !!design.colors.sign;
-      return { kind: 'fact', met: signed, evidence: signed ? 'has a sign over the front' : 'no sign on it' };
+      return { kind: 'fact', met: signed, evidence: signed ? 'has a sign over the front' : 'its name board is blank - colour it under Look' };
     }
     const post = state.backlog.find((i) => i.zone === item.zone && i.template === 'signpost'
       && (i.status === 'open' || i.status === 'done'));

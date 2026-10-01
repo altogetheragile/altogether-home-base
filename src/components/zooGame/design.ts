@@ -1200,10 +1200,15 @@ export function presetFor(item: BacklogItem): ItemDesign {
     // `buildingTypeFor` still exists and is still right: it is the ADVICE, and it is what the
     // Developers pick when the game is playing them. See `aiDesign`.
     const kind = item.template;
-    // ...and a building comes with walls, a roof and a sign it can actually be seen to have.
-    // Walls and a roof, and NO name board. "Can I tell what it is from outside?" is answered by
-    // putting a sign on it and giving it a colour, which is a decision - and a building born with
-    // one had that decision made for it before anybody opened the card.
+    // ...and a building comes with walls, a roof and a board over the door that is BLANK.
+    //
+    // The board hangs from the start; what it does not have is a colour, and an uncoloured board
+    // draws in the placeholder. "Can I tell what it is from outside?" is answered by colouring it,
+    // which is a decision - and a building born with that done had the decision made for it before
+    // anybody opened the card.
+    //
+    // The sign being already up is why no step can "put one up", and why the step that used to say
+    // so sent a newcomer hunting for a control that does not exist.
     return { parts: { ...(kind ? { type: kind } : {}), sign: 'on' }, colors: { walls: '#e6ddcf', roof: '#a4623a' } };
   }
   return { parts: { ...(PART_PRESETS[item.template ?? item.id] ?? GENERIC_EXHIBIT) }, colors: speciesColors(item) };
@@ -1287,7 +1292,7 @@ export function designCriteria(item: BacklogItem, design: ItemDesign, homeSize?:
     return [
       { label: 'Colour the walls', pass: !!design.colors.walls },
       { label: 'Colour the roof', pass: !!design.colors.roof },
-      { label: 'Add a sign so visitors can find it', pass: design.parts.sign !== 'off' && !!design.colors.sign },
+      { label: 'Colour its name board, so visitors can read it', pass: design.parts.sign !== 'off' && !!design.colors.sign },
     ];
   }
   // Exhibits are handled at the top: an exhibit is stocked, not painted, so the criteria that used

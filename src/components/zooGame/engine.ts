@@ -725,7 +725,16 @@ export function suggestTasks(item: BacklogItem): SprintTask[] {
     // Stocking, not modelling: how many and of what ages, and whether the habitat can hold them.
     ? ['Decide how many, and of what ages', 'Check they fit the habitat', 'Choose the coat']
     : item.category === 'amenity'
-      ? [`Design the ${item.name.toLowerCase()}`, 'Colour it', 'Put up a sign']
+      // Named for what there is to DO, not for what the finished building has on it.
+      //
+      // "Put up a sign" was a step nobody could take: a building is born with its board already
+      // hanging (`presetFor` sets `parts.sign: 'on'`), blank, and what the criterion actually wants
+      // is a COLOUR on it - a swatch row called "Sign", inside a tab called "Look". A newcomer
+      // playing the live game cold read the step, hunted for a way to put a sign up, and said the
+      // same thing six times: "I keep clicking 'Colour it' and 'Put up a sign' but the acceptance
+      // criteria still says no name board."
+      ? [`Design the ${item.name.toLowerCase()}`, 'Colour the walls and roof',
+        'Colour its name board, so visitors can tell what it is']
       // Scenery: named for the parts THIS thing actually has. A signpost was being asked to choose
       // a plant type and colour its foliage, because everything that was not landscape fell through
       // to the planting branch - and a signpost is not planting, whatever the category says.
