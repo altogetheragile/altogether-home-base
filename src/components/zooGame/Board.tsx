@@ -723,7 +723,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
                 explaining it reads as the game losing count; "5 → 3" reads as the Developers
                 re-sizing what is left, which is what happened. */}
             {it.carriedOver && (
-              <Chip tone="attention" title={`Carried over unfinished. It was sized at ${it.wasEstimate ?? '?'} points; what is left of it is ${it.estimate}. The build so far is kept.`}>
+              <Chip tone="attention" title={`Carried over unfinished. It was sized at ${it.wasEstimate ?? '?'} point${it.wasEstimate === 1 ? '' : 's'}; what is left of it is ${it.estimate}. The build so far is kept.`}>
                 carried over{it.wasEstimate && it.wasEstimate !== it.estimate ? ` · ${it.wasEstimate} \u2192 ${it.estimate}` : ''}
               </Chip>
             )}

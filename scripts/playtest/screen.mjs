@@ -61,7 +61,16 @@ export async function readScreen(page) {
     // two things at once. It killed a run at step 85, on the button marked "Start Sprint 2".
     for (const old of document.querySelectorAll('[data-playtest-ref]')) old.removeAttribute('data-playtest-ref');
     const controls = [];
-    const act = document.querySelectorAll('button, a[href], input, textarea, select, [role="button"], [role="tab"]');
+    // ...including the things that are not buttons but still take keys.
+    //
+    // The park is role="application" with a tabindex, and it announces what its keys do - it is how
+    // a path is laid without a mouse. None of that was listed here, so the newcomer could not see
+    // the park as something to act on at all: it went on clicking the enclosure, trying to press
+    // path corners onto a thing rather than onto the ground, and delivered nothing for want of a
+    // control that was right there.
+    const act = document.querySelectorAll(
+      'button, a[href], input, textarea, select, [role="button"], [role="tab"], '
+      + '[role="application"], [tabindex]:not([tabindex="-1"])');
     act.forEach((el, i) => {
       if (!seen(el)) return;
       if (el.disabled) return;
@@ -79,7 +88,11 @@ export async function readScreen(page) {
         || (field ? el.getAttribute('placeholder') : '')
         || '').replace(/\s+/g, ' ').slice(0, 90);
       if (!name) return;
-      const role = tag === 'a' ? 'link' : field ? 'field' : el.getAttribute('role') || 'button';
+      const declared = el.getAttribute('role');
+      const role = tag === 'a' ? 'link' : field ? 'field'
+        // Named for what it is to a player: a picture you stand on and work with the keys.
+        : declared === 'application' ? 'drawing surface (works with the keyboard - read its name)'
+          : declared || 'button';
       const ref = `c${i}`;
       el.setAttribute('data-playtest-ref', ref);
       const one = { ref, role, name };

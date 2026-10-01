@@ -116,7 +116,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
           <div data-part="decision" className="rounded-lg border-2 border-amber-400/70 bg-amber-500/[0.07] p-3">
             <div className="text-sm font-bold">Decision for today</div>
             <p className="mt-1 text-sm">
-              {decision.left} points left, {decision.daysLeft} day{decision.daysLeft === 1 ? '' : 's'} to do
+              {decision.left} point{decision.left === 1 ? '' : 's'} left, {decision.daysLeft} day{decision.daysLeft === 1 ? '' : 's'} to do
               about {decision.capacity} of them.{' '}
               {decision.essentialsKnown
                 ? <><strong>{decision.candidate.name}</strong> is not what the Goal depends on.</>
