@@ -54,6 +54,12 @@ export async function readScreen(page) {
 
     // Controls get a ref of their own, so the newcomer names what it is pressing without ever
     // being shown a selector.
+    //
+    // Last screen's refs are wiped first. They were not, and a ref is only unique among the
+    // controls counted on the screen that handed it out - so an element left over from an earlier
+    // render kept its old ref while a new element was given the same one, and the click matched
+    // two things at once. It killed a run at step 85, on the button marked "Start Sprint 2".
+    for (const old of document.querySelectorAll('[data-playtest-ref]')) old.removeAttribute('data-playtest-ref');
     const controls = [];
     const act = document.querySelectorAll('button, a[href], input, textarea, select, [role="button"], [role="tab"]');
     act.forEach((el, i) => {
@@ -121,7 +127,9 @@ export async function doAction(page, action) {
     await page.evaluate(() => window.scrollBy(0, Math.round(window.innerHeight * 0.8)));
     return 'scrolled down';
   }
-  const target = ref ? page.locator(`[data-playtest-ref="${ref}"]`) : null;
+  // .first() as a belt to the braces above: a stale ref should be impossible now, but a run that
+  // has got this far should not die of one.
+  const target = ref ? page.locator(`[data-playtest-ref="${ref}"]`).first() : null;
   if (!target || (await target.count()) === 0) return `could not find ${ref ?? 'anything'} to act on`;
 
   if (kind === 'type') {
