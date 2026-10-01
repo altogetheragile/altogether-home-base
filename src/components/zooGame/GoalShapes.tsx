@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import type { GoalShape, GoalMeasure, GoalMetric } from './types';
 import { GOAL_METRICS } from './engine';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS, SURFACE, TONE } from './ui/tokens';
-import { ChevronDown, Plus, Trash2, Sparkles } from 'lucide-react';
+import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 
 // ============= Other ways to write a Product Goal =============
 //
@@ -59,8 +58,17 @@ function MeasureRow({ measure, onChange, onRemove }: { measure: GoalMeasure; onC
   );
 }
 
-/** The optional panel. Collapsed by default: a plain sentence is the default answer, and this should
- *  read as "there are other ways to do this" rather than "you have not finished yet". */
+/** The optional panel: pick a shape, see a worked example, and for the two shapes that carry
+ *  measures, record them. It does NOT hold a second place to write the goal.
+ *
+ *  It used to. There was a box in here labelled "Your Product Goal", with a full-width orange
+ *  "Use this as the Product Goal" under it, sitting below the real field - two boxes, one
+ *  decision, and the decoy was the louder of the two. A newcomer played the game cold and said
+ *  the same thing at every step for fourteen steps running: "there are two fields and I cannot
+ *  tell which one I am supposed to type my goal into." They never got in.
+ *
+ *  So the shape is now applied the moment it is picked, and the goal is written in one place:
+ *  the field above. */
 export function GoalShapes({ goal, shape, measures, onSet }: {
   goal: string;
   shape?: GoalShape;
@@ -71,25 +79,18 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
   // that asks you to write something is help nobody finds.
   const [open, setOpen] = useState(true);
   const [pick, setPick] = useState<GoalShape>(shape ?? 'outcome');
-  // The draft FOLLOWS the field above until somebody types in here.
-  //
-  // It was seeded once, at mount. So the sentence in the field and the sentence in this box drifted
-  // apart the moment either changed, and "Use this as the Product Goal" then wrote this stale one
-  // back over theirs. That is the same thrown-away-goal fault the field above carries a comment
-  // about, one component down, and the wand makes it easy to hit: reword your goal, press the
-  // orange button, and the rewording is gone.
-  const [seen, setSeen] = useState(goal);
-  const [draft, setDraft] = useState(goal);
-  if (seen !== goal) { setSeen(goal); setDraft(goal); }
   const [rows, setRows] = useState<GoalMeasure[]>(measures?.length ? measures : [{ metric: 'happiness', target: 70 }]);
   const current = SHAPES.find((s) => s.key === pick)!;
+  // Whatever is in the field above, in whatever shape is picked now. Nothing in here edits the
+  // words, so the goal always passes straight through.
+  const apply = (next: GoalShape, ms: GoalMeasure[]) => onSet(next, goal, next === 'outcome' ? [] : ms.filter((r) => r.target > 0));
 
   return (
     <section className="rounded-lg border border-dashed border-border bg-muted/20">
       <button type="button" onClick={() => setOpen((o) => !o)} className={cn(FOCUS, "flex w-full items-center justify-between gap-2 px-3 py-2 text-left")}>
         <span className="min-w-0">
           <span className="text-sm font-semibold">Other ways to write a Product Goal</span>
-          <span className={cn(TONE.attention.text, "ml-1.5 text-[11px]")}>none of them Scrum</span>
+          <span className={cn(TONE.attention.text, "ml-1.5 text-[11px]")}>common, but not from the Guide</span>
         </span>
         <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')} />
       </button>
@@ -106,7 +107,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
 
           <div className="flex flex-wrap gap-1.5">
             {SHAPES.map((s) => (
-              <button key={s.key} type="button" onClick={() => setPick(s.key)}
+              <button key={s.key} type="button" onClick={() => { setPick(s.key); apply(s.key, rows); }}
                 className={cn(FOCUS, 'rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
                   pick === s.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
                 {s.label}
@@ -120,14 +121,11 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
             <p className="whitespace-pre-line text-[11px] italic leading-snug text-muted-foreground">{EXAMPLE[pick]}</p>
           </div>
 
-          <label className="block space-y-1">
-            <span className={cn(EYEBROW, 'text-muted-foreground')}>
-              {pick === 'epic' ? 'Your Product Goal, as a story' : pick === 'okr' ? 'Your objective' : 'Your Product Goal'}
-            </span>
-            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={pick === 'outcome' ? 2 : 3}
-              placeholder={pick === 'epic' ? 'As a … I want … so that …' : 'One clear outcome'}
-              className={cn(SURFACE.inset, 'w-full resize-none px-2 py-1.5 text-sm outline-none focus:border-primary')} />
-          </label>
+          <p data-part="write-it-above" className="text-[11px] font-medium text-foreground">
+            Write it in the Product Goal box above. {pick === 'epic'
+              ? 'The box takes the whole story.'
+              : pick === 'okr' ? 'The box takes the objective; the key results go below.' : ''}
+          </p>
 
           {pick !== 'outcome' && (
             <div className="space-y-1.5">
@@ -137,22 +135,17 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
               </div>
               {rows.map((m, i) => (
                 <MeasureRow key={i} measure={m}
-                  onChange={(next) => setRows(rows.map((r, j) => (j === i ? next : r)))}
-                  onRemove={() => setRows(rows.filter((_, j) => j !== i))} />
+                  onChange={(next) => { const ms = rows.map((r, j) => (j === i ? next : r)); setRows(ms); apply(pick, ms); }}
+                  onRemove={() => { const ms = rows.filter((_, j) => j !== i); setRows(ms); apply(pick, ms); }} />
               ))}
               {rows.length < 4 && (
-                <button type="button" onClick={() => setRows([...rows, { metric: 'visitors', target: 800 }])}
+                <button type="button" onClick={() => { const ms = [...rows, { metric: 'visitors' as GoalMetric, target: 800 }]; setRows(ms); apply(pick, ms); }}
                   className={cn(FOCUS, "flex items-center gap-1 text-[11px] font-medium text-primary hover:underline")}>
                   <Plus className="h-3 w-3" /> Add a measure
                 </button>
               )}
             </div>
           )}
-
-          <Button size="sm" className="w-full" disabled={!draft.trim()}
-            onClick={() => { onSet(pick, draft, pick === 'outcome' ? [] : rows.filter((r) => r.target > 0)); setOpen(false); }}>
-            <Sparkles className="mr-1 h-3.5 w-3.5" /> Use this as the Product Goal
-          </Button>
         </div>
       )}
     </section>

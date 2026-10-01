@@ -84,29 +84,53 @@ describe('the wand on the Product Goal field', () => {
   });
 });
 
-describe('and the panel under it keeps up', () => {
-  // "Other ways to write a Product Goal" holds its own copy of the sentence, and it was seeded once
-  // at mount. Reword the goal in the field and that copy still held what was there before - so the
-  // orange "Use this as the Product Goal" wrote the old one back over the new one.
+describe('and there is only one place to write it', () => {
+  // A newcomer played the live game cold and said the same thing at every step for fourteen steps:
+  // "there are two fields - 'Product Goal' and 'One clear outcome' - and I am not sure which one I
+  // am supposed to type my goal into." They never got in.
   //
-  // This is the same fault the field above already carries a comment about ("the Product Goal I
-  // wrote was thrown away"), one component down, and the wand is what makes it easy to reach.
-  const panelBox = (c: HTMLElement) => [...c.querySelectorAll('textarea')]
-    .find((t) => /outcome/i.test(t.getAttribute('placeholder') ?? '')) as HTMLTextAreaElement;
+  // The panel's own box was the louder of the two: full width, with a full-width orange "Use this
+  // as the Product Goal" under it, while the real field's button said "Reword mine". It also had to
+  // be kept in step with the field above, and when it drifted it wrote the stale sentence back over
+  // the new one - a fault this file used to carry two tests for. Both go: there is nothing to keep
+  // in step with any more.
+  const boxes = (c: HTMLElement) => [...c.querySelectorAll('textarea')];
 
-  it('shows what the wand wrote, not what was there before it', () => {
+  it('has one box for the goal, not two', () => {
     const { container } = intro();
-    fireEvent.change(field(container), { target: { value: 'lions' } });
-    fireEvent.click(wand(container));
-    expect(panelBox(container), 'the panel is not open').toBeTruthy();
-    expect(panelBox(container).value, 'the panel would write the old goal back over the new one')
-      .toBe(field(container).value);
+    expect(boxes(container).length, 'there is more than one place to write the Product Goal').toBe(1);
+    expect(boxes(container)[0].getAttribute('aria-label')).toBe('Product Goal');
   });
 
-  it('still lets them write their own in there', () => {
+  it('has no second button offering to set the goal', () => {
+    const { container } = intro('lions');
+    const labels = [...container.querySelectorAll('button')].map((b) => b.textContent ?? '');
+    expect(labels.filter((t) => /Use this as the Product Goal/i.test(t)),
+      'the decoy that wrote the old goal back over the new one is still there').toEqual([]);
+  });
+
+  it('points at the field above instead', () => {
     const { container } = intro();
-    fireEvent.change(panelBox(container), { target: { value: 'a zoo worth the train fare' } });
-    expect(panelBox(container).value).toBe('a zoo worth the train fare');
+    expect(container.querySelector('[data-part="write-it-above"]')?.textContent ?? '',
+      'the panel offers shapes and never says where to write one').toMatch(/Product Goal box above/i);
+  });
+
+  it('applies a shape the moment it is picked, with the words they already wrote', () => {
+    // No "use this" step, because there is nothing separate to use. Picking "an epic user story"
+    // IS the decision, and the goal goes through untouched: the panel never edits their words.
+    const onSetGoalShape = vi.fn();
+    const { container } = render(
+      <MemoryRouter><ZooIntro productGoal="lions" onSetGoal={() => {}} onStart={() => {}}
+        onStartFromTheBrief={() => {}} onSetGoalShape={onSetGoalShape} /></MemoryRouter>,
+    );
+    const chip = [...container.querySelectorAll('button')].find((b) => /An epic user story/.test(b.textContent ?? ''))!;
+    expect(chip, 'the shapes cannot be picked at all').toBeTruthy();
+    fireEvent.click(chip);
+    expect(onSetGoalShape, 'picking a shape did nothing until some other button was pressed').toHaveBeenCalled();
+    const calls = onSetGoalShape.mock.calls;
+    const [shape, text] = calls[calls.length - 1];
+    expect(shape).toBe('epic');
+    expect(text, 'the panel rewrote what they had written').toBe('lions');
   });
 });
 
