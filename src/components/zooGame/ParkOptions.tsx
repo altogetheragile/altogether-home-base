@@ -703,6 +703,18 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
           <button type="button" data-part="pbi-chip" data-ready={how.ready ? 'yes' : 'no'}
             onClick={press} disabled={!ask && !api.onOpenCard}
             title={ask ? `Offer it to ${how.po}` : api.onOpenCard ? 'Open the card and read its criteria' : undefined}
+            // Says which of the two it is.
+            //
+            // The item being built wears its name here, and the same item wears its name on the
+            // board a few inches away - so the page offered two controls called "Lion" and nothing
+            // on either to say what the difference was. A newcomer playing the live game cold
+            // stopped on it three times: "There are two Lion buttons - 'Lion 2 Next: accept 1 more
+            // criterion' and 'Lion 3 of 4 Ask Priya' - I am not sure which is which or why there
+            // are two." The third time the game had of naming two things the same way, after the
+            // example zoom and the Review's two pictures.
+            aria-label={`${inside ? `Inside ${inside.name}` : subject.name}, the one being built`
+              + (how.criteria.length > 0 ? ` - ${how.count} criteria met` : '')
+              + (ask ? ` - ask ${how.po} to accept it` : api.onOpenCard ? ' - open its card' : '')}
             className={cn(FOCUS, 'flex h-9 min-w-0 shrink items-center gap-1.5 rounded-md border px-2.5 text-xs',
               how.accepted ? 'border-emerald-500/60 bg-emerald-500/10'
                 : ask ? 'border-primary/60 bg-primary/10' : 'border-border bg-card',

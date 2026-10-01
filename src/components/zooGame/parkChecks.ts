@@ -350,7 +350,9 @@ export const CRITERIA: CriterionDef[] = [
       const signed = currentDesign(item).parts?.sign !== 'off' && !!currentDesign(item).colors?.sign;
       return signed
         ? { met: true, evidence: 'a name board over the door' }
-        : { met: false, evidence: 'no name board yet - put a sign on it and give it a colour' };
+        // Says where the control is. "Put a sign on it" reads as a thing to add, and there is
+        // nothing to add: the board is already hanging and it is blank.
+        : { met: false, evidence: 'the name board is blank - colour it under Look' };
     },
   },
   { id: 'sells-food', asks: 'Can I buy food and a drink here?', short: 'somewhere to eat',
