@@ -84,10 +84,15 @@ export async function readScreen(page) {
       el.setAttribute('data-playtest-ref', ref);
       const one = { ref, role, name };
       if (field) {
-        // What a person sees when they look at the box: the words in it, or nothing and a
-        // suggestion in grey, and whether the cursor is sitting there.
-        one.value = (el.value ?? '').replace(/\s+/g, ' ').slice(0, 200);
-        one.hint = (el.getAttribute('placeholder') ?? '').replace(/\s+/g, ' ').slice(0, 120);
+        // A tick box is ticked or it is not. Its `value` is the string "on" whatever its state,
+        // which is a detail of HTML and not a thing anybody can see - so the newcomer was handed
+        // six boxes "all containing 'on'" and could not tell what any of them meant. They are
+        // properly labelled on the page; it was this that could not read them.
+        const tick = el.type === 'checkbox' || el.type === 'radio';
+        one.role = tick ? 'tick box' : one.role;
+        one.value = tick ? (el.checked ? 'ticked' : 'not ticked')
+          : (el.value ?? '').replace(/\s+/g, ' ').slice(0, 200);
+        if (!tick) one.hint = (el.getAttribute('placeholder') ?? '').replace(/\s+/g, ' ').slice(0, 120);
         one.focused = el === document.activeElement;
       }
       controls.push(one);

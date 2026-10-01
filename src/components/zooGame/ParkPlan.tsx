@@ -279,6 +279,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   // Where a run was started, while it is being drawn.
   const [runFrom, setRunFrom] = useState<{ x: number; y: number } | null>(null);
   const [runTo, setRunTo] = useState<{ x: number; y: number } | null>(null);
+  /** Where the pen is standing when it is being walked about with the arrows rather than carried on
+   *  a pointer. A pointer press is always somewhere the player aimed at; a keyboard has to be given
+   *  a spot and then shown it. */
+  const [penAt, setPenAt] = useState<{ x: number; y: number } | null>(null);
   // The run being laid right now, if the last press carried on from where the one before it
   // stopped. A path round a habitat and up to the kiosk is ONE path with corners in it, not four
   // paths that happen to touch: "can the paths have joints like they used to?"
@@ -287,7 +291,81 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // Putting the pen away finishes the path. Picking it up again starts a new one rather than
     // carrying on from a corner nobody can see any more.
     if (tool !== 'path') { setRunFrom(null); setRunTo(null); setLaying(null); }
+    setPenAt(null);
   }, [tool]);
+
+  /** One press of the pen, wherever that press came from.
+   *
+   *  A pointer press and a press of Enter are the same press, and both go through this. They did
+   *  not: the pen was pointer-only, with no keyboard route to it at all. A path running to a thing
+   *  is a criterion the park judges for itself (`parkChecks`), so it cannot be ticked past - which
+   *  meant a keyboard user could not finish a single item in this game. Found by a newcomer playing
+   *  the live game cold, which is also how it was found that nobody had ever tried.
+   *
+   *  One function rather than two, because this file already carries four separate notes about the
+   *  two drawings drifting apart, and a second way to lay a path would be the fifth. */
+  const pressPen = (at: { x: number; y: number }) => {
+    const w = { ...at };
+          // Two clicks, and the run is drawn between them. A drag on an isometric grid is where
+          // path drawing went wrong; two points is a thing you can aim at.
+          //
+          // A run stops at the front of the park: the tarmac beyond it is the car park, which is
+          // where visitors arrive, not somewhere the Developers lay paths.
+          w.y = Math.min(w.y, FRONT_Y);
+          if (!runFrom) { setRunFrom(w); setRunTo(w); return; }
+          // Pressing the same spot twice finishes the path. It is the ordinary way to end a
+          // polyline, and it is the way to start a separate path somewhere else without putting
+          // the pen away: while one is being laid, every press carries on from the last corner.
+          //
+          // It also swallows the stray click it always swallowed. A press a few pixels from the
+          // last one used to lay a path a few pixels long, and a session hunting for the way in
+          // finished with eight of them fanned across the park: "every stray click creates a junk
+          // path run. I finished with eight."
+          if (Math.hypot(w.x - runFrom.x, w.y - runFrom.y) < MIN_RUN) {
+            setRunFrom(null); setRunTo(null); setLaying(null); return;
+          }
+          // An end that lands on something is ATTACHED to it, so the run follows when the thing
+          // moves. Runs were plain coordinates, so moving an exhibit left its paths behind,
+          // fanning across the park - reported from a play-through: "orphaned paths are never
+          // cleaned up. Mine looked like a cracked windscreen by Sprint 2." Nothing to clean up
+          // if the path goes with the thing it was drawn to.
+          const onThing = (p: { x: number; y: number }) => {
+            const hit = boxes.find((bx) => Math.abs(p.x - bx.at.x) <= bx.size.w / 2 + APRON_WIDTH
+              && Math.abs(p.y - bx.at.y) <= bx.size.h / 2 + APRON_WIDTH);
+            return hit ? { featureId: hit.item.id, x: p.x, y: p.y } : { x: p.x, y: p.y };
+          };
+          const from = onThing(runFrom), to = onThing(w);
+          // Carrying on from where the last press stopped bends the run it is carrying on from,
+          // rather than starting a second one beside it. The corner is where you stopped, and it
+          // is draggable afterwards.
+          const carryingOn = !!laying && (state.connectors ?? []).some((c) => c.id === laying);
+          if (carryingOn && onUpdateConnector) {
+            const c = (state.connectors ?? []).find((x) => x.id === laying)!;
+            onUpdateConnector(laying, { bends: [...(c.bends ?? []), { x: runFrom.x, y: runFrom.y }], b: to });
+          } else {
+            const id = `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`;
+            onAddConnector?.({
+              id,
+              // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
+              // you were building never counted the run you had just drawn for it, so it could not
+              // be built, accepted or finished - "I added the main paths and cannot move it to Done".
+              itemId: runFor,
+              a: from, b: to, bends: [],
+              thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
+            });
+            setLaying(id);
+          }
+          // The pen stays down AND it stays where you left it. Laying a path is laying several
+          // legs - round a habitat, along the front, up to the kiosk - and each press carries on
+          // from the last, so the path grows rather than starting again. Reported from playing
+          // it: "drawing paths is clunky. Can the draw tool stay active so multiple paths can be
+          // drawn at once?" It stops when you close the menu it lives in.
+          //
+          // An end that landed ON something finishes the path there: you have arrived.
+          if (to.featureId) { setRunFrom(null); setRunTo(null); setLaying(null); return; }
+          setRunFrom(w); setRunTo(w);
+          return;
+  };
 
   const standing = standingOnPark(state);
   // The ground each area of the zoo owns. Everything that asks where a thing stands reads the
@@ -641,12 +719,43 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         // Something waiting to be put down can be put down without a pointer: the park takes focus,
         // the arrows walk the ghost about, and Enter sets it there. The verdict is the same one a
         // click goes through, so what may stand where is one rule.
-        role={placing ? 'application' : 'img'}
-        tabIndex={placing ? 0 : undefined}
+        // ...and so can a path be laid. The pen was pointer-only - no focus, no keys, nothing - and a
+        // path running to a thing is a criterion the park judges for itself, so a keyboard user
+        // could not finish a single item. Same idiom as putting something down, deliberately: the
+        // arrows walk, Enter presses, and Escape lifts the pen.
+        role={placing || tool === 'path' ? 'application' : 'img'}
+        tabIndex={placing || tool === 'path' ? 0 : undefined}
         aria-label={placing
           ? `Putting down ${state.backlog.find((it) => it.id === placing.id)?.name ?? 'it'}: arrow keys move it, Enter puts it down`
-          : `The zoo from above: ${boxes.length} thing${boxes.length === 1 ? '' : 's'} standing on it`}
-        onKeyDown={placing ? (e) => {
+          : tool === 'path'
+            ? `Laying a path${runFrom ? ' from the last corner' : ''}: arrow keys walk the pen, Enter presses a corner, Escape puts the pen away`
+            : `The zoo from above: ${boxes.length} thing${boxes.length === 1 ? '' : 's'} standing on it`}
+        onKeyDown={tool === 'path' && !placing ? (e) => {
+          // The pen starts where the path is FOR, if that thing is on the park - you are drawing a
+          // path to something - and in the middle of the park otherwise. Anywhere else and the
+          // first press lands somewhere nobody aimed at.
+          const forItem = runFor ? boxes.find((b) => b.item.id === runFor) : undefined;
+          const here = penAt ?? runFrom ?? (forItem ? { x: forItem.at.x, y: forItem.at.y + forItem.size.h / 2 + PACE * 2 }
+            : { x: CANVAS_W / 2, y: PLAY_H / 2 });
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            setRunFrom(null); setRunTo(null); setLaying(null); setPenAt(null);
+            return;
+          }
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            pressPen(here);
+            return;
+          }
+          const step = e.shiftKey ? PACE * 10 : PACE;
+          const by = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+          if (!by) return;
+          e.preventDefault();
+          const next = { x: here.x + by[0], y: Math.min(here.y + by[1], FRONT_Y) };
+          setPenAt(next);
+          // The rubber band follows the pen, so the leg being drawn is visible before it is pressed.
+          if (runFrom) setRunTo(next);
+        } : placing ? (e) => {
           // Where the ghost starts, before any arrow has been pressed. A pointer starts it under
           // the pointer, which is always somewhere the player chose; a keyboard has to be given a
           // spot, and the middle of the item's OWN area is the one place it is certain to be
@@ -671,7 +780,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         } : undefined}
         // Taking focus shows where it would land. A pointer shows the ghost from the first move;
         // by keyboard, without this, the first thing a player sees is the result of a press.
-        onFocus={placing ? () => {
+        onFocus={tool === 'path' && !placing ? () => {
+          const forItem = runFor ? boxes.find((b) => b.item.id === runFor) : undefined;
+          setPenAt((at) => at ?? runFrom ?? (forItem
+            ? { x: forItem.at.x, y: Math.min(forItem.at.y + forItem.size.h / 2 + PACE * 2, FRONT_Y) }
+            : { x: CANVAS_W / 2, y: PLAY_H / 2 }));
+        } : placing ? () => {
           const item = state.backlog.find((it) => it.id === placing.id) ?? ({} as BacklogItem);
           const plot = plotFor(state, item.zone);
           setGhost((g) => g ?? verdict(placing.id, placing, item.pos
@@ -740,67 +854,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             if (v.ok && onPlace) { onPlace(placing.id, { x: v.x, y: v.y }); setGhost(null); }
             return;
           }
-          if (tool === 'path') {
-            // Two clicks, and the run is drawn between them. A drag on an isometric grid is where
-            // path drawing went wrong; two points is a thing you can aim at.
-            //
-            // A run stops at the front of the park: the tarmac beyond it is the car park, which is
-            // where visitors arrive, not somewhere the Developers lay paths.
-            w.y = Math.min(w.y, FRONT_Y);
-            if (!runFrom) { setRunFrom(w); setRunTo(w); return; }
-            // Pressing the same spot twice finishes the path. It is the ordinary way to end a
-            // polyline, and it is the way to start a separate path somewhere else without putting
-            // the pen away: while one is being laid, every press carries on from the last corner.
-            //
-            // It also swallows the stray click it always swallowed. A press a few pixels from the
-            // last one used to lay a path a few pixels long, and a session hunting for the way in
-            // finished with eight of them fanned across the park: "every stray click creates a junk
-            // path run. I finished with eight."
-            if (Math.hypot(w.x - runFrom.x, w.y - runFrom.y) < MIN_RUN) {
-              setRunFrom(null); setRunTo(null); setLaying(null); return;
-            }
-            // An end that lands on something is ATTACHED to it, so the run follows when the thing
-            // moves. Runs were plain coordinates, so moving an exhibit left its paths behind,
-            // fanning across the park - reported from a play-through: "orphaned paths are never
-            // cleaned up. Mine looked like a cracked windscreen by Sprint 2." Nothing to clean up
-            // if the path goes with the thing it was drawn to.
-            const onThing = (p: { x: number; y: number }) => {
-              const hit = boxes.find((bx) => Math.abs(p.x - bx.at.x) <= bx.size.w / 2 + APRON_WIDTH
-                && Math.abs(p.y - bx.at.y) <= bx.size.h / 2 + APRON_WIDTH);
-              return hit ? { featureId: hit.item.id, x: p.x, y: p.y } : { x: p.x, y: p.y };
-            };
-            const from = onThing(runFrom), to = onThing(w);
-            // Carrying on from where the last press stopped bends the run it is carrying on from,
-            // rather than starting a second one beside it. The corner is where you stopped, and it
-            // is draggable afterwards.
-            const carryingOn = !!laying && (state.connectors ?? []).some((c) => c.id === laying);
-            if (carryingOn && onUpdateConnector) {
-              const c = (state.connectors ?? []).find((x) => x.id === laying)!;
-              onUpdateConnector(laying, { bends: [...(c.bends ?? []), { x: runFrom.x, y: runFrom.y }], b: to });
-            } else {
-              const id = `run-${runFrom.x.toFixed(0)}-${w.x.toFixed(0)}-${w.y.toFixed(0)}`;
-              onAddConnector?.({
-                id,
-                // Whose run it is. Without this a drawn path belonged to no Backlog item: the pathway
-                // you were building never counted the run you had just drawn for it, so it could not
-                // be built, accepted or finished - "I added the main paths and cannot move it to Done".
-                itemId: runFor,
-                a: from, b: to, bends: [],
-                thickness: pathStyle?.thickness ?? 14, color: pathStyle?.color ?? '#c9a86a',
-              });
-              setLaying(id);
-            }
-            // The pen stays down AND it stays where you left it. Laying a path is laying several
-            // legs - round a habitat, along the front, up to the kiosk - and each press carries on
-            // from the last, so the path grows rather than starting again. Reported from playing
-            // it: "drawing paths is clunky. Can the draw tool stay active so multiple paths can be
-            // drawn at once?" It stops when you close the menu it lives in.
-            //
-            // An end that landed ON something finishes the path there: you have arrived.
-            if (to.featureId) { setRunFrom(null); setRunTo(null); setLaying(null); return; }
-            setRunFrom(w); setRunTo(w);
-            return;
-          }
+          if (tool === 'path') { pressPen(w); return; }
           if (!panning.current) onSelect?.(null);
         }}>
         {/* The ground, the promenade along the front, and a grid you can judge a footprint against. */}
@@ -1258,6 +1312,17 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           <line data-part="drawing-run" x1={runFrom.x} y1={runFrom.y} x2={runTo.x} y2={runTo.y}
             stroke={pathStyle?.color ?? '#c9a86a'} strokeWidth={Math.max(6, pathStyle?.thickness ?? 14)}
             strokeLinecap="round" opacity={0.75} pointerEvents="none" />
+        )}
+
+        {/* Where the pen is standing, when it is being walked rather than carried on a pointer.
+            A pointer shows itself; the arrows do not, and without this the first thing a keyboard
+            player sees is the result of a press they could not aim. */}
+        {tool === 'path' && penAt && (
+          <g data-part="pen-at" pointerEvents="none">
+            <circle cx={penAt.x} cy={penAt.y} r={11} fill="none"
+              stroke={pathStyle?.color ?? '#c9a86a'} strokeWidth={3} opacity={0.95} />
+            <circle cx={penAt.x} cy={penAt.y} r={3} fill={pathStyle?.color ?? '#c9a86a'} />
+          </g>
         )}
 
         {/* The ground the thing in your hand is allowed to stand on, while you are holding it.
