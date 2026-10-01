@@ -54,6 +54,12 @@ export async function readScreen(page) {
 
     // Controls get a ref of their own, so the newcomer names what it is pressing without ever
     // being shown a selector.
+    //
+    // Last screen's refs are wiped first. They were not, and a ref is only unique among the
+    // controls counted on the screen that handed it out - so an element left over from an earlier
+    // render kept its old ref while a new element was given the same one, and the click matched
+    // two things at once. It killed a run at step 85, on the button marked "Start Sprint 2".
+    for (const old of document.querySelectorAll('[data-playtest-ref]')) old.removeAttribute('data-playtest-ref');
     const controls = [];
     const act = document.querySelectorAll('button, a[href], input, textarea, select, [role="button"], [role="tab"]');
     act.forEach((el, i) => {
@@ -106,15 +112,24 @@ export async function doAction(page, action) {
   // stuck." Nothing wrong with the page. The tester could not do what the page told it to.
   if (kind === 'key') {
     const name = (text ?? '').trim() || 'Enter';
+    // Held down, rather than tapped once.
+    //
+    // A pace is a tile, and a park is a lot of tiles. One press per turn meant a newcomer could
+    // spend its whole budget shuffling an enclosure across the grass, which is not what any of
+    // this is for. A person holds the key; this is the same thing, and the game's own ten-pace
+    // Shift step still works.
+    const times = Math.max(1, Math.min(30, Number(action?.times) || 1));
     if (ref) await page.locator(`[data-playtest-ref="${ref}"]`).focus().catch(() => {});
-    await page.keyboard.press(name);
-    return `pressed ${name}`;
+    for (let i = 0; i < times; i += 1) await page.keyboard.press(name);
+    return times > 1 ? `pressed ${name} ${times} times` : `pressed ${name}`;
   }
   if (kind === 'scroll') {
     await page.evaluate(() => window.scrollBy(0, Math.round(window.innerHeight * 0.8)));
     return 'scrolled down';
   }
-  const target = ref ? page.locator(`[data-playtest-ref="${ref}"]`) : null;
+  // .first() as a belt to the braces above: a stale ref should be impossible now, but a run that
+  // has got this far should not die of one.
+  const target = ref ? page.locator(`[data-playtest-ref="${ref}"]`).first() : null;
   if (!target || (await target.count()) === 0) return `could not find ${ref ?? 'anything'} to act on`;
 
   if (kind === 'type') {
@@ -143,4 +158,63 @@ export async function doAction(page, action) {
   return now.trim()
     ? `the cursor is now in that box, which already contains "${now.slice(0, 80)}"`
     : 'the cursor is now in that box, and the box is empty - nothing else on the screen changes until you type something';
+}
+
+/** The park as a person looking at it would describe it.
+ *
+ *  Half this game is building things on a map, and the map is an SVG with no words in it. The
+ *  newcomer was told "picked up - arrow keys move it" and then asked to aim blind: "There is no
+ *  obvious visual map showing where I am placing it." It nudged an enclosure a tile at a time with
+ *  no idea where the tile was. This is the picture, in words - where things are, whose ground they
+ *  are on, and what is in the way.
+ *
+ *  Returns '' when there is no park on screen, so it costs nothing on the screens without one. */
+export async function readPark(page) {
+  return page.evaluate(() => {
+    // The player's own park, not the worked example on the first screen. That one is a picture of
+    // somebody else's zoo, and describing it as "the park in front of you" would hand a newcomer a
+    // park they have not built.
+    const svg = [...document.querySelectorAll('[data-part="park-plan"]')]
+      .find((el) => !el.closest('[data-part="labelled-park"]'));
+    if (!svg) return '';
+    const park = svg.getBoundingClientRect();
+    if (park.width < 10 || park.height < 10) return '';
+
+    // Thirds, the way somebody would point at it: "bottom left of the park".
+    const whereabouts = (r) => {
+      const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+      const col = ['left', 'middle', 'right'][Math.min(2, Math.max(0, Math.floor(((cx - park.left) / park.width) * 3)))];
+      const row = ['top', 'middle', 'bottom'][Math.min(2, Math.max(0, Math.floor(((cy - park.top) / park.height) * 3)))];
+      return row === 'middle' && col === 'middle' ? 'the middle' : `${row} ${col}`;
+    };
+    const paces = (r) => `about ${Math.round((r.width / park.width) * 100)}% of the park wide`;
+
+    const lines = [];
+
+    const zones = [...svg.querySelectorAll('[data-part="zone-plot"]')];
+    if (zones.length) {
+      lines.push('Plots of land: ' + zones.map((z) => {
+        const name = z.getAttribute('data-zone');
+        const ours = z.getAttribute('data-ours') === 'yes';
+        const open = z.getAttribute('data-open') === 'yes';
+        return `${name} (${whereabouts(z.getBoundingClientRect())}${ours ? '' : ', NOT bought yet'}${ours && !open ? ', not open to visitors' : ''})`;
+      }).join('; '));
+    }
+
+    const items = [...svg.querySelectorAll('[data-plan-item]')];
+    lines.push(items.length
+      ? 'On the park: ' + items.map((g) => {
+        const label = (g.getAttribute('aria-label') ?? '').replace(/ - arrow keys move it$/, '');
+        const r = g.getBoundingClientRect();
+        return `${label} at ${whereabouts(r)}, ${paces(r)}`;
+      }).join('; ')
+      : 'On the park: nothing has been built yet.');
+
+    if (svg.querySelector('[data-part="river"]')) lines.push('A river runs across the park. Things cannot stand in it, and visitors cannot cross it except at a bridge.');
+    if (svg.querySelector('[data-part="way-in"]')) lines.push('There is a way in, where visitors arrive.');
+    const ghost = svg.querySelector('[data-part="ghost"]');
+    if (ghost) lines.push(`Something is being positioned right now, at ${whereabouts(ghost.getBoundingClientRect())}.`);
+
+    return lines.join('\n');
+  });
 }

@@ -24,7 +24,13 @@ Rules:
 - One action per turn.
 - Some things are moved with the keyboard. If a control tells you which keys to press, press them:
   use "key" with the key's name in "text" ("ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
-  "Enter", "Escape", "Tab"), and its ref, so the key reaches the right thing.
+  "Enter", "Escape", "Tab"), and its ref, so the key reaches the right thing. Add "times" to hold
+  it down - "times": 8 nudges something eight paces, which is what a person does rather than
+  pressing once and looking.
+- You are playing this game, not inspecting it. Keep going: finish what you started, and when a
+  screen offers a way forward, take it. Say what confused you on the way past, do not stop on it.
+- Only use "stop" when the game itself has ended, or when you have genuinely tried everything on
+  screen and none of it moves you on. Running out of patience is not a reason to stop.
 - A field is a box you type in. To put words in it, use "type" with its ref: you do not need to
   click it first, and clicking it only moves the cursor. Each field below says what is already in
   it, so you never have to guess whether somebody has filled it in for you.
@@ -36,7 +42,7 @@ Answer with JSON only:
   "confused_by": "anything on this screen you cannot make sense of, or null",
   "thinking": "one or two sentences of what you make of this screen",
   "expect": "what you think your action will do",
-  "action": { "kind": "click" | "type" | "key" | "scroll" | "stop", "ref": "the ref from the list", "text": "the words for type, the key's name for key" }
+  "action": { "kind": "click" | "type" | "key" | "scroll" | "stop", "ref": "the ref from the list", "text": "the words for type, the key's name for key", "times": "optional, for key only" }
 }
 
 Use "stop" when you have nothing sensible left to try, or you believe you have finished.
@@ -55,10 +61,17 @@ const describe = (c) => {
 
 /** One step's worth of judgement. Returns null if the model cannot be reached or answers oddly,
  *  and the caller stops rather than inventing a player. */
-export async function askTheNewcomer({ apiKey, screen, history, step, maxSteps }) {
+export async function askTheNewcomer({ apiKey, screen, history, step, maxSteps, park }) {
+  // Only the recent past in full. A long game's history outgrows the screen it is about, and what
+  // somebody actually carries is roughly the last few minutes plus a sense of how long they have
+  // been at it.
+  const RECENT = 14;
+  const older = Math.max(0, history.length - RECENT);
   const prompt = [
     `Step ${step} of at most ${maxSteps}.`,
-    history.length ? `\nWhat you have done so far:\n${history.map((h, i) => `${i + 1}. ${h}`).join('\n')}` : '',
+    older ? `\nYou have been playing for a while - ${older} earlier steps, not listed.` : '',
+    history.length ? `\nWhat you have done recently:\n${history.slice(-RECENT).map((h, i) => `${older + i + 1}. ${h}`).join('\n')}` : '',
+    park ? `\nThe park in front of you:\n${park}` : '',
     `\nThe screen now:\n\n${screen.text}`,
     `\nThings you can act on:\n${screen.controls.map(describe).join('\n')}`,
     '\nWhat do you do? JSON only.',
