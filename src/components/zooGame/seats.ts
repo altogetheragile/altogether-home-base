@@ -54,3 +54,10 @@ export const SEAT = {
 /** Which of the stack this Developer is. Position, not identity: the front one is the lightest, and
  *  a fourth Developer starts round again rather than inventing a colour the board does not have. */
 export const devShade = (i: number) => DEV_STACK[Math.max(0, i) % DEV_STACK.length];
+
+/** One Developer's badge. A style rather than a class: the shade depends on which of them this is,
+ *  and a class name has to exist before it can be used.
+ *
+ *  For a badge standing for the Developers as a GROUP - a seat band, a legend - use
+ *  `SEAT.developers.chip` instead. The stack is for telling people apart, not roles. */
+export const devChip = (i: number) => ({ backgroundColor: devShade(i), color: '#fff' });

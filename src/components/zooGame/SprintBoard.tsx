@@ -24,7 +24,7 @@ import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, Target, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import { EYEBROW, FOCUS, TAP, TONE } from './ui/tokens';
-import { SEAT } from './seats';
+import { devChip } from './seats';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -137,9 +137,9 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
         </span>
         {devs.length > 0 && (
           <span className="ml-auto flex items-center -space-x-1.5">
-            {devs.map((d) => (
-              <span key={d.id} title={d.name}
-                className={cn(SEAT.developers.chip, "flex h-5 w-5 items-center justify-center rounded-full border border-card text-[9px] font-bold")}>
+            {devs.map((d, i) => (
+              <span key={d.id} title={d.name} style={devChip(i)}
+                className="flex h-5 w-5 items-center justify-center rounded-full border border-card text-[9px] font-bold">
                 {d.name.slice(0, 1).toUpperCase()}
               </span>
             ))}

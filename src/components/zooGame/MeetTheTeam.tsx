@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW } from './ui/tokens';
 import { sprintCapacity } from './engine';
-import { SEAT } from './seats';
+import { SEAT, devChip } from './seats';
 
 // Five seats, three accountabilities, no manager.
 //
@@ -22,7 +22,9 @@ type Seat = {
   role: string;
   does: string;
   character: string;
-  colour: string;
+  colour?: string;
+  /** A Developer's own shade of the stack. */
+  style?: React.CSSProperties;
 };
 
 const ROLES: Record<SeatName, { role: string; does: string }> = {
@@ -67,7 +69,7 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
     ...state.team.developers.map((d, i) => ({
       ...ROLES.developer, seat: 'developer' as SeatName, name: plain(d.name),
       initials: plain(d.name).slice(0, 1).toUpperCase(), character: CHARACTER[`dev${i}`] ?? 'Gets on with it.',
-      colour: SEAT.developers.chip,
+      style: devChip(i),
     })),
   ];
 
@@ -94,7 +96,7 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
               className={cn('flex flex-col rounded-xl border-2 bg-card p-3',
                 yours ? 'border-primary bg-primary/[0.04]' : 'border-border')}>
               <div className="flex items-center gap-2">
-                <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold', s.colour)}>
+                <span style={s.style} className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold', s.colour)}>
                   {s.initials}
                 </span>
                 <span className="min-w-0">
