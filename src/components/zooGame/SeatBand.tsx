@@ -4,6 +4,7 @@ import { seatLines, whoDoesWhatNow } from './header';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { cn } from '@/lib/utils';
+import { SEAT } from './seats';
 
 // The band: one sentence on who does what now, and the five people with what each is doing.
 //
@@ -14,8 +15,8 @@ import { cn } from '@/lib/utils';
 
 const ROLE_COLOR: Record<string, string> = {
   product_owner: 'bg-primary text-primary-foreground',
-  scrum_master: 'bg-teal-700 text-white',
-  developer: 'bg-sky-600 text-white',
+  scrum_master: SEAT.scrumMaster.chip,
+  developer: SEAT.developers.chip,
 };
 
 /** Which seat on the band is the one this player holds. A solo player holds all three

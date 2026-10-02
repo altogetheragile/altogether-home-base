@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { PRODUCT_GOAL } from './config';
-import { Pencil, FolderOpen, Trophy, Wand2 } from 'lucide-react';
+import { Pencil, FolderOpen, Wand2 } from 'lucide-react';
+import { BoardIcon, BOARD } from './board/BoardIcon';
 import { TeachingCard } from './ScrumTeaching';
 import { INTRO_COPY } from './scrumContent';
 import { GoalShapes } from './GoalShapes';
@@ -102,7 +103,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {/* The Product Goal's own mark. It is the thing every Sprint aims at, so it gets a
                 symbol you can then recognise in the header rather than another target among targets. */}
-            <Trophy className="h-5 w-5 shrink-0 text-amber-500" />
+            <BoardIcon name={BOARD.productGoal} className="h-5 w-5 shrink-0" />
             <h2 className="text-lg font-semibold">Your Product Goal</h2>
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
               Commitment of the Product Backlog
@@ -189,7 +190,12 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
               )}
             </p>
           )}
-          <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time from the trophy in Artifacts, in the header.</p>
+          {/* Where it actually is. This said "from the trophy in Artifacts, in the header", and
+              there has been no trophy button since Learn replaced it - Artifacts is a section
+              inside that drawer now. Swapping the Product Goal's trophy for the board's peaks only
+              made a stale sentence impossible to follow rather than merely wrong: a line pointing
+              at an icon that is not there sends somebody looking for it. */}
+          <p className="text-[11px] text-muted-foreground">Edit it here, and again at any time under Artifacts, in the Learn drawer.</p>
           {onSetGoalShape && (
             <div className="mt-2">
               {/* `goal`, not `chosen()`. chosen() falls back to the shipped Product Goal, so with

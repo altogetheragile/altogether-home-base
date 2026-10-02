@@ -3,11 +3,14 @@ import type { ScrumTeam, ScrumTeamMember } from './types';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Users, Check } from 'lucide-react';
-import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
+import { FOCUS, PADDING, SURFACE } from './ui/tokens';
+import { SEAT, devShade } from './seats';
 
 // A stable colour per Developer id, so the same person reads the same everywhere.
-const DEV_COLORS = ['#e6842a', '#3f8fd0', '#43a047', '#8a5a2b', '#c17a5c', '#7c4dff'];
-const devColor = (id: string, devs: ScrumTeamMember[]) => DEV_COLORS[Math.max(0, devs.findIndex((d) => d.id === id)) % DEV_COLORS.length];
+// The board's stack, not a rainbow. Six colours chosen for being different from each other put
+// the first Developer in #e6842a - an orange within a hair of the Product Owner's - on a screen
+// whose whole job is telling the accountabilities apart.
+const devColor = (id: string, devs: ScrumTeamMember[]) => devShade(devs.findIndex((d) => d.id === id));
 const initial = (name: string) => (name.replace(/\s*\(.*\)\s*/, '').trim()[0] ?? '?').toUpperCase();
 
 /** A round initial avatar for a Developer. */
@@ -79,7 +82,7 @@ export function TeamRow({ team, onRename, onWho }: {
         <EditableName member={team.productOwner} onRename={onRename} className="text-[11px] font-medium" />
       </span>
       <span className={cn('flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1')} {...cannot('Scrum Masters')} title="The Scrum Master">
-        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[10px] font-bold text-white')}>SM</span>
+        <span className={cn(SEAT.scrumMaster.chip, 'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold')}>SM</span>
         <EditableName member={team.scrumMaster} onRename={onRename} className="text-[11px] font-medium" />
       </span>
       {team.developers.map((d) => (
@@ -108,7 +111,7 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
             className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
             <Users className="h-3.5 w-3.5" />
             <span className="rounded-full bg-primary/15 px-1 font-semibold text-primary">PO</span>
-            <span className={cn(TONE.coach.text, "rounded-full bg-sky-500/15 px-1 font-semibold")}>SM</span>
+            <span className={cn(SEAT.scrumMaster.soft, "rounded-full px-1 font-semibold")}>SM</span>
             <span className="flex -space-x-1">
               {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}
             </span>
@@ -138,7 +141,7 @@ function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRenam
         <EditableName member={team.productOwner} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Scrum Master - a true leader who serves the team; causes impediments to be removed and coaches self-management.">
-        <span className={cn(TONE.coach.text, "rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold")}>SM</span>
+        <span className={cn(SEAT.scrumMaster.soft, "rounded-full px-1.5 py-0.5 text-[11px] font-semibold")}>SM</span>
         <EditableName member={team.scrumMaster} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Developers - build the Increment; self-managing (they decide who does what) and accountable for quality via the Definition of Done.">
