@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, siteName } from '@/lib/seo';
 import { requireModule } from '@/lib/module-gate';
+import { isOurSite } from '@/lib/ourSite';
 import { boardContent, pageIn } from '@/lib/scrumBoard/content';
 import { BOARD_PAGES } from '@/lib/scrumBoard/boardPages';
 import { Prose } from '@/lib/scrumBoard/prose';
@@ -32,6 +33,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BoardPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  // Ours, and only ours. The board is this practice's icons and course material; a flag says
+  // what a site wants, and this says what the content is. See lib/ourSite.ts.
+  if (!isOurSite()) notFound();
   await requireModule('zoo_game');
   const content = await boardContent();
   const page = pageIn(content, slug);

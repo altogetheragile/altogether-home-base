@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, siteName } from '@/lib/seo';
 import { requireModule } from '@/lib/module-gate';
+import { isOurSite } from '@/lib/ourSite';
 import { boardContent } from '@/lib/scrumBoard/content';
 import { Board } from './Board';
 import { colors as p } from '@/lib/brand';
 import './board.css';
+import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ScrumOnOnePage() {
+  // Ours, and only ours. The board is this practice's icons and course material; a flag says
+  // what a site wants, and this says what the content is. See lib/ourSite.ts.
+  if (!isOurSite()) notFound();
   await requireModule('zoo_game');
   const content = await boardContent();
   return (

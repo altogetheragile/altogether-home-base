@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/site-settings';
 import { founderOf } from '@/lib/brand';
+import { OUR_SITE } from '@/lib/ourSite';
 
 /** This deployment's public address. A second site sets NEXT_PUBLIC_SITE_URL; without it the
  *  canonical, the Open Graph url and every absolute link would point at altogetheragile.com from
  *  somebody else's domain, which is the one SEO mistake that is actively harmful rather than
  *  merely wrong. */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://altogetheragile.com').replace(/\/$/, '');
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || OUR_SITE).replace(/\/$/, '');
 
 /** The name this repository ships with. Used when a site has not set its own. */
 export const SITE_NAME = 'Altogether Agile';
