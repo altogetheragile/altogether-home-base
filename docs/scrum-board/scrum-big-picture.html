@@ -304,7 +304,12 @@ s+=link("sprint",`<g class="hot">${icon("esprint",146,yBar+12,38)}</g>`,"Sprint"
 ["eplan","edaily","ereview","eretro"].forEach((k,i)=>{const [a,b]=COLS[i];s+=link(EVENTS[i],`<g class="hot">${icon(k,(a+b)/2,yI,54)}</g>`,["Sprint Planning","Daily Scrum","Sprint Review","Sprint Retrospective"][i])});
 /* inspect / adapt description inside each event */
 DESC.forEach((pair,i)=>{const [a,b]=COLS[i];let lines=[];pair.forEach((t,j)=>wrapW(t,b-a-8,6.0).forEach((l,k)=>lines.push([l,j,k])));
-  const lh=14,top=yD+hD/2-(lines.length-1)*lh/2+4;
+  /* Hung from the top of the band, not centred in it. Centred, a two-line description dropped 30
+     below the band's edge while a three-line one sat 23 - so the Daily Scrums text floated away
+     from the icon it belongs to and the text under Sprint Planning did not, and which icon a
+     description went with stopped being obvious. Every column starts at the same line now, directly
+     under its icon. */
+  const lh=14,top=yD+18;
   const txt=lines.map(([l,j,k],n)=>{const m=k===0&&l.match(/^(Inspect|Adapt|Create)\b/);return `<text x="${(a+b)/2}" y="${top+n*lh}" text-anchor="middle" font-size="11.5" class="ink">${m?`<tspan font-weight="800" class="${j?"verb-ad":"verb-in"}">${m[1]}</tspan>${l.slice(m[1].length)}`:l}</text>`}).join("");
   s+=link(EVENTS[i],`<g class="iacell"><rect x="${a+6}" y="${yD}" width="${b-a-12}" height="${hD}" rx="8" class="ia-in"/>${txt}</g>`,pair.join(", "))});
 
@@ -319,6 +324,11 @@ s+=flow([{t:"Sprint Backlog|actionable plan",k:"sb",id:"sprint-backlog"}],170,32
 
 /* Daily Scrums */
 s+=hex(436,yC+100,"po")+devStack(504,yC+100)+hex(572,yC+100,"sm");
+/* The Definition of Done, between the people and the Increments they make.
+   It is the bar an Increment has to clear - "the moment a Product Backlog item meets the Definition
+   of Done, an Increment is born" - so it belongs between the Developers above it and the cubes
+   below. The cubes each wear the gem on a corner already; this says whose bar it is. */
+s+=link("definition-of-done",`<g class="hot">${icon("dod",504,yC+158,34)}</g>`,"Definition of Done");
 s+=cubes([474,yC+214],[544,yC+214],[509,yC+268]);
 /* Sprint Review */
 s+=teamHex(752,yC+150,36)+hex(830,yC+150,"sh");
@@ -335,10 +345,17 @@ s+=rowLabel(yOut,hOut,"OUTPUTS","adapted or created",C.orange,"#004D4D");
 s+=rail(1054,yB,yOut+hOut,"SCRUM THEORY: EMPIRICISM · LEAN THINKING","scrum-theory",C.teal);
 s+=rail(1098,yB,yOut+hOut,"PRODUCT BACKLOG REFINEMENT","refinement",C.orangeD);
 
-/* values + legend (drawn at their original coordinates, shifted down) */
-const dy=yOut+hOut+26-700;
+/* legend (drawn at its original coordinates, shifted down)
+   The SCRUM VALUES bracket and label used to sit here, at y=700, underlining the whole board and
+   linking to the same page the values wheel links to. Two ways to one page, and the wheel is the
+   better of them: it names all five values and is on the board rather than beneath it.
+   The group is shifted to put the LEGEND where that bracket was - 768 rather than 700 - so taking
+   it out shortens the board rather than leaving a gap where it stood.
+   Not all of it, though: 26 was the gap above a thin bracket, and the bracket was also what held
+   the legend off the outputs row. 60 is the gap between the board and the legend now that nothing
+   stands between them. */
+const dy=yOut+hOut+60-768;
 s+=`<g transform="translate(0 ${dy})">`;
-s+=link("scrum-values",`<path d="M172 700 v8 h846 v-8" fill="none" stroke="#9CA3AF" stroke-width="2"/><text x="595" y="730" text-anchor="middle" font-size="13" class="ink lbl ul">SCRUM VALUES</text>`,"Scrum Values");
 const lg=(x,r)=>{const [id,,,name]=ROLE[r];
   return link(id,`<g class="hot">${roleGlyph(r,x,768,.6)}<text x="${x+(r==="d"?36:28)}" y="773" font-size="14" font-weight="500" class="ink">${name}</text></g>`,name)};
 s+=lg(70,"po")+lg(258,"d")+lg(415,"sm")+lg(565,"sh");

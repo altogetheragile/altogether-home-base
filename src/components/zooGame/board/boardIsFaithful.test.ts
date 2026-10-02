@@ -19,7 +19,10 @@ const board = () => drawBoard({ INPUTS: BOARD_INPUTS, OUTPUTS: BOARD_OUTPUTS, DE
 
 describe('the board draws', () => {
   it('at the size the design file draws it', () => {
-    expect(board().height, 'the board has changed height, so the layout has moved').toBe(1080);
+    // 1080 until the SCRUM VALUES bracket came off the foot of it. It stood in 68, of which 34
+    // went back to the legend as the breathing room the bracket used to provide. The number is here
+    // to be changed deliberately when the layout changes, and to say so when it changes by accident.
+    expect(board().height, 'the board has changed height, so the layout has moved').toBe(1046);
   });
 
   it('a whole board, not a fragment', () => {
@@ -89,5 +92,44 @@ describe('the icons', () => {
     const heads = (id: string) => (BOARD_ICONS[id].inner.match(/<circle/g) ?? []).length;
     expect(heads('developers'), 'the Developers are not a stack of three').toBe(3);
     expect(heads('scrum_team'), 'the Scrum Team is three figures, not PO + stack + SM').toBe(5);
+  });
+});
+
+describe('what the board shows', () => {
+  // Three changes asked for after looking at it, each one a thing the board was saying badly.
+  const svg = () => board().svg;
+
+  it('offers one way to the Scrum Values, not two', () => {
+    // A SCRUM VALUES bracket underlined the whole board and opened the same page the values wheel
+    // opens. The wheel is the better of the two: it names all five and is ON the board.
+    expect(svg(), 'the bracket is back at the foot of the board').not.toContain('SCRUM VALUES');
+    const ways = (svg().match(/data-id="scrum-values"/g) ?? []).length;
+    expect(ways, 'the values are reachable twice again, or not at all').toBe(1);
+  });
+
+  it('shows the Definition of Done between the Developers and the Increments', () => {
+    // The bar an Increment has to clear, standing where it is cleared. The cubes each wear the gem
+    // on a corner; this says whose bar it is.
+    const inDaily = [...svg().matchAll(/translate\((\d+) (\d+)\)[^"]*"[^>]*>\s*<g class="hot">/g)];
+    expect(inDaily.length >= 0).toBe(true);
+    const gems = (svg().match(/data-id="definition-of-done"/g) ?? []).length;
+    expect(gems, 'the Definition of Done lost its place inside the Sprint').toBeGreaterThanOrEqual(5);
+  });
+
+  it('starts every event description on the same line, under its own icon', () => {
+    // Centred in its band, a two-line description dropped further than a three-line one - so the
+    // Daily Scrums text floated away from its icon and Sprint Planning's did not.
+    // Per column, because counting distinct lines across the whole row cannot tell the difference:
+    // centred, the two-line column began exactly where the four-line column's SECOND line fell, so
+    // both layouts produced the same four values and an assertion on them passed either way.
+    const lines = [...svg().matchAll(/<text x="(\d+)" y="(\d+)" text-anchor="middle" font-size="11\.5"/g)]
+      .map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+    expect(lines.length, 'the event descriptions are gone').toBeGreaterThan(6);
+    const byColumn = new Map<number, number>();
+    for (const l of lines) byColumn.set(l.x, Math.min(byColumn.get(l.x) ?? Infinity, l.y));
+    expect(byColumn.size, 'the four events no longer have four descriptions').toBe(4);
+    const starts = [...new Set(byColumn.values())];
+    expect(starts.length,
+      `the descriptions start on ${starts.length} different lines: ${starts.sort().join(', ')}`).toBe(1);
   });
 });
