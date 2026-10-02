@@ -22,6 +22,14 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
 const SRC = resolve(ROOT, 'docs/scrum-board');
 const OUT = resolve(ROOT, 'src/components/zooGame/board');
+/** ...and the Site's own copy of it.
+ *
+ *  `apps/web` installs alone and its `@/*` points at its own src, so it cannot import from the App.
+ *  The usual answer to that is `packages/ui` - a build step, and a stale-dist trap this session has
+ *  fallen into four times. None of it is needed for GENERATED content: the same bytes in two places
+ *  are safe precisely because nobody edits either copy, and `--check` fails the build if they
+ *  drift. */
+const SITE = resolve(ROOT, 'apps/web/src/lib/scrumBoard');
 const check = process.argv.includes('--check');
 
 /** The knowledge pages, read out of the design file's own `P` array. */
@@ -258,15 +266,7 @@ export const BOARD_NAMES: Record<string, string> = ${JSON.stringify(names, null,
 const P = pages();
 const I = icons();
 const D = drawing();
-const want = [
-  [resolve(OUT, 'boardPages.ts'), writePages(P)],
-  [resolve(OUT, 'boardIcons.ts'), writeIcons(I)],
-  [resolve(OUT, 'boardLabels.ts'), writeLabels(D.lifted, D.names)],
-  [resolve(OUT, 'boardDrawing.generated.js'), writeDrawing(D.code)],
-  // The drawing is lifted JavaScript and stays that way - it is not ours to re-type, and every
-  // annotation added to it would have to be re-added on the next import. The boundary is typed
-  // instead, which is the only part the app touches.
-  [resolve(OUT, 'boardDrawing.generated.d.ts'), `${banner}
+const types = `${banner}
 import type { BoardChip } from './boardLabels';
 
 export declare function drawBoard(text: {
@@ -274,8 +274,21 @@ export declare function drawBoard(text: {
   OUTPUTS: BoardChip[][];
   DESC: [string, string][];
 }): { svg: string; height: number };
-`],
+`;
+
+/** The same bytes into both apps. The Site renders the board read-only and server-side; the App
+ *  renders it inside the game. One generator, so they cannot teach different things. */
+const into = (dir) => [
+  [resolve(dir, 'boardPages.ts'), writePages(P)],
+  [resolve(dir, 'boardIcons.ts'), writeIcons(I)],
+  [resolve(dir, 'boardLabels.ts'), writeLabels(D.lifted, D.names)],
+  [resolve(dir, 'boardDrawing.generated.js'), writeDrawing(D.code)],
+  // The drawing is lifted JavaScript and stays that way - it is not ours to re-type, and every
+  // annotation added to it would have to be re-added on the next import. The boundary is typed
+  // instead, which is the only part either app touches.
+  [resolve(dir, 'boardDrawing.generated.d.ts'), types],
 ];
+const want = [...into(OUT), ...into(SITE)];
 
 let stale = 0;
 for (const [path, text] of want) {
@@ -292,4 +305,4 @@ if (check && stale) {
   console.error(`\n${stale} generated file(s) do not match docs/scrum-board.\nRun: node scripts/scrumBoard/import.mjs`);
   process.exit(1);
 }
-console.log(`${P.length} pages, ${I.length} icons, ${D.lifted.INPUTS.length + D.lifted.OUTPUTS.length} label groups${check ? ' - in step' : ''}`);
+console.log(`${P.length} pages, ${I.length} icons, into ${want.length / 5} apps${check ? ' - in step' : ''}`);

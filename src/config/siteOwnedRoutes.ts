@@ -21,6 +21,10 @@ export const SITE_OWNED = [
   '/events',
   '/blog',
   '/exams',
+  // Scrum on one page: the board, and one page for each of the 28 things on it. The game has its
+  // own copy of the same board, editable and behind the way in; this is the public one, server
+  // rendered so every page of it can be found.
+  '/scrum-on-one-page',
   // Courses, workshops and webinars. Not '/courses': a workshop is not a course, and the
   // catalogue holds both. Every old /courses/<slug> address redirects here.
   '/training',

@@ -24,7 +24,12 @@ import { MODULE_DEFAULTS } from '@altogether/ui/modules';
 
 export type GatedModule =
   | 'about' | 'coaching' | 'contact' | 'testimonials'
-  | 'events' | 'blog' | 'exams';
+  | 'events' | 'blog' | 'exams'
+  // Scrum on one page: the public board. The same flag as the game, because they are one teaching
+  // asset - the board is the reference layer the course moves to and from, and a site that does
+  // not run the game has no use for a page of this practice's icons. Off by default, which is why
+  // the second site does not inherit it.
+  | 'zoo_game';
 
 
 /** Is this page switched on? The one place that answers it, so the gate, the menu and the banner

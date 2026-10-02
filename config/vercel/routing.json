@@ -29,7 +29,7 @@
       ]
     },
     {
-      "source": "/((?!exams|blog|events|courses|about|coaching|testimonials|contact|setup|sites).+)",
+      "source": "/((?!exams|blog|events|courses|about|coaching|testimonials|contact|setup|sites|scrum-on-one-page).+)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -38,7 +38,7 @@
       ]
     },
     {
-      "source": "/(exams|blog|events|courses|about|coaching|testimonials|contact|setup|sites)(/.*)?",
+      "source": "/(exams|blog|events|courses|about|coaching|testimonials|contact|setup|sites|scrum-on-one-page)(/.*)?",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -631,6 +631,14 @@
     {
       "source": "/va/:path*",
       "destination": "https://va.vercel-scripts.com/:path*"
+    },
+    {
+      "source": "/scrum-on-one-page",
+      "destination": "https://altogether-home-base-web-next.vercel.app/scrum-on-one-page"
+    },
+    {
+      "source": "/scrum-on-one-page/:path*",
+      "destination": "https://altogether-home-base-web-next.vercel.app/scrum-on-one-page/:path*"
     },
     {
       "source": "/exams",
