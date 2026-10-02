@@ -7,7 +7,7 @@ import { bookingHref } from '@/lib/booking';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseListJsonLd } from '@/lib/seo';
 import { EventsList } from './EventsList';
 import { colors as c, fonts } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy, lines } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 
@@ -15,6 +15,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('events')) return {};
   const t = await getCopy('events');
   return buildMetadata({
   title: t('events.meta.titlePrefix'),

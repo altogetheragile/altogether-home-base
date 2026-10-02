@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, siteName } from '@/lib/seo';
 import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { isAdmin } from '@/lib/auth';
 import { GuideEditor } from './GuideEditor';
 
@@ -57,6 +57,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('exams')) return {};
   const { slug } = await params;
   const exam = await getExam(slug);
   if (!exam) return { title: 'Exam not found' };

@@ -8,7 +8,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName
 import { HomeTestimonials } from '../HomeTestimonials';
 import { CoachingEnquiryForm } from './CoachingEnquiryForm';
 import { colors as p, fonts } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 import { Icon } from '@/components/icons/Icon';
@@ -19,6 +19,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('coaching')) return {};
   const t = await getCopy('coaching');
   return {
   ...(await buildMetadata({

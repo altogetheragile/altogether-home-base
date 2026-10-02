@@ -10,7 +10,7 @@ import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName
 import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf, fonts } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { isAdmin } from '@/lib/auth';
 import { getCopy, lines, list, items } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
@@ -22,6 +22,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('about')) return {};
   const t = await getCopy('about');
   return {
   ...(await buildMetadata({

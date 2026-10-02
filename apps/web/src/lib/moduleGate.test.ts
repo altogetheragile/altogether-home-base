@@ -81,3 +81,46 @@ describe('every page the Site serves', () => {
     expect(pages().length).toBeGreaterThan(5);
   });
 });
+
+describe('a page this site has switched off', () => {
+  // `generateMetadata` runs before the body and never asked the module, so a site with Practice
+  // Exams off answered "Practice Exams - Stream Strategy" in its <title> while the body 404ed:
+  // the page denied existing and named itself in the same breath. A crawler reads the title.
+  //
+  // Found while checking whether a second site had inherited anything it should not have. It had
+  // not - but every page it had switched off was announcing itself.
+  const gated = () => pages()
+    .map(({ route, file }) => ({ route, src: readFileSync(file, 'utf8') }))
+    .filter(({ src }) => src.includes('requireModule('));
+
+  it('has pages to check, so a passing result means something', () => {
+    expect(gated().length).toBeGreaterThan(8);
+  });
+
+  it('says nothing about itself', () => {
+    const loud: string[] = [];
+    for (const { route, src } of gated()) {
+      const at = src.indexOf('export async function generateMetadata');
+      // No metadata of its own is fine: there is nothing to leak.
+      if (at < 0) continue;
+      const body = src.slice(at, src.indexOf('\nexport default', at));
+      if (!/moduleHidden\(|isOurSite\(\)/.test(body)) loud.push(route);
+    }
+    expect(loud, `names itself on a site that switched it off: ${loud.join(', ')}`).toEqual([]);
+  });
+
+  it('asks the same question of its title as of its body', () => {
+    // The two must not disagree. A title gated on one module and a body on another would be worse
+    // than neither, because it would look deliberate.
+    const wrong: string[] = [];
+    for (const { route, src } of gated()) {
+      const at = src.indexOf('export async function generateMetadata');
+      if (at < 0) continue;
+      const head = src.slice(at, src.indexOf('\nexport default', at));
+      const title = head.match(/moduleHidden\('([a-z_]+)'\)/)?.[1];
+      const body = src.slice(src.indexOf('\nexport default')).match(/requireModule\('([a-z_]+)'\)/)?.[1];
+      if (title && body && title !== body) wrong.push(`${route}: title asks ${title}, body asks ${body}`);
+    }
+    expect(wrong, wrong.join(' | ')).toEqual([]);
+  });
+});
