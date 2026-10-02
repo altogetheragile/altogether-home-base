@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ClipboardList, ListTodo, Package, Pencil, Check, Eye, Sparkles, Trophy } from 'lucide-react';
+import { Pencil, Check, Eye, Sparkles } from 'lucide-react';
+import { BoardIcon, BOARD } from './board/BoardIcon';
 import { cn } from '@/lib/utils';
 import type { ZooGameState } from './types';
 import { artifactState } from './engine';
@@ -14,10 +15,12 @@ import { FOCUS, SURFACE } from './ui/tokens';
 // too - because that is what a commitment IS: the Product Goal belongs to the Product Backlog, the
 // Definition of Done belongs to the Increment. Keeping them together says so without a paragraph.
 
-const ICON: Record<ArtifactId, typeof ClipboardList> = {
-  'product-backlog': ClipboardList,
-  'sprint-backlog': ListTodo,
-  increment: Package,
+// The board's own three, rather than a clipboard, a list and a parcel. Same artwork a learner met
+// on Scrum on one page, down to the Definition of Done gem on the Increment's corner.
+const ICON: Record<ArtifactId, (p: { className?: string }) => JSX.Element | null> = {
+  'product-backlog': (p) => <BoardIcon name={BOARD.productBacklog} {...p} />,
+  'sprint-backlog': (p) => <BoardIcon name={BOARD.sprintBacklog} {...p} />,
+  increment: (p) => <BoardIcon name={BOARD.increment} {...p} />,
 };
 const ROLE = {
   inspects: { label: 'Inspecting', cls: 'bg-sky-500/15 text-sky-700 dark:text-sky-300' },
@@ -116,7 +119,7 @@ export function ArtifactsBody({ state, onSetProductGoal, onSetDod, onSetDor }: {
                 {/* The commitment, on the artifact it belongs to. */}
                 <div className={cn('mt-1.5 rounded-md border px-2 py-1.5', a.commitmentMet ? 'border-primary/30 bg-primary/5' : 'border-dashed border-border')}>
                   <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.08em] text-primary">
-                    {a.id === 'product-backlog' && <Trophy className="h-3 w-3 text-amber-500" />}
+                    {a.id === 'product-backlog' && <BoardIcon name={BOARD.productGoal} className="h-3 w-3" />}
                     Commitment &middot; {prov.commitment}
                   </div>
                   {a.id === 'product-backlog'

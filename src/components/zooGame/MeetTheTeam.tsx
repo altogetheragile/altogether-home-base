@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW } from './ui/tokens';
 import { sprintCapacity } from './engine';
+import { SEAT } from './seats';
 
 // Five seats, three accountabilities, no manager.
 //
@@ -62,11 +63,11 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
     { ...ROLES.product_owner, seat: 'product_owner', name: plain(state.team.productOwner.name), initials: 'PO',
       character: CHARACTER.po, colour: 'bg-primary text-primary-foreground' },
     { ...ROLES.scrum_master, seat: 'scrum_master', name: plain(state.team.scrumMaster.name), initials: 'SM',
-      character: CHARACTER.sm, colour: 'bg-teal-700 text-white' },
+      character: CHARACTER.sm, colour: SEAT.scrumMaster.chip },
     ...state.team.developers.map((d, i) => ({
       ...ROLES.developer, seat: 'developer' as SeatName, name: plain(d.name),
       initials: plain(d.name).slice(0, 1).toUpperCase(), character: CHARACTER[`dev${i}`] ?? 'Gets on with it.',
-      colour: 'bg-sky-600 text-white',
+      colour: SEAT.developers.chip,
     })),
   ];
 
