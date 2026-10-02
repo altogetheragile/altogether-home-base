@@ -53,6 +53,34 @@ describe('several Developers', () => {
   });
 });
 
+describe('three Developers on a screen', () => {
+  // The first version of this file tested the PALETTE and passed while two screens drew all three
+  // Developers in one flat teal. Caught by reading the colours off the live page rather than
+  // trusting a screenshot: A, B and C all came back rgb(14, 140, 140).
+  //
+  // So this asks the screens, not the tokens.
+  const meetTheTeam = async () => {
+    const { render } = await import('@testing-library/react');
+    const { MemoryRouter } = await import('react-router-dom');
+    const { initialZooState } = await import('./config');
+    const { startOnTheBoard } = await import('./engine');
+    const { MeetTheTeam } = await import('./MeetTheTeam');
+    const state = startOnTheBoard(initialZooState(1) as never);
+    return render(<MemoryRouter><MeetTheTeam state={state} onNext={() => {}} /></MemoryRouter>).container;
+  };
+
+  const shades = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('[style*="background-color"]')]
+    .map((n) => n.style.backgroundColor)
+    .filter((v) => /rgb\(\s*\d+/.test(v));
+
+  it('are told apart on Meet the Team', async () => {
+    const found = shades(await meetTheTeam());
+    const devs = found.filter((v) => /rgb\((9|10|14|5),/.test(v.replace(/\s/g, '')) || /14, 140, 140|10, 109, 109|9, 84, 84/.test(v));
+    expect(devs.length, 'no Developer carries a shade of their own').toBeGreaterThan(2);
+    expect(new Set(devs).size, `all the Developers are one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
+  });
+});
+
 describe('nothing in the game paints a seat for itself', () => {
   // The colours were in four files and disagreed. Anything that wants one asks `seats.ts`.
   const files = readdirSync('src/components/zooGame')
