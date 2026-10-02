@@ -4,7 +4,7 @@ import { getPosts } from '@/lib/blog';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { BlogList } from './BlogList';
 import { colors as c } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 
@@ -12,6 +12,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('blog')) return {};
   const t = await getCopy('blog');
   return buildMetadata({
   title: t('blog.meta.titlePrefix'),

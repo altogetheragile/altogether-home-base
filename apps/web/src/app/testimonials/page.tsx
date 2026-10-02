@@ -5,7 +5,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { buildMetadata, JsonLd, breadcrumbJsonLd , siteName } from '@/lib/seo';
 import { TestimonialsGrid } from './TestimonialsGrid';
 import { colors as p, fonts } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 
@@ -13,6 +13,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('testimonials')) return {};
   const t = await getCopy('testimonials');
   return {
   ...(await buildMetadata({

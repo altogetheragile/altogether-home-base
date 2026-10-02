@@ -4,12 +4,14 @@ import type { Metadata } from 'next';
 import { getPost, renderArticle, formatDate } from '@/lib/blog';
 import { buildMetadata, JsonLd, blogPostingJsonLd, breadcrumbJsonLd, truncateText } from '@/lib/seo';
 import { colors as c } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 
 export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('blog')) return {};
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) return { title: 'Post not found' };

@@ -39,6 +39,24 @@ export function moduleIsShown(module: GatedModule, settings: SiteSettings): bool
   return typeof value === 'boolean' ? value : (MODULE_DEFAULTS[module as keyof typeof MODULE_DEFAULTS] ?? false);
 }
 
+/** Whether this page should say nothing about itself.
+ *
+ *  `generateMetadata` runs BEFORE the page body, and nothing in it ever asked the module. So a site
+ *  with Practice Exams switched off still answered "Practice Exams - Stream Strategy" in its
+ *  <title> while the body 404ed: the page denied existing and named itself in the same breath,
+ *  and a crawler reads the title.
+ *
+ *  Found by checking whether a second site had inherited anything it should not have. It had not -
+ *  but every page it had switched off was still announcing itself.
+ *
+ *  Mirrors `requireModule`, admin included, so the title and the body cannot disagree about
+ *  whether this page is here. */
+export async function moduleHidden(module: GatedModule, settings?: SiteSettings): Promise<boolean> {
+  const s = settings ?? (await getSiteSettings());
+  if (moduleIsShown(module, s)) return false;
+  return !(await isAdmin());
+}
+
 /** 404s the page when its module is switched off, unless you are the person who switched it off.
  *  Call it before fetching anything else. */
 export async function requireModule(module: GatedModule, settings?: SiteSettings): Promise<void> {

@@ -7,13 +7,15 @@ import { durationLong, formatPrice, formatDateRange, type EventTemplate, type Sc
 import { buildMetadata, JsonLd, breadcrumbJsonLd, courseJsonLd, truncateText , siteName } from '@/lib/seo';
 import { InterestForm } from './InterestForm';
 import { colors as p, fonts } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { pageName } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('events')) return {};
   const { slug: id } = await params;
   const course = await getCourse(id);
   if (!course) return { title: `Course Not Found - ${await siteName()}` };

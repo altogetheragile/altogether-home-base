@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, faqPageJsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
 import { EXAM_FAQS } from '@/lib/exam-faqs';
 import { colors as c } from '@/lib/brand';
-import { requireModule } from '@/lib/module-gate';
+import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy, list } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 
@@ -14,6 +14,8 @@ export const dynamic = 'force-dynamic';
 
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A page this site has switched off does not name itself. See lib/module-gate.ts.
+  if (await moduleHidden('exams')) return {};
   const t = await getCopy('exams');
   return buildMetadata({
   title: t('exams.meta.titlePrefix'),
