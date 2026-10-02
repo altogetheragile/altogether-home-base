@@ -22,6 +22,9 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  // Same reason as the board's own page: the title is written by something that does not ask whose
+  // site this is, and this one is ours.
+  if (!isOurSite()) return {};
   const page = await boardContent().then((c) => pageIn(c, slug));
   if (!page) return {};
   const title = `${page.title} - Scrum on One Page - ${await siteName()}`;

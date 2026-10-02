@@ -45,12 +45,30 @@ describe('whose deployment this is', () => {
 });
 
 describe('the pages that are ours alone', () => {
+  const sources = ['src/app/scrum-on-one-page/page.tsx', 'src/app/scrum-on-one-page/[slug]/page.tsx'];
+
   it('ask before rendering', async () => {
     const { readFileSync } = await import('node:fs');
-    for (const f of ['src/app/scrum-on-one-page/page.tsx', 'src/app/scrum-on-one-page/[slug]/page.tsx']) {
+    for (const f of sources) {
       const src = readFileSync(f, 'utf8');
       expect(src, `${f} does not check whose site it is on`).toContain('isOurSite()');
       expect(src, `${f} checks but does nothing about it`).toMatch(/if \(!isOurSite\(\)\) notFound\(\)/);
+    }
+  });
+
+  it('ask before naming themselves, too', async () => {
+    // The title is written by `generateMetadata`, which runs whatever the gate below it is about to
+    // decide. On this Site that is the rule rather than the exception - /exams on a site with
+    // show_exams false still answers "Practice Exams - Stream Strategy" - and for a module that is
+    // somebody's own choice it is only untidy. For a page that is OURS it puts the name of this
+    // practice's course material in the <title> on another company's domain.
+    const { readFileSync } = await import('node:fs');
+    for (const f of sources) {
+      const src = readFileSync(f, 'utf8');
+      const meta = src.slice(src.indexOf('export async function generateMetadata'));
+      const body = meta.slice(0, meta.indexOf('\nexport default'));
+      expect(body, `${f} names itself before asking whose site it is on`)
+        .toMatch(/if \(!isOurSite\(\)\) return \{\}/);
     }
   });
 });

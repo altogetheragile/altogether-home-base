@@ -15,6 +15,14 @@ const PATH = '/scrum-on-one-page';
 const LEDE = 'The whole of Scrum on one page: the Sprint, its five events, three accountabilities, three artifacts and their commitments. Every shape opens the page behind it.';
 
 export async function generateMetadata(): Promise<Metadata> {
+  // The title is written before the page is, and by something that does not ask whose site this is.
+  //
+  // Every gated page on this Site has the same shape: `/exams` on a site with show_exams false
+  // still answers "Practice Exams - Stream Strategy" in its <title>, because `generateMetadata`
+  // runs whatever `requireModule` is about to decide. For a module that is somebody's own choice
+  // that is untidy. For a page that is OURS it is the name of this practice's course material on
+  // another company's domain, which is the thing being fixed here.
+  if (!isOurSite()) return {};
   const title = `Scrum on One Page - ${await siteName()}`;
   return { ...(await buildMetadata({ title, description: LEDE, path: PATH })), title: { absolute: title } };
 }
