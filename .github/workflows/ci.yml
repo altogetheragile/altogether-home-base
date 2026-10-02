@@ -34,6 +34,12 @@ jobs:
       - name: Type check
         run: npx tsc -b --noEmit
 
+      # The board's reference pages and icons are generated from docs/scrum-board. Editing the
+      # design file and forgetting to re-import would leave the game teaching last week's wording,
+      # and nothing on screen would say so.
+      - name: Scrum board is in step with its design file
+        run: node scripts/scrumBoard/import.mjs --check
+
       - name: Verify MSW v2 compliance
         run: |
           echo "Verifying MSW v2 compliance..."
