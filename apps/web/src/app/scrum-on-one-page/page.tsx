@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, siteName } from '@/lib/seo';
 import { requireModule } from '@/lib/module-gate';
+import { isOurSite } from '@/lib/ourSite';
 import { boardContent } from '@/lib/scrumBoard/content';
 import { Board } from './Board';
 import { colors as p } from '@/lib/brand';
 import './board.css';
+import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +15,22 @@ const PATH = '/scrum-on-one-page';
 const LEDE = 'The whole of Scrum on one page: the Sprint, its five events, three accountabilities, three artifacts and their commitments. Every shape opens the page behind it.';
 
 export async function generateMetadata(): Promise<Metadata> {
+  // The title is written before the page is, and by something that does not ask whose site this is.
+  //
+  // Every gated page on this Site has the same shape: `/exams` on a site with show_exams false
+  // still answers "Practice Exams - Stream Strategy" in its <title>, because `generateMetadata`
+  // runs whatever `requireModule` is about to decide. For a module that is somebody's own choice
+  // that is untidy. For a page that is OURS it is the name of this practice's course material on
+  // another company's domain, which is the thing being fixed here.
+  if (!isOurSite()) return {};
   const title = `Scrum on One Page - ${await siteName()}`;
   return { ...(await buildMetadata({ title, description: LEDE, path: PATH })), title: { absolute: title } };
 }
 
 export default async function ScrumOnOnePage() {
+  // Ours, and only ours. The board is this practice's icons and course material; a flag says
+  // what a site wants, and this says what the content is. See lib/ourSite.ts.
+  if (!isOurSite()) notFound();
   await requireModule('zoo_game');
   const content = await boardContent();
   return (
