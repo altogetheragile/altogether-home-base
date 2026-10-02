@@ -80,7 +80,38 @@ function drawing() {
     lifted[name] = eval(`(${literal})`);
     code = code.slice(0, at) + `const ${name}=T.${name};` + code.slice(close + 2);
   }
-  return { code: tokenised(code), lifted };
+  // The legend at the foot of the board names every icon properly - "Definition of Done", not
+  // "Definition: of Done". Those names are what a hover should say.
+  //
+  // The chips carry a `|` where the text wraps onto a second line, and the drawing turns the FIRST
+  // one into ": " as though it always separated a name from a qualifier. For "Product Backlog|Goal
+  // + PBIs" it does. For "Definition|of Done" it does not, and the gem ended up labelled
+  // "Definition" with "of Done" underneath it.
+  // Keyed by the ICON, not by the page. Two different icons link to the Sprint Review page - the
+  // event itself and "Changes in the Environment" - so a page id names one of them and loses the
+  // other.
+  const names = {};
+  for (const m of code.matchAll(/\["([a-z]+)","[a-z-]+","([^"]+)",\d+\]/g)) names[m[1]] = m[2];
+  if (Object.keys(names).length < 12) throw new Error('the legend rows are not where they were');
+
+  // Each chip told what it is called, so the label on it does not depend on where its text wraps.
+  for (const list of [lifted.INPUTS, lifted.OUTPUTS]) {
+    for (const col of list) for (const chip of col) if (names[chip.k]) chip.name = names[chip.k];
+  }
+
+  // ...and the drawing asked to use it. The line it replaces made the first `|` into ": " as though
+  // a wrap were always a name and a qualifier, which is how the Definition of Done gem came to
+  // announce itself as "Definition", with "of Done" underneath.
+  const was = 'it.t.replace("|",": ").replace(/\\|/g," ")';
+  if (!code.includes(was)) throw new Error('the chip label is not built where it was');
+  code = code.replace(was, 'chipLabel(it)');
+  code = `const chipLabel=it=>{const whole=it.t.replace(/\\|/g," ");
+  if(!it.name||!whole.startsWith(it.name))return whole;
+  const sub=whole.slice(it.name.length).replace(/^[\\s,]+/,"");
+  return sub?it.name+": "+sub:it.name};
+${code}`;
+
+  return { code: tokenised(code), lifted, names };
 }
 
 /** The brand palette, written as tokens rather than as hex.
@@ -178,10 +209,20 @@ ${code}
 `;
 }
 
-function writeLabels(lifted) {
+function writeLabels(lifted, names) {
   return `${banner}
 /** One chip on the board: an icon with its name, or a dashed note. */
-export interface BoardChip { t: string; k: string; id: string }
+export interface BoardChip {
+  /** The text drawn on it. A \`|\` is where the line wraps, not a separator. */
+  t: string;
+  /** Which icon it is. */
+  k: string;
+  /** The page it opens. */
+  id: string;
+  /** What it is called, from the board's legend - what a hover says, and the part of \`t\` that is
+   *  the name rather than the qualifier after it. */
+  name?: string;
+}
 
 /** What each event inspects, laid out per column. */
 export const BOARD_INPUTS: BoardChip[][] = ${JSON.stringify(lifted.INPUTS, null, 2)};
@@ -191,6 +232,13 @@ export const BOARD_OUTPUTS: BoardChip[][] = ${JSON.stringify(lifted.OUTPUTS, nul
 
 /** The two lines under each event: what it inspects, and what it adapts. */
 export const BOARD_DESC: [string, string][] = ${JSON.stringify(lifted.DESC, null, 2)};
+
+/** What each shape is called, taken from the board's own legend.
+ *
+ *  A hover says this, rather than the shape's \`aria-label\`: a chip's label puts a colon where its
+ *  text happens to wrap, so the Definition of Done gem announced itself as "Definition" with "of
+ *  Done" underneath. */
+export const BOARD_NAMES: Record<string, string> = ${JSON.stringify(names, null, 2)};
 `;
 }
 
@@ -200,7 +248,7 @@ const D = drawing();
 const want = [
   [resolve(OUT, 'boardPages.ts'), writePages(P)],
   [resolve(OUT, 'boardIcons.ts'), writeIcons(I)],
-  [resolve(OUT, 'boardLabels.ts'), writeLabels(D.lifted)],
+  [resolve(OUT, 'boardLabels.ts'), writeLabels(D.lifted, D.names)],
   [resolve(OUT, 'boardDrawing.generated.js'), writeDrawing(D.code)],
   // The drawing is lifted JavaScript and stays that way - it is not ours to re-type, and every
   // annotation added to it would have to be re-added on the next import. The boundary is typed

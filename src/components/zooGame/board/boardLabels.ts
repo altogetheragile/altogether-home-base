@@ -5,7 +5,17 @@
 // re-running the import never overwrites anybody's edit.
 
 /** One chip on the board: an icon with its name, or a dashed note. */
-export interface BoardChip { t: string; k: string; id: string }
+export interface BoardChip {
+  /** The text drawn on it. A `|` is where the line wraps, not a separator. */
+  t: string;
+  /** Which icon it is. */
+  k: string;
+  /** The page it opens. */
+  id: string;
+  /** What it is called, from the board's legend - what a hover says, and the part of `t` that is
+   *  the name rather than the qualifier after it. */
+  name?: string;
+}
 
 /** What each event inspects, laid out per column. */
 export const BOARD_INPUTS: BoardChip[][] = [
@@ -13,73 +23,86 @@ export const BOARD_INPUTS: BoardChip[][] = [
     {
       "t": "Product Backlog|Goal + PBIs",
       "k": "pb",
-      "id": "product-backlog"
+      "id": "product-backlog",
+      "name": "Product Backlog"
     },
     {
       "t": "Past Performance & Capacity",
       "k": "perf",
-      "id": "topic-what"
+      "id": "topic-what",
+      "name": "Past Performance & Capacity"
     },
     {
       "t": "Definition|of Done",
       "k": "dod",
-      "id": "definition-of-done"
+      "id": "definition-of-done",
+      "name": "Definition of Done"
     },
     {
       "t": "Increment",
       "k": "inc",
-      "id": "increment"
+      "id": "increment",
+      "name": "Increment"
     },
     {
       "t": "Improvements|from the last Retrospective",
       "k": "imp",
-      "id": "sprint-retrospective"
+      "id": "sprint-retrospective",
+      "name": "Improvements"
     }
   ],
   [
     {
       "t": "Sprint Backlog|Sprint Goal + Plan",
       "k": "sb",
-      "id": "sprint-backlog"
+      "id": "sprint-backlog",
+      "name": "Sprint Backlog"
     }
   ],
   [
     {
       "t": "Increment",
       "k": "inc",
-      "id": "increment"
+      "id": "increment",
+      "name": "Increment"
     },
     {
       "t": "Sprint Goal",
       "k": "sg",
-      "id": "sprint-goal"
+      "id": "sprint-goal",
+      "name": "Sprint Goal"
     },
     {
       "t": "Product Goal",
       "k": "pg",
-      "id": "product-goal"
+      "id": "product-goal",
+      "name": "Product Goal"
     },
     {
       "t": "Product Backlog",
       "k": "pb",
-      "id": "product-backlog"
+      "id": "product-backlog",
+      "name": "Product Backlog"
     },
     {
       "t": "Changes in the Environment",
       "k": "env",
-      "id": "sprint-review"
+      "id": "sprint-review",
+      "name": "Changes in the Environment"
     }
   ],
   [
     {
       "t": "How the Sprint Went|individuals, interactions, processes, tools",
       "k": "how",
-      "id": "sprint-retrospective"
+      "id": "sprint-retrospective",
+      "name": "How the Sprint Went"
     },
     {
       "t": "Definition|of Done",
       "k": "dod",
-      "id": "definition-of-done"
+      "id": "definition-of-done",
+      "name": "Definition of Done"
     }
   ]
 ];
@@ -90,38 +113,44 @@ export const BOARD_OUTPUTS: BoardChip[][] = [
     {
       "t": "Sprint Backlog|Goal, PBIs, Plan",
       "k": "sb",
-      "id": "sprint-backlog"
+      "id": "sprint-backlog",
+      "name": "Sprint Backlog"
     },
     {
       "t": "Product Backlog|refined",
       "k": "pb",
-      "id": "product-backlog"
+      "id": "product-backlog",
+      "name": "Product Backlog"
     }
   ],
   [
     {
       "t": "Sprint Backlog|adapted plan for the next 24 hours",
       "k": "sb",
-      "id": "sprint-backlog"
+      "id": "sprint-backlog",
+      "name": "Sprint Backlog"
     }
   ],
   [
     {
       "t": "Product Backlog|adapted",
       "k": "pb",
-      "id": "product-backlog"
+      "id": "product-backlog",
+      "name": "Product Backlog"
     }
   ],
   [
     {
       "t": "Improvements|actionable, for the next Sprint",
       "k": "imp",
-      "id": "sprint-retrospective"
+      "id": "sprint-retrospective",
+      "name": "Improvements"
     },
     {
       "t": "Definition of|Done, if adapted",
       "k": "dod",
-      "id": "definition-of-done"
+      "id": "definition-of-done",
+      "name": "Definition of Done"
     }
   ]
 ];
@@ -145,3 +174,26 @@ export const BOARD_DESC: [string, string][] = [
     "Adapt ways of working"
   ]
 ];
+
+/** What each shape is called, taken from the board's own legend.
+ *
+ *  A hover says this, rather than the shape's `aria-label`: a chip's label puts a colon where its
+ *  text happens to wrap, so the Definition of Done gem announced itself as "Definition" with "of
+ *  Done" underneath. */
+export const BOARD_NAMES: Record<string, string> = {
+  "esprint": "Sprint",
+  "eplan": "Sprint Planning",
+  "edaily": "Daily Scrum",
+  "ereview": "Sprint Review",
+  "eretro": "Retrospective",
+  "imp": "Improvements",
+  "perf": "Past Performance & Capacity",
+  "env": "Changes in the Environment",
+  "how": "How the Sprint Went",
+  "pb": "Product Backlog",
+  "sb": "Sprint Backlog",
+  "inc": "Increment",
+  "pg": "Product Goal",
+  "sg": "Sprint Goal",
+  "dod": "Definition of Done"
+};
