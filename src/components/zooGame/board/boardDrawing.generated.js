@@ -8,6 +8,10 @@
 
 // The board, drawn. `T` carries the text that is editable; everything else is geometry.
 export function drawBoard(T) {
+const chipLabel=it=>{const whole=it.t.replace(/\|/g," ");
+  if(!it.name||!whole.startsWith(it.name))return whole;
+  const sub=whole.slice(it.name.length).replace(/^[\s,]+/,"");
+  return sub?it.name+": "+sub:it.name};
 /* ---------- board drawing (coordinates follow the source slide) ---------- */
 const C={teal:"#0E8C8C",orange:"hsl(var(--aa-orange-hsl))",orangeD:"#E8790A",plum:"#7B2D7B",sh:"#F07A2E"};
 const ROLE={po:["product-owner","PO",C.orange,"Product Owner"],d:["developers","D",C.teal,"Developers"],sm:["scrum-master","SM",C.plum,"Scrum Master"],sh:["stakeholders","SH",C.sh,"Stakeholders"]};
@@ -118,7 +122,7 @@ function drawItem(it,x,y,w,h){
 function flow(items,x1,x2,y){items=[...items.filter(i=>i.k!=="info"),...items.filter(i=>i.k==="info")];const inner=x2-x1-12,gap=8;const rows=[];let row=[],rw=0;
   items.forEach(it=>{const [w,h]=itemSize(it),W=Math.min(w,inner);if(row.length&&rw+gap+W>inner){rows.push(row);row=[];rw=0}rw+=(row.length?gap:0)+W;row.push([it,W,h])});if(row.length)rows.push(row);
   let out="",cy=y;rows.forEach(r=>{const tw=r.reduce((a,b)=>a+b[1],0)+gap*(r.length-1);let cx=(x1+x2)/2-tw/2;const rh=Math.max(...r.map(b=>b[2]));
-    r.forEach(([it,w,h])=>{out+=link(it.id,`<g class="hot">${drawItem(it,cx,cy+(rh-h)/2,w,h)}</g>`,it.t.replace("|",": ").replace(/\|/g," "));cx+=w+gap});cy+=rh+gap});
+    r.forEach(([it,w,h])=>{out+=link(it.id,`<g class="hot">${drawItem(it,cx,cy+(rh-h)/2,w,h)}</g>`,chipLabel(it));cx+=w+gap});cy+=rh+gap});
   return [out,cy-gap-y]}
 const wrapW=(t,w,cw)=>{const max=Math.floor((w-16)/cw),out=[];let line="";t.split(" ").forEach(word=>{if((line+" "+word).trim().length>max&&line){out.push(line);line=word}else line=(line+" "+word).trim()});out.push(line);return out};
 

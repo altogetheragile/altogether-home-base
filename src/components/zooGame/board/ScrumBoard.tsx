@@ -89,6 +89,10 @@ function Page({ page, onOpen, onBack }: {
   );
 }
 
+/** What the board says a shape is. The drawing puts it in `aria-label`, as "name: qualifier" -
+ *  "Product Backlog: Goal + PBIs" - so the name goes on top and the qualifier underneath it. */
+interface Tip { name: string; sub?: string; x: number; y: number; below: boolean }
+
 export function ScrumBoard({ under }: {
   /** Shown beneath the board, and only there. A page opened from the board is a thing somebody went
    *  looking for, and putting the summary of Scrum under it buries the answer they asked for. */
@@ -96,6 +100,29 @@ export function ScrumBoard({ under }: {
 } = {}) {
   const [open, setOpen] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<Tip | null>(null);
+
+  // The label, where the thing is. Every icon on the board carries its name and nothing else does -
+  // the board is deliberately almost wordless - so without this a gem is a gem and a learner has to
+  // press it to find out it is the Definition of Done.
+  //
+  // Measured against the scrolling box rather than the page, because on a narrow screen the board
+  // scrolls inside it and a label fixed to the page would drift off its own icon.
+  const showTip = (a: Element) => {
+    const box = root.current;
+    if (!box) return;
+    const [name, sub] = (a.getAttribute('aria-label') ?? '').split(': ');
+    if (!name) return;
+    const r = a.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const x = r.left + r.width / 2 - b.left + box.scrollLeft;
+    const above = r.top - b.top;
+    // Above the shape, unless it is near the top of the box, in which case below it - a label that
+    // would be cut off by the edge is a label nobody reads.
+    const below = above < 44;
+    setTip({ name, sub, x, y: (below ? r.bottom - b.top : above) + box.scrollTop, below });
+  };
+
   // A closure rather than a helper the ref is handed to: it runs from a pointer handler, and the
   // ref must not be read while rendering. Not memoised either - it touches the DOM on every pointer
   // move whatever we do, and a dependency list cannot describe `root.current` honestly.
@@ -131,12 +158,29 @@ export function ScrumBoard({ under }: {
       <p className="text-sm leading-snug text-muted-foreground">
         Every shape opens the page behind it. Point at one to see everywhere it appears in the Sprint.
       </p>
-      <div ref={root} data-part="scrum-board" className="scrum-board overflow-x-auto rounded-lg border border-border bg-card p-1"
+      <div ref={root} data-part="scrum-board" className="scrum-board relative overflow-x-auto rounded-lg border border-border bg-card p-1"
         onClick={pick}
-        onMouseOver={(e) => light((e.target as Element).closest?.('a[data-id]')?.getAttribute('data-id') ?? null)}
-        onMouseLeave={() => light(null)}
-        onFocus={(e) => light((e.target as Element).closest?.('a[data-id]')?.getAttribute('data-id') ?? null)}
-        onBlur={() => light(null)}>
+        onMouseOver={(e) => {
+          const a = (e.target as Element).closest?.('a[data-id]');
+          light(a?.getAttribute('data-id') ?? null);
+          if (a) showTip(a); else setTip(null);
+        }}
+        onMouseLeave={() => { light(null); setTip(null); }}
+        // Tab reaches every shape, so the keyboard gets the same label the pointer does.
+        onFocus={(e) => {
+          const a = (e.target as Element).closest?.('a[data-id]');
+          light(a?.getAttribute('data-id') ?? null);
+          if (a) showTip(a);
+        }}
+        onBlur={() => { light(null); setTip(null); }}>
+        {tip && (
+          <div data-part="board-tip" aria-hidden
+            style={{ left: tip.x, top: tip.y, transform: `translate(-50%, ${tip.below ? '8px' : 'calc(-100% - 8px)'})` }}
+            className="pointer-events-none absolute z-20 max-w-[14rem] rounded-md bg-foreground px-2 py-1 text-center text-xs font-semibold leading-tight text-background shadow-lg">
+            {tip.name}
+            {tip.sub && <span className="block text-[10px] font-normal opacity-80">{tip.sub}</span>}
+          </div>
+        )}
         <svg viewBox={`0 0 1200 ${board.height}`} role="img"
           aria-label="Scrum on one page: the Sprint, its events, artifacts and accountabilities"
           // Wide enough to stay readable on a phone, where the box scrolls, and narrow enough to
