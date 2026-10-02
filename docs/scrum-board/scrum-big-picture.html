@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Scrum Big Picture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,800&family=DM+Serif+Display&display=swap">
+<style>
+/* Layout: the one-page Scrum board drawn as a fixed-proportion SVG (same positions as the source slide); every shape links to a knowledge page via the hash. */
+:root{
+  --teal:#004D4D; --mid:#0E8C8C; --orange:#FF9715; --orange-d:#E8790A; --plum:#7B2D7B; --sh:#F07A2E;
+  --bg:#F7FBFB; --surface:#FFFFFF; --text:#374151; --muted:#6B7280; --border:#E5E7EB;
+  --sky:#F0FAFA; --pale:#D9F2F2; --light:#B2DFDF;
+  --head:#004D4D; --link:#007A7A; --ink:#1F2937; --focus:#FF9715; --adapt:#FFF3E3;
+  --serif:"DM Serif Display", Georgia, "Times New Roman", serif;
+  --sans:"DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#081A1A; --surface:#0F2626; --text:#D7E3E3; --muted:#93A8A8; --border:#21403F;
+  --sky:#0C2121; --pale:#163838; --light:#245252; --head:#8FDCDC; --link:#6CCFCF; --ink:#E6F0F0; --adapt:#3A2A12; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#081A1A; --surface:#0F2626; --text:#D7E3E3; --muted:#93A8A8; --border:#21403F;
+  --sky:#0C2121; --pale:#163838; --light:#245252; --head:#8FDCDC; --link:#6CCFCF; --ink:#E6F0F0; --adapt:#3A2A12; color-scheme:dark }
+
+html{font-size:17px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:20px 48px}
+a{color:var(--link)}
+a:focus-visible,button:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+h1,h2,h3{color:var(--head);text-wrap:balance;line-height:1.2}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;letter-spacing:.04em;font-size:.95rem}
+.mark{width:34px;height:34px;border-radius:8px;background:#004D4D;color:#FF9715;display:grid;place-items:center;font-size:1.15rem;font-weight:700}
+.brand .a1{color:var(--head)} .brand .a2{color:var(--orange)}
+.top p{margin:0;color:var(--muted);font-size:.9rem}
+.intro{margin:0 0 14px;max-width:64ch}
+.intro h1{font-family:var(--serif);font-weight:400;font-size:2.4rem;margin:0 0 6px}
+.intro p{margin:0;font-size:1.05rem}
+
+/* board */
+.stage{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 6px}
+.stage svg{display:block;width:100%;min-width:880px;height:auto;font-family:var(--sans)}
+.found{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
+.found span{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.found a{text-decoration:none;font-size:.9rem;font-weight:500;padding:5px 12px;border-radius:999px;background:var(--pale);border:1px solid var(--light);color:var(--head)}
+.found a:hover{background:var(--light)}
+.credit{margin-top:40px;padding-top:14px;border-top:1px solid var(--border);color:var(--muted);font-size:.85rem}
+.stage{position:relative}
+.tip{position:absolute;z-index:5;pointer-events:none;background:#004D4D;color:#fff;font-size:.85rem;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;box-shadow:0 4px 12px rgba(0,40,40,.25);transform:translate(-50%,calc(-100% - 10px))}
+.tip small{display:block;font-weight:500;font-size:.75rem;opacity:.85;text-align:center}
+.tip::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:#004D4D}
+.scroll-hint{display:none;color:var(--muted);font-size:.85rem;margin:6px 0 0}
+@media (max-width:900px){.scroll-hint{display:block}}
+
+svg .hot{cursor:pointer;transition:transform .15s, filter .15s;transform-box:fill-box;transform-origin:center}
+svg .hot:hover, svg .hot.lit{transform:scale(1.08);filter:drop-shadow(0 3px 5px rgba(0,60,60,.28))}
+svg a:focus-visible{outline:none}
+svg a:focus-visible .hot, svg a:focus-visible.hot{filter:drop-shadow(0 0 0 #FF9715) drop-shadow(0 0 3px #FF9715) drop-shadow(0 0 3px #FF9715)}
+svg .bar{transition:filter .15s} svg a:hover .bar{filter:brightness(1.15)}
+svg .ink{fill:var(--ink)} svg .paper{fill:var(--surface)} svg .muted{fill:var(--muted)}
+svg .boardline{stroke:var(--mid)}
+svg .lbl{font-weight:800;letter-spacing:.06em}
+svg .ia-in{fill:var(--sky)} svg .ia-ad{fill:var(--adapt)} svg .ia-tb{fill:var(--surface)}
+svg .ia-in-head{fill:#0E8C8C} svg .ia-ad-head{fill:#FF9715} svg .ia-tb-head{fill:var(--pale)}
+svg .ia-in-headtext{fill:#fff} svg .ia-ad-headtext{fill:#004D4D} svg .ia-tb-headtext{fill:var(--head)}
+svg .verb-in{fill:#0E8C8C} svg .verb-ad{fill:#C25F00}
+svg .iacell,svg .rowlab{cursor:pointer;transition:filter .15s}
+svg a:hover .iacell,svg a:hover .rowlab{filter:brightness(.96) drop-shadow(0 2px 4px rgba(0,60,60,.2))}
+svg .loop{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:stroke-width .15s}
+svg a:hover .loop{stroke-width:5}
+svg .runner{fill:#FF9715}
+svg a:hover .ul{text-decoration:underline}
+
+/* index */
+.index{margin-top:36px}
+.index h2{font-family:var(--serif);font-weight:400;font-size:1.7rem;margin:0 0 14px}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:22px}
+.groups h3{font-family:var(--sans);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.groups ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.groups li a{display:block;text-decoration:none;color:var(--text);padding:6px 10px;border-radius:6px;border-left:3px solid transparent}
+.groups li a:hover{background:var(--pale);border-left-color:var(--orange);color:var(--head)}
+
+/* detail */
+#detail{max-width:820px;margin:0 auto}
+.crumbs{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:.9rem;color:var(--muted);margin-bottom:22px}
+.back{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#004D4D;background:var(--orange);border-radius:8px;padding:8px 14px;text-decoration:none}
+.back:hover{filter:brightness(1.05)}
+.kind{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 10px;border-radius:999px;color:#fff;background:var(--mid)}
+.k-Event,.k-Topic{background:var(--plum)} .k-Accountability{background:#C25F00}
+.k-Artifact{background:#007A7A} .k-Commitment{background:#fff;color:#004D4D;box-shadow:inset 0 0 0 2px var(--orange)}
+.k-Activity{background:#4B5563} .k-Stakeholders{background:#fff;color:#C25F00;box-shadow:inset 0 0 0 2px #F07A2E} .k-Foundation{background:#004D4D} .k-Values,.k-Pillars{background:#004D4D}
+.dhead{display:flex;gap:20px;align-items:flex-start;justify-content:space-between}
+.dhead h1{font-family:var(--serif);font-weight:400;font-size:2.6rem;margin:8px 0 6px}
+.lede{font-size:1.2rem;margin:0 0 22px;max-width:60ch}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:0 0 28px}
+.facts div{background:var(--sky);padding:12px 16px}
+.facts dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+.facts dd{margin:2px 0 0;font-weight:500}
+.sec{margin-bottom:24px;max-width:66ch}
+.sec h2{font-size:1.25rem;margin:0 0 6px;font-family:var(--sans);font-weight:700}
+.sec p{margin:0 0 8px} .sec ul{margin:0;padding-left:1.2em} .sec li{margin-bottom:4px}
+.sec.watch{background:var(--sky);border-radius:8px;padding:16px 18px;border:1px solid var(--light)}
+.sec.watch h2{color:#C25F00}
+.tablewrap{overflow-x:auto;margin:6px 0 10px}
+.matrix{border-collapse:collapse;min-width:620px;width:100%;font-size:.95rem}
+.matrix th,.matrix td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top}
+.matrix thead th{background:#0E8C8C;color:#fff;font-weight:700}
+.matrix tbody th{background:var(--sky);font-weight:700}
+.matrix tbody td:nth-child(3){background:var(--adapt);font-weight:500}
+.related{margin-top:30px;padding-top:18px;border-top:1px solid var(--border)}
+.related h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-family:var(--sans)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{text-decoration:none;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.92rem}
+.chip:hover{border-color:var(--mid);color:var(--head)}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:30px;flex-wrap:wrap}
+.pager a{text-decoration:none;display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);flex:1 1 220px;min-width:0}
+.pager a small{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.1em}
+.pager a strong{color:var(--head)} .pager a.next{text-align:right} .pager a:hover{border-color:var(--mid)}
+.mini{flex:none;width:84px;height:74px}
+@media (max-width:640px){.intro h1{font-size:2rem}.dhead h1{font-size:2.1rem}.mini{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important} svg .runner{display:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#" aria-label="Scrum Big Picture home"><span class="mark" aria-hidden="true">皆</span><span><span class="a1">ALTOGETHER</span> <span class="a2">AGILE</span></span></a>
+    <p>Scrum Big Picture, using the terms of the 2020 Scrum Guide</p>
+  </header>
+
+  <main id="board-view">
+    <section class="intro">
+      <h1>Scrum on One Page</h1>
+      <p>Click any event, accountability, artifact or commitment to open its page. Hover a shape to see everywhere it appears in the Sprint.</p>
+    </section>
+    <nav class="found" aria-label="Foundations"><span>Foundations</span><a href="#scrum-definition">Scrum Definition</a><a href="#scrum-theory">Scrum Theory</a><a href="#empiricism">Three Pillars</a><a href="#inspect-adapt">Inspect and Adapt</a><a href="#scrum-values">Scrum Values</a><a href="#scrum-team">Scrum Team</a><a href="#scrum-events">Scrum Events</a><a href="#scrum-artifacts">Scrum Artifacts</a><a href="#end-note">End Note</a></nav>
+    <div class="stage"><div class="tip" id="tip" role="tooltip" hidden></div><svg id="board" viewBox="0 0 1200 1024" role="img" aria-label="Scrum one-page board"></svg></div>
+    <p class="scroll-hint">Swipe sideways to see the whole board.</p>
+    <section class="index" aria-labelledby="idx">
+      <h2 id="idx">Browse Everything</h2>
+      <div class="groups" id="groups"></div>
+    </section>
+  </main>
+  <main id="detail" hidden></main>
+  <p class="credit">Content draws on The Scrum Guide (November 2020) by Ken Schwaber and Jeff Sutherland, licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Read the original at <a href="https://scrumguides.org/scrum-guide.html">scrumguides.org</a>.</p>
+</div>
+
+<script>
+/* ---------- board drawing (coordinates follow the source slide) ---------- */
+const C={teal:"#0E8C8C",orange:"#FF9715",orangeD:"#E8790A",plum:"#7B2D7B",sh:"#F07A2E"};
+const ROLE={po:["product-owner","PO",C.orange,"Product Owner"],d:["developers","D",C.teal,"Developers"],sm:["scrum-master","SM",C.plum,"Scrum Master"],sh:["stakeholders","SH",C.sh,"Stakeholders"]};
+const esc=s=>s.replace(/&/g,"&amp;");
+const link=(id,inner,label)=>`<a href="#${id}" data-id="${id}" aria-label="${label}">${inner}</a>`;
+
+/* people: one joined head-and-shoulders figure, used for every accountability */
+const BODY="M-10 15 V10 Q-10 1 0 1 Q10 1 10 10 V15 Z";
+const fig=col=>`<circle cx="0" cy="-4.5" r="6" fill="${col}"/><path d="${BODY}" fill="${col}"/>`;
+/* several people in one role: three identical figures stacked close, told apart by shade only.
+   Same size as a figure standing on its own - the box grows, the figures do not shrink. */
+const manyOf=col=>`<g transform="translate(-2.5 0)"><g transform="translate(5 -3.5)">${fig("#095454")}</g><g transform="translate(2.5 -1.75)">${fig("#0A6D6D")}</g>${fig(col)}</g>`;
+/* groups: different roles side by side, every figure the same size.
+   The Scrum Master sits further out than the Product Owner because the Developers are a STACK and
+   it grows up and to the right - the darkest of the three teals was landing on the plum, and
+   colours must not merge with what sits beside them. */
+const grp=(l,r,c)=>`<g transform="translate(-12 -5)">${l}</g><g transform="translate(15 -5)">${r}</g><g transform="translate(0 1)">${c}</g>`;
+const TEAM=grp(fig("#FF9715"),fig("#7B2D7B"),manyOf("#0E8C8C"));
+const FS=1.9;
+function roleGlyph(r,cx,cy,s){const [,lab,col]=ROLE[r];
+  /* several people in one role: three identical figures stacked close, told apart by shade only */
+  if(r==="d")return `<g transform="translate(${cx} ${cy}) scale(${(FS*s).toFixed(3)})">${manyOf(col)}<g transform="translate(-2.5 0)"><text x="0" y="12" text-anchor="middle" font-size="6" font-weight="800" fill="#fff">D</text></g></g>`;
+  return `<g transform="translate(${cx} ${cy}) scale(${(FS*s).toFixed(3)})"><g transform="translate(0 -2.25)">${fig(col)}<text x="0" y="12" text-anchor="middle" font-size="6" font-weight="800" fill="#fff">${lab}</text></g></g>`}
+function hex(cx,cy,r){const [id,,,name]=ROLE[r];return link(id,`<g class="hot">${roleGlyph(r,cx,cy,1)}</g>`,name)}
+const tri=(x,y,a,b,c)=>hex(x,y,a)+hex(x+45,y+26,b)+hex(x,y+52,c);
+
+function tag(x,y,w,label,id,stroke){const lines=label.split("|");const h=lines.length>1?38:28;
+  return link(id,`<g class="hot"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" class="paper" stroke="${stroke||C.orange}" stroke-width="2"/>${lines.map((l,i)=>`<text x="${x+w/2}" y="${y+(lines.length>1?16+i*14:19)}" text-anchor="middle" font-size="12" font-weight="700" class="ink">${l}</text>`).join("")}</g>`,label.replace("|"," "))}
+
+function doc(x,y,w,label,id,stroke){const h=44;const lines=label.split("|");
+  const d=`M${x} ${y} h${w} v${h-6} q${-w/4} 9 ${-w/2} 0 t${-w/2} 0 z`;
+  return link(id,`<g class="hot"><path d="${d}" class="paper" stroke="${stroke}" stroke-width="2"/>${lines.map((l,i)=>`<text x="${x+w/2}" y="${y+16+i*14}" text-anchor="middle" font-size="11.5" font-weight="700" class="ink">${l}</text>`).join("")}</g>`,label.replace("|"," "))}
+
+function stack(x,y,w,label,id){let r="";for(let i=2;i>=0;i--)r+=`<rect x="${x+i*3}" y="${y+i*3}" width="${w}" height="36" class="paper" stroke="${C.orange}" stroke-width="1.6"/>`;
+  const l=label.split("|");return link(id,`<g class="hot">${r}${l.map((t,i)=>`<text x="${x+w/2}" y="${y+15+i*13}" text-anchor="middle" font-size="11" font-weight="700" class="ink">${t}</text>`).join("")}</g>`,label.replace("|"," "))}
+
+function cube(cx,cy){return `<polygon points="${cx},${cy-24} ${cx+22},${cy-12} ${cx},${cy} ${cx-22},${cy-12}" fill="#FFB24D"/><polygon points="${cx-22},${cy-12} ${cx},${cy} ${cx},${cy+25} ${cx-22},${cy+13}" fill="${C.orange}"/><polygon points="${cx+22},${cy-12} ${cx},${cy} ${cx},${cy+25} ${cx+22},${cy+13}" fill="${C.orangeD}"/>`}
+const cubes=(a,b,c)=>link("increment",`<g class="hot">${[a,b,c].map(p=>icon("inc",p[0],p[1],52)).join("")}</g>`,"Increments");
+
+function chevron(x1,x2,y,h,label,id,first){const n=9,m=y+h/2;
+  const pts=first?`${x1},${y} ${x2-n},${y} ${x2},${m} ${x2-n},${y+h} ${x1},${y+h}`:`${x1},${y} ${x2-n},${y} ${x2},${m} ${x2-n},${y+h} ${x1},${y+h} ${x1+n},${m}`;
+  return link(id,`<polygon class="bar" points="${pts}" fill="${C.plum}"/><text x="${(x1+x2)/2+ (first?0:4)}" y="${m+5}" text-anchor="middle" font-size="12" fill="#fff" class="lbl">${label}</text>`,label)}
+
+function callout(x,y,w,label,id,fill,border,circ){const h=36;
+  const tail=`${x+w-34},${y+h} ${x+w-14},${y+h} ${x+w-6},${y+h+16}`;
+  return link(id,`<g class="hot"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${border?`stroke="${border}" stroke-width="3"`:""}/><polygon points="${tail}" fill="${fill}" ${border?`stroke="${border}" stroke-width="3" stroke-linejoin="round"`:""}/><rect x="${x+w-34}" y="${y+h-3}" width="20" height="5" fill="${fill}"/><text x="${x+w/2}" y="${y+24}" text-anchor="middle" font-size="16" fill="#fff" class="lbl">${label}</text>
+   <circle cx="${circ[0]}" cy="${circ[1]}" r="22" fill="${circ[2]}" stroke="${circ[3]}" stroke-width="4"/><text x="${circ[0]}" y="${circ[1]+8}" text-anchor="middle" font-size="22" font-weight="800" fill="#fff">${circ[4]}</text></g>`,label)}
+
+function rail(x,y1,y2,label,id,col){const mid=(y1+y2)/2;
+  return link(id,`<g class="hot"><line x1="${x}" y1="${y1+10}" x2="${x}" y2="${y2-10}" stroke="${col}" stroke-width="3"/><polygon points="${x-8},${y1+12} ${x+8},${y1+12} ${x},${y1}" fill="${col}"/><polygon points="${x-8},${y2-12} ${x+8},${y2-12} ${x},${y2}" fill="${col}"/>
+   <text transform="translate(${x+18} ${mid}) rotate(90)" text-anchor="middle" font-size="12.5" fill="${col}" class="lbl">${label}</text></g>`,label)}
+
+function wheel(cx,cy){const R=58,r=22,labels=["Commitment","Focus","Openness","Respect","Courage"],cols=[C.plum,"#E8664A","#F4B03C",C.teal,"#9BCB3B"];let s="";
+  for(let i=0;i<5;i++){const a0=(-90+i*72)*Math.PI/180,a1=(-90+(i+1)*72)*Math.PI/180;
+    const p=(a,rad)=>[cx+rad*Math.cos(a),cy+rad*Math.sin(a)].map(v=>v.toFixed(1)).join(" ");
+    s+=`<path d="M${p(a0,r)} L${p(a0,R)} A${R} ${R} 0 0 1 ${p(a1,R)} L${p(a1,r)} A${r} ${r} 0 0 0 ${p(a0,r)}Z" fill="${cols[i]}"/>`;
+    const am=(a0+a1)/2;s+=`<text x="${(cx+40*Math.cos(am)).toFixed(1)}" y="${(cy+40*Math.sin(am)+3).toFixed(1)}" text-anchor="middle" font-size="6.6" font-weight="700" fill="#fff">${labels[i]}</text>`}
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#111"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Scrum</text>`;
+  return link("scrum-values",`<g class="hot">${s}</g>`,"Scrum Values")}
+
+let s=`<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="${C.plum}"/></marker>
+<linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="${C.teal}"/><stop offset="1" stop-color="${C.teal}" stop-opacity="0"/></linearGradient></defs>`;
+/* artifact and commitment icons, drawn around (0,0); hexes have radius 46 */
+const HEX46="0,-46 39.8,-23 39.8,23 0,46 -39.8,23 -39.8,-23";
+const GEM=`<polygon points="-17,-5 -9,-13 9,-13 17,-5 0,15" fill="#FFFFFF"/><polygon points="-15,-5 -8,-11.5 8,-11.5 15,-5" fill="#5CC8C8"/><polygon points="-15,-5 15,-5 0,12.5" fill="#0E8C8C"/><path d="M-6 -3 l4 4 l8 -9" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+const ICON={
+ pb:`<rect x="-31" y="-35" width="62" height="70" rx="11" fill="#007A7A"/><polygon points="-12,-14 -4,-27 1,-20 5,-24 12,-14" fill="#FF9715"/><polygon points="-4,-27 -1.6,-23 -6.4,-23" fill="#FFFFFF"/><rect x="-7" y="-10" width="14" height="4" rx="2" fill="#E0A800"/><rect x="-12" y="-3" width="24" height="6" rx="2.5" fill="#FFC21A"/><rect x="-18" y="6" width="36" height="8" rx="3" fill="#FFD866"/><rect x="-24" y="17" width="48" height="10" rx="3.5" fill="#FFEBAD"/>`,
+ sb:`<rect x="-31" y="-35" width="62" height="70" rx="11" fill="#004D4D"/><line x1="-8" y1="-26" x2="-8" y2="-12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><polygon points="-8,-26 7,-21 -8,-16" fill="#FF9715"/><rect x="-22" y="-7" width="8" height="8" rx="2" fill="#FF9715"/><rect x="-10" y="-6" width="32" height="6" rx="3" fill="#FFFFFF"/><rect x="-22" y="6" width="8" height="8" rx="2" fill="#FF9715"/><rect x="-10" y="7" width="32" height="6" rx="3" fill="#FFFFFF"/><rect x="-21" y="20" width="6" height="6" rx="1.5" fill="none" stroke="#FFFFFF" stroke-width="2"/><rect x="-10" y="20" width="32" height="6" rx="3" fill="#FFFFFF" opacity=".55"/>`,
+ inc:`<polygon points="-39.8,-23 0,-46 39.8,-23 0,0" fill="#FFB24D"/><polygon points="0,0 39.8,-23 39.8,23 0,46" fill="#E07A00"/><polygon points="-39.8,-23 0,0 0,46 -39.8,23" fill="#FF9715"/><g transform="translate(30 30)">${GEM}</g>`,
+ pg:`<polygon points="-26,18 -8,-16 2,-2 10,-12 26,18" fill="#FF9715"/><polygon points="-8,-16 -3,-7 -13,-7" fill="#FFFFFF"/><polygon points="10,-12 13,-6 7,-6" fill="#FFFFFF"/>`,
+ sg:`<line x1="-6" y1="-20" x2="-6" y2="20" stroke="#004D4D" stroke-width="3" stroke-linecap="round"/><polygon points="-6,-20 16,-12 -6,-4" fill="#FF9715"/>`,
+ dod:`<g transform="scale(1.35)">${GEM}</g>`};
+const CUBE=`<polygon points="-39.8,-23 0,-46 39.8,-23 0,0" fill="#FFB24D"/><polygon points="0,0 39.8,-23 39.8,23 0,46" fill="#E07A00"/><polygon points="-39.8,-23 0,0 0,46 -39.8,23" fill="#FF9715"/>`;
+const PL="#7B2D7B";
+const face=m=>`<circle cx="-2.1" cy="-5.3" r="0.8" fill="#fff"/><circle cx="2.1" cy="-5.3" r="0.8" fill="#fff"/><path d="${m}" fill="none" stroke="#fff" stroke-width="0.9" stroke-linecap="round"/>`;
+const VIEWS=grp(fig("#FF9715")+face("M-2.5 -2.7 Q0 -0.6 2.5 -2.7"),fig("#7B2D7B")+face("M-2.5 -1.2 Q0 -3.3 2.5 -1.2"),fig("#0E8C8C")+face("M-2.4 -2 H2.4"));
+const LOOP=`<path d="M5 -25.5 A26 26 0 1 1 -5 -25.5" fill="none" stroke="${PL}" stroke-width="3" stroke-linecap="round"/><polygon points="-8,-31 3,-25.5 -8,-20" fill="${PL}"/>`;
+const BUB=(t)=>`<path d="M-7 -8 H7 Q11 -8 11 -4 V4 Q11 8 7 8 ${t} H-7 Q-11 8 -11 4 V-4 Q-11 -8 -7 -8 Z" fill="#FFFFFF" stroke="${PL}" stroke-width="1.6" stroke-linejoin="round"/>`;
+Object.assign(ICON,{
+ esprint:LOOP+`<g transform="scale(.33)">${CUBE}</g>`,
+ eplan:`<g transform="translate(-12 -9) scale(.4)">${ICON.pb}</g><g transform="translate(13 12) scale(.4)">${ICON.sb}</g><path d="M2 -17 Q15 -17 15 -5" fill="none" stroke="${PL}" stroke-width="2.5" stroke-linecap="round"/><polygon points="10,-7 20,-7 15,0" fill="${PL}"/>`,
+ edaily:`<path d="M5 -25.5 A26 26 0 1 1 -5 -25.5" fill="none" stroke="${PL}" stroke-width="2.5" stroke-dasharray="5 4" stroke-linecap="round"/><polygon points="-8,-31 3,-25.5 -8,-20" fill="${PL}"/><g transform="scale(.5)">${ICON.sb}</g>`,
+ ereview:`<g transform="translate(-12 -17)">${BUB("H1 L-3 13 L-3 8")}<g transform="scale(.15)">${CUBE}</g></g><g transform="translate(12 -19)">${BUB("H3 L3 13 L-1 8")}<polygon transform="scale(.3)" points="-26,18 -8,-16 2,-2 10,-12 26,18" fill="#FF9715"/></g><g transform="translate(0 12) scale(.72)">${VIEWS}</g>`,
+ eretro:`<path d="M-5 -25.5 A26 26 0 1 0 5 -25.5" fill="none" stroke="${PL}" stroke-width="3" stroke-linecap="round"/><polygon points="8,-31 -3,-25.5 8,-20" fill="${PL}"/><g transform="translate(0 1) scale(.7)">${TEAM}</g>`,
+ team:`<g transform="translate(0 -1)">${TEAM}</g>`,
+ perf:`<line x1="-25" y1="22" x2="25" y2="22" stroke="#004D4D" stroke-width="2.5" stroke-linecap="round"/><rect x="-20" y="4" width="10" height="18" rx="2" fill="#0E8C8C"/><rect x="-5" y="-6" width="10" height="28" rx="2" fill="#0E8C8C"/><rect x="10" y="-1" width="10" height="23" rx="2" fill="#0E8C8C"/><line x1="-26" y1="-14" x2="26" y2="-14" stroke="#FF9715" stroke-width="3" stroke-dasharray="5 3" stroke-linecap="round"/>`,
+ env:`<circle cx="0" cy="0" r="17" fill="#D9F2F2" stroke="#007A7A" stroke-width="2.5"/><ellipse cx="0" cy="0" rx="7" ry="17" fill="none" stroke="#007A7A" stroke-width="2"/><line x1="-17" y1="0" x2="17" y2="0" stroke="#007A7A" stroke-width="2"/><path d="M-11 -22 A24 24 0 0 1 21 -11" fill="none" stroke="#FF9715" stroke-width="3" stroke-linecap="round"/><polygon points="16,-14 27,-13 21,-4" fill="#FF9715"/><path d="M11 22 A24 24 0 0 1 -21 11" fill="none" stroke="#FF9715" stroke-width="3" stroke-linecap="round"/><polygon points="-16,14 -27,13 -21,4" fill="#FF9715"/>`,
+ imp:`<rect x="-24" y="8" width="14" height="14" rx="2" fill="#7B2D7B"/><rect x="-10" y="-2" width="14" height="24" rx="2" fill="#7B2D7B"/><rect x="4" y="-12" width="14" height="34" rx="2" fill="#7B2D7B"/><rect x="9" y="-25" width="4" height="10" fill="#FF9715"/><polygon points="3,-23 19,-23 11,-31" fill="#FF9715"/>`,
+ how:`<g transform="translate(-10 4) scale(1.3)">${fig("#0E8C8C")}</g><g transform="translate(13 -6)" fill="#7B2D7B">${[0,45,90,135,180,225,270,315].map(a=>`<rect x="-2.5" y="-12.5" width="5" height="6" rx="1" transform="rotate(${a})"/>`).join("")}<circle r="8.5"/><circle r="3.2" fill="#FFFFFF"/></g>`});
+const ICONSIZE={perf:27,env:27,imp:31,how:27,pb:35,sb:35,inc:46,pg:26,sg:22,dod:22,esprint:31,eplan:27,edaily:31,ereview:30,eretro:31,team:22};
+const icon=(k,x,y,px)=>`<g transform="translate(${x} ${y}) scale(${(px/2/ICONSIZE[k]).toFixed(3)})">${ICON[k]}</g>`;
+/* ---------- extra shapes ---------- */
+function teamHex(cx,cy,r){return link("scrum-team",`<g class="hot"><g transform="translate(${cx} ${cy}) scale(${(r>=30?FS:FS*.6).toFixed(3)})"><g transform="translate(0 -1)">${TEAM}</g></g></g>`,"Scrum Team")}
+function hexPts(x,y,s){return [[x-30*s,y],[x-15*s,y-26*s],[x+15*s,y-26*s],[x+30*s,y],[x+15*s,y+26*s],[x-15*s,y+26*s]].map(p=>p.map(v=>v.toFixed(1)).join(",")).join(" ")}
+function devStack(cx,cy,s=1){ // Developers: stacked hexes, because there is usually more than one
+  return link("developers",`<g class="hot">${roleGlyph("d",cx,cy,s)}</g>`,"Developers")}
+function downArrow(cx,y,col){return `<polygon points="${cx-6},${y} ${cx+6},${y} ${cx+6},${y+8} ${cx+13},${y+8} ${cx},${y+20} ${cx-13},${y+8} ${cx-6},${y+8}" fill="${col}"/>`}
+
+/* input / output chips laid out to fit each column */
+const CW=6.5;
+const STROKE={pb:C.teal,sb:C.teal,inc:C.orangeD,pg:C.orange,sg:C.orange,dod:C.orange};
+const ISZ=38;
+function itemSize(it){if(it.k!=="info")return [ISZ,ISZ];const ls=it.t.split("|");return [Math.max(Math.max(...ls.map(l=>l.length))*CW+18,56),ls.length*13+14]}
+function drawItem(it,x,y,w,h){
+  if(it.k!=="info")return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent"/>${icon(it.k,x+w/2,y+h/2,w)}`;
+  const ls=it.t.split("|"),top=y+h/2-(ls.length-1)*6.5+4;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" class="ia-in" stroke="#9CA3AF" stroke-width="1.4" stroke-dasharray="4 3"/>`+ls.map((l,i)=>`<text x="${x+w/2}" y="${top+i*13}" text-anchor="middle" font-size="${i===0?11:10}" font-weight="${i===0?700:500}" class="${i===0?"ink":"muted"}">${l}</text>`).join("")}
+function flow(items,x1,x2,y){items=[...items.filter(i=>i.k!=="info"),...items.filter(i=>i.k==="info")];const inner=x2-x1-12,gap=8;const rows=[];let row=[],rw=0;
+  items.forEach(it=>{const [w,h]=itemSize(it),W=Math.min(w,inner);if(row.length&&rw+gap+W>inner){rows.push(row);row=[];rw=0}rw+=(row.length?gap:0)+W;row.push([it,W,h])});if(row.length)rows.push(row);
+  let out="",cy=y;rows.forEach(r=>{const tw=r.reduce((a,b)=>a+b[1],0)+gap*(r.length-1);let cx=(x1+x2)/2-tw/2;const rh=Math.max(...r.map(b=>b[2]));
+    r.forEach(([it,w,h])=>{out+=link(it.id,`<g class="hot">${drawItem(it,cx,cy+(rh-h)/2,w,h)}</g>`,it.t.replace("|",": ").replace(/\|/g," "));cx+=w+gap});cy+=rh+gap});
+  return [out,cy-gap-y]}
+const wrapW=(t,w,cw)=>{const max=Math.floor((w-16)/cw),out=[];let line="";t.split(" ").forEach(word=>{if((line+" "+word).trim().length>max&&line){out.push(line);line=word}else line=(line+" "+word).trim()});out.push(line);return out};
+
+/* ---------- the board ---------- */
+const COLS=[[170,320],[320,688],[688,882],[882,1028]];
+const EVENTS=["sprint-planning","daily-scrum","sprint-review","sprint-retrospective"];
+const INPUTS=[
+ [{t:"Product Backlog|Goal + PBIs",k:"pb",id:"product-backlog"},{t:"Past Performance & Capacity",k:"perf",id:"topic-what"},{t:"Definition|of Done",k:"dod",id:"definition-of-done"},{t:"Increment",k:"inc",id:"increment"},{t:"Improvements|from the last Retrospective",k:"imp",id:"sprint-retrospective"}],
+ [{t:"Sprint Backlog|Sprint Goal + Plan",k:"sb",id:"sprint-backlog"}],
+ [{t:"Increment",k:"inc",id:"increment"},{t:"Sprint Goal",k:"sg",id:"sprint-goal"},{t:"Product Goal",k:"pg",id:"product-goal"},{t:"Product Backlog",k:"pb",id:"product-backlog"},{t:"Changes in the Environment",k:"env",id:"sprint-review"}],
+ [{t:"How the Sprint Went|individuals, interactions, processes, tools",k:"how",id:"sprint-retrospective"},{t:"Definition|of Done",k:"dod",id:"definition-of-done"}]];
+const OUTPUTS=[
+ [{t:"Sprint Backlog|Goal, PBIs, Plan",k:"sb",id:"sprint-backlog"},{t:"Product Backlog|refined",k:"pb",id:"product-backlog"}],
+ [{t:"Sprint Backlog|adapted plan for the next 24 hours",k:"sb",id:"sprint-backlog"}],
+ [{t:"Product Backlog|adapted",k:"pb",id:"product-backlog"}],
+ [{t:"Improvements|actionable, for the next Sprint",k:"imp",id:"sprint-retrospective"},{t:"Definition of|Done, if adapted",k:"dod",id:"definition-of-done"}]];
+const DESC=[["Inspect the Product Backlog","Create the Sprint Backlog"],["Inspect progress toward the Sprint Goal","Adapt the Sprint Backlog"],["Inspect the Sprint outcome","Adapt the Product Backlog"],["Inspect how the Sprint went","Adapt ways of working"]];
+
+/* sprint bar + wheel + events */
+/* values wheel stays top right; Sprint bar and events now sit just above the board */
+s+=wheel(1128,60);
+
+
+/* inputs row */
+const yIn=24;const ins=INPUTS.map((list,i)=>flow(list,...COLS[i],yIn));const hIn=Math.max(...ins.map(x=>x[1]));
+ins.forEach(x=>s+=x[0]);
+const rowLabel=(y,h,title,sub,fill,txt)=>link("inspect-adapt",`<g class="rowlab"><rect x="40" y="${y}" width="120" height="${h}" rx="8" fill="${fill}"/><text x="100" y="${y+h/2-2}" text-anchor="middle" font-size="12" class="lbl" fill="${txt}">${title}</text><text x="100" y="${y+h/2+14}" text-anchor="middle" font-size="10.5" font-weight="500" fill="${txt}">${sub}</text></g>`,title.toLowerCase());
+s+=rowLabel(yIn,hIn,"INPUTS","inspected",C.teal,"#fff");
+const yArr1=yIn+hIn+4;COLS.forEach(([a,b])=>s+=downArrow((a+b)/2,yArr1,C.orange));
+
+/* board frame */
+const yBar=yArr1+28;
+s+=`<g transform="translate(0 ${yBar-76})">`+link("sprint",`<polygon class="bar" points="170,76 1022,76 1034,88 1022,100 170,100" fill="${C.teal}"/><polygon points="1036,76 1080,76 1080,100 1036,100 1048,88" fill="url(#fade)"/><text x="600" y="93" text-anchor="middle" font-size="15" fill="#fff" class="lbl">SPRINT</text>`,"Sprint")+chevron(170,318,106,24,"SPRINT PLANNING","sprint-planning",true)+chevron(320,688,106,24,"DAILY SCRUMS","daily-scrum")+chevron(690,880,106,24,"SPRINT REVIEW","sprint-review")+chevron(882,1028,106,24,"RETROSPECTIVE","sprint-retrospective")+"</g>";
+const yB=yBar+66,yI=yB+34,yD=yB+66,hD=66,yC=yD+hD+10,Z=128,yE=yC+3*Z+2;
+s+=`<rect x="170" y="${yB}" width="858" height="${yE-yB}" class="paper boardline" stroke-width="3"/>`;
+[320,688,882].forEach(x=>s+=`<line x1="${x}" y1="${yB}" x2="${x}" y2="${yE}" class="boardline" stroke-width="3"/>`);
+[yC+Z-2,yC+2*Z-2].forEach(y=>s+=`<line x1="170" y1="${y}" x2="320" y2="${y}" class="boardline" stroke-width="3" stroke-dasharray="14 8"/>`);
+
+/* event icons: Sprint beside its bar, the four events at the top of their columns */
+s+=link("sprint",`<g class="hot">${icon("esprint",146,yBar+12,38)}</g>`,"Sprint");
+["eplan","edaily","ereview","eretro"].forEach((k,i)=>{const [a,b]=COLS[i];s+=link(EVENTS[i],`<g class="hot">${icon(k,(a+b)/2,yI,54)}</g>`,["Sprint Planning","Daily Scrum","Sprint Review","Sprint Retrospective"][i])});
+/* inspect / adapt description inside each event */
+DESC.forEach((pair,i)=>{const [a,b]=COLS[i];let lines=[];pair.forEach((t,j)=>wrapW(t,b-a-8,6.0).forEach((l,k)=>lines.push([l,j,k])));
+  const lh=14,top=yD+hD/2-(lines.length-1)*lh/2+4;
+  const txt=lines.map(([l,j,k],n)=>{const m=k===0&&l.match(/^(Inspect|Adapt|Create)\b/);return `<text x="${(a+b)/2}" y="${top+n*lh}" text-anchor="middle" font-size="11.5" class="ink">${m?`<tspan font-weight="800" class="${j?"verb-ad":"verb-in"}">${m[1]}</tspan>${l.slice(m[1].length)}`:l}</text>`}).join("");
+  s+=link(EVENTS[i],`<g class="iacell"><rect x="${a+6}" y="${yD}" width="${b-a-12}" height="${hD}" rx="8" class="ia-in"/>${txt}</g>`,pair.join(", "))});
+
+/* Sprint Planning topics */
+const zc=k=>yC+k*Z;
+s+=callout(32,zc(0)+8,104,"1. WHY?","topic-why",C.orangeD,null,[162,zc(0)+64,C.orangeD,"#fff","1"]);
+s+=callout(40,zc(1)+8,106,"2. WHAT?","topic-what",C.teal,C.orange,[168,zc(1)+64,C.teal,C.orange,"2"]);
+s+=callout(40,zc(2)+8,100,"3. HOW?","topic-how",C.teal,C.orange,[168,zc(2)+64,C.teal,C.orange,"3"]);
+s+=flow([{t:"Sprint Goal",k:"sg",id:"sprint-goal"}],170,320,zc(0)+8)[0]+teamHex(245,zc(0)+82,33);
+s+=flow([{t:"Product Backlog|items selected",k:"pb",id:"product-backlog"}],170,320,zc(1)+4)[0]+hex(214,zc(1)+90,"po")+devStack(272,zc(1)+90);
+s+=flow([{t:"Sprint Backlog|actionable plan",k:"sb",id:"sprint-backlog"}],170,320,zc(2)+8)[0]+devStack(240,zc(2)+84);
+
+/* Daily Scrums */
+s+=hex(436,yC+100,"po")+devStack(504,yC+100)+hex(572,yC+100,"sm");
+s+=cubes([474,yC+214],[544,yC+214],[509,yC+268]);
+/* Sprint Review */
+s+=teamHex(752,yC+150,36)+hex(830,yC+150,"sh");
+/* Sprint Retrospective */
+s+=teamHex(955,yC+150,36);
+
+/* outputs row */
+const yArr2=yE+4;COLS.forEach(([a,b])=>s+=downArrow((a+b)/2,yArr2,C.orange));
+const yOut=yE+30;const outs=OUTPUTS.map((list,i)=>flow(list,...COLS[i],yOut));const hOut=Math.max(...outs.map(x=>x[1]));
+outs.forEach(x=>s+=x[0]);
+s+=rowLabel(yOut,hOut,"OUTPUTS","adapted or created",C.orange,"#004D4D");
+
+/* rails */
+s+=rail(1054,yB,yOut+hOut,"SCRUM THEORY: EMPIRICISM · LEAN THINKING","scrum-theory",C.teal);
+s+=rail(1098,yB,yOut+hOut,"PRODUCT BACKLOG REFINEMENT","refinement",C.orangeD);
+
+/* values + legend (drawn at their original coordinates, shifted down) */
+const dy=yOut+hOut+26-700;
+s+=`<g transform="translate(0 ${dy})">`;
+s+=link("scrum-values",`<path d="M172 700 v8 h846 v-8" fill="none" stroke="#9CA3AF" stroke-width="2"/><text x="595" y="730" text-anchor="middle" font-size="13" class="ink lbl ul">SCRUM VALUES</text>`,"Scrum Values");
+const lg=(x,r)=>{const [id,,,name]=ROLE[r];
+  return link(id,`<g class="hot">${roleGlyph(r,x,768,.6)}<text x="${x+(r==="d"?36:28)}" y="773" font-size="14" font-weight="500" class="ink">${name}</text></g>`,name)};
+s+=lg(70,"po")+lg(258,"d")+lg(415,"sm")+lg(565,"sh");
+[["esprint","sprint","Sprint",70],["eplan","sprint-planning","Sprint Planning",255],["edaily","daily-scrum","Daily Scrum",450],["ereview","sprint-review","Sprint Review",620],["eretro","sprint-retrospective","Retrospective",800]].forEach(([k,id,name,x])=>{
+  s+=link(id,`<g class="hot">${icon(k,x,866,34)}<text x="${x+26}" y="871" font-size="14" font-weight="500" class="ink">${name}</text></g>`,name)});
+[["imp","sprint-retrospective","Improvements",70],["perf","topic-what","Past Performance & Capacity",255],["env","sprint-review","Changes in the Environment",530],["how","sprint-retrospective","How the Sprint Went",800]].forEach(([k,id,name,x])=>{
+  s+=link(id,`<g class="hot">${icon(k,x,914,32)}<text x="${x+26}" y="919" font-size="14" font-weight="500" class="ink">${name}</text></g>`,name)});
+s+=teamHex(745,767,19).replace('aria-label="Scrum Team">','aria-label="Scrum Team"><text x="775" y="773" font-size="14" font-weight="500" class="ink">Scrum Team</text>');
+s+=`<text x="871" y="773" font-size="12" class="muted">= PO + SM + Developers</text>`;
+[["pb","product-backlog","Product Backlog",70],["sb","sprint-backlog","Sprint Backlog",255],["inc","increment","Increment",430],["pg","product-goal","Product Goal",585],["sg","sprint-goal","Sprint Goal",755],["dod","definition-of-done","Definition of Done",905]].forEach(([k,id,name,x])=>{
+  s+=link(id,`<g class="hot">${icon(k,x,816,k==="inc"?34:30)}<text x="${x+24}" y="821" font-size="14" font-weight="500" class="ink">${name}</text></g>`,name)});
+s+="</g>";
+const VBH=928+dy+24;
+
+document.getElementById("board").innerHTML=s;
+document.getElementById("board").setAttribute("viewBox","0 0 1200 "+VBH);
+
+const board=document.getElementById("board-view");
+const svg=document.getElementById("board");
+const clearLit=()=>svg.querySelectorAll(".lit").forEach(x=>x.classList.remove("lit"));
+svg.addEventListener("mouseover",e=>{const a=e.target.closest("a[data-id]");clearLit();if(a)svg.querySelectorAll('a[data-id="'+a.dataset.id+'"] .hot').forEach(x=>x.classList.add("lit"))});
+svg.addEventListener("mouseleave",clearLit);
+/* hover label */
+const tip=document.getElementById("tip"),stage=document.querySelector(".stage");
+function showTip(a){const r=a.getBoundingClientRect(),st=stage.getBoundingClientRect();const lab=a.getAttribute("aria-label").split(": ");tip.textContent=lab[0];if(lab[1]){const sm=document.createElement("small");sm.textContent=lab[1];tip.appendChild(sm)}tip.hidden=false;
+  let x=r.left+r.width/2-st.left+stage.scrollLeft,y=r.top-st.top+stage.scrollTop;const half=tip.offsetWidth/2+6;x=Math.max(half+stage.scrollLeft,Math.min(x,stage.scrollLeft+stage.clientWidth-half));
+  if(y<tip.offsetHeight+14){tip.style.transform="translate(-50%,10px)";y=r.bottom-st.top+stage.scrollTop}else tip.style.transform="";tip.style.left=x+"px";tip.style.top=y+"px"}
+svg.addEventListener("mouseover",e=>{const a=e.target.closest("a[data-id]");if(a)showTip(a);else tip.hidden=true});
+svg.addEventListener("mouseleave",()=>tip.hidden=true);
+svg.addEventListener("focusin",e=>{const a=e.target.closest("a[data-id]");if(a)showTip(a)});
+svg.addEventListener("focusout",()=>tip.hidden=true);
+
+/* ---------- knowledge pages (Scrum Guide 2020 terms) ---------- */
+const P=[
+ {id:"scrum-definition",kind:"Foundation",title:"Scrum Definition",lede:"Scrum is a lightweight framework that helps people, teams and organisations generate value through adaptive solutions for complex problems.",
+  facts:[["Type","Lightweight framework"],["For","Complex problems"],["Completeness","Purposefully incomplete"]],
+  secs:[["Scrum in a Nutshell","<p>Scrum requires a Scrum Master to foster an environment where:</p><ul><li>A <a href='#product-owner'>Product Owner</a> orders the work for a complex problem into a <a href='#product-backlog'>Product Backlog</a>.</li><li>The <a href='#scrum-team'>Scrum Team</a> turns a selection of the work into an <a href='#increment'>Increment</a> of value during a <a href='#sprint'>Sprint</a>.</li><li>The Scrum Team and its <a href='#stakeholders'>stakeholders</a> inspect the results and adjust for the next Sprint.</li><li>Repeat.</li></ul>"],
+   ["Simple by Design","<p>Scrum is simple. Rather than giving detailed instructions, its rules guide relationships and interactions. Various processes, techniques and methods can be used within it.</p>"],
+   ["Visibility","<p>Scrum wraps around existing practices or renders them unnecessary. It makes visible the relative efficacy of current management, environment and work techniques, so that improvements can be made.</p>"]],
+  rel:["scrum-theory","scrum-team","scrum-events","scrum-artifacts"]},
+
+ {id:"scrum-theory",kind:"Foundation",title:"Scrum Theory: Empiricism and Lean Thinking",lede:"Scrum is founded on empiricism and lean thinking. It uses an iterative, incremental approach to optimise predictability and control risk.",
+  facts:[["Empiricism","Knowledge comes from experience"],["Lean thinking","Reduce waste, focus on essentials"],["Approach","Iterative and incremental"]],
+  secs:[["Empiricism","<p>Empiricism asserts that knowledge comes from experience and making decisions based on what is observed. Scrum makes progress visible so decisions rest on facts, not assumptions.</p>"],
+   ["Lean Thinking","<p>Lean thinking reduces waste and focuses on the essentials. In Scrum this shows up as a small framework, short Sprints, a single ordered Product Backlog, and work that is either Done or returned to the Product Backlog.</p>"],
+   ["Iterative and Incremental","<p>Scrum engages groups of people who collectively have all the skills and expertise to do the work, and who share or acquire those skills as needed. Each Sprint builds on what was learned in the last.</p>"],
+   ["Three Pillars","<p>Four formal events inside the Sprint implement the empirical pillars of <a href='#empiricism'>transparency, inspection and adaptation</a>.</p>"]],
+  rel:["empiricism","scrum-values","sprint","refinement"]},
+
+ {id:"inspect-adapt",kind:"Foundation",group:"Scrum Theory",title:"Inspect and Adapt",lede:"Each Scrum event is a formal opportunity to inspect and adapt. On the board, inputs above each event are what it inspects; outputs below are what it adapts or creates.",
+  facts:[["Formal opportunities","Four events inside the Sprint"],["Rule","Inspection without adaptation is pointless"],["Timeboxes","For a one-month Sprint"]],
+  secs:[["The Matrix","<div class='tablewrap'><table class='matrix'><thead><tr><th>Event</th><th>Inspect (Inputs)</th><th>Adapt or Create (Outputs)</th><th>Who</th><th>Max Timebox</th></tr></thead><tbody><tr><th><a href='#sprint-planning'>Sprint Planning</a></th><td>Product Backlog and Product Goal, past performance and capacity, Definition of Done, Increment, Retrospective improvements</td><td>Refine the Product Backlog. Create the Sprint Goal and Sprint Backlog</td><td>Scrum Team</td><td>8 hours</td></tr><tr><th><a href='#daily-scrum'>Daily Scrum</a></th><td>The Sprint Backlog: progress toward the Sprint Goal</td><td>Adapt the Sprint Backlog: the plan for the next 24 hours</td><td>Developers</td><td>15 minutes</td></tr><tr><th><a href='#sprint-review'>Sprint Review</a></th><td>Increment, Sprint Goal, progress toward the Product Goal, changes in the environment</td><td>Adapt the Product Backlog</td><td>Scrum Team and stakeholders</td><td>4 hours</td></tr><tr><th><a href='#sprint-retrospective'>Sprint Retrospective</a></th><td>How the Sprint went: individuals, interactions, processes, tools and Definition of Done</td><td>Actionable improvements to ways of working and, if needed, the Definition of Done</td><td>Scrum Team</td><td>3 hours</td></tr></tbody></table></div><p>Events are usually shorter for shorter Sprints.</p>"],
+   ["Reading the Matrix","<p>Every row pairs an inspection with an adaptation. That pairing is <a href='#empiricism'>empiricism</a> at work: transparency makes inspection possible, and inspection makes adaptation possible.</p>"]],
+  rel:["empiricism","scrum-events","scrum-artifacts","scrum-theory"]},
+ {id:"scrum-team",icon:"team",kind:"Foundation",title:"Scrum Team",lede:"The fundamental unit of Scrum: a small team of people with one Scrum Master, one Product Owner and Developers.",
+  facts:[["Size","Typically 10 or fewer people"],["Structure","No sub-teams or hierarchies"],["Accountable for","A valuable, useful Increment every Sprint"]],
+  secs:[["Three Accountabilities","<ul><li><a href='#developers'>Developers</a></li><li><a href='#product-owner'>Product Owner</a></li><li><a href='#scrum-master'>Scrum Master</a></li></ul><p>On the board, the three-part hexagon stands for the whole Scrum Team, one face for each accountability.</p>"],
+   ["Cross-Functional and Self-Managing","<p>Members have all the skills needed to create value each Sprint. They decide internally who does what, when and how.</p>"],
+   ["Small Enough","<p>Small enough to remain nimble, large enough to complete significant work. Smaller teams communicate better and are more productive. A team that grows too large should consider reorganising into multiple cohesive Scrum Teams, each focused on the same product, sharing the same Product Goal, Product Backlog and Product Owner.</p>"],
+   ["Responsible For","<p>All product-related activities: stakeholder collaboration, verification, maintenance, operation, experimentation, research and development, and anything else that might be required. The whole team focuses on one objective at a time, the Product Goal.</p>"],
+   ["A Focused Pace","<p>Working in Sprints at a sustainable pace improves the Scrum Team's focus and consistency.</p>"]],
+  rel:["developers","product-owner","scrum-master","stakeholders","product-goal"]},
+
+ {id:"scrum-events",kind:"Foundation",title:"Scrum Events",lede:"The Sprint is a container for all other events. Each event is a formal opportunity to inspect and adapt Scrum artifacts.",
+  facts:[["Events","Five"],["Container","The Sprint"],["Held","Same time and place, to reduce complexity"]],
+  secs:[["The Five Events","<ul><li><a href='#sprint'>The Sprint</a>, one month or less</li><li><a href='#sprint-planning'>Sprint Planning</a>, up to 8 hours</li><li><a href='#daily-scrum'>Daily Scrum</a>, 15 minutes</li><li><a href='#sprint-review'>Sprint Review</a>, up to 4 hours</li><li><a href='#sprint-retrospective'>Sprint Retrospective</a>, up to 3 hours</li></ul><p>Timeboxes are for a one-month Sprint. Events are usually shorter for shorter Sprints.</p>"],
+   ["Why They Exist","<p>The events are designed to enable the transparency required. Failure to operate any events as prescribed results in lost opportunities to inspect and adapt. Events create regularity and minimise the need for meetings not defined in Scrum.</p>"]],
+  rel:["sprint","sprint-planning","daily-scrum","sprint-review","sprint-retrospective"]},
+
+ {id:"scrum-artifacts",kind:"Foundation",title:"Scrum Artifacts",lede:"Scrum's artifacts represent work or value. They are designed to maximise transparency of key information, so everyone inspecting them has the same basis for adaptation.",
+  facts:[["Artifacts","Three"],["Commitments","One per artifact"],["Purpose","Transparency and focus"]],
+  secs:[["Artifacts and Their Commitments","<ul><li><a href='#product-backlog'>Product Backlog</a>, committed to the <a href='#product-goal'>Product Goal</a></li><li><a href='#sprint-backlog'>Sprint Backlog</a>, committed to the <a href='#sprint-goal'>Sprint Goal</a></li><li><a href='#increment'>Increment</a>, committed to the <a href='#definition-of-done'>Definition of Done</a></li></ul>"],
+   ["Why Commitments","<p>Each commitment ensures the artifact provides information that enhances transparency and focus, against which progress can be measured. They reinforce empiricism and the Scrum Values for the Scrum Team and its stakeholders.</p>"]],
+  rel:["product-backlog","sprint-backlog","increment","empiricism"]},
+ {id:"sprint",icon:"esprint",kind:"Event",title:"Sprint",lede:"The heartbeat of Scrum. A fixed-length event of one month or less in which ideas are turned into value.",
+  facts:[["Timebox","One month or less"],["Who","The whole Scrum Team"],["Produces","At least one Increment"]],
+  secs:[["Purpose","<p>Sprints enable predictability by ensuring inspection and adaptation of progress towards the Product Goal at least every calendar month. A new Sprint starts immediately after the previous one ends.</p>"],
+   ["What a Sprint Contains","<p>All the work needed to achieve the Product Goal happens within Sprints, including <a href='#sprint-planning'>Sprint Planning</a>, <a href='#daily-scrum'>Daily Scrums</a>, the <a href='#sprint-review'>Sprint Review</a> and the <a href='#sprint-retrospective'>Sprint Retrospective</a>.</p>"],
+   ["During the Sprint","<ul><li>No changes are made that would endanger the <a href='#sprint-goal'>Sprint Goal</a>.</li><li>Quality does not decrease.</li><li>The Product Backlog is refined as needed.</li><li>Scope may be clarified and renegotiated with the Product Owner as more is learned.</li></ul>"],
+   ["Why Short Sprints","<p>Each Sprint may be considered a short project. When a Sprint's horizon is too long the Sprint Goal may become invalid, complexity may rise and risk may increase. Shorter Sprints generate more learning cycles and limit risk of cost and effort to a smaller time frame.</p>"],
+   ["Forecasting Progress","<p>Practices such as burn-downs, burn-ups or cumulative flows can help forecast progress. They do not replace the importance of empiricism: only what has already happened may be used for forward-looking decision making.</p>"],
+   ["Cancelling a Sprint","<p>A Sprint can be cancelled if the Sprint Goal becomes obsolete. Only the Product Owner has the authority to cancel it.</p>"],
+   ["Watch For","<ul><li>Sprints that end without a usable Increment.</li><li>Changing Sprint length to fit the work.</li><li>Gaps between Sprints.</li></ul>","watch"]],
+  rel:["sprint-planning","daily-scrum","sprint-review","sprint-retrospective","sprint-goal","increment"]},
+
+ {id:"sprint-planning",icon:"eplan",kind:"Event",title:"Sprint Planning",lede:"Initiates the Sprint by laying out the work to be performed. The resulting plan is created by the collaborative work of the entire Scrum Team.",
+  facts:[["Timebox","Maximum of 8 hours for a one-month Sprint; usually shorter for shorter Sprints"],["Who","Scrum Team, plus invited people for advice"],["Inspect","Product Backlog and Product Goal, past performance, capacity, Definition of Done, Increment, Retrospective improvements"],["Adapt / Create","Refine the Product Backlog; create the Sprint Goal and Sprint Backlog"]],
+  secs:[["Three Topics","<ul><li><a href='#topic-why'>Topic One: Why</a> is this Sprint valuable?</li><li><a href='#topic-what'>Topic Two: What</a> can be Done this Sprint?</li><li><a href='#topic-how'>Topic Three: How</a> will the chosen work get done?</li></ul><p>The Sprint Goal, the Product Backlog items selected, and the plan for delivering them together form the <a href='#sprint-backlog'>Sprint Backlog</a>.</p>"],
+   ["Inputs","<ul><li>The <a href='#product-backlog'>Product Backlog</a> and the <a href='#product-goal'>Product Goal</a></li><li>The latest product <a href='#increment'>Increment</a></li><li>Projected capacity of the Developers during the Sprint</li><li>Past performance</li><li>The <a href='#definition-of-done'>Definition of Done</a></li></ul>"],
+   ["Watch For","<ul><li>Work selected with no Sprint Goal.</li><li>The Product Owner deciding how much the Developers take on.</li></ul>","watch"]],
+  rel:["topic-why","topic-what","topic-how","sprint-backlog","sprint-goal"]},
+
+ {id:"topic-why",kind:"Topic",group:"Sprint Planning",title:"Topic One: Why Is This Sprint Valuable?",lede:"The Product Owner proposes how the product could increase its value and utility in the current Sprint. The whole Scrum Team then defines a Sprint Goal.",
+  facts:[["Proposed by","Product Owner"],["Who","Whole Scrum Team"],["Output","Sprint Goal"]],
+  secs:[["How It Works","<p>The <a href='#sprint-goal'>Sprint Goal</a> communicates why the Sprint is valuable to stakeholders. It must be finalised prior to the end of Sprint Planning.</p>"],
+   ["Watch For","<ul><li>A goal that is just a list of Product Backlog items.</li><li>A goal written after the work is chosen.</li></ul>","watch"]],
+  rel:["sprint-goal","product-owner","topic-what"]},
+
+ {id:"topic-what",kind:"Topic",group:"Sprint Planning",title:"Topic Two: What Can Be Done This Sprint?",lede:"Through discussion with the Product Owner, the Developers select items from the Product Backlog to include in the current Sprint.",
+  facts:[["Selected by","Developers"],["Who","Developers and Product Owner"],["Output","Selected Product Backlog items"]],
+  secs:[["How It Works","<p>The Scrum Team may refine these items during this process, which increases understanding and confidence.</p>"],
+   ["How Much","<p>Selecting how much can be completed within a Sprint may be challenging. The more the Developers know about their past performance, upcoming capacity and their Definition of Done, the more confident they will be in their Sprint forecasts.</p>"]],
+  rel:["product-backlog","developers","topic-how"]},
+
+ {id:"topic-how",kind:"Topic",group:"Sprint Planning",title:"Topic Three: How Will the Chosen Work Get Done?",lede:"For each selected Product Backlog item, the Developers plan the work necessary to create an Increment that meets the Definition of Done.",
+  facts:[["Owned by","Developers, solely"],["Who","Developers"],["Output","The Developers' plan"]],
+  secs:[["How It Works","<p>This is often done by decomposing Product Backlog items into smaller work items of one day or less. How this is done is at the sole discretion of the Developers.</p>"],
+   ["The Result","<p>The Sprint Goal, the selected items and this plan are together referred to as the <a href='#sprint-backlog'>Sprint Backlog</a>.</p>"]],
+  rel:["sprint-backlog","developers","definition-of-done"]},
+
+ {id:"daily-scrum",icon:"edaily",kind:"Event",title:"Daily Scrum",lede:"The Developers inspect progress toward the Sprint Goal and adapt the Sprint Backlog as necessary, adjusting the upcoming planned work.",
+  facts:[["Timebox","15 minutes"],["When","Same time and place every working day"],["Who","Developers"],["Inspect","The Sprint Backlog: progress toward the Sprint Goal"],["Adapt","The Sprint Backlog: the plan for the next 24 hours"]],
+  secs:[["Structure","<p>The Developers can select whatever structure and techniques they want, as long as the Daily Scrum focuses on progress toward the Sprint Goal and produces an actionable plan for the next day of work.</p>"],
+   ["Product Owner and Scrum Master","<p>If they are actively working on items in the Sprint Backlog, they participate as Developers.</p>"],
+   ["Benefits","<ul><li>Improves communication</li><li>Identifies impediments</li><li>Promotes quick decision-making</li><li>Eliminates the need for other meetings</li></ul>"],
+   ["Watch For","<ul><li>A status report to someone outside the Developers.</li><li>The only time the Developers adjust their plan. They can meet throughout the day.</li></ul>","watch"]],
+  rel:["sprint-backlog","developers","sprint-goal","increment"]},
+
+ {id:"sprint-review",icon:"ereview",kind:"Event",title:"Sprint Review",lede:"Inspect the outcome of the Sprint and determine future adaptations. The Scrum Team presents its work to key stakeholders and progress toward the Product Goal is discussed.",
+  facts:[["Timebox","Maximum of 4 hours for a one-month Sprint; usually shorter for shorter Sprints"],["Who","Scrum Team and key stakeholders"],["Position","Second to last event of the Sprint"],["Inspect","Increment, Sprint Goal, progress toward the Product Goal, changes in the environment"],["Adapt","The Product Backlog"]],
+  secs:[["What Happens","<ul><li>The Scrum Team and stakeholders review what was accomplished in the Sprint.</li><li>They review what has changed in their environment.</li><li>They collaborate on what to do next.</li><li>The <a href='#product-backlog'>Product Backlog</a> may be adjusted to meet new opportunities.</li></ul>"],
+   ["A Working Session","<p>The Scrum Team should avoid limiting it to a presentation.</p>"],
+   ["Releasing","<p>An Increment may be delivered to stakeholders prior to the end of the Sprint. The Sprint Review should never be considered a gate to releasing value.</p>"]],
+  rel:["stakeholders","increment","product-backlog","product-goal"]},
+
+ {id:"sprint-retrospective",icon:"eretro",kind:"Event",title:"Sprint Retrospective",lede:"Plan ways to increase quality and effectiveness. It concludes the Sprint.",
+  facts:[["Timebox","Maximum of 3 hours for a one-month Sprint; usually shorter for shorter Sprints"],["Who","Scrum Team"],["Inspect","How the Sprint went: individuals, interactions, processes, tools and Definition of Done"],["Adapt","Ways of working and, if needed, the Definition of Done"]],
+  secs:[["What the Scrum Team Inspects","<p>How the last Sprint went with regards to individuals, interactions, processes, tools and their <a href='#definition-of-done'>Definition of Done</a>. What went well, what problems it encountered, and how those problems were or were not solved.</p>"],
+   ["Outcome","<p>The Scrum Team identifies the most helpful changes to improve its effectiveness. The most impactful improvements are addressed as soon as possible. They may even be added to the Sprint Backlog for the next Sprint.</p>"]],
+  rel:["scrum-master","definition-of-done","scrum-values"]},
+
+ {id:"product-owner",kind:"Accountability",hex:"po",title:"Product Owner",lede:"Accountable for maximising the value of the product resulting from the work of the Scrum Team.",
+  facts:[["How many","One person, not a committee"],["Accountable for","Effective Product Backlog management"],["Key events","Sprint Planning, Sprint Review"]],
+  secs:[["Accountable For","<ul><li>Developing and explicitly communicating the <a href='#product-goal'>Product Goal</a>.</li><li>Creating and clearly communicating Product Backlog items.</li><li>Ordering Product Backlog items.</li><li>Ensuring that the <a href='#product-backlog'>Product Backlog</a> is transparent, visible and understood.</li></ul>"],
+   ["Decisions","<p>The Product Owner may delegate the work, but remains accountable. For Product Owners to succeed, the entire organisation must respect their decisions.</p>"],
+   ["Stakeholders","<p>The Product Owner may represent the needs of many stakeholders in the Product Backlog. Those wanting to change the Product Backlog can do so by trying to convince the Product Owner.</p>"]],
+  rel:["product-backlog","product-goal","topic-why","sprint-review"]},
+
+ {id:"developers",kind:"Accountability",hex:"d",title:"Developers",lede:"The people in the Scrum Team who are committed to creating any aspect of a usable Increment each Sprint.",
+  facts:[["Skills","Vary with the domain of work"],["Accountable for","The Sprint Backlog plan"],["Key event","Daily Scrum"]],
+  secs:[["Accountable For","<ul><li>Creating a plan for the Sprint, the <a href='#sprint-backlog'>Sprint Backlog</a>.</li><li>Instilling quality by adhering to a <a href='#definition-of-done'>Definition of Done</a>.</li><li>Adapting their plan each day toward the Sprint Goal.</li><li>Holding each other accountable as professionals.</li></ul>"],
+   ["Self-Managing","<p>Scrum Teams are cross-functional and self-managing. They internally decide who does what, when and how.</p>"],
+   ["On the Board","<p>Developers are drawn as a stack of hexagons, because a Scrum Team usually has several.</p>"],["An Inclusive Term","<p>The Scrum Guide uses \"Developers\" to include everyone who does the work, in any domain. It is not a title for software engineers only.</p>"]],
+  rel:["topic-how","daily-scrum","sprint-backlog","increment"]},
+
+ {id:"scrum-master",kind:"Accountability",hex:"sm",title:"Scrum Master",lede:"Accountable for establishing Scrum as defined in the Scrum Guide, and for the Scrum Team's effectiveness. Scrum Masters are true leaders who serve the Scrum Team and the larger organisation.",
+  facts:[["Serves","Scrum Team, Product Owner, organisation"],["Accountable for","Scrum Team effectiveness"],["Key event","Sprint Retrospective"]],
+  secs:[["Serving the Scrum Team","<ul><li>Coaching the team members in self-management and cross-functionality.</li><li>Helping the Scrum Team focus on creating high-value Increments that meet the Definition of Done.</li><li>Causing the removal of impediments to the Scrum Team's progress.</li><li>Ensuring that all Scrum events take place and are positive, productive and kept within the timebox.</li></ul>"],
+   ["Serving the Product Owner","<ul><li>Helping find techniques for effective Product Goal definition and Product Backlog management.</li><li>Helping the Scrum Team understand the need for clear and concise Product Backlog items.</li><li>Helping establish empirical product planning for a complex environment.</li><li>Facilitating stakeholder collaboration as requested or needed.</li></ul>"],
+   ["Serving the Organisation","<ul><li>Leading, training and coaching the organisation in its Scrum adoption.</li><li>Planning and advising Scrum implementations within the organisation.</li><li>Helping employees and stakeholders understand and enact an empirical approach for complex work.</li><li>Removing barriers between stakeholders and Scrum Teams.</li></ul>"]],
+  rel:["scrum-team","sprint-retrospective","daily-scrum","scrum-values"]},
+
+ {id:"stakeholders",kind:"Stakeholders",hex:"sh",title:"Stakeholders",lede:"People outside the Scrum Team with an interest in the product. The Scrum Guide names them, but they are not one of the three Scrum Team accountabilities.",
+  facts:[["Scrum Team member","No"],["Represented by","Product Owner"],["Key event","Sprint Review"]],
+  secs:[["In the Sprint Review","<p>The Scrum Team presents the results of its work to key stakeholders. Together they review what was accomplished and collaborate on what to do next.</p>"],
+   ["In the Product Backlog","<p>The Product Owner may represent the needs of many stakeholders in the Product Backlog. Stakeholders who want a change can do so by trying to convince the Product Owner. The Scrum Master facilitates stakeholder collaboration as requested or needed.</p>"]],
+  rel:["sprint-review","product-owner","topic-why"]},
+
+ {id:"product-backlog",icon:"pb",kind:"Artifact",title:"Product Backlog",lede:"An emergent, ordered list of what is needed to improve the product. It is the single source of work undertaken by the Scrum Team.",
+  facts:[["Commitment","Product Goal"],["Accountable","Product Owner"],["Sized by","Developers who will do the work"]],
+  secs:[["Product Backlog Items","<p>Items that can be Done by the Scrum Team within one Sprint are deemed ready for selection in a Sprint Planning event. They usually acquire this degree of transparency after <a href='#refinement'>refining</a> activities.</p>"],
+   ["Watch For","<ul><li>More than one Product Backlog for one product.</li><li>An unordered list.</li></ul>","watch"]],
+  rel:["product-goal","refinement","topic-what","product-owner"]},
+
+ {id:"product-goal",icon:"pg",kind:"Commitment",title:"Product Goal",lede:"Describes a future state of the product which can serve as a target for the Scrum Team to plan against. It is the commitment for the Product Backlog.",
+  facts:[["Commitment for","Product Backlog"],["Developed by","Product Owner"],["How many","One at a time"]],
+  secs:[["Purpose","<p>The Product Goal is the long-term objective for the Scrum Team. The rest of the Product Backlog emerges to define what will fulfil the Product Goal.</p>"],
+   ["One at a Time","<p>The Scrum Team must fulfil (or abandon) one objective before taking on the next.</p>"],
+   ["What Is a Product?","<p>A product is a vehicle to deliver value. It has a clear boundary, known stakeholders and well-defined users or customers. It could be a service, a physical product or something more abstract.</p>"]],
+  rel:["product-backlog","topic-why","sprint-review"]},
+
+ {id:"sprint-backlog",icon:"sb",kind:"Artifact",title:"Sprint Backlog",lede:"The Sprint Goal (why), the set of Product Backlog items selected for the Sprint (what), and an actionable plan for delivering the Increment (how).",
+  facts:[["Commitment","Sprint Goal"],["By and for","Developers"],["Updated","Throughout the Sprint"]],
+  secs:[["A Real-Time Picture","<p>A highly visible, real-time picture of the work the Developers plan to accomplish during the Sprint to achieve the Sprint Goal.</p>"],
+   ["Enough Detail","<p>It should have enough detail that the Developers can inspect their progress in the Daily Scrum.</p>"]],
+  rel:["sprint-goal","topic-how","daily-scrum","developers"]},
+
+ {id:"sprint-goal",icon:"sg",kind:"Commitment",title:"Sprint Goal",lede:"The single objective for the Sprint. It is the commitment for the Sprint Backlog.",
+  facts:[["Commitment for","Sprint Backlog"],["Created in","Sprint Planning, Topic One"],["Kept in mind","Throughout the Sprint"]],
+  secs:[["A Commitment by the Developers","<p>The Sprint Goal is the commitment by the Developers. It is created during Sprint Planning and added to the Sprint Backlog, and the Developers keep it in mind throughout the Sprint.</p>"],["Flexibility","<p>The Sprint Goal creates coherence and focus and gives flexibility on the exact work needed. If the work turns out to be different than expected, the Developers collaborate with the Product Owner to negotiate the scope of the Sprint Backlog without affecting the Sprint Goal.</p>"]],
+  rel:["topic-why","sprint-backlog","sprint-review"]},
+
+ {id:"increment",icon:"inc",kind:"Artifact",title:"Increment",lede:"A concrete stepping stone toward the Product Goal. Each Increment is additive to all prior Increments and thoroughly verified, so they all work together.",
+  facts:[["Commitment","Definition of Done"],["How many","Multiple may be created within a Sprint"],["Must be","Usable"]],
+  secs:[["Usable","<p>In order to provide value, the Increment must be usable.</p>"],["Done Means Done","<p>Work cannot be considered part of an Increment unless it meets the <a href='#definition-of-done'>Definition of Done</a>. If a Product Backlog item does not meet it, it returns to the Product Backlog for future consideration.</p>"],
+   ["Sprint Review","<p>The sum of the Increments is presented at the Sprint Review, but an Increment may be delivered to stakeholders before the end of the Sprint.</p>"]],
+  rel:["definition-of-done","sprint-review","daily-scrum"]},
+
+ {id:"definition-of-done",icon:"dod",kind:"Commitment",title:"Definition of Done",lede:"A formal description of the state of the Increment when it meets the quality measures required for the product. It is the commitment for the Increment.",
+  facts:[["Commitment for","Increment"],["Set by","Organisation standard, or the Scrum Team"],["Inspected in","Sprint Retrospective"]],
+  secs:[["Purpose","<p>It creates transparency by providing everyone a shared understanding of what work was completed as part of the Increment. The moment a Product Backlog item meets the Definition of Done, an Increment is born.</p>"],
+   ["Not Done","<p>An item that does not meet the Definition of Done cannot be released or even presented at the Sprint Review. It returns to the Product Backlog for future consideration.</p>"],
+   ["Who Sets It","<p>If it is part of the organisation's standards, all Scrum Teams must follow it as a minimum. If not, the Scrum Team must create one. Multiple Scrum Teams on the same product must share and comply with one Definition of Done.</p>"]],
+  rel:["increment","sprint-retrospective","developers"]},
+
+ {id:"refinement",kind:"Activity",title:"Product Backlog Refinement",lede:"The act of breaking down and further defining Product Backlog items into smaller, more precise items. An ongoing activity.",
+  facts:[["When","Ongoing, not a Scrum event"],["Who","Developers, with the Product Owner"],["Adds","Description, order and size"]],
+  secs:[["How It Works","<p>Refinement adds details such as a description, order and size. The Developers who will be doing the work are responsible for the sizing. The Product Owner may influence the Developers by helping them understand and select trade-offs.</p>"],
+   ["Aim","<p>Product Backlog items that can be Done within one Sprint, ready for selection at Sprint Planning.</p>"]],
+  rel:["product-backlog","topic-what","developers"]},
+
+ {id:"empiricism",kind:"Pillars",group:"Scrum Theory",title:"Three Pillars: Transparency, Inspection and Adaptation",lede:"Scrum combines four formal events for inspection and adaptation within a containing event, the Sprint. These events work because they implement the three empirical pillars.",
+  facts:[["Part of","Scrum Theory"],["Applies","Throughout the Sprint"],["Formal points","The five Scrum events"]],
+  secs:[["Transparency","<p>The emergent process and work must be visible to those performing the work as well as those receiving it. Important decisions are based on the perceived state of the three formal artifacts. Low transparency can lead to decisions that diminish value and increase risk. Transparency enables inspection; inspection without transparency is misleading and wasteful.</p>"],
+   ["Inspection","<p>The Scrum artifacts and the progress toward agreed goals must be inspected frequently and diligently to detect potentially undesirable variances or problems. The five events provide the cadence. Inspection enables adaptation; inspection without adaptation is considered pointless.</p>"],
+   ["Adaptation","<p>If any aspects of a process deviate outside acceptable limits, or if the resulting product is unacceptable, the process or materials must be adjusted as soon as possible to minimise further deviation. Adaptation becomes more difficult when the people involved are not empowered or self-managing.</p>"]],
+  rel:["inspect-adapt","scrum-theory","scrum-events","scrum-artifacts","scrum-values"]},
+
+ {id:"scrum-values",kind:"Values",title:"Scrum Values",lede:"Successful use of Scrum depends on people becoming more proficient in living five values. They give direction to the Scrum Team's work, actions and behaviour.",
+  facts:[["How many","Five"],["Who","The Scrum Team and the people they work with"],["Effect","Build trust"]],
+  secs:[["Commitment","<p>The Scrum Team commits to achieving its goals and to supporting each other.</p>"],["Focus","<p>The primary focus is on the work of the Sprint, to make the best possible progress toward these goals.</p>"],["Openness","<p>The Scrum Team and its stakeholders are open about the work and the challenges.</p>"],["Respect","<p>Scrum Team members respect each other to be capable, independent people, and are respected as such by the people with whom they work.</p>"],["Courage","<p>Scrum Team members have the courage to do the right thing and work on tough problems.</p>"],["Values and Pillars","<p>When these values are embodied by the Scrum Team and the people they work with, the empirical pillars of transparency, inspection and adaptation come to life, building trust.</p>"]],
+  rel:["empiricism","scrum-team","sprint-retrospective","scrum-master"]},
+ {id:"end-note",kind:"Foundation",title:"End Note",lede:"Scrum is free and offered in the Scrum Guide. The framework, as outlined there, is immutable.",
+  facts:[["Framework","Immutable"],["Partial Scrum","Is not Scrum"],["Other practices","Welcome inside it"]],
+  secs:[["All or Nothing","<p>While implementing only parts of Scrum is possible, the result is not Scrum. Scrum exists only in its entirety and functions well as a container for other techniques, methodologies and practices.</p>"],
+   ["Purpose of the Guide","<p>Each element of the framework serves a specific purpose essential to the overall value and results. Changing the core design or ideas, leaving out elements, or not following the rules covers up problems and limits the benefits of Scrum.</p>"],
+   ["Origins","<p>Ken Schwaber and Jeff Sutherland first presented Scrum at the OOPSLA Conference in 1995 and published the first Scrum Guide in 2010. This page draws on the 2020 edition.</p>"]],
+  rel:["scrum-definition","scrum-theory","scrum-team"]}
+];
+const ORDER=["scrum-definition","scrum-theory","empiricism","inspect-adapt","scrum-values","scrum-team","product-owner","developers","scrum-master","stakeholders","scrum-events","sprint","sprint-planning","topic-why","topic-what","topic-how","daily-scrum","sprint-review","sprint-retrospective","scrum-artifacts","product-backlog","product-goal","refinement","sprint-backlog","sprint-goal","increment","definition-of-done","end-note"];
+P.sort((a,b)=>ORDER.indexOf(a.id)-ORDER.indexOf(b.id));
+const BY={};P.forEach(p=>BY[p.id]=p);
+const GROUPS=[["Foundations",["scrum-definition","scrum-theory","empiricism","inspect-adapt","scrum-values","scrum-team","scrum-events","scrum-artifacts","end-note"]],["Events",["sprint","sprint-planning","daily-scrum","sprint-review","sprint-retrospective"]],["Accountabilities",["product-owner","developers","scrum-master"]],["Artifacts and Commitments",["product-backlog","product-goal","sprint-backlog","sprint-goal","increment","definition-of-done","refinement"]]];
+document.getElementById("groups").innerHTML=GROUPS.map(([g,ids])=>"<div><h3>"+g+"</h3><ul>"+ids.map(i=>"<li><a href='#"+i+"'>"+BY[i].title+"</a></li>").join("")+"</ul></div>").join("");
+const groupOf=id=>BY[id]&&BY[id].group==="Sprint Planning"?"Events":(GROUPS.find(g=>g[1].includes(id))||["Scrum"])[0];
+
+const detail=document.getElementById("detail");let boardScroll=0;
+function miniHex(r){return `<svg class="mini" viewBox="-54 -36 108 72" aria-hidden="true" font-family="DM Sans, sans-serif">${roleGlyph(r,0,0,1.2)}</svg>`}
+function show(){
+  const id=location.hash.slice(1),p=BY[id];
+  if(!p){detail.hidden=true;board.hidden=false;window.scrollTo(0,boardScroll);document.title="Scrum Big Picture";return}
+  if(!board.hidden)boardScroll=window.scrollY;
+  const i=P.indexOf(p),prev=P[i-1],next=P[i+1];
+  detail.innerHTML='<nav class="crumbs"><a class="back" href="#">← Back to the board</a><span>'+groupOf(id)+(p.group?" / "+p.group:"")+'</span></nav>'+
+   '<div class="dhead"><div style="min-width:0"><span class="kind k-'+p.kind+'">'+p.kind+'</span><h1>'+p.title+'</h1></div>'+(p.hex?miniHex(p.hex):p.icon?`<svg class="mini" viewBox="-50 -50 100 100" aria-hidden="true">${icon(p.icon,0,0,88)}</svg>`:"")+'</div>'+
+   '<p class="lede">'+p.lede+'</p><dl class="facts">'+p.facts.map(f=>"<div><dt>"+f[0]+"</dt><dd>"+f[1]+"</dd></div>").join("")+'</dl>'+
+   p.secs.map(s=>'<section class="sec'+(s[2]?" "+s[2]:"")+'"><h2>'+s[0]+'</h2>'+s[1]+'</section>').join("")+
+   '<div class="related"><h2>Related on the Board</h2><div class="chips">'+p.rel.map(r=>"<a class='chip' href='#"+r+"'>"+BY[r].title+"</a>").join("")+'</div></div>'+
+   '<nav class="pager">'+(prev?'<a href="#'+prev.id+'"><small>Previous</small><strong>← '+prev.title+'</strong></a>':'<span></span>')+(next?'<a class="next" href="#'+next.id+'"><small>Next</small><strong>'+next.title+' →</strong></a>':'')+'</nav>';
+  board.hidden=true;detail.hidden=false;window.scrollTo(0,0);document.title=p.title+" | Scrum Big Picture";
+  const h=detail.querySelector("h1");h.setAttribute("tabindex","-1");h.focus({preventScroll:true});
+}
+window.addEventListener("hashchange",show);show();
+</script>
+
+</body>
+</html>

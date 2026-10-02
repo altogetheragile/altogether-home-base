@@ -1,5 +1,7 @@
 import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE, INTRO_COPY, ORIENTATION } from './scrumContent';
 import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
+import { BOARD_PAGES } from './board/boardPages';
+import { BOARD_INPUTS, BOARD_OUTPUTS, BOARD_DESC } from './board/boardLabels';
 
 // ============= The teaching copy, as data you can edit =============
 //
@@ -160,6 +162,39 @@ export function copyEntries(): CopyEntry[] {
   // Scrum on one page: the second tab of that same first screen, so it comes next. Its own order
   // already matched the page and still does - what Scrum is, then founded on, the accountabilities,
   // the artifacts, the events, the values, straight down the one-pager.
+  //
+  // The BOARD sits above all of that now, so its own words come first: the chips naming what each
+  // event inspects and produces, and the two lines under each event saying what it inspects and
+  // what it adapts. Everything else drawn on the board - "SPRINT", "SPRINT PLANNING", "INPUTS" - is
+  // a column name or a step title bound to the layout, and stays in code for the reason this file
+  // has always given: an edit there breaks a screen rather than improving a sentence.
+  const COLUMN = ['Sprint Planning', 'the Daily Scrums', 'the Sprint Review', 'the Retrospective'];
+  const chip = (list: typeof BOARD_INPUTS, kind: 'inspects' | 'produces') => {
+    list.forEach((col, c) => col.forEach((it, i) => {
+      out.push({
+        key: `board.${kind}.${c}.${i}`, group: 'Scrum on one page',
+        label: `${COLUMN[c]} ${kind} - ${it.t.split('|')[0]}`,
+        // The chip's text is one or two lines, split on a bar. Edited as it is written.
+        where: `Scrum on one page - the board, what ${COLUMN[c]} ${kind}`,
+        value: it.t, long: true, phases: ['intro'],
+        apply: (v) => { it.t = v; },
+      });
+    }));
+  };
+  chip(BOARD_INPUTS, 'inspects');
+  chip(BOARD_OUTPUTS, 'produces');
+  BOARD_DESC.forEach((pair, i) => {
+    (['Inspect', 'Adapt'] as const).forEach((which, j) => {
+      out.push({
+        key: `board.desc.${i}.${j}`, group: 'Scrum on one page',
+        label: `${COLUMN[i]} - the "${which}" line`,
+        where: `Scrum on one page - the board, under ${COLUMN[i]}`,
+        value: pair[j], phases: ['intro'],
+        apply: (v) => { pair[j] = v; },
+      });
+    });
+  });
+
   out.push({
     key: 'intro.what', group: 'Scrum on one page', label: 'What Scrum is',
     where: 'Scrum on one page, under the heading', value: SCRUM_INTRO.what, long: true, phases: ['intro'],
@@ -176,6 +211,42 @@ export function copyEntries(): CopyEntry[] {
         where: `Scrum on one page - ${label}`, value: row.text, long: true, phases: ['intro'],
         apply: (v) => { SCRUM_INTRO[section][i].text = v; },
       });
+    });
+  }
+
+  // The 28 pages behind the board, last of this group, because that is the order they are reached
+  // in: the board, then the summary under it, then whatever shape you pressed.
+  //
+  // Every word of them, which is what was asked for. `where` carries the page's own title so that
+  // searching the editor for "Sprint Review" brings back everything on that page at once - with
+  // four hundred entries in one group, findable matters more than listed.
+  for (const page of BOARD_PAGES) {
+    const where = `Scrum on one page - ${page.title}`;
+    out.push(
+      { key: `board.${page.id}.title`, group: 'Scrum on one page', label: `${page.title} - title`,
+        where, value: page.title, phases: ['intro'], apply: (v) => { page.title = v; } },
+      { key: `board.${page.id}.lede`, group: 'Scrum on one page', label: `${page.title} - opening line`,
+        where, value: page.lede, long: true, phases: ['intro'], apply: (v) => { page.lede = v; } },
+    );
+    page.facts.forEach((fact, i) => {
+      out.push(
+        { key: `board.${page.id}.fact.${i}.k`, group: 'Scrum on one page',
+          label: `${page.title} - fact ${i + 1} name`, where, value: fact[0], phases: ['intro'],
+          apply: (v) => { fact[0] = v; } },
+        { key: `board.${page.id}.fact.${i}.v`, group: 'Scrum on one page',
+          label: `${page.title} - fact ${i + 1}: ${fact[0]}`, where, value: fact[1], phases: ['intro'],
+          apply: (v) => { fact[1] = v; } },
+      );
+    });
+    page.secs.forEach((sec, i) => {
+      out.push(
+        { key: `board.${page.id}.sec.${i}.h`, group: 'Scrum on one page',
+          label: `${page.title} - section ${i + 1} heading`, where, value: sec[0], phases: ['intro'],
+          apply: (v) => { sec[0] = v; } },
+        { key: `board.${page.id}.sec.${i}.b`, group: 'Scrum on one page',
+          label: `${page.title} - ${sec[0]}`, where, value: sec[1], long: true, phases: ['intro'],
+          apply: (v) => { sec[1] = v; } },
+      );
     });
   }
 
