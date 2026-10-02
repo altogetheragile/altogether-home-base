@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { ZooOrientationBody } from './ZooOrientation';
 import { ScrumOnePagerBody } from './ScrumTeaching';
+import { ScrumBoard } from './board/ScrumBoard';
+import { BOARD_PAGES } from './board/boardPages';
 import { copyEntries, type CopyEntry, type CopyGroup } from './copy';
 
 // The copy editor lists the words in the order a player reads them.
@@ -44,6 +46,22 @@ const inOrder = (found: { key: string; at: number }[]) => {
 
 const only = (group: CopyGroup) => copyEntries().filter((e) => e.group === group);
 
+/** The entries whose words are actually RENDERED on the Scrum on one page screen, which is what an
+ *  order read off that screen can honestly cover.
+ *
+ *  Two kinds are left out, for the same reason and not to make the test pass. The 28 reference pages
+ *  are reached by pressing a shape, so they are not on the screen at all; they are held to their own
+ *  order below. And the input and output chips are drawn as ICONS - their words are the hover label,
+ *  and nothing of them appears in the text - so the only place their sentence turns up is somewhere
+ *  else that happens to use the same words. "Changes in the Environment" matched the legend at the
+ *  foot of the board, four hundred characters from the chip it was supposed to be measuring. */
+const onTheScreen = () => {
+  const pages = BOARD_PAGES.map((p) => `board.${p.id}.`);
+  const unrendered = (k: string) => k.startsWith('board.inspects.') || k.startsWith('board.produces.')
+    || pages.some((pre) => k.startsWith(pre));
+  return only('Scrum on one page').filter((e) => !unrendered(e.key));
+};
+
 describe('the order the editor lists things in', () => {
   it('follows How the zoo works down the page', () => {
     const screen = render(<ZooOrientationBody />).container.textContent ?? '';
@@ -54,11 +72,32 @@ describe('the order the editor lists things in', () => {
   });
 
   it('follows Scrum on one page down the page', () => {
-    const screen = render(<ScrumOnePagerBody />).container.textContent ?? '';
-    const found = asRendered(only('Scrum on one page'), screen);
+    // The screen is the BOARD now, with the written summary under it - so that is what the order is
+    // read off. Rendering only the summary measured the board's words against a page they are not
+    // on, and matched nine of them to whatever sentence in the summary happened to contain the same
+    // words: a guess presented as a measurement, which is the thing this file exists to stop.
+    const screen = render(<ScrumBoard under={<ScrumOnePagerBody />} />).container.textContent ?? '';
+    const found = asRendered(onTheScreen(), screen);
     expect(found.length, 'almost nothing could be found on the screen, so this proves nothing')
       .toBeGreaterThan(12);
     expect(inOrder(found), 'the editor lists the one-pager out of order').toEqual([]);
+  });
+
+  it('follows each page behind the board down ITS page', () => {
+    // The 28 reference pages are not on the screen until somebody presses a shape, so their order
+    // cannot be read off it. It can be read off the page they belong to, which is the same promise
+    // one level down: title, the opening line, the facts strip, then the sections in order.
+    const wrong: string[] = [];
+    for (const page of BOARD_PAGES) {
+      const want = [
+        `board.${page.id}.title`, `board.${page.id}.lede`,
+        ...page.facts.flatMap((_, i) => [`board.${page.id}.fact.${i}.k`, `board.${page.id}.fact.${i}.v`]),
+        ...page.secs.flatMap((_, i) => [`board.${page.id}.sec.${i}.h`, `board.${page.id}.sec.${i}.b`]),
+      ];
+      const got = only('Scrum on one page').map((e) => e.key).filter((k) => k.startsWith(`board.${page.id}.`));
+      if (got.join() !== want.join()) wrong.push(page.id);
+    }
+    expect(wrong, `listed out of page order: ${wrong.join(', ')}`).toEqual([]);
   });
 });
 

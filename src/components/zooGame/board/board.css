@@ -1,0 +1,43 @@
+/* The board's own classes, mapped onto the game's theme.
+ *
+ * The palette is already in the drawing: teal, orange and plum are fills on the shapes themselves,
+ * straight from the design file, and nothing here touches them. What IS here is the handful of
+ * neutrals the design file keeps in CSS - paper, ink, muted, rules - because those are the ones
+ * that have to follow the app around. The standalone page themes itself; inside the game it would
+ * be the one panel still white when everything round it went dark.
+ *
+ * Scoped under .scrum-board so a class as broad as `.bar` or `.ink` cannot reach the rest of the
+ * app. */
+
+.scrum-board .paper { fill: hsl(var(--card)); }
+.scrum-board .boardline { stroke: hsl(var(--border)); fill: none; }
+.scrum-board .ink { fill: hsl(var(--foreground)); }
+.scrum-board .muted { fill: hsl(var(--muted-foreground)); }
+.scrum-board .lbl { font-weight: 700; letter-spacing: .02em; }
+.scrum-board .ul { text-decoration: underline; text-underline-offset: 3px; }
+.scrum-board .ia-in { fill: hsl(var(--muted) / .35); }
+.scrum-board .iacell { fill: hsl(var(--muted) / .25); }
+.scrum-board .rowlab text { pointer-events: none; }
+
+/* Anything that opens a page says so by moving, and says it the same way under a pointer, under a
+ * keyboard and when its twin elsewhere on the board is pointed at. The board shows the SAME artifact
+ * in four columns; hovering one lights all of them, which is most of what the board is for. */
+.scrum-board a[data-id] { cursor: pointer; outline: none; }
+.scrum-board .hot { transition: opacity .12s ease, filter .12s ease; }
+.scrum-board a[data-id]:hover .hot,
+.scrum-board a[data-id]:focus-visible .hot,
+.scrum-board .hot.lit { filter: brightness(1.08) drop-shadow(0 0 3px hsl(var(--primary) / .55)); }
+.scrum-board a[data-id]:focus-visible .hot { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+
+/* The prose on a reference page. Tables carry a wrapper in the source, but `class` is stripped on
+ * the way out - an editable field that can set a class can set `fixed inset-0` - so the table is
+ * styled here instead of trusting a class to survive. */
+.board-prose p { margin: 0 0 .6rem; line-height: 1.55; }
+.board-prose ul, .board-prose ol { margin: 0 0 .6rem 1.1rem; list-style: disc; }
+.board-prose li { margin: .15rem 0; }
+.board-prose a { color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 2px; }
+.board-prose strong { font-weight: 600; color: hsl(var(--foreground)); }
+.board-prose div:has(> table) { overflow-x: auto; }
+.board-prose table { width: 100%; border-collapse: collapse; margin: 0 0 .6rem; font-size: .8125rem; }
+.board-prose th, .board-prose td { border: 1px solid hsl(var(--border)); padding: .35rem .5rem; text-align: left; vertical-align: top; }
+.board-prose th { background: hsl(var(--muted) / .4); font-weight: 600; }

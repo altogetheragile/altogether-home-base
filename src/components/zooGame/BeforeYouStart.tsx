@@ -3,6 +3,7 @@ import { Trees, Repeat } from 'lucide-react';
 import { Tab } from './ZooShell';
 import { ZooOrientationBody } from './ZooOrientation';
 import { ScrumOnePagerBody } from './ScrumTeaching';
+import { ScrumBoard } from './board/ScrumBoard';
 import { ORIENTATION } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { ShowTeachingAgain } from './ShowTeachingAgain';
@@ -100,7 +101,18 @@ export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching,
             draws an isometric park: mounting both and hiding one makes arriving at this screen pay
             for the half of it nobody asked for. */}
         <div role="tabpanel" id={`start-panel-${tab}`} aria-labelledby={`start-tab-${tab}`}>
-          {tab === 'zoo' ? <ZooOrientationBody /> : <ScrumOnePagerBody />}
+          {/* The board first, then the summary underneath it.
+              The board is the reference layer - every shape opens the page behind it - and it is
+              block 3 of the course. The written summary stays below rather than being thrown away:
+              it answers "what is Scrum" in a paragraph for somebody who does not want to read a
+              diagram, and it is what the screen said before the board existed. */}
+          {tab === 'zoo' ? <ZooOrientationBody /> : (
+            <ScrumBoard under={
+              <div className="border-t border-border pt-4">
+                <ScrumOnePagerBody />
+              </div>
+            } />
+          )}
         </div>
 
         {/* One way onward, for both tabs. Whichever page you were reading, the next thing to do is
