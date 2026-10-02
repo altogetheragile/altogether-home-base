@@ -203,6 +203,19 @@ function writeDrawing(code) {
 ${banner}
 // The board, drawn. \`T\` carries the text that is editable; everything else is geometry.
 export function drawBoard(T) {
+  // The text on the board is EDITABLE, and the board is markup built by joining strings. So no
+  // label may carry a '<' into it: "</text><script>" in a chip would otherwise be a script tag on
+  // a public page, written by anyone who can reach the copy editor.
+  //
+  // The design file has an 'esc' helper for this and never calls it, which did not matter while
+  // the words were fixed in the file and does now.
+  //
+  // '<' and '>' only, deliberately. '&' cannot open an element, and escaping it would change the
+  // LENGTH of every label containing one - "Past Performance & Capacity" - which is what the board
+  // wraps its text by. Safety that silently re-flows the layout is a poor trade.
+  const safe = (v) => String(v ?? '').replace(/</g, '\u2039').replace(/>/g, '\u203a');
+  const chips = (list) => list.map((col) => col.map((c) => ({ ...c, t: safe(c.t), name: c.name === undefined ? undefined : safe(c.name) })));
+  T = { INPUTS: chips(T.INPUTS), OUTPUTS: chips(T.OUTPUTS), DESC: T.DESC.map(([a, b]) => [safe(a), safe(b)]) };
 ${code}
   return { svg: s, height: VBH };
 }
