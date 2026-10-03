@@ -8,7 +8,7 @@ import {
   enclosureWater, enclosureFlora,
   type ItemDesign,
 } from './design';
-import { groupsFor, openCriteria, wouldSettle, labelOf, type GroupDef, type GroupId } from './buildGroups';
+import { groupsFor, openCriteria, wouldSettle, labelOf, iconOf, type GroupDef, type GroupId } from './buildGroups';
 import { inspect } from './parkChecks';
 import { structuresFor } from './toolboxItems';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -818,7 +818,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               shifts down as the PO approval kicks in." */}
           <div data-part="park-menus" className="contents">
           {shown.map((g) => (
-            <Menu key={g.id} group={g} icon={TOOLBAR_ICONS[g.icon]} label={labelOf(g, subject)} lit={lit(g)}
+            <Menu key={g.id} group={g} icon={TOOLBAR_ICONS[iconOf(g, subject)]} label={labelOf(g, subject)} lit={lit(g)}
               open={openMenu === g.id}
               onOpenChange={(o) => setOpenMenu(o ? g.id : null)}
               // The pen is a mode, and a mode you cannot see is a mode that surprises you. It used

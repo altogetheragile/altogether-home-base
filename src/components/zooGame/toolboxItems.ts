@@ -245,7 +245,7 @@ export function structuresFor(category: ItemCategory): Structure[] {
 }
 
 /** What this kind of item's first decision is called, in the words of the thing being built. */
-export const structureWord = (category: ItemCategory): string =>
+export const structureWord = (category: ItemCategory): 'Species' | 'Planting' | 'Structure' =>
   (category === 'exhibit' ? 'Species' : category === 'flora' ? 'Planting' : 'Structure');
 
 /** Whether this kind of item is one the Developers choose a structure for before building it. */
