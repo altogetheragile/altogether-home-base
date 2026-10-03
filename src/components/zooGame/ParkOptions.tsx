@@ -689,8 +689,11 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
   };
 
   return (
-    <div data-part="park-options" data-for={subject.id}
-      className={cn('flex min-h-[2.75rem] flex-wrap items-center gap-x-2 gap-y-2', className)}>
+    <div data-part="park-options" data-for={subject.id} className={cn('flex flex-col gap-y-1', className)}>
+      {/* The item, and the filter. Both change width as the work goes on - the chip grows by sixty
+          pixels the moment "Ask Priya" appears on it - so they are kept out of the row the menus
+          wrap in. */}
+      <div data-part="park-controls" className="flex min-h-[2.75rem] flex-wrap items-center gap-x-2 gap-y-2">
       {/* What is selected, how far off it is, and the one move left when it is not far off at all.
           The count used to be in three places: a pill under the object on the park, a pill floating
           over its corner, and nowhere near the controls that change it. They each worked it out for
@@ -744,6 +747,13 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         </>
       ) : (
         <>
+          {/* The menus, on a line of their own.
+              They are a fixed set, so on their own they wrap the same way every time. Sharing a row
+              with the item chip they did not: the chip grows by sixty pixels the moment "Ask Priya"
+              appears on it, which is enough to move where the row wraps and drop the menus a line -
+              out from under whichever one was open. Reported while drawing a path: "the studio menu
+              shifts down as the PO approval kicks in." */}
+          <div data-part="park-menus" className="flex w-full flex-wrap items-center gap-x-2 gap-y-2">
           {shown.map((g) => (
             <Menu key={g.id} group={g} label={labelOf(g, subject)} lit={lit(g)}
               open={openMenu === g.id}
@@ -757,13 +767,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               {body(g.id, labelOf(g, subject))}
             </Menu>
           ))}
-          {/* Everything measurable is met. Worth saying rather than leaving the player to notice
-              that no dot is lit: the measurable part is done, and what is left is a conversation. */}
-          {how.ready && how.criteria.length > 0 && (
-            <span data-part="nothing-open" className="text-xs text-muted-foreground">
-              Everything the park can check is met{how.outstanding ? '' : ` - ${how.po} judges the rest`}.
-            </span>
-          )}
+          </div>
           {/* The filter, at the end of the row where it does not compete with the work. */}
           <label data-part="needs-only" title="Show only the controls that would finish this item"
             className={cn('ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground')}>
@@ -772,6 +776,21 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             Needs only
           </label>
         </>
+      )}
+      </div>
+
+      {/* Everything measurable is met. Worth saying rather than leaving the player to notice that no
+          dot is lit: the measurable part is done, and what is left is a conversation.
+          
+          On its own line, UNDER the controls, because it arrives in the middle of using them. It was
+          the last item in the same wrapping row, so the moment the Product Owner's approval became
+          the only thing left, this sentence appeared, took the width it needed, and moved where the
+          row wrapped - sliding the menus down from under an open one. Reported while drawing a path:
+          "the studio menu shifts down as the PO approval kicks in". Nothing above it moves now. */}
+      {how.ready && how.criteria.length > 0 && (
+        <p data-part="nothing-open" className="text-xs text-muted-foreground">
+          Everything the park can check is met{how.outstanding ? '' : ` - ${how.po} judges the rest`}.
+        </p>
       )}
     </div>
   );
