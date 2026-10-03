@@ -69,9 +69,26 @@ describe('three Developers on a screen', () => {
     return render(<MemoryRouter><MeetTheTeam state={state} onNext={() => {}} /></MemoryRouter>).container;
   };
 
-  const shades = (c: HTMLElement) => [...c.querySelectorAll<HTMLElement>('[style*="background-color"]')]
-    .map((n) => n.style.backgroundColor)
-    .filter((v) => /rgb\(\s*\d+/.test(v));
+  /** Every colour a person on this screen is actually drawn in, as lowercase hex.
+   *
+   *  This used to read inline `background-color`, because a person was a coloured disc with a
+   *  letter in it. They are the board's person now - an <svg> whose head and shoulders carry a
+   *  `fill` - so it reads both, and a screen that went back to discs is still checked. */
+  const hex = (v: string): string => {
+    const rgb = v.match(/rgb\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+    if (rgb) return `#${rgb.slice(1).map((n) => (+n).toString(16).padStart(2, '0')).join('')}`;
+    return /^#[0-9a-f]{6}$/i.test(v.trim()) ? v.trim().toLowerCase() : '';
+  };
+  const shades = (c: HTMLElement) => [
+    ...[...c.querySelectorAll<HTMLElement>('[style*="background-color"]')].map((n) => n.style.backgroundColor),
+    ...[...c.querySelectorAll('svg [fill]')].map((n) => n.getAttribute('fill') ?? ''),
+  ].map(hex).filter(Boolean);
+  /** ...narrowed to the ones that are a Developer. The other people on these screens are the
+   *  Product Owner and the Scrum Master, and they are supposed to be one colour each. */
+  const devShades = (c: HTMLElement) => {
+    const stack = DEV_STACK.map((s) => s.toLowerCase());
+    return shades(c).filter((v) => stack.includes(v));
+  };
 
   it('are told apart on the seat band, which is where this was spotted', async () => {
     // "Should I see different icons, or?" - with a screenshot of Ada, Ben and Cara in one teal.
@@ -84,14 +101,13 @@ describe('three Developers on a screen', () => {
     const { SeatBand } = await import('./SeatBand');
     const state = startOnTheBoard(initialZooState(1) as never);
     const c = render(<MemoryRouter><SeatBand state={state} /></MemoryRouter>).container;
-    const devs = shades(c);
+    const devs = devShades(c);
     expect(devs.length, 'no Developer on the band carries a shade').toBeGreaterThan(2);
     expect(new Set(devs).size, `the band draws them all in one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
   });
 
   it('are told apart on Meet the Team', async () => {
-    const found = shades(await meetTheTeam());
-    const devs = found.filter((v) => /rgb\((9|10|14|5),/.test(v.replace(/\s/g, '')) || /14, 140, 140|10, 109, 109|9, 84, 84/.test(v));
+    const devs = devShades(await meetTheTeam());
     expect(devs.length, 'no Developer carries a shade of their own').toBeGreaterThan(2);
     expect(new Set(devs).size, `all the Developers are one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
   });

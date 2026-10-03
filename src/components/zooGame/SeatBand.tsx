@@ -4,7 +4,8 @@ import { seatLines, whoDoesWhatNow } from './header';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { cn } from '@/lib/utils';
-import { SEAT, devChip } from './seats';
+import { SEAT, devShade } from './seats';
+import { Person } from './board/Person';
 
 // The band: one sentence on who does what now, and the five people with what each is doing.
 //
@@ -13,13 +14,13 @@ import { SEAT, devChip } from './seats';
 // without the game ever saying that was the problem. This row says it continuously: who is doing
 // what, right now, and who is not in the room for what is on the screen.
 
-// The two seats there is only ever one of. The Developers are not here: this band lists them one
-// by one, with their own names and initials, so each takes their own shade of the stack rather than
-// the role's flat colour. Ada, Ben and Cara in one teal is three people drawn as one person.
-const ROLE_COLOR: Record<string, string> = {
-  product_owner: 'bg-primary text-primary-foreground',
-  scrum_master: SEAT.scrumMaster.chip,
-};
+// What each of the five is drawn in. The two seats there is only ever one of take their
+// accountability's colour; a Developer takes their own shade of the stack, because Ada, Ben and
+// Cara in one teal is three people drawn as one person.
+const shadeOf = (role: string, devIndex?: number): string =>
+  (devIndex === undefined
+    ? role === 'product_owner' ? SEAT.productOwner.hex : SEAT.scrumMaster.hex
+    : devShade(devIndex));
 
 /** Which seat on the band is the one this player holds. A solo player holds all three
  *  accountabilities, so nothing is outlined - there is nobody else to tell them apart from. */
@@ -92,10 +93,10 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
                 cover && !absent && 'border-2 border-dashed border-primary/60',
                 absent && 'border-2 border-dashed border-amber-400/70 bg-amber-500/[0.04]',
                 !s.present && 'opacity-40')}>
-              <span style={s.devIndex === undefined ? undefined : devChip(s.devIndex)}
-                className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', ROLE_COLOR[s.role])}>
-                {s.initials}
-              </span>
+              {/* The board's person, not a coloured disc with a letter in it. Taller than it is
+                  wide, because a person is - so it is given height rather than a square. */}
+              <Person hex={shadeOf(s.role, s.devIndex)} initials={s.initials}
+                className="h-7 w-[1.45rem] shrink-0" />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}

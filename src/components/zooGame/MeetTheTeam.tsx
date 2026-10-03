@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW } from './ui/tokens';
 import { sprintCapacity } from './engine';
-import { SEAT, devChip } from './seats';
+import { SEAT, devShade } from './seats';
+import { Person } from './board/Person';
+import { personSize } from './board/personShape';
 
 // Five seats, three accountabilities, no manager.
 //
@@ -61,15 +63,15 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
   const cap = sprintCapacity(state);
   // The card says the accountability under the name, so a name carrying it too says it twice.
   const plain = (name: string) => name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '');
-  const seats: (Seat & { name: string; initials: string })[] = [
+  const seats: (Seat & { name: string; initials: string; hex: string })[] = [
     { ...ROLES.product_owner, seat: 'product_owner', name: plain(state.team.productOwner.name), initials: 'PO',
-      character: CHARACTER.po, colour: 'bg-primary text-primary-foreground' },
+      character: CHARACTER.po, hex: SEAT.productOwner.hex },
     { ...ROLES.scrum_master, seat: 'scrum_master', name: plain(state.team.scrumMaster.name), initials: 'SM',
-      character: CHARACTER.sm, colour: SEAT.scrumMaster.chip },
+      character: CHARACTER.sm, hex: SEAT.scrumMaster.hex },
     ...state.team.developers.map((d, i) => ({
       ...ROLES.developer, seat: 'developer' as SeatName, name: plain(d.name),
       initials: plain(d.name).slice(0, 1).toUpperCase(), character: CHARACTER[`dev${i}`] ?? 'Gets on with it.',
-      style: devChip(i),
+      hex: devShade(i),
     })),
   ];
 
@@ -96,9 +98,7 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
               className={cn('flex flex-col rounded-xl border-2 bg-card p-3',
                 yours ? 'border-primary bg-primary/[0.04]' : 'border-border')}>
               <div className="flex items-center gap-2">
-                <span style={s.style} className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold', s.colour)}>
-                  {s.initials}
-                </span>
+                <Person hex={s.hex} initials={s.initials} style={personSize(40)} className="shrink-0" />
                 <span className="min-w-0">
                   <span className="block truncate text-lg font-bold leading-tight">{s.name}</span>
                   <span className="block text-xs text-muted-foreground">{s.role}</span>
