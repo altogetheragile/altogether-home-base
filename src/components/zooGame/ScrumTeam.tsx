@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { Users, Check } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE } from './ui/tokens';
 import { SEAT, devShade } from './seats';
+import { Person } from './board/Person';
+import { personSize } from './board/personShape';
 
 // A stable colour per Developer id, so the same person reads the same everywhere.
 // The board's stack, not a rainbow. Six colours chosen for being different from each other put
@@ -13,13 +15,13 @@ import { SEAT, devShade } from './seats';
 const devColor = (id: string, devs: ScrumTeamMember[]) => devShade(devs.findIndex((d) => d.id === id));
 const initial = (name: string) => (name.replace(/\s*\(.*\)\s*/, '').trim()[0] ?? '?').toUpperCase();
 
-/** A round initial avatar for a Developer. */
+/** One Developer, drawn the way the board draws a person. `size` is the width it is given; a
+ *  person is taller than they are wide, so the height follows from the box the board uses. */
 function Avatar({ name, colour, size = 18, ring = false, dim = false }: { name: string; colour: string; size?: number; ring?: boolean; dim?: boolean }) {
   return (
     <span title={name} aria-label={name}
-      className={cn('inline-flex shrink-0 items-center justify-center rounded-full font-bold text-white', ring && 'ring-2 ring-offset-1 ring-primary', dim && 'opacity-30')}
-      style={{ width: size, height: size, background: colour, fontSize: size * 0.5 }}>
-      {initial(name)}
+      className={cn('inline-flex shrink-0 items-center justify-center', ring && 'rounded-full ring-2 ring-offset-1 ring-primary', dim && 'opacity-30')}>
+      <Person hex={colour} initials={initial(name)} style={personSize(size)} />
     </span>
   );
 }
@@ -78,11 +80,11 @@ export function TeamRow({ team, onRename, onWho }: {
   return (
     <div data-part="team-row" className="flex flex-wrap items-center gap-2">
       <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1" {...cannot('Product Owners')} title="The Product Owner">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">PO</span>
+        <Person hex={SEAT.productOwner.hex} initials="PO" style={personSize(22)} />
         <EditableName member={team.productOwner} onRename={onRename} className="text-[11px] font-medium" />
       </span>
       <span className={cn('flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1')} {...cannot('Scrum Masters')} title="The Scrum Master">
-        <span className={cn(SEAT.scrumMaster.chip, 'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold')}>SM</span>
+        <Person hex={SEAT.scrumMaster.hex} initials="SM" style={personSize(22)} />
         <EditableName member={team.scrumMaster} onRename={onRename} className="text-[11px] font-medium" />
       </span>
       {team.developers.map((d) => (
