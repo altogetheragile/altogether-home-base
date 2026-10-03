@@ -45,6 +45,16 @@ export interface GroupDef {
    *  railings come off the same list as a tree's leaves and trunk, and "Planting" is the wrong word
    *  over a bridge. */
   labelFor?: (item: BacklogItem) => string;
+  /** ...and when the word changes, the picture changes with it.
+   *
+   *  The first decision is Structure over a habitat, Species over an animal and Planting over a
+   *  stand of trees. One button doing one job, but not one word - and a house drawn over a lion is
+   *  the picture contradicting the word beside it. Reported on looking at the first row of icons:
+   *  "Structure is drawn as a house, and over an animal that button is labelled Species."
+   *
+   *  Only a group with a `labelFor` needs one, and a test holds that the two stay together: a name
+   *  gets the same drawing everywhere it appears. */
+  iconFor?: (item: BacklogItem) => ToolbarIconName;
   /** Which of this item's criteria these controls could settle. Empty means cosmetic: it changes
    *  how the thing looks and nothing about whether it is Done. Cosmetic is not lesser - a zoo that
    *  looks like a zoo is the job - but it is a different question, and the strip should say which
@@ -75,6 +85,11 @@ export interface GroupDef {
   writes: string[];
 }
 
+/** The first decision, drawn as whatever it is called. */
+const STRUCTURE_ICON = {
+  Structure: 'structure', Species: 'species', Planting: 'planting',
+} as const satisfies Record<ReturnType<typeof structureWord>, ToolbarIconName>;
+
 const habitat = (it: BacklogItem) => it.category === 'enclosure';
 const animal = (it: BacklogItem) => it.category === 'exhibit';
 const building = (it: BacklogItem) => it.category === 'amenity';
@@ -93,6 +108,9 @@ export const GROUPS: GroupDef[] = [
     // Said in the words of the thing being built: a habitat is a structure, a lion is a species and
     // a stand of trees is planting.
     labelFor: (it) => structureWord(it.category),
+    // Keyed off the word rather than off the category, so the two cannot drift: adding a fourth
+    // kind of thing fails to compile here until it has been given a drawing.
+    iconFor: (it) => STRUCTURE_ICON[structureWord(it.category)],
     applies: (it) => picksAStructure(it.category),
     litFor: (it) => !structureChosen(it) },
 
@@ -156,6 +174,10 @@ export const groupsFor = (item: BacklogItem): GroupDef[] => GROUPS.filter((g) =>
 
 /** What this group is called over this object. */
 export const labelOf = (group: GroupDef, item: BacklogItem): string => group.labelFor?.(item) ?? group.label;
+
+/** ...and what it is drawn as over this object. */
+export const iconOf = (group: GroupDef, item: BacklogItem): ToolbarIconName =>
+  group.iconFor?.(item) ?? group.icon;
 
 /** The criteria this item is failing that the park can actually answer.
  *
