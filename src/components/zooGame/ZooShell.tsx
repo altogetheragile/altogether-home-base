@@ -24,8 +24,9 @@ import { cn } from '@/lib/utils';
 import { GameNotesProvider } from './GameNotes';
 import type { GameNote } from './notesDock';
 import type { SeatName } from './useZooSessions';
-import { Target, Trees, ClipboardList, ListChecks, Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge, Heart } from 'lucide-react';
+import { Save, FolderOpen, Sparkles, Loader2, MoreHorizontal, ChevronLeft, Gauge, Heart } from 'lucide-react';
 import { FOCUS, SURFACE, TAB_EDGE, TAB_ROW } from './ui/tokens';
+import { BoardIcon, BOARD } from './board/BoardIcon';
 
 /** The work tab's label per phase - what you are actually doing there. */
 
@@ -143,7 +144,12 @@ export type ArtifactTab = 'backlog' | 'sprint' | 'increment';
 /** Exported so the Before you start screen wears the same tab as the game does. It had its own -
  *  big bold labels with an underline - and got the same report this one already carries in its
  *  comment: "it is not clear they are tabs". One tab shape in the game, not two. */
-export function Tab({ active, onClick, icon: Icon, label, badge, locked, ...rest }: { active: boolean; onClick: () => void; icon: typeof Target; label: string; badge?: string; locked?: string } & React.ComponentProps<'button'>) {
+export function Tab({ active, onClick, icon: Icon, label, badge, locked, ...rest }: {
+  active: boolean; onClick: () => void;
+  /** Anything that draws itself at the size it is given. A lucide icon, or one off the board. */
+  icon: (p: { className?: string }) => React.ReactNode;
+  label: string; badge?: string; locked?: string;
+} & React.ComponentProps<'button'>) {
   return (
     <button type="button" onClick={locked ? undefined : onClick} disabled={!!locked} title={locked}
       aria-current={active ? 'page' : undefined} {...rest}
@@ -466,12 +472,21 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             places depending on which state you were in. It is a property of the tab, so it rides on
             the tab row, in one place, on both states. */}
         <div data-part="tab-row" className={cn('mt-1', TAB_ROW)}>
-          <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} icon={ClipboardList} label="Product Backlog" />
-          <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} icon={ListChecks} label="Sprint Backlog"
+          {/* The three artifacts wear the board's own marks.
+              COURSE-AND-BOARD.md maps them tab by tab - the Product Backlog icon to this tab, the
+              Sprint Backlog icon to the next, the Increment cube to the last - and the point of it
+              is that a learner meets the same picture on the diagram, in the game and on a lesson
+              card. They were a clipboard, a checklist and a clump of trees: good icons, and nothing
+              to do with the board somebody had been reading ten minutes earlier. */}
+          <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} label="Product Backlog"
+            icon={(p) => <BoardIcon name={BOARD.productBacklog} {...p} />} />
+          <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} label="Sprint Backlog"
+            icon={(p) => <BoardIcon name={BOARD.sprintBacklog} {...p} />}
             locked={sprintBacklog ? undefined : 'made at Planning'} />
           {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
               Increment. A learner who never connects the two is playing a building game. */}
-          <Tab active={tab === 'increment'} onClick={() => setTab('increment')} icon={Trees} label="Increment" badge={open ? String(open) : undefined} />
+          <Tab active={tab === 'increment'} onClick={() => setTab('increment')} label="Increment"
+            icon={(p) => <BoardIcon name={BOARD.increment} {...p} />} badge={open ? String(open) : undefined} />
         </div>
       </header>
 
