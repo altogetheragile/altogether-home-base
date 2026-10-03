@@ -1,5 +1,6 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { answerable, checkCriterion, checkedAt, inspect, ACCEPTANCE_CRITERIA } from './parkChecks';
+import { AcceptanceCriteriaIcon } from './AcceptanceCriteriaIcon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
@@ -106,6 +107,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
           (quiet || (collapsed && !hidden)) && 'pointer-events-none', !collapsed && !quiet && FOCUS, !collapsed && !quiet && 'hover:bg-background',
           !at && place, className)}
         style={moved}>
+        <AcceptanceCriteriaIcon className="mr-1 inline-block h-3.5 w-3.5 align-[-0.15em]" />
         {ACCEPTANCE_CRITERIA} <span className="font-normal text-muted-foreground">&middot; {count}</span>
       </button>
     );
@@ -118,6 +120,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
       <h3 data-part="inspector-grip" onPointerDown={carry}
         className="flex cursor-grab select-none items-center gap-1.5 text-sm font-bold active:cursor-grabbing">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+        <AcceptanceCriteriaIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="flex-1">{ACCEPTANCE_CRITERIA} <span className="font-normal text-muted-foreground">&middot; {count}</span></span>
         <button type="button" data-part="hide-inspector" aria-label="Put the acceptance criteria away"
           onPointerDown={(e) => e.stopPropagation()} onClick={() => setHidden(true)}

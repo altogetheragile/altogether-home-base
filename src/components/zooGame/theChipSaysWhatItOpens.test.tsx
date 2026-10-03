@@ -56,6 +56,35 @@ describe('the chip on the build strip', () => {
   });
 });
 
+describe('the mark for acceptance criteria', () => {
+  // One picture for one idea, wherever the words are. It needs room: at the eleven pixels the
+  // chip's second line would give it, the clipboard, the person and the check are one grey smudge,
+  // which is why it is at the head of the button rather than inline in the small print.
+  const mark = (el: Element | null) => el?.querySelector('[data-part="ac-mark"]') ?? null;
+
+  it('stands on the button', () => {
+    const s = game();
+    const chip = strip(s, of(s, 'enclosure')).querySelector('[data-part="pbi-chip"]')!;
+    expect(mark(chip), 'the button has the words and not the mark').toBeTruthy();
+  });
+
+  it('is not put on an item that has no criteria', () => {
+    const s = game();
+    const bare = { ...of(s, 'enclosure'), acceptance: [] };
+    const chip = strip(s, bare).querySelector('[data-part="pbi-chip"]')!;
+    expect(mark(chip), 'an item with no criteria wears the mark for them').toBeFalsy();
+  });
+
+  it('is big enough to read', () => {
+    // Rendered at 11px it is a smudge. jsdom has no layout, so what is held here is the size it is
+    // asked for - the thing that was chosen by looking at it at every size it could have been.
+    const s = game();
+    const chip = strip(s, of(s, 'enclosure')).querySelector('[data-part="pbi-chip"]')!;
+    expect(mark(chip)?.getAttribute('class'), 'the mark was shrunk into the small print')
+      .toMatch(/\bh-5\b/);
+  });
+});
+
 describe('the button and the panel it opens', () => {
   // The panel has two shapes - a pill while something else has the floor, and the open list - and
   // they are written in two places. Checking one of them is how renaming the other got past this
@@ -90,5 +119,12 @@ describe('the button and the panel it opens', () => {
       'the open panel is the pill again, so its heading was never read').toBeTruthy();
     expect(said(shut), 'the pill calls it something else').toBe(ACCEPTANCE_CRITERIA);
     expect(said(open), 'the open panel calls it something else').toBe(ACCEPTANCE_CRITERIA);
+  });
+
+  it('carry the same mark in both shapes', () => {
+    expect(panel({ collapsed: true })?.querySelector('[data-part="ac-mark"]'),
+      'the pill says the words without the mark').toBeTruthy();
+    expect(panel({ open: true, onOpenChange: () => {} })?.querySelector('[data-part="ac-mark"]'),
+      'the open panel says the words without the mark').toBeTruthy();
   });
 });

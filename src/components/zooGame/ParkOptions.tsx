@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { DodList } from './Board';
 import { ToolIcon } from './ToolIcon';
+import { AcceptanceCriteriaIcon } from './AcceptanceCriteriaIcon';
 import { TOOLBAR_ICONS, type ToolbarIcon as Drawing } from './toolbarIcons';
 import { BOARD } from './board/BoardIcon';
 import { BOARD_ICONS } from './board/boardIcons';
@@ -775,6 +776,13 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 "every fact is in", which is a different thing and sat on the chip beside a button
                 asking her to come and look - a finished tick over an unanswered question. */}
             {how.accepted && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />}
+            {/* The mark for acceptance criteria, at the head of the button rather than inline in
+                the small print under the name: at the eleven pixels that line would give it, the
+                clipboard, the person and the check are one grey smudge. Here it has room, and it
+                marks the whole button as the one that opens them. */}
+            {how.criteria.length > 0 && (
+              <AcceptanceCriteriaIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
+            )}
             {/* The name, and under it what the count is a count OF.
                 It used to be the name and a bare "0 of 5" beside it, and nothing said what the five
                 were - the panel it opens is headed "Acceptance criteria · 0 of 5" and the button

@@ -125,7 +125,9 @@ still on built sprites:
 
 ## Licensing
 
-`art-src/` holds licensed source art. Record where each sheet came from in the
+`art-src/` holds licensed source art - the animal sheets, and under `icons/` the odd single
+icon that is not ours. The sheets are cut by the generator;
+record where each one came from in the
 `credit` field of the config - it is carried into the generated file's header.
 
 Sources in use, and what covers them:
@@ -135,3 +137,4 @@ Sources in use, and what covers them:
 | `wild-animals.svg`, `flamingos.svg`, `tropic.svg`, `apes.svg`, `iso-animals.svg` | Freepik | Al's Freepik licence |
 | `savanna.svg`, `savanna-grazers.svg`, `otters.svg`, `reef.svg`, `birds.svg` | Adobe Stock | Al's Adobe Stock licence, confirmed 2026-08-24 |
 | `kenney-isometric-buildings/` | Kenney | CC0 - public domain, no attribution required |
+| `icons/acceptance-criteria.svg` | The Noun Project (`noun_acceptancecriteria_8371658`) | Al to confirm: Noun Project Pro covers it without a credit line, the free licence needs one |
