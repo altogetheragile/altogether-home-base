@@ -320,7 +320,7 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
  *  beside it, and what nobody but the Scrum Team can judge. A line that cannot apply to this kind
  *  of thing says so rather than counting against it - a kiosk has no fence to make escape-proof.
  */
-function DodList({ state, item }: { state: ZooGameState; item: BacklogItem }) {
+export function DodList({ state, item }: { state: ZooGameState; item: BacklogItem }) {
   const lines = dodVerdicts(state, item);
   // No bar at all is a state worth saying out loud rather than an empty space. A team that started
   // without a Definition of Done should be able to see, on the thing they are about to call Done,
