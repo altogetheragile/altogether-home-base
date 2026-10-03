@@ -3,6 +3,7 @@ import { CRITERIA, criterionFor, answerable, inspect } from './parkChecks';
 import { LANDSCAPE_TYPES, currentDesign } from './design';
 import { picksAStructure, structureWord } from './toolboxItems';
 import { structureChosen } from './engine';
+import type { ToolbarIconName } from './toolbarIcons';
 
 // ============= What the strip offers, and what each part of it would settle =============
 //
@@ -31,6 +32,15 @@ export type GroupId =
 export interface GroupDef {
   id: GroupId;
   label: string;
+  /** The drawing on this group's button. Belongs to the GROUP, not to the word over it: a habitat's
+   *  Structure and an animal's Species are one button doing one job, and the icon is what stays
+   *  still while the word changes with the object.
+   *
+   *  Hand-kept, like `meets` and `writes`. Two tests hold the two things that could go wrong with
+   *  it: groups that share a name share an icon, and no single item ever shows the same icon twice.
+   *  Twelve drawings cover seventeen groups because of the first, and the second is what makes that
+   *  safe - a habitat has a footprint, a plant has a grown size, nothing is both. */
+  icon: ToolbarIconName;
   /** ...unless the same controls are a different thing on a different object. A bridge's deck and
    *  railings come off the same list as a tree's leaves and trunk, and "Planting" is the wrong word
    *  over a bridge. */
@@ -79,7 +89,7 @@ export const GROUPS: GroupDef[] = [
   // which is what `litFor` is for.
   // It SEEDS `parts.piece` and the plant's colours rather than owning them: a tree chosen is an oak
   // to start with, and which oak each plant in the clump is belongs to How many.
-  { id: 'structure', writes: ['parts.structure', 'parts.type', 'parts.ground', 'item.template'], label: 'Structure', meets: [],
+  { id: 'structure', writes: ['parts.structure', 'parts.type', 'parts.ground', 'item.template'], label: 'Structure', icon: 'structure', meets: [],
     // Said in the words of the thing being built: a habitat is a structure, a lion is a species and
     // a stand of trees is planting.
     labelFor: (it) => structureWord(it.category),
@@ -87,8 +97,8 @@ export const GROUPS: GroupDef[] = [
     litFor: (it) => !structureChosen(it) },
 
   // ---- a habitat ----
-  { id: 'footprint', writes: ['item.enclosureSize'], label: 'Size', meets: ['roomy', 'room-to-spare'], applies: habitat },
-  { id: 'shape', writes: ['parts.shape'], label: 'Shape', meets: [], applies: habitat },
+  { id: 'footprint', writes: ['item.enclosureSize'], label: 'Size', icon: 'size', meets: ['roomy', 'room-to-spare'], applies: habitat },
+  { id: 'shape', writes: ['parts.shape'], label: 'Shape', icon: 'shape', meets: [], applies: habitat },
   // "Holds: land or a tank" was this question asked twice - a paddock holds land and a tank holds
   // water, and Structure is where that is decided now.
   // What the floor of it is, in the one word that is true either way: a paddock's surface is ground
@@ -96,37 +106,37 @@ export const GROUPS: GroupDef[] = [
   // it called GROUND - the menu's own name said again, in a word that is wrong the moment the
   // habitat is a tank - and then briefly a menu called Ground, which is the same wrongness moved up
   // a level. The swatches change with the structure; the word does not need to.
-  { id: 'ground', writes: ['colors.ground', 'colors.water'], label: 'Surface', meets: ['a-home'],
+  { id: 'ground', writes: ['colors.ground', 'colors.water'], label: 'Surface', icon: 'surface', meets: ['a-home'],
     applies: habitat },
-  { id: 'barrier', writes: ['parts.barrier'], label: 'Perimeter', meets: ['held'], applies: habitat },
+  { id: 'barrier', writes: ['parts.barrier'], label: 'Perimeter', icon: 'perimeter', meets: ['held'], applies: habitat },
   // What it looks like. Called Look wherever it happens - a habitat's fence, a building's walls
   // and sign, an animal's coat, a plant's foliage - because it is one act, and it was three words.
-  { id: 'fence', writes: ['colors.fence'], label: 'Look', meets: [], applies: habitat },
-  { id: 'inside', writes: ['design.water', 'design.flora'], label: 'Interior', meets: ['a-home'], applies: habitat },
+  { id: 'fence', writes: ['colors.fence'], label: 'Look', icon: 'look', meets: [], applies: habitat },
+  { id: 'inside', writes: ['design.water', 'design.flora'], label: 'Interior', icon: 'interior', meets: ['a-home'], applies: habitat },
 
   // ---- an animal ----
-  { id: 'stock', writes: ['design.group'], label: 'How many', meets: ['a-group', 'room-to-spare'], applies: animal },
+  { id: 'stock', writes: ['design.group'], label: 'How many', icon: 'how-many', meets: ['a-group', 'room-to-spare'], applies: animal },
   // A white lion is what the posters are of, and whether you can tell it is a lion is a person's
   // judgement rather than a measurement - so this group settles nothing the park can check, and
   // gets no light. It is still the control somebody reaches for at the Review.
-  { id: 'look', writes: ['colors.coat'], label: 'Look', meets: [], about: ['recognisable'], applies: animal },
-  { id: 'lives-in', writes: ['item.enclosureId'], label: 'Lives in', meets: ['findable', 'room-to-spare'], applies: animal },
+  { id: 'look', writes: ['colors.coat'], label: 'Look', icon: 'look', meets: [], about: ['recognisable'], applies: animal },
+  { id: 'lives-in', writes: ['item.enclosureId'], label: 'Lives in', icon: 'lives-in', meets: ['findable', 'room-to-spare'], applies: animal },
 
   // ---- a building ----
   // "Type: kiosk, cafe, shop" was Structure asked twice. What a building IS is the first decision.
-  { id: 'offers', writes: ['item.services'], label: 'Offers', meets: ['sells-food', 'has-cubicles', 'somewhere-to-sit'], applies: building },
+  { id: 'offers', writes: ['item.services'], label: 'Offers', icon: 'offers', meets: ['sells-food', 'has-cubicles', 'somewhere-to-sit'], applies: building },
   // The board over the door is a colour, which is why the colours are not purely cosmetic for a
   // building: "no name board yet - put a sign on it and give it a colour".
-  { id: 'colours', writes: ['colors.sign', 'colors.walls', 'colors.roof', 'colors.door'], label: 'Look', meets: ['says-what-it-is'], applies: building },
+  { id: 'colours', writes: ['colors.sign', 'colors.walls', 'colors.roof', 'colors.door'], label: 'Look', icon: 'look', meets: ['says-what-it-is'], applies: building },
 
   // ---- planting ----
   // What it LOOKS like: how big it grew, what colour it is, how many of them. What it IS is the
   // first decision, on Planting, and this used to be called that too - two menus with one name.
-  { id: 'grown', writes: ['parts.size'], label: 'Size', meets: [],
+  { id: 'grown', writes: ['parts.size'], label: 'Size', icon: 'size', meets: [],
     applies: (it) => flora(it) && !LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') },
-  { id: 'clump', writes: ['item.copies', 'parts.piece'], label: 'How many', meets: [],
+  { id: 'clump', writes: ['item.copies', 'parts.piece'], label: 'How many', icon: 'how-many', meets: [],
     applies: (it) => flora(it) && !LANDSCAPE_TYPES.includes(currentDesign(it).parts.type ?? it.template ?? '') },
-  { id: 'planting', writes: ['colors.plant'], label: 'Look',
+  { id: 'planting', writes: ['colors.plant'], label: 'Look', icon: 'look',
     // What a piece of landscape looks like is the whole of what it is asked: can you tell that is
     // water at a glance, can you see it from across the park, does it read as a crossing.
     about: ['greenery', 'sense-of-place', 'water-at-a-glance', 'rock-at-a-glance',
@@ -136,9 +146,9 @@ export const GROUPS: GroupDef[] = [
   // ---- the pen, and the park ----
   // Four groups were four: the pen, how wide, the runs laid, and the surface. They are one piece of
   // work - laying a path - and they are one menu.
-  { id: 'path', writes: ['parts.thickness', 'colors.path', 'state.connectors'], label: 'Paths', meets: ['walkable-to', 'joins-up', 'side-by-side'],
+  { id: 'path', writes: ['parts.thickness', 'colors.path', 'state.connectors'], label: 'Paths', icon: 'paths', meets: ['walkable-to', 'joins-up', 'side-by-side'],
     applies: (it) => path(it) || habitat(it) || building(it) },
-  { id: 'park', writes: ['item.rot', 'item.pos'], label: 'On the park', meets: ['crosses-water'],
+  { id: 'park', writes: ['item.rot', 'item.pos'], label: 'On the park', icon: 'on-the-park', meets: ['crosses-water'],
     applies: (it) => !path(it) && !animal(it) },
 ];
 

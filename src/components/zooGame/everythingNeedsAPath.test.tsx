@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
-import { openGroup, showEverything } from './openGroup';
+import { openGroup } from './openGroup';
 import { initialZooState } from './config';
 import { writeBacklog, acceptSignal } from './engine';
 import { answerable } from './parkChecks';
@@ -57,7 +57,6 @@ describe('the pen that answers it', () => {
     const s = zoo();
     const it = s.backlog.find((x) => x.category === category)!;
     strip(s, it);
-    showEverything();
     // The pen lives in the Paths menu now: the pen, the width, the surface and the runs already
     // laid are one piece of work rather than four rows that happened to sit beside each other.
     return document.querySelector('[data-part="group-path"]')

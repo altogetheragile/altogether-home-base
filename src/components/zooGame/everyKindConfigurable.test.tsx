@@ -5,7 +5,7 @@ import { ParkOptions } from './ParkOptions';
 import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
 import { presetFor, addFloraTo, addWaterTo, HABITAT_FEATURE_TYPES } from './design';
-import { openGroup, showEverything } from './openGroup';
+import { openGroup, stripNames } from './openGroup';
 import type { ZooGameState, BacklogItem } from './types';
 
 // Everything you can build can be changed, and this says what "changed" means.
@@ -60,7 +60,6 @@ describe('every kind of thing has controls', () => {
       const item = of(s, category);
       expect(item, `there is no ${category} in the starting Backlog to try`).toBeTruthy();
       const { container } = open(s, item);
-      showEverything();
       expect(container.querySelectorAll('[data-part^="group-"]').length,
         `a ${category} has no part of the strip at all`).toBeGreaterThan(0);
       // The lion had exactly one control - "Turn" - which is the shape this is here to catch. A
@@ -78,10 +77,9 @@ describe('what you can change about each kind of thing', () => {
   it('a habitat: its size, its shape, its ground, its fence and the way inside', () => {
     const s = game();
     const { container } = open(s, of(s, 'enclosure'));
-    showEverything();
-    const text = container.textContent ?? '';
-    expect(text, 'sizing is not called Size').toMatch(/Size/);
-    expect(text).toMatch(/Shape/);
+    const names = stripNames(container);
+    expect(names, 'sizing is not called Size').toContain('Size');
+    expect(names).toContain('Shape');
     expect(swatches(openGroup('ground')).some((l) => /^Surface /.test(l)), 'a habitat has no surface colour').toBe(true);
     expect(swatches(openGroup('fence')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
     expect(openGroup('inside').body.textContent, 'there is no way in').toMatch(/Look inside/);
@@ -105,38 +103,35 @@ describe('what you can change about each kind of thing', () => {
   it('an animal: how many of them, the coat they wear, and where they live', () => {
     const s = game();
     const { container } = open(s, of(s, 'exhibit'));
-    showEverything();
     expect(openGroup('stock').body.textContent).toMatch(/A pair|A family/);
     // A few named looks rather than a palette: "White" is a white lion, which is a decision with an
     // opinion in it and a consequence at the Review. "#f0efe9" is neither.
     const look = openGroup('look');
     expect(look.querySelector('[data-part="look-white"]'), 'an animal cannot be given a look').toBeTruthy();
     expect(look.body.textContent, 'the looks are unnamed swatches again').toMatch(/Natural/);
-    expect(container.textContent, 'an animal cannot be moved to another habitat').toMatch(/Lives in/);
+    expect(stripNames(container), 'an animal cannot be moved to another habitat').toContain('Lives in');
     // An animal has no ground of its own: it lives inside a habitat, so it is not turned or moved
     // about the park like a kiosk.
-    expect(container.textContent, 'an animal was offered the park controls of a building').not.toMatch(/On the park/);
+    expect(stripNames(container), 'an animal was offered the park controls of a building').not.toContain('On the park');
   });
 
   it('a facility: its walls, roof and sign', () => {
     const s = game();
     const { container } = open(s, of(s, 'amenity'));
-    showEverything();
     const colours = swatches(openGroup('colours'));
     for (const part of ['Walls', 'Roof', 'Sign']) {
       expect(colours.some((l) => l.startsWith(`${part} `)), `a building has no ${part.toLowerCase()} colour`).toBe(true);
     }
-    expect(container.textContent, 'a building cannot be turned or moved').toMatch(/On the park/);
+    expect(stripNames(container), 'a building cannot be turned or moved').toContain('On the park');
   });
 
   it('scenery: the colours that kind of thing has', () => {
     // No "what kind" for something that came from a card: the card already said what it is.
     const s = game();
     const { container } = open(s, of(s, 'flora'));
-    showEverything();
     expect(container.textContent, 'a card-driven object was asked what kind of thing it is').not.toMatch(/What kind/);
     expect(swatches(openGroup('planting')).length, 'a piece of scenery has no colours').toBeGreaterThan(0);
-    expect(container.textContent, 'scenery cannot be turned or moved').toMatch(/On the park/);
+    expect(stripNames(container), 'scenery cannot be turned or moved').toContain('On the park');
   });
 });
 

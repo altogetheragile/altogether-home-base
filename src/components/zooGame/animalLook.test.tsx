@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
-import { openGroup, showEverything } from './openGroup';
+import { openGroup } from './openGroup';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
 import { currentDesign } from './design';
@@ -55,7 +55,6 @@ describe('choosing a look', () => {
     );
     // What a lion looks like settles nothing the park can measure, so it is behind the filter: a
     // white lion is a decision about the zoo, not about whether the item is Done.
-    showEverything();
     const white = openGroup('look').querySelector('[data-part="look-white"]') as HTMLButtonElement | null;
     expect(white, 'there is no White to choose').toBeTruthy();
     fireEvent.click(white!);

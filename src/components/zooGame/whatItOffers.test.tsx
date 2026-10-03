@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent, screen, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
 import { checkCriterion, answerable } from './parkChecks';
-import { openGroup } from './openGroup';
+import { openGroup, stripNames } from './openGroup';
 import { setServices } from './engine';
 import { initialZooState, DEFAULT_SERVICE_CAPACITY } from './config';
 import { simulateSprint } from './simulation/simulate';
@@ -72,7 +72,7 @@ describe('choosing it', () => {
 
   it('is offered on a building, and says when it offers nothing', () => {
     const { container } = strip(park(shop()), shop());
-    expect(container.textContent, 'a building cannot be told what it is for').toMatch(/Offers/);
+    expect(stripNames(container), 'a building cannot be told what it is for').toContain('Offers');
     expect(openGroup('offers').body.textContent).toMatch(/nothing visitors need, yet/i);
   });
 

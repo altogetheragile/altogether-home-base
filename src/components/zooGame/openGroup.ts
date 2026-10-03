@@ -19,10 +19,13 @@ export function openGroup(id: GroupId): Document {
   return document;
 }
 
-/** Turn off "Needs only", which the strip opens with. Cosmetic controls - a fence colour, what a
- *  tree looks like - are hidden while something on the object still fails a criterion the park can
- *  check, so a test about styling says so first. */
-export function showEverything(): void {
-  const toggle = document.querySelector<HTMLInputElement>('[data-part="needs-only"] input');
-  if (toggle?.checked) fireEvent.click(toggle);
+/** Every part of the work the strip is offering, by name.
+ *
+ *  The buttons are pictures now, so a test that asked whether a control was on the strip by looking
+ *  for its name in the strip's text was asking the wrong question of the wrong thing - the name is
+ *  the button's accessible name, which is also the only name a screen reader is given. Reading it
+ *  from there checks the control is there AND that it is announced. */
+export function stripNames(root: ParentNode = document): string[] {
+  return [...root.querySelectorAll('[data-part^="group-"]')]
+    .map((b) => b.getAttribute('aria-label') ?? '');
 }
