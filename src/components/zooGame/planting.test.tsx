@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, fireEvent, cleanup } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
-import { openGroup, showEverything } from './openGroup';
+import { openGroup } from './openGroup';
 import { ParkPlan } from './ParkPlan';
 import { IsoZoo } from './IsoZoo';
 import { initialZooState } from './config';
@@ -49,7 +49,6 @@ const mount = (state: ZooGameState, item: BacklogItem, api: Record<string, unkno
 const strip = (state: ZooGameState, item: BacklogItem, api: Record<string, unknown> = {}) => {
   cleanup();                 // one strip at a time: the panels are portalled to a shared body
   mount(state, item, api);
-  showEverything();
   return openGroup('clump').querySelector('[data-part="panel-clump"]')!;
 };
 
@@ -91,7 +90,6 @@ describe('planting more than one thing', () => {
     const { state, item } = planting({ template: 'river', design: { parts: { type: 'river' }, colors: {} } } as Partial<BacklogItem>);
     cleanup();
     mount(state, item, { onAddCopy: () => {} });
-    showEverything();
     expect(document.querySelector('[data-part="group-clump"]'),
       'a river was offered a second river beside it').toBeNull();
   });
@@ -223,7 +221,6 @@ describe('the colours offered', () => {
     const { state, item } = planting();
     cleanup();
     mount(state, item);
-    showEverything();
     const said = openGroup('planting').querySelector('[data-part="panel-planting"]')!;
     const swatches = [...said.querySelectorAll('button[title], button[aria-label]')]
       .map((b) => b.getAttribute('aria-label') ?? b.getAttribute('title') ?? '');

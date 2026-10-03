@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Minus, Trash2, Check, ChevronDown } from 'lucide-react';
+import { Plus, Minus, Trash2, Check } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
@@ -15,6 +15,10 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { DodList } from './Board';
+import { ToolIcon } from './ToolIcon';
+import { TOOLBAR_ICONS, type ToolbarIcon as Drawing } from './toolbarIcons';
+import { BOARD } from './board/BoardIcon';
+import { BOARD_ICONS } from './board/boardIcons';
 
 // ============= The build strip =============
 //
@@ -64,13 +68,34 @@ function Row({ label, part, children }: { label: string; part?: string; children
 
 /** One part of the work, as a button on the strip that opens its controls.
  *
+ *  A picture, not a word.
+ *
+ *  It was a word for a long time, and the words are long: "Structure", "Perimeter", "Interior",
+ *  "How many", "On the park", "Definition of Done". Ten of those is around twelve hundred pixels of
+ *  button in a column that is six hundred and sixty wide, so the strip wrapped to two rows and the
+ *  second row came out of the park. Every fix for that traded one for the other - give the menus a
+ *  row of their own and the park loses a row of its own: "it does not look good, it reduces the
+ *  size of the studio work area."
+ *
+ *  Icons are the fix that costs neither. The same ten buttons are about four hundred pixels, which
+ *  fits beside the item chip with room over, so there is one row and the park keeps its space.
+ *
+ *  The word has not gone anywhere. It is the button's accessible name, it is its tooltip, and it is
+ *  the heading on the panel the button opens - which is where it teaches, because that is where you
+ *  are looking when you use the control.
+ *
  *  Lit when it holds the answer to something this object is failing. The light is a dot rather than
  *  a colour change on the button: a row of buttons that change colour is a row where nothing stands
  *  out, and the dot is the only thing on the strip moving. */
-function Menu({ group, label, lit, busy, open, onOpenChange, onClosed, children }: {
+function Menu({ group, icon, label, lit, busy, open, onOpenChange, onClosed, children }: {
   /** Only the id is read, so a menu that is not a build group can use this too: the Definition of
    *  Done writes nothing, so it is not one. */
-  group: { id: string }; label: string; lit: boolean;
+  group: { id: string };
+  /** Taken as the drawing rather than as its name, so the one menu on the strip that is not a build
+   *  group can wear the board's Definition of Done gem - the same gem the Increment tab wears, and
+   *  the same one on the diagram. */
+  icon: Drawing;
+  label: string; lit: boolean;
   /** Which menu is open is held by the strip, not by each menu: they are one row of one control, and
    *  three panels stacked over the park is three answers to "what am I doing". */
   open: boolean;
@@ -87,13 +112,20 @@ function Menu({ group, label, lit, busy, open, onOpenChange, onClosed, children 
       <PopoverTrigger asChild>
         <button type="button" data-part={`group-${group.id}`} data-lit={lit ? 'yes' : 'no'}
           data-drawing={busy ? 'yes' : undefined}
+          // The name of the button, for anyone not reading the picture. The tooltip says the same
+          // and adds why it is lit; the label stays the plain word, because a name that changes as
+          // the game goes on is a name that cannot be looked for.
+          aria-label={label}
           title={busy ? `${label} - the pen is out` : lit ? `${label} - something here would finish this item` : label}
-          className={cn(FOCUS, 'flex h-9 shrink-0 items-center gap-1 rounded-md border px-2.5 text-xs font-medium transition-colors',
-            open || busy ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:bg-muted/60')}>
-          {label}
+          className={cn(FOCUS, 'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors',
+            open || busy ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-foreground/80 hover:bg-muted/60 hover:text-foreground')}>
+          <ToolIcon icon={icon} className="h-5 w-5" />
+          {/* On the corner rather than in the row: beside the word it took width, which is the
+              thing the icons are here to stop spending. Inside the button's own edge rather than
+              over it, because the row scrolls when it has to and anything hanging outside would be
+              shaved off at the end of it. */}
           {lit && <span data-part="lit" aria-label="would finish this item"
-            className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
-          <ChevronDown className="h-3 w-3 shrink-0 opacity-50" aria-hidden />
+            className="absolute right-[3px] top-[3px] h-1.5 w-1.5 rounded-full bg-amber-500 ring-2 ring-card" />}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" data-part={`panel-${group.id}`} className="zoo-theme w-[19rem] p-2"
@@ -101,6 +133,14 @@ function Menu({ group, label, lit, busy, open, onOpenChange, onClosed, children 
         // in: closing is what puts the pen away, and a menu that closed on the first press would
         // put it away before the first point landed.
         onInteractOutside={busy ? (e) => e.preventDefault() : undefined}>
+        {/* The word, where it teaches.
+            It used to be on the button, and inside the panel the row's own label was blanked when
+            it repeated it - "Interior: Interior" is a word doing no work. With a picture on the
+            button that left single-row panels with no word at all, so the name moved in here and
+            the rows go on being quiet underneath it. */}
+        {/* Not `panel-<id>`: that prefix is how the game counts how many menus are standing open,
+            and a heading inside a panel would have counted as a second panel. */}
+        <div data-part={`menu-name-${group.id}`} className={cn(EYEBROW, 'px-1 pb-1 text-muted-foreground')}>{label}</div>
         {children}
       </PopoverContent>
     </Popover>
@@ -701,7 +741,8 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
           That bought stability with the park's vertical space, which is a poor trade on the screen
           the park is the point of: "It does not look good. It reduces the size of the studio work
           area." The chip holds its width instead - see below - so one row is stable too. */}
-      <div data-part="park-controls" className="flex min-h-[2.75rem] flex-wrap items-center gap-x-2 gap-y-2">
+      <div data-part="park-controls"
+        className="flex min-h-[2.75rem] items-center gap-x-1.5 overflow-x-auto overflow-y-hidden">
       {/* What is selected, how far off it is, and the one move left when it is not far off at all.
           The count used to be in three places: a pill under the object on the park, a pill floating
           over its corner, and nowhere near the controls that change it. They each worked it out for
@@ -740,13 +781,15 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             )}
             {/* The room for this is kept whether or not it is wanted.
                 It appears the moment the Product Owner becomes the only thing between this item and
-                Done, and it is sixty pixels wide - enough to move where the strip wraps and drop the
-                menus a line, out from under whichever one was open. That was fixed once by giving
-                the menus a row of their own, which cost the park a row of ITS own: "it reduces the
-                size of the studio work area."
-                Holding the width costs sixty pixels of chip instead of forty-four of park, and
-                nothing moves either way. When the toolbar is icons rather than words the whole row
-                is a third of its length and this can be looked at again. */}
+                Done, and it is sixty pixels wide - enough, on a row that wrapped, to move where it
+                wrapped and drop the menus a line out from under whichever one was open. Reported
+                while drawing a path: "the studio menu shifts down as the PO approval kicks in."
+                The icons stopped the row wrapping, and that is NOT the same as stopping this. Taken
+                out on the strength of the one-row fix, the menus stopped dropping a line and started
+                sliding sixty pixels to the right instead, still out from under an open one. The
+                direction changed and the fault did not.
+                So the room stays kept. It costs sixty pixels of the item's own name, which truncates
+                and is on the button's title and its accessible name in full. */}
             <span aria-hidden={!ask}
               className={cn('shrink-0 font-semibold text-emerald-700 dark:text-emerald-400', !ask && 'invisible')}>
               Ask {how.po}
@@ -775,7 +818,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               shifts down as the PO approval kicks in." */}
           <div data-part="park-menus" className="contents">
           {shown.map((g) => (
-            <Menu key={g.id} group={g} label={labelOf(g, subject)} lit={lit(g)}
+            <Menu key={g.id} group={g} icon={TOOLBAR_ICONS[g.icon]} label={labelOf(g, subject)} lit={lit(g)}
               open={openMenu === g.id}
               onOpenChange={(o) => setOpenMenu(o ? g.id : null)}
               // The pen is a mode, and a mode you cannot see is a mode that surprises you. It used
@@ -796,12 +839,14 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               game has them do it. Kept apart from the item's acceptance criteria on purpose -
               COURSE-AND-BOARD.md is explicit that merging the two is the mistake. The criteria
               belong to this item; the Definition of Done belongs to every item. */}
-          <Menu group={{ id: 'dod' }} label="Definition of Done" lit={false}
+          {/* The board's own gem, in the board's own colours, where every other button on the strip
+              is a line drawing in the button's ink. The difference is the point: the nine beside it
+              are controls that write something, and this one writes nothing. It is the same picture
+              a learner met on the diagram and on the Increment tab. */}
+          <Menu group={{ id: 'dod' }} icon={BOARD_ICONS[BOARD.definitionOfDone]}
+            label="Definition of Done" lit={false}
             open={openMenu === 'dod'} onOpenChange={(o) => setOpenMenu(o ? 'dod' : null)}>
             <div data-part="dod-panel" className="space-y-1.5">
-              <div className={cn(EYEBROW, 'text-muted-foreground')}>
-                Definition of Done <span className="font-normal normal-case tracking-normal">· every item</span>
-              </div>
               {/* The same list the card shows, not a second one. It already knows how to say a line
                   the park measured, a line only the Scrum Team can judge, and the state this game
                   starts every player in: nothing agreed at all. */}

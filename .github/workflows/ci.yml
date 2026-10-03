@@ -40,6 +40,12 @@ jobs:
       - name: Scrum board is in step with its design file
         run: node scripts/scrumBoard/import.mjs --check
 
+      # The same again for the build strip's icons, which are drawn outside the repo and dropped
+      # into docs/zoo-toolbar. The generated module is checked in, so it can be hand-edited and
+      # nothing would notice until the next import silently reverted it.
+      - name: Build strip icons are in step with their drawings
+        run: node scripts/zooToolbar/import.mjs --check
+
       - name: Verify MSW v2 compliance
         run: |
           echo "Verifying MSW v2 compliance..."
