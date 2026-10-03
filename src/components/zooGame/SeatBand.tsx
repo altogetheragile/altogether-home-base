@@ -4,7 +4,7 @@ import { seatLines, whoDoesWhatNow } from './header';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { cn } from '@/lib/utils';
-import { SEAT, devShade } from './seats';
+import { SEAT } from './seats';
 import { Person } from './board/Person';
 
 // The band: one sentence on who does what now, and the five people with what each is doing.
@@ -14,13 +14,12 @@ import { Person } from './board/Person';
 // without the game ever saying that was the problem. This row says it continuously: who is doing
 // what, right now, and who is not in the room for what is on the screen.
 
-// What each of the five is drawn in. The two seats there is only ever one of take their
-// accountability's colour; a Developer takes their own shade of the stack, because Ada, Ben and
-// Cara in one teal is three people drawn as one person.
-const shadeOf = (role: string, devIndex?: number): string =>
-  (devIndex === undefined
-    ? role === 'product_owner' ? SEAT.productOwner.hex : SEAT.scrumMaster.hex
-    : devShade(devIndex));
+// What each of the five is drawn in: their accountability's colour, and every Developer the same
+// one. They each carry their own name on the line beside them, which is what tells them apart.
+const colourOf = (role: string): string =>
+  (role === 'product_owner' ? SEAT.productOwner.hex
+    : role === 'scrum_master' ? SEAT.scrumMaster.hex
+      : SEAT.developers.hex);
 
 /** Which seat on the band is the one this player holds. A solo player holds all three
  *  accountabilities, so nothing is outlined - there is nobody else to tell them apart from. */
@@ -95,7 +94,11 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
                 !s.present && 'opacity-40')}>
               {/* The board's person, not a coloured disc with a letter in it. Taller than it is
                   wide, because a person is - so it is given height rather than a square. */}
-              <Person hex={shadeOf(s.role, s.devIndex)} initials={s.initials}
+              {/* No letters on a Developer: the name is right there, and "A" beside "Ada" is the
+                  word said twice. The two seats there is only one of keep theirs - "PO" and "SM"
+                  are the accountability rather than the person, and they are what the board writes
+                  on them. */}
+              <Person hex={colourOf(s.role)} initials={s.role === 'developer' ? undefined : s.initials}
                 className="h-7 w-[1.45rem] shrink-0" />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[11px] font-semibold">

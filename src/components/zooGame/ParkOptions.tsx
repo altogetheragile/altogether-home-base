@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Plus, Minus, Trash2, Check } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
@@ -108,16 +108,25 @@ function Menu({ group, icon, label, lit, busy, open, onOpenChange, onClosed, chi
   onClosed?: () => void;
   children: React.ReactNode;
 }) {
+  // One per button on the page, so two strips cannot point at each other's description.
+  const litId = `${useId()}lit`;
   return (
     <Popover open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) onClosed?.(); }}>
       <PopoverTrigger asChild>
         <button type="button" data-part={`group-${group.id}`} data-lit={lit ? 'yes' : 'no'}
           data-drawing={busy ? 'yes' : undefined}
-          // The name of the button, for anyone not reading the picture. The tooltip says the same
-          // and adds why it is lit; the label stays the plain word, because a name that changes as
-          // the game goes on is a name that cannot be looked for.
+          // The name of the button, for anyone not reading the picture. It stays the plain word,
+          // because a name that changes as the game goes on is a name that cannot be looked for.
           aria-label={label}
-          title={busy ? `${label} - the pen is out` : lit ? `${label} - something here would finish this item` : label}
+          // ...and so does the tooltip. It used to add "- something here would finish this item"
+          // whenever the dot was lit, which is the dot saying itself in words next to itself:
+          // "the hover over labels are weird for some - extra duplicate text."
+          // The pen is the exception. That is a mode with nothing on screen to show for it once
+          // the menu is shut, so the tooltip is the only place it can be said.
+          title={busy ? `${label} - the pen is out` : label}
+          // The lit state said where a tooltip cannot reach. `aria-label` on the button replaces
+          // everything inside it, so the dot's own label was never announced.
+          aria-describedby={lit ? litId : undefined}
           className={cn(FOCUS, 'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors',
             open || busy ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-foreground/80 hover:bg-muted/60 hover:text-foreground')}>
           <ToolIcon icon={icon} className="h-5 w-5" />
@@ -125,8 +134,13 @@ function Menu({ group, icon, label, lit, busy, open, onOpenChange, onClosed, chi
               thing the icons are here to stop spending. Inside the button's own edge rather than
               over it, because the row scrolls when it has to and anything hanging outside would be
               shaved off at the end of it. */}
-          {lit && <span data-part="lit" aria-label="would finish this item"
-            className="absolute right-[3px] top-[3px] h-1.5 w-1.5 rounded-full bg-amber-500 ring-2 ring-card" />}
+          {lit && (
+            <>
+              <span data-part="lit" aria-hidden
+                className="absolute right-[3px] top-[3px] h-1.5 w-1.5 rounded-full bg-amber-500 ring-2 ring-card" />
+              <span id={litId} className="sr-only">something here would finish this item</span>
+            </>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" data-part={`panel-${group.id}`} className="zoo-theme w-[19rem] p-2"

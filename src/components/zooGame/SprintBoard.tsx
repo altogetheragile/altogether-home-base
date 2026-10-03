@@ -24,7 +24,7 @@ import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, Target, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import { EYEBROW, FOCUS, TAP, TONE } from './ui/tokens';
-import { devShade } from './seats';
+import { SEAT } from './seats';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
 
@@ -139,10 +139,12 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
         </span>
         {devs.length > 0 && (
           <span className="ml-auto flex items-center -space-x-1.5">
-            {/* Overlapped, which is how the board draws more than one Developer: its own
-                Developers icon is three of these stacked, lightest at the front. */}
-            {devs.map((d, i) => (
-              <Person key={d.id} title={d.name} hex={devShade(i)}
+            {/* Overlapped, which is how the board draws more than one Developer. One colour for
+                all of them, like everywhere else - but lettered, which is the exception: there is
+                no name beside these, and which Developer picked an item up is the whole point of
+                showing them on it. */}
+            {devs.map((d) => (
+              <Person key={d.id} title={d.name} hex={SEAT.developers.hex}
                 initials={d.name.slice(0, 1).toUpperCase()} style={personSize(20)} />
             ))}
           </span>

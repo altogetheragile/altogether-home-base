@@ -4,24 +4,30 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Users, Check } from 'lucide-react';
 import { FOCUS, PADDING, SURFACE } from './ui/tokens';
-import { SEAT, devShade } from './seats';
+import { SEAT } from './seats';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
 
 // A stable colour per Developer id, so the same person reads the same everywhere.
-// The board's stack, not a rainbow. Six colours chosen for being different from each other put
-// the first Developer in #e6842a - an orange within a hair of the Product Owner's - on a screen
-// whose whole job is telling the accountabilities apart.
-const devColor = (id: string, devs: ScrumTeamMember[]) => devShade(devs.findIndex((d) => d.id === id));
+// One teal, not a rainbow. Six colours chosen for being different from each other put the first
+// Developer in #e6842a - an orange within a hair of the Product Owner's - on a screen whose whole
+// job is telling the ACCOUNTABILITIES apart. Telling the people apart is what their names are for.
 const initial = (name: string) => (name.replace(/\s*\(.*\)\s*/, '').trim()[0] ?? '?').toUpperCase();
 
 /** One Developer, drawn the way the board draws a person. `size` is the width it is given; a
- *  person is taller than they are wide, so the height follows from the box the board uses. */
-function Avatar({ name, colour, size = 18, ring = false, dim = false }: { name: string; colour: string; size?: number; ring?: boolean; dim?: boolean }) {
+ *  person is taller than they are wide, so the height follows from the box the board uses.
+ *
+ *  `lettered` writes their initial on them, and is off by default. Beside their name it is the same
+ *  word twice - "A, B, C on dev's is not needed" - so it is only asked for where the figure stands
+ *  alone AND it matters which of them it is: who has picked up this item. A row of them standing
+ *  for the Developers as a group needs no letters, because nobody is being named. */
+function Avatar({ name, colour, size = 18, ring = false, dim = false, lettered = false }: {
+  name: string; colour: string; size?: number; ring?: boolean; dim?: boolean; lettered?: boolean;
+}) {
   return (
     <span title={name} aria-label={name}
       className={cn('inline-flex shrink-0 items-center justify-center', ring && 'rounded-full ring-2 ring-offset-1 ring-primary', dim && 'opacity-30')}>
-      <Person hex={colour} initials={initial(name)} style={personSize(size)} />
+      <Person hex={colour} initials={lettered ? initial(name) : undefined} style={personSize(size)} />
     </span>
   );
 }
@@ -91,7 +97,7 @@ export function TeamRow({ team, onRename, onWho }: {
         <span key={d.id} {...drag(d.id)}
           title={`${d.name} - drag onto a card to take that work`}
           className="flex cursor-grab items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 active:cursor-grabbing">
-          <Avatar name={d.name} colour={devColor(d.id, team.developers)} size={24} />
+          <Avatar name={d.name} colour={SEAT.developers.hex} size={24} />
           <EditableName member={d} onRename={onRename} className="text-[11px] font-medium" />
         </span>
       ))}
@@ -115,7 +121,7 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
             <span className="rounded-full bg-primary/15 px-1 font-semibold text-primary">PO</span>
             <span className={cn(SEAT.scrumMaster.soft, "rounded-full px-1 font-semibold")}>SM</span>
             <span className="flex -space-x-1">
-              {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}
+              {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={SEAT.developers.hex} size={16} />)}
             </span>
           </button>
         </PopoverTrigger>
@@ -149,7 +155,7 @@ function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRenam
       <span className="flex items-center gap-1.5" title="Developers - build the Increment; self-managing (they decide who does what) and accountable for quality via the Definition of Done.">
         <span className="text-[11px] font-semibold text-muted-foreground">Devs</span>
         <span className="flex -space-x-1">
-          {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} />)}
+          {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={SEAT.developers.hex} />)}
         </span>
       </span>
     </div>
@@ -167,7 +173,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
           className={cn(FOCUS, "flex items-center gap-1 rounded-full border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
           {assigned.length === 0
             ? <span>+ pick up</span>
-            : <span className="flex -space-x-1">{team.developers.filter((d) => assigned.includes(d.id)).map((d) => <Avatar key={d.id} name={d.name} colour={devColor(d.id, team.developers)} size={16} />)}</span>}
+            : <span className="flex -space-x-1">{team.developers.filter((d) => assigned.includes(d.id)).map((d) => <Avatar key={d.id} name={d.name} colour={SEAT.developers.hex} size={16} lettered />)}</span>}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="zoo-theme w-52">
@@ -178,7 +184,7 @@ export function AssignDevs({ team, assigned, onToggle }: { team: ScrumTeam; assi
             return (
               <button key={d.id} type="button" onClick={() => onToggle(d.id)}
                 className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-md border px-2 py-1 text-xs', on ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40')}>
-                <Avatar name={d.name} colour={devColor(d.id, team.developers)} size={18} dim={!on} />
+                <Avatar name={d.name} colour={SEAT.developers.hex} size={18} dim={!on} />
                 <span className="flex-1 text-left font-medium">{d.name}</span>
                 {on && <Check className="h-3.5 w-3.5 text-primary" />}
               </button>

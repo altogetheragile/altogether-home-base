@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW } from './ui/tokens';
 import { sprintCapacity } from './engine';
-import { SEAT, devShade } from './seats';
+import { SEAT } from './seats';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
 
@@ -63,15 +63,17 @@ export function MeetTheTeam({ state, seat = null, onNext }: {
   const cap = sprintCapacity(state);
   // The card says the accountability under the name, so a name carrying it too says it twice.
   const plain = (name: string) => name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '');
-  const seats: (Seat & { name: string; initials: string; hex: string })[] = [
+  const seats: (Seat & { name: string; initials?: string; hex: string })[] = [
     { ...ROLES.product_owner, seat: 'product_owner', name: plain(state.team.productOwner.name), initials: 'PO',
       character: CHARACTER.po, hex: SEAT.productOwner.hex },
     { ...ROLES.scrum_master, seat: 'scrum_master', name: plain(state.team.scrumMaster.name), initials: 'SM',
       character: CHARACTER.sm, hex: SEAT.scrumMaster.hex },
+    // No letter on a Developer's figure: the card has their name on it in bold, and their first
+    // initial on their chest is that word said twice.
     ...state.team.developers.map((d, i) => ({
       ...ROLES.developer, seat: 'developer' as SeatName, name: plain(d.name),
-      initials: plain(d.name).slice(0, 1).toUpperCase(), character: CHARACTER[`dev${i}`] ?? 'Gets on with it.',
-      hex: devShade(i),
+      initials: undefined, character: CHARACTER[`dev${i}`] ?? 'Gets on with it.',
+      hex: SEAT.developers.hex,
     })),
   ];
 
