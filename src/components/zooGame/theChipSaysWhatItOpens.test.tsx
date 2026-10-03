@@ -76,12 +76,16 @@ describe('the mark for acceptance criteria', () => {
   });
 
   it('is big enough to read', () => {
-    // Rendered at 11px it is a smudge. jsdom has no layout, so what is held here is the size it is
-    // asked for - the thing that was chosen by looking at it at every size it could have been.
+    // The clipboard and the check stop being two things at about fourteen pixels, and the line
+    // under the item's name would give it eleven. jsdom has no layout, so what is held here is the
+    // size the mark is ASKED for - rendered at 11, 12, 14, 16, 18, 20, 24 and 32 to decide it.
+    //
+    // A range rather than one class: sixteen, eighteen and twenty all read, and pinning the test to
+    // whichever was picked would fail a change that is not a fault.
     const s = game();
     const chip = strip(s, of(s, 'enclosure')).querySelector('[data-part="pbi-chip"]')!;
     expect(mark(chip)?.getAttribute('class'), 'the mark was shrunk into the small print')
-      .toMatch(/\bh-5\b/);
+      .toMatch(/(?:^|\s)(?:h-4|h-\[1[6-9]px\]|h-5|h-6)(?:\s|$)/);
   });
 });
 

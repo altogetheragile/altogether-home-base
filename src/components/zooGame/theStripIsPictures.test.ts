@@ -49,6 +49,16 @@ describe('one drawing per name', () => {
     }
   });
 
+  // Drawings in the folder that are not a build group's. There is one: the mark for acceptance
+  // criteria, which belongs to the item being built rather than to any control, and stands on the
+  // chip and on the panel the chip opens.
+  //
+  // Named here rather than letting the orphan check wave anything unused through. A drawing nobody
+  // put anywhere is still a fault; this says which ones are placed by hand and where to look.
+  const NOT_A_GROUP: Record<string, string> = {
+    'acceptance-criteria': 'the item chip and the criteria panel - AcceptanceCriteriaIcon.tsx',
+  };
+
   it('draws every button, and draws nothing nobody asked for', () => {
     const used = new Set<string>();
     for (const g of GROUPS) {
@@ -62,7 +72,17 @@ describe('one drawing per name', () => {
       used.add(b.icon);
     }
     for (const name of Object.keys(TOOLBAR_ICONS)) {
+      if (NOT_A_GROUP[name]) continue;
       expect(used.has(name), `${name}.svg is in docs/zoo-toolbar but on no button`).toBe(true);
+    }
+    // ...and the hand-placed ones really are placed, so this list cannot become a way of keeping a
+    // drawing nobody uses.
+    for (const [name, where] of Object.entries(NOT_A_GROUP)) {
+      expect(Object.keys(TOOLBAR_ICONS), `${name} is listed as hand-placed but is not in the set`)
+        .toContain(name);
+      expect(used.has(name), `${name} is a group's drawing after all, so it needs no exception`)
+        .toBe(false);
+      expect(where, `${name} does not say where it is placed`).toBeTruthy();
     }
   });
 
