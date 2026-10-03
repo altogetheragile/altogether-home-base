@@ -192,6 +192,59 @@ describe('the strip draws what the registry says', () => {
   });
 });
 
+describe('what a button says when you hover it', () => {
+  // The tooltip used to add "- something here would finish this item" whenever the dot was lit,
+  // which is the dot saying itself in words beside itself: "the hover over labels are weird for
+  // some - extra duplicate text."
+  //
+  // The dot is the one on screen saying it now. For anyone who cannot see the dot it is said in a
+  // hidden line the button points at, because `aria-label` on a button replaces everything inside
+  // it, so the dot's own label was never announced to begin with.
+  const strip = async () => {
+    const { render } = await import('@testing-library/react');
+    const { MemoryRouter } = await import('react-router-dom');
+    const { ParkOptions } = await import('./ParkOptions');
+    const React = await import('react');
+    const noop = () => {};
+    const state = { ...initialZooState(3), phase: 'sprint', dayStage: 'building', sprintNumber: 1 };
+    const habitat = state.backlog.find((it) => it.category === 'enclosure')!;
+    return render(React.createElement(MemoryRouter, null,
+      React.createElement(ParkOptions as never, {
+        state, item: habitat, api: { onDesign: noop, onInside: noop, onTurn: noop, onUnplace: noop },
+      }))).container;
+  };
+
+  it('says its name and nothing else', async () => {
+    const container = await strip();
+    const buttons = [...container.querySelectorAll('[data-part^="group-"]')];
+    expect(buttons.length, 'no buttons to hover').toBeGreaterThan(3);
+    for (const b of buttons) {
+      // The pen is the exception: a mode with nothing on screen for it once the menu is shut.
+      if (b.getAttribute('data-drawing') === 'yes') continue;
+      expect(b.getAttribute('title'), `${b.getAttribute('aria-label')} says more than its name`)
+        .toBe(b.getAttribute('aria-label'));
+    }
+  });
+
+  it('leaves the lit dot to say the lit part, and says it where a tooltip cannot reach', async () => {
+    const container = await strip();
+    const lit = [...container.querySelectorAll('[data-part^="group-"][data-lit="yes"]')];
+    expect(lit.length, 'nothing on this strip is lit, so there is nothing to check').toBeGreaterThan(0);
+    for (const b of lit) {
+      expect(b.getAttribute('title'), 'the tooltip repeats the dot').not.toMatch(/would finish/i);
+      const describedBy = b.getAttribute('aria-describedby');
+      expect(describedBy, 'a lit button describes itself to nobody').toBeTruthy();
+      const said = container.querySelector(`#${CSS.escape(describedBy!)}`)?.textContent ?? '';
+      expect(said, 'the description does not say what being lit means').toMatch(/would finish this item/i);
+    }
+    // ...and an unlit one points at nothing, rather than at an empty description.
+    for (const b of container.querySelectorAll('[data-part^="group-"][data-lit="no"]')) {
+      expect(b.getAttribute('aria-describedby'), 'an unlit button still describes itself as lit')
+        .toBeNull();
+    }
+  });
+});
+
 describe('the strip is one row', () => {
   // This is the fault the icons were for, and it has been fixed twice before by trading the park's
   // space for it: "it does not look good, it reduces the size of the studio work area."

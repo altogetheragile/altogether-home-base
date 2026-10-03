@@ -20,7 +20,17 @@ import { colors } from '@/theme/colors';
 // `brandColoursComeFromTokens.test.ts` is for, and a rebrand should move the Product Owner with it.
 // Plum, teal and coral are the board's own language rather than the brand's, and are written here.
 
-/** Several people in one role are a stack, told apart by shade - the board's rule 3. Front first. */
+/** The shades the board's Developers icon is built from - three figures offset up and to the right,
+ *  told apart by shade only, the front one lightest. The board's rule 3.
+ *
+ *  That rule is about a STACK: several people compressed into one figure, where shade is the only
+ *  thing left to say there is more than one of them. It is not about a list of people. Where the
+ *  game lists Ada, Ben and Cara by name, their names tell them apart and three teals say nothing a
+ *  reader needs - "A, B, C on dev's is not needed and they should be the same colours, not
+ *  different shades."
+ *
+ *  So this is the board's artwork, checked against the board's artwork, and nothing draws a person
+ *  from it. A person who is a Developer is `SEAT.developers.hex`, like every other Developer. */
 export const DEV_STACK = ['#0E8C8C', '#0A6D6D', '#095454'] as const;
 
 export const SEAT = {
@@ -38,10 +48,10 @@ export const SEAT = {
     text: 'text-[#7B2D7B] dark:text-[#C79BC7]',
   },
   developers: {
+    /** Every Developer, as a person and as a role. There was a time when a person took their own
+     *  shade of the stack and this was only for the role; the shades said nothing beside a name,
+     *  so they went, and the two are one colour again. */
     hex: DEV_STACK[0],
-    /** The Developers AS A ROLE - a legend, a heading, a key. For a PERSON use `devChip(i)`:
-     *  three people in one flat colour is the thing this file exists to stop, and reaching for
-     *  this by mistake has now caused it three times. */
     groupChip: 'bg-[#0E8C8C] text-white',
     soft: 'bg-[#0E8C8C]/15 text-[#0E8C8C] dark:text-[#5CC8C8]',
     text: 'text-[#0E8C8C] dark:text-[#5CC8C8]',
@@ -54,13 +64,7 @@ export const SEAT = {
   },
 } as const;
 
-/** Which of the stack this Developer is. Position, not identity: the front one is the lightest, and
- *  a fourth Developer starts round again rather than inventing a colour the board does not have. */
-export const devShade = (i: number) => DEV_STACK[Math.max(0, i) % DEV_STACK.length];
-
-/** One Developer's badge. A style rather than a class: the shade depends on which of them this is,
- *  and a class name has to exist before it can be used.
- *
- *  For a badge standing for the Developers as a GROUP - a seat band, a legend - use
- *  `SEAT.developers.groupChip` instead. The stack tells people apart, not roles. */
-export const devChip = (i: number) => ({ backgroundColor: devShade(i), color: '#fff' });
+// `devShade(i)` and `devChip(i)` used to live here - one shade of the stack per Developer, so that
+// Ada, Ben and Cara were never drawn as one person. Four screens called them. They are gone, and
+// nothing replaced them: a Developer is `SEAT.developers.hex`, and what tells them apart is their
+// name, which is written next to every one of them.

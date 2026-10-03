@@ -10,8 +10,13 @@ import {
 export function Person({ hex, initials, className, style, title }: {
   /** The colour this person is. An accountability's own, or a Developer's shade of the stack. */
   hex: string;
-  /** What is written on them. Two letters on the board; the game writes one for a named Developer. */
-  initials: string;
+  /** What is written on them, if anything. The board writes two letters on its three people
+   *  because the icon is all there is - nothing on the diagram says "Product Owner" beside it.
+   *
+   *  A Developer in the game is listed by name, so a letter on their chest is the first letter of
+   *  the word already next to it: "A, B, C on dev's is not needed." Left out, the figure is drawn
+   *  without it. */
+  initials?: string;
   className?: string;
   /** For a caller that sizes in numbers rather than classes - see `personSize`. */
   style?: React.CSSProperties;
@@ -25,10 +30,12 @@ export function Person({ hex, initials, className, style, title }: {
       <g transform={PERSON_SHIFT}>
         <circle cx={PERSON_HEAD.cx} cy={PERSON_HEAD.cy} r={PERSON_HEAD.r} fill={hex} />
         <path d={PERSON_BODY} fill={hex} />
-        <text x={PERSON_LABEL.x} y={PERSON_LABEL.y} textAnchor="middle"
-          fontSize={PERSON_LABEL.fontSize} fontWeight={PERSON_LABEL.fontWeight} fill="#fff">
-          {initials}
-        </text>
+        {initials && (
+          <text x={PERSON_LABEL.x} y={PERSON_LABEL.y} textAnchor="middle"
+            fontSize={PERSON_LABEL.fontSize} fontWeight={PERSON_LABEL.fontWeight} fill="#fff">
+            {initials}
+          </text>
+        )}
       </g>
     </svg>
   );

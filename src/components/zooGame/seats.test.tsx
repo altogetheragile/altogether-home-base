@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { colors } from '@/theme/colors';
-import { SEAT, DEV_STACK, devShade } from './seats';
+import { SEAT, DEV_STACK } from './seats';
 import { BOARD_ICONS } from './board/boardIcons';
 
 // One colour per accountability, and the same one the board uses.
@@ -40,76 +40,104 @@ describe('the four accountabilities', () => {
 });
 
 describe('several Developers', () => {
-  it('are one colour in three shades, not three colours', () => {
-    // The board's rule 3: told apart by shade only.
+  it('are one colour in three shades on the board, not three colours', () => {
+    // The board's rule 3, which is about the STACK - several people drawn as one figure, told apart
+    // by shade because nothing else is left. Still true of the board's icon; no longer true of how
+    // the game draws a person, which is `SEAT.developers.hex` for all of them.
     expect(DEV_STACK.length).toBeGreaterThan(2);
     for (const hex of DEV_STACK) expect(hex, `${hex} is not a teal`).toMatch(/^#0[0-9A-F]/i);
-    expect(devShade(0), 'the one at the front is not the lightest').toBe(DEV_STACK[0]);
+    expect(DEV_STACK[0], 'the one at the front is not the colour a Developer is drawn in')
+      .toBe(SEAT.developers.hex);
   });
 
-  it('start the stack again rather than inventing a colour', () => {
-    expect(devShade(DEV_STACK.length)).toBe(DEV_STACK[0]);
-    expect(devShade(-1), 'a missing Developer picks something off the end of the list').toBe(DEV_STACK[0]);
+  it('are the stack the board actually drew', () => {
+    const stack = BOARD_ICONS.developers.inner;
+    for (const hex of DEV_STACK) {
+      expect(stack, `the board's Developers icon has no ${hex} in it`).toContain(`fill="${hex}"`);
+    }
   });
 });
 
 describe('three Developers on a screen', () => {
-  // The first version of this file tested the PALETTE and passed while two screens drew all three
-  // Developers in one flat teal. Caught by reading the colours off the live page rather than
-  // trusting a screenshot: A, B and C all came back rgb(14, 140, 140).
+  // For a while they were three shades of the stack, one each, so that Ada, Ben and Cara were never
+  // drawn as one person. That was the wrong reading of the board's rule 3, which is about a STACK -
+  // several people compressed into one figure, where shade is the only thing left to say there is
+  // more than one. A list of people is not a stack. Every one of them has their name written beside
+  // them, and three teals on top of that said nothing a reader needed: "they should be the same
+  // colours - not different shades."
   //
-  // So this asks the screens, not the tokens.
-  const meetTheTeam = async () => {
+  // So this asks the opposite question now, and asks it of the screens rather than the tokens - the
+  // first version of this file tested the PALETTE and passed while two screens disagreed with it.
+  const screen = async (name: 'band' | 'team') => {
     const { render } = await import('@testing-library/react');
     const { MemoryRouter } = await import('react-router-dom');
     const { initialZooState } = await import('./config');
     const { startOnTheBoard } = await import('./engine');
-    const { MeetTheTeam } = await import('./MeetTheTeam');
     const state = startOnTheBoard(initialZooState(1) as never);
-    return render(<MemoryRouter><MeetTheTeam state={state} onNext={() => {}} /></MemoryRouter>).container;
+    if (name === 'team') {
+      const { MeetTheTeam } = await import('./MeetTheTeam');
+      return render(<MemoryRouter><MeetTheTeam state={state} onNext={() => {}} /></MemoryRouter>).container;
+    }
+    const { SeatBand } = await import('./SeatBand');
+    return render(<MemoryRouter><SeatBand state={state} /></MemoryRouter>).container;
   };
 
   /** Every colour a person on this screen is actually drawn in, as lowercase hex.
    *
-   *  This used to read inline `background-color`, because a person was a coloured disc with a
-   *  letter in it. They are the board's person now - an <svg> whose head and shoulders carry a
-   *  `fill` - so it reads both, and a screen that went back to discs is still checked. */
+   *  Reads inline `background-color` as well as an svg `fill`: a person is the board's figure now,
+   *  but was a coloured disc, and a screen that went back to discs should still be checked. */
   const hex = (v: string): string => {
     const rgb = v.match(/rgb\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
     if (rgb) return `#${rgb.slice(1).map((n) => (+n).toString(16).padStart(2, '0')).join('')}`;
     return /^#[0-9a-f]{6}$/i.test(v.trim()) ? v.trim().toLowerCase() : '';
   };
-  const shades = (c: HTMLElement) => [
+  const colours = (c: HTMLElement) => [
     ...[...c.querySelectorAll<HTMLElement>('[style*="background-color"]')].map((n) => n.style.backgroundColor),
     ...[...c.querySelectorAll('svg [fill]')].map((n) => n.getAttribute('fill') ?? ''),
   ].map(hex).filter(Boolean);
-  /** ...narrowed to the ones that are a Developer. The other people on these screens are the
-   *  Product Owner and the Scrum Master, and they are supposed to be one colour each. */
-  const devShades = (c: HTMLElement) => {
+  /** The teals on the screen: every Developer, and nothing else. The other two people are orange
+   *  and plum. */
+  const devTeals = (c: HTMLElement) => {
     const stack = DEV_STACK.map((s) => s.toLowerCase());
-    return shades(c).filter((v) => stack.includes(v));
+    return colours(c).filter((v) => stack.includes(v));
   };
 
-  it('are told apart on the seat band, which is where this was spotted', async () => {
-    // "Should I see different icons, or?" - with a screenshot of Ada, Ben and Cara in one teal.
-    // The band was left on the role's flat colour because it looked like a list of ACCOUNTABILITIES.
-    // It is a list of people: three names, three initials, one line each.
-    const { render } = await import('@testing-library/react');
-    const { MemoryRouter } = await import('react-router-dom');
-    const { initialZooState } = await import('./config');
-    const { startOnTheBoard } = await import('./engine');
-    const { SeatBand } = await import('./SeatBand');
-    const state = startOnTheBoard(initialZooState(1) as never);
-    const c = render(<MemoryRouter><SeatBand state={state} /></MemoryRouter>).container;
-    const devs = devShades(c);
-    expect(devs.length, 'no Developer on the band carries a shade').toBeGreaterThan(2);
-    expect(new Set(devs).size, `the band draws them all in one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
+  for (const where of ['band', 'team'] as const) {
+    it(`draws every Developer the same colour on the ${where === 'band' ? 'seat band' : 'Meet the Team cards'}`, async () => {
+      const devs = devTeals(await screen(where));
+      expect(devs.length, 'no Developer is drawn in a teal at all').toBeGreaterThan(2);
+      expect(new Set(devs).size, `the Developers are drawn in ${new Set(devs).size} colours: ${[...new Set(devs)].join(', ')}`)
+        .toBe(1);
+      expect([...new Set(devs)][0], 'the Developers are not the colour seats.ts says they are')
+        .toBe(SEAT.developers.hex.toLowerCase());
+    });
+  }
+
+  it('leaves the back shades of the stack to the board', async () => {
+    // The two darker teals are the board's artwork for several-people-as-one-figure. Nothing in the
+    // game should be painting a person with them.
+    const back = DEV_STACK.slice(1).map((s) => s.toLowerCase());
+    for (const where of ['band', 'team'] as const) {
+      const used = colours(await screen(where));
+      for (const shade of back) {
+        expect(used, `${shade} is on a person on the ${where}, which is a stack shade`)
+          .not.toContain(shade);
+      }
+    }
   });
 
-  it('are told apart on Meet the Team', async () => {
-    const devs = devShades(await meetTheTeam());
-    expect(devs.length, 'no Developer carries a shade of their own').toBeGreaterThan(2);
-    expect(new Set(devs).size, `all the Developers are one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
+  it('writes no letter on a Developer where their name is beside them', async () => {
+    // "A, B, C on dev's is not needed." A is the first letter of Ada, which is the word next to it.
+    for (const where of ['band', 'team'] as const) {
+      const c = await screen(where);
+      const teal = SEAT.developers.hex.toLowerCase();
+      const figures = [...c.querySelectorAll('svg')]
+        .filter((s) => [...s.querySelectorAll('[fill]')].some((n) => hex(n.getAttribute('fill') ?? '') === teal));
+      expect(figures.length, `no Developer figure found on the ${where}`).toBeGreaterThan(2);
+      for (const f of figures) {
+        expect(f.querySelector('text'), `a Developer on the ${where} is wearing a letter`).toBeNull();
+      }
+    }
   });
 });
 
