@@ -9,13 +9,14 @@ import {
   type ItemDesign,
 } from './design';
 import { groupsFor, openCriteria, wouldSettle, labelOf, iconOf, type GroupDef, type GroupId } from './buildGroups';
-import { inspect } from './parkChecks';
+import { inspect, ACCEPTANCE_CRITERIA } from './parkChecks';
 import { structuresFor } from './toolboxItems';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { DodList } from './Board';
 import { ToolIcon } from './ToolIcon';
+import { AcceptanceCriteriaIcon } from './AcceptanceCriteriaIcon';
 import { TOOLBAR_ICONS, type ToolbarIcon as Drawing } from './toolbarIcons';
 import { BOARD } from './board/BoardIcon';
 import { BOARD_ICONS } from './board/boardIcons';
@@ -775,10 +776,36 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 "every fact is in", which is a different thing and sat on the chip beside a button
                 asking her to come and look - a finished tick over an unanswered question. */}
             {how.accepted && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />}
-            <span className="truncate font-bold">{inside ? `Inside ${inside.name}` : subject.name}</span>
+            {/* The mark for acceptance criteria, at the head of the button rather than inline in
+                the small print under the name: at the eleven pixels that line would give it, the
+                clipboard, the person and the check are one grey smudge. Here it has room, and it
+                marks the whole button as the one that opens them. */}
             {how.criteria.length > 0 && (
-              <span className="shrink-0 tabular-nums text-muted-foreground">{how.count}</span>
+              <AcceptanceCriteriaIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
             )}
+            {/* The name, and under it what the count is a count OF.
+                It used to be the name and a bare "0 of 5" beside it, and nothing said what the five
+                were - the panel it opens is headed "Acceptance criteria · 0 of 5" and the button
+                that opens it said neither word. Asked of it directly: "can we call this acceptance
+                criteria - it is not clear what is behind it."
+                Stacked rather than strung out, which is what the seat band does with a person's
+                name and what they are doing. On one line "acceptance criteria" is a hundred pixels
+                taken off the item's own name; on a line of its own it costs the chip nothing it was
+                not already spending on the count and the ask. */}
+            {/* `text-left` because a <button> centres its text, and two stacked lines of different
+                lengths centred over each other read as a label rather than as a name with a note
+                under it. */}
+            <span className="flex min-w-0 flex-col items-start text-left leading-tight">
+              <span className="w-full truncate font-bold">{inside ? `Inside ${inside.name}` : subject.name}</span>
+              {how.criteria.length > 0 && (
+                <span data-part="pbi-criteria"
+                  className="w-full truncate text-[10px] font-normal text-muted-foreground">
+                  {/* The same words as the heading of the panel this opens, so pressing it lands
+                      somewhere that says what you just pressed. */}
+                  {ACCEPTANCE_CRITERIA} <span className="tabular-nums">&middot; {how.count}</span>
+                </span>
+              )}
+            </span>
             {/* The room for this is kept whether or not it is wanted.
                 It appears the moment the Product Owner becomes the only thing between this item and
                 Done, and it is sixty pixels wide - enough, on a row that wrapped, to move where it
