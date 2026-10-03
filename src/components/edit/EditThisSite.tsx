@@ -36,6 +36,11 @@ export function EditThisSite() {
   // Stable, so the drawer can depend on it without reloading itself on every render.
   const host: EditorHost = useMemo(() => ({
     pathname,
+    // The games pin their own action bar bottom-right - "End Day", "Start Sprint 2" - and the
+    // launcher is fixed above everything, so it covered the one button the screen was asking
+    // somebody to press. Reported from playing it. Only this app knows which of its pages have a
+    // bar of their own, so it says so here rather than the drawer guessing.
+    launcher: /^\/(zoo-game|flow-game|scrum-game)/.test(pathname) ? 'clear-of-a-bottom-bar' as const : undefined,
     // No server render to revalidate here; the pages read through react-query, so clearing it is
     // the equivalent of Next's refresh.
     refresh: () => { void queryClient.invalidateQueries(); },
