@@ -777,11 +777,13 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 asking her to come and look - a finished tick over an unanswered question. */}
             {how.accepted && <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />}
             {/* The mark for acceptance criteria, at the head of the button rather than inline in
-                the small print under the name: at the eleven pixels that line would give it, the
-                clipboard, the person and the check are one grey smudge. Here it has room, and it
-                marks the whole button as the one that opens them. */}
+                the small print under the name. Inline it would be eleven pixels, and the clipboard
+                and the check stop being two things at about fourteen. Here it has room, and it
+                marks the whole button as the one that opens them rather than one line of it.
+                Eighteen rather than sixteen or twenty: sixteen sits small against two lines of
+                text and twenty starts to lead them. Chosen by rendering all three. */}
             {how.criteria.length > 0 && (
-              <AcceptanceCriteriaIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <AcceptanceCriteriaIcon className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
             )}
             {/* The name, and under it what the count is a count OF.
                 It used to be the name and a bare "0 of 5" beside it, and nothing said what the five
