@@ -129,6 +129,9 @@ export interface SeatLine {
   name: string;
   initials: string;
   role: 'product_owner' | 'scrum_master' | 'developer';
+  /** Which of the Developers, for the shade of the stack they wear. Absent for the two seats there
+   *  is only ever one of. */
+  devIndex?: number;
   doing: string;
   /** In the room for what is happening on this screen. */
   present: boolean;
@@ -175,9 +178,11 @@ export function seatLines(state: ZooGameState): SeatLine[] {
       role: 'product_owner', doing: poDoing(), present: !scrum },
     { id: state.team.scrumMaster.id, name: plain(state.team.scrumMaster.name), initials: 'SM',
       role: 'scrum_master', doing: smDoing(), present: !scrum },
-    ...state.team.developers.map((d) => ({
+    ...state.team.developers.map((d, i) => ({
       id: d.id, name: plain(d.name), initials: plain(d.name).slice(0, 1).toUpperCase(),
-      role: 'developer' as const, doing: devDoing(d.id), present: true,
+      // Which of the Developers this is, so a band of them can be shaded the way the board shades
+      // a stack. Position, not identity - the first Developer is the front of the stack.
+      role: 'developer' as const, devIndex: i, doing: devDoing(d.id), present: true,
     })),
   ];
 }

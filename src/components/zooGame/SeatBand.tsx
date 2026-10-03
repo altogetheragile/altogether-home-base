@@ -4,7 +4,7 @@ import { seatLines, whoDoesWhatNow } from './header';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { cn } from '@/lib/utils';
-import { SEAT } from './seats';
+import { SEAT, devChip } from './seats';
 
 // The band: one sentence on who does what now, and the five people with what each is doing.
 //
@@ -13,10 +13,12 @@ import { SEAT } from './seats';
 // without the game ever saying that was the problem. This row says it continuously: who is doing
 // what, right now, and who is not in the room for what is on the screen.
 
+// The two seats there is only ever one of. The Developers are not here: this band lists them one
+// by one, with their own names and initials, so each takes their own shade of the stack rather than
+// the role's flat colour. Ada, Ben and Cara in one teal is three people drawn as one person.
 const ROLE_COLOR: Record<string, string> = {
   product_owner: 'bg-primary text-primary-foreground',
   scrum_master: SEAT.scrumMaster.chip,
-  developer: SEAT.developers.chip,
 };
 
 /** Which seat on the band is the one this player holds. A solo player holds all three
@@ -90,7 +92,8 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
                 cover && !absent && 'border-2 border-dashed border-primary/60',
                 absent && 'border-2 border-dashed border-amber-400/70 bg-amber-500/[0.04]',
                 !s.present && 'opacity-40')}>
-              <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', ROLE_COLOR[s.role])}>
+              <span style={s.devIndex === undefined ? undefined : devChip(s.devIndex)}
+                className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold', ROLE_COLOR[s.role])}>
                 {s.initials}
               </span>
               <span className="min-w-0 leading-tight">
