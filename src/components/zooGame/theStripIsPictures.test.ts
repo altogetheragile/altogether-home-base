@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { GROUPS, groupsFor } from './buildGroups';
+import { GROUPS, groupsFor, labelOf, iconOf } from './buildGroups';
 import { TOOLBAR_ICONS } from './toolbarIcons';
 import { initialZooState } from './config';
 import { LANDSCAPE_TYPES } from './design';
@@ -20,44 +20,69 @@ import type { BacklogItem } from './types';
 
 const ROOT = resolve(__dirname, '../../..');
 
+// Every button the game can ever put on the strip: each group, over each thing that offers it,
+// with the word and the picture it would actually wear. Some groups are called one thing over a
+// habitat and another over a lion, and the drawing follows the word, so neither can be checked on
+// its own.
+const seeded = initialZooState(3).backlog;
+const landscape = seeded.find((it) => it.category === 'flora'
+  && LANDSCAPE_TYPES.includes(it.template ?? ''));
+const everything: BacklogItem[] = [...seeded, ...(landscape ? [] : [
+  { ...seeded.find((it) => it.category === 'flora')!, template: LANDSCAPE_TYPES[0] },
+])];
+const everyButton = () => everything.flatMap((item) => groupsFor(item)
+  .map((g) => ({ item, group: g, label: labelOf(g, item), icon: iconOf(g, item) })));
+
 describe('one drawing per name', () => {
-  it('gives groups that share a name the same drawing', () => {
+  it('gives the same name the same drawing wherever it appears', () => {
+    // Not just groups that share a `label`: the first decision is Structure over a habitat, Species
+    // over an animal and Planting over a plant, so the word a button wears is not the word in the
+    // registry. A house drawn over "Species" is the picture saying one thing and the word another.
     const byName = new Map<string, Set<string>>();
-    for (const g of GROUPS) {
-      if (!byName.has(g.label)) byName.set(g.label, new Set());
-      byName.get(g.label)!.add(g.icon);
+    for (const b of [...GROUPS.map((g) => ({ label: g.label, icon: g.icon })), ...everyButton()]) {
+      if (!byName.has(b.label)) byName.set(b.label, new Set());
+      byName.get(b.label)!.add(b.icon);
     }
+    expect(byName.size, 'no names to check').toBeGreaterThan(10);
     for (const [label, icons] of byName) {
       expect([...icons], `"${label}" is drawn ${icons.size} different ways`).toHaveLength(1);
     }
   });
 
-  it('draws every group, and draws nothing nobody asked for', () => {
+  it('draws every button, and draws nothing nobody asked for', () => {
+    const used = new Set<string>();
     for (const g of GROUPS) {
       expect(Object.keys(TOOLBAR_ICONS), `${g.id} points at a drawing that is not in the set`)
         .toContain(g.icon);
+      used.add(g.icon);
     }
-    const used = new Set(GROUPS.map((g) => g.icon));
+    for (const b of everyButton()) {
+      expect(Object.keys(TOOLBAR_ICONS), `${b.group.id} over ${b.item.category} points at a drawing that is not in the set`)
+        .toContain(b.icon);
+      used.add(b.icon);
+    }
     for (const name of Object.keys(TOOLBAR_ICONS)) {
-      expect(used.has(name as never), `${name}.svg is in docs/zoo-toolbar but on no button`).toBe(true);
+      expect(used.has(name), `${name}.svg is in docs/zoo-toolbar but on no button`).toBe(true);
     }
+  });
+
+  it('names the first decision after the thing being built', () => {
+    // The pair this was all for. Checked by name rather than by group id, because what makes it
+    // right is that the word and the picture agree.
+    const first = (category: string) => everyButton()
+      .find((b) => b.item.category === category && b.group.id === 'structure');
+    expect(first('enclosure')).toMatchObject({ label: 'Structure', icon: 'structure' });
+    expect(first('exhibit')).toMatchObject({ label: 'Species', icon: 'species' });
+    expect(first('flora')).toMatchObject({ label: 'Planting', icon: 'planting' });
+    expect(first('amenity')).toMatchObject({ label: 'Structure', icon: 'structure' });
   });
 });
 
 describe('no object shows the same picture twice', () => {
-  // Every item the game seeds, plus a piece of landscape - which is the one kind whose controls
-  // change with what it is, because a river is not grown and has no copies.
-  const seeded = initialZooState(3).backlog;
-  const landscape = seeded.find((it) => it.category === 'flora'
-    && LANDSCAPE_TYPES.includes(it.template ?? ''));
-  const everything: BacklogItem[] = [...seeded, ...(landscape ? [] : [
-    { ...seeded.find((it) => it.category === 'flora')!, template: LANDSCAPE_TYPES[0] },
-  ])];
-
   it('offers each of them a strip of distinct buttons', () => {
     expect(everything.length, 'nothing to check').toBeGreaterThan(3);
     for (const item of everything) {
-      const icons = groupsFor(item).map((g) => g.icon);
+      const icons = groupsFor(item).map((g) => iconOf(g, item));
       const twice = icons.filter((n, i) => icons.indexOf(n) !== i);
       expect(twice, `${item.name} (${item.category}) shows ${twice.join(', ')} twice`).toEqual([]);
     }
@@ -100,6 +125,50 @@ describe('the drawings themselves', () => {
       expect(icon.inner, `${name} is drawn in nothing`).toMatch(/currentColor/);
       expect(icon.box, `${name} is not drawn in a 24-square box`).toBe('0 0 24 24');
     }
+  });
+});
+
+describe('the strip draws what the registry says', () => {
+  // Everything above checks the registry. None of it would notice the strip reading `g.icon` and
+  // ignoring `iconOf`, which is the whole of what makes the first button a lion over a lion - so
+  // this one looks at the markup that actually reached the button.
+  const strip = async (category: string) => {
+    const { render } = await import('@testing-library/react');
+    const { MemoryRouter } = await import('react-router-dom');
+    const { ParkOptions } = await import('./ParkOptions');
+    const React = await import('react');
+    const noop = () => {};
+    const state = { ...initialZooState(3), phase: 'sprint', dayStage: 'building', sprintNumber: 1 };
+    const item = state.backlog.find((it) => it.category === category)!;
+    const { container } = render(React.createElement(MemoryRouter, null,
+      React.createElement(ParkOptions as never, {
+        state, item, api: { onDesign: noop, onInside: noop, onTurn: noop, onUnplace: noop },
+      })));
+    return container;
+  };
+  // The DOM writes `<path></path>` where the file writes `<path/>`. Same drawing, different
+  // spelling, so both are flattened before they are compared.
+  const shapes = (markup: string) => markup.replace(/\s*\/>/g, '>').replace(/<\/[a-z]+>/g, '');
+  const drawnOn = (container: Element, id: string) =>
+    shapes(container.querySelector(`[data-part="group-${id}"] svg`)?.innerHTML ?? '');
+
+  it('puts the lion on the lion and the house on the habitat', async () => {
+    for (const [category, icon] of [
+      ['exhibit', 'species'], ['flora', 'planting'],
+      ['enclosure', 'structure'], ['amenity', 'structure'],
+    ] as const) {
+      const container = await strip(category);
+      const button = container.querySelector('[data-part="group-structure"]');
+      expect(button, `a ${category} has no first decision on its strip`).toBeTruthy();
+      expect(drawnOn(container, 'structure'), `a ${category} is not drawn as ${icon}`)
+        .toBe(shapes(TOOLBAR_ICONS[icon].inner));
+    }
+  });
+
+  it('names the button what it draws', async () => {
+    const container = await strip('exhibit');
+    expect(container.querySelector('[data-part="group-structure"]')?.getAttribute('aria-label'))
+      .toBe('Species');
   });
 });
 
