@@ -43,6 +43,15 @@ export type EditorHost = {
    *  edits the menu and the footer but does not render them, so it leaves this out and the drawer
    *  offers no preview there rather than a preview of nothing. */
   preview?: { on: boolean; set: (on: boolean) => void };
+  /** Where to put the launcher, for a page that has something of its own in the bottom-right.
+   *
+   *  The games keep their own action bar pinned there - "End Day", "Start Sprint 2" - and the
+   *  launcher is fixed above everything, so it sat on top of the one button the screen was asking
+   *  somebody to press. Reported from playing it: "The Edit this Page button blocks the game
+   *  buttons bottom right."
+   *
+   *  Only the app rendering the page knows it has a bar, so it says so rather than this guessing. */
+  launcher?: 'bottom-right' | 'clear-of-a-bottom-bar';
   /** Open on arrival, at this tab. Set from the URL, so something elsewhere can send somebody
    *  straight to the right box rather than to the right page and a hunt. */
   openAt?: string | null;
@@ -420,7 +429,11 @@ export function EditDrawer({ host }: { host: EditorHost }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-medium text-background shadow-lg transition-transform hover:scale-105"
+        data-part="edit-this-page"
+        // Out of the way of a page that has its own bar down there: up the left-hand side, where
+        // nothing in these games lives, rather than hovering over whatever is pinned bottom-right.
+        className={`fixed z-[60] flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-medium text-background shadow-lg transition-transform hover:scale-105 ${
+          host.launcher === 'clear-of-a-bottom-bar' ? 'bottom-6 left-6' : 'bottom-6 right-6'}`}
       >
         <Pencil size={16} /> Edit This Page
       </button>
