@@ -39,7 +39,10 @@ export const SEAT = {
   },
   developers: {
     hex: DEV_STACK[0],
-    chip: 'bg-[#0E8C8C] text-white',
+    /** The Developers AS A ROLE - a legend, a heading, a key. For a PERSON use `devChip(i)`:
+     *  three people in one flat colour is the thing this file exists to stop, and reaching for
+     *  this by mistake has now caused it three times. */
+    groupChip: 'bg-[#0E8C8C] text-white',
     soft: 'bg-[#0E8C8C]/15 text-[#0E8C8C] dark:text-[#5CC8C8]',
     text: 'text-[#0E8C8C] dark:text-[#5CC8C8]',
   },
@@ -59,5 +62,5 @@ export const devShade = (i: number) => DEV_STACK[Math.max(0, i) % DEV_STACK.leng
  *  and a class name has to exist before it can be used.
  *
  *  For a badge standing for the Developers as a GROUP - a seat band, a legend - use
- *  `SEAT.developers.chip` instead. The stack is for telling people apart, not roles. */
+ *  `SEAT.developers.groupChip` instead. The stack tells people apart, not roles. */
 export const devChip = (i: number) => ({ backgroundColor: devShade(i), color: '#fff' });

@@ -73,11 +73,38 @@ describe('three Developers on a screen', () => {
     .map((n) => n.style.backgroundColor)
     .filter((v) => /rgb\(\s*\d+/.test(v));
 
+  it('are told apart on the seat band, which is where this was spotted', async () => {
+    // "Should I see different icons, or?" - with a screenshot of Ada, Ben and Cara in one teal.
+    // The band was left on the role's flat colour because it looked like a list of ACCOUNTABILITIES.
+    // It is a list of people: three names, three initials, one line each.
+    const { render } = await import('@testing-library/react');
+    const { MemoryRouter } = await import('react-router-dom');
+    const { initialZooState } = await import('./config');
+    const { startOnTheBoard } = await import('./engine');
+    const { SeatBand } = await import('./SeatBand');
+    const state = startOnTheBoard(initialZooState(1) as never);
+    const c = render(<MemoryRouter><SeatBand state={state} /></MemoryRouter>).container;
+    const devs = shades(c);
+    expect(devs.length, 'no Developer on the band carries a shade').toBeGreaterThan(2);
+    expect(new Set(devs).size, `the band draws them all in one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
+  });
+
   it('are told apart on Meet the Team', async () => {
     const found = shades(await meetTheTeam());
     const devs = found.filter((v) => /rgb\((9|10|14|5),/.test(v.replace(/\s/g, '')) || /14, 140, 140|10, 109, 109|9, 84, 84/.test(v));
     expect(devs.length, 'no Developer carries a shade of their own').toBeGreaterThan(2);
     expect(new Set(devs).size, `all the Developers are one colour: ${devs.join(', ')}`).toBeGreaterThan(1);
+  });
+});
+
+describe('the role colour and the person colour', () => {
+  // Three screens have now drawn three people in one flat teal, each time by reaching for the
+  // Developers' ROLE colour because it was the obvious thing called `chip`. It is called
+  // `groupChip` now, and nothing may use it where a person is being drawn.
+  it('are not the same thing, and the names say so', () => {
+    expect('chip' in SEAT.developers, 'the trap is back: a name that reads right for a person')
+      .toBe(false);
+    expect(SEAT.developers.groupChip, 'the Developers have no colour as a role').toBeTruthy();
   });
 });
 
