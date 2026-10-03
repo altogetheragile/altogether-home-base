@@ -14,6 +14,7 @@ import { structuresFor } from './toolboxItems';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
+import { DodList } from './Board';
 
 // ============= The build strip =============
 //
@@ -67,7 +68,9 @@ function Row({ label, part, children }: { label: string; part?: string; children
  *  a colour change on the button: a row of buttons that change colour is a row where nothing stands
  *  out, and the dot is the only thing on the strip moving. */
 function Menu({ group, label, lit, busy, open, onOpenChange, onClosed, children }: {
-  group: GroupDef; label: string; lit: boolean;
+  /** Only the id is read, so a menu that is not a build group can use this too: the Definition of
+   *  Done writes nothing, so it is not one. */
+  group: { id: string }; label: string; lit: boolean;
   /** Which menu is open is held by the strip, not by each menu: they are one row of one control, and
    *  three panels stacked over the park is three answers to "what am I doing". */
   open: boolean;
@@ -218,7 +221,9 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
   const [needsOnly, setNeedsOnly] = useState(true);
   // One menu at a time. Each used to hold its own, so opening a second left the first standing and
   // three could be stacked over the park at once.
-  const [openMenu, setOpenMenu] = useState<GroupId | null>(null);
+  // 'dod' is not a build group - it writes nothing - but it is one of the row's menus and only one
+  // of them may be open at a time, so it shares the state.
+  const [openMenu, setOpenMenu] = useState<GroupId | 'dod' | null>(null);
   const subject = inside ?? item;
   if (!subject) {
     return (
@@ -767,6 +772,31 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               {body(g.id, labelOf(g, subject))}
             </Menu>
           ))}
+          {/* The bar every item has to clear, on the screen where the building happens.
+              It was on the Increment tab and in the Learn drawer and nowhere here - so the game's
+              own strapline, "build to your Definition of Done", asked for something you could not
+              see while building. Reported as "I have no visibility of the DoD - where is it on the
+              screen?"
+              Read-only: agreeing it is the Scrum Team's act, and the Retrospective is where this
+              game has them do it. Kept apart from the item's acceptance criteria on purpose -
+              COURSE-AND-BOARD.md is explicit that merging the two is the mistake. The criteria
+              belong to this item; the Definition of Done belongs to every item. */}
+          <Menu group={{ id: 'dod' }} label="Definition of Done" lit={false}
+            open={openMenu === 'dod'} onOpenChange={(o) => setOpenMenu(o ? 'dod' : null)}>
+            <div data-part="dod-panel" className="space-y-1.5">
+              <div className={cn(EYEBROW, 'text-muted-foreground')}>
+                Definition of Done <span className="font-normal normal-case tracking-normal">· every item</span>
+              </div>
+              {/* The same list the card shows, not a second one. It already knows how to say a line
+                  the park measured, a line only the Scrum Team can judge, and the state this game
+                  starts every player in: nothing agreed at all. */}
+              <DodList state={state} item={subject} />
+              <p className="border-t border-border pt-1.5 text-[11px] leading-snug text-muted-foreground">
+                This is the bar every item clears. What {subject.name} has to show on top of it is on
+                its own card.
+              </p>
+            </div>
+          </Menu>
           </div>
           {/* The filter, at the end of the row where it does not compete with the work. */}
           <label data-part="needs-only" title="Show only the controls that would finish this item"
