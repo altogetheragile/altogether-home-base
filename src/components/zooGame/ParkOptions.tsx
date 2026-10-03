@@ -8,7 +8,7 @@ import {
   enclosureWater, enclosureFlora,
   type ItemDesign,
 } from './design';
-import { groupsFor, openCriteria, wouldSettle, isAbout, labelOf, type GroupDef, type GroupId } from './buildGroups';
+import { groupsFor, openCriteria, wouldSettle, labelOf, type GroupDef, type GroupId } from './buildGroups';
 import { inspect } from './parkChecks';
 import { structuresFor } from './toolboxItems';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -218,7 +218,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
 }) {
   // On by default. The strip opens showing the work rather than the styling, and the styling is one
   // press away - which is the right way round for a team with a Sprint Goal.
-  const [needsOnly, setNeedsOnly] = useState(true);
   // One menu at a time. Each used to hold its own, so opening a second left the first standing and
   // three could be stacked over the park at once.
   // 'dod' is not a build group - it writes nothing - but it is one of the row's menus and only one
@@ -243,16 +242,17 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
   const how = inspect(state, subject);
   const all = groupsFor(subject);
   const lit = (g: GroupDef) => wouldSettle(g, open, subject);
-  // With the filter on, the strip is the controls this item's criteria are ABOUT - met or not - and
-  // the dots say which of them are still outstanding. Filtering on "still open" instead would take
-  // a button away the moment it was used, which is how you lose the control you change your mind
-  // with. Filtering towards nothing empties the strip altogether, and an empty strip looks broken:
-  // a tree is asked nothing the park can check, and styling it is the entire point of one.
-  const about = (g: GroupDef) => isAbout(g, subject);
-  // Whether to filter at all is decided by the groups the item's CRITERIA are about. The first
-  // decision - what kind of thing to build - is about every item there is, so counting it here
-  // would filter an item whose criteria match nothing down to that one menu and hide the rest.
-  const shown = needsOnly && all.some((g) => !g.litFor && about(g)) ? all.filter(about) : all;
+  // Every control this thing has, always.
+  //
+  // There was a "Needs only" tick box that hid the ones the item's criteria were not about, on by
+  // default. Nobody asked for it - it arrived inside #645, a commit about making the strip one row -
+  // and it is the wrong shape for what this screen is: the Developers decide HOW, and a strip that
+  // quietly withholds half the hows is answering that for them. Asked while playing: "what is the
+  // 'Needs' check box? Who asked for that?"
+  //
+  // What it was for is already done better by the dots: a lit group is one that would finish this
+  // item. That points without hiding.
+  const shown = all;
 
   /** The controls for one part of the work. Each of these is what used to sit on the flat strip. */
   const body = (id: GroupId, menu: string) => {
@@ -695,9 +695,12 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
 
   return (
     <div data-part="park-options" data-for={subject.id} className={cn('flex flex-col gap-y-1', className)}>
-      {/* The item, and the filter. Both change width as the work goes on - the chip grows by sixty
-          pixels the moment "Ask Priya" appears on it - so they are kept out of the row the menus
-          wrap in. */}
+      {/* One row. It was two for a while - the menus kept apart from the item chip, because the
+          chip grows by sixty pixels the moment "Ask Priya" appears on it and that was enough to
+          move where the row wrapped and drop the menus a line.
+          That bought stability with the park's vertical space, which is a poor trade on the screen
+          the park is the point of: "It does not look good. It reduces the size of the studio work
+          area." The chip holds its width instead - see below - so one row is stable too. */}
       <div data-part="park-controls" className="flex min-h-[2.75rem] flex-wrap items-center gap-x-2 gap-y-2">
       {/* What is selected, how far off it is, and the one move left when it is not far off at all.
           The count used to be in three places: a pill under the object on the park, a pill floating
@@ -735,7 +738,19 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             {how.criteria.length > 0 && (
               <span className="shrink-0 tabular-nums text-muted-foreground">{how.count}</span>
             )}
-            {ask && <span className="shrink-0 font-semibold text-emerald-700 dark:text-emerald-400">Ask {how.po}</span>}
+            {/* The room for this is kept whether or not it is wanted.
+                It appears the moment the Product Owner becomes the only thing between this item and
+                Done, and it is sixty pixels wide - enough to move where the strip wraps and drop the
+                menus a line, out from under whichever one was open. That was fixed once by giving
+                the menus a row of their own, which cost the park a row of ITS own: "it reduces the
+                size of the studio work area."
+                Holding the width costs sixty pixels of chip instead of forty-four of park, and
+                nothing moves either way. When the toolbar is icons rather than words the whole row
+                is a third of its length and this can be looked at again. */}
+            <span aria-hidden={!ask}
+              className={cn('shrink-0 font-semibold text-emerald-700 dark:text-emerald-400', !ask && 'invisible')}>
+              Ask {how.po}
+            </span>
           </button>
         );
       })()}
@@ -758,7 +773,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               appears on it, which is enough to move where the row wraps and drop the menus a line -
               out from under whichever one was open. Reported while drawing a path: "the studio menu
               shifts down as the PO approval kicks in." */}
-          <div data-part="park-menus" className="flex w-full flex-wrap items-center gap-x-2 gap-y-2">
+          <div data-part="park-menus" className="contents">
           {shown.map((g) => (
             <Menu key={g.id} group={g} label={labelOf(g, subject)} lit={lit(g)}
               open={openMenu === g.id}
@@ -798,13 +813,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             </div>
           </Menu>
           </div>
-          {/* The filter, at the end of the row where it does not compete with the work. */}
-          <label data-part="needs-only" title="Show only the controls that would finish this item"
-            className={cn('ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground')}>
-            <input type="checkbox" className="h-3 w-3 accent-primary" checked={needsOnly}
-              onChange={(e) => setNeedsOnly(e.target.checked)} />
-            Needs only
-          </label>
         </>
       )}
       </div>
