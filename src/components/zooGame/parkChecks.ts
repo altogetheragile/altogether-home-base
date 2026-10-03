@@ -152,6 +152,17 @@ const offers = (need: 'food' | 'toilet' | 'rest', miss: string) =>
       ? `it offers ${item.services === 'food' ? 'food and drink' : item.services === 'toilet' ? 'toilets' : 'somewhere to sit'}, which is not what this asks for`
       : miss });
 
+/** What this item was asked for, by name.
+ *
+ *  Said in two places that have to agree: the heading of the panel the criteria are listed in, and
+ *  the button on the build strip that opens it. The button used to carry the count and not the
+ *  name - "Lion Enclosure  0 of 5" - and nothing on it said what the five were. Asked of it
+ *  directly: "can we call this acceptance criteria - it is not clear what is behind it."
+ *
+ *  So it is one string. Pressing the button lands on a heading using the same words, which is the
+ *  whole of what makes a button legible: it says where it goes. */
+export const ACCEPTANCE_CRITERIA = 'Acceptance criteria';
+
 export const CRITERIA: CriterionDef[] = [
   // ---- a habitat, answered while it is being built ----
   {
