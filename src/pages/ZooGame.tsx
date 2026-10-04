@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
 import { DOCK_GUTTER } from '@/components/zooGame/ActionBar';
 import { cn } from '@/lib/utils';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
+import type { ZooAction } from '@/components/zooGame/types';
 import { inHandItem, copyOffset } from '@/components/zooGame/engine';
 import { readyToAsk } from '@/components/zooGame/parkChecks';
 
@@ -39,6 +40,8 @@ import { BeforeYouStart, type StartTab } from '@/components/zooGame/BeforeYouSta
 import { RecordingChip } from '@/components/zooGame/RecordingChip';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 import { useZooCopy } from '@/components/zooGame/useZooCopy';
+import { useAiSeats } from '@/components/zooGame/useZooSession';
+import { SOLO_AI_SEATS } from '@/components/zooGame/aiSeats';
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
@@ -54,6 +57,22 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     away?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void }) {
+  // Priya and Sam, in a game played alone.
+  //
+  // The seats nobody is sitting in are played by the game - that is what makes one person a whole
+  // Scrum Team - and until now that only happened in a shared session. Alone, the player answered
+  // their own Developers' questions, accepted their own work and signed off their own criteria,
+  // which is three jobs and no argument.
+  //
+  // Which seats, and why those, is in `SOLO_AI_SEATS` - the Developers and the Scrum Master are
+  // both deliberately absent from it.
+  const aiSeats = useMemo(() => ({
+    state: game.state,
+    drivesClock: true,
+    sendAs: (_seat: SeatName, action: ZooAction) => game.send(action),
+  }), [game]);
+  useAiSeats(aiSeats, SOLO_AI_SEATS);
+
   const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
   const { saveGame, isSaving } = useZooGameSaves();
