@@ -39,16 +39,23 @@ describe('the rail', () => {
     expect(line.textContent).toMatch(/Building Lion Enclosure/);
   });
 
-  it('carries the Developers’ question, with the answers on the line', () => {
+  it('carries the Developers’ question, with the answers on the line - to whoever it belongs to', () => {
+    // Where a thing goes is the Product Owner's call. While the Sprint Backlog is being executed
+    // the player is a Developer, so it is hers and she is played by the game: the question is not
+    // put to the player at all. Hold her seat and it is yours again.
     const s = sprint({}, { design });
     const item = s.backlog.find((it) => it.started)!;
     const onAnswerPlacement = vi.fn();
     const asked = { ...s, pendingPlacement: { itemId: item.id, askedAt: 80 } } as unknown as ZooGameState;
-    const { container } = rail(asked, { onAnswerPlacement });
-    const line = container.querySelector('[data-part="action-rail"]')!;
-    expect(line.textContent, 'the question is not on the rail').toMatch(/Where should Lion Enclosure go/);
-    expect(line.textContent, 'the rail does not say whose call it is').toMatch(/Product Owner/i);
-    fireEvent.click(screen.getByRole('button', { name: 'You choose' }));
+
+    const alone = rail(asked, { onAnswerPlacement }).container;
+    expect(alone.textContent, 'a Developer was asked where the Product Owner wants it')
+      .not.toMatch(/Where should Lion Enclosure go/);
+
+    const asPo = rail(asked, { onAnswerPlacement, seat: 'product_owner' }).container;
+    expect(asPo.textContent, 'the question is not on the rail').toMatch(/Where should Lion Enclosure go/);
+    expect(asPo.textContent, 'the rail does not say whose call it is').toMatch(/Product Owner/i);
+    fireEvent.click(screen.getAllByRole('button', { name: 'You choose' })[0]);
     expect(onAnswerPlacement, 'the answer on the line did nothing').toHaveBeenCalledWith(item.id, 'them');
   });
 
@@ -79,7 +86,9 @@ describe('the rail', () => {
           tasks: [{ id: 't', label: 'Get the PO’s sign-off', done: true }] }
         : it))),
     } as unknown as ZooGameState;
-    const { container } = rail(both, { onAnswerPlacement: () => {}, onOpen: () => {} });
+    // Held as the Product Owner, so both of her decisions reach the rail and there are two to
+    // queue. A Developer is asked neither.
+    const { container } = rail(both, { onAnswerPlacement: () => {}, onOpen: () => {}, seat: 'product_owner' });
     expect(container.textContent, 'both were shown at once, which is a panel again').toMatch(/more/);
     const first = container.querySelector('[data-part="action-rail"]')!.textContent;
     fireEvent.click(screen.getByRole('button', { name: /more/ }));

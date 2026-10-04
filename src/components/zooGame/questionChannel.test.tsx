@@ -95,16 +95,36 @@ describe('a question with a clock on it', () => {
 });
 
 describe('the rail carries it', () => {
-  it('puts the question, its clock and its answers on the line', () => {
-    const onAnswerQuestion = vi.fn();
+  it('puts the question and its clock on the line, whoever it belongs to', () => {
+    // The clock is the lesson and it runs either way: the Developers are standing still while it
+    // is open, and past the threshold they answer it themselves. A player who cannot answer it
+    // still has to see it ticking - a question you cannot see teaches nothing.
     const asked = askIfDue(building());
     const later = { ...asked, daySecondsLeft: asked.daySecondsLeft - 9 } as ZooGameState;
     const { container } = render(
-      <MemoryRouter><ActionRail state={later} onAnswerQuestion={onAnswerQuestion} /></MemoryRouter>,
+      <MemoryRouter><ActionRail state={later} onAnswerQuestion={() => {}} /></MemoryRouter>,
     );
     const rail = container.querySelector('[data-part="action-rail"]')!;
     expect(rail.textContent).toMatch(/Rounded or square/);
     expect(rail.textContent, 'the rail does not say how long they have been waiting').toMatch(/waiting 9s/);
+  });
+
+  it('offers its answers only to the seat it was put to', () => {
+    // A Developer is not asked how the Product Owner wants it: that is hers, and she is played by
+    // the game. Hold her seat and the answers are yours.
+    const asked = askIfDue(building());
+    const onAnswerQuestion = vi.fn();
+    const asDev = render(
+      <MemoryRouter><ActionRail state={asked} onAnswerQuestion={onAnswerQuestion} /></MemoryRouter>,
+    ).container;
+    expect(asDev.querySelector('[data-part="action-rail"]')!.textContent, 'the question is hidden')
+      .toMatch(/Rounded or square/);
+    expect(screen.queryByRole('button', { name: 'Your call' }),
+      'a Developer was handed the Product Owner\u2019s answer').toBeNull();
+
+    render(
+      <MemoryRouter><ActionRail state={asked} seat="product_owner" onAnswerQuestion={onAnswerQuestion} /></MemoryRouter>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Your call' }));
     expect(onAnswerQuestion).toHaveBeenCalledWith((asked.questions ?? [])[0].id, 'theirs');
   });

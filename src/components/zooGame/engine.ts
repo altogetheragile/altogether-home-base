@@ -2218,6 +2218,33 @@ export function holdPlannedRefinement(state: ZooGameState): ZooGameState {
   };
 }
 
+/** The three accountabilities, named here rather than imported: the seat names live in the session
+ *  hook, and the engine is pure and must not reach into it. */
+export type Accountability = 'product_owner' | 'scrum_master' | 'developer';
+
+/** Whether a decision belonging to `of` is the player's to take right now.
+ *
+ *  In a shared session it is simply whose seat it is.
+ *
+ *  Alone it depends on WHEN. Outside a Sprint the player holds all three accountabilities and the
+ *  game says which one they are acting in as they act - writing the Product Goal, ordering the
+ *  Product Backlog, adapting it at the Review. But while the Sprint Backlog is being executed they
+ *  are a Developer and nothing else: "always a developer when we execute the plan from the SBL."
+ *
+ *  That is what makes the Product Owner somebody to argue with rather than another hat. A player
+ *  who answers their own Developers' questions is never told that how is theirs, because they were
+ *  never on the receiving end of being handed it back.
+ *
+ *  Deliberately NOT applied to opening Done work to visitors. Releasing is a decision about the
+ *  product rather than a step in executing the plan, the Review is explicitly not a gate for it,
+ *  and nothing in the seat played by the game opens anything - so taking it away would leave a zoo
+ *  nobody can visit, which is the one thing the whole value model rests on. */
+export const theirsToTake = (state: ZooGameState, of: Accountability, seat?: Accountability | null): boolean => {
+  if (seat) return seat === of;
+  if (state.phase !== 'sprint') return true;
+  return of === 'developer';
+};
+
 /** What the Developers could pull next, and why each one is worth pulling.
  *
  *  In the Sprint Backlog's own order, because that order is theirs: the Product Owner orders the

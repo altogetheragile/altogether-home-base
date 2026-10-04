@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
-import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext } from './engine';
+import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext, theirsToTake } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -62,6 +62,13 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnsw
     Number(z.id.startsWith('check-')) - Number(a.id.startsWith('check-')));
   for (const q of queue) {
     if (!onAnswerQuestion) break;
+    // Whether it is yours to answer. While the Sprint Backlog is being executed the player is a
+    // Developer, so a question put to the Product Owner is hers - and she is played by the game.
+    //
+    // It is still SHOWN, with its clock still running, because the Developers standing still
+    // waiting on an answer is the whole of what this channel teaches and a question you cannot see
+    // teaches nothing. What it loses is the buttons.
+    const mine = theirsToTake(state, q.of as never, seat ?? null);
     const waited = Math.max(0, q.askedAt - state.daySecondsLeft);
     // The clock belongs to the questions that have one. An acceptance does not expire - nobody
     // else may answer it - and counting it down to twenty-five was the rail saying something was
@@ -72,12 +79,12 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnsw
       text: `${q.from}: ${q.text}  ·  ${theirs
         ? `waiting ${waited}s of ${QUESTION_PATIENCE}`
         : 'this one waits for you - nobody else can answer it'}`,
-      answers: q.choices.map((c) => ({
+      answers: mine ? q.choices.map((c) => ({
         // Accepting is the answer that moves the work on, so it is the one that looks like the
         // action. The refusal is a real choice and not a mistake to make quickly.
         label: c.label, primary: c.key === 'theirs' || c.key === 'accept',
         act: () => onAnswerQuestion(q.id, c.key),
-      })),
+      })) : [],
       note: q.choices.map((c) => (c.note ? `${c.label}: ${c.note}` : '')).filter(Boolean).join(' '),
     });
   }
@@ -99,7 +106,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnsw
   // unanswered. They get on with it if nobody answers, and that costs you the say.
   const question = asks.find((a) => a.kind === 'question');
   const asked = question?.itemId ? state.backlog.find((it) => it.id === question.itemId) : undefined;
-  if (asked && onAnswerPlacement) {
+  if (asked && onAnswerPlacement && theirsToTake(state, 'product_owner', seat ?? null)) {
     actions.push({
       id: `place-${asked.id}`, actor: whoIs('product_owner'),
       text: `Where should ${asked.name} go? It is what visitors walk up to.`,
