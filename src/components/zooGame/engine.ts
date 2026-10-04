@@ -2218,6 +2218,37 @@ export function holdPlannedRefinement(state: ZooGameState): ZooGameState {
   };
 }
 
+/** What the Developers could pull next, and why each one is worth pulling.
+ *
+ *  In the Sprint Backlog's own order, because that order is theirs: the Product Owner orders the
+ *  Product Backlog by value, and the Developers arrange the Sprint Backlog in the order they will
+ *  work in. The list is not a recommendation and the game never refuses the rest of it - the point
+ *  is that pulling is a CHOICE, and a choice nobody is told the stakes of is a guess.
+ *
+ *  One line each, and the most informative one that is true. Anything that cannot start yet is left
+ *  out rather than offered and refused: the board already says why on the card. */
+export function whatToPullNext(state: ZooGameState, limit = 3): { item: BacklogItem; why: string }[] {
+  const inSprint = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
+    && it.status === 'committed' && !it.started);
+  const canStart = inSprint.filter((it) => enclosureReady(state, it));
+  return canStart.slice(0, limit).map((item, i) => {
+    // What else in this Sprint is waiting on this one. A habitat with a lion behind it is not just
+    // the next card, it is the card two cards depend on.
+    const waiting = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
+      && it.status === 'committed' && it.enclosureId === item.id && !enclosureReady(state, it));
+    const why = item.goalCritical
+      ? 'The Sprint Goal depends on it.'
+      : waiting.length === 1
+        ? `${waiting[0].name} cannot start until this is built.`
+        : waiting.length > 1
+          ? `${waiting.length} other items cannot start until this is built.`
+          : i === 0
+            ? 'Top of the list.'
+            : 'Next in the order you put them in.';
+    return { item, why };
+  });
+}
+
 /** How many days this card has been in progress, or null if it is not.
  *
  *  Counted inclusively: picked up today is one day old. The board colours it at two and again at
