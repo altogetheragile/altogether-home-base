@@ -252,7 +252,11 @@ const EVENT_BEAT_MS = 9000;
  *  the gate if it does not belong to that accountability. An AI seat is a player, not a back
  *  door - and now it works at something like the pace of one.
  */
-export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, action: ZooAction) => void,
+export function useAiSeats(
+  /** Only three things are read, so a game played alone can offer them without being a session:
+   *  the state to read, whether this browser owns the clock, and a way to send a move as a seat. */
+  session: Pick<ZooSession, 'state' | 'drivesClock' | 'sendAs'>,
+  aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, action: ZooAction) => void,
   /** Who still has to agree a Sprint Goal before topic two begins: the seats somebody or some AI
    *  is holding. An empty seat cannot agree, so waiting on it would stall the game. */
   mustAgree?: readonly string[]) {
@@ -280,13 +284,19 @@ export function useAiSeats(session: ZooSession, aiSeats: SeatName[], onSay?: (se
     let waitedFor: string | null = null;
     const beat = () => {
       const { state: now, sendAs: send, onSay: say } = latest.current;
-      // Busy hands take no new work. While there is time owed on what they have already taken on,
-      // the seats are building it - which is most of what makes a Sprint take a Sprint. Charged in
-      // a lump and acted on at once, a whole forecast went by in a few seconds.
-      if (now && teamIsBusy(now)) { if (live) timer = setTimeout(beat, BEAT_MS); return; }
       let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
       if (now) {
         for (const seat of seats.split(',') as SeatName[]) {
+          // Busy HANDS take no new work. While there is time owed on what they have already taken
+          // on, the Developers are building it - which is most of what makes a Sprint take a
+          // Sprint. Charged in a lump and acted on at once, a whole forecast went by in seconds.
+          //
+          // It used to stop the whole beat, every seat with it, so the moment anybody pulled a
+          // card the Product Owner went silent: no answers, no acceptance, nothing, for as long as
+          // anything was being built. A Product Owner answering a question while the Developers
+          // build is not taking on new work - it is the one thing that seat is there to do, and
+          // the reason for playing it at all.
+          if (seat === 'developer' && teamIsBusy(now)) continue;
           const move = aiTurn(now, seat, agreers ? agreers.split(',') : undefined);
           // A move its own accountability may not take is skipped rather than sent, so a seat
           // that keeps proposing something impossible cannot starve the seats behind it in

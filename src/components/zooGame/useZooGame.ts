@@ -394,5 +394,7 @@ export function useZooGame(gameSeed?: number, runClock = true) {
   const send = useCallback((action: ZooAction) => { remember(action); dispatch(action); }, []);
   const actions = useMemo(() => zooActions(send), [send]);
 
-  return { state, ...actions };
+  // `send` as well as the actions built from it: a game played alone has seats nobody is sitting
+  // in too, and the beat that plays them sends raw actions as a seat.
+  return { state, send, ...actions };
 }

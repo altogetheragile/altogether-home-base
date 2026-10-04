@@ -140,4 +140,8 @@ export type ZooActions = ReturnType<typeof zooActions>;
  *  directly; useZooSession does once its state has loaded. The screens take this rather than
  *  calling a hook themselves, which is what lets the same screens serve a game played alone
  *  and a game played by a team. */
-export type ZooGameApi = { state: ZooGameState } & ZooActions;
+/** What a screen is handed, however the game is being carried.
+ *
+ *  `send` is the raw dispatcher beside the eighty-odd named actions built from it. The screens use
+ *  the named ones; the beat that plays the empty seats sends a move it was given, as a seat. */
+export type ZooGameApi = { state: ZooGameState; send: (action: ZooAction) => void } & ZooActions;

@@ -179,6 +179,24 @@ const ASK_PATIENCE_SECONDS = 12;
 /** Every accountability, which is who has to agree a Sprint Goal unless a caller says otherwise. */
 const ALL_SEATS: SeatName[] = ['product_owner', 'scrum_master', 'developer'];
 
+/** The seats the game plays when one person is playing alone.
+ *
+ *  The Product Owner, and nobody else yet.
+ *
+ *  Not the DEVELOPERS: that is the seat the player holds while the Sprint Backlog is being
+ *  executed. "Watching AI agents build things as Devs is not fun for a human PO."
+ *
+ *  Not the SCRUM MASTER either, for a sharper reason. The clearest thing that seat does here is
+ *  hold the Daily Scrum - and the Daily Scrum is the DEVELOPERS' event, which the player is now
+ *  sitting in. A Scrum Master played by the game would hold it a few seconds after it opened and
+ *  the player would never get to decide anything in it: not what to do about what surfaced, not
+ *  whether to say "we're done" early, not whether to skip it and pay for it. That is the one event
+ *  this game has spent the most care on.
+ *
+ *  So the Scrum Master waits until there is something for them to do that is not taking the
+ *  player's own event away from them. */
+export const SOLO_AI_SEATS: SeatName[] = ['product_owner'];
+
 /** What this AI accountability would do now, or nothing if it is not their turn.
  *
  *  `mustAgree` is who still has to agree the Sprint Goal before topic two can begin - the same
@@ -480,6 +498,22 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     const name = state.backlog.find((it) => it.id === asked.itemId)?.name ?? 'it';
     return { action: { type: 'ANSWER_QUESTION', id: asked.id, choice: 'accept', by: 'product_owner' },
              says: `I have looked at ${name}. That is what I asked for.` };
+  }
+
+  // A question about HOW the work gets built, handed straight back.
+  //
+  // This is the seat's sharpest teaching and it only lands from the other side of it. The
+  // Developers ask "rounded or square?"; what and why are the Product Owner's, how is theirs, and
+  // the right answer is to say so. A player sitting in the Developers' seat learns it by being
+  // handed their own decision back, which is worth more than being told not to answer it.
+  //
+  // Found by the choice the question itself offers - the question knows which of its answers is
+  // the one that keeps the decision where it belongs - rather than by matching on its wording.
+  const theirs = (state.questions ?? []).find((q) => q.of === 'product_owner'
+    && (q.choices ?? []).some((c) => c.key === 'theirs'));
+  if (theirs) {
+    return { action: { type: 'ANSWER_QUESTION', id: theirs.id, choice: 'theirs', by: 'product_owner' },
+             says: 'Your call. How it gets built is yours - I care what it has to do.' };
   }
 
   // Accepting the work. Done waits for the Product Owner's sign-off, and the sign-off follows the
