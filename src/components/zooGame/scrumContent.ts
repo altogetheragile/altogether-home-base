@@ -152,6 +152,15 @@ export const SCRUM_CARDS: ScrumCard[] = [
     how: 'State the outcome, not the list of items. Keep it while the Sprint runs: the work can change around it, the Goal does not.',
   },
   {
+    id: 'definition-of-ready', kind: 'concept', title: 'The Definition of Ready',
+    summary: 'A bar an item clears before it can be forecast: sized, small enough, with acceptance criteria.',
+    why: 'Forecasting work nobody has looked at closely is guessing. A team that keeps the top of the Product Backlog ready can plan from it instead of refining in Planning.',
+    who: 'The Scrum Team, if it wants one. Nobody is required to have one.',
+    when: 'Applied at Sprint Planning, when the Developers choose what they believe they can finish.',
+    how: 'Write down what an item must have before it can be selected, and hold it there rather than at the Sprint Planning itself.',
+    notScrum: 'The Definition of Ready is a common practice and not a Scrum Guide term. The Guide has one commitment for the Product Backlog, and it is the Product Goal. A Ready bar used as a gate can also become a handover between the Product Owner and the Developers, which is the thing refinement exists to avoid.',
+  },
+  {
     id: 'sprint-backlog', kind: 'artifact', title: 'The Sprint Backlog',
     summary: 'The Sprint Goal, the selected items, and the plan to deliver them.',
     why: 'It makes the Sprint’s work visible in real time, so progress can be inspected every day.',
@@ -254,7 +263,7 @@ export const CARDS_BY_PHASE: Record<string, string[]> = {
   // Slicing is met at Refinement, which is where the decision is actually taken - breaking an area
   // into an enclosure, an animal and a path is slicing, and it is the moment to say so.
   refine: ['product-backlog', 'pbi', 'refinement', 'slices', 'definition-of-done'],
-  planning: ['sprint-planning', 'sprint-goal', 'sprint-backlog'],
+  planning: ['sprint-planning', 'sprint-goal', 'sprint-backlog', 'definition-of-ready'],
   sprint: ['sprint', 'daily-scrum', 'increment', 'developers'],
   // Empiricism is met at the Review, where inspection and adaptation are actually happening -
   // the one-pager teaches it, but the one-pager is skippable and nothing repeated it during play.
@@ -462,7 +471,13 @@ export const ORIENTATION = {
       // the Product Owner" - so it is one of the boxes, and the last one to go.
       { name: 'Done is what your Definition of Done says',
         text: 'Nothing else. The first line of this zoo\'s is that an item meets its acceptance criteria, confirmed by the Product Owner, so their tick is one of the boxes for Done and the last one to go, not a gate after them. Another Scrum Team need not write it that way: the Developers conform to the Definition of Done, and what is in it is the whole team\'s to agree.' },
-      { name: 'You were given a Definition of Done', text: 'Three lines arrived with the game and nobody asked you. Noticing that is part of the exercise.' },
+      // Was "You were given a Definition of Done - three lines arrived and nobody asked you",
+      // which was true when it was written and stopped being true when `startOnTheBoard` began
+      // emptying it. The first Sprint has none at all, on purpose: asking a learner on their first
+      // screen what Done means gets a rule written out of politeness rather than out of
+      // experience, so the Sprint ships whatever it ships and the Retrospective hands over the
+      // thing that would have caught it. See DodHandover.tsx.
+      { name: 'You have no Definition of Done', text: 'Nothing says what Done means and nobody asked you to write one. The Retrospective offers you one once the Review has shown what that cost.' },
     ],
   },
   onward: 'Write your Product Goal',
