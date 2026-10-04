@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
+import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, SKIP_PENALTY_MULT, DAILY_SCRUM_FLOOR_SECONDS, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
-  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
+  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, dayTotalSeconds, scrumSpent, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -731,7 +731,13 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     expect(s.pendingImpediment).toBeNull();
     expect(s.carriedImpediment).toBeNull();
     expect(s.dayNumber).toBe(2);
-    expect(s.dayTimeMult).toBe(DAILY_SCRUM_MULT);
+    // The event costs the seconds it took, not a share of the day. Held to the buzzer here - the
+    // timebox was never ticked down - so it costs the whole box.
+    expect(s.dayTimeMult, 'holding it is still charging a share of the day').toBe(1);
+    // Concluded without the timebox ever ticking, so the floor is what it cost: you cannot
+    // inspect a burndown in no time, and a free event would make dismissing it the cheap play.
+    expect(s.daySecondsLeft, 'the event was not taken out of the day')
+      .toBe(dayTotalSeconds(1, DAILY_SCRUM_FLOOR_SECONDS));
     expect(s.missedScrums).toBe(0);
   });
 
@@ -742,19 +748,33 @@ describe('zoo game: timed days and the Daily Scrum', () => {
     expect(s.dayNumber).toBe(2);
     expect(s.carriedImpediment).toMatchObject({ missed: true, title: 'The pond pump failed' });
     expect(s.carriedImpediment!.tip!.length).toBeGreaterThan(0);
-    expect(SKIP_PENALTY_MULT).toBeLessThan(DAILY_SCRUM_MULT); // a heavier cost than holding it
+    expect(SKIP_PENALTY_MULT).toBeLessThan(1); // the blocker grew, and that is a share of the day
     expect(s.dayTimeMult).toBe(SKIP_PENALTY_MULT);
     expect(s.missedScrums).toBe(1);
   });
 
-  it('the Daily Scrum is not skippable: with nothing waiting it still costs its timebox', () => {
+  it('the Daily Scrum is not skippable: skipping costs the whole timebox', () => {
+    // The box is set aside for the event whether or not it is held, so skipping buys no time at
+    // all. Without that a player could read the screen, see nothing had surfaced, and skip for a
+    // free thirty seconds - paying them for the one habit the event exists to build.
     let s = endDay(planSprint(initialZooState(1), ['lion']));
     s = { ...s, pendingImpediment: null };
-    s = skipDailyScrum(s);
-    expect(s.dayNumber).toBe(2);
-    expect(s.carriedImpediment).toBeNull();
-    expect(s.dayTimeMult).toBe(DAILY_SCRUM_MULT); // the event happened - no free skip
-    expect(s.missedScrums).toBe(0);
+    const skipped = skipDailyScrum(s);
+    expect(skipped.dayNumber).toBe(2);
+    expect(skipped.carriedImpediment).toBeNull();
+    expect(skipped.daySecondsLeft, 'skipping gave the team time back')
+      .toBe(dayTotalSeconds(1, DAILY_SCRUM_SECONDS));
+    expect(skipped.missedScrums).toBe(0);
+
+    // ...and holding it, then saying "we're done" partway through, is cheaper than skipping.
+    const part = { ...s, scrumSecondsLeft: DAILY_SCRUM_SECONDS - 12 };
+    expect(scrumSpent(part), 'the seconds actually spent are not what is charged').toBe(12);
+    expect(runDailyScrum(part).daySecondsLeft, 'finishing early bought the team nothing')
+      .toBeGreaterThan(skipped.daySecondsLeft);
+
+    // Below the floor it is the floor, however fast the button is pressed.
+    expect(scrumSpent({ ...s, scrumSecondsLeft: DAILY_SCRUM_SECONDS - 2 })).toBe(DAILY_SCRUM_FLOOR_SECONDS);
+    expect(scrumSpent({ ...s, scrumSecondsLeft: DAILY_SCRUM_SECONDS })).toBe(DAILY_SCRUM_FLOOR_SECONDS);
   });
 });
 
@@ -1049,8 +1069,8 @@ describe('zoo game: WIP limit and improvements with teeth', () => {
     let s = startNextSprint(initialZooState(1), 'Hold the Daily Scrum every day and catch issues early');
     expect(s.scrumDiscipline).toBe(true);
     s = { ...s, phase: 'sprint', dayStage: 'dailyScrum', dayNumber: 1, sprintDays: 3 };
-    expect(runDailyScrum(s).dayTimeMult, 'the habit made the team\u2019s own event free').toBe(DAILY_SCRUM_MULT);
-    expect(runDailyScrum({ ...s, scrumDiscipline: false }).dayTimeMult).toBe(DAILY_SCRUM_MULT);
+    expect(runDailyScrum(s).daySecondsLeft, 'the habit made the team\u2019s own event free')
+      .toBe(runDailyScrum({ ...s, scrumDiscipline: false }).daySecondsLeft);
 
     // ...and a blocker carried past a skipped Daily Scrum costs the disciplined team less.
     const withBlocker = { ...s, pendingImpediment: { id: 'i1', title: 'A blocker', detail: 'in the way' } } as typeof s;
@@ -3559,7 +3579,10 @@ describe('the clock is part of the game, not part of a component', () => {
     const held = runDailyScrum(running({ dayStage: 'dailyScrum', daySecondsLeft: 3, dayNumber: 1 }));
     expect(held.daySecondsLeft, 'the day did not get a fresh clock').toBeGreaterThan(3);
     expect(held.daySecondsLeft, 'holding the Daily Scrum cost nothing').toBeLessThan(DAY_SECONDS);
-    expect(held.daySecondsLeft).toBe(Math.round(DAY_SECONDS * held.dayTimeMult));
+    // What it cost is the seconds the box took, not a share of the day: the multiplier is for
+    // things that cost the day, like an impediment that grew overnight.
+    expect(held.dayTimeMult, 'the event is charging a share of the day again').toBe(1);
+    expect(held.daySecondsLeft).toBe(dayTotalSeconds(held.dayTimeMult, scrumSpent(running({ dayStage: 'dailyScrum' }))));
   });
 
   it('runs the Daily Scrum timebox too, and adapts when it expires', () => {
