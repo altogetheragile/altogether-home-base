@@ -133,6 +133,18 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
               </Button>
               <Button size="sm" variant="outline" onClick={onHold}>Keep the plan</Button>
             </div>
+            {/* What this event does with the decision, and what it does not.
+                Adapting the Sprint Backlog is the Daily Scrum's own purpose - the Guide says so in
+                its first sentence - and the Sprint Backlog belongs to the Developers, so this is
+                theirs to decide with nobody else in the room. What happens here is the DECIDING.
+                The board changes when the event closes, which is how a team actually works: you
+                agree it in the fifteen minutes and you do it afterwards.
+                Anything that needs the Product Owner cannot happen here at all, because she is not
+                in the room. That is what the huddle after it is for. */}
+            <p data-part="decided-not-done" className="mt-1.5 text-[11px] text-muted-foreground">
+              Decided here, done when the event closes. The Sprint Backlog is the Developers&rsquo; to
+              change. Anything needing the Product Owner waits until you are out of the room.
+            </p>
           </div>
         )}
       </div>
@@ -220,8 +232,20 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
               : 'On track for the Sprint Goal - nothing blocking today. The Daily Scrum is how you know that.'}
           </div>
           <div className="flex flex-col gap-1">
-            <Button onClick={onHold}>Adapt and continue &rarr;</Button>
-            <span className="text-[11px] text-muted-foreground">{state.scrumDiscipline ? 'efficient - no time lost' : 'the event takes ~10% of tomorrow'}</span>
+            {/* The Developers saying the event is over. A timebox is a maximum, not a duration, and
+                naming the button after the thing a team actually says is the cheapest way to teach
+                that. */}
+            <Button onClick={onHold}>We&rsquo;re done &rarr;</Button>
+            {/* What the habit buys, said correctly.
+                This line used to read "efficient - no time lost" for a team that had adopted
+                "hold the Daily Scrum every day", which was true until the engine stopped making
+                the event free for them - and then went on saying it. The event costs its timebox
+                whoever holds it; what improves with the habit is the price of a blocker that does
+                get carried. */}
+            <span className="text-[11px] text-muted-foreground">
+              the event takes ~10% of tomorrow
+              {state.scrumDiscipline && ' \u00b7 and a carried blocker costs you half what it costs a team that skips'}
+            </span>
           </div>
         </div>
       )}

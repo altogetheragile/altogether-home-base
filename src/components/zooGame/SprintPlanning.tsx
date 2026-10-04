@@ -83,7 +83,7 @@ const STEPS: { key: Step; n: number; label: string; topic: string; question: str
 // the cards say, in slightly different words, and only the cards were editable.
 const TOPIC_CARDS: Record<Step, string[]> = {
   why: ['sprint-goal', 'sprint-planning'],
-  what: ['sprint-backlog', 'velocity', 'pbi'],
+  what: ['sprint-backlog', 'velocity', 'pbi', 'definition-of-ready'],
   how: ['sprint-backlog', 'developers'],
 };
 

@@ -85,7 +85,7 @@ export const DAILY_SCRUM_MULT = 0.9;
 /** The Daily Scrum's timebox, in seconds - a playable stand-in for the real 15-minute box.
  *  Long enough to inspect the burndown and decide, short enough to feel timeboxed. On expiry
  *  the event auto-resolves to the disciplined default (re-plan / adapt). Paused in learn mode. */
-export const DAILY_SCRUM_SECONDS = 20;
+export const DAILY_SCRUM_SECONDS = 30;
 /** A skipped Daily Scrum with a waiting impediment costs much more of the next day:
  *  the problem grew overnight. */
 export const SKIP_PENALTY_MULT = 0.55;
