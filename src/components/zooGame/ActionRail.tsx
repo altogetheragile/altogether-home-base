@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
-import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES } from './engine';
+import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -31,10 +31,13 @@ type RailAction = {
   note?: string;
 };
 
-export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
+export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   onAnswerPlacement?: (id: string, choice: string) => void;
+  /** Take a card into Doing. Only a Developer pulls - the Sprint Backlog is theirs - which is why
+   *  this is the one action on the rail that is not somebody else waiting on an answer. */
+  onStartItem?: (id: string) => void;
   /** Answer a question addressed to an accountability. */
   onAnswerQuestion?: (id: string, choice: string) => void;
   onOpen?: (id: string) => void;
@@ -128,6 +131,32 @@ export function ActionRail({ state, seat, onAnswerPlacement, onAnswerQuestion, o
           { label: p.label, primary: true, act: () => (p.kind === 'add' ? onAddProposal?.(p.draft) : onSplitEpic?.(p.epicId, p.memberIds)) },
           { label: 'Not this one', act: () => onDeclineProposal(p.id) },
         ],
+      });
+    }
+  }
+
+  // ...and last of all, the one thing on this rail that is not somebody waiting on an answer: what
+  // the Developers will pull next.
+  //
+  // Only when there is nothing in hand. A prompt that arrives while you are mid-build is a tap on
+  // the shoulder, and the question it asks has already been answered. It is last in the list for
+  // the same reason: a Product Owner waiting on a question outranks the board offering you work.
+  //
+  // The candidates are the first few that could actually start, in the Sprint Backlog's order. The
+  // rest of the column is still there and still pullable - the point is that pulling is a choice,
+  // and a choice nobody is told the stakes of is a guess.
+  const nothingInHand = state.phase === 'sprint' && state.dayStage === 'building'
+    && !state.backlog.some((it) => it.status === 'committed' && it.started && it.sprintNumber === state.sprintNumber);
+  if (nothingInHand && onStartItem) {
+    const next = whatToPullNext(state);
+    if (next.length) {
+      actions.push({
+        id: 'pull-next', actor: 'Developers',
+        text: 'What will you pull next?',
+        answers: next.map(({ item }, i) => ({
+          label: item.name, primary: i === 0, act: () => onStartItem(item.id),
+        })),
+        note: next.map(({ item, why }) => `${item.name}: ${why}`).join('  \u00b7  '),
       });
     }
   }
