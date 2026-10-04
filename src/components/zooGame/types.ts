@@ -285,6 +285,11 @@ export interface BacklogItem {
   /** True once work has started (it moved from To Do into Doing and opened the studio).
    *  Keeps it in the Doing column while it is being built and its tasks ticked. */
   started?: boolean;
+  /** The day of the Sprint it was picked up on, so the board can say how long it has been in
+   *  progress. A card that has sat in Doing for three days is the thing a Daily Scrum is for, and
+   *  nothing on the board said it. Absent on anything started before the board kept count, and on
+   *  anything that is not started - the age is simply not drawn. */
+  startedDay?: number;
   /** True once a built item has been put on the park to place & size it, but before it is marked
    *  "Deploy complete". It shows on the park (so you can position it and confirm its placement
    *  acceptance criteria) while its card stays in Deploy - it isn't live to visitors until Done. */

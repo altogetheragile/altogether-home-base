@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -117,6 +117,9 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
 }) {
   const steps = (item.tasks ?? []).filter((t) => t.label.trim() && !isSignOffTask(t.label));
   const devs = state.team.developers.filter((d) => (item.assignedDevs ?? []).includes(d.id));
+  // How long it has been in Doing. A card nobody has touched since Monday looked exactly like one
+  // picked up an hour ago, which is the one thing a board is supposed to make impossible.
+  const age = daysInProgress(state, item);
   return (
     <button type="button" onClick={onOpen} data-part="board-card"
       title={`${item.name} - open it`}
@@ -137,6 +140,19 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
             <span key={t.id} className={cn('h-2 w-2 rounded-full', t.done ? 'bg-emerald-500' : 'bg-muted-foreground/25')} />
           ))}
         </span>
+        {/* Quiet at a day, amber at two, red at three. It is a count and not a telling-off: work
+            takes as long as it takes, and the colour is there so the Developers notice before the
+            Sprint ends rather than at the Review. */}
+        {age !== null && (
+          <span data-part="card-age" data-days={age}
+            title={`In progress ${age} day${age === 1 ? '' : 's'}${age >= 3 ? ' - worth asking what is holding it' : ''}`}
+            className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+              age >= 3 ? 'bg-destructive/15 text-destructive'
+                : age >= 2 ? cn(TONE.attention.soft, TONE.attention.text)
+                  : 'bg-muted text-muted-foreground')}>
+            {age}d
+          </span>
+        )}
         {devs.length > 0 && (
           <span className="ml-auto flex items-center -space-x-1.5">
             {/* Overlapped, which is how the board draws more than one Developer. One colour for

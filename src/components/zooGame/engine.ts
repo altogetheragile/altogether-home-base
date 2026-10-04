@@ -1166,7 +1166,7 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   // Reported from playing it: "I finished everything 15 seconds into the second day."
   const moved: ZooGameState = { ...state, pendingPlacement: pending,
     backlog: state.backlog.map((it) => (it.id === id
-      ? { ...it, started: true,
+      ? { ...it, started: true, startedDay: state.dayNumber,
         assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (freest ? [freest.id] : []) }
       : it)) };
   // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
@@ -2218,6 +2218,25 @@ export function holdPlannedRefinement(state: ZooGameState): ZooGameState {
   };
 }
 
+/** How many days this card has been in progress, or null if it is not.
+ *
+ *  Counted inclusively: picked up today is one day old. The board colours it at two and again at
+ *  three, which is the question a Daily Scrum asks and the board never did - a card nobody has
+ *  touched since Monday looks exactly like one started an hour ago.
+ *
+ *  Null rather than zero where there is nothing to count, so a card carrying no age draws no badge
+ *  rather than drawing a confident "0". Anything started before the board began keeping count has
+ *  no `startedDay` and is simply not aged. */
+export function daysInProgress(state: ZooGameState, item: BacklogItem): number | null {
+  if (!item.started || item.startedDay === undefined) return null;
+  if (item.sprintNumber !== state.sprintNumber) return null;
+  return Math.max(1, state.dayNumber - item.startedDay + 1);
+}
+
+/** Cards that have been in progress long enough to be worth saying out loud. */
+export const ageingCards = (state: ZooGameState, from = 2): BacklogItem[] => state.backlog
+  .filter((it) => (daysInProgress(state, it) ?? 0) >= from);
+
 /** Progress toward the Sprint Goal: points and essentials (the goal-critical items) done vs
  *  committed, and the work still remaining. Used by the Daily Scrum, the board and the burndown. */
 export function sprintProgress(state: ZooGameState): { pointsCommitted: number; pointsDone: number; remaining: number; essentialsTotal: number; essentialsDone: number } {
@@ -3208,7 +3227,7 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
     // ...and nobody is working on it any more. It goes back to the Product Backlog, so it comes back
     // out of it the way anything does: taken on by somebody, on a day. Left `started`, it arrived in
     // the next Sprint already in progress - work in flight that nobody had picked up.
-    return { ...back, started: false, assignedDevs: undefined,
+    return { ...back, started: false, startedDay: undefined, assignedDevs: undefined,
       carriedOver: true, wasEstimate: it.estimate, unsized: false, estimate: remaining, trueSize: remaining };
   });
 }
@@ -3993,6 +4012,20 @@ export function antiPatterns(state: ZooGameState, sprint = state.sprintNumber): 
     });
   }
 
+  // Work that sat. Read off the board rather than the log, because nothing logs a card NOT moving -
+  // which is the whole difficulty with noticing it, and the reason the Daily Scrum exists.
+  // Only this Sprint's own cards, and only while they are still in progress: once a Sprint ends its
+  // unfinished work goes back to the Product Backlog and stops having an age at all.
+  const aged = sprint === state.sprintNumber ? ageingCards(state, 3) : [];
+  if (aged.length) {
+    const oldest = aged.reduce((a, b) => ((daysInProgress(state, b) ?? 0) > (daysInProgress(state, a) ?? 0) ? b : a));
+    out.push({
+      id: 'cards-sat', title: 'Work sat in progress', count: aged.length,
+      what: `${aged.length} item${aged.length === 1 ? '' : 's'} spent three days or more in Doing - ${oldest.name} the longest.`,
+      instead: 'Stop starting, start finishing. A card that is not moving is a question for the Daily Scrum, and a second Developer on it finishes it sooner than a second card started.',
+    });
+  }
+
   const onTheTools = log.filter((d) => d.kind === 'moved' && d.by === 'product_owner').length;
   if (onTheTools) {
     out.push({
@@ -4173,7 +4206,9 @@ export function dropFromSprint(state: ZooGameState, id: string, by?: string): Zo
   const item = state.backlog.find((it) => it.id === id);
   if (!item || item.sprintNumber !== state.sprintNumber || item.status !== 'committed') return state;
   const out: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === id
-    ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, assignedDevs: [] }
+    // ...and it stops having an age. Nulling the Sprint hides it either way, but a card carrying
+    // the day it was picked up in a Sprint it is no longer in is a fact waiting to be read wrongly.
+    ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, startedDay: undefined, assignedDevs: [] }
     : it)) };
   return note({ ...out, forecastPoints: Math.max(0, (state.forecastPoints ?? 0) - item.estimate) },
     { kind: 'moved', by: by ?? 'developer',
