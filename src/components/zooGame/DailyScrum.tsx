@@ -1,7 +1,7 @@
 import type { ZooGameState, ImpedimentAnswer } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
-import { DAILY_SCRUM_SECONDS } from './config';
+import { DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS } from './config';
 import { sprintProgress, todaysDecision, inTheWayOfTheGoal } from './engine';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
@@ -219,7 +219,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
             </div>
             <div>
               <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
-              <span className="ml-2 text-[11px] text-muted-foreground">the event does not happen, and it grows overnight</span>
+              <span className="ml-2 text-[11px] text-muted-foreground">the event does not happen, it grows overnight, and the timebox is gone either way</span>
             </div>
           </div>
         </>
@@ -242,8 +242,15 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
                 the event free for them - and then went on saying it. The event costs its timebox
                 whoever holds it; what improves with the habit is the price of a blocker that does
                 get carried. */}
+            {/* What it costs, which is the seconds you spend in it.
+                This line used to read "efficient - no time lost" for a team that had adopted "hold
+                the Daily Scrum every day", which was true until the engine stopped making the
+                event free for them - and then went on saying it. Then it read "~10% of tomorrow",
+                a flat charge whatever the team did. It is the box you use now: finish and the rest
+                of it is yours, sit through it and you pay all of it, and it never costs less than
+                the floor, because nobody inspects a burndown in no time. */}
             <span className="text-[11px] text-muted-foreground">
-              the event takes ~10% of tomorrow
+              it costs the time you spend in it, {DAILY_SCRUM_FLOOR_SECONDS}s to {DAILY_SCRUM_SECONDS}s of the day
               {state.scrumDiscipline && ' \u00b7 and a carried blocker costs you half what it costs a team that skips'}
             </span>
           </div>

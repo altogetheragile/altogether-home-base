@@ -80,12 +80,26 @@ export const CAUGHT_EARLY_MULT = 0.8;
 export const REFINE_POINT_OPTIONS = [0, 1, 2, 3] as const;
 /** Chance an impediment surfaces on any given day (deterministic per game/Sprint/day). */
 export const IMPEDIMENT_CHANCE = 0.55;
-/** A held Daily Scrum takes a little of the next day (the event is timeboxed). */
-export const DAILY_SCRUM_MULT = 0.9;
+/** What the Scrum Master spends removing an impediment, as a share of the day.
+ *
+ *  This used to be `DAILY_SCRUM_MULT`, one number doing two jobs: what the EVENT cost, and what
+ *  REMOVING something cost. The event is charged in the seconds it actually takes now, so the two
+ *  came apart, and only this one is still a share of the day. */
+export const REMOVE_IMPEDIMENT_MULT = 0.9;
 /** The Daily Scrum's timebox, in seconds - a playable stand-in for the real 15-minute box.
  *  Long enough to inspect the burndown and decide, short enough to feel timeboxed. On expiry
  *  the event auto-resolves to the disciplined default (re-plan / adapt). Paused in learn mode. */
 export const DAILY_SCRUM_SECONDS = 30;
+/** The least a Daily Scrum can cost, however fast it is called.
+ *
+ *  Charging purely by the second made pressing "We're done" the instant the event opened free -
+ *  and it still cleared whatever had surfaced, so the cheapest way to play was to dismiss the
+ *  event every morning without reading it. You cannot inspect a burndown in no time.
+ *
+ *  Ten of the box's thirty. The flat charge this replaced was about eighteen seconds of a
+ *  hundred-and-eighty-second day, so a team that is brisk now does better than it used to and a
+ *  team that sits through the whole box does worse, which is the way round a timebox should work. */
+export const DAILY_SCRUM_FLOOR_SECONDS = 10;
 /** A skipped Daily Scrum with a waiting impediment costs much more of the next day:
  *  the problem grew overnight. */
 export const SKIP_PENALTY_MULT = 0.55;

@@ -63,13 +63,14 @@ describe('what the log costs', () => {
   } as ZooGameState);
 
   it('says what holding the Daily Scrum cost, and what it caught', () => {
-    // "Day 2: the Daily Scrum was held" teaches nothing. Beside "blocker cleared, 10% of the day"
-    // it is the trade the event actually is.
+    // "Day 2: the Daily Scrum was held" teaches nothing. Beside what it caught and what the box
+    // took, it is the trade the event actually is. The cost is in seconds because that is what the
+    // event charges now - the timebox is a maximum, and a brisk team pays less than a slow one.
     const s = sprint({ pendingImpediment: { id: 'i1', title: 'The paint is late', detail: 'stuck' } } as Partial<ZooGameState>);
     const held = decisionsIn(runDailyScrum(s), 1).find((d) => d.kind === 'daily-scrum')!;
     expect(held.cost, 'the Daily Scrum was logged with no cost beside it').toBeTruthy();
     expect(held.cost).toMatch(/The paint is late/);
-    expect(held.cost).toMatch(/10% of the day/);
+    expect(held.cost, 'the log does not say what the timebox took').toMatch(/took \d+s of the day/);
   });
 
   it('prices work pulled in and work dropped', () => {

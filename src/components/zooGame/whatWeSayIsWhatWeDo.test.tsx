@@ -3,8 +3,8 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DailyScrum } from './DailyScrum';
 import { ORIENTATION, SCRUM_CARDS, CARDS_BY_PHASE, cardFor } from './scrumContent';
-import { initialZooState, DAILY_SCRUM_SECONDS, DAILY_SCRUM_MULT } from './config';
-import { startOnTheBoard } from './engine';
+import { initialZooState, DAILY_SCRUM_SECONDS } from './config';
+import { startOnTheBoard, runDailyScrum, dayTotalSeconds } from './engine';
 import type { ZooGameState } from './types';
 
 // Two bugs, one shape: a sentence that was true when it was written, and a mechanic that moved
@@ -58,12 +58,15 @@ describe('what the Daily Scrum says it costs', () => {
   };
 
   it('never tells a team the event is free, while the engine charges for it', () => {
-    // `scrumDiscipline` buys a cheaper carried blocker, not a cheaper event.
-    expect(DAILY_SCRUM_MULT, 'the event is free again, so this test is the stale one').toBeLessThan(1);
+    // `scrumDiscipline` buys a cheaper carried blocker, not a cheaper event. The event itself is
+    // charged in the seconds it takes, and a team that sits through the box pays all of it.
+    const held = runDailyScrum({ ...game(), dayStage: 'dailyScrum', pendingImpediment: null } as ZooGameState);
+    expect(held.daySecondsLeft, 'the event is free again, so this test is the stale one')
+      .toBeLessThan(dayTotalSeconds(1));
     for (const disciplined of [true, false]) {
       const said = screen(disciplined).textContent ?? '';
       expect(said, 'the Daily Scrum claims to cost nothing').not.toMatch(/no time lost|costs nothing|free/i);
-      expect(said, 'the Daily Scrum does not say what it costs').toMatch(/takes ~?\d+% of tomorrow/i);
+      expect(said, 'the Daily Scrum does not say what it costs').toMatch(/costs the time you spend/i);
     }
   });
 
