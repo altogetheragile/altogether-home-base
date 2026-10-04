@@ -17,7 +17,7 @@ import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
+import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -46,7 +46,29 @@ const chargeRefine = (before: ZooGameState, after: ZooGameState, seconds: number
 };
 
 /** How long a build day is, given how much of it this day has. */
-export const dayTotalSeconds = (mult: number): number => Math.round(DAY_SECONDS * mult);
+/** How long today's build is.
+ *
+ *  `mult` is what something is COSTING the day as a share of it - an impediment that grew
+ *  overnight, the Scrum Master spending the morning removing one. `spent` is time the Developers
+ *  have actually already used, in seconds, and the Daily Scrum's timebox is the one that spends it.
+ *
+ *  The two are different kinds of thing and used to be one number. A timebox is a maximum, not a
+ *  duration: a team that says "we're done" in eight seconds has spent eight, and charging them a
+ *  flat tenth of the day whatever they did taught that the box is a toll rather than a budget. */
+export const dayTotalSeconds = (mult: number, spent = 0): number =>
+  Math.max(10, Math.round(DAY_SECONDS * mult) - Math.max(0, spent));
+
+/** What the Daily Scrum's timebox actually took out of today.
+ *
+ *  Finish early and the rest of the box goes back to the day. Run to the buzzer and you pay all of
+ *  it. SKIP it and you pay all of it too - the time was set aside for the event either way, and
+ *  what you saved by not holding it is nothing, while what you missed is whatever it would have
+ *  surfaced. Without that the player could read the screen, see nothing had come up, and skip for a
+ *  free thirty seconds, which rewards exactly the habit the event exists to build. */
+export const scrumSpent = (state: ZooGameState): number => Math.min(
+  DAILY_SCRUM_SECONDS,
+  Math.max(DAILY_SCRUM_FLOOR_SECONDS, DAILY_SCRUM_SECONDS - (state.scrumSecondsLeft ?? 0)),
+);
 
 /** What a point of work costs in build time.
  *
@@ -2981,7 +3003,7 @@ export function endDay(state: ZooGameState): ZooGameState {
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
  *  A new day opens paused (`dayStart`) - a breather before the build resumes; the
  *  team starts it when ready. `nextMult` sets how much build time the new day has. */
-function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
+function advanceDay(state: ZooGameState, nextMult: number, spent = 0): ZooGameState {
   const next = state.dayNumber + 1;
   if (next > state.sprintDays) return reviewSprint({ ...state, dayStage: 'building' });
   // A new day gets a fresh build clock, so the refinement spend resets too.
@@ -3002,7 +3024,7 @@ function advanceDay(state: ZooGameState, nextMult: number): ZooGameState {
     // the game take no new move while the team is busy, so a debt that outlived its day froze every
     // one of them for the rest of the game. A Sprint 2 Planning sat waiting for Developers who were
     // never going to answer. Reported from a live game.
-    carriedImpediment: waited, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult) };
+    carriedImpediment: waited, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(nextMult, spent) };
 }
 
 /** Begin the new day's build (leaves the between-days pause). */
@@ -3021,20 +3043,22 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   // held" teaches nothing; the same line beside "blocker cleared, 10% of the day" is the trade the
   // event actually is.
   const caught = state.pendingImpediment;
+  const spent = scrumSpent(state);
   state = note(state, { kind: 'daily-scrum', by,
     what: `Day ${state.dayNumber}: the Daily Scrum was held${by && by !== 'developer' ? `, by ${whoIs(by).replace(/^The /, 'the ')}` : ''}.`,
-    cost: `${caught ? `${caught.title} surfaced and cleared \u00b7 ` : ''}the timebox costs about ${Math.round((1 - DAILY_SCRUM_MULT) * 100)}% of the day` });
-  // The event costs its timebox, every time. It used to cost a disciplined team nothing at all,
-  // which rewarded the wrong thing: a Daily Scrum is fifteen minutes whoever holds it, and what
-  // improves with the habit is the price of the blockers it catches (see skipDailyScrum).
-  const mult = DAILY_SCRUM_MULT;
+    cost: `${caught ? `${caught.title} surfaced and cleared \u00b7 ` : ''}the timebox took ${spent}s of the day` });
+  // The event costs the seconds it actually took, and nothing else. It used to cost a flat tenth of
+  // the day whatever the team did in it - and before that, nothing at all for a disciplined team,
+  // which rewarded the wrong thing. A Daily Scrum is fifteen minutes whoever holds it; what it is
+  // not is a fixed toll. Say "we're done" early and the rest of the box is yours.
+  const mult = 1;
   const cleared = { ...state, pendingImpediment: null, carriedImpediment: null };
   // Start-of-day scrums are held ON the day (endDay already advanced it): begin building.
   // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
   // has to happen here rather than when the day turned over - otherwise holding the event
   // costs nothing, which is the opposite of what it should teach.
-  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
-  return advanceDay(cleared, mult);
+  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult, spent) };
+  return advanceDay(cleared, mult, spent);
 }
 
 /** What the Scrum Master did about what surfaced, and what it cost.
@@ -3066,18 +3090,21 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
           cost: `it grew overnight: about ${Math.round((1 - (state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT)) * 100)}% of the next day` };
     }
     if (how === 'remove') {
-      return { mult: DAILY_SCRUM_MULT, carry: null,
+      return { mult: REMOVE_IMPEDIMENT_MULT, carry: null,
         what: `${imp.title}: the Scrum Master removed it${block ? ', though the Developers could have' : ''}.`,
         cost: block
           ? 'cleared today, and the team learned to wait for you'
-          : `cleared today, at about ${Math.round((1 - DAILY_SCRUM_MULT) * 100)}% of the day` };
+          : `cleared today, at about ${Math.round((1 - REMOVE_IMPEDIMENT_MULT) * 100)}% of the day` };
     }
     if (how === 'around') {
       return { mult: 0.95, carry: { ...imp },
         what: `${imp.title}: worked around rather than removed.`,
         cost: 'a small cut today, and it is still there tomorrow' };
     }
-    return { mult: DAILY_SCRUM_MULT, carry: { ...imp, waitDays: 2 },
+    // Escalating costs nothing today, which is what its own line has always said. It used to carry
+    // the event's flat tenth of the day, so the line and the number disagreed; now the event is
+    // charged in seconds of its own and this is free, as advertised.
+    return { mult: 1, carry: { ...imp, waitDays: 2 },
       what: `${imp.title}: escalated, and the team waited.`,
       cost: 'nothing today. It clears in a day or two, and nobody here solved it' };
   })();
@@ -3085,9 +3112,10 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
   // Two lines, because two things happened: the event was held, and this is what it decided. Only
   // the decision was recorded, so a Sprint where every Daily Scrum was held with something on the
   // table read afterwards as a Sprint with no Daily Scrums in it at all.
+  const spent = scrumSpent(state);
   const held = note(state, { kind: 'daily-scrum', by,
     what: `Day ${state.dayNumber}: the Daily Scrum was held${by && by !== 'developer' ? `, by ${whoIs(by).replace(/^The /, 'the ')}` : ''}.`,
-    cost: `the timebox costs about ${Math.round((1 - DAILY_SCRUM_MULT) * 100)}% of the day` });
+    cost: `the timebox took ${spent}s of the day` });
   const logged = note(held, { kind: 'daily-scrum', by,
     what: `Day ${state.dayNumber}: ${outcome.what}`, cost: outcome.cost });
   const base: ZooGameState = { ...logged,
@@ -3100,8 +3128,8 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
     impedimentLog: [...(logged.impedimentLog ?? []),
       { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal }],
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult) };
-  return advanceDay(base, outcome.mult);
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult, spent) };
+  return advanceDay(base, outcome.mult, spent);
 }
 
 /** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and
@@ -3109,7 +3137,8 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
  *  a heavier time cost. With nothing waiting, skipping costs nothing this time. */
 /** Carry on with the original plan instead of adapting. With a blocker surfaced, ignoring
  *  it lets it grow overnight (a big cost tomorrow). With nothing surfaced, this is just the
- *  Daily Scrum concluding - it still costs its small timebox (the event is not skippable). */
+ *  Daily Scrum concluding - and it still costs the whole timebox, because the time was set aside
+ *  for the event whether or not the Developers used it. */
 export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   state = note(state, { kind: 'daily-scrum', by,
@@ -3119,15 +3148,19 @@ export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
       : undefined });
   const imp = state.pendingImpediment;
   // A team in the habit of holding it spots a carried blocker first thing and pays less for it.
-  const mult = imp ? (state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT) : DAILY_SCRUM_MULT;
+  const mult = imp ? (state.scrumDiscipline ? CAUGHT_EARLY_MULT : SKIP_PENALTY_MULT) : 1;
+  // The whole box, whether or not it was used. The time was set aside for the event either way,
+  // and without this a player could read the screen, see that nothing had surfaced, and skip for a
+  // free thirty seconds - which pays them for the one habit the event exists to build. Holding it
+  // and saying "we're done" is the only way to get any of the box back.
   const base = {
     ...state,
     pendingImpediment: null,
     carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
     missedScrums: state.missedScrums + (imp ? 1 : 0),
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult) };
-  return advanceDay(base, mult);
+  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult, DAILY_SCRUM_SECONDS) };
+  return advanceDay(base, mult, DAILY_SCRUM_SECONDS);
 }
 
 // ============= The Sprint Review =============

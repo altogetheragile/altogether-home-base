@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, DAILY_SCRUM_MULT, SKIP_PENALTY_MULT } from './config';
+import { initialZooState, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT } from './config';
 import { answerImpediment, generateImpediment, landImpediment, inTheWayOfTheGoal, decisionsIn } from './engine';
 import type { ZooGameState, Impediment } from './types';
 
@@ -74,7 +74,8 @@ describe('the four answers, and what each costs', () => {
   it('lets the Developers clear their own block, cheaply', () => {
     const after = answerImpediment(atScrum(landImpediment(atScrum(null), block())), 'team');
     expect(after.carriedImpediment, 'the Developers cleared it and it came back anyway').toBeNull();
-    expect(after.dayTimeMult).toBeGreaterThan(DAILY_SCRUM_MULT);
+    expect(after.dayTimeMult, 'clearing your own block costs more than the Scrum Master removing it')
+      .toBeGreaterThan(REMOVE_IMPEDIMENT_MULT);
     const log = decisionsIn(after, 1).find((d) => /left to the Developers/.test(d.what))!;
     expect(log.cost).toMatch(/solved their own problem/);
   });
@@ -88,7 +89,7 @@ describe('the four answers, and what each costs', () => {
   it('clears what the Scrum Master removes, and says when they did not need to', () => {
     const removed = answerImpediment(atScrum(impediment()), 'remove');
     expect(removed.carriedImpediment).toBeNull();
-    expect(removed.dayTimeMult).toBe(DAILY_SCRUM_MULT);
+    expect(removed.dayTimeMult, 'removing it is free to the day').toBe(REMOVE_IMPEDIMENT_MULT);
 
     // The same answer to a block is the Super Hero, and the log says so without scoring it.
     const hero = answerImpediment(atScrum(landImpediment(atScrum(null), block())), 'remove');
