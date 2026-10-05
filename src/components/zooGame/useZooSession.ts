@@ -259,7 +259,10 @@ export function useAiSeats(
   aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, action: ZooAction) => void,
   /** Who still has to agree a Sprint Goal before topic two begins: the seats somebody or some AI
    *  is holding. An empty seat cannot agree, so waiting on it would stall the game. */
-  mustAgree?: readonly string[]) {
+  mustAgree?: readonly string[],
+  /** Moves this table leaves to the player. A seat played by the game does the seat's routine
+   *  work; a decision somebody is sitting there to make is not routine work. */
+  skip?: (action: ZooAction) => boolean) {
   const { state, drivesClock, sendAs } = session;
   const seats = aiSeats.join(',');
   const agreers = (mustAgree ?? []).join(',');
@@ -271,8 +274,8 @@ export function useAiSeats(
   // Building is the one move with a long beat, so the Developers could forecast, plan and pull
   // work, and then never build a single thing: the board sat still for a whole day with an
   // item in Doing and nobody saying why.
-  const latest = useRef<{ state: typeof state; sendAs: typeof sendAs; onSay: typeof onSay }>({ state, sendAs, onSay });
-  useEffect(() => { latest.current = { state, sendAs, onSay }; });
+  const latest = useRef<{ state: typeof state; sendAs: typeof sendAs; onSay: typeof onSay; skip: typeof skip }>({ state, sendAs, onSay, skip });
+  useEffect(() => { latest.current = { state, sendAs, onSay, skip }; });
 
   useEffect(() => {
     if (!drivesClock || !seats) return;
@@ -283,7 +286,7 @@ export function useAiSeats(
     // move: the same move coming back after its wait is taken rather than deferred forever.
     let waitedFor: string | null = null;
     const beat = () => {
-      const { state: now, sendAs: send, onSay: say } = latest.current;
+      const { state: now, sendAs: send, onSay: say, skip } = latest.current;
       let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
       if (now) {
         for (const seat of seats.split(',') as SeatName[]) {
@@ -302,6 +305,7 @@ export function useAiSeats(
           // that keeps proposing something impossible cannot starve the seats behind it in
           // this list - which is how the Scrum Master ended up never getting to agree.
           if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
+          if (skip?.(move.action)) continue;
           next = { seat, move }; break;
         }
       }

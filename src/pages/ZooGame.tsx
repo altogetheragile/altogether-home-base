@@ -41,7 +41,7 @@ import { RecordingChip } from '@/components/zooGame/RecordingChip';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 import { useZooCopy } from '@/components/zooGame/useZooCopy';
 import { useAiSeats } from '@/components/zooGame/useZooSession';
-import { SOLO_AI_SEATS } from '@/components/zooGame/aiSeats';
+import { SOLO_AI_SEATS, leftToThePlayer } from '@/components/zooGame/aiSeats';
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
@@ -71,7 +71,9 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
     drivesClock: true,
     sendAs: (_seat: SeatName, action: ZooAction) => game.send(action),
   }), [game]);
-  useAiSeats(aiSeats, SOLO_AI_SEATS);
+  // ...and what it leaves alone. Accepting work is a decision, and the player is sitting here to
+  // make it: it comes to them in the rail rather than happening to them.
+  useAiSeats(aiSeats, SOLO_AI_SEATS, undefined, undefined, leftToThePlayer);
 
   const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
