@@ -5,6 +5,7 @@ import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { riverY, BANK, spansTheWater } from './parkWater';
 import { tune } from './tuning';
 import { zonePlots, plotOrder } from './parkZones';
+import { reserved, freeSlots, onReservedGround } from './parkOutline';
 // Re-exported below as well; a re-export is not a local binding, and this module asks the question
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
@@ -1884,8 +1885,15 @@ export function answerPlacement(state: ZooGameState, id: string, choice: string)
   if (!spot) return state;
   const ground = (it: BacklogItem) => (it.category === 'enclosure'
     ? ENCLOSURE_SIZE[it.enclosureSize ?? 'medium'] : footprintFor(it));
-  const taken = state.backlog.filter((it) => it.pos && it.id !== id)
-    .map((it) => ({ id: it.id, ...ground(it), ...it.pos! }));
+  // Everything already standing, AND the ground the park keeps clear: every zone's spine, and the
+  // apron in front of the way in. `nearestFreeSpot` only ever knew about other items, which is why
+  // a habitat could land across a path or square in front of the entrance - those were not unlucky
+  // positions, they were positions nothing had been told about.
+  const taken = [
+    ...state.backlog.filter((it) => it.pos && it.id !== id)
+      .map((it) => ({ id: it.id, ...ground(it), ...it.pos! })),
+    ...reserved(state).map((r, i) => ({ id: `reserved-${i}`, w: r.w, h: r.h, x: r.x, y: r.y })),
+  ];
   const box = { id, ...ground(item) };
   const wanted = spot.of(box);
   // "At the back" is across the river, and until something crosses the water the back of the park is
@@ -1893,9 +1901,22 @@ export function answerPlacement(state: ZooGameState, id: string, choice: string)
   // goes to the back of the ground people can reach, and the log says why: a habitat put down where
   // no path could ever reach it could not be finished, and nothing anywhere said what was wrong.
   const marooned = wanted.y - box.h / 2 < riverY(wanted.x) + BANK && !crossesTheWater(state);
-  const aim = marooned
+  const aimed = marooned
     ? { x: wanted.x, y: Math.round(deepestRiver() + BANK + box.h / 2 + 24) }
     : wanted;
+  // ...and then onto the outline. "By the entrance" is a direction rather than a coordinate, so
+  // what it means is the free slot nearest the entrance - not the nearest clear pixel to a point
+  // the game made up. A slot faces the zone's path and is reachable through its gate, so landing
+  // in one is what makes "a visitor can get to it" true of the shape rather than of the luck.
+  const free = freeSlots(state, id);
+  const nearest = free.length
+    ? free.reduce((best, s) => ((s.at.x - aimed.x) ** 2 + (s.at.y - aimed.y) ** 2
+      < (best.at.x - aimed.x) ** 2 + (best.at.y - aimed.y) ** 2 ? s : best))
+    : null;
+  const aim = nearest ? nearest.at : aimed;
+  // Still through `nearestFreeSpot`: a slot can be too small for a large enclosure, and the park
+  // can fill up. Where the outline has an answer it is taken; where it has not, the old search
+  // runs, and it now knows about the ground that is kept clear.
   const pos = nearestFreeSpot(taken, box, aim);
   const placed = { ...state, pendingPlacement: null,
     backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
@@ -2277,8 +2298,26 @@ export function startItemAt(state: ZooGameState, id: string, pos: { x: number; y
 
 /** Set a feature's free-placement position in the park (from dragging on the Park tab). */
 export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y: number }): ZooGameState {
+  // Not onto the ground the park keeps clear, whoever is dropping it.
+  //
+  // Strict for everybody, which is the harder half of the rule and the half worth having. A game
+  // that stops the Developers walling off the entrance and then lets you do it has not taught
+  // that a zoo needs somewhere to walk - it has taught that the computer is fussy.
+  //
+  // Refused rather than nudged. A thing that slides out from under the pointer is a thing you
+  // fight; a drop that does not take is a drop you make again a few pixels over, and the park says
+  // why on the way past.
+  const item = state.backlog.find((it) => it.id === id);
+  if (item && onReservedGround(state, { ...pos, ...groundSize(item) })) return state;
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
 }
+
+/** Why a drop was refused, for a screen that wants to say so. Null when it would be taken. */
+export const whyNotHere = (state: ZooGameState, item: BacklogItem,
+  pos: { x: number; y: number }): string | null => (
+  onReservedGround(state, { ...pos, ...groundSize(item) })
+    ? 'That ground is kept clear: the path through the area runs there, and the way in has to stay open.'
+    : null);
 
 /** Position an item WITHIN its parent enclosure (0..1 fractions of the habitat box) - drag an
  *  animal to a spot inside its enclosure rather than letting it auto-arrange. */

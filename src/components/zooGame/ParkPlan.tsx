@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import type { ZooGameState, ZooConnector, BacklogItem } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf, runPoints, runPath, pathTarget } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
+import { outlineOf } from './parkOutline';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
@@ -909,6 +910,13 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           <rect width="18" height="18" fill="#93a271" />
           <line x1="0" y1="0" x2="0" y2="18" stroke="#7b8a5c" strokeWidth="6" />
         </pattern>
+        {/* Reserved ground: where the area's path has to be able to run. Hatched rather than
+            surfaced, because nothing has been built there yet - the outline only says it is
+            spoken for. */}
+        <pattern id="reserved-ground" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="12" height="12" fill="#d8d2c2" fillOpacity="0.5" />
+          <line x1="0" y1="0" x2="0" y2="12" stroke="#b5ab91" strokeWidth="3" />
+        </pattern>
         {/* The treeline along the boundary, from the same points, and open along the front where
             the way in is - so the plan and the Increment agree about where the park stops. Seen
             from straight above, a tree is its canopy. */}
@@ -989,6 +997,26 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   not the zoo&rsquo;s ground &middot; {groundPrice().toLocaleString()}
                 </text>
               )}
+              {/* The ground the area keeps clear, from its gate to the back of the plot.
+                  Drawn as RESERVED rather than as a path, because it is not one: "Main Pathways"
+                  is a Product Backlog item and the team still has to build it. What the outline
+                  says is only where it must be able to go - and that nothing may stand there,
+                  which is the whole of the fix for "the enclosure was placed across a path". */}
+              {ours && (() => {
+                const o = outlineOf(p);
+                return (
+                  <g data-part="zone-spine" data-zone={p.zone} opacity={open ? 0.5 : 0.3}>
+                    <rect x={o.spine.x - o.spine.w / 2} y={o.spine.y - o.spine.h / 2}
+                      width={o.spine.w} height={o.spine.h} rx={10}
+                      fill="url(#reserved-ground)" stroke="#8a7f63" strokeWidth={1.5}
+                      strokeDasharray="8 7" />
+                    {/* The gate, where the area meets the rest of the park. Everything inside is
+                        reached through it, which is what makes "a visitor can get there" a
+                        property of the shape rather than something to test for afterwards. */}
+                    <circle cx={o.gate.x} cy={o.gate.y} r={7} fill="#8a7f63" opacity={0.55} />
+                  </g>
+                );
+              })()}
             </g>
           );
         })}
