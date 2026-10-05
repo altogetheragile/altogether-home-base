@@ -2,7 +2,8 @@ import type { ZooGameState, ImpedimentAnswer } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
 import { DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS } from './config';
-import { sprintProgress, todaysDecision, inTheWayOfTheGoal } from './engine';
+import { sprintProgress, todaysDecision, inTheWayOfTheGoal, yourStandUp } from './engine';
+import { Bubble } from './TeamChat';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
 import { FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
@@ -17,6 +18,54 @@ interface DailyScrumProps {
   onDrop?: (id: string) => void;
   /** What the Scrum Master does about what surfaced. Four answers, and the game charges each. */
   onAnswer?: (how: ImpedimentAnswer) => void;
+  /** Your own turn in the room. Chosen rather than typed, so what you say is something your own
+   *  cards make true. */
+  onSay?: (text: string) => void;
+}
+
+
+/** The stand-up: what everybody said, and your turn.
+ *
+ *  The three questions are not the Guide's - the 2020 Guide dropped them and says the Developers
+ *  select whatever structure they want - so the heading says whose format it is, beside the thing
+ *  it is naming rather than in a footnote nobody reads.
+ *
+ *  Your turn is three options, not a text box. Every one of them is built from your own cards, so
+ *  all three are true; what differs is what they are ABOUT. One is progress toward the Sprint
+ *  Goal, which is the only thing the Guide insists this event focuses on. The other two are the
+ *  ways a stand-up goes wrong - a status report addressed to nobody, and a promise where a plan
+ *  should be. Nothing scores them. The Retrospective reads back what was said. */
+function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: string) => void }) {
+  const thread = (state.chat ?? []).filter((m) => m.day === state.dayNumber && m.text.includes('In my way:'));
+  const yours = thread.some((m) => m.who === 'you');
+  const options = yours ? [] : yourStandUp(state);
+  if (!thread.length && !options.length) return null;
+  return (
+    <div data-part="stand-up" className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <span className="text-xs font-semibold">Round the room</span>
+        <span className="text-[11px] text-muted-foreground">
+          the three questions are a common format, not the Guide&rsquo;s - the Developers choose how they run this
+        </span>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {thread.map((m) => <Bubble key={m.id} msg={m} />)}
+      </ul>
+      {options.length > 0 && onSay && (
+        <div data-part="your-turn" className="space-y-1.5 border-t border-border pt-2">
+          <div className="text-[11px] font-semibold text-muted-foreground">Your turn</div>
+          <div className="flex flex-wrap gap-1.5">
+            {options.map((o) => (
+              <button key={o.key} type="button" onClick={() => onSay(o.text)} title={o.text}
+                className={cn(FOCUS, 'rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/60 hover:text-foreground')}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** The Daily Scrum: the Developers' short, TIMEBOXED daily event to inspect progress toward
@@ -25,7 +74,7 @@ interface DailyScrumProps {
  *  real choice is whether you ADAPT to what it surfaced or carry on regardless (letting a
  *  blocker grow overnight). The timebox counts down; on expiry it adapts (the disciplined
  *  default), so you decide within the box. In learn mode the timebox is paused. */
-export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScrumProps) {
+export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: DailyScrumProps) {
   const decision = todaysDecision(state);
   const prog = sprintProgress(state);
   // Today counts. The Daily Scrum is held at the start of the day it is named for, so "days left"
@@ -85,6 +134,11 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer }: DailyScr
           you can carry on regardless, and the cost of that is shown.
         </p>
       </div>
+
+      {/* The room, talking. The event was a dashboard: three numbers, a burndown and a decision,
+          with nobody in it saying a word - and a Daily Scrum is the Developers talking to each
+          other. Theirs is already said when you walk in; yours is a choice. */}
+      <TheStandUp state={state} onSay={onSay} />
 
       {/* Inspect: the three numbers this event is about. */}
       <div className="grid gap-2 sm:grid-cols-3">

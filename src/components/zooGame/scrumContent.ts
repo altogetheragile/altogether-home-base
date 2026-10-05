@@ -176,6 +176,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     when: 'Every day of the Sprint, at the same time and place.',
     how: 'The Developers choose the structure. Impediments are surfaced here and removed outside it. The Scrum Master is accountable for it happening, not for running it.',
     timebox: '15 minutes',
+    notScrum: 'The three questions - what I did, what I will do, what is in my way - are a common format, and the one this game uses. The 2020 Guide removed them: the Developers select whatever structure they want, as long as it focuses on progress toward the Sprint Goal and produces a plan for the day.',
   },
   {
     id: 'increment', kind: 'artifact', title: 'The Increment',

@@ -33,7 +33,7 @@ const HEX: Record<ChatWho, string> = {
   you: SEAT.developers.hex,
 };
 
-function Bubble({ msg }: { msg: ChatMessage }) {
+export function Bubble({ msg }: { msg: ChatMessage }) {
   const mine = msg.who === 'you';
   return (
     <li data-part="chat-message" data-who={msg.who}
@@ -48,8 +48,10 @@ function Bubble({ msg }: { msg: ChatMessage }) {
             orange a filled thing usually is here: the brand orange is the Product Owner's colour,
             and a thread where your own messages are the same colour as Priya's is a thread you
             have to read twice. You are a Developer, so you are teal like the rest of them. */}
+        {/* `whitespace-pre-line`, because some messages are several lines of one thing said at
+            once - a Developer's three lines at the Daily Scrum are one turn, not three. */}
         <span style={mine ? { backgroundColor: SEAT.developers.hex } : undefined}
-          className={cn('mt-0.5 inline-block rounded-2xl px-2.5 py-1.5 text-left text-[12px] leading-snug',
+          className={cn('mt-0.5 inline-block whitespace-pre-line rounded-2xl px-2.5 py-1.5 text-left text-[12px] leading-snug',
             mine ? 'rounded-br-sm text-white' : 'rounded-bl-sm bg-muted text-foreground')}>
           {msg.text}
         </span>

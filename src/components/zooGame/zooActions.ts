@@ -45,6 +45,10 @@ export function zooActions(send: (action: ZooAction) => void) {
     placeOnPark: (id: string) => send({ type: 'PLACE_ON_PARK', id }),
     saveDraftDesign: (id: string, design: ItemDesign) => send({ type: 'SET_DRAFT_DESIGN', id, design }),
     startItem: (id: string) => send({ type: 'START_ITEM', id }),
+    /** Say something in the team's thread, as yourself. The only place a player's own words reach
+     *  the chat - and they are chosen rather than typed, so every one of them is something the
+     *  game knows to be true. */
+    say: (text: string) => send({ type: 'SAY', who: 'you', from: 'You', text }),
     toggleGoalCritical: (id: string) => send({ type: 'TOGGLE_GOAL_CRITICAL', id }),
     setSprintDays: (days: number) => send({ type: 'SET_SPRINT_DAYS', days }),
     setWipLimit: (limit: number) => send({ type: 'SET_WIP_LIMIT', limit }),
