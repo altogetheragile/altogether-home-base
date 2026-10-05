@@ -355,6 +355,26 @@ export function habitatSpot(animal: BacklogItem, i: number, n: number,
  *  what it reaches, a Definition of Done line about being accessible - has to ask here, or it is
  *  reading a field that is empty for most of the zoo.
  */
+/** Where EVERYTHING on the park stands, worked out once.
+ *
+ *  `whereItStands` answers for one thing by laying out the whole park, which is fine for one and
+ *  ruinous for a loop: asking it per item is a full layout per item, and a layout sweeps a grid.
+ *  Anything that wants more than one answer asks this instead.
+ *
+ *  Added after `setItemPos` started asking per item to tell a free slot from an occupied one - one
+ *  drag became thirty park layouts, which is the sort of thing that is invisible in a test and
+ *  obvious under a pointer. */
+export function everythingStanding(state: ZooGameState): Map<string, { x: number; y: number }> {
+  const standing = standingOnPark(state);
+  const auto = parkPositions(standing, zonePlots(state));
+  const out = new Map<string, { x: number; y: number }>();
+  for (const s of standing) {
+    const at = restingPlace(s.item, s.size, auto);
+    if (at) out.set(s.item.id, at);
+  }
+  return out;
+}
+
 export function whereItStands(state: ZooGameState, item: BacklogItem): { x: number; y: number } | null {
   const standing = standingOnPark(state);
   const mine = standing.find((s) => s.item.id === item.id);

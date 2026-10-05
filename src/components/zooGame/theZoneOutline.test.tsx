@@ -10,7 +10,7 @@ import {
 import { zonePlots, plotOrder } from './parkZones';
 import { PROMENADE_Y } from './parkLayout';
 import { setItemPos, answerPlacement, askPlacement, openGround, whereEverythingStands } from './engine';
-import { whereItStands, groundSize, parkPositions } from './parkModel';
+import { whereItStands, groundSize, parkPositions, everythingStanding } from './parkModel';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The skeleton a zone is built on.
@@ -52,11 +52,14 @@ const aBuiltPark = (seed: number): ZooGameState => {
   } as ZooGameState;
 };
 
-/** Everything actually drawn on the park, with where it stands. */
-const standing = (s: ZooGameState): { item: BacklogItem; at: { x: number; y: number } }[] =>
-  s.backlog.filter((it) => it.status === 'done' || it.status === 'open')
-    .map((item) => ({ item, at: whereItStands(s, item)! }))
-    .filter((x) => !!x.at);
+/** Everything actually drawn on the park, with where it stands.
+ *
+ *  One layout for the lot. Asking `whereItStands` per item lays the whole park out per item, and
+ *  this walks fifty parks. */
+const standing = (s: ZooGameState): { item: BacklogItem; at: { x: number; y: number } }[] => {
+  const at = everythingStanding(s);
+  return s.backlog.filter((it) => at.has(it.id)).map((item) => ({ item, at: at.get(item.id)! }));
+};
 
 describe('a zone has a shape', () => {
   it('is entered from the front, where the visitors are', () => {

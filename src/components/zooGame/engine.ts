@@ -9,7 +9,7 @@ import { reserved, freeSlots, onReservedGround } from './parkOutline';
 // Re-exported below as well; a re-export is not a local binding, and this module asks the question
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
-import { whereItStands, groundSize } from './parkModel';
+import { whereItStands, groundSize, everythingStanding } from './parkModel';
 import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, DEFAULT_GROUP, floraDefaultColors, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
@@ -1852,9 +1852,7 @@ export function askPlacement(state: ZooGameState, id: string): ZooGameState {
 /** Where everything on the park actually is, which is not the same as where anybody put it: most
  *  of a zoo has no chosen position and is laid out. Used to tell a free slot from an occupied one. */
 export const whereEverythingStands = (state: ZooGameState, ignore?: string): { x: number; y: number }[] =>
-  state.backlog.filter((it) => it.id !== ignore)
-    .map((it) => whereItStands(state, it))
-    .filter((at): at is { x: number; y: number } => !!at);
+  [...everythingStanding(state)].filter(([id]) => id !== ignore).map(([, at]) => at);
 
 export const PLACEMENT_CHOICES: { key: string; label: string; of: (box: { w: number; h: number }) => { x: number; y: number } }[] = [
   { key: 'entrance', label: 'By the entrance', of: () => ({ x: CANVAS_W / 2, y: PLAY_H - 140 }) },
