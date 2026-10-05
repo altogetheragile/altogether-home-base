@@ -1849,6 +1849,13 @@ export function askPlacement(state: ZooGameState, id: string): ZooGameState {
  *
  *  Named spots rather than a free drag, because the answer is a product decision and not a
  *  pixel: what a visitor meets first, what is worth walking to, what fills the empty middle. */
+/** Where everything on the park actually is, which is not the same as where anybody put it: most
+ *  of a zoo has no chosen position and is laid out. Used to tell a free slot from an occupied one. */
+export const whereEverythingStands = (state: ZooGameState, ignore?: string): { x: number; y: number }[] =>
+  state.backlog.filter((it) => it.id !== ignore)
+    .map((it) => whereItStands(state, it))
+    .filter((at): at is { x: number; y: number } => !!at);
+
 export const PLACEMENT_CHOICES: { key: string; label: string; of: (box: { w: number; h: number }) => { x: number; y: number } }[] = [
   { key: 'entrance', label: 'By the entrance', of: () => ({ x: CANVAS_W / 2, y: PLAY_H - 140 }) },
   { key: 'middle', label: 'In the middle', of: () => ({ x: CANVAS_W / 2, y: PLAY_H / 2 }) },
@@ -1908,7 +1915,7 @@ export function answerPlacement(state: ZooGameState, id: string, choice: string)
   // what it means is the free slot nearest the entrance - not the nearest clear pixel to a point
   // the game made up. A slot faces the zone's path and is reachable through its gate, so landing
   // in one is what makes "a visitor can get to it" true of the shape rather than of the luck.
-  const free = freeSlots(state, id);
+  const free = freeSlots(state, id, whereEverythingStands(state, id));
   const nearest = free.length
     ? free.reduce((best, s) => ((s.at.x - aimed.x) ** 2 + (s.at.y - aimed.y) ** 2
       < (best.at.x - aimed.x) ** 2 + (best.at.y - aimed.y) ** 2 ? s : best))
@@ -2308,8 +2315,27 @@ export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y:
   // fight; a drop that does not take is a drop you make again a few pixels over, and the park says
   // why on the way past.
   const item = state.backlog.find((it) => it.id === id);
-  if (item && onReservedGround(state, { ...pos, ...groundSize(item) })) return state;
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos } : it)) };
+  if (!item) return state;
+  if (onReservedGround(state, { ...pos, ...groundSize(item) })) return state;
+  // ...and into the place you dropped it in.
+  //
+  // A slot is where a thing stands in an area: beside the path, facing it, reached through the
+  // gate. Dropping INTO one and landing a few pixels off it is the difference between a zoo that
+  // was laid out and one that was assembled, and nobody is going to line things up by hand.
+  //
+  // Only when it is free, and only when the thing fits: a slot with something in it is not a
+  // place to put a second thing, and a large enclosure half in a small slot is worse than one
+  // standing where you let go of it.
+  // No size check here: the smallest slot the park can make is 330 x 167 and the biggest thing in
+  // the game is 172 x 114, so everything fits everywhere. `SLOT_MIN` is what holds that, and
+  // `theZoneOutline` asserts every slot clears it - a second check here was a line no test could
+  // fail on. The slot-FILLER in `parkModel` keeps its own, because that one takes boxes from
+  // anywhere and is asked directly with an oversized one.
+  const slot = freeSlots(state, id, whereEverythingStands(state, id)).find((sl) =>
+    sl.at.x - sl.size.w / 2 <= pos.x && pos.x <= sl.at.x + sl.size.w / 2
+    && sl.at.y - sl.size.h / 2 <= pos.y && pos.y <= sl.at.y + sl.size.h / 2);
+  const at = slot ? slot.at : pos;
+  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos: at } : it)) };
 }
 
 /** Why a drop was refused, for a screen that wants to say so. Null when it would be taken. */

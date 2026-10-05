@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { ParkPlan } from './ParkPlan';
 import { initialZooState, DAY_SECONDS } from './config';
 import {
   outlines, allSlots, reserved, entranceApron, onReservedGround, freeSlots,
@@ -6,7 +9,7 @@ import {
 } from './parkOutline';
 import { zonePlots, plotOrder } from './parkZones';
 import { PROMENADE_Y } from './parkLayout';
-import { setItemPos, answerPlacement, askPlacement, openGround } from './engine';
+import { setItemPos, answerPlacement, askPlacement, openGround, whereEverythingStands } from './engine';
 import { whereItStands, groundSize, parkPositions } from './parkModel';
 import type { ZooGameState, BacklogItem } from './types';
 
@@ -158,6 +161,79 @@ describe('the ground that is kept clear', () => {
     const moved = setItemPos(s, item.id, slot.at);
     expect(moved.backlog.find((it) => it.id === item.id)!.pos, 'a perfectly good drop was refused')
       .toEqual(slot.at);
+  });
+});
+
+describe('dropping something into a place', () => {
+  // The other half of "strict for everyone": the spine refuses a drop, and a drop into a slot
+  // takes it. Landing a few pixels off a place is the difference between a zoo that was laid out
+  // and one that was assembled, and nobody is going to line things up by hand.
+  const smallest = (s: ZooGameState) => [...s.backlog]
+    .filter((it) => it.status === 'done').sort((a, z) => groundSize(a).w - groundSize(z).w)[0];
+
+  it('settles into the slot it was dropped in', () => {
+    const s = aBuiltPark(4);
+    const item = smallest(s);
+    // Free by the engine's own reckoning, which is where things actually STAND rather than where
+    // the few hand-placed ones were put.
+    const slot = freeSlots(s, item.id, whereEverythingStands(s, item.id))[0];
+    expect(slot, 'the park is full, so there is nowhere to drop it').toBeTruthy();
+    const near = { x: slot.at.x + Math.round(slot.size.w / 4), y: slot.at.y - 8 };
+    const moved = setItemPos(s, item.id, near);
+    expect(moved.backlog.find((it) => it.id === item.id)!.pos,
+      'a drop inside a place was left a few pixels off it').toEqual(slot.at);
+  });
+
+  it('and is left exactly where it was dropped between them', () => {
+    const s = aBuiltPark(4);
+    const item = smallest(s);
+    const slots = allSlots(s);
+    const rows = [...new Set(slots.map((sl) => sl.at.y))].sort((a, b) => a - b);
+    if (rows.length < 2) return;
+    const between = { x: slots[0].at.x, y: Math.round((rows[0] + rows[1]) / 2) };
+    if (slots.some((sl) => Math.abs(sl.at.x - between.x) <= sl.size.w / 2
+      && Math.abs(sl.at.y - between.y) <= sl.size.h / 2)) return;
+    expect(setItemPos(s, item.id, between).backlog.find((it) => it.id === item.id)!.pos,
+      'a deliberate spot between two places was tidied into one').toEqual(between);
+  });
+
+  it('never into a place something is already standing in', () => {
+    const s = aBuiltPark(4);
+    const item = smallest(s);
+    const free = freeSlots(s, item.id, whereEverythingStands(s, item.id));
+    const taken = allSlots(s).find((sl) => !free.some((f) => f.id === sl.id));
+    if (!taken) return;                     // this park has an empty area
+    const moved = setItemPos(s, item.id, { x: taken.at.x + 6, y: taken.at.y + 6 });
+    expect(moved.backlog.find((it) => it.id === item.id)!.pos,
+      'it snapped on top of something that was already there').not.toEqual(taken.at);
+  });
+
+});
+
+describe('the plan draws the shape', () => {
+  // "A light architectural framework that guides development." A framework nobody can see guides
+  // nothing: the snap has to be something you aimed at rather than something that happened to you.
+  const plan = (s: ZooGameState) => render(
+    <MemoryRouter><ParkPlan state={s} /></MemoryRouter>,
+  ).container;
+
+  it('marks out the places that are still empty, and not the ones in use', () => {
+    const s = aBuiltPark(4);
+    const c = plan(s);
+    const drawn = [...c.querySelectorAll('[data-part="free-slot"]')].map((n) => n.getAttribute('data-slot'));
+    expect(drawn.length, 'the plan marks out nowhere to build').toBeGreaterThan(0);
+    const free = new Set(freeSlots(s, undefined, whereEverythingStands(s)).map((sl) => sl.id));
+    for (const id of drawn) {
+      expect(free.has(id!), `${id} is drawn as empty with something standing in it`).toBe(true);
+    }
+    expect(drawn.length, 'every place is drawn as empty, including the ones in use')
+      .toBe(free.size);
+  });
+
+  it('and the corridor each area keeps clear', () => {
+    const c = plan(aBuiltPark(4));
+    expect(c.querySelectorAll('[data-part="zone-spine"]').length,
+      'nothing on the plan shows where the path has to go').toBeGreaterThan(0);
   });
 });
 
