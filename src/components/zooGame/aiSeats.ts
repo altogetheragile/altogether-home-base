@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector, ScrumTeamMember } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled, heldBy, stillBuilding, yourDev, otherDevs } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled, heldBy, stillBuilding, otherDevs, whatToHelpWith, handsOn } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, buildingTypeFor, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked, readyToAsk } from './parkChecks';
@@ -404,22 +404,25 @@ export function aiDevTurn(state: ZooGameState, dev: ScrumTeamMember): AiMove | n
   const keeping = teamHousekeeping(state, dev);
   if (keeping) return keeping;
 
-  // They do not take the last slot out from under you.
-  //
-  // Three Developers and a limit of three is a team at full stretch and comes out even. Tighten it
-  // to two - which is the team deciding to finish fewer things, and a good decision - and two
-  // colleagues working flat out would have taken both before you had read the first card, leaving
-  // the one person at the table with nothing to do and no way to get any. The proper answer is to
-  // offer you a hand on a card instead of starting another, which is what helping is for and is
-  // not built yet; until it is, they leave you a slot.
-  const you = yourDev(state);
-  const yoursInFlight = !!you && state.backlog.some((it) => it.status === 'committed' && it.started
-    && it.sprintNumber === state.sprintNumber && it.pulledBy === you.id);
-  const wip = activeWipLimit(state);
-  const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
-  if (!yoursInFlight && wip !== 0 && doing + 1 >= wip) return null;
+  const pulled = pullNext(state, dev);
+  if (pulled) return pulled;
 
-  return pullNext(state, dev);
+  // Nothing to pull, which is not the same as nothing to do.
+  //
+  // This is what the work-in-progress limit is FOR. A limit of two with three Developers used to
+  // be papered over - the colleagues left you a slot so you were not shut out - and that stopgap
+  // taught the opposite of the lesson, because a limit that cannot bite is not a limit. The right
+  // answer to "there is no room to start anything" is to help finish something.
+  //
+  // Soonest-to-finish first: a second pair of hands on the biggest thing on the board is a Sprint
+  // with two unfinished cards instead of one.
+  const help = whatToHelpWith(state, dev.id)[0];
+  if (help) {
+    const mate = handsOn(state, help)[0];
+    return { action: { type: 'LEND_A_HAND', itemId: help.id, devId: dev.id },
+             says: `Nothing I can start, so I will give ${mate ? mate.name : 'you'} a hand with ${help.name}. Two of us on it finishes it sooner.` };
+  }
+  return null;
 }
 
 /** What this AI accountability would do now, or nothing if it is not their turn.

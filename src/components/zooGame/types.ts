@@ -796,6 +796,7 @@ export type ZooAction =
   | { type: 'PLACE_ON_PARK'; id: string }
   | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string; kind?: 'stand-up' }
   | { type: 'ANSWER_HUDDLE'; how: HuddleAnswer; by?: string }
+  | { type: 'LEND_A_HAND'; itemId: string; devId: string; by?: string }
   | { type: 'START_ITEM'; id: string; by?: string;
       /** The Developer taking it, where a particular one is. Absent when you pull it yourself:
        *  the board writes down whoever has least on. */

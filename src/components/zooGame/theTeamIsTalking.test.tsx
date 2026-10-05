@@ -197,10 +197,12 @@ describe('nobody says their own name', () => {
     }
     expect(lines.length, 'nobody said anything, so nothing is being tested').toBeGreaterThan(2);
     for (const line of lines) {
-      for (const name of names) {
-        expect(line, `a Developer said their own name: "${line}"`).not.toContain(name);
-      }
+      // Their OWN name. Naming a colleague is ordinary speech - "I will give Ada a hand with the
+      // Lion Enclosure" is exactly how somebody offers to help - and banning every name would be
+      // the rule applied past the point it means anything.
+      expect(line, `${ben.name} said their own name: "${line}"`).not.toContain(ben.name);
     }
+    expect(names.length, 'there is nobody else on the team to name').toBeGreaterThan(1);
   });
 });
 

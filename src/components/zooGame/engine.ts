@@ -17,7 +17,7 @@ import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER, HUDDLE_SECONDS } from './config';
+import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -271,6 +271,74 @@ export function speaking(state: ZooGameState, by?: string): { who: ChatWho; from
   if (by === 'scrum_master') return { who: 'scrum_master', from: state.team.scrumMaster.name };
   if (by === 'developer') return { who: 'developer', from: 'The Developers' };
   return { who: 'you', from: 'You' };
+}
+
+// ============= Lending a hand =============
+//
+// A Developer with nothing to pull is not finished for the day. They can put a second pair of
+// hands on something already in flight, which finishes it sooner - and the game pays for that
+// honestly: `SWARM_FACTOR`, not double. Two people on one piece of work spend some of it talking
+// to each other, and a game that paid double would teach that the answer to any late Sprint is to
+// pile on, which is the thing swarming is most often got wrong by.
+//
+// It is also what the work-in-progress limit is FOR. A limit of two with three Developers used to
+// be papered over - the colleagues left you a slot so you were not shut out - and that stopgap
+// taught the opposite of the lesson: a limit that cannot bite is not a limit. Now the answer to
+// "there is no room to start anything" is the right one, which is to help finish something.
+//
+// Swarming is a common practice rather than a term in the Guide. What the Guide says is that the
+// Developers are self-managing and that the Sprint Backlog is theirs, which is what makes this
+// their call and nobody's to assign.
+
+/** Who has a hand on this card. */
+export const handsOn = (state: ZooGameState, item: BacklogItem): ScrumTeamMember[] =>
+  state.team.developers.filter((d) => (item.assignedDevs ?? []).includes(d.id));
+
+/** Whether this Developer could join this card: it is being built, and not by them already. */
+export const couldHelpWith = (state: ZooGameState, item: BacklogItem, devId: string): boolean =>
+  item.status === 'committed' && !!item.started && !item.design
+  && item.sprintNumber === state.sprintNumber
+  && !(item.assignedDevs ?? []).includes(devId);
+
+/** What somebody with nothing to pull could put a hand on, soonest-to-finish first.
+ *
+ *  Soonest first because that is what helping is for: finishing something. A second pair of hands
+ *  on the biggest thing on the board is a Sprint with two unfinished cards instead of one. */
+export function whatToHelpWith(state: ZooGameState, devId: string, limit = 3): BacklogItem[] {
+  return state.backlog
+    .filter((it) => couldHelpWith(state, it, devId))
+    .sort((a, z) => (a.owedSeconds ?? a.estimate * 1000) - (z.owedSeconds ?? z.estimate * 1000))
+    .slice(0, limit);
+}
+
+/** A second pair of hands joins a card, and it finishes sooner.
+ *
+ *  The time is taken off what is still OWED rather than off what the card cost, because help that
+ *  arrives when a card is nearly done is help that arrives nearly too late - which is true, and is
+ *  the reason a team swarms early rather than at the end of the Sprint.
+ *
+ *  Only ever faster. A third pair of hands on the same card does nothing to the clock: the game
+ *  will not pay for piling on, and the card already says who is on it. */
+export function lendAHand(state: ZooGameState, itemId: string, devId: string, by?: string): ZooGameState {
+  const item = state.backlog.find((it) => it.id === itemId);
+  if (!item || !couldHelpWith(state, item, devId)) return state;
+  const dev = state.team.developers.find((d) => d.id === devId);
+  if (!dev) return state;
+  const alone = (item.assignedDevs ?? []).length <= 1;
+  const owed = item.owedSeconds !== undefined && alone
+    ? Math.max(1, Math.round(item.owedSeconds / SWARM_FACTOR))
+    : item.owedSeconds;
+  const joined: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === itemId
+    ? { ...it, assignedDevs: [...(it.assignedDevs ?? []), devId], owedSeconds: owed }
+    : it)) };
+  const said = say(joined, { who: dev.id === yourDev(state)?.id ? 'you' : 'developer',
+    from: dev.id === yourDev(state)?.id ? 'You' : dev.name, itemId,
+    text: `Giving ${handsOn(state, item)[0]?.name ?? 'you'} a hand with ${item.name}.` });
+  return note(said, { kind: 'moved', by: by ?? 'developer',
+    what: `${dev.name} put a second pair of hands on ${item.name}.`,
+    cost: alone
+      ? 'Two Developers finish it about 1.6 times faster, not twice. Swarming is a practice teams bring to Scrum, not a Guide term.'
+      : 'A third pair of hands buys nothing. The work was already being shared.' });
 }
 
 // ============= The Daily Scrum, out loud =============

@@ -117,6 +117,15 @@ export const SCRUM_CARDS: ScrumCard[] = [
     how: 'Split what is too big, add description and acceptance criteria, order by value, and size it. Keep a couple of Sprints ready ahead of you: detailed analysis of work you may never build is waste.',
   },
   {
+    id: 'swarming', kind: 'concept', title: 'Swarming',
+    summary: 'Several Developers finishing one item together instead of starting another.',
+    why: 'Work only counts when it is finished. Two people on one card finish it sooner than two people on two cards finish either, and a Sprint full of nearly-done work is a Sprint with nothing to show.',
+    who: 'The Developers. They are self-managing and the Sprint Backlog is theirs, so who works on what is their call and nobody\u2019s to assign.',
+    when: 'When there is no room to start anything, when a card is at risk, or when somebody who knows the work is free.',
+    how: 'Put a second pair of hands on something already in flight. Early rather than late: help that arrives when a card is nearly done is help that arrives nearly too late.',
+    notScrum: 'Swarming is a practice teams bring to Scrum, not a word in the Guide. What the Guide says is that the Developers are self-managing and that the Sprint Backlog belongs to them - which is what makes this theirs to decide. Nor is it free: two people on one piece of work spend some of it talking to each other, so it finishes sooner, not twice as fast.',
+  },
+  {
     id: 'definition-of-done', kind: 'commitment', of: 'Increment', title: 'The Definition of Done',
     summary: 'The Increment’s commitment: what "finished" means for this product.',
     why: 'Without a shared meaning of Done, nobody can tell what has actually been delivered, and unfinished work piles up invisibly.',
@@ -265,7 +274,9 @@ export const CARDS_BY_PHASE: Record<string, string[]> = {
   // into an enclosure, an animal and a path is slicing, and it is the moment to say so.
   refine: ['product-backlog', 'pbi', 'refinement', 'slices', 'definition-of-done'],
   planning: ['sprint-planning', 'sprint-goal', 'sprint-backlog', 'definition-of-ready'],
-  sprint: ['sprint', 'daily-scrum', 'increment', 'developers'],
+  // Swarming is met during the Sprint, which is the only place it can happen: the board fills,
+  // there is no room to start anything, and the answer is to finish something together.
+  sprint: ['sprint', 'daily-scrum', 'increment', 'developers', 'swarming'],
   // Empiricism is met at the Review, where inspection and adaptation are actually happening -
   // the one-pager teaches it, but the one-pager is skippable and nothing repeated it during play.
   review: ['sprint-review', 'empiricism', 'product-owner'],

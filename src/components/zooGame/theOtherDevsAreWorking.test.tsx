@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { initialZooState, DAY_SECONDS, AI_DEV_FLOOR } from './config';
+import { initialZooState, DAY_SECONDS, AI_DEV_FLOOR, SWARM_FACTOR } from './config';
 import {
   startItem, yourDev, otherDevs, heldBy, stillBuilding, tickDay, secondsPerPoint,
-  devSecondsPerPoint, workOwed, yourSecondsPerPoint,
+  devSecondsPerPoint, workOwed, yourSecondsPerPoint, lendAHand, whatToHelpWith,
 } from './engine';
 import { aiDevTurn } from './aiSeats';
 import { SprintBoard } from './SprintBoard';
+import { ActionRail } from './ActionRail';
 import type { ZooGameState, BacklogItem, ScrumTeamMember } from './types';
 
 // Three Developers, working at the same time.
@@ -139,23 +140,95 @@ describe('the Developers the game plays beside you', () => {
       'somebody else built the card you were working on').toBeUndefined();
   });
 
-  it('leave you somewhere to work when the limit would shut you out', () => {
-    // Three Developers and a limit of three comes out even. Tighten it to two - which is the team
-    // deciding to finish fewer things, and a good decision - and two colleagues working flat out
-    // would take both before you had read the first card.
+  it('offer a hand rather than standing still when the limit shuts them out', () => {
+    // They used to leave you a slot, so a tightened limit could not shut you out. That was a
+    // stopgap and it taught the opposite of the lesson: a limit that cannot bite is not a limit.
+    // The right answer to "there is no room to start anything" is to help finish something, which
+    // is what the work-in-progress limit is for.
+    //
     // Setting a limit yourself in Sprint 1 is what puts it in force - see `revealed`.
     let s = sprint({ wipLimit: 2 });
     const [ben, cara] = otherDevs(s);
-    for (let i = 0; i < 6; i += 1) { s = theirTurn(s, ben); s = theirTurn(s, cara); }
-    expect(pulled(s).length, 'they filled the board and left you nothing to pull').toBe(1);
-
-    // ...and once you are working, the last slot is theirs to take.
+    s = theirTurn(s, cara);                                   // Cara takes one
     const free = s.backlog.find((it) => it.status === 'committed' && !it.started)!;
-    s = startItem(s, free.id);
-    s = theirTurn(s, ben);
-    expect(pulled(s).length, 'they are holding a slot open for somebody who is already busy').toBe(2);
+    s = startItem(s, free.id);                                // ...and you take the other
+    expect(pulled(s).length, 'the limit did not bite, so nothing is being tested').toBe(2);
+    expect(heldBy(s, ben.id), 'Ben has a card of his own, so he is not shut out').toBeUndefined();
+
+    const move = aiDevTurn(s, ben);
+    expect(move?.action.type, 'he stood still rather than helping finish something')
+      .toBe('LEND_A_HAND');
+    expect(move!.says, 'he did not say why he was joining a card').toMatch(/hand with/);
+    // Soonest-to-finish first: a second pair of hands on the biggest thing on the board is a
+    // Sprint with two unfinished cards instead of one.
+    const joined = (move!.action as { itemId: string }).itemId;
+    expect(whatToHelpWith(s, ben.id)[0].id, 'he joined the long one rather than the near one')
+      .toBe(joined);
   });
-});
+
+  it('finish it sooner together, and not twice as fast', () => {
+    // Two people on one piece of work spend some of it talking to each other. A game that paid
+    // double would teach that the answer to any late Sprint is to pile on, which is the thing
+    // swarming is most often got wrong by.
+    let s = sprint({ wipLimit: 0 });
+    const [ben, cara] = otherDevs(s);
+    s = theirTurn(s, cara);
+    const card = heldBy(s, cara.id)!;
+    const owed = card.owedSeconds!;
+    s = lendAHand(s, card.id, ben.id);
+    const now = s.backlog.find((it) => it.id === card.id)!;
+    expect(now.assignedDevs, 'the card does not say he is on it').toContain(ben.id);
+    expect(now.owedSeconds, 'two of them on it finishes no sooner than one')
+      .toBe(Math.max(1, Math.round(owed / SWARM_FACTOR)));
+    expect(now.owedSeconds, 'two of them finish it twice as fast, which is not how people work')
+      .toBeGreaterThan(owed / 2);
+    // ...and he says so, because a second name appearing on a card with nobody mentioning it is
+    // the board moving by itself.
+    const last = (s.chat ?? [])[(s.chat ?? []).length - 1];
+    expect(last?.from, 'nobody said they were joining the card').toBe(ben.name);
+    expect(last?.text, 'he did not say whose card he joined or which one').toContain(cara.name);
+    expect(last?.text).toContain(card.name);
+  });
+
+  it('put YOUR hand on it as yours, on your own side of the thread', () => {
+    // The same move either way, and the thread has to tell them apart. A colleague joining is
+    // news; you joining is you.
+    let s = sprint({ wipLimit: 0 });
+    const [, cara] = otherDevs(s);
+    const you = yourDev(s)!;
+    s = theirTurn(s, cara);
+    const card = heldBy(s, cara.id)!;
+    s = lendAHand(s, card.id, you.id);
+    const last = (s.chat ?? [])[(s.chat ?? []).length - 1];
+    expect(last?.who, 'you joined a card and the thread filed it as somebody else').toBe('you');
+    expect(last?.from).toBe('You');
+  });
+
+  it('buy nothing by piling a third pair of hands on', () => {
+    let s = sprint({ wipLimit: 0 });
+    const [ben, cara] = otherDevs(s);
+    const you = yourDev(s)!;
+    s = theirTurn(s, cara);
+    const card = heldBy(s, cara.id)!;
+    s = lendAHand(s, card.id, ben.id);
+    const two = s.backlog.find((it) => it.id === card.id)!.owedSeconds;
+    s = lendAHand(s, card.id, you.id);
+    const three = s.backlog.find((it) => it.id === card.id)!;
+    expect(three.assignedDevs, 'the third pair of hands is not written down').toContain(you.id);
+    expect(three.owedSeconds, 'the game paid for piling on').toBe(two);
+  });
+
+  it('never join a card twice, or one nobody is building', () => {
+    let s = sprint({ wipLimit: 0 });
+    const [ben, cara] = otherDevs(s);
+    s = theirTurn(s, cara);
+    const card = heldBy(s, cara.id)!;
+    expect(lendAHand(s, card.id, cara.id), 'she joined her own card').toBe(s);
+    const waiting = s.backlog.find((it) => it.status === 'committed' && !it.started)!;
+    expect(lendAHand(s, waiting.id, ben.id), 'he helped with work nobody had started').toBe(s);
+  });
+
+  });
 
 describe('the second pair of eyes on their work', () => {
   /** Cara's card, built, its plan ticked off, waiting only on a review. */
@@ -342,5 +415,72 @@ describe('the board while they work', () => {
     const { container } = render(board(sprint()));
     expect(container.querySelector('[data-part="being-built"]'),
       'a card nobody has taken says somebody is building it').toBeNull();
+  });
+});
+
+describe('the rail, when there is nothing to start', () => {
+  const rail = (s: ZooGameState, onLendAHand: (itemId: string, devId: string) => void = () => {}) => render(
+    <MemoryRouter>
+      <ActionRail state={s} onStartItem={() => {}} onLendAHand={onLendAHand} />
+    </MemoryRouter>,
+  ).container.querySelector('[data-part="action-rail"]')!;
+
+  /** Ben and Cara both building, against a limit of two, and you with nothing in hand. */
+  const boardFull = () => {
+    let s = sprint({ wipLimit: 2 });
+    const [ben, cara] = otherDevs(s);
+    s = theirTurn(s, ben);
+    s = theirTurn(s, cara);
+    return s;
+  };
+
+  it('asks what you will pull while your colleagues are building', () => {
+    // It used to ask only when NOBODY had started anything, which was the same question back when
+    // the Developers were one set of hands. Once two colleagues were building beside you the board
+    // always had something on it, and the person at the table was never asked again.
+    let s = sprint();
+    const [, cara] = otherDevs(s);
+    s = theirTurn(s, cara);
+    expect(rail(s).textContent, 'the prompt went quiet because somebody else was busy')
+      .toMatch(/What will you pull next\?/);
+  });
+
+  it('offers a hand instead when there is no room to start', () => {
+    const asked: string[] = [];
+    const s = boardFull();
+    const you = yourDev(s)!;
+    expect(heldBy(s, you.id), 'you already have a card, so nothing is being tested').toBeUndefined();
+    const r = rail(s, (itemId: string) => { asked.push(itemId); });
+    expect(r.textContent, 'it still offers work the limit will refuse').not.toMatch(/What will you pull next\?/);
+    expect(r.textContent, 'it says nothing at all, so the limit reads as a dead end')
+      .toMatch(/No room to start anything\. Lend a hand\?/);
+    expect(r.textContent, 'it does not say what helping buys').toMatch(/1\.6 times, not twice/);
+    expect(r.textContent, 'it teaches a practice as though it were Scrum').toMatch(/not a word in the Guide/);
+    // Soonest-to-finish first, worked out from the cards rather than from the same function the
+    // rail used: a second pair of hands on the biggest thing on the board is a Sprint with two
+    // unfinished cards instead of one.
+    const inFlight = s.backlog.filter((it) => it.started && !it.design && it.owedSeconds !== undefined);
+    expect(inFlight.length, 'only one card is in flight, so the order cannot be tested').toBe(2);
+    const nearest = [...inFlight].sort((a, z) => a.owedSeconds! - z.owedSeconds!)[0];
+    expect(nearest.owedSeconds, 'both cards owe the same, so the order cannot be tested')
+      .not.toBe([...inFlight].sort((a, z) => z.owedSeconds! - a.owedSeconds!)[0].owedSeconds);
+
+    const buttons = [...r.querySelectorAll('button')].filter((b) => inFlight.some((it) => it.name === b.textContent));
+    expect(buttons[0]?.textContent, 'it offers the long one first').toBe(nearest.name);
+    fireEvent.click(buttons[0]);
+    expect(asked, 'pressing it did nothing').toEqual([nearest.id]);
+  });
+
+  it('says nothing to you at all while you have something in hand', () => {
+    // A prompt that arrives mid-build is a tap on the shoulder, and the question it asks has
+    // already been answered.
+    let s = boardFull();
+    const free = { ...s, wipLimit: 0 } as ZooGameState;
+    const next = free.backlog.find((it) => it.status === 'committed' && !it.started)!;
+    s = startItem(free, next.id);
+    expect(heldBy(s, yourDev(s)!.id), 'you did not pick anything up').toBeTruthy();
+    const text = rail(s).textContent ?? '';
+    expect(text, 'you were asked to help while mid-build').not.toMatch(/Lend a hand/);
+    expect(text, 'you were asked what to pull while mid-build').not.toMatch(/What will you pull next\?/);
   });
 });

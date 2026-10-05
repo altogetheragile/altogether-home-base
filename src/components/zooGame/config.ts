@@ -79,6 +79,16 @@ export const DAY_SECONDS = 180;
  *  up for it; the huddle is the conversation you have in the corridor afterwards because something
  *  came up, and it costs what it costs. Skipping it is free - the Daily Scrum's box is spent
  *  whether you hold it or not, and this one is not. */
+/** How much faster two Developers finish one card than one does.
+ *
+ *  Not twice. Two people on one piece of work spend some of it talking to each other, and a game
+ *  that paid double for swarming would teach that the answer to any late Sprint is to pile on -
+ *  which is the thing swarming is most often got wrong by. 1.6 is the number the spec picked and
+ *  it is in the right place: clearly worth doing, clearly not free.
+ *
+ *  Swarming is a common practice rather than a Guide term, which the teaching card says. */
+export const SWARM_FACTOR = 1.6;
+
 export const HUDDLE_SECONDS = 12;
 
 export const AI_DEV_FLOOR = 0.6;
