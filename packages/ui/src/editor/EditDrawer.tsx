@@ -50,8 +50,14 @@ export type EditorHost = {
    *  somebody to press. Reported from playing it: "The Edit this Page button blocks the game
    *  buttons bottom right."
    *
-   *  Only the app rendering the page knows it has a bar, so it says so rather than this guessing. */
-  launcher?: 'bottom-right' | 'clear-of-a-bottom-bar';
+   *  `clear-of-a-bottom-bar` moves it to the other corner. `tucked-away` is for a page with
+   *  something in EVERY corner - a game fills the window - and puts it against the edge of the
+   *  screen as a sliver that opens under the pointer. Reported twice: once for the bottom-right
+   *  bar, and again once a chat panel arrived in the bottom-left corner it had moved to.
+   *
+   *  Only the app rendering the page knows what it has pinned, so it says so rather than this
+   *  guessing. */
+  launcher?: 'bottom-right' | 'clear-of-a-bottom-bar' | 'tucked-away';
   /** Open on arrival, at this tab. Set from the URL, so something elsewhere can send somebody
    *  straight to the right box rather than to the right page and a hunt. */
   openAt?: string | null;
@@ -426,12 +432,36 @@ export function EditDrawer({ host }: { host: EditorHost }) {
   };
 
   if (!open) {
+    // Tucked out of the way entirely, for a page that has something in every corner.
+    //
+    // This started bottom-right, moved to bottom-left to clear the games' action bar, and then the
+    // games put a chat panel under it. Both of those were the same move - find the empty corner -
+    // and a game screen has not got one: header, tabs, seat band, board, park, the team's thread,
+    // the action bar. Asked for twice now, the second time as "the Edit button is in the way
+    // again, can it be hidden?"
+    //
+    // So on those pages it is a sliver against the edge of the window, a few pixels wide, which
+    // opens out under the pointer and opens the drawer when pressed. It is still there, it is
+    // still one click, and it is on top of nothing.
+    if (host.launcher === 'tucked-away') {
+      return (
+        <button
+          onClick={() => setOpen(true)}
+          data-part="edit-this-page"
+          title="Edit This Page"
+          aria-label="Edit This Page"
+          className="group fixed left-0 top-1/2 z-[60] flex -translate-y-1/2 items-center gap-2 rounded-r-full bg-foreground/25 py-6 pl-1 pr-1 text-background shadow-lg transition-all hover:bg-foreground hover:pl-2 hover:pr-3 focus-visible:bg-foreground focus-visible:pr-3"
+        >
+          <Pencil size={16} className="opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+        </button>
+      );
+    }
     return (
       <button
         onClick={() => setOpen(true)}
         data-part="edit-this-page"
         // Out of the way of a page that has its own bar down there: up the left-hand side, where
-        // nothing in these games lives, rather than hovering over whatever is pinned bottom-right.
+        // nothing on that page lives, rather than hovering over whatever is pinned bottom-right.
         className={`fixed z-[60] flex items-center gap-2 rounded-full bg-foreground px-4 py-3 text-sm font-medium text-background shadow-lg transition-transform hover:scale-105 ${
           host.launcher === 'clear-of-a-bottom-bar' ? 'bottom-6 left-6' : 'bottom-6 right-6'}`}
       >
