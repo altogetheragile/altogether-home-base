@@ -186,7 +186,8 @@ describe('the screen', () => {
     expect(said[0]).toMatch(/In my way:/);
 
     const after = { ...open, chat: [...(open.chat ?? []),
-      { id: 'yours', who: 'you' as const, from: 'You', text: said[0], day: open.dayNumber }] };
+      { id: 'yours', who: 'you' as const, from: 'You', text: said[0], day: open.dayNumber,
+        kind: 'stand-up' as const }] };
     expect(scrum(after as ZooGameState).querySelector('[data-part="your-turn"]'),
       'you are asked to speak again after you have spoken').toBeNull();
   });

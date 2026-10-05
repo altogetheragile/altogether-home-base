@@ -2,7 +2,7 @@ import type { ZooGameState, ImpedimentAnswer } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
 import { DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS } from './config';
-import { sprintProgress, todaysDecision, inTheWayOfTheGoal, yourStandUp } from './engine';
+import { sprintProgress, todaysDecision, inTheWayOfTheGoal, yourStandUp, goalAtRisk } from './engine';
 import { Bubble } from './TeamChat';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ interface DailyScrumProps {
   onAnswer?: (how: ImpedimentAnswer) => void;
   /** Your own turn in the room. Chosen rather than typed, so what you say is something your own
    *  cards make true. */
-  onSay?: (text: string) => void;
+  onSay?: (text: string, kind?: 'stand-up') => void;
 }
 
 
@@ -35,8 +35,12 @@ interface DailyScrumProps {
  *  Goal, which is the only thing the Guide insists this event focuses on. The other two are the
  *  ways a stand-up goes wrong - a status report addressed to nobody, and a promise where a plan
  *  should be. Nothing scores them. The Retrospective reads back what was said. */
-function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: string) => void }) {
-  const thread = (state.chat ?? []).filter((m) => m.day === state.dayNumber && m.text.includes('In my way:'));
+function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: string, kind?: 'stand-up') => void }) {
+  // This event's own thread, by what each message says it belongs to. It used to be found by
+  // sniffing for the words of the three questions, which worked until a Developer said something
+  // in the room that was not one of them - the risk flag, which is the most important thing said
+  // at a stand-up and the one the filter dropped on the floor.
+  const thread = (state.chat ?? []).filter((m) => m.kind === 'stand-up' && m.day === state.dayNumber);
   const yours = thread.some((m) => m.who === 'you');
   const options = yours ? [] : yourStandUp(state);
   if (!thread.length && !options.length) return null;
@@ -56,7 +60,7 @@ function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: stri
           <div className="text-[11px] font-semibold text-muted-foreground">Your turn</div>
           <div className="flex flex-wrap gap-1.5">
             {options.map((o) => (
-              <button key={o.key} type="button" onClick={() => onSay(o.text)} title={o.text}
+              <button key={o.key} type="button" onClick={() => onSay(o.text, 'stand-up')} title={o.text}
                 className={cn(FOCUS, 'rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/60 hover:text-foreground')}>
                 {o.label}
               </button>
@@ -75,7 +79,17 @@ function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: stri
  *  blocker grow overnight). The timebox counts down; on expiry it adapts (the disciplined
  *  default), so you decide within the box. In learn mode the timebox is paused. */
 export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: DailyScrumProps) {
-  const decision = todaysDecision(state);
+  // What does not fit, and whose call it is.
+  //
+  // Two different situations wear the same arithmetic. Work that will not fit while the Sprint
+  // Goal is still safe is the Developers adapting their own Sprint Backlog, which is this event's
+  // stated purpose and needs nobody else in the room. A Sprint Goal AT RISK is not: what the
+  // Sprint promises is the Product Owner's, and she is not here. So the first is decided in the
+  // event and the second is flagged in it and settled in the huddle on the way out, which is where
+  // she is. The event cuts no scope it has no right to cut.
+  const atRisk = goalAtRisk(state);
+  const decision = atRisk ? null : todaysDecision(state);
+  const flagged = atRisk ? todaysDecision(state) : null;
   const prog = sprintProgress(state);
   // Today counts. The Daily Scrum is held at the start of the day it is named for, so "days left"
   // that excluded it disagreed with the decision panel underneath, which counts the day you are
@@ -153,7 +167,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: D
 
       {/* ...and adapt: the burndown and the decision, side by side, above the fold. The decision is
           the reason this screen exists, and it used to start eight hundred pixels down it. */}
-      <div className={cn('grid gap-2', decision && onDrop ? 'lg:grid-cols-2' : '')}>
+      <div className={cn('grid gap-2', (decision && onDrop) || flagged ? 'lg:grid-cols-2' : '')}>
         <div className={cn(SURFACE.card, PADDING.default)}>
           <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
             <Target className="h-3.5 w-3.5 text-muted-foreground" /> Burndown
@@ -165,6 +179,25 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: D
               : `${prog.remaining} pts remain over ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`}
           </p>
         </div>
+
+        {flagged && (
+          <div data-part="needs-priya" className="rounded-lg border-2 border-amber-400/70 bg-amber-500/[0.07] p-3">
+            <div className="text-sm font-bold">This one is not ours alone</div>
+            <p className="mt-1 text-sm">
+              {flagged.left} point{flagged.left === 1 ? '' : 's'} left, {flagged.daysLeft} day{flagged.daysLeft === 1 ? '' : 's'} to do
+              about {flagged.capacity} of them, and the Sprint Goal is at risk.{' '}
+              <strong>{flagged.candidate.name}</strong> is the thing that will not make it.
+            </p>
+            {/* The teaching, and the reason this event has no Drop button when the Goal is the
+                thing in danger. The Guide puts the Product Owner outside this event unless they
+                are working on Sprint Backlog items; what the Sprint PROMISES is theirs. */}
+            <p className="mt-1.5 text-[12px] text-muted-foreground">
+              The Sprint Backlog is yours to change, and you have just changed what you think you can
+              finish. What the Sprint promised is the Product Owner&rsquo;s, and she is not in this
+              event. Flag it here; settle it with her on the way out.
+            </p>
+          </div>
+        )}
 
         {decision && onDrop && (
           <div data-part="decision" className="rounded-lg border-2 border-amber-400/70 bg-amber-500/[0.07] p-3">

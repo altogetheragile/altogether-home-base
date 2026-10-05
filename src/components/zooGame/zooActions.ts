@@ -1,4 +1,4 @@
-import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure } from './types';
+import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure, HuddleAnswer } from './types';
 import type { ItemDesign } from './design';
 import { bothLists, forgetTaught, readTaught } from './whatYouHaveRead';
 
@@ -48,7 +48,9 @@ export function zooActions(send: (action: ZooAction) => void) {
     /** Say something in the team's thread, as yourself. The only place a player's own words reach
      *  the chat - and they are chosen rather than typed, so every one of them is something the
      *  game knows to be true. */
-    say: (text: string) => send({ type: 'SAY', who: 'you', from: 'You', text }),
+    say: (text: string, kind?: 'stand-up') => send({ type: 'SAY', who: 'you', from: 'You', text, kind }),
+    /** What the Scrum Team does about a Sprint Goal at risk, in the huddle after the Daily Scrum. */
+    answerHuddle: (how: HuddleAnswer) => send({ type: 'ANSWER_HUDDLE', how }),
     toggleGoalCritical: (id: string) => send({ type: 'TOGGLE_GOAL_CRITICAL', id }),
     setSprintDays: (days: number) => send({ type: 'SET_SPRINT_DAYS', days }),
     setWipLimit: (limit: number) => send({ type: 'SET_WIP_LIMIT', limit }),
