@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
 import type { ZooAction } from '@/components/zooGame/types';
-import { inHandItem, copyOffset } from '@/components/zooGame/engine';
+import { inHandItem, copyOffset, otherDevs } from '@/components/zooGame/engine';
 import { readyToAsk } from '@/components/zooGame/parkChecks';
 
 /** The Product Owner, as somebody says their name. */
@@ -73,7 +73,12 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   }), [game]);
   // ...and what it leaves alone. Accepting work is a decision, and the player is sitting here to
   // make it: it comes to them in the rail rather than happening to them.
-  useAiSeats(aiSeats, SOLO_AI_SEATS, undefined, undefined, leftToThePlayer);
+  // ...and Ben and Cara, who are Developers like you rather than a seat nobody is in. You hold the
+  // first of the three while the Sprint Backlog is being executed; they pull their own cards and
+  // build them beside you, at your pace. Not Sprint Planning, though: sizing the work and
+  // forecasting the Sprint belong to the Developers as a whole, and you are one of them.
+  const alongside = useMemo(() => (game.state ? otherDevs(game.state) : []), [game.state]);
+  useAiSeats(aiSeats, SOLO_AI_SEATS, { skip: leftToThePlayer, alongside });
 
   const { state, start, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();

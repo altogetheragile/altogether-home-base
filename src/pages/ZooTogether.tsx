@@ -1,8 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { ZooGameScreens } from './ZooGame';
 import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
+import { otherDevs } from '@/components/zooGame/engine';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
 import { seatIsAway, unmannedSeats } from '@/components/zooGame/seatPresence';
 import type { SeatContext } from '@/components/zooGame/seatRules';
@@ -83,7 +84,14 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   // The same list the Sprint Goal panel waits on, so the seats played by the game hold topic one
   // open exactly as long as the screen does.
   const mustAgree = [...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))];
-  useAiSeats(session, aiSeats, useCallback((seat: string, says: string, action: { type: string; topic?: string }) => {
+  // The Developers the game plays BESIDE a human one. Somebody is in that chair, so the seat
+  // itself is not played - but a Scrum Team is three Developers and the other two should be
+  // working. Empty when nobody holds it: then `aiSeats` has the seat in it and the game plays the
+  // Developers as one set of hands, which is the other way round and never both at once.
+  const devHeld = lobby.seats.some((x) => x.seat === 'developer' && x.participant_id && !x.is_ai);
+  const alongside = useMemo(() => (devHeld && session.state ? otherDevs(session.state) : []),
+    [devHeld, session.state]);
+  useAiSeats(session, aiSeats, { mustAgree, alongside, onSay: useCallback((seat: string, says: string, action: { type: string; topic?: string }) => {
     const kind = action.type;
     // A move that changes the topic is about the topic it moves TO, or the line announcing
     // topic three would be filed under topic two and swept away on arrival.
@@ -105,7 +113,7 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
     const running = timers.current.get(id);
     if (running) clearTimeout(running);
     timers.current.set(id, setTimeout(() => forget(id), SAY_SECONDS * 1000));
-  }, [forget]), mustAgree);
+  }, [forget]) });
   const { state, ready, present, drivesClock, error, refused, clearRefused } = session;
 
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;

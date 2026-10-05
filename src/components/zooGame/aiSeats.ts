@@ -1,6 +1,6 @@
-import type { ZooGameState, ZooAction, BacklogItem, ZooConnector } from './types';
+import type { ZooGameState, ZooAction, BacklogItem, ZooConnector, ScrumTeamMember } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled, heldBy, stillBuilding, yourDev, otherDevs } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, buildingTypeFor, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked, readyToAsk } from './parkChecks';
@@ -219,6 +219,206 @@ export const leftToThePlayer = (action: ZooAction): boolean =>
   PLAYER_DECIDES.has(action.type)
   || (action.type === 'ANSWER_QUESTION' && 'choice' in action && action.choice === 'accept');
 
+// ============= The Developers' own work, during a Sprint =============
+//
+// Split out of the Developers' seat because there are now two ways to play it. Nobody in the seat
+// at all and the game plays them as one set of hands, which is what a shared session with no
+// Developer in it needs. Somebody in it - which is every solo game, since the player is always a
+// Developer while the Sprint Backlog is being executed - and the game plays the OTHER Developers
+// as people: one card each, at their own pace, beside you. The steps are the same either way; who
+// is taking them is not.
+
+/** Built, and said as what they did rather than what they wish they had done. Done is the whole
+ *  team's word and it waits for the Product Owner's: saying "built to the Definition of Done"
+ *  while four acceptance criteria sat untouched was the Developers declaring something that is not
+ *  theirs to declare. */
+const buildMove = (item: BacklogItem, who?: string): AiMove => ({
+  action: { type: 'BUILD_ITEM', id: item.id, byTheGame: true },
+  says: `${who ? `${who}: built` : 'Built'} ${item.name}. Not Done until its criteria are accepted.`,
+  weight: item.estimate,
+});
+
+/** Tick their own plan off. The sign-off step is not theirs - that is the Product Owner accepting
+ *  the work - and ticking the last of the rest is what moves an item to Done, so leaving the plan
+ *  untouched left everything sitting in Doing. */
+function tickOffPlan(items: readonly BacklogItem[], who?: string): AiMove | null {
+  for (const it of items) {
+    const task = (it.tasks ?? []).find((t) => !t.done && t.label.trim() && !isSignOffTask(t.label));
+    if (task) return { action: { type: 'TOGGLE_TASK', id: it.id, taskId: task.id },
+                       says: `${task.label} - done, on ${it.name}${who ? ` (${who})` : ''}.` };
+  }
+  return null;
+}
+
+/** The work that belongs to the team rather than to one person: reviewing each other, asking the
+ *  Product Owner to come and look, moving a card to Done, and running the path that joins a new
+ *  thing to the way in. Any Developer may do any of it, on anybody's card - including yours, which
+ *  is the point of the first one. */
+function teamHousekeeping(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
+  const who = dev?.name;
+  // A second pair of eyes on something that is otherwise finished.
+  //
+  // "Peer-reviewed by another Developer" is a line in the shipped Definition of Done, and the
+  // only thing that satisfies it is a second Developer being on the item. Nobody ever was:
+  // seats played by the game built the work and never reviewed each other's, so an item could
+  // meet every acceptance criterion, be signed off, stand on the park - and sit unfinishable
+  // for the rest of the Sprint. A Product Owner watching that could do nothing about it either,
+  // because assigning a Developer is not their call and should not be. Reported from a live
+  // game, on day 3 of Sprint 3, with the Sprint Goal at risk over it.
+  const needsEyes = state.backlog.find((it) => it.status === 'committed' && it.started && it.design
+    && (it.assignedDevs ?? []).length === 1
+    && (it.tasks ?? []).every((t) => !t.label.trim() || t.done || isSignOffTask(t.label)));
+  if (needsEyes) {
+    const already = new Set(needsEyes.assignedDevs ?? []);
+    // Whoever is reviewing it, and not its author: a review by the person who wrote it is not a
+    // review. Themselves first if they are free of the card, then one of their colleagues, and
+    // only then you.
+    //
+    // That last order matters now the Developers are people. It used to take the first Developer
+    // on the team who was not already on the card, which is YOU - so the game quietly put your
+    // name against a review you had not done, on somebody else's work, which is the same thing as
+    // a Product Owner played by the game accepting work before anybody had looked at it. You are
+    // still the fallback, because the alternative is a card that can never meet the Definition of
+    // Done when everybody else is busy, and a stalled board teaches nothing.
+    const notOnIt = (d: ScrumTeamMember) => !already.has(d.id);
+    const free = (dev && notOnIt(dev) ? dev : undefined)
+      ?? otherDevs(state).find(notOnIt)
+      ?? state.team.developers.find(notOnIt);
+    if (free) {
+      return { action: { type: 'ASSIGN_DEV', itemId: needsEyes.id, devId: free.id },
+               says: `${who ? `${who}: took` : 'Took'} a look over ${needsEyes.name} with the second pair of eyes our Definition of Done asks for.` };
+    }
+  }
+
+  // ...and ask the Product Owner to come and look, which is what the sign-off waits for now.
+  // Meeting every criterion the park can measure is what makes the asking possible; it is not
+  // the answer, and work whose criteria are all facts used to reach Done without anybody being
+  // asked anything at all.
+  const toShow = state.backlog.find((it) => it.sprintNumber === state.sprintNumber
+    && it.status === 'committed' && !it.signedOff && readyToAsk(state, it)
+    && !(state.questions ?? []).some((q) => q.id === `check-${it.id}`));
+  if (toShow) {
+    return { action: { type: 'ASK_TO_CHECK', id: toShow.id, by: 'developer' },
+             says: `${toShow.name} is built. ${who ? `${who} is asking` : 'Asking'} Priya to come and look at it.` };
+  }
+
+  // ...and move to Done what is ready. After the second pair of eyes, not before: the
+  // Definition of Done asks for a review, and a team that moves the card first has reviewed
+  // nothing. Done is the Developers' word - the card no longer walks into the column when the
+  // Product Owner accepts it - so where the seats are played by the game, this is them saying it.
+  const toMove = state.backlog.find((it) => it.sprintNumber === state.sprintNumber && readyToMove(it));
+  if (toMove) {
+    return { action: { type: 'FINISH_ITEM', id: toMove.id },
+             says: `${toMove.name} meets the Definition of Done. Moving it to Done.` };
+  }
+
+  // A pathway is only finished when a run of it actually reaches the zone. The park
+  // answers that criterion itself - it either has a path running there or it does not -
+  // so a path could be built, planned and Done, and still never be releasable, because
+  // nobody had drawn the run. Deploying it is the Developers' work, like building it.
+  // ...and a habitat is only finished when somebody can walk to it, which is now one of its own
+  // acceptance criteria rather than a paths item of its own. Same work, same seat: the run that
+  // joins it to the way in is the Developers'.
+  const undeployed = state.backlog.find((it) => (it.category === 'path' || it.category === 'enclosure')
+    && it.design && (it.status === 'done' || it.status === 'committed') && it.started
+    && !(state.connectors ?? []).some((c) => c.itemId === it.id));
+  if (undeployed) {
+    const run = pathRunFor(state, undeployed);
+    if (run) return { action: { type: 'ADD_CONNECTOR', connector: run },
+                      says: `${who ? `${who} ran` : 'Ran'} a path to ${undeployed.name}, so you can get there without crossing the grass.` };
+  }
+  return null;
+}
+
+/** Pull the next piece, when there is room for it.
+ *
+ *  Self-managing: they take their own next piece rather than waiting to be given one, and the WIP
+ *  limit is what bounds it - so they finish before starting more. `dev` is who is taking it, where
+ *  a particular person is; without one the Developers take it as a collective and the board writes
+ *  down whoever has least on. */
+function pullNext(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
+  const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
+  const wip = activeWipLimit(state);
+  if (wip !== 0 && doing >= wip) return null;
+  // Only something that can actually start. An animal whose habitat is not built yet
+  // cannot, and proposing it anyway spun forever: the move was refused by the engine,
+  // the item stayed unstarted, and the same move came back on the next tick.
+  // The work-in-progress limit decides how much is on the go at once, and the day's clock
+  // decides when the day is over. Neither of them is a budget the work is priced against:
+  // what a team gets through in a day is their velocity, and the game measures it.
+  const next = state.backlog.find((it) => it.status === 'committed' && !it.started
+    && enclosureReady(state, it));
+  if (!next) return null;
+  const take: ZooAction = { type: 'START_ITEM', id: next.id, devId: dev?.id };
+  const who = dev?.name;
+  // Where a habitat or a building goes is a product decision - it is what a visitor walks
+  // up to, and in what order - so they ask rather than let the layout decide it quietly.
+  // Only for things with a footprint worth arguing about: nobody needs consulting about
+  // where a path is drawn or which patch of grass a shrub goes on.
+  const worthAsking = (next.category === 'enclosure' || next.category === 'amenity') && !next.pos;
+  const asked = state.pendingPlacement;
+  if (worthAsking && !asked) {
+    return { action: { type: 'ASK_PLACEMENT', id: next.id },
+             says: `${who ? `${who}: where` : 'Where'} do you want ${next.name}? You know what the visitors are here for.` };
+  }
+  if (worthAsking && asked?.itemId === next.id) {
+    // They do not wait forever. An unanswered question costs you the decision, which is
+    // the truer lesson and means a Product Owner who has wandered off cannot stall a
+    // Sprint. Measured on the day clock, so the wait is in the game's own time.
+    if (asked.askedAt - state.daySecondsLeft < ASK_PATIENCE_SECONDS) return null;
+    return { action: take,
+             says: `No word on where ${next.name} goes, so ${who ?? 'we'} ${who ? 'has' : 'have'} put it where there is room.` };
+  }
+  return { action: take, says: `${who ? `${who}: taking` : 'Taking'} ${next.name} next.` };
+}
+
+/** What one of the Developers the game plays beside you would do now, or nothing if they are busy
+ *  or there is nothing to take.
+ *
+ *  Their own card first, and only when the time it costs has actually been spent - `owedSeconds`
+ *  is counted down by the day's clock, so a five-point habitat takes five points' worth of the
+ *  Sprint whoever builds it. Then their own plan, then whatever the team owes anybody's card,
+ *  then the next thing off the Sprint Backlog.
+ *
+ *  What is NOT here is the Sprint Backlog being chosen, the work being sized, or the steps being
+ *  planned. Those belong to the Developers as a whole, and in a solo game the player is one of
+ *  them: a colleague who forecast the Sprint for you while you read the Sprint Goal would be the
+ *  game taking Sprint Planning away from the person it is trying to teach it to. */
+export function aiDevTurn(state: ZooGameState, dev: ScrumTeamMember): AiMove | null {
+  if (state.phase !== 'sprint' || state.dayStage !== 'building') return null;
+
+  // Finish before starting, and never before the work is done. Pulling work and never building it
+  // left a Sprint that could only end with nothing Done, which is the opposite of the lesson - and
+  // a team that pulls a second thing while the first is unfinished is the habit the WIP limit
+  // exists to break.
+  const mine = heldBy(state, dev.id);
+  if (mine) return stillBuilding(mine) === null ? buildMove(mine, dev.name) : null;
+
+  const ticked = tickOffPlan(state.backlog.filter((it) => it.status === 'committed' && it.started
+    && it.design && it.pulledBy === dev.id), dev.name);
+  if (ticked) return ticked;
+
+  const keeping = teamHousekeeping(state, dev);
+  if (keeping) return keeping;
+
+  // They do not take the last slot out from under you.
+  //
+  // Three Developers and a limit of three is a team at full stretch and comes out even. Tighten it
+  // to two - which is the team deciding to finish fewer things, and a good decision - and two
+  // colleagues working flat out would have taken both before you had read the first card, leaving
+  // the one person at the table with nothing to do and no way to get any. The proper answer is to
+  // offer you a hand on a card instead of starting another, which is what helping is for and is
+  // not built yet; until it is, they leave you a slot.
+  const you = yourDev(state);
+  const yoursInFlight = !!you && state.backlog.some((it) => it.status === 'committed' && it.started
+    && it.sprintNumber === state.sprintNumber && it.pulledBy === you.id);
+  const wip = activeWipLimit(state);
+  const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
+  if (!yoursInFlight && wip !== 0 && doing + 1 >= wip) return null;
+
+  return pullNext(state, dev);
+}
+
 /** What this AI accountability would do now, or nothing if it is not their turn.
  *
  *  `mustAgree` is who still has to agree the Sprint Goal before topic two can begin - the same
@@ -302,11 +502,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
 
     // Self-managing: they pull their own next piece when there is room, rather than waiting
     // to be given one. Bounded by the WIP limit, so they finish before starting more.
+    //
+    // This is the COLLECTIVE form of it - the Developers as one set of hands - for a game where
+    // nobody is sitting in that seat at all. Where somebody is, which is every solo game, the
+    // game plays the other Developers as people instead and `aiDevTurn` is their turn.
     if (state.phase === 'sprint' && state.dayStage === 'building') {
-      // Finish before starting. Pulling work and never building it left a Sprint that could
-      // only end with nothing Done, which is the opposite of the lesson - and a team that
-      // pulls a second thing while the first is unfinished is the habit the WIP limit exists
-      // to break, so it would have been the wrong order even if it worked.
       // Build anything started that has no committed design yet. The test used to be
       // "is the design incomplete", which quietly skipped a path: its preset already meets
       // its own criteria, so it looked finished, was never built, never had a design stored,
@@ -316,122 +516,23 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       // game's design was stored as the item's, the takeover then read that instead of the draft,
       // and every further click vanished. Reported as "I still cannot move this PBI to Done" - the
       // work was being undone as fast as it was done.
+      // ...nor one of the other Developers' cards that still owes time. One set of hands and three
+      // people are two ways to play the same seat and never both at once, so this should never
+      // find one - but a collective that finished somebody else's paced work the instant they took
+      // it on would undo the pacing entirely, which is worth one clause to make impossible.
       const building = state.backlog.find((it) => it.status === 'committed' && it.started
-        && !it.design && !it.draftDesign);
-      if (building) {
-        {
-          return { action: { type: 'BUILD_ITEM', id: building.id, byTheGame: true },
-                   // What they did, not what they wish they had done. Done is the whole team's
-                   // word and it waits for the Product Owner's: saying "built to the Definition
-                   // of Done" while four acceptance criteria sat untouched was the Developers
-                   // declaring something that is not theirs to declare.
-                   says: `Built ${building.name}. Not Done until its criteria are accepted.`,
-                   weight: building.estimate };
-        }
-      }
+        && !it.design && !it.draftDesign && stillBuilding(it) === null);
+      if (building) return buildMove(building);
 
-      // Then tick their own plan off. The sign-off step is not theirs - that is the Product
-      // Owner accepting the work - and ticking the last of the rest is what moves an item to
-      // Done, so leaving the plan untouched left everything sitting in Doing.
-      for (const it of state.backlog.filter((x) => x.status === 'committed' && x.started && x.design)) {
-        const task = (it.tasks ?? []).find((t) => !t.done && t.label.trim() && !isSignOffTask(t.label));
-        if (task) return { action: { type: 'TOGGLE_TASK', id: it.id, taskId: task.id },
-                           says: `${task.label} - done, on ${it.name}.` };
-      }
+      const ticked = tickOffPlan(state.backlog.filter((it) => it.status === 'committed'
+        && it.started && it.design));
+      if (ticked) return ticked;
 
-      // A second pair of eyes on something that is otherwise finished.
-      //
-      // "Peer-reviewed by another Developer" is a line in the shipped Definition of Done, and the
-      // only thing that satisfies it is a second Developer being on the item. Nobody ever was:
-      // seats played by the game built the work and never reviewed each other's, so an item could
-      // meet every acceptance criterion, be signed off, stand on the park - and sit unfinishable
-      // for the rest of the Sprint. A Product Owner watching that could do nothing about it either,
-      // because assigning a Developer is not their call and should not be. Reported from a live
-      // game, on day 3 of Sprint 3, with the Sprint Goal at risk over it.
-      const needsEyes = state.backlog.find((it) => it.status === 'committed' && it.started && it.design
-        && (it.assignedDevs ?? []).length === 1
-        && (it.tasks ?? []).every((t) => !t.label.trim() || t.done || isSignOffTask(t.label)));
-      if (needsEyes) {
-        const already = new Set(needsEyes.assignedDevs ?? []);
-        const free = state.team.developers.find((d) => !already.has(d.id));
-        if (free) {
-          return { action: { type: 'ASSIGN_DEV', itemId: needsEyes.id, devId: free.id },
-                   says: `Took a look over ${needsEyes.name} with the second pair of eyes our Definition of Done asks for.` };
-        }
-      }
+      const keeping = teamHousekeeping(state);
+      if (keeping) return keeping;
 
-      // ...and ask the Product Owner to come and look, which is what the sign-off waits for now.
-      // Meeting every criterion the park can measure is what makes the asking possible; it is not
-      // the answer, and work whose criteria are all facts used to reach Done without anybody being
-      // asked anything at all.
-      const toShow = state.backlog.find((it) => it.sprintNumber === state.sprintNumber
-        && it.status === 'committed' && !it.signedOff && readyToAsk(state, it)
-        && !(state.questions ?? []).some((q) => q.id === `check-${it.id}`));
-      if (toShow) {
-        return { action: { type: 'ASK_TO_CHECK', id: toShow.id, by: 'developer' },
-                 says: `${toShow.name} is built. Asking Priya to come and look at it.` };
-      }
-
-      // ...and move to Done what is ready. After the second pair of eyes, not before: the
-      // Definition of Done asks for a review, and a team that moves the card first has reviewed
-      // nothing. Done is the Developers' word - the card no longer walks into the column when the
-      // Product Owner accepts it - so where the seats are played by the game, this is them saying it.
-      const toMove = state.backlog.find((it) => it.sprintNumber === state.sprintNumber && readyToMove(it));
-      if (toMove) {
-        return { action: { type: 'FINISH_ITEM', id: toMove.id },
-                 says: `${toMove.name} meets the Definition of Done. Moving it to Done.` };
-      }
-
-      // A pathway is only finished when a run of it actually reaches the zone. The park
-      // answers that criterion itself - it either has a path running there or it does not -
-      // so a path could be built, planned and Done, and still never be releasable, because
-      // nobody had drawn the run. Deploying it is the Developers' work, like building it.
-      // ...and a habitat is only finished when somebody can walk to it, which is now one of its own
-      // acceptance criteria rather than a paths item of its own. Same work, same seat: the run that
-      // joins it to the way in is the Developers'.
-      const undeployed = state.backlog.find((it) => (it.category === 'path' || it.category === 'enclosure')
-        && it.design && (it.status === 'done' || it.status === 'committed') && it.started
-        && !(state.connectors ?? []).some((c) => c.itemId === it.id));
-      if (undeployed) {
-        const run = pathRunFor(state, undeployed);
-        if (run) return { action: { type: 'ADD_CONNECTOR', connector: run },
-                          says: `Ran a path to ${undeployed.name}, so you can get there without crossing the grass.` };
-      }
-
-      const doing = state.backlog.filter((it) => it.status === 'committed' && it.started).length;
-      const wip = activeWipLimit(state);
-      if (wip === 0 || doing < wip) {
-        // Only something that can actually start. An animal whose habitat is not built yet
-        // cannot, and proposing it anyway spun forever: the move was refused by the engine,
-        // the item stayed unstarted, and the same move came back on the next tick.
-        // The work-in-progress limit decides how much is on the go at once, and the day's clock
-        // decides when the day is over. Neither of them is a budget the work is priced against:
-        // what a team gets through in a day is their velocity, and the game measures it.
-        const next = state.backlog.find((it) => it.status === 'committed' && !it.started
-          && enclosureReady(state, it));
-        if (next) {
-          // Where a habitat or a building goes is a product decision - it is what a visitor walks
-          // up to, and in what order - so they ask rather than let the layout decide it quietly.
-          // Only for things with a footprint worth arguing about: nobody needs consulting about
-          // where a path is drawn or which patch of grass a shrub goes on.
-          const worthAsking = (next.category === 'enclosure' || next.category === 'amenity') && !next.pos;
-          const asked = state.pendingPlacement;
-          if (worthAsking && !asked) {
-            return { action: { type: 'ASK_PLACEMENT', id: next.id },
-                     says: `Where do you want ${next.name}? You know what the visitors are here for.` };
-          }
-          if (worthAsking && asked?.itemId === next.id) {
-            // They do not wait forever. An unanswered question costs you the decision, which is
-            // the truer lesson and means a Product Owner who has wandered off cannot stall a
-            // Sprint. Measured on the day clock, so the wait is in the game's own time.
-            if (asked.askedAt - state.daySecondsLeft < ASK_PATIENCE_SECONDS) return null;
-            return { action: { type: 'START_ITEM', id: next.id },
-                     says: `No word on where ${next.name} goes, so we have put it where there is room.` };
-          }
-          return { action: { type: 'START_ITEM', id: next.id },
-                   says: `Taking ${next.name} next.` };
-        }
-      }
+      const pulled = pullNext(state);
+      if (pulled) return pulled;
     }
     return null;
   }

@@ -61,6 +61,21 @@ export const STARTER_CAPACITY = TRUE_VELOCITY_PER_DAY * SPRINT_DAYS;
  *  refinement costs below are absolute, and they move with it. */
 export const DAY_SECONDS = 180;
 
+/** How the Developers the game plays beside you are paced.
+ *
+ *  They work at your pace, not at a machine's. That is the whole of it: a learner who is reading
+ *  the criteria and choosing a footprint must not watch two tireless colleagues finish the Sprint
+ *  around them, and a learner who is quick must not be held up either.
+ *
+ *  `AI_DEV_FLOOR` is the slowest they go, as a share of the forecast pace - so a player who pauses
+ *  to read is not punished by a team that stops dead with them. The ceiling is the forecast pace
+ *  itself: they never outrun what the Developers said they could finish, because that forecast is
+ *  the thing the Sprint is measured against and a team that beats it every time has learnt nothing
+ *  about forecasting. `AI_DEV_JITTER` is the seeded difference between two people, so Ben and Cara
+ *  are not one Developer drawn twice. */
+export const AI_DEV_FLOOR = 0.6;
+export const AI_DEV_JITTER = 0.12;
+
 /** Refining the Product Backlog DURING a Sprint takes time from building (ongoing refinement is
  *  real work with a cost). Each action spends this many seconds of the current day. In the
  *  Refinement/Planning phases it is free - that is the dedicated time to refine. */

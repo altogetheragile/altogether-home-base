@@ -60,7 +60,7 @@ describe('a card built and offered', () => {
     const sent: { seat: SeatName; action: ZooAction }[] = [];
     const session = { state, drivesClock: true,
       sendAs: (seat: SeatName, action: ZooAction) => { sent.push({ seat, action }); } };
-    renderHook(() => useAiSeats(session, SOLO_AI_SEATS, undefined, undefined, skip));
+    renderHook(() => useAiSeats(session, SOLO_AI_SEATS, { skip }));
     act(() => { vi.advanceTimersByTime(20000); });
     return sent;
   };
