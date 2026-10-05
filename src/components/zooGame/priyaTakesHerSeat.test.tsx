@@ -116,7 +116,12 @@ describe('the beat, while the Developers are building', () => {
     expect(sent.length, 'the Product Owner went silent the moment a card was pulled')
       .toBeGreaterThan(0);
     expect(sent[0].seat).toBe('product_owner');
-    expect(sent[0].action).toMatchObject({ type: 'ANSWER_QUESTION', choice: 'theirs' });
+    // She says it and then does it - two moves now, because what a seat says is kept in the
+    // thread rather than flashed up on a card. The answer is the one that matters here.
+    expect(sent[0].action, 'she answered without a word, so nothing reaches the thread')
+      .toMatchObject({ type: 'SAY', who: 'product_owner' });
+    expect(sent.map((x) => x.action)).toContainEqual(
+      expect.objectContaining({ type: 'ANSWER_QUESTION', choice: 'theirs' }));
   });
 
   it('leaves the Developer seat held exactly as it was', () => {

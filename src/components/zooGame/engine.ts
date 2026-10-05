@@ -1,4 +1,4 @@
-import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember } from './types';
+import type { ChatMessage, ChatWho, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember } from './types';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -223,6 +223,56 @@ export function tickDay(state: ZooGameState): ZooGameState {
   return askIfDue(guessUnanswered(tickTheirWork({ ...state, daySecondsLeft: left })));
 }
 
+// ============= What the team says =============
+//
+// The game was already full of people saying things. A Developer takes a card and says so; Priya
+// hands a decision back and says why; a question is put with a clock on it. Every one of those
+// lines flashed up on a card for a few seconds and was gone - and a learner playing alone saw none
+// of them at all, because the lines were only ever rendered in a shared session.
+//
+// "I was expecting to see the SMS like chat between the team." So they are kept, in game state,
+// where everybody in a session reads the same thread and a reload does not wipe the conversation.
+// It is this Sprint's thread: cleared when the next one starts, so what the Retrospective reads
+// back is the Sprint it is about.
+
+/** How much of the conversation is kept. A Sprint is a few hundred moves and all of this is
+ *  written to the database on every change, so the oldest falls off the top. A display decision
+ *  rather than a rule of the game, which is why it is not in `config`. */
+export const CHAT_KEPT = 80;
+
+/** Somebody says something.
+ *
+ *  Two lines in a row from the same person about the same thing are one line. The seats played by
+ *  the game work at about a move a second, and a team that says "Lay the ground - done, on the
+ *  Lion Enclosure" four times is four messages where a reader wanted one - the same collapsing a
+ *  shared session already did to the cards that used to carry these. */
+export function say(state: ZooGameState, msg: Omit<ChatMessage, 'id' | 'day'>): ZooGameState {
+  const thread = state.chat ?? [];
+  const last = thread[thread.length - 1];
+  const line: ChatMessage = { ...msg, day: state.dayNumber, id: `m${thread.length}-${state.dayNumber}` };
+  // Said twice over, word for word, by the same person: nothing new was said.
+  if (last && last.from === msg.from && last.text === msg.text) return state;
+  const kept = last && last.from === msg.from && last.itemId && last.itemId === msg.itemId
+    ? [...thread.slice(0, -1), { ...line, id: last.id }]
+    : [...thread, line];
+  return { ...state, chat: kept.slice(-CHAT_KEPT) };
+}
+
+/** Who is talking, from the accountability a move was taken by.
+ *
+ *  An action carries `by` when a seat took it - a seat played by the game, or a person holding one
+ *  in a shared session - and carries nothing when the move is simply yours. So the absence of an
+ *  accountability is the signal that it was you, and no new field is needed to tell the two apart.
+ *
+ *  They speak as people, because a bubble signed "The Product Owner" is a memo. The accountability
+ *  survives as the colour it is drawn in. */
+export function speaking(state: ZooGameState, by?: string): { who: ChatWho; from: string } {
+  if (by === 'product_owner') return { who: 'product_owner', from: state.team.productOwner.name };
+  if (by === 'scrum_master') return { who: 'scrum_master', from: state.team.scrumMaster.name };
+  if (by === 'developer') return { who: 'developer', from: 'The Developers' };
+  return { who: 'you', from: 'You' };
+}
+
 // ============= The question channel =============
 //
 // A question is a card addressed to an accountability. It has a clock on it, because the cost of not
@@ -252,14 +302,18 @@ export function askIfDue(state: ZooGameState): ZooGameState {
   // Once per item per Sprint: a question already asked and answered is not asked again.
   if ((state.decisions ?? []).some((d) => d.kind === 'question' && d.what.includes(item.name))) return state;
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
+  const text = `Rounded or square for ${item.name}?`;
+  // Asked out loud, by name, in the thread. The question used to exist only as a row on the rail,
+  // which is a form to fill in rather than somebody asking you something - and the whole lesson
+  // here is that a person is standing there waiting.
   return {
-    ...state,
+    ...say(state, { who: 'developer', from: asker?.name ?? 'The Developers', text, itemId: item.id }),
     questions: [{
       id: `fence-${item.id}`, of: 'product_owner', from: asker?.name ?? 'The Developers', itemId: item.id,
       // About something the game actually has - the shape of the footprint - because a question
       // about a property that does not exist teaches the lesson dishonestly. The lesson is the
       // same: this is a how, and how is the Developers'.
-      text: `Rounded or square for ${item.name}?`,
+      text,
       choices: [
         { key: 'rounded', label: 'Rounded' },
         { key: 'square', label: 'Square' },
@@ -427,6 +481,21 @@ export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGam
 export function answerQuestion(state: ZooGameState, id: string, choice: string, by?: string): ZooGameState {
   const q = (state.questions ?? []).find((x) => x.id === id);
   if (!q) return state;
+  // Your answer, out loud, in the thread the question was asked in - which is what makes this a
+  // conversation rather than a feed of things the game did.
+  //
+  // Yours and nobody else's. Who answered is read off `by`, which the move already carries: an
+  // accountability is named when a seat takes it and left off when the move is simply yours. A
+  // seat played by the game has already said its own line in its own words a beat earlier, and
+  // posting the label of the button it pressed underneath put Priya's answer in the thread twice.
+  //
+  // Said BEFORE the answer lands, so the reply reads under the question rather than under whatever
+  // it set off - an acceptance moves a card to Done and the Developers have something to say about
+  // that too.
+  if (!by) {
+    state = say(state, { who: 'you', from: 'You', itemId: q.itemId,
+      text: q.choices.find((c) => c.key === choice)?.label ?? choice });
+  }
 
   // A question the Product Owner answers by doing something. Accepting is the sign-off - every
   // criterion confirmed, which is what the sign-off has always followed - and the other answer is
@@ -505,7 +574,11 @@ export const theirsToAnswer = (q: GameQuestion): boolean =>
  *  something is what was asked for is the Product Owner's, and an acceptance waits however long it
  *  has to. */
 function devsDecide(state: ZooGameState, q: GameQuestion, waited: string): ZooGameState {
-  return note({ ...state, questions: (state.questions ?? []).filter((x) => x.id !== q.id) }, {
+  // Said in the thread, under the question nobody answered, because that is where the cost of not
+  // answering is legible: a line of your own silence followed by somebody else deciding.
+  const spoken = say(state, { who: 'developer', from: q.from, itemId: q.itemId,
+    text: 'Nobody answered, so we have gone with our own judgement on this one.' });
+  return note({ ...spoken, questions: (spoken.questions ?? []).filter((x) => x.id !== q.id) }, {
     kind: 'question', by: 'developer',
     what: `${q.from} asked about ${q.itemId ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work'} and nobody answered, so the Developers chose for themselves.`,
     cost: `${waited} A question nobody answers is answered anyway - by whoever is holding the work.`,
@@ -3569,6 +3642,10 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
+    // A new Sprint, a new conversation. The thread is this Sprint's - what the Retrospective reads
+    // back should be the Sprint it is about, and a thread that never emptied would mean scrolling
+    // through every Sprint the team has ever had to find Tuesday.
+    chat: [],
     // A new Sprint Planning opens on topic one, the way the event opens.
     planningTopic: 'why' as const,
     committedIds: [],
@@ -3694,6 +3771,10 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
+    // A new Sprint, a new conversation. The thread is this Sprint's - what the Retrospective reads
+    // back should be the Sprint it is about, and a thread that never emptied would mean scrolling
+    // through every Sprint the team has ever had to find Tuesday.
+    chat: [],
     // A new Sprint Planning opens on topic one, the way the event opens.
     planningTopic: 'why' as const,
     wipLimit,

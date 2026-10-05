@@ -414,6 +414,31 @@ export interface ZooConnector {
  *  mode - kept as a first-class entity with a stable id, not just a label. */
 export interface ScrumTeamMember { id: string; name: string }
 
+/** Who said it. An accountability rather than a person, plus the name they go by - because the
+ *  colour a bubble is drawn in is the accountability's and the name on it is the person's.
+ *
+ *  `you` is its own kind rather than a Developer with your name on it. A thread where you cannot
+ *  tell your own messages from the team's at a glance is not a conversation you are in. */
+export type ChatWho = 'product_owner' | 'scrum_master' | 'developer' | 'stakeholder' | 'you';
+
+/** One message in the team's chat.
+ *
+ *  Short-lived by design: cleared at the start of each Sprint, so the thread is this Sprint's
+ *  conversation and the Retrospective has a day 2 to quote from. It lives in game state rather
+ *  than in a component because it is shared - in a session everybody reads the same thread - and
+ *  because a conversation that vanished on reload would be no record of anything. */
+export interface ChatMessage {
+  id: string;
+  who: ChatWho;
+  /** The name on the bubble. Yours says so. */
+  from: string;
+  text: string;
+  /** The card it is about, where it is about one. */
+  itemId?: string;
+  /** The day it was said on, so the thread can be broken up by day. */
+  day: number;
+}
+
 /** One question, addressed to one accountability. */
 export interface GameQuestion {
   id: string;
@@ -511,6 +536,17 @@ export interface ZooGameState {
    *  took. Unanswered past the threshold, the Developers answer it themselves and the guess is
    *  logged - which is the honest cost of an absent Product Owner. */
   questions?: GameQuestion[];
+
+  /** What the team has said to each other this Sprint, oldest first.
+   *
+   *  The game was already full of people saying things - a Developer taking a card, Priya handing a
+   *  decision back, a question with a clock on it - and every one of them flashed up for a few
+   *  seconds and was gone. A learner playing alone saw none of it at all: the lines were only ever
+   *  rendered in a shared session. "I was expecting to see the SMS like chat between the team."
+   *
+   *  Capped, because this is written to the database on every change and a Sprint is a lot of
+   *  moves. The cap is a display decision rather than a rule, which is why it is not in `config`. */
+  chat?: ChatMessage[];
 
   /** Which topic of Sprint Planning the Scrum Team is on. In state rather than in the component
    *  because Sprint Planning is one event that a team attends together: a topic each player was
@@ -745,6 +781,7 @@ export type ZooAction =
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
   | { type: 'SET_DRAFT_DESIGN'; id: string; design: ItemDesign }
   | { type: 'PLACE_ON_PARK'; id: string }
+  | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string }
   | { type: 'START_ITEM'; id: string; by?: string;
       /** The Developer taking it, where a particular one is. Absent when you pull it yourself:
        *  the board writes down whoever has least on. */

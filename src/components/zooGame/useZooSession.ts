@@ -7,7 +7,7 @@ import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
 import { aiTurn, aiDevTurn } from './aiSeats';
-import { teamIsBusy } from './engine';
+import { speaking, teamIsBusy } from './engine';
 import type { SeatName } from './useZooSessions';
 import { useTabAway } from './useTabAway';
 
@@ -243,6 +243,13 @@ const TOPIC_BEAT_MS = 5000;
  *  is a decision somebody at the table might want to make themselves. */
 const EVENT_BEAT_MS = 9000;
 
+/** Moves the reducer puts in the thread itself, so this does not put them there twice.
+ *
+ *  The reducer knows something the beat cannot: whether the move actually landed. A pull that the
+ *  engine refuses - no room under the WIP limit, a habitat not built yet - is not a thing that
+ *  happened, and a thread that announces refused moves is a thread nobody can trust. */
+const NARRATED = new Set(['START_ITEM']);
+
 /** Play the seats nobody is sitting in.
  *
  *  Only one browser does this - the same one that drives the clock - or every browser takes
@@ -304,7 +311,7 @@ export function useAiSeats(
     const beat = () => {
       const { state: now, sendAs: send, table: at } = latest.current;
       const { onSay: say, skip } = at;
-      let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
+      let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>>; dev?: ScrumTeamMember } | null = null;
       if (now) {
         for (const seat of (seats ? seats.split(',') : []) as SeatName[]) {
           // Busy HANDS take no new work. While there is time owed on what they have already taken
@@ -333,7 +340,7 @@ export function useAiSeats(
           const move = aiDevTurn(now, dev);
           if (!move || !mayTake(move.action.type, { seat: 'developer' }).allowed) continue;
           if (skip?.(move.action)) continue;
-          next = { seat: 'developer', move }; break;
+          next = { seat: 'developer', move, dev }; break;
         }
       }
       if (next) {
@@ -361,6 +368,20 @@ export function useAiSeats(
         // which screen the line belongs to, which is not always the screen it was said on: the
         // move that changes the topic is about the topic it moves to.
         say?.(seat, move.says, move.action);
+        // ...and into the thread, where it stays. These lines were written long before there was
+        // anywhere to keep them: a seat played by the game has always said why it did what it did,
+        // and that sentence flashed up on a card for a few seconds and was gone - in a shared
+        // session only. A learner playing alone never saw a word of it.
+        //
+        // Sent as its own move rather than carried on the action, because most actions reach the
+        // reducer from a person too, and a person's reasons are not the game's to write.
+        if (now && !NARRATED.has(move.action.type)) {
+          const who = next.dev
+            ? { who: 'developer' as const, from: next.dev.name }
+            : speaking(now, seat);
+          const about = 'id' in move.action ? (move.action as { id?: string }).id : undefined;
+          send(seat, { type: 'SAY', ...who, text: move.says, itemId: about });
+        }
         send(seat, move.action);       // one move at a time, so it reads as somebody working
         // The work costs the day, and BUILD_ITEM charges it - so this no longer charges it again.
         // It used to be the only place the cost was applied, which is exactly why a person's own
