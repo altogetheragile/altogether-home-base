@@ -259,14 +259,22 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work');
     const theirs = open.find(theirsToAnswer);
     if (theirs) {
-      return { chip: `${theirs.from} is waiting`,
+      return { chip: `${theirs.from} is waiting`, waiting: undefined,
         cost: `${theirs.from} asked about ${named(theirs)} and is waiting. End the day and the Developers decide it themselves.` };
     }
     const mine = open.find((q) => !theirsToAnswer(q));
     if (mine) {
       const last = state.dayNumber >= state.sprintDays;
       return { chip: `${named(mine)} is waiting to be checked`,
-        cost: `${named(mine)} is built and waiting on the Product Owner. Ending the day does not accept it - ${last
+        // No long version of it. The rail below is already asking this question, in more words and
+        // with the two buttons that answer it - and the dock saying the same thing again grew the
+        // pill across the window until it lay on top of those buttons. Reported as "when I finish
+        // a PBI and want to ask for PO approval I cannot - other messages are in the way".
+        //
+        // The chip stays, because it is the one thing the rail does NOT say: that pressing End Day
+        // will not settle this. Six words rather than forty.
+        cost: undefined,
+        waiting: `Ending the day does not accept it - ${last
           ? 'the Sprint ends and it goes to the Review unaccepted.'
           : `it carries into Day ${state.dayNumber + 1}.`}` };
     }
@@ -956,7 +964,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                   the price instead. In `left` rather than only in the hint because the hint is
                   hidden on a narrow screen and behind anything the game is saying. */}
               {pressing && (
-                <span data-part="unanswered"
+                <span data-part="unanswered" title={pressing.waiting ?? pressing.cost}
                   className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
                   {pressing.chip}
                 </span>

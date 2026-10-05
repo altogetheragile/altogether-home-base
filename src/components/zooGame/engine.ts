@@ -3050,6 +3050,18 @@ export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooG
     status: 'committed' as const,
     draftDesign: it.design ?? it.draftDesign,
     design: undefined,
+    // ...and it costs the time again.
+    //
+    // This said "finishing it again costs Sprint time" and it did not: the owed seconds had
+    // already been counted down to nought, so a colleague rebuilt it on the next beat, for
+    // nothing, and asked again immediately. Reported as "when I reject them they are immediately
+    // submitted for approval again" - which is what a rejection with no cost looks like.
+    //
+    // Only a card a colleague is holding has owed seconds. What YOURS costs is however long you
+    // spend on it, which the day's clock already charges you for.
+    owedSeconds: it.owedSeconds !== undefined || it.workSeconds !== undefined
+      ? (it.workSeconds ?? workOwed(state, it, it.pulledBy ?? ''))
+      : undefined,
     // Counted, and kept after the rebuild clears the rest: doing something twice is capacity that
     // did not go into anything new, whether or not the item still says it came back.
     sentBackTimes: (it.sentBackTimes ?? 0) + 1,
