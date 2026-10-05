@@ -75,9 +75,14 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
   measures?: GoalMeasure[];
   onSet: (shape: GoalShape, goal: string, measures: GoalMeasure[]) => void;
 }) {
-  // Open. The shapes are the help this panel exists to give, and a closed drawer on the one screen
-  // that asks you to write something is help nobody finds.
-  const [open, setOpen] = useState(true);
+  // Closed. It was open, on the argument that a closed drawer is help nobody finds - and what that
+  // produced was a screen where the help was three times the height of the thing to do, with the
+  // worked example and a format picker standing between the Product Goal box and the button that
+  // starts the game. A drawer with a name on it is not hidden; it is offered.
+  //
+  // The rule is the app's rather than this panel's: anything that explains opens when it is asked
+  // for. `panelsOpenWhenYouAsk.test.tsx` holds it.
+  const [open, setOpen] = useState(false);
   const [pick, setPick] = useState<GoalShape>(shape ?? 'outcome');
   const [rows, setRows] = useState<GoalMeasure[]>(measures?.length ? measures : [{ metric: 'happiness', target: 70 }]);
   const current = SHAPES.find((s) => s.key === pick)!;

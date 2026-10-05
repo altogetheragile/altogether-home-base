@@ -7,6 +7,18 @@ import { reducer } from './useZooGame';
 import { initialZooState, PRODUCT_GOAL } from './config';
 import type { ZooGameState, GoalShape, GoalMeasure } from './types';
 
+/** Open "Other ways to write a Product Goal", which is a drawer now.
+ *
+ *  It used to be open on arrival. What that produced was a screen where the help was three times
+ *  the height of the thing to do - so these two reach in and open it, which is what the rule asks
+ *  of a reader who wants it: a click, not a hunt. */
+const openTheShapes = (container: HTMLElement) => {
+  const toggle = [...container.querySelectorAll('button')]
+    .find((b) => /Other ways to write a Product Goal/.test(b.textContent ?? ''));
+  expect(toggle, 'there is no way to open the other ways to write a Product Goal').toBeTruthy();
+  fireEvent.click(toggle!);
+};
+
 // The wand asks a coach over the network before falling back to the mechanical reword. A unit
 // test of this screen has no business making that call: left real it reached for Supabase, which
 // fails instantly on a developer's machine and hangs in CI until waitFor gives up at one second -
@@ -111,6 +123,7 @@ describe('and there is only one place to write it', () => {
 
   it('points at the field above instead', () => {
     const { container } = intro();
+    openTheShapes(container);
     expect(container.querySelector('[data-part="write-it-above"]')?.textContent ?? '',
       'the panel offers shapes and never says where to write one').toMatch(/Product Goal box above/i);
   });
@@ -123,6 +136,7 @@ describe('and there is only one place to write it', () => {
       <MemoryRouter><ZooIntro productGoal="lions" onSetGoal={() => {}} onStart={() => {}}
         onStartFromTheBrief={() => {}} onSetGoalShape={onSetGoalShape} /></MemoryRouter>,
     );
+    openTheShapes(container);
     const chip = [...container.querySelectorAll('button')].find((b) => /An epic user story/.test(b.textContent ?? ''))!;
     expect(chip, 'the shapes cannot be picked at all').toBeTruthy();
     fireEvent.click(chip);

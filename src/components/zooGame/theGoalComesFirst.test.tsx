@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ZooIntro } from './ZooIntro';
 import { INTRO_COPY } from './scrumContent';
@@ -41,11 +41,23 @@ describe('the Product Goal on the first screen', () => {
     expect(text, 'its heading is still here with nothing under it').not.toContain(INTRO_COPY.loopTitle);
   });
 
-  it('opens with the other ways to write one already showing', () => {
-    // "and expanded". A closed drawer on the one screen that asks you to write something is help
-    // nobody finds.
+  it('opens with the other ways to write one FOLDED, and says where they are', () => {
+    // This used to assert the opposite, on the argument that a closed drawer is help nobody finds.
+    // What that produced was the screen in the report above: the help was three times the height
+    // of the thing to do, with a format picker and a worked example standing between the Product
+    // Goal box and the button that starts the game. "The Product Goal area should be closed and
+    // not expanded as default."
+    //
+    // A drawer with its name on it is not hidden; it is offered. The test that matters is that it
+    // is still FINDABLE, which is the thing the old argument was right about.
     const { container } = intro();
-    expect(container.textContent, 'the shapes are folded away').toMatch(/A plain outcome/);
+    expect(container.textContent, 'the shapes are open again, over the thing to do')
+      .not.toMatch(/A plain outcome/);
+    const toggle = [...container.querySelectorAll('button')]
+      .find((b) => /Other ways to write a Product Goal/.test(b.textContent ?? ''));
+    expect(toggle, 'the shapes are folded away with nothing to open them by').toBeTruthy();
+    fireEvent.click(toggle!);
+    expect(container.textContent, 'opening it did not bring the shapes back').toMatch(/A plain outcome/);
     expect(container.textContent).toMatch(/Objective and key results/);
   });
 });
