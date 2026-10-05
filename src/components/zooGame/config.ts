@@ -73,6 +73,14 @@ export const DAY_SECONDS = 180;
  *  the thing the Sprint is measured against and a team that beats it every time has learnt nothing
  *  about forecasting. `AI_DEV_JITTER` is the seeded difference between two people, so Ben and Cara
  *  are not one Developer drawn twice. */
+/** What the huddle after the Daily Scrum costs, in day seconds.
+ *
+ *  A slice, not a box. The Daily Scrum has a timebox because it is scheduled and everybody turns
+ *  up for it; the huddle is the conversation you have in the corridor afterwards because something
+ *  came up, and it costs what it costs. Skipping it is free - the Daily Scrum's box is spent
+ *  whether you hold it or not, and this one is not. */
+export const HUDDLE_SECONDS = 12;
+
 export const AI_DEV_FLOOR = 0.6;
 export const AI_DEV_JITTER = 0.12;
 

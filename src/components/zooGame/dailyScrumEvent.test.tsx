@@ -89,8 +89,23 @@ describe('what the Daily Scrum puts above the fold', () => {
     <MemoryRouter><DailyScrum state={state} onHold={noop} onSkip={noop} onDrop={noop} /></MemoryRouter>,
   ).container;
 
-  it('puts the decision beside the burndown, not below it', () => {
-    const c = screen();
+  /** Work that will not fit while the Sprint Goal is still safe: the smallest item is what the
+   *  Goal depends on, and it fits; the rest do not. That is the Developers adapting their own
+   *  Sprint Backlog, which is this event's own purpose and needs nobody else in the room. */
+  const theirsToDecide = () => {
+    // Sprint 2, so essentials can be marked at all, and with a measured velocity so the capacity
+    // is the team's own rather than a first-Sprint guess.
+    const base = scrum({ sprintNumber: 2, dayNumber: 2, velocity: [10] });
+    const take = base.backlog.filter((it) => it.status === 'committed');
+    const smallest = [...take].sort((a, z) => a.estimate - z.estimate)[0];
+    return { ...base,
+      backlog: base.backlog.map((it) => (take.some((t) => t.id === it.id)
+        ? { ...it, sprintNumber: 2, goalCritical: it.id === smallest.id } : it)),
+    } as ZooGameState;
+  };
+
+  it('puts the Developers\u2019 own decision beside the burndown, not below it', () => {
+    const c = screen(theirsToDecide());
     const decision = c.querySelector('[data-part="decision"]');
     expect(decision, 'there is no decision on the screen the decision is for').toBeTruthy();
     expect(decision!.textContent).toMatch(/points left/);
@@ -99,6 +114,21 @@ describe('what the Daily Scrum puts above the fold', () => {
     // Side by side: one grid, two children, no scrolling between them.
     expect(decision!.parentElement!.className).toMatch(/grid/);
     expect(decision!.parentElement!.className).toMatch(/lg:grid-cols-2/);
+  });
+
+  it('cuts no scope at all once the Sprint Goal itself is at risk', () => {
+    // Two situations wearing the same arithmetic. The Sprint Backlog is the Developers' to change
+    // and this event is where they change it - but what the Sprint PROMISED is the Product Owner's,
+    // and she is not in this event. So a Goal at risk is flagged here and settled with her on the
+    // way out, and the event is given no button that cuts something it has no right to cut.
+    const c = screen();
+    expect(c.querySelector('[data-part="needs-priya"]'),
+      'the Goal is at risk and nothing on the screen says so').toBeTruthy();
+    expect(c.querySelector('[data-part="decision"]'),
+      'the event still offers to drop work while the Goal is the thing in danger').toBeNull();
+    expect(c.textContent, 'there is still a Drop button on it').not.toMatch(/Drop .+, (protect the Goal|finish the rest)/);
+    expect(c.querySelector('[data-part="needs-priya"]')!.textContent,
+      'it does not say why this one is not theirs alone').toMatch(/Product Owner/);
   });
 
   it('names who is in the room', () => {

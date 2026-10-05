@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatWho, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember } from './types';
+import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember } from './types';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -17,7 +17,7 @@ import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER } from './config';
+import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER, HUDDLE_SECONDS } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -344,7 +344,25 @@ export function standUp(state: ZooGameState): ZooGameState {
   for (const dev of otherDevs(state)) {
     const lines = standUpLines(said, dev, raised);
     if (!/In my way: nothing\.$/.test(lines)) raised = true;
-    said = say(said, { who: 'developer', from: dev.name, text: lines });
+    said = say(said, { who: 'developer', from: dev.name, text: lines, kind: 'stand-up' });
+  }
+  // ...and somebody says the thing everybody can see on the burndown.
+  //
+  // Flagging it is all that happens here. The Daily Scrum does not cut scope: this is the
+  // Developers' event, the Product Owner is not in it, and what the Sprint promises is hers. The
+  // flag is what opens the huddle afterwards, where she is.
+  //
+  // Said whenever the Goal is at risk, with or without something to name. The two sums do not
+  // always agree - `goalPulse` measures what is owed against the clock that is actually left,
+  // `todaysDecision` against whole days - and a flag that appeared only when both said so left the
+  // huddle opening on a risk nobody in the room had mentioned.
+  if (goalAtRisk(said)) {
+    const who = otherDevs(said)[0] ?? yourDev(said);
+    const risk = todaysDecision(said);
+    if (who) {
+      said = say(said, { who: 'developer', from: who.name, itemId: risk?.candidate.id, kind: 'stand-up',
+        text: `${risk ? `At this rate ${risk.candidate.name} will not make it. That is the Goal at risk` : 'At this rate the Goal does not make it'}, and it is not ours alone to settle - can we have Priya after this?` });
+    }
   }
   return said;
 }
@@ -371,6 +389,121 @@ export function yourStandUp(state: ZooGameState): { key: string; label: string; 
       `${now.length ? `${andList(now)} will be done today.` : 'I will have something done today.'}\n`
       + `That is ${prog.remaining} point${prog.remaining === 1 ? '' : 's'} off the board.\nIn my way: nothing.` },
   ];
+}
+
+// ============= The huddle after the Daily Scrum =============
+//
+// The Daily Scrum is the Developers' event and the Product Owner is not in it. So when the Sprint
+// Goal is at risk, the Developers can see it, say it, and do nothing about it in the room - what
+// the Sprint promises is the Product Owner's, and she is not there.
+//
+// The huddle is the two minutes afterwards. Priya proposes a response from the same arithmetic
+// the board already does, and the Scrum Team decides. It is not an event: it is unscheduled, it
+// costs a slice of the day rather than a timebox, and you can walk away from it - which is free
+// and logged, because the conversation genuinely did not happen.
+//
+// The Sprint Goal itself is never on the table. It is the commitment, and a game that offers to
+// drop it the moment it gets hard has taught that a commitment is a preference.
+
+/** Whether the Sprint Goal is at risk - the one thing that opens a huddle. Read from the same
+ *  pulse the strip shows, so the board and the room never disagree about it. */
+export const goalAtRisk = (state: ZooGameState): boolean =>
+  state.phase === 'sprint' && goalPulse(state).level === 'risk';
+
+/** Where the day goes once the huddle is over: back to whatever the Daily Scrum had left it at. */
+const afterHuddle = (state: ZooGameState): DayStage =>
+  (state.dailyScrumAt === 'start' ? 'building' : 'dayStart');
+
+/** Hold the huddle, if there is anything to huddle about.
+ *
+ *  Wrapped around each way out of the Daily Scrum rather than built into one of them, because
+ *  there are three - held, skipped, and answered with what surfaced - and a conversation that only
+ *  happens when you leave by one door is not a rule, it is a trapdoor. */
+export function openHuddle(state: ZooGameState): ZooGameState {
+  // Only on the way back into a running day. A Sprint that has ended is covered by `goalAtRisk`,
+  // which asks the phase itself - a second check here read as careful and was a line no test could
+  // ever fail, because nothing can be at risk in a Sprint that is over.
+  if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
+  if (!goalAtRisk(state)) return state;
+  return { ...state, dayStage: 'huddle' };
+}
+
+/** What Priya proposes, and what the Scrum Team can do about it.
+ *
+ *  Her proposal is the board's own arithmetic rather than an opinion: `todaysDecision` already
+ *  works out what does not fit and what dropping it leaves. Where nothing is optional she has no
+ *  cut to propose, and says so - which is the honest answer and the one worth meeting, because a
+ *  Sprint where everything is essential is a Sprint that was forecast without a Goal. */
+export function huddleProposal(state: ZooGameState): {
+  /** Priya's line, as she would say it. */
+  says: string;
+  /** The item she is proposing to hand back, where there is one. */
+  candidate: BacklogItem | null;
+  /** What the Developers can answer. Never the Sprint Goal. */
+  answers: { how: HuddleAnswer; label: string; cost: string }[];
+} {
+  const d = todaysDecision(state);
+  const keep = { how: 'keep' as const, label: 'Keep the plan',
+    cost: 'The Goal is at risk and we have said so. Nothing comes off.' };
+  const skip = { how: 'skip' as const, label: 'Not now',
+    cost: 'Costs nothing, and nothing is decided. The Retrospective reads it back.' };
+  if (!d) {
+    return {
+      says: 'The Goal is at risk and there is nothing on this Sprint I would take off it. Tell me what you need.',
+      candidate: null,
+      answers: [keep, skip],
+    };
+  }
+  return {
+    says: `${d.candidate.name} is the one I would put down - ${d.essentialsKnown
+      ? 'the Goal does not depend on it'
+      : 'it is the biggest thing left, and nothing is marked essential'}. ${d.ifDropped}`,
+    candidate: d.candidate,
+    answers: [
+      { how: 'hand-back', label: `Hand ${d.candidate.name} back`,
+        cost: 'It returns to the Product Backlog and its points come out of the forecast.' },
+      keep, skip,
+    ],
+  };
+}
+
+/** The huddle ends, and the day goes on.
+ *
+ *  Every answer is allowed and every one is written down. Handing work back is the Product Owner
+ *  being told and agreeing; keeping the plan is the team accepting the risk with their eyes open,
+ *  which is a real decision and not a failure; walking away is free, and costs you the one
+ *  conversation that could have changed anything. */
+export function answerHuddle(state: ZooGameState, how: HuddleAnswer, by?: string): ZooGameState {
+  if (state.dayStage !== 'huddle') return state;
+  const { candidate } = huddleProposal(state);
+  const back = state.dayStage === 'huddle' ? afterHuddle(state) : state.dayStage;
+  // Skipping is free. The Daily Scrum's box is spent whether or not you hold it, because the time
+  // was set aside; this one was not, so what you save by not having it is real - and so is what
+  // you do not find out.
+  const seconds = how === 'skip' ? 0 : HUDDLE_SECONDS;
+  const spoken = how === 'skip' ? state : say(state, {
+    who: 'product_owner', from: state.team.productOwner.name, text: huddleProposal(state).says,
+  });
+  const base: ZooGameState = { ...spoken, dayStage: back,
+    daySecondsLeft: Math.max(0, spoken.daySecondsLeft - seconds) };
+  if (how === 'hand-back' && candidate) {
+    const dropped = dropFromSprint(say(base, { who: 'you', from: 'You',
+      text: `Agreed. ${candidate.name} goes back on the Product Backlog; the Goal stands.`,
+      itemId: candidate.id }), candidate.id, by ?? 'developer');
+    return note(dropped, { kind: 'moved', by: by ?? 'developer',
+      what: `Day ${state.dayNumber}: the Sprint Goal was at risk, so ${candidate.name} went back to the Product Backlog.`,
+      cost: `${HUDDLE_SECONDS}s of the day, in a huddle with the Product Owner.` });
+  }
+  if (how === 'keep') {
+    return note(say(base, { who: 'you', from: 'You',
+      text: 'We will keep the plan and go at it. If it slips, it slips with our eyes open.' }), {
+      kind: 'moved', by: by ?? 'developer',
+      what: `Day ${state.dayNumber}: the Sprint Goal was at risk and the plan was kept as it was.`,
+      cost: `${HUDDLE_SECONDS}s of the day. Nothing came off, so nothing changed but what everybody knows.` });
+  }
+  return note(base, { kind: 'moved', by: by ?? 'developer',
+    what: `Day ${state.dayNumber}: the Sprint Goal was at risk and nobody talked about it.`,
+    cost: 'Free. The Product Owner was not told, and the day went on as it was.' });
 }
 
 // ============= The question channel =============
@@ -3416,8 +3549,8 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
   // The clock is sized from dayTimeMult, and the Daily Scrum is what SETS it, so the cut
   // has to happen here rather than when the day turned over - otherwise holding the event
   // costs nothing, which is the opposite of what it should teach.
-  if (state.dailyScrumAt === 'start') return { ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult, spent) };
-  return advanceDay(cleared, mult, spent);
+  if (state.dailyScrumAt === 'start') return openHuddle({ ...cleared, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult, spent) });
+  return openHuddle(advanceDay(cleared, mult, spent));
 }
 
 /** What the Scrum Master did about what surfaced, and what it cost.
@@ -3487,8 +3620,8 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
     impedimentLog: [...(logged.impedimentLog ?? []),
       { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal }],
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult, spent) };
-  return advanceDay(base, outcome.mult, spent);
+  if (state.dailyScrumAt === 'start') return openHuddle({ ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult, spent) });
+  return openHuddle(advanceDay(base, outcome.mult, spent));
 }
 
 /** Skip the Daily Scrum. If an impediment was waiting, it goes unspotted and
@@ -3518,8 +3651,8 @@ export function skipDailyScrum(state: ZooGameState, by?: string): ZooGameState {
     carriedImpediment: imp ? { ...imp, missed: true, tip: MISSED_SCRUM_TIP } : null,
     missedScrums: state.missedScrums + (imp ? 1 : 0),
   };
-  if (state.dailyScrumAt === 'start') return { ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult, DAILY_SCRUM_SECONDS) };
-  return advanceDay(base, mult, DAILY_SCRUM_SECONDS);
+  if (state.dailyScrumAt === 'start') return openHuddle({ ...base, dayStage: 'building', dayTimeMult: mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(mult, DAILY_SCRUM_SECONDS) });
+  return openHuddle(advanceDay(base, mult, DAILY_SCRUM_SECONDS));
 }
 
 // ============= The Sprint Review =============

@@ -62,6 +62,10 @@ describe('what a day is', () => {
     while (s.phase === 'sprint' && ticked < DAY_SECONDS * 6) {
       if (s.pendingImpediment) { s = reducer(s, { type: 'ANSWER_IMPEDIMENT', how: 'remove' }); continue; }
       if (s.dayStage === 'dailyScrum') { s = reducer(s, { type: 'RUN_DAILY_SCRUM' }); continue; }
+      // A Sprint Goal at risk opens a huddle with the Product Owner on the way out of the Daily
+      // Scrum. Answered the costly way on purpose: it comes out of the day rather than extending
+      // it, which is the thing this test is actually about.
+      if (s.dayStage === 'huddle') { s = reducer(s, { type: 'ANSWER_HUDDLE', how: 'keep' }); continue; }
       s = reducer(s, { type: 'TICK_DAY' });
       ticked += 1;
     }

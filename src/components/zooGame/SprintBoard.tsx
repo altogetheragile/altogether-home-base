@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer } from './types';
 import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress, stillBuilding } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { DailyScrum } from './DailyScrum';
+import { Huddle } from './Huddle';
 import { BoardColumn, CategoryIcon, SplitEpicPanel } from './Board';
 import { CardDialog } from './CardDialog';
 import { Workspace } from './ui/Workspace';
@@ -49,7 +50,9 @@ interface SprintBoardProps {
   onAssignDev: (itemId: string, devId: string) => void;
   onOpen: (id: string) => void;
   /** Your own turn in the team's thread. Chosen rather than typed - see `yourStandUp`. */
-  onSay?: (text: string) => void;
+  onSay?: (text: string, kind?: 'stand-up') => void;
+  /** What the Scrum Team does about a Sprint Goal at risk, in the huddle after the Daily Scrum. */
+  onAnswerHuddle?: (how: HuddleAnswer) => void;
   /** Ask the Product Owner to look at built work. Offered on the card as well as on the park:
    *  "how does Priya approve the last AC?" is not a question the pill was answering. */
   onAskToCheck?: (id: string) => void;
@@ -207,7 +210,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Whether the Sprint Goal is safe - the strip's own arithmetic, read here rather than worked out
   // a second time. Two opinions about one Sprint is how a board tells you something the strip does
@@ -911,6 +914,21 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           <DialogTitle className="sr-only">Daily Scrum</DialogTitle>
           <div>
             <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} onSay={onSay} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ...and the word with the Product Owner on the way out of it, when the Sprint Goal is at
+          risk. A dialog of its own rather than a page on the Daily Scrum's, because it is not part
+          of that event: she is not in the room for it, which is the whole reason this exists. */}
+      <Dialog open={state.dayStage === 'huddle'}>
+        {/* Border only. `TONE.attention.strong` carries a translucent amber FILL as well, and over
+            a dialog that means the board shows through the conversation. */}
+        <DialogContent data-part="huddle-dialog"
+          className="zoo-theme max-h-[88vh] max-w-[min(96vw,900px)] overflow-y-auto border-2 border-amber-400 p-4 [&>button]:hidden">
+          <DialogTitle className="sr-only">A word with the Product Owner</DialogTitle>
+          <div>
+            {onAnswerHuddle && <Huddle state={state} onAnswer={onAnswerHuddle} />}
           </div>
         </DialogContent>
       </Dialog>

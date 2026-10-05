@@ -63,7 +63,13 @@ export interface PoDecisions {
 
 /** Within a Sprint, a day is being worked (building), paused at its close for the
  *  Daily Scrum, or pausing at the start of a new day before the build resumes. */
-export type DayStage = 'building' | 'dailyScrum' | 'dayStart';
+export type DayStage = 'building' | 'dailyScrum' | 'huddle' | 'dayStart';
+
+/** What the Scrum Team does about a Sprint Goal at risk, in the huddle after the Daily Scrum.
+ *
+ *  The Sprint Goal is never one of them. It is the commitment, and a game that offers to drop it
+ *  the moment it gets hard has taught that a commitment is a preference. */
+export type HuddleAnswer = 'hand-back' | 'keep' | 'skip';
 
 /** Something that gets in the team's way. Surfaced at the Daily Scrum: hold it and
  *  the Scrum Master clears the way; skip it and the impediment resurfaces the next
@@ -437,6 +443,13 @@ export interface ChatMessage {
   itemId?: string;
   /** The day it was said on, so the thread can be broken up by day. */
   day: number;
+  /** Which conversation it belongs to, where it belongs to a particular one.
+   *
+   *  The Daily Scrum's screen shows that event's own thread and nothing else, and sniffing the
+   *  wording for it worked until a Developer said something at the stand-up that was not one of
+   *  the three lines - the risk flag, which is the single most important thing said in the room
+   *  and the one the filter dropped. A message says which conversation it is in. */
+  kind?: 'stand-up';
 }
 
 /** One question, addressed to one accountability. */
@@ -781,7 +794,8 @@ export type ZooAction =
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
   | { type: 'SET_DRAFT_DESIGN'; id: string; design: ItemDesign }
   | { type: 'PLACE_ON_PARK'; id: string }
-  | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string }
+  | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string; kind?: 'stand-up' }
+  | { type: 'ANSWER_HUDDLE'; how: HuddleAnswer; by?: string }
   | { type: 'START_ITEM'; id: string; by?: string;
       /** The Developer taking it, where a particular one is. Absent when you pull it yourself:
        *  the board writes down whoever has least on. */
