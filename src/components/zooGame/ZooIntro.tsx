@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { PRODUCT_GOAL } from './config';
 import { Pencil, FolderOpen, Wand2 } from 'lucide-react';
 import { BoardIcon, BOARD } from './board/BoardIcon';
-import { TeachingCard } from './ScrumTeaching';
+import { ExplainButton } from './Explain';
 import { INTRO_COPY } from './scrumContent';
 import { GoalShapes } from './GoalShapes';
 import { useGoalCoach } from './useGoalCoach';
@@ -108,6 +108,15 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
               Commitment of the Product Backlog
             </span>
+            {/* The teaching, beside the thing it teaches, like every other screen in the game.
+                It used to be a card below this panel, open, about the length of the panel again -
+                so the screen that asks you to write one sentence was mostly reading, and the only
+                way to be rid of it was to dismiss it for good. Behind the icon it is a click away
+                and a click back. */}
+            <span className="ml-auto">
+              <ExplainButton cards={['product-goal', 'product-backlog']}
+                teachCard={teachCard} onMarkTaught={onMarkTaught} />
+            </span>
           </div>
           <p className="text-sm leading-snug text-muted-foreground">
             You are the Product Owner, so this one is yours to write. Shape it into a single clear outcome -
@@ -208,19 +217,6 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
             </div>
           )}
         </section>
-
-        {/* ...and then whatever the game is teaching. Reading material, under the thing to do
-            rather than over it.
-
-            The Sprint loop used to sit here too, and it is on the screen before this one - shown
-            there against WHEN each step happens, which is more than a list of five. The same five
-            lines on two screens in a row is the same thing said twice, and this is the screen that
-            asks you to write something. */}
-        {teachCard && onMarkTaught && (
-          <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
-            <TeachingCard id={teachCard} onDismiss={onMarkTaught} />
-          </div>
-        )}
 
 
         {/* Floating, like every other primary action in the game. */}

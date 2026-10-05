@@ -97,7 +97,9 @@ interface RefineBacklogProps {
  *  is what actually happens, and what costs capacity you can see. You can still tidy the
  *  list here; the screen just stops telling you to finish it first. */
 export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, onEstimate, onAddPbi, onRefinePbi, onReorder, onMoveZone, onMoveBefore, onSetUseStories, onSplitEpic, onChooseSolution, onDeletePbi, onDuplicatePbi, onPlan, onOpenGround, teachCard, onMarkTaught }: RefineBacklogProps) {
-  const [lengthOpen, setLengthOpen] = useState(true);
+  // Closed, like the agreement below it. Two steps side by side, one open and one shut, said that
+  // the first was further along than the second when neither had been done.
+  const [lengthOpen, setLengthOpen] = useState(false);
   // Which item is on the bench. Nothing, until you pick one.
   const [focus, setFocus] = useState<string | null>(null);
   const [dodOpen, setDodOpen] = useState(false);

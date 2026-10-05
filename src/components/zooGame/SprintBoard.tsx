@@ -76,8 +76,6 @@ interface SprintBoardProps {
   canBuild?: boolean;
   /** Which accountability is looking, so what is asked of them comes first. */
   seat?: SeatName | null;
-  /** The Sprint teaching card, shown inside the "?" rather than as a block above the board. */
-  teachCard?: string | null;
 }
 
 /** The start of a new day, after the Daily Scrum: the team gathers before the build.

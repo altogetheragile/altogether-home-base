@@ -16,7 +16,7 @@ import { DOCKED_BAR_H, DOCK_GUTTER } from './ActionBar';
 import { CopyEditor } from './CopyEditor';
 import { DialEditor } from './DialEditor';
 import { TrailButton } from './TrailButton';
-import { TeachingCard } from './ScrumTeaching';
+import { ExplainButton } from './Explain';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
 import { CARDS_BY_PHASE, BACK_FROM } from './scrumContent';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -487,6 +487,17 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               Increment. A learner who never connects the two is playing a building game. */}
           <Tab active={tab === 'increment'} onClick={() => setTab('increment')} label="Increment"
             icon={(p) => <BoardIcon name={BOARD.increment} {...p} />} badge={open ? String(open) : undefined} />
+          {/* ...and the teaching for wherever you are, at the end of the row. It used to be a card
+              stacked above the Product Backlog, open, pushing the artifact down the screen - and
+              the only way to be rid of it was to dismiss it for good. Every event screen already
+              keeps its teaching behind a "?" beside its own question; this is the same button for
+              the phases that have no screen of their own. */}
+          {teachCard && onMarkTaught && (
+            <span className="ml-auto self-center pl-2">
+              <ExplainButton cards={CARDS_BY_PHASE[state.phase] ?? []}
+                teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
+            </span>
+          )}
         </div>
       </header>
 
@@ -505,7 +516,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           {/* Wide, because this tab is two panes now - the artifact and the bench that works on it.
               A 1024px column on a 1440px screen made the bench a column of wrapped words. */}
           <div className={cn('mx-auto max-w-[1600px] space-y-3', DOCK_GUTTER)}>
-            {teachCard && onMarkTaught && <TeachingCard id={teachCard} onDismiss={onMarkTaught} />}
             {/* The artifact is a place you can work, whatever else is going on. Refinement is the
                 screen on this tab before the first Sprint; for the rest of the game the tab is the
                 bench, because refinement is ongoing work and not a phase in front of the Sprints.
