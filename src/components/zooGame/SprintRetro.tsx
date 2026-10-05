@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import type { ZooGameState } from './types';
+import type { ZooGameState, ChatKind } from './types';
 import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { ActionBar } from './ActionBar';
 import { DodHandover } from './DodHandover';
 import { NextRung } from './NextRung';
-import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns } from './engine';
+import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns, yourRetroTurn } from './engine';
+import { Bubble } from './TeamChat';
 import { costBySize, sizesThatAgree } from './whatItCost';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { DodEditor } from './DodEditor';
@@ -35,12 +36,62 @@ interface SprintRetroProps {
   /** The Retrospective teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
+  /** Your own turn in the room. Chosen rather than typed, so what you say is something the
+   *  Sprint's own log says happened. */
+  onSay?: (text: string, kind?: ChatKind) => void;
 }
 
 
+
+/** The Retrospective, as a conversation.
+ *
+ *  Sam facilitates and says nothing about the work - "The Scrum Master ensures that the event takes
+ *  place", and the Guide gives them no opinion about what the team found. The Developers each say
+ *  one thing, drawn from the Sprint's own log rather than written, so what is said is only ever
+ *  something that actually happened: the difference between inspecting and reminiscing.
+ *
+ *  Your turn is a choice from whatever the Developers did not get to, so you add something to the
+ *  room rather than repeating it. */
+function TheRoom({ state, onSay }: { state: ZooGameState; onSay?: (text: string, kind?: ChatKind) => void }) {
+  const thread = (state.chat ?? []).filter((m) => m.kind === 'retro');
+  const spoken = thread.some((m) => m.who === 'you');
+  const yours = spoken ? [] : yourRetroTurn(state);
+  if (!thread.length) return null;
+  return (
+    <section data-part="retro-room" className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <span className="flex items-center gap-1.5 text-sm font-semibold">
+          <MessageCircleQuestion className="h-4 w-4" /> Round the room
+        </span>
+        {/* The one event the Guide fences. Said on the screen rather than only in a card, because
+            it is the thing a learner is most likely to get wrong in a real team. */}
+        <span className="text-[11px] text-muted-foreground">
+          the Scrum Team only - nobody from outside it is in this room
+        </span>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {thread.map((m) => <Bubble key={m.id} msg={m} />)}
+      </ul>
+      {yours.length > 0 && onSay && (
+        <div data-part="retro-your-turn" className="space-y-1.5 border-t border-border pt-2">
+          <div className="text-[11px] font-semibold text-muted-foreground">Your turn</div>
+          <div className="flex flex-col gap-1.5">
+            {yours.map((text) => (
+              <button key={text} type="button" onClick={() => onSay(text, 'retro')}
+                className={cn(FOCUS, 'rounded-lg border border-border bg-card px-2.5 py-1.5 text-left text-[12px] leading-snug transition-colors hover:border-primary/60')}>
+                {text}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** Retrospective: inspect how the Scrum Team worked and pick one improvement to carry
  *  forward, then plan the next Sprint. */
-export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprintDays, teachCard, onMarkTaught }: SprintRetroProps) {
+export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprintDays, teachCard, onMarkTaught, onSay }: SprintRetroProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [step, setStep] = useState<Step>('inspect');
   const questions = retroQuestions(state);
@@ -103,6 +154,11 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
           worked it - each line attributed, and carrying its cost where the game knows one. The
           right-hand column is what it came to. Two columns because they are read together: a
           decision means little without its outcome, and an outcome without its decisions is luck. */}
+      {/* The room, talking. The Retrospective had everything except the people: it read back what
+          the Sprint cost, and it read it back as a report. Sam opens it, the Developers each say
+          one thing they noticed from the Sprint's own log, and you add yours. */}
+      {step === 'inspect' && <TheRoom state={state} onSay={onSay} />}
+
       {step === 'inspect' && (
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
           {/* The log, where there is one. A Sprint the team never logged a decision in is still a

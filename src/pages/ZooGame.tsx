@@ -415,7 +415,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onTakeSignal={takeSignal} onDeclineSignal={declineSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} onOpen={open} onConfirmAc={confirmAc} onToggleTask={toggleTask} onSendBack={sendBack} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':
-        return <ZooShell state={state} {...shellProps}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onAdopt={adopt} onSetSprintDays={setSprintDays} teachCard={cardFor('retro')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onAdopt={adopt} onSetSprintDays={setSprintDays} onSay={say} teachCard={cardFor('retro')} onMarkTaught={markTaught} /></ZooShell>;
       case 'final':
         return <ZooFinal state={state} onReset={reset} />;
       default:

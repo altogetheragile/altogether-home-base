@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer, ChatKind } from './types';
 import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress, stillBuilding } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
@@ -50,7 +50,7 @@ interface SprintBoardProps {
   onAssignDev: (itemId: string, devId: string) => void;
   onOpen: (id: string) => void;
   /** Your own turn in the team's thread. Chosen rather than typed - see `yourStandUp`. */
-  onSay?: (text: string, kind?: 'stand-up') => void;
+  onSay?: (text: string, kind?: ChatKind) => void;
   /** What the Scrum Team does about a Sprint Goal at risk, in the huddle after the Daily Scrum. */
   onAnswerHuddle?: (how: HuddleAnswer) => void;
   /** Ask the Product Owner to look at built work. Offered on the card as well as on the park:

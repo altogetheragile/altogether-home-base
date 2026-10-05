@@ -427,6 +427,10 @@ export interface ScrumTeamMember { id: string; name: string }
  *  tell your own messages from the team's at a glance is not a conversation you are in. */
 export type ChatWho = 'product_owner' | 'scrum_master' | 'developer' | 'stakeholder' | 'you';
 
+/** Which conversation a message belongs to, where it belongs to a particular one. An event's own
+ *  screen shows its own thread and nothing else. */
+export type ChatKind = 'stand-up' | 'retro';
+
 /** One message in the team's chat.
  *
  *  Short-lived by design: cleared at the start of each Sprint, so the thread is this Sprint's
@@ -449,7 +453,7 @@ export interface ChatMessage {
    *  wording for it worked until a Developer said something at the stand-up that was not one of
    *  the three lines - the risk flag, which is the single most important thing said in the room
    *  and the one the filter dropped. A message says which conversation it is in. */
-  kind?: 'stand-up';
+  kind?: ChatKind;
 }
 
 /** One question, addressed to one accountability. */
@@ -794,7 +798,7 @@ export type ZooAction =
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
   | { type: 'SET_DRAFT_DESIGN'; id: string; design: ItemDesign }
   | { type: 'PLACE_ON_PARK'; id: string }
-  | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string; kind?: 'stand-up' }
+  | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string; kind?: ChatKind }
   | { type: 'ANSWER_HUDDLE'; how: HuddleAnswer; by?: string }
   | { type: 'LEND_A_HAND'; itemId: string; devId: string; by?: string }
   | { type: 'START_ITEM'; id: string; by?: string;

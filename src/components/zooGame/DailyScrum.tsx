@@ -1,4 +1,4 @@
-import type { ZooGameState, ImpedimentAnswer } from './types';
+import type { ZooGameState, ImpedimentAnswer, ChatKind } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
 import { DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS } from './config';
@@ -20,7 +20,7 @@ interface DailyScrumProps {
   onAnswer?: (how: ImpedimentAnswer) => void;
   /** Your own turn in the room. Chosen rather than typed, so what you say is something your own
    *  cards make true. */
-  onSay?: (text: string, kind?: 'stand-up') => void;
+  onSay?: (text: string, kind?: ChatKind) => void;
 }
 
 
@@ -35,7 +35,7 @@ interface DailyScrumProps {
  *  Goal, which is the only thing the Guide insists this event focuses on. The other two are the
  *  ways a stand-up goes wrong - a status report addressed to nobody, and a promise where a plan
  *  should be. Nothing scores them. The Retrospective reads back what was said. */
-function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: string, kind?: 'stand-up') => void }) {
+function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: string, kind?: ChatKind) => void }) {
   // This event's own thread, by what each message says it belongs to. It used to be found by
   // sniffing for the words of the three questions, which worked until a Developer said something
   // in the room that was not one of them - the risk flag, which is the most important thing said
