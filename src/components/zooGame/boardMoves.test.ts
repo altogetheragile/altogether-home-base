@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, decisionsIn } from './engine';
+import { splitEpic, planSprint, decisionsIn, yourDev } from './engine';
 import type { ZooGameState } from './types';
 
 // Moving a card across the board is a decision.
@@ -28,7 +28,12 @@ describe('every move across the board is recorded', () => {
     const started = reducer(s, { type: 'START_ITEM', id: habitat });
     const m = moves(started);
     expect(m.length, 'work was taken into Doing and nobody wrote it down').toBe(1);
-    expect(m[0].what, 'the line does not say who, what, or how much').toMatch(/Developers took .+ into Doing \(\d+ points\)/);
+    // The PERSON, now the Developers are three people rather than a collective noun. It used to
+    // read "The Developers took..." - and in a solo game `whoIs('developer')` is empty, so your
+    // own pulls went into the log with no subject at all: "took Bridge into Doing (2 points)".
+    // The accountability is still on the line; it is just not doing the work of a name.
+    expect(m[0].what, 'the line does not say who, what, or how much')
+      .toMatch(new RegExp(`^${yourDev(s)!.name} took .+ into Doing \\(\\d+ points\\)`));
     expect(m[0].by, 'the Sprint Backlog changed and the accountability was not named').toBe('developer');
   });
 

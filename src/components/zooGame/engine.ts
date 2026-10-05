@@ -273,6 +273,98 @@ export function speaking(state: ZooGameState, by?: string): { who: ChatWho; from
   return { who: 'you', from: 'You' };
 }
 
+// ============= The Retrospective, out loud =============
+//
+// The Retrospective had everything except the people. It read back what the Sprint cost - what was
+// guessed at, what sat in Doing for three days, what the Daily Scrums were worth - and it read it
+// back as a report. Nobody said any of it.
+//
+// A Retrospective is the Scrum Team talking about how they worked. So Sam opens it and each of
+// them says one thing they noticed, drawn from the Sprint's own log rather than written: what is
+// said is only ever something that actually happened, which is the difference between inspecting
+// and reminiscing.
+//
+// "The Scrum Team only." No stakeholder is ever in this room - it is the one event the Guide
+// fences, and `theRetroThread` holds that.
+
+/** One thing somebody noticed, from the Sprint's own record. */
+type Noticed = { text: string; weight: number };
+
+/** What this Sprint's log has to say about itself, strongest first.
+ *
+ *  Only what is in the record. An observation the game invented would be the one thing a
+ *  Retrospective cannot afford: a team inspecting something that did not happen. */
+export function whatWeNoticed(state: ZooGameState, sprint = state.sprintNumber): string[] {
+  const log = decisionsIn(state, sprint);
+  const out: Noticed[] = [];
+  const count = (f: (d: TeamDecision) => boolean) => log.filter(f).length;
+
+  const guessed = count((d) => d.kind === 'question' && d.by === 'developer');
+  if (guessed) out.push({ weight: 5,
+    text: `We answered ${guessed} question${guessed === 1 ? '' : 's'} ourselves because nobody else did. Each one was a guess we are now living with.` });
+
+  const forUs = count((d) => d.kind === 'question' && d.by === 'product_owner' && /chose /.test(d.what));
+  if (forUs) out.push({ weight: 4,
+    text: `${forUs} decision${forUs === 1 ? ' about how to build something was' : 's about how to build things were'} made for us. How it gets built is ours, and we let it go.` });
+
+  const missed = count((d) => d.kind === 'daily-scrum' && /not held|skipped/i.test(d.what + (d.cost ?? '')));
+  if (missed) out.push({ weight: 5,
+    text: `We skipped the Daily Scrum ${missed} time${missed === 1 ? '' : 's'}. The timebox went either way; what we missed is whatever it would have surfaced.` });
+
+  const helped = count((d) => d.kind === 'moved' && /second pair of hands/.test(d.what));
+  if (helped) out.push({ weight: 3,
+    text: `${helped} time${helped === 1 ? '' : 's'} one of us put a second pair of hands on somebody else\u2019s card instead of starting another. That is what finished things.` });
+
+  const handedBack = count((d) => d.kind === 'moved' && /went back to the Product Backlog/.test(d.what));
+  if (handedBack) out.push({ weight: 4,
+    text: 'We took something out of the Sprint rather than carry it. It was the right call and it is worth saying out loud that we made it.' });
+
+  const kept = count((d) => d.kind === 'moved' && /the plan was kept as it was/.test(d.what));
+  if (kept) out.push({ weight: 4,
+    text: 'We knew the Goal was at risk and kept the plan anyway. We went in with our eyes open; the question is whether we would again.' });
+
+  const quiet = count((d) => d.kind === 'moved' && /nobody talked about it/.test(d.what));
+  if (quiet) out.push({ weight: 5,
+    text: 'The Goal was at risk and we did not talk to the Product Owner about it. That is the cheapest conversation there is and we did not have it.' });
+
+  const refined = count((d) => d.kind === 'refinement');
+  if (refined) out.push({ weight: 2,
+    text: `We refined the Product Backlog on ${refined} day${refined === 1 ? '' : 's'} of the Sprint. It costs build time, and it is what makes the next Sprint possible.` });
+
+  const aged = ageingCards(state, 3).length;
+  if (aged) out.push({ weight: 4,
+    text: `${aged} card${aged === 1 ? '' : 's'} sat in Doing for three days or more. Nothing on the board asked why until the Daily Scrum did.` });
+
+  // Nothing went wrong is itself worth saying, and a Retrospective with nothing on it reads as a
+  // broken screen rather than as a quiet Sprint.
+  if (!out.length) out.push({ weight: 1,
+    text: 'Nothing in the log stands out this Sprint. That is worth saying too: a quiet Sprint is a result, not an absence of one.' });
+
+  return out.sort((a, z) => z.weight - a.weight).map((o) => o.text);
+}
+
+/** Sam opens the Retrospective, and the Developers each say one thing.
+ *
+ *  Sam is the facilitator and says nothing about the work: "The Scrum Master ensures that the
+ *  event takes place" and the Guide gives them no opinion about what the team found. One
+ *  observation each, strongest first, so two people never read out the same line. */
+export function openRetro(state: ZooGameState): ZooGameState {
+  if ((state.chat ?? []).some((m) => m.kind === 'retro')) return state;   // already opened
+  const noticed = whatWeNoticed(state);
+  let said = say({ ...state, chat: [] }, { who: 'scrum_master', from: state.team.scrumMaster.name, kind: 'retro',
+    text: `Sprint ${state.sprintNumber}, then. How did we work? Not what we built - how we worked. Nobody outside this team is in the room, so say it.` });
+  state.team.developers.forEach((dev, i) => {
+    const line = noticed[i];
+    if (line) said = say(said, { who: 'developer', from: dev.name, kind: 'retro', text: line });
+  });
+  return said;
+}
+
+/** Your own observation, offered as a choice. Whatever the Developers did not get to, so your turn
+ *  adds something to the room rather than repeating it. */
+export const yourRetroTurn = (state: ZooGameState): string[] =>
+  whatWeNoticed(state).slice(state.team.developers.length, state.team.developers.length + 3);
+
 // ============= Lending a hand =============
 //
 // A Developer with nothing to pull is not finished for the day. They can put a second pair of
@@ -1677,10 +1769,14 @@ export function startItem(state: ZooGameState, id: string, by?: string, devId?: 
   // may make it - the Sprint Backlog belongs to them - which is why the accountability is named
   // even when one person is playing all three.
   return note(moved, { kind: 'moved', by: by ?? 'developer',
-    // Named, where a person took it. The Retrospective reads this back, and "Ben took the Lion
+    // Named, because a person took it. The Retrospective reads this back, and "Ben took the Lion
     // Enclosure into Doing" is a team's own account of its Sprint; "The Developers took" is a
-    // collective noun doing the work of three people.
-    what: `${taker ? taker.name : whoIs(by ?? 'developer')} took ${item.name} into Doing (${item.estimate} points).`,
+    // collective noun doing the work of three people - and `whoIs('developer')` is empty in a solo
+    // game, which left your own pulls in the log with no subject at all: "took Bridge into Doing".
+    // A seat that is not the Developers is named as the SEAT, because that is the teaching: a
+    // Product Owner on the tools is the accountability doing somebody else's job, and their name
+    // is beside the point. A Developer is named as a person.
+    what: `${by && by !== 'developer' ? whoIs(by) : (mine?.name ?? whoIs('developer'))} took ${item.name} into Doing (${item.estimate} points).`,
     // Free play allows it and names it. A Product Owner may work as a Developer - the Guide says so
     // - but while they are on the tools, nobody is doing the Product Owner's job, and the questions
     // pile up on an empty seat. The Retrospective reads this back with the rest.
