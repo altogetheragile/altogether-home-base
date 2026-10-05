@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Plus, Minus, Trash2, Check } from 'lucide-react';
+import { Plus, Minus, Trash2, Check, HelpCircle } from 'lucide-react';
 import type { ZooGameState, BacklogItem } from './types';
 import {
   currentDesign, floraColors, ENCLOSURE_SIZE, ENCLOSURE_SHAPES,
@@ -159,6 +159,28 @@ function Menu({ group, icon, label, lit, busy, open, onOpenChange, onClosed, chi
         {children}
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** The pen's instructions, folded away. The park is under this panel, so anything it says while
+ *  the pen is out is said over the thing being drawn on. */
+function HowThePenWorks() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" data-part="pen-help" onClick={() => setOpen((o) => !o)}
+        aria-expanded={open} aria-label="How the pen works"
+        className={cn(FOCUS, 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-muted/60')}>
+        <HelpCircle className="h-3.5 w-3.5" aria-hidden />
+      </button>
+      {open && (
+        <span className="w-full pt-1 text-[11px] leading-snug text-muted-foreground">
+          Each press carries on from the last, so the path bends where you stop. Press the same spot
+          twice to finish one, or reach the thing you were heading for. Closing this menu puts the
+          pen away.
+        </span>
+      )}
+    </>
   );
 }
 
@@ -674,16 +696,15 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             {onDrawing && (
               <Row label={L(subject.category === 'path' ? 'Draw' : 'Path to it')}>
                 <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
-                  {drawing ? 'Drawing - press each corner in turn'
-                    : subject.category === 'path' ? 'Draw a run' : 'Draw a path to it'}
+                  {drawing ? 'Drawing\u2026' : subject.category === 'path' ? 'Draw a run' : 'Draw a path to it'}
                 </Chip>
-                {drawing && (
-                  <span className="w-full pt-1 text-[11px] text-muted-foreground">
-                    Each press carries on from the last, so the path bends where you stop. Press the
-                    same spot twice to finish one, or reach the thing you were heading for. Closing
-                    this menu puts the pen away.
-                  </span>
-                )}
+                {/* How the pen works, behind a question mark like everything else that explains.
+                    It used to unfold in full the moment the pen came out - five lines of it, which
+                    is the one moment this panel must be small, because the surface you are drawing
+                    on is directly underneath it. "The pathways menu obscures the park when drawing
+                    paths. Do we need the explanatory text showing all the time?"
+                    Still one press away, and the chip says the state in a word. */}
+                <HowThePenWorks />
               </Row>
             )}
             <Row label={L('Width')}>

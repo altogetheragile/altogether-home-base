@@ -7,7 +7,7 @@ import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { ENTRANCE } from './parkNetwork';
 
-import { hasGround, groundPrice, structureChosen } from './engine';
+import { hasGround, groundPrice } from './engine';
 import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -385,6 +385,40 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // covered the bridge, so every press near it selected the river. Reported from playing it - "I
     // cannot move the bridge, it thinks it is a river".
     .sort((a, z) => (z.size.w * z.size.h) - (a.size.w * a.size.h));
+
+  /** How far each park label is lifted so it does not land on the one beside it.
+   *
+   *  Two small things side by side had their two names drawn on top of each other. SVG will not
+   *  measure text without a DOM, so the width is estimated from the name - enough, because the only
+   *  question is whether two of them touch at all.
+   *
+   *  One pass, in the order they are drawn: a name that would sit on one already placed goes up a
+   *  line, and up another if that line is taken too. Deterministic, so the park looks the same
+   *  every time it is drawn. */
+  const LABEL_LINE = 15;
+  const labelLifts = ((): Map<string, number> => {
+    const wide = (name: string) => name.length * 7.2;   // SVG cannot measure text without a DOM
+    const lifts = new Map<string, number>();
+    // The area names are on the park first, at the top-left of each plot, and a thing standing
+    // there had its own name laid across one. They are not ours to move, so they go down as taken.
+    const placed = order.map((zone) => plots.get(zone)).filter((q) => !!q).map((q) => ({
+      x: q!.x0 + 14 + wide(q!.zone) / 2, y: q!.y0 + 24, w: wide(q!.zone),
+    }));
+    // Near enough to be read as one line. Two names a hundred units apart do not collide however
+    // wide they are, which is why the first version - which compared only x - lifted almost
+    // everything in an area clear of that area's own name.
+    const clash = (a: { x: number; y: number; w: number }, z: { x: number; y: number; w: number }) =>
+      Math.abs(a.y - z.y) < LABEL_LINE && Math.abs(a.x - z.x) < (a.w + z.w) / 2;
+    for (const b of boxes) {
+      const w = wide(b.item.name);
+      const top = b.at.y - b.size.h / 2 - 6;
+      let lift = 0;
+      while (placed.some((q) => clash(q, { x: b.at.x, y: top - lift * LABEL_LINE, w }))) lift += 1;
+      lifts.set(b.item.id, lift * LABEL_LINE);
+      placed.push({ x: b.at.x, y: top - lift * LABEL_LINE, w });
+    }
+    return lifts;
+  })();
 
   /** Whether a thing is water somebody could put a bridge across. */
   const overWater = (it: { category: string; template?: string; design?: { parts?: Record<string, string> }; draftDesign?: { parts?: Record<string, string> } }) => {
@@ -1028,6 +1062,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         ))}
 
         {/* Everything standing on the park, straight down, nothing behind anything else. */}
+        {/* How far to lift a name so it clears the one beside it.
+            SVG cannot measure text, so the width is estimated from the name - which is enough,
+            because the question is only "do these two overlap at all". Each box is compared with
+            the ones before it in order; a name that would sit on an earlier one goes up a line, and
+            up another if that one is taken too. Deterministic, so the park looks the same each
+            time it is drawn. */}
         {boxes.map((b) => {
           const c = fillFor(b.item);
           const on = selected === b.item.id;
@@ -1263,11 +1303,20 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
               {/* The name, and only out on the whole park: inside a habitat the picture IS the
                   habitat, and the inspector's pill already says which. */}
               {!inside && (
-                <text x={b.at.x} y={y - 6} textAnchor="middle" fontSize={ch(13)} fontWeight={700} fill="#20351f">
-                  {/* "Built, not Done" is a claim about work that has been done. A plot whose
-                      Developers have not yet said what they are building is a plot: the ground is
-                      taken and nothing else is true yet. */}
-                  {b.item.name}{!b.underWay ? '' : structureChosen(b.item) ? ' · built, not Done' : ' · nothing chosen yet'}
+                // The name, and the name only.
+                //
+                // It used to carry the state as well - "Toilets · nothing chosen yet" - which is
+                // three times the width for something the build strip's chip already says about
+                // whatever is selected. Two small things side by side and the two labels sat on top
+                // of each other: "the text labels on multiple items overlap and get in the way."
+                //
+                // Exactly the reason the 180px pill above this was taken off the park. One
+                // question, one place: the chip.
+                //
+                // `labelLift` keeps what is left from colliding anyway, where two names are wide
+                // and their things are close.
+                <text x={b.at.x} y={y - 6 - (labelLifts.get(b.item.id) ?? 0)} textAnchor="middle" fontSize={ch(13)} fontWeight={700} fill="#20351f">
+                  {b.item.name}
                 </text>
               )}
               {/* The count and the offer to Priya used to be a pill under every built object out here,
