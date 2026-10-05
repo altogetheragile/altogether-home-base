@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import type { ZooGameState, ZooConnector, BacklogItem } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf, runPoints, runPath, pathTarget } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
-import { outlineOf } from './parkOutline';
+import { outlineOf, freeSlots } from './parkOutline';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
@@ -374,6 +374,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const plots = zonePlots(state);
   const order = plotOrder(state);
   const auto = parkPositions(standing, plots);
+  // The places in each area that nothing is standing in yet, drawn so the layout is legible.
+  // From where things ACTUALLY are - `auto` is the laid-out park - rather than from the few that
+  // carry a chosen position, or a slot with a habitat in it would be drawn as empty.
+  const free = freeSlots(state, undefined,
+    standing.map((st) => st.item.pos ?? auto.get(st.item.id)).filter((at): at is { x: number; y: number } => !!at));
   const boxes = standing.map((s) => ({
     item: s.item,
     animals: s.animals,
@@ -1017,6 +1022,18 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                   </g>
                 );
               })()}
+              {/* The places in it, where nothing is standing yet.
+                  Faint, and only the empty ones: a plan that marks out where things go is the
+                  whole point of an outline - "a light architectural framework that guides
+                  development" - and a drop that lands in one takes it. Drawn, so the snap is
+                  something you aimed at rather than something that happened to you. */}
+              {ours && free.filter((sl) => sl.zone === p.zone).map((sl) => (
+                <rect key={sl.id} data-part="free-slot" data-slot={sl.id}
+                  x={sl.at.x - sl.size.w / 2} y={sl.at.y - sl.size.h / 2}
+                  width={sl.size.w} height={sl.size.h} rx={12}
+                  fill="none" stroke="#7a6f55" strokeWidth={2} strokeDasharray="6 8"
+                  opacity={0.55} />
+              ))}
             </g>
           );
         })}

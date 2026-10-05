@@ -150,9 +150,15 @@ export const slotAt = (state: ZooGameState, at: Pt): Slot | undefined =>
   allSlots(state).find((s) => Math.abs(s.at.x - at.x) <= s.size.w / 2
     && Math.abs(s.at.y - at.y) <= s.size.h / 2);
 
-/** The slots nothing is standing in, nearest the way in first. */
-export function freeSlots(state: ZooGameState, ignore?: string): Slot[] {
-  const standing = state.backlog.filter((it) => it.pos && it.id !== ignore);
-  return allSlots(state).filter((s) => !standing.some((it) =>
-    Math.abs(it.pos!.x - s.at.x) <= s.size.w / 2 && Math.abs(it.pos!.y - s.at.y) <= s.size.h / 2));
+/** The slots nothing is standing in, nearest the way in first.
+ *
+ *  `standing` is where things ACTUALLY are, which is not the same as where they were put: most of
+ *  the park has no chosen position at all and is laid out, so asking only for `pos` reported a
+ *  slot as free with a habitat sitting in it. Passed in rather than worked out here, because
+ *  working it out lives in `parkModel` and `parkModel` reads this - a module cannot ask the module
+ *  that asks it. */
+export function freeSlots(state: ZooGameState, ignore?: string, standing?: Pt[]): Slot[] {
+  const at = standing ?? state.backlog.filter((it) => it.pos && it.id !== ignore).map((it) => it.pos!);
+  return allSlots(state).filter((s) => !at.some((p) =>
+    Math.abs(p.x - s.at.x) <= s.size.w / 2 && Math.abs(p.y - s.at.y) <= s.size.h / 2));
 }

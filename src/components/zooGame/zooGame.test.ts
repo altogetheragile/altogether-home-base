@@ -5,6 +5,7 @@ import {
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
+import { allSlots } from './parkOutline';
 import { askToCheck, answerQuestion, setServices, zoneSlices, zonesOpenedSince, zooIsOpen, standsOnPark } from './engine';
 import { applyParkChecks, checkCriterion, wantedServices } from './parkChecks';
 import { lookAhead } from './lookAhead';
@@ -1206,13 +1207,21 @@ describe('zoo game: enclosures are built before their animals', () => {
     expect(find(s, 'tiger-enc').enclosureSize).toBe('large'); // unaffected
   });
 
-  it('a dragged feature keeps its saved park position', () => {
+  it('a dragged feature keeps a saved park position, and only its own', () => {
+    // Where it lands may be settled into the place it was dropped in - an area has slots beside
+    // its path, and a drop inside one takes it. What this is about is that the drop is REMEMBERED
+    // and that it is targeted: one item moves, the rest are where they were.
+    const near = (a: { x: number; y: number }, b: { x: number; y: number }, by: number) =>
+      Math.abs(a.x - b.x) <= by && Math.abs(a.y - b.y) <= by;
     let s = setItemPos(initialZooState(1), 'lion-enc', { x: 300, y: 120 });
-    expect(find(s, 'lion-enc').pos).toEqual({ x: 300, y: 120 });
+    expect(find(s, 'lion-enc').pos, 'the drop was not remembered at all').toBeTruthy();
+    expect(near(find(s, 'lion-enc').pos!, { x: 300, y: 120 }, 200),
+      'it was moved somewhere else entirely').toBe(true);
     // targeted - no other item is positioned
     expect(s.backlog.filter((i) => i.pos).map((i) => i.id)).toEqual(['lion-enc']);
+    const first = find(s, 'lion-enc').pos!;
     s = setItemPos(s, 'lion-enc', { x: 50, y: 60 });
-    expect(find(s, 'lion-enc').pos).toEqual({ x: 50, y: 60 });
+    expect(find(s, 'lion-enc').pos, 'the second drop did nothing').not.toEqual(first);
   });
 
   it('an animal keeps its dragged spot inside the enclosure (0..1 fractions), independent of the park position', () => {
@@ -2360,10 +2369,37 @@ describe('zoo game: where work stands while it is being built', () => {
   });
 
   it('leaves a spot somebody chose alone', () => {
-    // Dropping a thing on the park is a decision. The park does not tidy it away.
+    // Dropping a thing on the park is a decision. The park does not tidy it away - it settles it
+    // into the PLACE you dropped it in, which is a different thing: an area has slots beside its
+    // path, and landing a few pixels off one is the difference between a zoo that was laid out and
+    // one that was assembled. Outside a slot, where you let go of it is where it stands.
     let s = planSprint(bigCatsSplit(1), ['lion-enc']);
     s = startItemAt(s, 'lion-enc', { x: 300, y: 260 });
-    expect(s.backlog.find((it) => it.id === 'lion-enc')!.pos).toEqual({ x: 300, y: 260 });
+    const at = s.backlog.find((it) => it.id === 'lion-enc')!.pos!;
+    const slot = allSlots(s).find((sl) => sl.at.x === at.x && sl.at.y === at.y);
+    if (slot) {
+      // It snapped. It snapped into the one it was dropped in, not into some other one.
+      expect(Math.abs(slot.at.x - 300), 'it jumped to a place nobody dropped it in')
+        .toBeLessThanOrEqual(slot.size.w / 2);
+      expect(Math.abs(slot.at.y - 260)).toBeLessThanOrEqual(slot.size.h / 2);
+    } else {
+      expect(at, 'a drop outside any place was moved anyway').toEqual({ x: 300, y: 260 });
+    }
+  });
+
+  it('and takes a drop between the places exactly as it was dropped', () => {
+    let s = planSprint(bigCatsSplit(1), ['lion-enc']);
+    // The gap between two rows of slots, which is nobody's place.
+    const slots = allSlots(s);
+    const rows = [...new Set(slots.map((sl) => sl.at.y))].sort((a, b) => a - b);
+    if (rows.length < 2) return;                 // one row, so there is no gap between rows
+    const gap = { x: slots[0].at.x, y: Math.round((rows[0] + rows[1]) / 2) };
+    const inAnySlot = slots.some((sl) => Math.abs(sl.at.x - gap.x) <= sl.size.w / 2
+      && Math.abs(sl.at.y - gap.y) <= sl.size.h / 2);
+    if (inAnySlot) return;                       // the rows touch; no gap worth testing
+    s = startItemAt(s, 'lion-enc', gap);
+    expect(s.backlog.find((it) => it.id === 'lion-enc')!.pos,
+      'a deliberate spot between two places was tidied into one').toEqual(gap);
   });
 });
 
@@ -2824,7 +2860,12 @@ describe('zoo game: starting an item by dropping it on the park', () => {
     const it = s.backlog.find((i) => i.id === 'lion-enc')!;
     expect(it.started).toBe(true);
     expect(it.status).toBe('committed');   // started, not Done - it is a construction site
-    expect(it.pos).toEqual({ x: 300, y: 200 });
+    // Where it landed, settled into the place it landed in: the drop decides the area and the
+    // area's slot decides the pixels. What it must not do is land somewhere else.
+    expect(it.pos, 'it was dropped on the park and stands nowhere').toBeTruthy();
+    expect(Math.abs(it.pos!.x - 300), 'it jumped to the other side of the park')
+      .toBeLessThanOrEqual(220);
+    expect(Math.abs(it.pos!.y - 200)).toBeLessThanOrEqual(220);
   });
 
   it('refuses when the item may not start, and places nothing', () => {
