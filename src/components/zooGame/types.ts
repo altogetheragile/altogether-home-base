@@ -429,7 +429,7 @@ export type ChatWho = 'product_owner' | 'scrum_master' | 'developer' | 'stakehol
 
 /** Which conversation a message belongs to, where it belongs to a particular one. An event's own
  *  screen shows its own thread and nothing else. */
-export type ChatKind = 'stand-up' | 'retro';
+export type ChatKind = 'stand-up' | 'retro' | 'review';
 
 /** One message in the team's chat.
  *
@@ -632,6 +632,12 @@ export interface ZooGameState {
   /** What the last Review's gate took, gave back and was fined. Kept so the Review can show its
    *  working: a number that changes with no account of why is a score, not a consequence. */
   lastLedger: Ledger | null;
+  /** The shuffle bag the Sprint Review draws its stakeholders from.
+   *
+   *  Drawn without replacement until it empties and is then refilled, so over a few Sprints
+   *  everybody gets a turn rather than the same two people arriving every time. Seeded from the
+   *  game, so a trainer replaying a seed meets the same people in the same order. */
+  stakeholderBag?: string[];
   /** Outstanding signals from the visitors (persist and worsen until addressed).
    *  The Product Owner decides whether to turn one into a Product Backlog item. */
   signals: Signal[];

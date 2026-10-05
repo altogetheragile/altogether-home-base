@@ -2,7 +2,7 @@ import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
-import {say, speaking, answerHuddle, lendAHand, openRetro, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
+import {say, speaking, answerHuddle, lendAHand, openRetro, openReview, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks, wantedServices } from './parkChecks';
 import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail, recordEverything } from './trail';
@@ -88,7 +88,9 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       // than arriving over the next six seconds.
       return action.phase === 'retro'
         ? openRetro({ ...state, phase: action.phase })
-        : { ...state, phase: action.phase };
+        : action.phase === 'review'
+          ? openReview({ ...state, phase: action.phase })
+          : { ...state, phase: action.phase };
     case 'SET_PRODUCT_GOAL':
       return setProductGoal(state, action.goal);
     case 'SET_SPRINT_GOAL':
@@ -341,7 +343,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'CANCEL_SPRINT':
       return cancelSprint(state);
     case 'REVIEW_SPRINT':
-      return reviewSprint(state);
+      // The Review opens with the room already in it. Every way into the event goes through
+      // `reviewSprint` - the last day running out as well as this - so the people turn up here
+      // rather than only when somebody presses a button.
+      return openReview(reviewSprint(state));
     case 'NEXT_SPRINT':
       return startNextSprint(state, action.improvement);
     case 'END_GAME':

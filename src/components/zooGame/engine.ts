@@ -17,6 +17,7 @@ import { TOOLBOX, noOnePieceMeets, bestFor, structuresFor, picksAStructure } fro
 import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
+import { STAKEHOLDERS, STAKEHOLDER_LINES, type StakeholderLine } from './stakeholders';
 export { SIGNAL_NEEDS };
 import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
 
@@ -272,6 +273,110 @@ export function speaking(state: ZooGameState, by?: string): { who: ChatWho; from
   if (by === 'scrum_master') return { who: 'scrum_master', from: state.team.scrumMaster.name };
   if (by === 'developer') return { who: 'developer', from: 'The Developers' };
   return { who: 'you', from: 'You' };
+}
+
+// ============= The Sprint Review, out loud =============
+//
+// "The Scrum Team presents the results of their work to key stakeholders and progress toward the
+// Product Goal is discussed." The game had the results and it had the progress. What it never had
+// was the stakeholders: attendance and happiness were two numbers on a card and nobody in the room
+// had an opinion about either - which teaches that a Review is a report, the thing it is most
+// often turned into.
+//
+// So they turn up. Two or three of them, drawn from a seeded bag so a trainer replaying a seed
+// meets the same people, and each says something the park's own numbers make true. The rule that
+// makes it worth anything: **a line only exists when the number behind it crossed its threshold.**
+// A stakeholder who would say the same thing whatever the zoo was like is scenery.
+
+/** How many stakeholders come to a Review. Two or three: enough that they can disagree, few enough
+ *  that the Scrum Team can still hear each one. */
+export const STAKEHOLDERS_AT_A_REVIEW = 3;
+
+/** The next few out of the bag, refilling it when it empties.
+ *
+ *  Without replacement, so over a few Sprints everybody gets a turn rather than the same two
+ *  arriving every time - and seeded, so the order is the game's rather than the moment's. */
+export function drawStakeholders(state: ZooGameState, n = STAKEHOLDERS_AT_A_REVIEW): {
+  drawn: string[]; bag: string[];
+} {
+  const rng = makeRng(hashStr(`stakeholders:${state.sprintNumber}`, state.gameSeed));
+  const refill = () => {
+    const ids = STAKEHOLDERS.map((p) => p.id);
+    // Fisher-Yates on a seeded stream, so the shuffle is the game's and not the moment's.
+    for (let i = ids.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(rng.next() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    return ids;
+  };
+  let bag = [...(state.stakeholderBag ?? refill())];
+  const drawn: string[] = [];
+  while (drawn.length < n) {
+    if (!bag.length) bag = refill();
+    const next = bag.shift()!;
+    if (!drawn.includes(next)) drawn.push(next);
+    if (drawn.length >= STAKEHOLDERS.length) break;   // everybody is already here
+  }
+  return { drawn, bag };
+}
+
+/** What this stakeholder has to say about this Sprint, or nothing if the numbers give them no
+ *  reason to speak. Their first eligible line: the deck is ordered by how much it matters. */
+export const lineFor = (state: ZooGameState, who: string): StakeholderLine | undefined => {
+  const sim = state.lastReview;
+  if (!sim) return undefined;
+  return STAKEHOLDER_LINES.find((l) => l.who === who && l.when(state, sim));
+};
+
+/** The Sprint Review opens: the Product Owner's verdict on the Sprint Goal, then the people the
+ *  zoo is for, saying what they found.
+ *
+ *  Priya goes first because the Goal is the thing being inspected and it is hers to judge. The
+ *  stakeholders answer the Increment, not her - the Review is not an approval meeting, and nothing
+ *  any of them says signs anything off. */
+export function openReview(state: ZooGameState): ZooGameState {
+  if ((state.chat ?? []).some((m) => m.kind === 'review')) return state;
+  const sim = state.lastReview;
+  if (!sim) return state;
+  const { drawn, bag } = drawStakeholders(state);
+  const verdict = state.sprintGoalMet === true
+    ? 'We met the Sprint Goal.'
+    : state.sprintGoalMet === false
+      ? 'We did not meet the Sprint Goal.'
+      : 'We set no Sprint Goal this time, so there is nothing to measure this against.';
+  let said = say({ ...state, chat: [], stakeholderBag: bag },
+    { who: 'product_owner', from: state.team.productOwner.name, kind: 'review',
+      text: `${verdict} Here is what is open to visitors, and here is what they did with it. Nothing is being signed off - I want to know what you make of it.` });
+  for (const id of drawn) {
+    const line = lineFor(said, id);
+    const who = STAKEHOLDERS.find((p) => p.id === id);
+    if (line && who) {
+      said = say(said, { who: 'stakeholder', from: `${who.name}, ${who.role}`, kind: 'review',
+        text: line.says(said, sim) });
+    }
+  }
+  return said;
+}
+
+/** What you can say back, and what each one is.
+ *
+ *  Two of these are the job - explaining what was built and learned, and naming something that
+ *  worries you - and the third is the anti-pattern this event collects most: asking the people in
+ *  the room to approve it. Nothing stops you; the game answers it with what a Review is for. */
+export function yourReviewTurn(state: ZooGameState): { key: string; label: string; text: string; notScrum?: string }[] {
+  const open = state.backlog.filter((it) => it.status === 'open');
+  const next = state.backlog.find((it) => it.status === 'backlog');
+  return [
+    { key: 'built', label: 'What we built, and what we learned',
+      text: open.length
+        ? `${open.map((it) => it.name).join(', ')} ${open.length === 1 ? 'is' : 'are'} open. What we learned is that it is worth less than it looks until somebody can walk to it.`
+        : 'We built a good deal and opened none of it, which we now know is the same as building nothing.' },
+    { key: 'risk', label: 'Something that worries me',
+      text: `${next ? `${next.name} is next and it depends on work we have not started.` : 'What is left depends on work we have not started.'} I would rather say so now than at the next one of these.` },
+    { key: 'signoff', label: 'Can you sign this off?',
+      text: 'Can we take that as approved, then?',
+      notScrum: 'The Sprint Review is not an approval gate. The Increment is Done when it meets the Definition of Done, and releasing it is the Product Owner\u2019s call - which may already have happened mid-Sprint. A Review that ends in a signature has turned inspection into a committee.' },
+  ];
 }
 
 // ============= The Retrospective, out loud =============
@@ -3717,7 +3822,7 @@ export function endDay(state: ZooGameState): ZooGameState {
   // Sample the burndown as the day closes: committed points still remaining.
   const s = { ...closed, burndown: [...closed.burndown, sprintProgress(closed).remaining] };
   // The last day ends straight to the Review: there is no next day to re-plan.
-  if (s.dayNumber >= s.sprintDays) return reviewSprint(s);
+  if (s.dayNumber >= s.sprintDays) return openReview(reviewSprint(s));
   if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
