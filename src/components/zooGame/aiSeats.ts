@@ -228,24 +228,29 @@ export const leftToThePlayer = (action: ZooAction): boolean =>
 // as people: one card each, at their own pace, beside you. The steps are the same either way; who
 // is taking them is not.
 
-/** Built, and said as what they did rather than what they wish they had done. Done is the whole
+/** Built, and said as what they did rather than what they wish they had done.
+ *
+ *  Nobody says their own name in any of these. They used to - "Cara: taking Signposts next" - from
+ *  the days when a line had nowhere to say who was speaking. The chat panel signs every bubble
+ *  with the person who said it, so the prefix left Cara talking about herself in the third person.
+ * Done is the whole
  *  team's word and it waits for the Product Owner's: saying "built to the Definition of Done"
  *  while four acceptance criteria sat untouched was the Developers declaring something that is not
  *  theirs to declare. */
-const buildMove = (item: BacklogItem, who?: string): AiMove => ({
+const buildMove = (item: BacklogItem): AiMove => ({
   action: { type: 'BUILD_ITEM', id: item.id, byTheGame: true },
-  says: `${who ? `${who}: built` : 'Built'} ${item.name}. Not Done until its criteria are accepted.`,
+  says: `Built ${item.name}. Not Done until its criteria are accepted.`,
   weight: item.estimate,
 });
 
 /** Tick their own plan off. The sign-off step is not theirs - that is the Product Owner accepting
  *  the work - and ticking the last of the rest is what moves an item to Done, so leaving the plan
  *  untouched left everything sitting in Doing. */
-function tickOffPlan(items: readonly BacklogItem[], who?: string): AiMove | null {
+function tickOffPlan(items: readonly BacklogItem[]): AiMove | null {
   for (const it of items) {
     const task = (it.tasks ?? []).find((t) => !t.done && t.label.trim() && !isSignOffTask(t.label));
     if (task) return { action: { type: 'TOGGLE_TASK', id: it.id, taskId: task.id },
-                       says: `${task.label} - done, on ${it.name}${who ? ` (${who})` : ''}.` };
+                       says: `${task.label} - done, on ${it.name}.` };
   }
   return null;
 }
@@ -255,7 +260,6 @@ function tickOffPlan(items: readonly BacklogItem[], who?: string): AiMove | null
  *  thing to the way in. Any Developer may do any of it, on anybody's card - including yours, which
  *  is the point of the first one. */
 function teamHousekeeping(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
-  const who = dev?.name;
   // A second pair of eyes on something that is otherwise finished.
   //
   // "Peer-reviewed by another Developer" is a line in the shipped Definition of Done, and the
@@ -286,7 +290,7 @@ function teamHousekeeping(state: ZooGameState, dev?: ScrumTeamMember): AiMove | 
       ?? state.team.developers.find(notOnIt);
     if (free) {
       return { action: { type: 'ASSIGN_DEV', itemId: needsEyes.id, devId: free.id },
-               says: `${who ? `${who}: took` : 'Took'} a look over ${needsEyes.name} with the second pair of eyes our Definition of Done asks for.` };
+               says: `Took a look over ${needsEyes.name} with the second pair of eyes our Definition of Done asks for.` };
     }
   }
 
@@ -299,7 +303,7 @@ function teamHousekeeping(state: ZooGameState, dev?: ScrumTeamMember): AiMove | 
     && !(state.questions ?? []).some((q) => q.id === `check-${it.id}`));
   if (toShow) {
     return { action: { type: 'ASK_TO_CHECK', id: toShow.id, by: 'developer' },
-             says: `${toShow.name} is built. ${who ? `${who} is asking` : 'Asking'} Priya to come and look at it.` };
+             says: `${toShow.name} is built. Asking Priya to come and look at it.` };
   }
 
   // ...and move to Done what is ready. After the second pair of eyes, not before: the
@@ -325,7 +329,7 @@ function teamHousekeeping(state: ZooGameState, dev?: ScrumTeamMember): AiMove | 
   if (undeployed) {
     const run = pathRunFor(state, undeployed);
     if (run) return { action: { type: 'ADD_CONNECTOR', connector: run },
-                      says: `${who ? `${who} ran` : 'Ran'} a path to ${undeployed.name}, so you can get there without crossing the grass.` };
+                      says: `Ran a path to ${undeployed.name}, so you can get there without crossing the grass.` };
   }
   return null;
 }
@@ -350,7 +354,6 @@ function pullNext(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
     && enclosureReady(state, it));
   if (!next) return null;
   const take: ZooAction = { type: 'START_ITEM', id: next.id, devId: dev?.id };
-  const who = dev?.name;
   // Where a habitat or a building goes is a product decision - it is what a visitor walks
   // up to, and in what order - so they ask rather than let the layout decide it quietly.
   // Only for things with a footprint worth arguing about: nobody needs consulting about
@@ -359,7 +362,7 @@ function pullNext(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
   const asked = state.pendingPlacement;
   if (worthAsking && !asked) {
     return { action: { type: 'ASK_PLACEMENT', id: next.id },
-             says: `${who ? `${who}: where` : 'Where'} do you want ${next.name}? You know what the visitors are here for.` };
+             says: `Where do you want ${next.name}? You know what the visitors are here for.` };
   }
   if (worthAsking && asked?.itemId === next.id) {
     // They do not wait forever. An unanswered question costs you the decision, which is
@@ -367,9 +370,9 @@ function pullNext(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
     // Sprint. Measured on the day clock, so the wait is in the game's own time.
     if (asked.askedAt - state.daySecondsLeft < ASK_PATIENCE_SECONDS) return null;
     return { action: take,
-             says: `No word on where ${next.name} goes, so ${who ?? 'we'} ${who ? 'has' : 'have'} put it where there is room.` };
+             says: `No word on where ${next.name} goes, so we have put it where there is room.` };
   }
-  return { action: take, says: `${who ? `${who}: taking` : 'Taking'} ${next.name} next.` };
+  return { action: take, says: `Taking ${next.name} next.` };
 }
 
 /** What one of the Developers the game plays beside you would do now, or nothing if they are busy
@@ -392,10 +395,10 @@ export function aiDevTurn(state: ZooGameState, dev: ScrumTeamMember): AiMove | n
   // a team that pulls a second thing while the first is unfinished is the habit the WIP limit
   // exists to break.
   const mine = heldBy(state, dev.id);
-  if (mine) return stillBuilding(mine) === null ? buildMove(mine, dev.name) : null;
+  if (mine) return stillBuilding(mine) === null ? buildMove(mine) : null;
 
   const ticked = tickOffPlan(state.backlog.filter((it) => it.status === 'committed' && it.started
-    && it.design && it.pulledBy === dev.id), dev.name);
+    && it.design && it.pulledBy === dev.id));
   if (ticked) return ticked;
 
   const keeping = teamHousekeeping(state, dev);
