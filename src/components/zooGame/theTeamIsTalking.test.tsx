@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { initialZooState, DAY_SECONDS } from './config';
 import {
   say, speaking, askIfDue, answerQuestion, guessUnanswered, startNextSprint, tickDay,
-  otherDevs, QUESTION_PATIENCE, CHAT_KEPT,
+  otherDevs, QUESTION_PATIENCE, CHAT_KEPT, startItem,
 } from './engine';
 import { reducer } from './useZooGame';
 import { aiDevTurn } from './aiSeats';
@@ -179,9 +179,14 @@ describe('nobody says their own name', () => {
   it('because the bubble is already signed', () => {
     const s = sprint();
     const [ben] = otherDevs(s);
-    const free = s.backlog.filter((it) => it.status === 'backlog' && it.category === 'path');
-    const ready = { ...s, wipLimit: 0, backlog: s.backlog.map((it) => (free.some((f) => f.id === it.id)
+    const free = s.backlog.filter((it) => it.status === 'backlog'
+      && !['epic', 'exhibit'].includes(it.category) && !it.unsized).slice(0, 3);
+    expect(free.length, 'there is nothing for anybody to pull').toBeGreaterThan(1);
+    const open = { ...s, wipLimit: 0, backlog: s.backlog.map((it) => (free.some((f) => f.id === it.id)
       ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
+    // You take one first: a colleague waits for the person at the table to choose before they
+    // reach across for anything. `theOtherDevsAreWorking` is where that rule is held.
+    const ready = startItem(open, free[0].id);
     const names = s.team.developers.map((d) => d.name);
     // Every line any of them would say, over a Sprint's worth of states.
     let walk = ready;
@@ -195,7 +200,7 @@ describe('nobody says their own name', () => {
       lines.push(move.says);
       walk = reducer(walk, move.action);
     }
-    expect(lines.length, 'nobody said anything, so nothing is being tested').toBeGreaterThan(2);
+    expect(lines.length, 'nobody said anything, so nothing is being tested').toBeGreaterThan(1);
     for (const line of lines) {
       // Their OWN name. Naming a colleague is ordinary speech - "I will give Ada a hand with the
       // Lion Enclosure" is exactly how somebody offers to help - and banning every name would be
@@ -242,11 +247,14 @@ describe('the beat, putting it in the thread', () => {
     // reducer is the only one that knows, so it does the talking and the beat keeps quiet.
     const s = sprint();
     const [ben] = otherDevs(s);
-    const free = s.backlog.filter((it) => it.status === 'backlog' && it.category === 'path');
-    const ready = { ...s, wipLimit: 0,
+    const free = s.backlog.filter((it) => it.status === 'backlog'
+      && !['epic', 'exhibit'].includes(it.category) && !it.unsized).slice(0, 3);
+    expect(free.length, 'there is nothing left for Ben to pull').toBeGreaterThan(1);
+    const open = { ...s, wipLimit: 0,
       backlog: s.backlog.map((it) => (free.some((f) => f.id === it.id)
         ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
-    const sent = run(ready, [ben]);
+    // ...and you have already taken one, which is what Ben waits for before pulling.
+    const sent = run(startItem(open, free[0].id), [ben]);
     const pull = sent.findIndex((a) => a.type === 'START_ITEM');
     expect(pull, 'nobody pulled anything, so nothing is being tested').toBeGreaterThanOrEqual(0);
     expect(sent.filter((a) => a.type === 'SAY'),

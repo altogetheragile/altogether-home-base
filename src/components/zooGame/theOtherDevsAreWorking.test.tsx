@@ -56,6 +56,13 @@ const theirTurn = (s: ZooGameState, dev: { id: string; name: string }): ZooGameS
   return s;
 };
 
+/** You take something first, which is what the colleagues now wait for. The card is the top of the
+ *  Sprint Backlog, because that is what a person at the table would reach for. */
+const youPullFirst = (s: ZooGameState): ZooGameState => {
+  const top = s.backlog.find((it) => it.status === 'committed' && !it.started)!;
+  return startItem(s, top.id);
+};
+
 const pulled = (s: ZooGameState): BacklogItem[] =>
   s.backlog.filter((it) => it.status === 'committed' && it.started);
 
@@ -71,11 +78,12 @@ describe('the Developers the game plays beside you', () => {
   });
 
   it('each take their own card, so two of them are working at once', () => {
-    let s = sprint();
+    let s = youPullFirst(sprint());
     const [ben, cara] = otherDevs(s);
     s = theirTurn(s, ben);
     s = theirTurn(s, cara);
-    const theirs = pulled(s);
+    // Theirs, not everything in flight: you took one first, which is what they waited for.
+    const theirs = pulled(s).filter((it) => it.pulledBy !== yourDev(s)!.id);
     expect(theirs.length, 'only one card was taken: they are still one set of hands').toBe(2);
     expect(new Set(theirs.map((it) => it.pulledBy)).size, 'both cards went to the same Developer').toBe(2);
     expect(theirs.map((it) => it.pulledBy).sort(), 'somebody took a card who was not one of them')
@@ -83,20 +91,21 @@ describe('the Developers the game plays beside you', () => {
   });
 
   it('are building them at the same time, not one after the other', () => {
-    let s = sprint();
+    let s = youPullFirst(sprint());
     const [ben, cara] = otherDevs(s);
     s = theirTurn(s, ben);
     s = theirTurn(s, cara);
-    expect(pulled(s).length, 'nobody took a card, so there is nothing to tick').toBe(2);
-    const before = pulled(s).map((it) => it.owedSeconds!);
+    const ours = () => pulled(s).filter((it) => it.owedSeconds !== undefined);
+    expect(ours().length, 'nobody took a card, so there is nothing to tick').toBe(2);
+    const before = ours().map((it) => it.owedSeconds!);
     s = tickDay(s);
-    const after = pulled(s).map((it) => it.owedSeconds!);
+    const after = ours().map((it) => it.owedSeconds!);
     expect(after, 'a second of the day only moved one card on, so they are taking turns')
       .toEqual(before.map((n) => n - 1));
   });
 
   it('do not finish a card until the time it costs has been spent', () => {
-    let s = sprint();
+    let s = youPullFirst(sprint());
     const [ben] = otherDevs(s);
     // The smallest card on the board, so the work fits inside one day and this is about the time
     // being spent rather than about the day running out.
@@ -147,11 +156,10 @@ describe('the Developers the game plays beside you', () => {
     // is what the work-in-progress limit is for.
     //
     // Setting a limit yourself in Sprint 1 is what puts it in force - see `revealed`.
-    let s = sprint({ wipLimit: 2 });
+    // You first - the colleagues wait for that - and then Cara takes the other one.
+    let s = youPullFirst(sprint({ wipLimit: 2 }));
     const [ben, cara] = otherDevs(s);
-    s = theirTurn(s, cara);                                   // Cara takes one
-    const free = s.backlog.find((it) => it.status === 'committed' && !it.started)!;
-    s = startItem(s, free.id);                                // ...and you take the other
+    s = theirTurn(s, cara);
     expect(pulled(s).length, 'the limit did not bite, so nothing is being tested').toBe(2);
     expect(heldBy(s, ben.id), 'Ben has a card of his own, so he is not shut out').toBeUndefined();
 
@@ -170,7 +178,7 @@ describe('the Developers the game plays beside you', () => {
     // Two people on one piece of work spend some of it talking to each other. A game that paid
     // double would teach that the answer to any late Sprint is to pile on, which is the thing
     // swarming is most often got wrong by.
-    let s = sprint({ wipLimit: 0 });
+    let s = youPullFirst(sprint({ wipLimit: 0 }));
     const [ben, cara] = otherDevs(s);
     s = theirTurn(s, cara);
     const card = heldBy(s, cara.id)!;
@@ -193,7 +201,7 @@ describe('the Developers the game plays beside you', () => {
   it('put YOUR hand on it as yours, on your own side of the thread', () => {
     // The same move either way, and the thread has to tell them apart. A colleague joining is
     // news; you joining is you.
-    let s = sprint({ wipLimit: 0 });
+    let s = youPullFirst(sprint({ wipLimit: 0 }));
     const [, cara] = otherDevs(s);
     const you = yourDev(s)!;
     s = theirTurn(s, cara);
@@ -205,7 +213,7 @@ describe('the Developers the game plays beside you', () => {
   });
 
   it('buy nothing by piling a third pair of hands on', () => {
-    let s = sprint({ wipLimit: 0 });
+    let s = youPullFirst(sprint({ wipLimit: 0 }));
     const [ben, cara] = otherDevs(s);
     const you = yourDev(s)!;
     s = theirTurn(s, cara);
@@ -219,7 +227,7 @@ describe('the Developers the game plays beside you', () => {
   });
 
   it('never join a card twice, or one nobody is building', () => {
-    let s = sprint({ wipLimit: 0 });
+    let s = youPullFirst(sprint({ wipLimit: 0 }));
     const [ben, cara] = otherDevs(s);
     s = theirTurn(s, cara);
     const card = heldBy(s, cara.id)!;
@@ -388,7 +396,7 @@ const board = (state: ZooGameState) => (
 
 describe('the board while they work', () => {
   it('says who is on it and how far through they are', () => {
-    let s = sprint();
+    let s = youPullFirst(sprint());
     const [ben] = otherDevs(s);
     const small = s.backlog.filter((it) => it.status === 'committed')
       .sort((a, z) => a.estimate - z.estimate)[0];
@@ -427,11 +435,15 @@ describe('the rail, when there is nothing to start', () => {
 
   /** Ben and Cara both building, against a limit of two, and you with nothing in hand. */
   const boardFull = () => {
-    let s = sprint({ wipLimit: 2 });
+    // You take one, both colleagues take what is left of a limit of three, and then you hand yours
+    // back - which is what dropping a card looks like, and leaves the board full with you free.
+    let s = youPullFirst(sprint({ wipLimit: 3 }));
     const [ben, cara] = otherDevs(s);
     s = theirTurn(s, ben);
     s = theirTurn(s, cara);
-    return s;
+    const yours = s.backlog.find((it) => it.pulledBy === yourDev(s)!.id)!;
+    return { ...s, wipLimit: 2, backlog: s.backlog.map((it) => (it.id === yours.id
+      ? { ...it, started: false, pulledBy: undefined, owedSeconds: undefined } : it)) } as ZooGameState;
   };
 
   it('asks what you will pull while your colleagues are building', () => {

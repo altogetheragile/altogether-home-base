@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction, BacklogItem, ZooConnector, ScrumTeamMember } from './types';
 import type { SeatName } from './useZooSessions';
-import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled, heldBy, stillBuilding, otherDevs, whatToHelpWith, handsOn } from './engine';
+import { pokerHand, activeWipLimit, notReady, isReady, cannotOpenGround, suggestTasks, sprintCapacity, enclosureReady, isSignOffTask, PLACEMENT_CHOICES, readyToMove, acSettled, heldBy, stillBuilding, yourDev, otherDevs, whatToHelpWith, handsOn } from './engine';
 import { presetFor, floraColors, isLandscapeType, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, barrierOf, buildingTypeFor, type ItemDesign } from './design';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked, readyToAsk } from './parkChecks';
@@ -350,8 +350,29 @@ function pullNext(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
   // The work-in-progress limit decides how much is on the go at once, and the day's clock
   // decides when the day is over. Neither of them is a budget the work is priced against:
   // what a team gets through in a day is their velocity, and the game measures it.
-  const next = state.backlog.find((it) => it.status === 'committed' && !it.started
+  const canStart = state.backlog.filter((it) => it.status === 'committed' && !it.started
     && enclosureReady(state, it));
+  // The person at the table chooses first.
+  //
+  // A colleague is a named person here, and a named person does not reach across you for the
+  // headline card the moment the day opens. Reported from playing it: "The AI Dev's start building
+  // stuff straight away. They have picked the interesting items i.e. an enclosure. A human player
+  // should pull first and the AIs follow with other items like the toilet."
+  //
+  // Two rules, and both of them are the game making room for you rather than anything the Guide
+  // says. The Sprint Backlog belongs to the Developers and a real team would take the top of it;
+  // what a real team would also do is ask the person standing there what they want to pick up.
+  if (dev) {
+    const yours = yourDev(state);
+    const youHaveOne = !!yours && state.backlog.some((it) => it.status === 'committed' && it.started
+      && !it.design && it.sprintNumber === state.sprintNumber && it.pulledBy === yours.id);
+    // One: nobody pulls while you have nothing in hand and there is something you could take.
+    if (!youHaveOne && canStart.length) return null;
+  }
+  // Two: and when they do pull, they take from the BOTTOM of the Sprint Backlog rather than the
+  // top, so the work the Product Owner ordered highest is still there when you come back. The
+  // toilets, not the lion enclosure.
+  const next = dev ? canStart[canStart.length - 1] : canStart[0];
   if (!next) return null;
   const take: ZooAction = { type: 'START_ITEM', id: next.id, devId: dev?.id };
   // Where a habitat or a building goes is a product decision - it is what a visitor walks
