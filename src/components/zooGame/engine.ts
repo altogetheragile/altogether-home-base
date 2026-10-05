@@ -1,4 +1,4 @@
-import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger } from './types';
+import type { GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember } from './types';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -17,7 +17,7 @@ import { makeRng, hashStr } from './simulation/rng';
 import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity } from './config';
+import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -97,6 +97,111 @@ export const teamIsBusy = (state: ZooGameState): boolean =>
 export const inFlight = (state: ZooGameState): BacklogItem[] =>
   state.backlog.filter((it) => it.status === 'committed' && it.started && !it.design);
 
+// ============= The other Developers =============
+//
+// The Developers used to be a collective noun. One seat, one set of hands, and the game either
+// played all of it or none of it - so a player sitting in the Developers' seat worked alone on a
+// board that said three people were on the team, and "I was expecting to see other Devs (AI
+// agents) building things in parallel" is the obvious thing to expect of it.
+//
+// Three people now. You hold one of them; the game holds the rest, and each of them pulls a card,
+// takes real time over it and builds it beside you. That is also what makes the WIP limit mean
+// anything: three Developers and a limit of three is a team at full stretch, and tightening it to
+// two is the team deciding that somebody should help rather than start.
+
+/** The Developer whose hands you have.
+ *
+ *  The first on the team, by name, rather than a flag: somebody has to be you, every screen that
+ *  draws the team already draws them in order, and a player who pulls a card should see their own
+ *  name on it. */
+export const yourDev = (state: ZooGameState): ScrumTeamMember | undefined => state.team.developers[0];
+
+/** The Developers the game plays beside you - everybody on the team who is not you. */
+export const otherDevs = (state: ZooGameState): ScrumTeamMember[] => state.team.developers.slice(1);
+
+/** What this Developer is building right now, if anything. Per person, which is the point: the
+ *  old test asked whether ANYBODY was mid-build and stopped the whole team if they were, so one
+ *  card in Doing froze the other two Developers for as long as it took. */
+export const heldBy = (state: ZooGameState, devId: string): BacklogItem | undefined =>
+  state.backlog.find((it) => it.status === 'committed' && it.started && !it.design && it.pulledBy === devId);
+
+/** Build seconds gone in this Sprint so far - today's spent time plus every day before it.
+ *
+ *  Used to measure your own pace, so it has to be the clock the work is actually charged against
+ *  rather than wall time: a game paused to read a teaching card has not got any slower. */
+export const buildSecondsSoFar = (state: ZooGameState): number => {
+  const day = dayTotalSeconds(state.dayTimeMult ?? 1);
+  const before = Math.max(0, state.dayNumber - 1) * day;
+  return before + Math.max(0, day - state.daySecondsLeft);
+};
+
+/** How fast you are going, in seconds per point, measured from what your own Developer has
+ *  actually finished this Sprint.
+ *
+ *  Null until you have finished something: a pace measured off no work is not a pace, and the
+ *  first Sprint has none by definition. The forecast stands in for it, which is what the forecast
+ *  is - the team's own answer to "how fast are we". */
+export const yourSecondsPerPoint = (state: ZooGameState): number | null => {
+  const you = yourDev(state);
+  if (!you) return null;
+  const done = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
+    && (it.status === 'done' || it.status === 'open')
+    && (it.pulledBy === you.id || (!it.pulledBy && (it.assignedDevs ?? []).includes(you.id))));
+  const points = done.reduce((n, it) => n + it.estimate, 0);
+  if (points <= 0) return null;
+  const spent = buildSecondsSoFar(state);
+  return spent > 0 ? spent / points : null;
+};
+
+/** What a point costs one of the Developers the game plays, in day seconds.
+ *
+ *  Your pace, bounded. The ceiling is the forecast pace - they never outrun what the team said it
+ *  could finish - and the floor is `AI_DEV_FLOOR` of it, so a player who stops to read the
+ *  acceptance criteria does not come back to a finished Sprint, and is not punished for reading.
+ *  Seeded jitter on top, per person per Sprint, so Ben and Cara are two people rather than one
+ *  drawn twice; it is applied inside the bounds, so no amount of jitter breaks either of them. */
+export function devSecondsPerPoint(state: ZooGameState, devId: string): number {
+  const forecast = secondsPerPoint(state);           // the ceiling: fastest they ever go
+  const slowest = forecast / AI_DEV_FLOOR;           // the floor: slowest they ever go
+  // Your pace, with the jitter that makes them two people rather than one drawn twice. It only
+  // ever makes somebody SLOWER than the pace they are matching, which is the asymmetry the ceiling
+  // asks for: a Sprint 1 team has no measured pace, so both of them are matching the forecast
+  // exactly - and jitter that could go either way was clamped back to the ceiling in both
+  // directions, leaving two colleagues working at identical speeds.
+  const rng = makeRng(hashStr(`pace:${devId}:${state.sprintNumber}`, state.gameSeed));
+  const theirs = (yourSecondsPerPoint(state) ?? forecast) * (1 + rng.next() * AI_DEV_JITTER);
+  // ...and then the bounds, once. Clamped twice over it looked careful and was dead code: the
+  // first clamp could not change an answer the second one did not change back.
+  return Math.min(slowest, Math.max(forecast, theirs));
+}
+
+/** How long this card will take the Developer who is taking it, in day seconds. At least one, so
+ *  nothing is ever free. */
+export const workOwed = (state: ZooGameState, item: BacklogItem, devId: string): number =>
+  Math.max(1, Math.round(Math.max(1, item.estimate) * devSecondsPerPoint(state, devId)));
+
+/** Build time still owed on a card the game is working on, or null if it is not one.
+ *
+ *  Shown on the board, because work that takes time and says nothing about it is indistinguishable
+ *  from work that is stuck - which is the one thing a board is there to make impossible. */
+export const stillBuilding = (item: BacklogItem): number | null =>
+  (item.owedSeconds ?? 0) > 0 && item.status === 'committed' && item.started && !item.design
+    ? item.owedSeconds! : null;
+
+/** One second of everybody else's work. The cards the game is building come down by a second
+ *  each, together, because they are being built at the same time by different people - that is
+ *  what "in parallel" means and the reason this is not a queue. */
+export const tickTheirWork = (state: ZooGameState): ZooGameState => {
+  if (state.dayStage !== 'building') return state;
+  let moved = false;
+  const backlog = state.backlog.map((it) => {
+    if (stillBuilding(it) === null) return it;
+    moved = true;
+    return { ...it, owedSeconds: Math.max(0, (it.owedSeconds ?? 0) - 1) };
+  });
+  return moved ? { ...state, backlog } : state;
+};
+
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
  *  at once. Paused in learn mode and outside a running build day. */
@@ -111,7 +216,11 @@ export function tickDay(state: ZooGameState): ZooGameState {
   if (left <= 0) return endDay({ ...state, daySecondsLeft: 0 });
   // A question has a clock on it: it is asked while the work is being done, and answered or guessed
   // before the day is out. Both happen here, so they happen the same way in every browser.
-  return askIfDue(guessUnanswered({ ...state, daySecondsLeft: left }));
+  // ...and so does everybody else's work. The Developers the game plays are building at the same
+  // time as you, and the day's clock is what they are building against - so their progress is a
+  // second of this tick rather than a timer of its own, which is what makes it the same in every
+  // browser, survive a reload, and stop dead when somebody puts a hand on the clock.
+  return askIfDue(guessUnanswered(tickTheirWork({ ...state, daySecondsLeft: left })));
 }
 
 // ============= The question channel =============
@@ -997,6 +1106,13 @@ export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
   // Nothing left: the card says so and waits to be moved. Done is the Developers' word, so the
   // card does not walk into the column by itself when the Product Owner accepts.
   if (readyToMove(item)) return 'Ready \u00b7 move it to Done';
+  // ...unless it is not yours. What is left on somebody else's card is their work, and telling you
+  // to go and build it on the park is an instruction to do a colleague's job - which is what the
+  // card said the day the Developers became three people.
+  if (stillBuilding(item)) {
+    const who = state.team.developers.find((d) => d.id === item.pulledBy);
+    return who ? `${who.name} is building it` : 'Being built';
+  }
   if (!isDesignDone(item, currentDesign(item), homeSizeOf(item, state.backlog))) return 'Next: build it on the park';
   const left = (item.acceptance ?? []).filter((_, i) => !acSettled(item, i)).length;
   if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
@@ -1129,7 +1245,7 @@ export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean 
 /** Start work on a committed item: it moves from To Do into Doing (the studio opens).
  *  Blocked once the WIP limit is reached - finish something before starting more - and,
  *  for an animal, until its enclosure is built (you build the habitat first). */
-export function startItem(state: ZooGameState, id: string, by?: string): ZooGameState {
+export function startItem(state: ZooGameState, id: string, by?: string, devId?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || item.status !== 'committed' || item.started) return state;
   const wip = activeWipLimit(state);
@@ -1152,9 +1268,22 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   // the game, nobody ever chose. The team is self-managing, so this is not the game assigning work:
   // it is the game writing down who took it. Deterministic - the Developer with the least on -
   // so the same game always reads the same way.
-  const load = (dev: { id: string }) => state.backlog.filter((it) => it.status === 'committed' && it.started
-    && (it.assignedDevs ?? []).includes(dev.id)).length;
-  const freest = [...state.team.developers].sort((a, z) => load(a) - load(z) || a.id.localeCompare(z.id))[0];
+  // Whose card it is. A Developer the game plays names themselves when they take one; a pull with
+  // nobody named is yours, because you are the one Developer at the table.
+  //
+  // That is the only thing keeping the hands apart, and it has to be: the card you took is the one
+  // nobody may build out from under you, and the ones they took are the ones that cost them time
+  // rather than you. It used to go to whoever had least on - which spread the names prettily
+  // across a board where nobody owned anything, and is exactly the ambiguity that let a colleague
+  // finish your work for you.
+  const taker = devId ? state.team.developers.find((d) => d.id === devId) : undefined;
+  const mine = taker ?? yourDev(state);
+  // ...and how long it will take them. Priced the moment they take it on, at the pace they are
+  // going at now, because that is the moment a team commits to a piece of work - and re-pricing it
+  // every second as the measurement moved would mean a card got further from finished the longer
+  // you watched it. Nothing is priced for you: what yours costs is however long you spend on it,
+  // which is the honest version and the one the day clock already charges you for.
+  const owed = taker ? workOwed(state, item, taker.id) : undefined;
   // Taking work into Doing is the moment the Developers take it ON, and it is the one moment every
   // route through the game passes through - dragged to Doing, started from the park, or picked up
   // by a seat played by the game. So it is where the work's cost is written down.
@@ -1167,13 +1296,17 @@ export function startItem(state: ZooGameState, id: string, by?: string): ZooGame
   const moved: ZooGameState = { ...state, pendingPlacement: pending,
     backlog: state.backlog.map((it) => (it.id === id
       ? { ...it, started: true, startedDay: state.dayNumber,
-        assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (freest ? [freest.id] : []) }
+        pulledBy: mine?.id, owedSeconds: owed, workSeconds: owed,
+        assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (mine ? [mine.id] : []) }
       : it)) };
   // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
   // may make it - the Sprint Backlog belongs to them - which is why the accountability is named
   // even when one person is playing all three.
   return note(moved, { kind: 'moved', by: by ?? 'developer',
-    what: `${whoIs(by ?? 'developer')} took ${item.name} into Doing (${item.estimate} points).`,
+    // Named, where a person took it. The Retrospective reads this back, and "Ben took the Lion
+    // Enclosure into Doing" is a team's own account of its Sprint; "The Developers took" is a
+    // collective noun doing the work of three people.
+    what: `${taker ? taker.name : whoIs(by ?? 'developer')} took ${item.name} into Doing (${item.estimate} points).`,
     // Free play allows it and names it. A Product Owner may work as a Developer - the Guide says so
     // - but while they are on the tools, nobody is doing the Product Owner's job, and the questions
     // pile up on an empty seat. The Retrospective reads this back with the rest.
@@ -3258,7 +3391,7 @@ function returnUnfinished(state: ZooGameState): BacklogItem[] {
     // ...and nobody is working on it any more. It goes back to the Product Backlog, so it comes back
     // out of it the way anything does: taken on by somebody, on a day. Left `started`, it arrived in
     // the next Sprint already in progress - work in flight that nobody had picked up.
-    return { ...back, started: false, startedDay: undefined, assignedDevs: undefined,
+    return { ...back, started: false, startedDay: undefined, pulledBy: undefined, owedSeconds: undefined, workSeconds: undefined, assignedDevs: undefined,
       carriedOver: true, wasEstimate: it.estimate, unsized: false, estimate: remaining, trueSize: remaining };
   });
 }
@@ -4239,7 +4372,7 @@ export function dropFromSprint(state: ZooGameState, id: string, by?: string): Zo
   const out: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === id
     // ...and it stops having an age. Nulling the Sprint hides it either way, but a card carrying
     // the day it was picked up in a Sprint it is no longer in is a fact waiting to be read wrongly.
-    ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, startedDay: undefined, assignedDevs: [] }
+    ? { ...it, status: 'backlog' as const, sprintNumber: null, started: false, startedDay: undefined, pulledBy: undefined, owedSeconds: undefined, workSeconds: undefined, assignedDevs: [] }
     : it)) };
   return note({ ...out, forecastPoints: Math.max(0, (state.forecastPoints ?? 0) - item.estimate) },
     { kind: 'moved', by: by ?? 'developer',

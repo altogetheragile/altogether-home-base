@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ZooGameState, ZooAction } from './types';
+import type { ZooGameState, ZooAction, ScrumTeamMember } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
-import { aiTurn } from './aiSeats';
+import { aiTurn, aiDevTurn } from './aiSeats';
 import { teamIsBusy } from './engine';
 import type { SeatName } from './useZooSessions';
 import { useTabAway } from './useTabAway';
@@ -252,20 +252,36 @@ const EVENT_BEAT_MS = 9000;
  *  the gate if it does not belong to that accountability. An AI seat is a player, not a back
  *  door - and now it works at something like the pace of one.
  */
+export interface AiTable {
+  onSay?: (seat: SeatName, says: string, action: ZooAction) => void;
+  /** Who still has to agree a Sprint Goal before topic two begins: the seats somebody or some AI
+   *  is holding. An empty seat cannot agree, so waiting on it would stall the game. */
+  mustAgree?: readonly string[];
+  /** Moves this table leaves to the player. A seat played by the game does the seat's routine
+   *  work; a decision somebody is sitting there to make is not routine work. */
+  skip?: (action: ZooAction) => boolean;
+  /** The Developers the game plays BESIDE a player who is holding that seat themselves.
+   *
+   *  A different thing from putting 'developer' in `aiSeats`, and the two never go together. The
+   *  seat in the list is the Developers as one set of hands, for a table where nobody is in that
+   *  chair: it sizes the work, forecasts the Sprint and plans the steps. These are colleagues -
+   *  people with names, one card each, building at their own pace - for a table where somebody IS
+   *  in the chair and would quite rightly object to having Sprint Planning done for them. */
+  alongside?: readonly ScrumTeamMember[];
+}
+
 export function useAiSeats(
   /** Only three things are read, so a game played alone can offer them without being a session:
    *  the state to read, whether this browser owns the clock, and a way to send a move as a seat. */
   session: Pick<ZooSession, 'state' | 'drivesClock' | 'sendAs'>,
-  aiSeats: SeatName[], onSay?: (seat: SeatName, says: string, action: ZooAction) => void,
-  /** Who still has to agree a Sprint Goal before topic two begins: the seats somebody or some AI
-   *  is holding. An empty seat cannot agree, so waiting on it would stall the game. */
-  mustAgree?: readonly string[],
-  /** Moves this table leaves to the player. A seat played by the game does the seat's routine
-   *  work; a decision somebody is sitting there to make is not routine work. */
-  skip?: (action: ZooAction) => boolean) {
+  aiSeats: SeatName[], table: AiTable = {}) {
   const { state, drivesClock, sendAs } = session;
+  const { mustAgree } = table;
   const seats = aiSeats.join(',');
   const agreers = (mustAgree ?? []).join(',');
+  // The same trick as the seat list: a stable string, so a new array of the same people each
+  // render does not tear the beat down and start it again.
+  const devs = (table.alongside ?? []).map((d) => d.id).join(',');
   // The state is read when the beat lands, not captured when it was scheduled.
   //
   // This used to be an effect that took `state` as a dependency and scheduled the move on a
@@ -274,11 +290,11 @@ export function useAiSeats(
   // Building is the one move with a long beat, so the Developers could forecast, plan and pull
   // work, and then never build a single thing: the board sat still for a whole day with an
   // item in Doing and nobody saying why.
-  const latest = useRef<{ state: typeof state; sendAs: typeof sendAs; onSay: typeof onSay; skip: typeof skip }>({ state, sendAs, onSay, skip });
-  useEffect(() => { latest.current = { state, sendAs, onSay, skip }; });
+  const latest = useRef<{ state: typeof state; sendAs: typeof sendAs; table: AiTable }>({ state, sendAs, table });
+  useEffect(() => { latest.current = { state, sendAs, table }; });
 
   useEffect(() => {
-    if (!drivesClock || !seats) return;
+    if (!drivesClock || (!seats && !devs)) return;
     let live = true;
     let timer: ReturnType<typeof setTimeout>;
     // A move that deserves watching gets its pause BEFORE it lands as well as after, so it reads
@@ -286,10 +302,11 @@ export function useAiSeats(
     // move: the same move coming back after its wait is taken rather than deferred forever.
     let waitedFor: string | null = null;
     const beat = () => {
-      const { state: now, sendAs: send, onSay: say, skip } = latest.current;
+      const { state: now, sendAs: send, table: at } = latest.current;
+      const { onSay: say, skip } = at;
       let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
       if (now) {
-        for (const seat of seats.split(',') as SeatName[]) {
+        for (const seat of (seats ? seats.split(',') : []) as SeatName[]) {
           // Busy HANDS take no new work. While there is time owed on what they have already taken
           // on, the Developers are building it - which is most of what makes a Sprint take a
           // Sprint. Charged in a lump and acted on at once, a whole forecast went by in seconds.
@@ -307,6 +324,16 @@ export function useAiSeats(
           if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
           if (skip?.(move.action)) continue;
           next = { seat, move }; break;
+        }
+        // ...and then the colleagues, who are all Developers, so their moves are judged against
+        // that accountability like anybody's. After the seats rather than before: the Product
+        // Owner answering a question is the one thing a waiting Developer needs, and a team
+        // building flat out must not be what keeps them from getting it.
+        for (const dev of next ? [] : (at.alongside ?? [])) {
+          const move = aiDevTurn(now, dev);
+          if (!move || !mayTake(move.action.type, { seat: 'developer' }).allowed) continue;
+          if (skip?.(move.action)) continue;
+          next = { seat: 'developer', move }; break;
         }
       }
       if (next) {
@@ -353,5 +380,5 @@ export function useAiSeats(
     };
     timer = setTimeout(beat, BEAT_MS);
     return () => { live = false; clearTimeout(timer); };
-  }, [drivesClock, seats, agreers]);
+  }, [drivesClock, seats, agreers, devs]);
 }

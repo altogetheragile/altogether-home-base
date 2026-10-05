@@ -290,6 +290,23 @@ export interface BacklogItem {
    *  nothing on the board said it. Absent on anything started before the board kept count, and on
    *  anything that is not started - the age is simply not drawn. */
   startedDay?: number;
+  /** The Developer who pulled it, if a particular one did.
+   *
+   *  Not the same question as `assignedDevs`, which is everybody who has a hand on it: this is
+   *  whose card it is. It matters because the Developers are now people rather than a collective
+   *  noun - the game plays two of them beside you - and the one card nobody may build out from
+   *  under you is the one you took. */
+  pulledBy?: string;
+  /** Build time still owed on it, in day seconds, where the card belongs to a Developer the game
+   *  plays. Counted down by the day's clock; the work lands when it reaches nought.
+   *
+   *  Absent on your own cards: what yours cost is however long you spend on them, which is the
+   *  honest version and the one the day clock already charges you for. */
+  owedSeconds?: number;
+  /** What it was priced at when they took it on, so the board can draw how far through it is.
+   *  Kept beside `owedSeconds` rather than worked out again: the pace moves as your own does, and
+   *  a card that got further from finished the longer you watched it would be worse than no bar. */
+  workSeconds?: number;
   /** True once a built item has been put on the park to place & size it, but before it is marked
    *  "Deploy complete". It shows on the park (so you can position it and confirm its placement
    *  acceptance criteria) while its card stays in Deploy - it isn't live to visitors until Done. */
@@ -728,7 +745,10 @@ export type ZooAction =
   | { type: 'CONFIRM_AC'; id: string; index: number; value: boolean }
   | { type: 'SET_DRAFT_DESIGN'; id: string; design: ItemDesign }
   | { type: 'PLACE_ON_PARK'; id: string }
-  | { type: 'START_ITEM'; id: string; by?: string }
+  | { type: 'START_ITEM'; id: string; by?: string;
+      /** The Developer taking it, where a particular one is. Absent when you pull it yourself:
+       *  the board writes down whoever has least on. */
+      devId?: string }
   | { type: 'TOGGLE_GOAL_CRITICAL'; id: string }
   | { type: 'SET_SPRINT_DAYS'; days: number }
   | { type: 'SET_LEARN_MODE'; on: boolean }

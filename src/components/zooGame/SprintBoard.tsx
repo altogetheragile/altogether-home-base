@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer } from './types';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress } from './engine';
+import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress, stillBuilding } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -120,6 +120,14 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   // How long it has been in Doing. A card nobody has touched since Monday looked exactly like one
   // picked up an hour ago, which is the one thing a board is supposed to make impossible.
   const age = daysInProgress(state, item);
+  // Somebody else is building it, and this is how far through they are. Work that takes time and
+  // says nothing about it is indistinguishable from work that is stuck, which is the one thing a
+  // board exists to make impossible - and a colleague building in the background with no sign of
+  // it on the card is worse than no colleague at all.
+  const left = stillBuilding(item);
+  const onIt = left !== null ? state.team.developers.find((d) => d.id === item.pulledBy) : undefined;
+  const through = left !== null && item.workSeconds
+    ? Math.round(((item.workSeconds - left) / item.workSeconds) * 100) : 0;
   return (
     <button type="button" onClick={onOpen} data-part="board-card"
       title={`${item.name} - open it`}
@@ -166,6 +174,18 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
           </span>
         )}
       </div>
+      {/* One of the other Developers is on it. The bar is the work, not the clock: a five-point
+          habitat is five points of somebody's Sprint however many days it spans. Who is on it is
+          left to the note below, which is where this card already says what is left to do - two
+          sentences a line apart saying the same thing is how a board gets hard to read. */}
+      {left !== null && (
+        <div data-part="being-built" data-left={left} data-who={onIt?.name ?? ''} className="mt-1.5">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div data-part="built-so-far" className="h-full rounded-full bg-primary transition-[width] duration-700"
+              style={{ width: `${Math.max(2, through)}%` }} />
+          </div>
+        </div>
+      )}
       {/* Somebody is waiting on an answer about this card, and everybody can see who. */}
       {waiting && (
         <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-primary">
@@ -174,7 +194,10 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
       )}
       {/* Clear of the corner the reorder arrows are laid over. Room across, not room down: the
           card's height is what it would be without them, which is the point of putting them there. */}
-      {note && <p className={cn(TONE.attention.text, 'mt-1 pr-[5.5rem] text-[11px] leading-snug')}>{note}</p>}
+      {/* Amber is for what YOU have still to do. A colleague building their own card is a fact
+          about the Sprint, not a thing being asked of you, so it is said quietly. */}
+      {note && <p className={cn(left !== null ? 'text-muted-foreground' : TONE.attention.text,
+        'mt-1 pr-[5.5rem] text-[11px] leading-snug')}>{note}</p>}
     </button>
   );
 }

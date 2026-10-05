@@ -136,7 +136,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'PLACE_ON_PARK':
       return placeOnPark(state, action.id);
     case 'START_ITEM':
-      return startItem(state, action.id, action.by);
+      return startItem(state, action.id, action.by, action.devId);
     case 'TOGGLE_GOAL_CRITICAL':
       return toggleGoalCritical(state, action.id);
     case 'SET_SPRINT_DAYS':

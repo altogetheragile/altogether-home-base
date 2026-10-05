@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
-import { startItem } from './engine';
+import { startItem, yourDev, otherDevs } from './engine';
 import { dodVerdicts } from './dodChecks';
 import { aiTurn } from './aiSeats';
 import type { ZooGameState } from './types';
@@ -47,12 +47,19 @@ describe('who is working on it', () => {
     expect(line.answer?.evidence, 'the park still says nobody is on it').toMatch(/one Developer worked it alone/);
   });
 
-  it('gives the work to the Developer with the least on', () => {
-    // Deterministic, so the same game always reads the same way.
+  it('gives it to whoever took it, and to you when nobody is named', () => {
+    // This used to spread the work: whoever had least on took the next card, so two pulls landed
+    // on two Developers. It read prettily on a board where nobody owned anything, and that
+    // ambiguity is exactly what let a colleague finish your work for you - a Developer played by
+    // the game would find a started card with no design and build it, and it might be yours.
+    //
+    // So a pull now says whose it is. One with nobody named is YOURS, however much you already
+    // have on, because you are the Developer at the table; the Developers the game plays name
+    // themselves. Nothing about the second pair of eyes needs the old spreading: the reviewer is
+    // somebody who is not already on the card, which is the thing the line is actually asking.
     const base = initialZooState(3);
     // Two things that can start on their own - an animal waits for its habitat - and two SMALL
-    // ones, so that a single day can pay for both. This is about who takes the work, not about
-    // running out of day.
+    // ones, so that a single day can pay for both.
     const two = base.backlog.filter((it) => !it.unsized && !['epic', 'exhibit'].includes(it.category))
       .sort((a, z) => a.estimate - z.estimate).slice(0, 2);
     let s = {
@@ -60,12 +67,36 @@ describe('who is working on it', () => {
       backlog: base.backlog.map((it) => (two.some((t) => t.id === it.id)
         ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)),
     } as ZooGameState;
-    s = startItem(s, two[0].id);
-    s = startItem(s, two[1].id);
-    const [a, b] = two.map((t) => s.backlog.find((it) => it.id === t.id)!.assignedDevs ?? []);
-    expect(a.length).toBe(1);
-    expect(b.length).toBe(1);
-    expect(a[0], 'both items went to the same Developer while another had nothing').not.toBe(b[0]);
+    const you = yourDev(s)!;
+    const them = otherDevs(s)[0];
+    s = startItem(s, two[0].id);                      // you pulled it
+    s = startItem(s, two[1].id, 'developer', them.id); // they pulled it
+    const [a, b] = two.map((t) => s.backlog.find((it) => it.id === t.id)!);
+    expect(a.pulledBy, 'a card you pulled is not yours').toBe(you.id);
+    expect(a.assignedDevs, 'your name is not on the card you took').toEqual([you.id]);
+    expect(b.pulledBy, 'a card a named Developer pulled is not theirs').toBe(them.id);
+    expect(b.assignedDevs).toEqual([them.id]);
+  });
+
+  it('prices what they took on, and never what you did', () => {
+    // What a colleague's card costs has to be written down somewhere, because the day's clock is
+    // what counts it down and the work has to take time or it is not work. Yours is not priced at
+    // all: what it costs is however long you spend on it, which the same day clock already
+    // charges you for - priced as well, you would pay twice.
+    const base = initialZooState(3);
+    const one = base.backlog.find((it) => !it.unsized && it.category === 'enclosure')!;
+    const s = {
+      ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: DAY_SECONDS, wipLimit: 0,
+      backlog: base.backlog.map((it) => (it.id === one.id
+        ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)),
+    } as ZooGameState;
+    const them = otherDevs(s)[0];
+    const theirs = startItem(s, one.id, 'developer', them.id).backlog.find((it) => it.id === one.id)!;
+    expect(theirs.owedSeconds, 'their card costs them nothing, so it would land at once').toBeGreaterThan(0);
+    expect(theirs.workSeconds, 'nothing says how long it was going to take, so no bar can be drawn')
+      .toBe(theirs.owedSeconds);
+    const yours = startItem(s, one.id).backlog.find((it) => it.id === one.id)!;
+    expect(yours.owedSeconds, 'your own work was priced, so you pay for it twice').toBeUndefined();
   });
 });
 
