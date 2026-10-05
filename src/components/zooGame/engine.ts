@@ -273,6 +273,106 @@ export function speaking(state: ZooGameState, by?: string): { who: ChatWho; from
   return { who: 'you', from: 'You' };
 }
 
+// ============= The Daily Scrum, out loud =============
+//
+// The event was a dashboard. Three numbers, a burndown, a decision and whatever had surfaced
+// overnight - everything a Daily Scrum is FOR, and nobody in the room saying a word. The player
+// read it, pressed a button and the day went on.
+//
+// A Daily Scrum is the Developers talking to each other. So they do: each of them says where they
+// got to, what they are on and what is in their way, and the lines are built from what the game
+// already knows rather than written. Then you say yours, by choosing from what your own cards
+// make true - which is the difference between taking part in an event and watching one.
+//
+// The three questions are NOT the Guide's. The 2020 Guide dropped them: "The Developers can select
+// whatever structure and techniques they want, as long as their Daily Scrum focuses on progress
+// toward the Sprint Goal and produces an actionable plan for the next day of work." So the game
+// uses them, because they are what most teams meet, and says on the card that they are a format
+// rather than a rule.
+
+/** What one Developer finished on the day before this one. */
+const finishedYesterday = (state: ZooGameState, devId: string): BacklogItem[] => state.backlog
+  .filter((it) => it.sprintNumber === state.sprintNumber
+    && (it.status === 'done' || it.status === 'open')
+    && (it.pulledBy === devId || (it.assignedDevs ?? []).includes(devId)));
+
+/** What they have in hand now. */
+const inHandOf = (state: ZooGameState, devId: string): BacklogItem[] => state.backlog
+  .filter((it) => it.status === 'committed' && it.started && it.sprintNumber === state.sprintNumber
+    && (it.pulledBy === devId || (it.assignedDevs ?? []).includes(devId)));
+
+const andList = (names: string[]): string => (names.length <= 1 ? names[0] ?? ''
+  : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+
+/** One person's three lines, built from what the game knows rather than written.
+ *
+ *  "Toward the goal" is in two of them on purpose. It is the one thing the Guide does insist on -
+ *  that the event focuses on progress toward the Sprint Goal - and a stand-up that is three status
+ *  updates in a row is the anti-pattern this event turns into when nobody says why they are here. */
+export function standUpLines(state: ZooGameState, dev: ScrumTeamMember, raised = false): string {
+  const did = finishedYesterday(state, dev.id).map((it) => it.name);
+  const now = inHandOf(state, dev.id);
+  // What is actually stopping them, in the order it bites: a question nobody has answered is a
+  // person standing still, and that is the costliest thing this event can surface.
+  //
+  // `raised` is whether somebody has already named the team's impediment. One is a thing that
+  // slows everybody, so everybody would say it - and three people reading out the same sentence
+  // is how a stand-up sounds when nobody is listening to the one before them. It gets named once,
+  // by whoever speaks first, and the rest say what is in their OWN way.
+  const waiting = (state.questions ?? []).find((q) => q.from === dev.name);
+  const stale = now.find((it) => (daysInProgress(state, it) ?? 0) >= 3);
+  const inTheWay = waiting ? `waiting on an answer about ${waiting.text.replace(/\?$/, '').toLowerCase()}`
+    : stale ? `${stale.name} has been with me ${daysInProgress(state, stale)} days`
+      : !raised && state.pendingImpediment && state.pendingImpediment.kind !== 'block'
+        ? state.pendingImpediment.title.toLowerCase()
+        : 'nothing';
+  return [
+    `Yesterday, toward the goal: ${did.length ? `finished ${andList(did)}` : 'nothing finished yet'}.`,
+    `Today, toward the goal: ${now.length ? andList(now.map((it) => it.name)) : 'picking up the next thing'}.`,
+    `In my way: ${inTheWay}.`,
+  ].join('\n');
+}
+
+/** The Developers the game plays, saying their piece as the event opens.
+ *
+ *  Posted by the reducer rather than by the beat, so the stand-up has happened by the time the
+ *  screen is drawn - an event where the room fills up over the next six seconds is an event whose
+ *  timebox is spent watching people arrive. */
+export function standUp(state: ZooGameState): ZooGameState {
+  let said = state;
+  let raised = false;
+  for (const dev of otherDevs(state)) {
+    const lines = standUpLines(said, dev, raised);
+    if (!/In my way: nothing\.$/.test(lines)) raised = true;
+    said = say(said, { who: 'developer', from: dev.name, text: lines });
+  }
+  return said;
+}
+
+/** Your own three lines, offered as a choice rather than typed.
+ *
+ *  Built from your own cards, so every option is something that is true. The choice is the whole
+ *  of it: the first is what the board says, and the others are the two ways a stand-up goes wrong
+ *  - a status report to nobody, and a promise instead of a plan. Nothing is scored for picking
+ *  one; the Retrospective reads back what was said. */
+export function yourStandUp(state: ZooGameState): { key: string; label: string; text: string }[] {
+  const you = yourDev(state);
+  if (!you) return [];
+  // ...and it is already out of somebody's mouth by the time it is your turn, so yours is about
+  // your own cards. The room has heard about the keeper being off.
+  const mine = standUpLines(state, you, true);
+  const now = inHandOf(state, you.id).map((it) => it.name);
+  const prog = sprintProgress(state);
+  return [
+    { key: 'goal', label: 'Where I am against the Goal', text: mine },
+    { key: 'busy', label: 'What I have been busy with', text:
+      `Yesterday: ${now.length ? `working on ${andList(now)}` : 'bits and pieces'}.\nToday: more of the same.\nIn my way: nothing.` },
+    { key: 'promise', label: 'What I will have finished by tonight', text:
+      `${now.length ? `${andList(now)} will be done today.` : 'I will have something done today.'}\n`
+      + `That is ${prog.remaining} point${prog.remaining === 1 ? '' : 's'} off the board.\nIn my way: nothing.` },
+  ];
+}
+
 // ============= The question channel =============
 //
 // A question is a card addressed to an accountability. It has a clock on it, because the cost of not
@@ -3249,11 +3349,14 @@ export function endDay(state: ZooGameState): ZooGameState {
   if (s.dailyScrumAt === 'start') {
     // The Daily Scrum starts the NEXT day: advance the day, then hold it before building.
     const next = s.dayNumber + 1;
-    return { ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, next)), refinePenalty: 0,
-      pendingPlacement: null, daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
+    // The room is already talking when you walk in. Posted here rather than by the AI beat,
+    // because an event whose first six seconds are spent watching people arrive has spent six
+    // seconds of a thirty-second timebox on nothing.
+    return standUp({ ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, next)), refinePenalty: 0,
+      pendingPlacement: null, daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS });
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
-  return { ...s, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber)), scrumSecondsLeft: DAILY_SCRUM_SECONDS };
+  return standUp({ ...s, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber)), scrumSecondsLeft: DAILY_SCRUM_SECONDS });
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.
