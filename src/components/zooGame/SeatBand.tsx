@@ -1,6 +1,7 @@
-import type { ZooGameState } from './types';
+import type { ZooGameState, ScrumTeamMember } from './types';
 import type { SeatName } from './useZooSessions';
 import { seatLines, whoDoesWhatNow } from './header';
+import { yourDev } from './engine';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { cn } from '@/lib/utils';
@@ -21,9 +22,18 @@ const colourOf = (role: string): string =>
     : role === 'scrum_master' ? SEAT.scrumMaster.hex
       : SEAT.developers.hex);
 
-/** Which seat on the band is the one this player holds. A solo player holds all three
- *  accountabilities, so nothing is outlined - there is nobody else to tell them apart from. */
-const isMine = (role: string, seat: SeatName | null | undefined): boolean => !!seat && role === seat;
+/** Which seat on the band is the one this player holds.
+ *
+ *  In a shared game it is the seat they took. Playing alone it is a PERSON: you hold the first
+ *  Developer and the game plays the other two beside you, which is the whole shape of the Sprint
+ *  and was nowhere on the screen. "Three Devs are mentioned. Which is the human player?" - the band
+ *  said "Ada - building Bridge" exactly as it said "Ben - building Lion Enclosure", so there was
+ *  no way to know. */
+const isMine = (
+  s: { role: string; id: string },
+  seat: SeatName | null | undefined,
+  you: ScrumTeamMember | undefined,
+): boolean => (seat ? s.role === seat : s.id === you?.id);
 
 export function SeatBand({ state, seat, covering, away, observer, onWho, className }: {
   state: ZooGameState;
@@ -44,6 +54,8 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
   className?: string;
 }) {
   const lines = seatLines(state);
+  // The Developer whose hands you have, for a game with nobody else at the table.
+  const you = yourDev(state);
   const sentence = whoDoesWhatNow(state, observer ? null : seat ?? null);
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
@@ -78,7 +90,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
                 onWho?.(`The ${s.role === 'product_owner' ? 'Product Owner' : 'Scrum Master'} takes part as a Developer only when they are working on Sprint Backlog items. ${s.name} has their own accountability here.`);
               },
             };
-          const yours = isMine(s.role, mine);
+          const yours = isMine(s, mine, observer ? undefined : you);
           const cover = !yours && covered.has(s.role as SeatName);
           const absent = gone.has(s.role as SeatName);
           return (
@@ -103,7 +115,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}
-                  {yours && <span className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
+                  {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
                   {/* One word, because the band is one line and this is the whole news. Said in
                       words as well as in colour: a faded chip is not a message, and dimming was all
                       this had. */}
