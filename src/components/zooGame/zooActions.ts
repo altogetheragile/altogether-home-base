@@ -51,6 +51,8 @@ export function zooActions(send: (action: ZooAction) => void) {
     say: (text: string, kind?: 'stand-up') => send({ type: 'SAY', who: 'you', from: 'You', text, kind }),
     /** What the Scrum Team does about a Sprint Goal at risk, in the huddle after the Daily Scrum. */
     answerHuddle: (how: HuddleAnswer) => send({ type: 'ANSWER_HUDDLE', how }),
+    /** Put a second pair of hands on a card somebody else is already building. */
+    lendAHand: (itemId: string, devId: string) => send({ type: 'LEND_A_HAND', itemId, devId }),
     toggleGoalCritical: (id: string) => send({ type: 'TOGGLE_GOAL_CRITICAL', id }),
     setSprintDays: (days: number) => send({ type: 'SET_SPRINT_DAYS', days }),
     setWipLimit: (limit: number) => send({ type: 'SET_WIP_LIMIT', limit }),

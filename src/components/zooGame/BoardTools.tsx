@@ -112,7 +112,7 @@ export function BoardTools({ state, teachCard, onMarkTaught, onSetScrumAt, onSet
           </NewHere>}
         </span>
       )}
-      <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
+      <ExplainButton cards={['sprint', 'sprint-backlog', 'daily-scrum', 'swarming']} phase="sprint" teachCard={teachCard} onMarkTaught={onMarkTaught} compact />
       <BoardSettings dailyScrumAt={state.dailyScrumAt} learnMode={state.learnMode} wipLimit={state.wipLimit}
         onSetScrumAt={onSetScrumAt} onSetLearnMode={onSetLearnMode} onSetWipLimit={onSetWipLimit} onCancelSprint={onCancelSprint} />
     </div>

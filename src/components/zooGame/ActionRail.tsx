@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
-import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext } from './engine';
+import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext, whatToHelpWith, yourDev, activeWipLimit } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -31,13 +31,15 @@ type RailAction = {
   note?: string;
 };
 
-export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
+export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   onAnswerPlacement?: (id: string, choice: string) => void;
   /** Take a card into Doing. Only a Developer pulls - the Sprint Backlog is theirs - which is why
    *  this is the one action on the rail that is not somebody else waiting on an answer. */
   onStartItem?: (id: string) => void;
+  /** Put your own hands on a card somebody else is already building. */
+  onLendAHand?: (itemId: string, devId: string) => void;
   /** Answer a question addressed to an accountability. */
   onAnswerQuestion?: (id: string, choice: string) => void;
   onOpen?: (id: string) => void;
@@ -145,10 +147,21 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnsw
   // The candidates are the first few that could actually start, in the Sprint Backlog's order. The
   // rest of the column is still there and still pullable - the point is that pulling is a choice,
   // and a choice nobody is told the stakes of is a guess.
-  const nothingInHand = state.phase === 'sprint' && state.dayStage === 'building'
-    && !state.backlog.some((it) => it.status === 'committed' && it.started && it.sprintNumber === state.sprintNumber);
-  if (nothingInHand && onStartItem) {
-    const next = whatToPullNext(state);
+  //
+  // YOURS in hand, not anybody's. It used to be "has anybody started anything", which was the same
+  // question back when the Developers were one set of hands - and once two colleagues were
+  // building beside you it meant the prompt never came again: the board always had something on
+  // it, and the person at the table was never asked what they wanted to do next.
+  const you = yourDev(state);
+  const yoursInHand = !!you && state.backlog.some((it) => it.status === 'committed' && it.started
+    && !it.design && it.sprintNumber === state.sprintNumber && it.pulledBy === you.id);
+  const inTheDay = state.phase === 'sprint' && state.dayStage === 'building';
+  if (inTheDay && !yoursInHand && onStartItem) {
+    const wip = activeWipLimit(state);
+    const doing = state.backlog.filter((it) => it.status === 'committed' && it.started
+      && it.sprintNumber === state.sprintNumber).length;
+    const room = wip === 0 || doing < wip;
+    const next = room ? whatToPullNext(state) : [];
     if (next.length) {
       actions.push({
         id: 'pull-next', actor: 'Developers',
@@ -158,6 +171,20 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onAnsw
         })),
         note: next.map(({ item, why }) => `${item.name}: ${why}`).join('  \u00b7  '),
       });
+    } else if (you && onLendAHand) {
+      // Nothing to start is not nothing to do, and this is what the work-in-progress limit is
+      // for: the answer to a full board is to help finish something rather than to start another.
+      const hands = whatToHelpWith(state, you.id);
+      if (hands.length) {
+        actions.push({
+          id: 'lend-a-hand', actor: 'Developers',
+          text: room ? 'Nothing left to start. Lend a hand?' : 'No room to start anything. Lend a hand?',
+          answers: hands.map((item, i) => ({
+            label: item.name, primary: i === 0, act: () => onLendAHand(item.id, you.id),
+          })),
+          note: 'Two of you finish it sooner - about 1.6 times, not twice. Swarming is a practice teams bring to Scrum, not a word in the Guide.',
+        });
+      }
     }
   }
 
