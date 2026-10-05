@@ -5,7 +5,7 @@ import { initialZooState } from './config';
 import { openRetro, whatWeNoticed, yourRetroTurn } from './engine';
 import { reducer } from './useZooGame';
 import { SprintRetro } from './SprintRetro';
-import type { ZooGameState, TeamDecision } from './types';
+import type { ZooGameState, TeamDecision, ChatKind } from './types';
 
 // The Retrospective, out loud.
 //
@@ -134,7 +134,7 @@ describe('what gets said', () => {
 });
 
 describe('the screen', () => {
-  const retro = (s: ZooGameState, onSay: (t: string, k?: 'stand-up' | 'retro') => void = () => {}) => render(
+  const retro = (s: ZooGameState, onSay: (t: string, k?: ChatKind) => void = () => {}) => render(
     <MemoryRouter>
       <SprintRetro state={s} onNextSprint={() => {}} onSetDod={() => {}} onSay={onSay} />
     </MemoryRouter>,

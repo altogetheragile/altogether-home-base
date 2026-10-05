@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { ZooGameState } from './types';
+import type { ZooGameState, ChatKind } from './types';
 import type { SegmentId } from './simulation/types';
 import { whatVisitorsCanReach } from './parkNetwork';
+import { Bubble } from './TeamChat';
 import { whatGotOut } from './engine';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, yourReviewTurn } from './engine';
 import { PbiCard } from './PbiCard';
 import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
@@ -17,7 +18,7 @@ import { ActionBar } from './ActionBar';
 import { EventStage } from './EventStage';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW, PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
+import { EYEBROW, FOCUS, PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
 import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check } from 'lucide-react';
 
 type Step = 'done' | 'visitors' | 'next';
@@ -55,15 +56,66 @@ interface SprintReviewProps {
   /** The Sprint Review teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
+  /** Your own turn in the room. Chosen rather than typed. */
+  onSay?: (text: string, kind?: ChatKind) => void;
 }
 
 const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts: 'Enthusiasts', comfortSeekers: 'Comfort Seekers' };
 const SEG_COLOR: Record<SegmentId, string> = { families: 'bg-orange-500', enthusiasts: TONE.coach.solid, comfortSeekers: 'bg-amber-700' };
 const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber-500' : 'bg-rose-500');
 
+/** The Sprint Review, as a conversation.
+ *
+ *  Priya gives the verdict on the Sprint Goal and the stakeholders answer the Increment - not her.
+ *  Nothing anybody says here signs anything off, which the opening line says out loud, because an
+ *  approval meeting is what this event turns into when nobody says otherwise.
+ *
+ *  Your three replies are two halves of the job and one anti-pattern. Asking the room to approve
+ *  it is not blocked: it is answered with what a Review is for, which teaches more than a disabled
+ *  button would. */
+function TheRoom({ state, onSay }: { state: ZooGameState; onSay?: (text: string, kind?: ChatKind) => void }) {
+  const [told, setTold] = useState<string | null>(null);
+  const thread = (state.chat ?? []).filter((m) => m.kind === 'review');
+  const spoken = thread.some((m) => m.who === 'you');
+  const yours = spoken ? [] : yourReviewTurn(state);
+  if (!thread.length) return null;
+  return (
+    <section data-part="review-room" className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <span className="text-sm font-semibold">Round the room</span>
+        <span className="text-[11px] text-muted-foreground">
+          the Scrum Team and the people the zoo is for - nothing here is a sign-off
+        </span>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {thread.map((m) => <Bubble key={m.id} msg={m} />)}
+      </ul>
+      {told && (
+        <p data-part="review-not-a-gate" className={cn(TONE.attention.text, 'text-[12px] leading-snug')}>
+          {told}
+        </p>
+      )}
+      {yours.length > 0 && onSay && (
+        <div data-part="review-your-turn" className="space-y-1.5 border-t border-border pt-2">
+          <div className="text-[11px] font-semibold text-muted-foreground">Your turn</div>
+          <div className="flex flex-wrap gap-1.5">
+            {yours.map((o) => (
+              <button key={o.key} type="button" title={o.text}
+                onClick={() => { onSay(o.text, 'review'); setTold(o.notScrum ?? null); }}
+                className={cn(FOCUS, 'rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/60')}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
  *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, teachCard, onMarkTaught }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, teachCard, onMarkTaught, onSay }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   // What they TOOK, which is not what they thought they could do. The header counts against this
@@ -126,6 +178,11 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           <p className="text-sm text-muted-foreground">{current.lead}</p>
         </div>
       </header>
+
+      {/* The people the Review is held for. The game had the results and the progress; what it
+          never had was anybody in the room with an opinion about either, which teaches that a
+          Review is a report. */}
+      <TheRoom state={state} onSay={onSay} />
 
       <EventStage state={state} at={step} walk title="The Increment &middot; everything delivered so far"
         note="Not this Sprint's work alone - the whole zoo, which is what an Increment is.">
