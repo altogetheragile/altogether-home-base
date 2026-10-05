@@ -61,7 +61,14 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 pb-28 pt-5">
+      {/* At least a screenful, so the bar at the foot of it stays at the foot of the SCREEN.
+          It is `sticky bottom-4`, which means it sits at the bottom of the viewport while the page
+          is taller than one and wherever the content happens to end once it is not. The page used
+          to be taller than one - an open teaching card and an open drawer of goal formats saw to
+          that - and folding both of those away left the bar tucked under the panel with half a
+          screen of white underneath it. Reported as "it has moved and looks a mess", which it did
+          and it was: nothing in the bar changed, the page around it got shorter. */}
+      <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-3 px-4 pb-8 pt-5">
         {/* Both ways back, as links rather than as panels. What Scrum is, and what this game is:
             they are two different questions and a player who wants one rarely wants the other. They
             stay up here because the Product Goal owns the top of this page - putting either of them
@@ -220,6 +227,10 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
 
 
         {/* Floating, like every other primary action in the game. */}
+        {/* Everything above has had its room; this takes what is left, so the bar below it is
+            pushed to the bottom of the screen rather than floating under the panel. */}
+        <div className="flex-1" aria-hidden />
+
         <div className={ACTION_BAR}>
           {onOpenSaves ? (
             // Grey text on a white pill is not a button anyone finds. Bordered, in the foreground
