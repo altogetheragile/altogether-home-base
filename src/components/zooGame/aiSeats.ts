@@ -197,6 +197,28 @@ const ALL_SEATS: SeatName[] = ['product_owner', 'scrum_master', 'developer'];
  *  player's own event away from them. */
 export const SOLO_AI_SEATS: SeatName[] = ['product_owner'];
 
+/** What the seat played by the game must NOT do while somebody is sitting at the table.
+ *
+ *  Accepting work is a decision, and it is one of the few the player is here to make. Played for
+ *  them it simply happened: a card was built and approved before anybody had looked at it, which
+ *  is the opposite of the lesson - "the PO automatically approved a built card. I'd prefer to keep
+ *  the decision action using the message centre."
+ *
+ *  So the sign-off and the criteria stay in the rail, where the game asks the player for things.
+ *  Answering HOW it gets built is not on this list, because handing that back is itself the
+ *  teaching and the player is on the receiving end of it.
+ *
+ *  Only when a player is there. In a shared session with nobody in the Product Owner's seat the
+ *  game still has to accept, or work builds up against a sign-off that is never coming. An empty
+ *  chair is not the same as somebody choosing not to decide yet. */
+const PLAYER_DECIDES: ReadonlySet<string> = new Set(['CONFIRM_AC']);
+
+/** ...and the one that is an answer rather than an action: accepting at the Product Owner's own
+ *  door. Matched on the choice rather than the type, because the same action refuses it too. */
+export const leftToThePlayer = (action: ZooAction): boolean =>
+  PLAYER_DECIDES.has(action.type)
+  || (action.type === 'ANSWER_QUESTION' && 'choice' in action && action.choice === 'accept');
+
 /** What this AI accountability would do now, or nothing if it is not their turn.
  *
  *  `mustAgree` is who still has to agree the Sprint Goal before topic two can begin - the same
