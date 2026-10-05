@@ -6,6 +6,7 @@ import { ActionRail } from './ActionRail';
 import { initialZooState } from './config';
 import { askToCheck, askIfDue, endDay, tickDay, guessUnanswered, settleOpenQuestions,
   theirsToAnswer, openQuestions, QUESTION_PATIENCE } from './engine';
+import { DOCK_POSITION } from './notesDock';
 import type { ZooGameState } from './types';
 
 // Two things the game says at once, and the seam between them.
@@ -151,17 +152,45 @@ describe('the dock, while something is being asked', () => {
   });
 
   it('says the other thing when only the Product Owner can answer', () => {
+    // On the chip rather than spelled out beside it. The rail below is already asking this
+    // question, in more words and with the two buttons that answer it - and the dock saying it
+    // again grew the pill across the window until it lay on top of those buttons. Reported as
+    // "when I finish a PBI and want to ask for PO approval I cannot - other messages are in the
+    // way". What the chip carries is the one thing the rail does NOT say: that pressing End Day
+    // will not settle it.
     const s = sprint();
     board(askToCheck(s, penOf(s).id));
-    expect(document.querySelector('[data-part="unanswered"]')!.textContent).toMatch(/waiting to be checked/);
-    expect(document.body.textContent, 'the dock claims ending the day settles an acceptance')
+    const chip = document.querySelector('[data-part="unanswered"]')!;
+    expect(chip.textContent).toMatch(/waiting to be checked/);
+    expect(chip.getAttribute('title'), 'the dock claims ending the day settles an acceptance')
       .toMatch(/Ending the day does not accept it - it carries into Day 2/);
+  });
+
+  it('is never wide enough to lie across the pane beside it', () => {
+    // Asked of the class rather than of a layout, because a rendering with no viewport has no
+    // layout to ask. It was `max-w-[calc(100vw-2rem)]` - as wide as the window, which it reached
+    // whenever the game had a sentence to say - and on the Sprint Backlog the other half of the
+    // screen ends in the rail, which is the one place the game asks you for something. A pill that
+    // grew until it covered those buttons ate the answer.
+    expect(DOCK_POSITION, 'the dock can grow to the full width of the window')
+      .not.toMatch(/max-w-\[calc\(100vw-2rem\)\]/);
+    expect(DOCK_POSITION, 'the dock has no cap on how wide it can get').toMatch(/max-w-\[min\(/);
+  });
+
+  it('does not say again, at length, what the rail is already asking', () => {
+    // Two things in one corner saying the same thing, and the longer one on top of the buttons.
+    const s = sprint();
+    board(askToCheck(s, penOf(s).id));
+    const pill = document.querySelector('[data-part="unanswered"]')!.closest('div')!.parentElement!;
+    expect(pill.textContent, 'the dock is explaining the question the rail is asking')
+      .not.toMatch(/is built and waiting on the Product Owner/);
   });
 
   it('says where it goes instead on the last day of the Sprint', () => {
     const s = sprint({ dayNumber: 3, sprintDays: 3 });
     board(askToCheck(s, penOf(s).id));
-    expect(document.body.textContent, 'the last day promises a tomorrow the Sprint does not have')
+    expect(document.querySelector('[data-part="unanswered"]')!.getAttribute('title'),
+      'the last day promises a tomorrow the Sprint does not have')
       .toMatch(/the Sprint ends and it goes to the Review unaccepted/);
   });
 

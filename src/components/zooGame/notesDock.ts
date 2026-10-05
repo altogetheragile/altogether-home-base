@@ -39,6 +39,16 @@ export function useDockPresence() {
 }
 
 /** Where the dock stands. One place, every screen: bottom right, whatever screen you are on. */
-export const DOCK_POSITION = 'fixed bottom-4 right-4 z-40 flex max-w-[calc(100vw-2rem)] justify-end';
+// Capped, so the pill can never lie across the pane beside it.
+//
+// It was `max-w-[calc(100vw-2rem)]`: as wide as the window, which it reached whenever the game had
+// a sentence to say. On the Sprint Backlog the left half of the screen is the board and the team's
+// thread, and the thread ends in the rail - the one place the game asks you for something. A pill
+// that grew leftward until it covered those buttons is a pill that ate the answer. Reported as
+// "messages overlap... I cannot - other messages are in the way".
+//
+// 40rem is wide enough for the button, a chip and a truncated hint, and narrow enough to stay out
+// of the other half of any window the game is playable on.
+export const DOCK_POSITION = 'fixed bottom-4 right-4 z-40 flex max-w-[min(calc(100vw-2rem),40rem)] justify-end';
 /** The pill itself - the action bar and the notes-only fallback are the same shape. */
 export const DOCK_PILL = 'pointer-events-auto flex items-center gap-3 rounded-full border border-border bg-background/95 px-3 py-2 shadow-lg backdrop-blur';
