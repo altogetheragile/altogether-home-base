@@ -401,7 +401,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
         // The Scrum Team, before the Backlog they will work on. Held here rather than in the game
         // state: it is an introduction, not a decision, so there is nothing to save or replay.
         if (!metTeam) {
-          return <ZooShell state={state} {...shellProps}><MeetTheTeam state={state} seat={seat} onNext={() => setMetTeam(true)} /></ZooShell>;
+          return <ZooShell state={state} {...shellProps}><MeetTheTeam state={state} seat={seat} onNext={() => setMetTeam(true)} onRename={renameMember} /></ZooShell>;
         }
         // No shell: there is nothing to put in a header yet - no Sprint, no Backlog, no park.
         return <div className={cn('h-full overflow-y-auto px-4 py-5', DOCK_GUTTER)}><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} seat={seat} emptySeats={covering} /></div>;

@@ -4,9 +4,12 @@ import { seatLines, whoDoesWhatNow } from './header';
 import { yourDev } from './engine';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
+import { useState } from 'react';
+import { Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
+import { FOCUS } from './ui/tokens';
 
 // The band: one sentence on who does what now, and the five people with what each is doing.
 //
@@ -35,7 +38,49 @@ const isMine = (
   you: ScrumTeamMember | undefined,
 ): boolean => (seat ? s.role === seat : s.id === you?.id);
 
-export function SeatBand({ state, seat, covering, away, observer, onWho, className }: {
+/** Your own name, changed where it is written.
+ *
+ *  The band is on every screen of the game, which is why it is here: Meet the Team has the same
+ *  field and most players never see that screen - "Start building" goes straight to a planned
+ *  Sprint 1 and skips it.
+ *
+ *  A button until you press it, so the band stays a band. It stops the pointer from reaching the
+ *  seat around it, which is draggable: dragging a Developer onto a card is how work gets picked
+ *  up, and a rename that started a drag would be worse than no rename. */
+function RenameMe({ id, name, onRename }: {
+  id: string; name: string; onRename: (id: string, name: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  if (!editing) {
+    return (
+      <button type="button" data-part="rename-me" title="Call yourself whatever you like"
+        aria-label="Change your name"
+        draggable={false}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+        className={cn(FOCUS, 'ml-1 rounded p-0.5 text-muted-foreground opacity-60 hover:bg-muted hover:text-foreground hover:opacity-100')}>
+        <Pencil className="h-3 w-3" />
+      </button>
+    );
+  }
+  return (
+    <input
+      autoFocus
+      value={name}
+      data-part="your-name"
+      aria-label="Your name"
+      maxLength={24}
+      draggable={false}
+      onPointerDown={(e) => e.stopPropagation()}
+      onChange={(e) => onRename(id, e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') setEditing(false); }}
+      onBlur={(e) => { if (!e.target.value.trim()) onRename(id, name); setEditing(false); }}
+      className={cn(FOCUS, 'ml-1 w-24 rounded border border-primary bg-background px-1 text-[11px] font-semibold outline-none')}
+    />
+  );
+}
+
+export function SeatBand({ state, seat, covering, away, observer, onWho, onRename, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   /** Seats nobody is holding and no AI is playing, so their work falls to whoever is here. Said on
@@ -51,6 +96,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
   observer?: boolean;
   /** Somebody was dragged who cannot be dragged, so the game says why rather than nothing. */
   onWho?: (why: string) => void;
+  /** Put your own name on your own person. Offered here because the band is on every screen.
+   *  "Maybe people do not want to be called Ada." */
+  onRename?: (memberId: string, name: string) => void;
   className?: string;
 }) {
   const lines = seatLines(state);
@@ -116,6 +164,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, classNa
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}
                   {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
+                  {yours && onRename && <RenameMe id={s.id} name={s.name} onRename={onRename} />}
                   {/* One word, because the band is one line and this is the whole news. Said in
                       words as well as in colour: a faded chip is not a message, and dimming was all
                       this had. */}

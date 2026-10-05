@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { initialZooState, DAY_SECONDS } from './config';
 import { startItem, yourDev, otherDevs, heldBy } from './engine';
@@ -69,6 +69,51 @@ describe('you are one of the three', () => {
     expect(yours[0].textContent).toMatch(/PO/);
     expect(yours[0].textContent, 'a Developer is marked as you as well')
       .not.toContain(yourDev(s)!.name);
+  });
+});
+
+describe('and you can say what to call you', () => {
+  // "Maybe people do not want to be called Ada. Can we add the ability to add a name?" The engine
+  // has had `renameMember` for months; nothing in the game reached it.
+  //
+  // On the BAND rather than only on Meet the Team, because the band is on every screen and most
+  // players never see Meet the Team: it is reached from the long way round, and "Start building"
+  // goes straight to a planned Sprint 1.
+  const band = (over: Partial<ZooGameState> = {}, onRename = () => {}) => render(
+    <MemoryRouter><SeatBand state={sprint(over)} onRename={onRename} /></MemoryRouter>,
+  ).container;
+
+  it('offers it on your own seat and nobody else\u2019s', () => {
+    const c = band();
+    const pencils = [...c.querySelectorAll('[data-part="rename-me"]')];
+    expect(pencils.length, 'you cannot change your name, or everybody\u2019s is changeable').toBe(1);
+    expect(pencils[0].closest('[data-part="seat"]')!.textContent)
+      .toContain(yourDev(sprint())!.name);
+  });
+
+  it('takes a name and keeps it', () => {
+    const named: [string, string][] = [];
+    const s = sprint();
+    const c = render(
+      <MemoryRouter><SeatBand state={s} onRename={(id, name) => { named.push([id, name]); }} /></MemoryRouter>,
+    ).container;
+    fireEvent.click(c.querySelector('[data-part="rename-me"]')!);
+    const field = c.querySelector('[data-part="your-name"]')!;
+    expect(field, 'pressing it offered nothing to type into').toBeTruthy();
+    fireEvent.change(field, { target: { value: 'Al' } });
+    expect(named, 'typing a name changed nothing').toEqual([[yourDev(s)!.id, 'Al']]);
+  });
+
+  it('is a button until you press it, so the band stays a band', () => {
+    const c = band();
+    expect(c.querySelector('[data-part="your-name"]'),
+      'there is a text box on the band at all times').toBeNull();
+  });
+
+  it('and says nothing about renaming when nobody can', () => {
+    const c = render(<MemoryRouter><SeatBand state={sprint()} /></MemoryRouter>).container;
+    expect(c.querySelector('[data-part="rename-me"]'),
+      'it offers a rename with nothing to carry it').toBeNull();
   });
 });
 

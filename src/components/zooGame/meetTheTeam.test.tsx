@@ -36,19 +36,30 @@ describe('meeting the Scrum Team', () => {
   });
 
   it('offers no seat to pick when there is nobody to pick against', () => {
-    // "Should I be able to pick a seat in single player mode?" - no. Playing alone you hold all
-    // three accountabilities, and five identical buttons that do nothing is an offer the game
-    // cannot keep.
+    // "Should I be able to pick a seat in single player mode?" - no. Which seat you are in is
+    // settled by the game, and five identical buttons that do nothing is an offer it cannot keep.
     const { container } = render(<MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} /></MemoryRouter>);
     const cards = [...container.querySelectorAll('[data-part="seat-card"]')];
     expect(cards.some((c) => c.querySelector('button')), 'a seat could be picked in solo play').toBe(false);
-    expect(container.textContent).toMatch(/you hold all three/i);
   });
 
-  it('marks every seat yours when you play alone, and only yours when you do not', () => {
+  it('marks ONE seat yours, and says who is playing the rest', () => {
+    // This used to mark all five and say "playing alone you hold all three accountabilities".
+    // That was true, and stopped being true when the Product Owner got a seat of her own and two
+    // Developers started working beside you. "Three Devs are mentioned. Which is the human
+    // player?" - the answer has to be on the screen where you meet them.
     const solo = render(<MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} /></MemoryRouter>);
-    expect(solo.container.querySelectorAll('[data-part="seat-card"].border-primary').length,
-      'playing alone, some accountability was said to be somebody else’s').toBe(5);
+    const mine = [...solo.container.querySelectorAll('[data-part="seat-card"].border-primary')];
+    expect(mine.length, 'more than one of the five is marked as you').toBe(1);
+    expect(mine[0].textContent, 'the one marked as you is not a Developer').toMatch(/Developer/);
+    expect(mine[0].textContent, 'it does not say it is you').toMatch(/You · Developer/);
+    expect(solo.container.textContent, 'nothing says who is playing the others')
+      .toMatch(/Played by the game/);
+    // ...and the Scrum Master is nobody's, which is why holding the Daily Scrum falls to you.
+    const sm = [...solo.container.querySelectorAll('[data-part="seat-card"]')]
+      .find((c) => /Scrum Master/.test(c.textContent ?? ''))!;
+    expect(sm.textContent, 'the Scrum Master is played by the game, which would take your event away')
+      .toMatch(/Nobody holds it/);
     solo.unmount();
 
     const seated = render(
@@ -56,6 +67,41 @@ describe('meeting the Scrum Team', () => {
     );
     expect(seated.container.querySelectorAll('[data-part="seat-card"].border-primary').length).toBe(1);
     expect(seated.container.textContent).toMatch(/Played by the game/);
+  });
+
+  it('lets you put your own name on your own Developer', () => {
+    // "Maybe people do not want to be called Ada. Can we add the ability to add a name?" The
+    // engine has had `renameMember` for months and nothing in the game reached it.
+    const named: [string, string][] = [];
+    const s = state();
+    const { container } = render(
+      <MemoryRouter><MeetTheTeam state={s} onNext={() => {}}
+        onRename={(id, name) => named.push([id, name])} /></MemoryRouter>,
+    );
+    const fields = [...container.querySelectorAll('[data-part="your-name"]')];
+    expect(fields.length, 'you cannot name yourself, or everybody is a field').toBe(1);
+    expect((fields[0] as HTMLInputElement).value, 'the field is not your own name')
+      .toBe(s.team.developers[0].name);
+    fireEvent.change(fields[0], { target: { value: 'Al' } });
+    expect(named, 'typing a name changed nothing').toEqual([[s.team.developers[0].id, 'Al']]);
+  });
+
+  it('and nobody else’s', () => {
+    // In a shared game the seat you took is you, whichever it is - so the field follows you to it
+    // and the other four are other people.
+    const s = state();
+    const c = render(
+      <MemoryRouter><MeetTheTeam state={s} seat="product_owner" onNext={() => {}}
+        onRename={() => {}} /></MemoryRouter>,
+    ).container;
+    const fields = [...c.querySelectorAll('[data-part="your-name"]')];
+    expect(fields.length, 'more than one person’s name is editable').toBe(1);
+    expect(fields[0].closest('[data-part="seat-card"]')!.textContent,
+      'the field is on somebody else’s card').toMatch(/Product Owner/);
+    for (const d of s.team.developers) {
+      expect(fields[0].closest('[data-part="seat-card"]')!.textContent,
+        `${d.name} is editable and is not you`).not.toContain(d.name);
+    }
   });
 
   it('leads to the brief', () => {

@@ -176,7 +176,7 @@ export function Tab({ active, onClick, icon: Icon, label, badge, locked, ...rest
 /** The app-shell: a fixed-height frame (no page scroll) with a slim header - phase, Sprint
  *  Goal, and the game controls collapsed into one row plus tabs - over a body that fills the
  *  screen and scrolls INTERNALLY. Built to fit a tablet without scrolling the page. */
-export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onMoveInside, onSetClockPaused,  onWho, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector, onUpdateConnector, onRemoveRun,         onSetSize, onAddCopy, onSetCopyPiece, onRemovePlant, onMoveCopy,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onMarkTaught, onBack, copy, seat = null, observer, covering, away }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
+export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks, backlogTab, onReading, onCommitBuild, onTurn, onSetMemberSpot, onMoveInside, onSetClockPaused,  onWho, onRenameMember, tools,  onPutIn, onAskToCheck, canBuild = true, building, onOpenBuild, edit,  drawRoute, drawing, onDrawing,  onPlaceItem,  onAddConnector, onUpdateConnector, onRemoveRun,         onSetSize, onAddCopy, onSetCopyPiece, onRemovePlant, onMoveCopy,      onSetDod, onSetDor, onSetProductGoal, onSave, onOpenSaves, onPoRefine, poRefining, poNote, onDismissPoNote, said, onDismissSaid, refused, onDismissRefused, onMarkTaught, onBack, copy, seat = null, observer, covering, away }: { state: ZooGameState; children: ReactNode; onPart?: (p: { id: string; key: string } | null) => void; drawRoute?: { id: string; name: string; style: { thickness: number; color: string } } | null; drawing?: boolean; onDrawing?: (on: boolean) => void; parkTab?: ArtifactTab; onSetTab?: (t: ArtifactTab) => void;
   /** Whether there is anything in hand to build - Build with empty hands is not a state. */
   canBuild?: boolean;
   /** The way back to the site and who is signed in, handed in rather than reached for: the shell
@@ -194,6 +194,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   /** A hand on the clock, or off it. */
   onSetClockPaused?: (paused: boolean) => void;
   onWho?: (why: string) => void;
+  /** Your own name, changed from the band it is written on. */
+  onRenameMember?: (memberId: string, name: string) => void;
   /** Somebody is reading what the game said, or has stopped. A solo game stops its clock while they
    *  are: the Sprint's time is for building, and charging a learner for reading what the game chose
    *  to tell them is the game punishing its own teaching. */
@@ -503,7 +505,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
 
       {/* The band: who does what now, and what each of the five is doing. The accountabilities were
           invisible - a row of name chips that said nothing about what any of them were for. */}
-      <SeatBand state={state} seat={seat} covering={covering} away={away} observer={observer} onWho={onWho} />
+      <SeatBand state={state} seat={seat} covering={covering} away={away} observer={observer} onWho={onWho} onRename={onRenameMember} />
 
       {/* Body: one artifact at a time, filling the width. Each pane stays mounted and is toggled
           with CSS, so the day clock, a half-finished design and the park's own scroll all survive
