@@ -3,6 +3,7 @@ import { standsOnPark } from './onThePark';
 import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, currentDesign } from './design';
 import { autoLayout, insidePark, CANVAS_W, PAD, PLAY_H, PROMENADE_Y } from './parkLayout';
 import { zonePlots, type Plot } from './parkZones';
+import { outlineOf } from './parkOutline';
 import { riverY, BANK, acrossTheWater } from './parkWater';
 
 // ============= One park, described once =============
@@ -169,7 +170,20 @@ export function parkPositions(standing: Standing[], plots: Map<string, Plot>): M
   // are, so they are passed in as ground already taken rather than packed as though they were
   // going to move - which is how something ended up standing on top of something else.
   const box = (s: Standing) => ({ id: s.item.id, w: s.size.w, h: s.size.h });
-  const fixed = standing.filter((s) => s.item.pos).map((s) => ({ ...box(s), ...insidePark(s.size, s.item.pos!) }));
+  const fixed = standing.filter((s) => s.item.pos)
+    .map((s) => ({ ...box(s), ...insidePark(s.size, s.item.pos!) }));
+  // The corridor is kept clear by the SLOTS, not by a wall around it.
+  //
+  // This is where most things land - taking work into Doing does not choose a position, so the
+  // packer lays nearly everything out - and the packer knew about other items and nothing else.
+  // "The enclosure was placed by the AI across a path and blocking the main entrance" was a shelf
+  // being filled, because the corridor was ground like any other as far as it knew.
+  //
+  // The reserved boxes were passed in here as well, at first. They turned out to be a line no test
+  // could fail on: once the slots either side are filled first, the overflow has the occupants to
+  // route around and never reaches the corridor between them. Where `reserved` IS load-bearing is
+  // the Product Owner's answer and your own drops, and both of those have a mutation on them.
+  // Kept out rather than kept in - see `theZoneOutline`.
   const loose = standing.filter((s) => !s.item.pos);
   if (!plots.size) {
     // Terrain first, and anywhere: a river is not a thing visitors walk up to, it is what decides
@@ -195,8 +209,30 @@ export function parkPositions(standing: Standing[], plots: Map<string, Plot>): M
   for (const [zone, plot] of plots) {
     const mine = loose.filter((s) => s.item.zone === zone);
     if (!mine.length) continue;
-    const laid = autoLayout(mine.map(box), busy, { x0: plot.x0, y0: plot.y0, x1: plot.x1, y1: plot.y1 });
+    // Into the area's slots first, nearest the gate.
+    //
+    // The shelf-packer filled a plot from its top-left corner and the result read as what it was:
+    // things stacked where there happened to be room, with the path running wherever it could get
+    // afterwards. "AI places things in weird places." A slot is a place: it is beside the area's
+    // spine, it faces it, and it is reached through the gate - so standing in one is what makes a
+    // thing reachable rather than something to check for later.
+    const o = outlineOf(plot);
+    const free = o.slots.filter((sl) => !busy.some((t) =>
+      Math.abs(t.x - sl.at.x) < (t.w + sl.size.w) / 2 && Math.abs(t.y - sl.at.y) < (t.h + sl.size.h) / 2));
+    const spare: Standing[] = [];
     for (const s of mine) {
+      // Only a slot it actually fits in. A large enclosure in a narrow area has to go somewhere,
+      // and somewhere is better than half of it hanging over the path.
+      const i = free.findIndex((sl) => sl.size.w >= s.size.w && sl.size.h >= s.size.h);
+      if (i < 0) { spare.push(s); continue; }
+      const [sl] = free.splice(i, 1);
+      out.set(s.item.id, sl.at);
+      busy.push({ ...box(s), ...sl.at });
+    }
+    // ...and whatever had no slot goes through the packer, which now knows what to keep clear.
+    if (!spare.length) continue;
+    const laid = autoLayout(spare.map(box), busy, { x0: plot.x0, y0: plot.y0, x1: plot.x1, y1: plot.y1 });
+    for (const s of spare) {
       const at = laid.get(s.item.id);
       if (!at) continue;
       out.set(s.item.id, at);
