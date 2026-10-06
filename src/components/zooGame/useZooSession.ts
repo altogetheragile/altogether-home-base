@@ -247,8 +247,27 @@ const EVENT_BEAT_MS = 9000;
  *
  *  The reducer knows something the beat cannot: whether the move actually landed. A pull that the
  *  engine refuses - no room under the WIP limit, a habitat not built yet - is not a thing that
- *  happened, and a thread that announces refused moves is a thread nobody can trust. */
-const NARRATED = new Set(['START_ITEM']);
+ *  happened, and a thread that announces refused moves is a thread nobody can trust.
+ *
+ *  Lending a hand was missing from here, and said everything twice:
+ *
+ *    BEN   Nothing I can start, so I will give Ada a hand with Lion. Two of us finishes it sooner.
+ *    BEN   Giving Ada a hand with Lion.
+ *
+ *  Reported from playing it: "the messaging... can it be combined?" The reducer's line carries the
+ *  reason now, so the one that is left is the one worth reading. */
+export const NARRATED = new Set(['START_ITEM', 'LEND_A_HAND']);
+
+/** Which card a move is about, under either of the two names an action gives it.
+ *
+ *  Reading `id` alone meant a move keyed by `itemId` reached the thread attached to nothing: the
+ *  bubble belonged to no card, and `say` - which collapses two lines in a row from one person
+ *  about one card - could not tell that it was about the same card as the line above it.
+ *  `ASSIGN_DEV` is the live one; `LEND_A_HAND` was the other, and that one is narrated now. */
+export const aboutCard = (action: object): string | undefined => {
+  const named = action as { id?: string; itemId?: string };
+  return named.id ?? named.itemId;
+};
 
 /** Play the seats nobody is sitting in.
  *
@@ -379,7 +398,7 @@ export function useAiSeats(
           const who = next.dev
             ? { who: 'developer' as const, from: next.dev.name }
             : speaking(now, seat);
-          const about = 'id' in move.action ? (move.action as { id?: string }).id : undefined;
+          const about = aboutCard(move.action);
           send(seat, { type: 'SAY', ...who, text: move.says, itemId: about });
         }
         send(seat, move.action);       // one move at a time, so it reads as somebody working

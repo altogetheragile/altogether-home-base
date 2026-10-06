@@ -33,16 +33,28 @@ const HEX: Record<ChatWho, string> = {
   you: SEAT.developers.hex,
 };
 
-export function Bubble({ msg }: { msg: ChatMessage }) {
+/** The figure's width, so a message that does not draw one still lines up under the one above. */
+const FIGURE = 18;
+
+export function Bubble({ msg, opens = true }: { msg: ChatMessage; opens?: boolean }) {
   const mine = msg.who === 'you';
   return (
-    <li data-part="chat-message" data-who={msg.who}
+    <li data-part="chat-message" data-who={msg.who} data-opens={opens ? 'yes' : 'no'}
       className={cn('flex items-end gap-1.5', mine && 'flex-row-reverse')}>
-      <Person hex={HEX[msg.who]} style={personSize(18)} className="mb-0.5 shrink-0" title={msg.from} />
+      {/* Said twice running by the same person, the name and the figure are furniture: they cost a
+          row of their own every time and say nothing the line above did not. A run is one person
+          talking, drawn as one person talking - the space where the figure would be is kept, so
+          the bubbles still line up under each other. Reported from playing it, with a screenshot
+          of four lines from two people: "can the messaging be combined?" */}
+      {opens
+        ? <Person hex={HEX[msg.who]} style={personSize(FIGURE)} className="mb-0.5 shrink-0" title={msg.from} />
+        : <span aria-hidden className="shrink-0" style={{ width: FIGURE }} />}
       <div className={cn('min-w-0 max-w-[85%]', mine && 'text-right')}>
-        <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {msg.from}
-        </span>
+        {opens && (
+          <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            {msg.from}
+          </span>
+        )}
         {/* The tail is the corner that is not rounded, on the side the speaker is. */}
         {/* Your own bubbles are filled, and filled in the Developers' teal rather than the brand
             orange a filled thing usually is here: the brand orange is the Product Owner's colour,
@@ -95,13 +107,20 @@ export function TeamChat({ state, rail, className }: {
             Nothing said yet. The team talks here while the Sprint runs.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2 py-1">
-            {thread.map((m, i) => (
-              <Fragment key={m.id}>
-                {(i === 0 || thread[i - 1].day !== m.day) && <DayLine day={m.day} />}
-                <Bubble msg={m} />
-              </Fragment>
-            ))}
+          <ul className="flex flex-col py-1">
+            {thread.map((m, i) => {
+              const newDay = i === 0 || thread[i - 1].day !== m.day;
+              // A run is the same person, still on the same day. Only the first of a run is
+              // introduced; the rest sit under it, closer together, because they are one turn.
+              const opens = newDay || thread[i - 1].from !== m.from;
+              return (
+                <Fragment key={m.id}>
+                  {newDay && <DayLine day={m.day} />}
+                  <li className={opens ? 'h-2' : 'h-0.5'} aria-hidden />
+                  <Bubble msg={m} opens={opens} />
+                </Fragment>
+              );
+            })}
           </ul>
         )}
         <div ref={foot} />

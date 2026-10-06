@@ -529,9 +529,15 @@ export function lendAHand(state: ZooGameState, itemId: string, devId: string, by
   const joined: ZooGameState = { ...state, backlog: state.backlog.map((it) => (it.id === itemId
     ? { ...it, assignedDevs: [...(it.assignedDevs ?? []), devId], owedSeconds: owed }
     : it)) };
+  // One line, and it says why. It used to be the bland half of a pair - the Developer played by the
+  // game said why they were helping and then this said that they were - so the thread carried the
+  // same act twice, in two voices, a line apart. Reported from playing it: "can the messaging be
+  // combined?" The beat no longer speaks for this move at all; see `NARRATED`.
   const said = say(joined, { who: dev.id === yourDev(state)?.id ? 'you' : 'developer',
     from: dev.id === yourDev(state)?.id ? 'You' : dev.name, itemId,
-    text: `Giving ${handsOn(state, item)[0]?.name ?? 'you'} a hand with ${item.name}.` });
+    text: `Giving ${handsOn(state, item)[0]?.name ?? 'you'} a hand with ${item.name}. ${alone
+      ? 'Two of us on it finishes it sooner.'
+      : 'It was already being shared, so this buys nothing.'}` });
   return note(said, { kind: 'moved', by: by ?? 'developer',
     what: `${dev.name} put a second pair of hands on ${item.name}.`,
     cost: alone
