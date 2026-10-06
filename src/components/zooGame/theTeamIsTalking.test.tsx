@@ -241,10 +241,16 @@ describe('the beat, putting it in the thread', () => {
     expect(said[0]).toMatchObject({ who: 'developer', from: ben.name });
   });
 
-  it('leaves a pull to the reducer, which knows whether it landed', () => {
+  it('holds a pull up rather than making it, and says nothing twice', () => {
+    // Two rules meeting on one move.
+    //
     // A pull the engine refuses - no room under the WIP limit, a habitat not built yet - is not a
     // thing that happened, and a thread announcing refused moves is a thread nobody can trust. The
     // reducer is the only one that knows, so it does the talking and the beat keeps quiet.
+    //
+    // And a pull is a card movement, so it is asked before it is made: the beat sends the
+    // PROPOSAL and the move itself waits on you. What the Developer would have said travels on
+    // it - the same sentence, said while asking instead of while doing.
     const s = sprint();
     const [ben] = otherDevs(s);
     const free = s.backlog.filter((it) => it.status === 'backlog'
@@ -255,8 +261,12 @@ describe('the beat, putting it in the thread', () => {
         ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
     // ...and you have already taken one, which is what Ben waits for before pulling.
     const sent = run(startItem(open, free[0].id), [ben]);
-    const pull = sent.findIndex((a) => a.type === 'START_ITEM');
-    expect(pull, 'nobody pulled anything, so nothing is being tested').toBeGreaterThanOrEqual(0);
+    expect(sent.some((a) => a.type === 'START_ITEM'),
+      'Ben moved a card without asking').toBe(false);
+    const asked = sent.find((a) => a.type === 'PROPOSE_MOVE');
+    expect(asked, 'nobody asked about anything, so nothing is being tested').toBeTruthy();
+    expect(asked).toMatchObject({ devId: ben.id, move: { kind: 'pull' } });
+    expect((asked as { says: string }).says, 'he held a card up and said nothing').toBeTruthy();
     expect(sent.filter((a) => a.type === 'SAY'),
       'the pull was announced twice: once by the beat and once by the reducer').toHaveLength(0);
   });

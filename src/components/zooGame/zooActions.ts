@@ -53,6 +53,8 @@ export function zooActions(send: (action: ZooAction) => void) {
     answerHuddle: (how: HuddleAnswer) => send({ type: 'ANSWER_HUDDLE', how }),
     /** Put a second pair of hands on a card somebody else is already building. */
     lendAHand: (itemId: string, devId: string) => send({ type: 'LEND_A_HAND', itemId, devId }),
+    agreeMove: () => send({ type: 'AGREE_MOVE' }),
+    declineMove: () => send({ type: 'DECLINE_MOVE' }),
     toggleGoalCritical: (id: string) => send({ type: 'TOGGLE_GOAL_CRITICAL', id }),
     setSprintDays: (days: number) => send({ type: 'SET_SPRINT_DAYS', days }),
     setWipLimit: (limit: number) => send({ type: 'SET_WIP_LIMIT', limit }),

@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember } from './types';
+import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember, ProposedMove } from './types';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -212,6 +212,11 @@ export function tickDay(state: ZooGameState): ZooGameState {
   // taught at - and it is game state rather than one browser's idea, so in a shared game the hold
   // is everybody's. That is the trainer's pause-all in miniature.
   if (state.clockPaused) return state;
+  // ...and held while a Developer is holding a card up waiting on you. The question is on the rail
+  // and the Sprint is not going anywhere until it is answered, so charging the day for the time
+  // you spend reading it would be the game asking you to hurry - which is the thing that was
+  // wrong. See `waitingOnYou`.
+  if (state.proposed) return state;
   if (state.learnMode || state.phase !== 'sprint') return state;
   if (state.dayStage !== 'building' && state.dayStage !== 'dayStart') return state;
   const left = state.daySecondsLeft - 1;
@@ -3829,7 +3834,10 @@ export function endDay(state: ZooGameState): ZooGameState {
   // can end from either stage (the pause uses real time).
   if (state.phase !== 'sprint' || (state.dayStage !== 'building' && state.dayStage !== 'dayStart')) return state;
   // Anything still on the rail that was theirs to answer, they answer. The day is what runs out.
-  const closed = settleOpenQuestions(state);
+  // ...and a card somebody was holding up is put back down, with what you turned down today. "Not
+  // yet" is an answer about today: tomorrow they may ask again, and a Developer who could never
+  // ask twice would eventually have nothing left to offer.
+  const closed = { ...settleOpenQuestions(state), proposed: null, declined: [] };
   // Sample the burndown as the day closes: committed points still remaining.
   const s = { ...closed, burndown: [...closed.burndown, sprintProgress(closed).remaining] };
   // The last day ends straight to the Review: there is no next day to re-plan.
@@ -5177,4 +5185,87 @@ export function valueMeasures(state: ZooGameState): {
       how: 'Points delivered on new items, over all points delivered.',
       moves: 'Rises when the Definition of Done holds. Falls when work comes back to be fixed.' },
   ];
+}
+
+// ============= Nothing moves a card but you =============
+//
+// Reported from playing it: "The pulling of the PBIs and the messages that pop up is very quick and
+// confusing. All card movements need to be at least prompted and agreed."
+//
+// The colleagues worked at about a move a second. A card was taken, built and asked about before
+// the line saying it had been taken had been read, and the thread scrolled while you were reading
+// it. Speed was not the only fault: a board that moves by itself is a board you watch rather than
+// one you work, and the one thing a Sprint Backlog is FOR is that the Developers own it.
+//
+// So a Developer played by the game no longer moves a card. They hold it up and say what they want
+// to do, in their own name, and wait. While they are waiting the day clock holds - a game that
+// charges you for reading has not slowed down at all - and no other colleague acts, because two
+// people holding up cards is the queue that was wrong with the old pace.
+//
+// WHAT THIS IS NOT. Developers self-organise: nobody's permission is needed to pull a card, and a
+// game that made you approve your colleagues' every move would teach the opposite of that. This is
+// a pace control for a learner, not a rule of Scrum, and the rail says so.
+
+/** The moves that have to be agreed before they happen: the ones that move a card between columns.
+ *
+ *  Lending a hand is not here. It moves nobody's card - it puts a second pair of hands on one that
+ *  is already in Doing - and stopping to agree it would make the WIP-limit lesson it exists to
+ *  teach into an interruption. */
+export const ASKS_FIRST = new Set(['START_ITEM', 'FINISH_ITEM', 'SET_FORECAST']);
+
+/** Whether a Developer is holding up a card, waiting on you. */
+export const waitingOnYou = (state: ZooGameState): boolean => !!state.proposed;
+
+/** How a declined move is remembered: this Developer, this card, today. */
+const turnedDown = (devId: string, move: ProposedMove): string =>
+  `${devId}:${move.kind === 'forecast' ? move.ids.join('+') : move.itemId}`;
+
+/** Whether this Developer has already been told "not yet" about this card today. */
+export const wasTurnedDown = (state: ZooGameState, devId: string, move: ProposedMove): boolean =>
+  (state.declined ?? []).includes(turnedDown(devId, move));
+
+/** A Developer holds a card up instead of moving it.
+ *
+ *  Ignored while another is already waiting: one question at a time is the whole point. */
+export function proposeMove(state: ZooGameState, devId: string, move: ProposedMove, says: string): ZooGameState {
+  if (state.proposed) return state;
+  if (!state.team.developers.some((d) => d.id === devId)) return state;
+  if (wasTurnedDown(state, devId, move)) return state;
+  return { ...state, proposed: { id: `p${state.dayNumber}-${(state.chat ?? []).length}`, devId, move, says, day: state.dayNumber } };
+}
+
+/** You agree, and the move happens - in the asker's name, so the board and the thread say exactly
+ *  what they would have said if the Developer had simply done it.
+ *
+ *  And nothing else. A "Go ahead." of your own in the thread would put the count back to two lines
+ *  for one act, which is the fault this game has just had taken out of it: the asking happens on
+ *  the rail, and the thread records what happened. One movement, one line. */
+export function agreeMove(state: ZooGameState): ZooGameState {
+  const p = state.proposed;
+  if (!p) return state;
+  const dev = state.team.developers.find((d) => d.id === p.devId);
+  // Their own sentence, said once, at the moment the thing happens. Not the reducer's "Taking X
+  // next.": the asking went through here rather than through the action, so the narration the
+  // reducer would have written never ran - and what they said when they asked is better anyway.
+  const said = say({ ...state, proposed: null }, { who: 'developer', from: dev?.name ?? 'The Developers',
+    text: p.says, itemId: p.move.kind === 'forecast' ? undefined : p.move.itemId });
+  if (p.move.kind === 'pull') return startItem(said, p.move.itemId, 'developer', p.devId);
+  if (p.move.kind === 'finish') return finishItem(said, p.move.itemId, 'developer');
+  return planSprint(said, p.move.ids);
+}
+
+/** You say not yet. The card stays where it is, and the Developer does not ask again about it
+ *  today - "not yet" that is asked again a second later is not an answer, it is a nag. */
+export function declineMove(state: ZooGameState): ZooGameState {
+  const p = state.proposed;
+  if (!p) return state;
+  const dev = state.team.developers.find((d) => d.id === p.devId);
+  // No line in the thread: nothing happened, and a thread of things that did not happen is a
+  // thread nobody reads. It goes to the decision log, which is where what-already-happened lives
+  // and where the Retrospective reads it back.
+  const put = { ...state, proposed: null,
+    declined: [...(state.declined ?? []), turnedDown(p.devId, p.move)] };
+  return note(put, { kind: 'moved', by: 'developer',
+    what: `${dev?.name ?? 'A Developer'} asked and was told not yet.`,
+    cost: 'Nothing moved. In Scrum the Developers would not have had to ask - the Sprint Backlog is theirs, and who takes what is theirs to settle. This game asks so you can see each move.' });
 }
