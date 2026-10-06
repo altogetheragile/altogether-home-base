@@ -4,7 +4,7 @@ import { ENCLOSURE_SIZE, footprintFor, isLandscapeType, type ItemDesign, current
 import { autoLayout, insidePark, CANVAS_W, PAD, PLAY_H, PROMENADE_Y } from './parkLayout';
 import { zonePlots, type Plot } from './parkZones';
 import { outlineOf } from './parkOutline';
-import { riverY, BANK, acrossTheWater } from './parkWater';
+import { riverY, BANK, acrossTheWater, riverBand } from './parkWater';
 
 // ============= One park, described once =============
 //
@@ -246,7 +246,49 @@ export function parkPositions(standing: Standing[], plots: Map<string, Plot>): M
   // where nobody can walk to you is not, so the overflow goes on the visitors' side of the water
   // first, and only takes what is left over if there is no room there either.
   const rest = loose.filter((s) => !out.has(s.item.id) && !isLandscapeType(parkType(s.item) ?? ''));
-  for (const [id, at] of nearBankFirst(rest.map(box), busy)) out.set(id, at);
+
+  // A building that belongs to no area still stands in one.
+  //
+  // The toilets and the benches are in `Facilities`, which owns no ground on purpose - they are
+  // the fabric between the areas and they may go anywhere. "Anywhere" was read by the packer as
+  // whatever gap it found first, and the gaps are nearly all inside somebody's plot: the toilets
+  // landed in the top corner of the Big Cats, COVERING a slot without standing in it, so the slot
+  // was neither free nor occupied and the next habitat had nowhere to go. Reported from playing
+  // it: "the seating area and toilets are in the middle and block the placement of other
+  // enclosures."
+  //
+  // A zoo puts its toilets in an area, beside the path, where a visitor walking round can find
+  // them - which is what a slot is. So they take one: the slots left after every area's own work
+  // has taken its own, nearest the way in first. Competing for the last slot is a real thing to
+  // see and move something about; half-covering one is not.
+  //
+  // Only the things visitors walk up to. A flowerbed does not need to be reachable and would only
+  // be taking a habitat's place, so scenery still fills in around the edges as it did.
+  // From the back, and on the visitors' side of the water.
+  //
+  // The areas fill from the way in, so a toilet taking the first free slot it finds takes it out of
+  // the area the Sprint is about - the complaint moved rather than fixed. Filling from the far end
+  // means the two only meet when the zoo is genuinely full, which is a thing worth seeing.
+  //
+  // But not the far BANK. The back row of plots is across the river, and a toilet put there is a
+  // toilet no visitor can reach until somebody builds the bridge - so its own criterion ("can I
+  // walk to it from the way in?") fails for a reason nobody chose. Being crowded is an argument;
+  // being stranded by a layout is a bug, and this module already says so about the overflow.
+  const river = riverBand();
+  const open = [...plots.values()].flatMap((p) => outlineOf(p).slots)
+    .filter((sl) => !busy.some((t) =>
+      Math.abs(t.x - sl.at.x) < (t.w + sl.size.w) / 2 && Math.abs(t.y - sl.at.y) < (t.h + sl.size.h) / 2));
+  const spare = [...open.filter((sl) => sl.at.y > river.y1).reverse(),
+    ...open.filter((sl) => sl.at.y <= river.y1).reverse()];
+  for (const s of rest.filter((r) => r.item.category === 'amenity')) {
+    const i = spare.findIndex((sl) => sl.size.w >= s.size.w && sl.size.h >= s.size.h);
+    if (i < 0) continue;
+    const [sl] = spare.splice(i, 1);
+    out.set(s.item.id, sl.at);
+    busy.push({ ...box(s), ...sl.at });
+  }
+
+  for (const [id, at] of nearBankFirst(rest.filter((s) => !out.has(s.item.id)).map(box), busy)) out.set(id, at);
   const terrain = loose.filter((s) => !out.has(s.item.id));
   for (const [id, at] of autoLayout(terrain.map(box), busy)) out.set(id, at);
   return out;

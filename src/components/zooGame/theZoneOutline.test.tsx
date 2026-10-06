@@ -138,7 +138,11 @@ describe('the ground that is kept clear', () => {
     const r = reserved(park());
     expect(r.length, 'nothing is reserved at all').toBe(outlines(park()).length + 1);
     const apron = entranceApron();
-    expect(r).toContainEqual(apron);
+    // The box, and the reason it is kept clear. The reason travels with it because the only reader
+    // that matters is somebody who has just been told no, and "kept clear" on its own is the
+    // computer being fussy.
+    expect(r).toContainEqual({ ...apron, why: expect.stringMatching(/way in/) });
+    expect(r.every((k) => !!k.why), 'ground is kept clear for no stated reason').toBe(true);
     expect(apron.y, 'the apron is not in front of the way in').toBeLessThan(PROMENADE_Y);
   });
 
