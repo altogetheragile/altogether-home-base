@@ -6,6 +6,7 @@ import { DayClock } from './DayClock';
 import { SeatBand } from './SeatBand';
 import { eventPill, goalLine } from './header';
 import { inHandItem, structureChosen } from './engine';
+import { putDownByHand } from './buildGroups';
 import { ParkOptions } from './ParkOptions';
 import { ParkInspector } from './ParkInspector';
 import { footprintFor } from './design';
@@ -317,7 +318,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // the thing in your hands with its kind already decided, so the first act of building was dropping
   // somebody else's decision on the grass. Reported from playing it: "as soon as I pick the card the
   // studio has me placing an enclosure. I want to start the action myself from the toolbar."
-  const placingId = moving ?? (inHand && edit && inHand.category !== 'path' && !inHand.pos
+  // ...and not for something that has no spot of its own. A path is drawn rather than dropped and
+  // an animal lives in its habitat, so neither is a thing you carry to a place and let go of. See
+  // `putDownByHand`, which the On the park menu reads too.
+  const placingId = moving ?? (inHand && edit && putDownByHand(inHand) && !inHand.pos
     && structureChosen(inHand) ? inHand.id : null);
   /** Which corner to dock the inspector in: the one furthest from the thing you are working on, so
    *  what it is telling you about is never underneath it. */
