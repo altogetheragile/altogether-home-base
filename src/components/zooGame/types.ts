@@ -508,6 +508,26 @@ export interface Ledger {
   net: number;
 }
 
+/** A move somebody wants to make, waiting on you.
+ *
+ *  The move is named rather than carried: a `{ kind, itemId }` survives being written to a
+ *  database and read back in another browser, and a closure does not. */
+export type ProposedMove =
+  | { kind: 'pull'; itemId: string }
+  | { kind: 'finish'; itemId: string }
+  | { kind: 'forecast'; ids: string[] };
+
+export interface Proposal {
+  id: string;
+  /** Which Developer is asking. They ask in their own name, the way they say everything else. */
+  devId: string;
+  move: ProposedMove;
+  /** What they said, in their own words - the same sentence they would have said doing it. */
+  says: string;
+  /** The day it was raised. A question about today does not outlive today. */
+  day: number;
+}
+
 export interface ZooGameState {
   phase: ZooPhase;
   /** The one Scrum Team - the accountabilities made visible (PO, Scrum Master, Developers). */
@@ -553,6 +573,23 @@ export interface ZooGameState {
    *  took. Unanswered past the threshold, the Developers answer it themselves and the guess is
    *  logged - which is the honest cost of an absent Product Owner. */
   questions?: GameQuestion[];
+
+  /** A card movement a Developer played by the game wants to make, and has not made.
+   *
+   *  Reported from playing it: "The pulling of the PBIs and the messages that pop up is very quick
+   *  and confusing. All card movements need to be at least prompted and agreed."
+   *
+   *  The colleagues worked at about a move a second, so a card arrived in Doing, was built and was
+   *  asked about before anybody had read the line that said it had been taken. Nothing moves a
+   *  card now except you, or somebody asking you first - and while one of these is open the day
+   *  clock holds, because a game that charges you for reading has not slowed down at all.
+   *
+   *  One at a time. Two Developers each holding up a card is a queue, and a queue is the thing
+   *  that was wrong with the old pace. */
+  proposed?: Proposal | null;
+  /** Moves turned down today, as `devId:itemId`, so the same Developer does not ask about the same
+   *  card twice in a row. Cleared when the day ends: "not yet" is about now, not for ever. */
+  declined?: string[];
 
   /** What the team has said to each other this Sprint, oldest first.
    *
@@ -807,6 +844,9 @@ export type ZooAction =
   | { type: 'SAY'; who: ChatWho; from: string; text: string; itemId?: string; kind?: ChatKind }
   | { type: 'ANSWER_HUDDLE'; how: HuddleAnswer; by?: string }
   | { type: 'LEND_A_HAND'; itemId: string; devId: string; by?: string }
+  | { type: 'PROPOSE_MOVE'; devId: string; move: ProposedMove; says: string }
+  | { type: 'AGREE_MOVE' }
+  | { type: 'DECLINE_MOVE' }
   | { type: 'START_ITEM'; id: string; by?: string;
       /** The Developer taking it, where a particular one is. Absent when you pull it yourself:
        *  the board writes down whoever has least on. */

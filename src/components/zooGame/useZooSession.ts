@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ZooGameState, ZooAction, ScrumTeamMember } from './types';
+import type { ZooGameState, ZooAction, ScrumTeamMember, ProposedMove } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
 import { aiTurn, aiDevTurn } from './aiSeats';
-import { speaking, teamIsBusy } from './engine';
+import { speaking, teamIsBusy, ASKS_FIRST, waitingOnYou, wasTurnedDown } from './engine';
 import type { SeatName } from './useZooSessions';
 import { useTabAway } from './useTabAway';
 
@@ -264,6 +264,18 @@ export const NARRATED = new Set(['START_ITEM', 'LEND_A_HAND']);
  *  bubble belonged to no card, and `say` - which collapses two lines in a row from one person
  *  about one card - could not tell that it was about the same card as the line above it.
  *  `ASSIGN_DEV` is the live one; `LEND_A_HAND` was the other, and that one is narrated now. */
+/** The move an action would make, named so it can be written down and asked about.
+ *
+ *  Null for anything that is not one of the three card movements, which is how `ASKS_FIRST` and
+ *  this cannot drift apart: a type in the set with no shape here simply goes through unasked. */
+export function asProposed(action: object): ProposedMove | null {
+  const a = action as { type: string; id?: string; ids?: string[] };
+  if (a.type === 'START_ITEM' && a.id) return { kind: 'pull', itemId: a.id };
+  if (a.type === 'FINISH_ITEM' && a.id) return { kind: 'finish', itemId: a.id };
+  if (a.type === 'SET_FORECAST' && a.ids?.length) return { kind: 'forecast', ids: a.ids };
+  return null;
+}
+
 export const aboutCard = (action: object): string | undefined => {
   const named = action as { id?: string; itemId?: string };
   return named.id ?? named.itemId;
@@ -331,6 +343,12 @@ export function useAiSeats(
       const { state: now, sendAs: send, table: at } = latest.current;
       const { onSay: say, skip } = at;
       let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>>; dev?: ScrumTeamMember } | null = null;
+      // Somebody is already holding a card up. Nobody else acts until that is answered: two
+      // colleagues each waiting on you is a queue, and a queue is what was wrong with the old pace.
+      if (now && waitingOnYou(now)) {
+        if (live) timer = setTimeout(beat, BEAT_MS);
+        return;
+      }
       if (now) {
         for (const seat of (seats ? seats.split(',') : []) as SeatName[]) {
           // Busy HANDS take no new work. While there is time owed on what they have already taken
@@ -360,6 +378,22 @@ export function useAiSeats(
           if (!move || !mayTake(move.action.type, { seat: 'developer' }).allowed) continue;
           if (skip?.(move.action)) continue;
           next = { seat: 'developer', move, dev }; break;
+        }
+      }
+      // A card movement is held up rather than made. Reported from playing it: "the pulling of the
+      // PBIs ... is very quick and confusing. All card movements need to be at least prompted and
+      // agreed." So the colleague says what they want to do and waits; `proposeMove` records it,
+      // the rail asks you, and `tickDay` holds the day while it is open. See `ASKS_FIRST`.
+      //
+      // Only the colleagues. A seat nobody is sitting in is not a Developer beside you - it is the
+      // Product Owner answering a question or the Scrum Master running an event, and neither moves
+      // a card between columns.
+      if (next?.dev && ASKS_FIRST.has(next.move.action.type) && now) {
+        const move = asProposed(next.move.action);
+        if (move && !wasTurnedDown(now, next.dev.id, move)) {
+          send(next.seat, { type: 'PROPOSE_MOVE', devId: next.dev.id, move, says: next.move.says });
+          if (live) timer = setTimeout(beat, BEAT_MS);
+          return;
         }
       }
       if (next) {

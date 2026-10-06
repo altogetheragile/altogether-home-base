@@ -31,7 +31,7 @@ type RailAction = {
   note?: string;
 };
 
-export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, className }: {
+export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, onAgreeMove, onDeclineMove, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   onAnswerPlacement?: (id: string, choice: string) => void;
@@ -46,6 +46,9 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   onAddProposal?: (draft: PbiDraft) => void;
   onSplitEpic?: (id: string, memberIds: string[]) => void;
   onDeclineProposal?: (id: string) => void;
+  /** Agree to the card movement a colleague is holding up, or tell them not yet. */
+  onAgreeMove?: () => void;
+  onDeclineMove?: () => void;
   className?: string;
 }) {
   const [at, setAt] = useState(0);
@@ -54,6 +57,32 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   const [seen, setSeen] = useState<string | null>(null);
   const asks = asksNow(state);
   const actions: RailAction[] = [];
+
+  // A colleague holding a card up, waiting on you. First on the rail and alone on it: the day
+  // clock is held while this is open and nobody else is doing anything, so anything behind it is
+  // a thing you cannot act on yet.
+  //
+  // Reported from playing it: "the pulling of the PBIs and the messages that pop up is very quick
+  // and confusing. All card movements need to be at least prompted and agreed."
+  const held = state.proposed;
+  if (held && onAgreeMove && onDeclineMove) {
+    const who = state.team.developers.find((d) => d.id === held.devId);
+    const move = held.move;
+    const card = move.kind === 'forecast' ? null : state.backlog.find((it) => it.id === move.itemId);
+    actions.push({
+      id: held.id, actor: who?.name ?? 'Developers',
+      text: `${who?.name ?? 'A Developer'}: ${held.says}`,
+      answers: [
+        { label: move.kind === 'pull' ? 'Yes, take it'
+          : move.kind === 'finish' ? 'Yes, move it to Done' : 'Yes, forecast those',
+        primary: true, act: onAgreeMove },
+        { label: 'Not yet', act: onDeclineMove },
+      ],
+      // Whose call this really is. A game that asks your permission for a colleague's pull has
+      // taught the opposite of a Developer-owned Sprint Backlog unless it says so out loud.
+      note: `The clock is held while you decide${card ? ` about ${card.name}` : ''}. In Scrum nobody would be asking: who takes what is the Developers' to settle between them. The game asks so that you see every move.`,
+    });
+  }
 
   // A question put to an accountability, with the clock running on it. The Developers are standing
   // still while it is open; past the threshold they answer it themselves and the guess is logged.
@@ -155,7 +184,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   const you = yourDev(state);
   const yoursInHand = !!you && state.backlog.some((it) => it.status === 'committed' && it.started
     && !it.design && it.sprintNumber === state.sprintNumber && it.pulledBy === you.id);
-  const inTheDay = state.phase === 'sprint' && state.dayStage === 'building';
+  const inTheDay = state.phase === 'sprint' && state.dayStage === 'building' && !held;
   if (inTheDay && !yoursInHand && onStartItem) {
     const wip = activeWipLimit(state);
     const doing = state.backlog.filter((it) => it.status === 'committed' && it.started
