@@ -1008,8 +1008,15 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       )}
 
       {/* The message centre, under the work it is about: what is being asked of somebody, and what
-          has just happened. One channel, and an action here is answered or it waits. */}
-      {!dayStarting && state.dayStage !== 'dailyScrum' && rail}
+          has just happened. One channel, and an action here is answered or it waits.
+          Half the pane, the board the other half. It used to take whatever it needed up to 40vh
+          while the board took everything left over, so the two were never the same size and
+          usually not close: a board holding two cards had a hundred and eighty pixels and the
+          thread had three hundred and sixty. Asked for: "I want the message window and the board
+          to be similar in height and width." */}
+      {!dayStarting && state.dayStage !== 'dailyScrum' && (
+        <div data-part="message-centre" className="flex min-h-0 flex-1 basis-0 flex-col">{rail}</div>
+      )}
 
       {/* An item's detail, in the one place it lives. */}
       <CardDialog state={state} item={cardId ? state.backlog.find((it) => it.id === cardId) ?? null : null}
