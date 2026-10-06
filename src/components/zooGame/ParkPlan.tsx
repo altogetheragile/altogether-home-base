@@ -618,7 +618,15 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       if (!onPlaceItem) return;
       const p = worldAt(ev);
       if (!p) return;
-      const v = verdict(b.item.id, b.size, { x: p.x - grabX, y: p.y - grabY });
+      const at = { x: p.x - grabX, y: p.y - grabY };
+      // An animal let go over a habitat is MOVING IN, which is the only thing dragging an animal
+      // can mean: it has no spot of its own, so a position written down for it is a position the
+      // park never reads. The ghost has always said "into the Lion Enclosure" here and the drop
+      // only wrote the position, so the one animal you can still drag - one whose habitat is not
+      // built yet, or that has not been given one - landed nowhere and nothing said why.
+      const home = homeUnder(b.item.id, b.size, at);
+      if (home) { if (onPlace) onPlace(b.item.id, at, undefined, home.item.id); return; }
+      const v = verdict(b.item.id, b.size, at);
       if (v.ok) onPlaceItem(b.item.id, { x: v.x, y: v.y });
     };
     window.addEventListener('pointermove', move);

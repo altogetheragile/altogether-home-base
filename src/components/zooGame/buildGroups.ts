@@ -96,6 +96,22 @@ const building = (it: BacklogItem) => it.category === 'amenity';
 const flora = (it: BacklogItem) => it.category === 'flora';
 const path = (it: BacklogItem) => it.category === 'path';
 
+/** Whether this is a thing you put down on the park yourself.
+ *
+ *  A path is drawn rather than dropped. An animal is STOCKED: it has no spot of its own, it lives
+ *  inside its habitat, and the park draws it there - which is what its own criterion asks ("Can I
+ *  find them in their habitat?") and what the Lives in control decides.
+ *
+ *  Three places in the game already knew that and one did not. Picking a lion's card put the lion
+ *  under the cursor with exactly one thing it could ever say - "an animal lives in a habitat - drop
+ *  it on one" - about the habitat already named on its own card, and dropping it there wrote down
+ *  what was already true. Reported from playing it: "Placing lions in the Lion Enclosure is a step
+ *  I thought we were going to remove."
+ *
+ *  One rule, read by the On the park menu and by the thing that puts something in your hands, so
+ *  the two cannot drift apart again. */
+export const putDownByHand = (it: BacklogItem): boolean => !path(it) && !animal(it);
+
 export const GROUPS: GroupDef[] = [
   // ---- what kind of thing this is: the first decision, and the one that makes the rest possible ----
   //
@@ -167,7 +183,7 @@ export const GROUPS: GroupDef[] = [
   { id: 'path', writes: ['parts.thickness', 'colors.path', 'state.connectors'], label: 'Paths', icon: 'paths', meets: ['walkable-to', 'joins-up', 'side-by-side'],
     applies: (it) => path(it) || habitat(it) || building(it) },
   { id: 'park', writes: ['item.rot', 'item.pos'], label: 'On the park', icon: 'on-the-park', meets: ['crosses-water'],
-    applies: (it) => !path(it) && !animal(it) },
+    applies: putDownByHand },
 ];
 
 export const groupsFor = (item: BacklogItem): GroupDef[] => GROUPS.filter((g) => g.applies(item));

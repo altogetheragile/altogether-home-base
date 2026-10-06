@@ -15,6 +15,12 @@ import type { ZooGameState, BacklogItem } from './types';
 // wanted the pointer strictly inside the habitat's own box, the ghost asked a rule that knows
 // nothing about animals, and between them a lion let go where the ghost said no landed nowhere and
 // nothing said why.
+//
+// Which animal this is about has since narrowed. An animal whose card already names its habitat is
+// never handed to you at all - see `anAnimalIsStocked` - because dropping it on the pen it belongs
+// to only writes down what the card already says. The gesture is for the animal nobody has given a
+// home to: the drop is what names one, so it is the one case where carrying a lion decides
+// anything. The lion here has no habitat, which is why it is in your hands.
 
 const HOME = { x: 300, y: 800 };
 
@@ -24,7 +30,9 @@ const park = (): { s: ZooGameState; lion: BacklogItem; pen: BacklogItem } => {
   const lion = base.backlog.find((it) => it.category === 'exhibit' && it.enclosureId === pen.id)!;
   const built = { ...pen, status: 'open' as const, started: true, sprintNumber: 1,
     enclosureSize: 'large' as const, design: presetFor(pen), pos: HOME } as BacklogItem;
-  const held = { ...lion, status: 'committed' as const, started: true, sprintNumber: 1 } as BacklogItem;
+  // No habitat named on the card: the one animal there is still a placement to make for.
+  const held = { ...lion, status: 'committed' as const, started: true, sprintNumber: 1,
+    enclosureId: undefined } as BacklogItem;
   return {
     s: { ...base, phase: 'sprint', sprintNumber: 1,
       backlog: base.backlog.map((it) => (it.id === pen.id ? built : it.id === lion.id ? held : it)) } as ZooGameState,
@@ -108,5 +116,48 @@ describe('carrying an animal over its habitat', () => {
     const ghost = container.querySelector('[data-part="ghost"]')!;
     expect(ghost.textContent, 'an animal on the grass is refused with no reason').toMatch(/habitat/i);
     expect(ghost.querySelector('rect')?.getAttribute('stroke')).toBe('#dc2626');
+  });
+});
+
+// ...and the same gesture when the animal is already out there.
+//
+// An animal with no habitat stands on the grass of its own area rather than vanishing, and it can
+// be picked up. That drag drew the same green ghost promising "into the Lion Enclosure" and then
+// wrote a POSITION, which is the one thing an animal does not have: the park draws it inside its
+// habitat or not at all, so the position was read by nothing and the lion stayed on the grass.
+describe('dragging an animal that is already standing', () => {
+  const outside = (): { s: ZooGameState; lion: BacklogItem; pen: BacklogItem } => {
+    const { s, lion, pen } = park();
+    // Built, so visitors could walk to it - and the lion beside it, belonging nowhere.
+    const out = { ...lion, status: 'open' as const } as BacklogItem;
+    return { s: { ...s, backlog: s.backlog.map((it) => (it.id === lion.id ? out : it)) } as ZooGameState,
+      lion: out, pen };
+  };
+
+  const standing = (s: ZooGameState, onPlace: (...a: unknown[]) => void) => {
+    const r = render(<ParkPlan state={s} onPlaceItem={() => {}} onPlace={onPlace as never} />);
+    const svg = r.container.querySelector('[data-part="park-plan"]')!;
+    svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 820, height: 760,
+      right: 820, bottom: 760, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+    return { ...r, svg };
+  };
+
+  it('moves it in, rather than writing down a spot nothing reads', () => {
+    const onPlace = vi.fn();
+    const { s, lion, pen } = outside();
+    const { container, svg } = standing(s, onPlace);
+    const from = container.querySelector(`[data-plan-item="${lion.id}"]`);
+    expect(from, 'the homeless lion is not on the park to pick up').toBeTruthy();
+    const at = penAt(container, svg, pen.id);
+    // Taken hold of by its middle. A drag carries whatever the grab offset was, so pressing a
+    // corner of the park and letting go over the pen aims the lion that far off the pen.
+    const grab = penAt(container, svg, lion.id);
+    fireEvent.pointerDown(from!, { clientX: grab.x, clientY: grab.y });
+    // Far enough to count as a drag: a press that does not move opens the card instead.
+    fireEvent.pointerMove(window, { clientX: at.x, clientY: at.y });
+    fireEvent.pointerUp(window, { clientX: at.x, clientY: at.y });
+    expect(onPlace, 'the lion was dropped on the habitat and nothing happened').toHaveBeenCalled();
+    const [, , , into] = onPlace.mock.calls[0] as [string, unknown, unknown, string];
+    expect(into, 'it was given a position instead of a home').toBe(pen.id);
   });
 });
