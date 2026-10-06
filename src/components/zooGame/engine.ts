@@ -5,7 +5,7 @@ import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
 import { riverY, BANK, spansTheWater } from './parkWater';
 import { tune } from './tuning';
 import { zonePlots, plotOrder } from './parkZones';
-import { reserved, freeSlots, onReservedGround } from './parkOutline';
+import { reserved, freeSlots, onReservedGround, whyReserved } from './parkOutline';
 // Re-exported below as well; a re-export is not a local binding, and this module asks the question
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
@@ -2441,12 +2441,17 @@ export function setItemPos(state: ZooGameState, id: string, pos: { x: number; y:
   return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, pos: at } : it)) };
 }
 
-/** Why a drop was refused, for a screen that wants to say so. Null when it would be taken. */
+/** Why a drop would be refused, for the ghost that has to say so. Null when it would be taken.
+ *
+ *  This had no readers for a while, and the cost of that was exact: `setItemPos` refused a drop on
+ *  reserved ground and the ghost - which asks its own question - knew nothing about it. So the box
+ *  under the cursor went green, the drop did nothing, and nothing anywhere said why. Reported from
+ *  playing it: "I cannot move the structures."
+ *
+ *  Two rules for one gesture, for the third time in this park. The ghost asks this now. */
 export const whyNotHere = (state: ZooGameState, item: BacklogItem,
-  pos: { x: number; y: number }): string | null => (
-  onReservedGround(state, { ...pos, ...groundSize(item) })
-    ? 'That ground is kept clear: the path through the area runs there, and the way in has to stay open.'
-    : null);
+  pos: { x: number; y: number }): string | null =>
+  whyReserved(state, { ...pos, ...groundSize(item) });
 
 /** Position an item WITHIN its parent enclosure (0..1 fractions of the habitat box) - drag an
  *  animal to a spot inside its enclosure rather than letting it auto-arrange. */

@@ -132,18 +132,32 @@ export function allSlots(state: Parameters<typeof zonePlots>[0]): Slot[] {
   return outlines(state).flatMap((o) => o.slots);
 }
 
+/** A piece of ground that is kept clear, and what it is kept clear FOR.
+ *
+ *  The reason travels with the box because the only reader that matters is a person who has just
+ *  been told no. "Kept clear" on its own is the computer being fussy; "the way in has to stay
+ *  clear" is the rule the zoo is built on. */
+export interface Keep extends Box { why: string }
+
 /** The ground nothing may be built on: every spine, and the apron in front of the way in. */
-export function reserved(state: Parameters<typeof zonePlots>[0]): Box[] {
-  return [...outlines(state).map((o) => o.spine), entranceApron()];
+export function reserved(state: Parameters<typeof zonePlots>[0]): Keep[] {
+  return [
+    ...outlines(state).map((o) => ({ ...o.spine, why: `the path through ${o.zone} runs here` })),
+    { ...entranceApron(), why: 'the way in has to stay clear' },
+  ];
 }
 
 const overlaps = (a: Box, b: Box): boolean =>
   Math.abs(a.x - b.x) < (a.w + b.w) / 2 && Math.abs(a.y - b.y) < (a.h + b.h) / 2;
 
-/** Whether a thing standing here would be on ground that is kept clear. The one question the park
- *  could not answer, and the reason a lion enclosure ended up across a path. */
+/** Why a thing standing here may not, or null when it may. The one question the park could not
+ *  answer, and the reason a lion enclosure ended up across a path. */
+export const whyReserved = (state: ZooGameState, box: Box): string | null =>
+  reserved(state).find((r) => overlaps(r, box))?.why ?? null;
+
+/** Whether a thing standing here would be on ground that is kept clear. */
 export const onReservedGround = (state: ZooGameState, box: Box): boolean =>
-  reserved(state).some((r) => overlaps(r, box));
+  whyReserved(state, box) !== null;
 
 /** Which slot, if any, something standing here is in. */
 export const slotAt = (state: ZooGameState, at: Pt): Slot | undefined =>

@@ -8,7 +8,7 @@ import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
 import { ENTRANCE } from './parkNetwork';
 
-import { hasGround, groundPrice } from './engine';
+import { hasGround, groundPrice, whyNotHere } from './engine';
 import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -558,7 +558,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // A bridge snaps to the water. Which part of the river to cross is a real decision and stays
     // yours; how squarely it sits on the water is not a decision anybody makes well by eye, and a
     // bridge that misses by six pixels is a bridge nobody can cross for a reason nobody can see.
-    const crossing = (state.backlog.find((it) => it.id === id)?.template ?? '') === 'bridge';
+    const item = state.backlog.find((it) => it.id === id);
+    const crossing = (item?.template ?? '') === 'bridge';
     const at = insidePark(box, crossing ? acrossTheWater(box, w) : w);
     // Snapped is not strayed: a bridge lands on the water rather than under the pointer, on purpose.
     const aim = crossing ? acrossTheWater(box, w) : w;
@@ -566,7 +567,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // Everything belongs to an area of the zoo, and every area owns its ground. Refused rather than
     // slid quietly into place: where the Savanna is is worth learning, and a thing that lands
     // somewhere other than where you let go of it teaches nothing.
-    const zone = state.backlog.find((it) => it.id === id)?.zone;
+    const zone = item?.zone;
     const plot = plotFor(state, zone);
     const strayed = !off && plot && !insidePlot(plot, box, at);
     // Nothing is built in the river. The exception is the one thing whose whole job is to cross it.
@@ -579,18 +580,42 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
     // An animal over a habitat is moving IN. Its own zone still applies - a lion belongs in the Big
     // Cats - but the habitat it is aimed at is the point of the gesture rather than something in
     // the way of it.
+    // The ground the park keeps clear, asked of the engine so the ghost and the drop cannot give
+    // two answers. They used to: `setItemPos` refused a drop on the spine and the ghost went green
+    // over it, so letting go did nothing and nothing said why - "I cannot move the structures".
+    const kept = !off && item ? whyNotHere(state, item, at) : null;
     const home = homeUnder(id, box, at);
     if (home) {
       return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed,
         why: off ? 'off the park' : strayed ? `outside the ${zone} area` : undefined,
         into: home.item.name };
     }
-    const animal = state.backlog.find((it) => it.id === id)?.category === 'exhibit';
-    return { x: at.x, y: at.y, w: box.w, h: box.h, ok: !off && !strayed && !wet && !over && !animal,
-      why: off ? 'off the park' : wet ? 'in the river' : strayed ? `outside the ${zone} area`
+    const animal = item?.category === 'exhibit';
+    return { x: at.x, y: at.y, w: box.w, h: box.h,
+      ok: !off && !kept && !strayed && !wet && !over && !animal,
+      // Whose ground it is comes first. A Big Cats habitat let go on the Waterside's path is
+      // refused twice over, and "outside the Big Cats area" is the half worth saying: the other
+      // one invites you to try a few pixels to the left, on ground that was never yours.
+      why: off ? 'off the park' : strayed ? `outside the ${zone} area` : kept ?? (wet ? 'in the river'
         : over ? `on top of ${over.item.name}`
-        : animal ? 'an animal lives in a habitat - drop it on one' : undefined };
+        : animal ? 'an animal lives in a habitat - drop it on one' : undefined) };
   };
+
+  /** Where the ghost starts when something is being put down without a pointer.
+   *
+   *  The middle of the item's own area, it used to be, tried before anything else: "the one place
+   *  it is certain to be allowed". That stopped being true the day an area got a spine, because the
+   *  middle of a plot IS the corridor - so the first thing a keyboard user met was a refusal they
+   *  had not caused, and the next pace was another one.
+   *
+   *  A free slot in the item's OWN area is the answer: it is where the thing is going anyway, it
+   *  faces the path, and a slot is allowed by construction. Its OWN area and no other: the next
+   *  free slot in the park is as often somebody else's ground, and opening on "outside the Big Cats
+   *  area" is the same refusal in different words. A full area falls through to wherever the park
+   *  has laid the thing out, which is the honest answer when there is no room left. */
+  const placeStart = (item: BacklogItem, box: { w: number; h: number }) => item.pos
+    ?? free.find((sl) => sl.zone === item.zone && sl.size.w >= box.w && sl.size.h >= box.h)?.at
+    ?? restingPlace(item, box, auto) ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
 
   /** Drag something that is already standing: it follows the pointer and lands where you let go. */
   const dragFrom = (e: ReactPointerEvent, b: typeof boxes[number]) => {
@@ -803,10 +828,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           // "outside the Big Cats area" from a corner nobody had aimed at, and there was nothing on
           // screen to say which way to walk.
           const item = state.backlog.find((it) => it.id === placing.id) ?? ({} as BacklogItem);
-          const plot = plotFor(state, item.zone);
-          const from = item.pos ?? (plot ? { x: (plot.x0 + plot.x1) / 2, y: (plot.y0 + plot.y1) / 2 } : null)
-            ?? restingPlace(item, placing, auto) ?? { x: CANVAS_W / 2, y: PLAY_H / 2 };
-          const at = ghost ?? verdict(placing.id, placing, from);
+          const at = ghost ?? verdict(placing.id, placing, placeStart(item, placing));
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             if (at.ok && onPlace) { onPlace(placing.id, { x: at.x, y: at.y }); setGhost(null); }
@@ -827,10 +849,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
             : { x: CANVAS_W / 2, y: PLAY_H / 2 }));
         } : placing ? () => {
           const item = state.backlog.find((it) => it.id === placing.id) ?? ({} as BacklogItem);
-          const plot = plotFor(state, item.zone);
-          setGhost((g) => g ?? verdict(placing.id, placing, item.pos
-            ?? (plot ? { x: (plot.x0 + plot.x1) / 2, y: (plot.y0 + plot.y1) / 2 } : null)
-            ?? restingPlace(item, placing, auto) ?? { x: CANVAS_W / 2, y: PLAY_H / 2 }));
+          setGhost((g) => g ?? verdict(placing.id, placing, placeStart(item, placing)));
         } : undefined}
         // Fitted to the room it is given rather than sized off its width, so the whole picture - the
         // promenade and the way in included - is always above the day's dock in the corner. Sized by

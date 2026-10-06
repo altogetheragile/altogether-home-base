@@ -6,6 +6,8 @@ import { ScrumOnePagerBody } from './ScrumTeaching';
 import { SCRUM_INTRO, SCRUM_CARDS } from './scrumContent';
 import { initialZooState } from './config';
 import { startOnTheBoard } from './engine';
+import { footprintFor } from './design';
+import { plotFor } from './parkZones';
 import type { ZooGameState, BacklogItem } from './types';
 
 // The park, without a pointer.
@@ -18,13 +20,18 @@ import type { ZooGameState, BacklogItem } from './types';
 
 const park = (): ZooGameState => startOnTheBoard(initialZooState(1) as ZooGameState);
 const first = (s: ZooGameState) => s.backlog.find((it) => it.status === 'committed')!;
+/** Where the thing being nudged stands: on its own area's ground, left of the corridor. */
+const HERE = 160;
 
 describe('moving something that is standing', () => {
   const standing = (): ZooGameState => {
     const s = park();
     const it0 = first(s);
+    // Clear of the corridor that runs up the middle of its area, with ten paces of room to its
+    // right. The middle of a plot IS the corridor, so a habitat standing there is standing on the
+    // path and the arrows are refused - correctly, and by the same rule a drag is refused by.
     return { ...s, backlog: s.backlog.map((x) => (x.id === it0.id
-      ? { ...x, started: true, pos: { x: 500, y: 800 } } : x)) } as ZooGameState;
+      ? { ...x, started: true, pos: { x: HERE, y: 800 } } : x)) } as ZooGameState;
   };
 
   it('can be reached by keyboard at all', () => {
@@ -50,10 +57,10 @@ describe('moving something that is standing', () => {
     const g = container.querySelector(`[data-plan-item="${first(s).id}"]`)!;
     fireEvent.keyDown(g, { key: 'ArrowRight' });
     expect(moves.length, 'the arrows move nothing').toBe(1);
-    const pace = moves[0].x - 500;
+    const pace = moves[0].x - HERE;
     expect(pace, 'a pace is backwards or nothing').toBeGreaterThan(0);
     fireEvent.keyDown(g, { key: 'ArrowRight', shiftKey: true });
-    expect(moves[1].x - 500, 'Shift does not stride').toBeGreaterThan(pace);
+    expect(moves[1].x - HERE, 'Shift does not stride').toBeGreaterThan(pace);
   });
 
   it('is refused by the same rule a drag is refused by', () => {
@@ -76,6 +83,55 @@ describe('putting something down', () => {
     const svg = container.querySelector('[data-part="park-plan"]')!;
     expect(svg.getAttribute('tabindex'), 'the park cannot be focused with something in hand').toBe('0');
     expect(svg.getAttribute('aria-label'), 'it does not say how to put it down').toMatch(/arrow keys|Enter/i);
+  });
+
+  it('starts somewhere it is allowed to go', () => {
+    // A pointer starts the ghost wherever the player chose, so it is never wrong by default. A
+    // keyboard has to be given a spot, and the spot it was given was the middle of the item's own
+    // area - "the one place it is certain to be allowed". That stopped being true the day an area
+    // got a corridor up its middle, and the first thing a keyboard user met was a refusal they had
+    // not caused, with another one a pace away in three directions.
+    const s = park();
+    const { container } = render(
+      <ParkPlan state={s} placing={{ id: first(s).id, ...footprintFor(first(s)) }} onPlace={() => {}} />,
+    );
+    fireEvent.focus(container.querySelector('[data-part="park-plan"]')!);
+    const ghost = container.querySelector('[data-part="ghost"]')!;
+    expect(ghost, 'nothing showed where it would land').toBeTruthy();
+    expect(ghost.querySelector('rect')?.getAttribute('stroke'),
+      `it opens on a refusal: ${ghost.textContent}`).toBe('#059669');
+    // ...and in the item's own area. The next free slot in the PARK is as often somebody else's
+    // ground, and "outside the Big Cats area" is the same refusal in different words.
+    const plot = plotFor(s, first(s).zone)!;
+    const at = { x: Number(ghost.querySelector('rect')!.getAttribute('x')) + Number(ghost.querySelector('rect')!.getAttribute('width')) / 2,
+      y: Number(ghost.querySelector('rect')!.getAttribute('y')) + Number(ghost.querySelector('rect')!.getAttribute('height')) / 2 };
+    expect(at.x, 'it opens on another area’s ground').toBeGreaterThanOrEqual(plot.x0);
+    expect(at.x).toBeLessThanOrEqual(plot.x1);
+    expect(at.y).toBeGreaterThanOrEqual(plot.y0);
+    expect(at.y).toBeLessThanOrEqual(plot.y1);
+  });
+
+  it('starts in the area the item belongs to, not the first area with room', () => {
+    // The nearest free slot in the PARK is as often somebody else's ground, and the refusal it
+    // opens on - "outside the Savanna area" - is the same dead end wearing different words.
+    const base = park();
+    const held = { ...first(base), zone: 'Savanna' };
+    const s = { ...base, backlog: base.backlog.map((x) => (x.id === held.id ? held : x)) } as ZooGameState;
+    const { container } = render(
+      <ParkPlan state={s} placing={{ id: held.id, ...footprintFor(held) }} onPlace={() => {}} />,
+    );
+    fireEvent.focus(container.querySelector('[data-part="park-plan"]')!);
+    const ghost = container.querySelector('[data-part="ghost"]')!;
+    expect(ghost.querySelector('rect')?.getAttribute('stroke'),
+      `it opens on a refusal: ${ghost.textContent}`).toBe('#059669');
+    const plot = plotFor(s, 'Savanna')!;
+    const rect = ghost.querySelector('rect')!;
+    const x = Number(rect.getAttribute('x')) + Number(rect.getAttribute('width')) / 2;
+    expect(x, 'it opened on the first area with room, not the item’s own')
+      .toBeGreaterThanOrEqual(plot.x0);
+    const y = Number(rect.getAttribute('y')) + Number(rect.getAttribute('height')) / 2;
+    expect(y, 'it opened on the first area with room, not the item’s own').toBeLessThanOrEqual(plot.y1);
+    expect(y).toBeGreaterThanOrEqual(plot.y0);
   });
 
   it('puts it down on Enter', () => {
