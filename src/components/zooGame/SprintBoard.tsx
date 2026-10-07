@@ -17,7 +17,6 @@ import { PickCard } from './PickCard';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
 import { toolboxDraft } from './toolboxItems';
-import { goalLine } from './header';
 import type { EditApi } from './ParkView';
 import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
@@ -212,10 +211,6 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
 export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
-  // Whether the Sprint Goal is safe - the strip's own arithmetic, read here rather than worked out
-  // a second time. Two opinions about one Sprint is how a board tells you something the strip does
-  // not.
-  const goalSafe = goalLine(state);
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
   // ...and which item has just been pulled into Doing and is waiting for somebody to take it.
@@ -497,11 +492,18 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
             <span className="font-normal normal-case tracking-normal text-muted-foreground">
               commitment of the Sprint Backlog
             </span>
-            <span data-part="goal-verdict"
-              className={cn('ml-auto font-normal normal-case tracking-normal',
-                goalSafe.risk ? TONE.attention.text : 'text-muted-foreground')}>
-              {goalSafe.line}
-            </span>
+            {/* The verdict is not here any more.
+                It was written to be the strip's arithmetic read a second time where the work is
+                chosen, and on the screen a Sprint is actually played it came out as the same
+                sentence twice, word for word, 170 pixels apart:
+
+                  Goal safe · 0 of 3 items · 0 of 13 pts        <- the strip, always on screen
+                  SPRINT GOAL  commitment of the Sprint Backlog · Goal safe · 0 of 3 items...
+
+                Asked after playing it: "Can the spaces be better used?" The strip keeps it,
+                because the strip is on every screen and this banner is on one. What this banner
+                is for is the Goal ITSELF, in full, beside the cards - which is what it still does
+                and what the strip, truncated to a line, never could. */}
           </div>
           {/* Big enough to read at a glance and wrapping rather than truncating: the whole fault
               was that it could not be read. */}

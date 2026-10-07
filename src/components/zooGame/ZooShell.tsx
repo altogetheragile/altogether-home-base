@@ -405,7 +405,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           <div className="flex flex-1 justify-center"><DayClock state={state} onPause={onSetClockPaused} /></div>
 
           {/* Is the Sprint Goal safe. The answer in bold, from the Sprint's own arithmetic; the Goal
-              itself in small type under it, opening in full when you ask for it. */}
+              itself in small type under it, opening in full when you ask for it.
+              The one place the verdict is written. The board's banner below carries the Goal in
+              full where the work is chosen, and used to carry the verdict on the end of its label
+              as well - the same words, 170 pixels apart. See the banner in `SprintBoard`. */}
           <Popover>
             <PopoverTrigger asChild>
               <button type="button" data-part="goal-line" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
