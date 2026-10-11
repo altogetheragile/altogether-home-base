@@ -62,12 +62,21 @@ describe('the Sprint Goal on the Sprint Backlog', () => {
       .toMatch(/No Sprint Goal/i);
   });
 
-  it('carries the verdict the strip carries, from the same arithmetic', () => {
-    // Two places working out whether the Sprint is safe is two places that can disagree about one
-    // Sprint. This reads `goalLine`, which is what the strip reads.
-    const { container } = board(sprint());
-    expect(container.querySelector('[data-part="goal-verdict"]')!.textContent!.length)
-      .toBeGreaterThan(0);
+  it('leaves the verdict to the strip, which is on every screen', () => {
+    // It used to carry the verdict as well, read from `goalLine` so the two could not disagree
+    // about one Sprint. They never did disagree - they agreed so exactly that on the screen a
+    // Sprint is played on, the same sentence was printed twice, 170 pixels apart. Asked after
+    // playing it: "Can the spaces be better used?"
+    //
+    // One copy cannot disagree with itself, which is the stronger version of what this was for.
+    // The strip keeps it because the strip is on every screen; the banner is on this one, and
+    // what the banner is for is the Goal itself, in full, beside the cards.
+    const s = sprint();
+    const { container } = board(s);
+    expect(container.querySelector('[data-part="goal-verdict"]'),
+      'the board is still printing the strip’s arithmetic').toBeNull();
+    expect(container.querySelector('[data-part="sprint-goal"]')!.textContent,
+      'the board lost the Goal along with the verdict').toContain(s.sprintGoal);
   });
 
   it('is not shown where there is no Sprint to have one', () => {
