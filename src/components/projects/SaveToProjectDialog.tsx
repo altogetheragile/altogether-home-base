@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,6 @@ import { useProjects, useProjectMutations } from "@/hooks/useProjects";
 import { useProjectArtifactMutations } from "@/hooks/useProjectArtifacts";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Plus, FolderOpen } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
 interface SaveToProjectDialogProps {
@@ -38,6 +37,8 @@ export const SaveToProjectDialog = ({
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
   const [newProjectColor, setNewProjectColor] = useState("#3B82F6");
+  // Opened from inside an initiative, the dialog saves there unless asked to choose
+  const [choosing, setChoosing] = useState(!preselectedProjectId);
 
   const { data: projects, isLoading: projectsLoading } = useProjects();
   const { createProject } = useProjectMutations();
@@ -45,11 +46,22 @@ export const SaveToProjectDialog = ({
 
   const resetForm = () => {
     setMode("existing");
-    setSelectedProjectId("");
+    setSelectedProjectId(preselectedProjectId || "");
+    setChoosing(!preselectedProjectId);
     setNewProjectName("");
     setNewProjectDescription("");
     setNewProjectColor("#3B82F6");
   };
+
+  useEffect(() => {
+    if (open) resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, preselectedProjectId]);
+
+  const homeProject = preselectedProjectId
+    ? projects?.find((p) => p.id === preselectedProjectId)
+    : undefined;
+  const savingHome = Boolean(homeProject) && !choosing;
 
   const handleSave = async () => {
     try {
@@ -132,10 +144,26 @@ export const SaveToProjectDialog = ({
         <DialogHeader>
           <DialogTitle>Save to Initiative</DialogTitle>
           <DialogDescription>
-            Choose an existing initiative or create a new one to save your {artifactType}.
+            {savingHome
+              ? "This saves into the initiative you opened it from."
+              : `Choose an existing initiative or create a new one to save your ${artifactType}.`}
           </DialogDescription>
         </DialogHeader>
 
+        {savingHome && homeProject ? (
+          <div className="space-y-3 py-4">
+            <div className="flex items-center gap-2 p-3 rounded-md border border-primary bg-primary/5 min-w-0">
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: homeProject.color_theme || "#3B82F6" }}
+              />
+              <p className="font-medium text-sm truncate">{homeProject.name}</p>
+            </div>
+            <Button variant="link" className="h-auto p-0" onClick={() => setChoosing(true)}>
+              Choose another initiative
+            </Button>
+          </div>
+        ) : (
         <div className="space-y-4 py-4">
           <RadioGroup value={mode} onValueChange={(value) => setMode(value as "existing" | "new")}>
             <div className="flex items-center space-x-2">
@@ -162,12 +190,15 @@ export const SaveToProjectDialog = ({
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : projects && projects.length > 0 ? (
-                <ScrollArea className="h-[200px] border rounded-md">
+                // A plain scroller: Radix ScrollArea sizes its content to fit, so truncate never bites
+                <div className="max-h-[200px] overflow-y-auto border rounded-md">
                   <div className="p-2 space-y-2">
                     {projects.map((project) => (
-                      <div
+                      <button
+                        type="button"
                         key={project.id}
-                        className={`p-3 rounded-md border cursor-pointer transition-colors ${
+                        aria-pressed={selectedProjectId === project.id}
+                        className={`w-full text-left p-3 rounded-md border cursor-pointer transition-colors ${
                           selectedProjectId === project.id
                             ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
@@ -188,10 +219,10 @@ export const SaveToProjectDialog = ({
                             )}
                           </div>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center p-4">
                   No initiatives found. Create a new one instead.
@@ -240,6 +271,7 @@ export const SaveToProjectDialog = ({
             </div>
           )}
         </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
