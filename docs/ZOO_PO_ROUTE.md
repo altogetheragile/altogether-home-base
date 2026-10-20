@@ -156,12 +156,12 @@ What the zoo does not take from the tool: a priority badge. In the zoo the order
 1. **The tool's card reads like the zoo's.** Journey treatment from status, "?" points, priority in the backlog's scheme, the duplicate source badge gone. Touches the tool only.
 2. **One card shell for both.** Pull the zoo's `PbiCard` layout into a shell that takes an icon, a name, a state and its chips; the zoo's card becomes a thin wrapper over it, looking exactly as it does now (checked by screenshot). The tool's card moves onto the same shell.
 3. **Story and criteria on the tool's card**, shown when the card is opened, as the zoo's refinement panel shows them.
-4. **The Product Goal.** Each product backlog gets a Product Goal of its own, shown at the top, with the initiative's "why" kept above it on the initiative.
+4. **The Product Goal.** Written on the roadmap slice; each product backlog shows the goal of the slice it was made from at the top, with the initiative's "why" kept on the initiative. Waits for the roadmap (Build Order step 1).
 
-### To Decide
+### Decided (20 October 2026)
 
-- **Simple (Critical to Low) as a scheme.** Its four levels sit beside an ordered list. Keep it, or let Simple mean "the order is the priority" and show no badge.
-- **Where a Product Goal is written.** On the backlog itself, or on the roadmap slice that becomes it (Build Order step 1), with the backlog showing it.
+- **Simple means the order is the priority.** No levels, no badge, nothing asked when adding an item: the item's place in the list says it. MoSCoW and WSJF stay for a team that wants a technique on top. An item's stored level is kept, and shows again if the backlog switches to MoSCoW.
+- **A Product Goal is written on the roadmap slice** that becomes it (Build Order step 1). The Product Backlog shows the goal of the slice it was made from; it is not typed in a second time on the backlog.
 
 ## Build Order
 

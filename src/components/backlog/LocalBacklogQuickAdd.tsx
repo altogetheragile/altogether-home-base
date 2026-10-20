@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { ItemType } from '@/types/story';
 import { StoryTypeSelector } from './StoryTypeSelector';
 import { ParentSelector } from './ParentSelector';
+import { useActiveScheme } from './SchemeContext';
 
 interface LocalBacklogQuickAddProps {
   onAddItem: (item: LocalBacklogItemInput) => void;
@@ -24,13 +25,6 @@ const SOURCES = [
   { value: 'ai_suggestion', label: 'AI Suggestion' },
 ];
 
-const PRIORITIES = [
-  { value: 'critical', label: 'Critical' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
-
 export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({ 
   onAddItem,
   potentialParents = [],
@@ -38,7 +32,13 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('medium');
+  // Priority is asked in the backlog's own scheme, and only where the scheme has levels: under
+  // Simple the order is the priority, and WSJF is scored in the item's editor.
+  const scheme = useActiveScheme();
+  const levels = scheme.type === 'ordinal' ? scheme.options ?? [] : [];
+  const middling = levels[2]?.value ?? 'medium';
+  const [priority, setPriority] = useState('');
+  const chosenPriority = levels.some((l) => l.value === priority) ? priority : middling;
   const [source, setSource] = useState('enhancement');
   const [estimatedValue, setEstimatedValue] = useState('');
   const [estimatedEffort, setEstimatedEffort] = useState('');
@@ -55,7 +55,7 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({
       title: title.trim(),
       description: description.trim() || null,
       acceptance_criteria: null,
-      priority,
+      priority: chosenPriority,
       source,
       status: 'idea',
       estimated_value: estimatedValue ? Number(estimatedValue) : null,
@@ -68,7 +68,7 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({
 
     setTitle('');
     setDescription('');
-    setPriority('medium');
+    setPriority('');
     setSource('enhancement');
     setEstimatedValue('');
     setEstimatedEffort('');
@@ -147,14 +147,15 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {levels.length > 0 && (
             <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select value={priority} onValueChange={setPriority}>
+              <Label>Priority <span className="font-normal text-muted-foreground">({scheme.name})</span></Label>
+              <Select value={chosenPriority} onValueChange={setPriority}>
                 <SelectTrigger>
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRIORITIES.map((p) => (
+                  {levels.map((p) => (
                     <SelectItem key={p.value} value={p.value}>
                       {p.label}
                     </SelectItem>
@@ -162,6 +163,7 @@ export const LocalBacklogQuickAdd: React.FC<LocalBacklogQuickAddProps> = ({
                 </SelectContent>
               </Select>
             </div>
+            )}
             
             <div className="space-y-2">
               <Label>Source</Label>
