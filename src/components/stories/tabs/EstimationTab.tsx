@@ -59,7 +59,11 @@ export function EstimationTab({ data, onChange, mode }: EstimationTabProps) {
       {/* Priority (scheme-aware) */}
       <div className="space-y-2">
         <Label>Priority <span className="font-normal text-muted-foreground">({scheme.name})</span></Label>
-        {scheme.type === 'ordinal' ? (
+        {scheme.type === 'order' ? (
+          <p className="text-sm text-muted-foreground">
+            The order is the priority. Drag the item up or down the Product Backlog.
+          </p>
+        ) : scheme.type === 'ordinal' ? (
           <div className="flex flex-wrap gap-2">
             {scheme.options!.map((p) => (
               <Button

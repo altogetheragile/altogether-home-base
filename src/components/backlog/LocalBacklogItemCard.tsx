@@ -55,6 +55,8 @@ interface LocalBacklogItemCardProps {
 /** Priority as this backlog's scheme says it. An item stored under another scheme ('medium'
  *  under MoSCoW) is shown at the same rank in this one, never in a word from the other. */
 const priorityBadge = (scheme: PrioritisationScheme, item: LocalBacklogItem) => {
+  // The order is the priority: the card's place says it, a badge would say it twice
+  if (scheme.type === 'order') return null;
   if (scheme.type === 'scored') {
     const score = scheme.score?.(item.priority_data || {}) ?? null;
     return score === null

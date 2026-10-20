@@ -28,8 +28,9 @@ export interface PrioritisationScheme {
   name: string;
   description: string;
   stretch: string;
-  /** ordinal: a discrete priority stored in backlog_items.priority. scored: numbers in priority_data. */
-  type: 'ordinal' | 'scored';
+  /** order: the backlog's order is the priority, nothing else is asked. ordinal: a discrete
+   *  priority stored in backlog_items.priority. scored: numbers in priority_data. */
+  type: 'order' | 'ordinal' | 'scored';
   options?: PriorityOption[];
   fields?: ScoredField[];
   /** scored schemes: higher means do first. Null when not enough numbers yet. */
@@ -66,19 +67,16 @@ const wsjfScore = (data: Record<string, number>): number | null => {
 };
 
 export const SCHEMES: Record<SchemeId, PrioritisationScheme> = {
+  // The Scrum Guide's Product Backlog is an ordered list, so the plain scheme is the order itself.
+  // Levels beside it gave every item a second priority that could disagree with its place, a
+  // "Low" above a "High". MoSCoW and WSJF remain for a team that wants a technique on top.
   simple: {
     id: 'simple',
-    name: 'Simple (Critical to Low)',
-    description: 'Four ordered levels, from Critical to Low.',
-    stretch: 'Which Must would you quietly trade away under pressure?',
-    type: 'ordinal',
-    options: [
-      { value: 'critical', label: 'Critical', color: 'bg-destructive text-destructive-foreground' },
-      { value: 'high', label: 'High', color: 'bg-orange-500 text-white' },
-      { value: 'medium', label: 'Medium', color: 'bg-primary text-primary-foreground' },
-      { value: 'low', label: 'Low', color: 'bg-muted text-muted-foreground' },
-    ],
-    rank: (i) => ordinalRank(i.priority),
+    name: 'Simple (Order Only)',
+    description: 'The order is the priority: drag an item up or down. No levels.',
+    stretch: 'If only the top item were built, would it be the right one?',
+    type: 'order',
+    rank: () => 3,
   },
   moscow: {
     id: 'moscow',
@@ -128,6 +126,8 @@ export const defaultSchemeForKind = (kind?: string | null): SchemeId =>
 
 /** Compare two items by a scheme: higher priority first. */
 export const compareByScheme = (scheme: PrioritisationScheme, a: PrioritisationItem, b: PrioritisationItem): number => {
+  // Ordered by position: a stable sort leaves the backlog's own order alone
+  if (scheme.type === 'order') return 0;
   if (scheme.type === 'scored' && scheme.score) {
     const sa = scheme.score(a.priority_data || {}) ?? -Infinity;
     const sb = scheme.score(b.priority_data || {}) ?? -Infinity;
