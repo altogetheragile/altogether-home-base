@@ -131,6 +131,10 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
   const childTypes = getChildItemTypes(item.item_type);
   const canSplit = (item.acceptance_criteria?.length || 0) >= 2;
   const priority = priorityBadge(useActiveScheme(), item);
+  // Opened as the zoo's card opens: the story and each criterion, read without the editor
+  const [open, setOpen] = React.useState(false);
+  const criteria = item.acceptance_criteria ?? [];
+  const isStory = /^\s*as an? /i.test(item.description ?? '');
 
   const TypeIcon = TYPE_ICONS[item.item_type] ?? FileText;
   const journey = JOURNEY[item.status] ?? JOURNEY.idea;
@@ -261,11 +265,21 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
         detail={(item.description || item.acceptance_criteria?.length || item.estimated_value != null || item.tags?.length) ? (
           <div className="mt-1 pl-6">
             {item.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+              // A description written as a story reads as the zoo's story does, in italics
+              <p className={cn('text-xs text-muted-foreground', isStory && 'italic', !open && 'line-clamp-2')}>{item.description}</p>
             )}
             <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              {item.acceptance_criteria && item.acceptance_criteria.length > 0 && (
-                <span>{item.acceptance_criteria.length} acceptance criteria</span>
+              {criteria.length > 0 && (
+                <button
+                  type="button"
+                  className="flex items-center gap-0.5 hover:text-foreground"
+                  aria-expanded={open}
+                  onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                >
+                  <ChevronRight className={cn('h-3 w-3 transition-transform', open && 'rotate-90')} />
+                  {criteria.length} acceptance criteria
+                </button>
               )}
               {item.estimated_value != null && <span>Value: {item.estimated_value}</span>}
               {item.tags && item.tags.length > 0 && (
@@ -276,6 +290,16 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                 </span>
               )}
             </div>
+            {open && criteria.length > 0 && (
+              <div className="mt-1.5 border-t border-border/60 pt-1.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Acceptance criteria</div>
+                <ul className="mt-0.5 space-y-0.5">
+                  {criteria.map((c, i) => (
+                    <li key={i} className="flex gap-1.5 text-[11px] text-muted-foreground"><span className="text-muted-foreground/50">&bull;</span><span>{c}</span></li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         ) : undefined}
       />
