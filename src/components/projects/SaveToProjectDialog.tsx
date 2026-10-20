@@ -150,8 +150,10 @@ export const SaveToProjectDialog = ({
           </DialogDescription>
         </DialogHeader>
 
+        {/* DialogContent is a grid: without min-w-0 its one column grows to the longest
+            untruncated line, and the cards and buttons spill past the dialog's edge */}
         {savingHome && homeProject ? (
-          <div className="space-y-3 py-4">
+          <div className="space-y-3 py-4 min-w-0">
             <div className="flex items-center gap-2 p-3 rounded-md border border-primary bg-primary/5 min-w-0">
               <div
                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -164,7 +166,7 @@ export const SaveToProjectDialog = ({
             </Button>
           </div>
         ) : (
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 min-w-0">
           <RadioGroup value={mode} onValueChange={(value) => setMode(value as "existing" | "new")}>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="existing" id="existing" />
@@ -190,7 +192,6 @@ export const SaveToProjectDialog = ({
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : projects && projects.length > 0 ? (
-                // A plain scroller: Radix ScrollArea sizes its content to fit, so truncate never bites
                 <div className="max-h-[200px] overflow-y-auto border rounded-md">
                   <div className="p-2 space-y-2">
                     {projects.map((project) => (
