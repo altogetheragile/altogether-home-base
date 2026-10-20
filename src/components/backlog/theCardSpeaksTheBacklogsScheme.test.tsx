@@ -49,7 +49,8 @@ describe('the card speaks the backlog\'s scheme', () => {
     expect(screen.getByTitle(/Not sized yet/).textContent).toBe('?');
     unmount();
     show('simple', item({ estimated_effort: 3 }));
-    expect(screen.getByText('3 pts')).toBeTruthy();
+    // As on the zoo's list rows: the number, titled as a size
+    expect(screen.getByTitle('Size, in points').textContent).toBe('3');
   });
 
   it('names the source once', () => {
