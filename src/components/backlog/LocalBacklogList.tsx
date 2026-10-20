@@ -59,7 +59,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   ];
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'flat' | 'hierarchical'>('hierarchical');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -130,11 +130,28 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
     });
   }, []);
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
+  // Order is kept by item, not by row number: the grouped view numbers only the top level,
+  // and a filter hides items, so a row's index is not its place in the backlog.
+  const siblingsOf = (item: LocalBacklogItem) =>
+    viewMode === 'flat'
+      ? filteredItems
+      : filteredItems.filter((i) => (i.parent_item_id ?? null) === (item.parent_item_id ?? null));
+
+  const moveItem = useCallback((fromId: string, toId: string) => {
+    const all = [...items].sort((a, b) => a.backlog_position - b.backlog_position);
+    const from = all.findIndex((i) => i.id === fromId);
+    const to = all.findIndex((i) => i.id === toId);
+    if (from === -1 || to === -1 || from === to) return;
+    const [moved] = all.splice(from, 1);
+    all.splice(to, 0, moved);
+    onReorderItems(all.map((item, idx) => ({ id: item.id, backlog_position: idx })));
+  }, [items, onReorderItems]);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
     if (!isEditable) return;
-    setDraggedIndex(index);
+    setDraggedId(id);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', index.toString());
+    e.dataTransfer.setData('text/plain', id);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -142,48 +159,20 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = useCallback((e: React.DragEvent, targetIndex: number) => {
+  const handleDrop = (e: React.DragEvent, target: LocalBacklogItem) => {
     e.preventDefault();
-    if (!isEditable || draggedIndex === null || draggedIndex === targetIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-
-    const reorderedItems = [...filteredItems];
-    const [removed] = reorderedItems.splice(draggedIndex, 1);
-    reorderedItems.splice(targetIndex, 0, removed);
-
-    const updates = reorderedItems.map((item, idx) => ({
-      id: item.id,
-      backlog_position: idx,
-    }));
-
-    onReorderItems(updates);
-    setDraggedIndex(null);
-  }, [draggedIndex, filteredItems, onReorderItems, isEditable]);
-
-  const handleMoveUp = (index: number) => {
-    if (!isEditable || index === 0) return;
-    const reorderedItems = [...filteredItems];
-    [reorderedItems[index - 1], reorderedItems[index]] = [reorderedItems[index], reorderedItems[index - 1]];
-    
-    const updates = reorderedItems.map((item, idx) => ({
-      id: item.id,
-      backlog_position: idx,
-    }));
-    onReorderItems(updates);
+    e.stopPropagation();
+    const dragged = items.find((i) => i.id === draggedId);
+    setDraggedId(null);
+    if (!isEditable || !dragged || dragged.id === target.id) return;
+    // In the grouped view an item moves among its own siblings; changing parent is an edit
+    if (viewMode === 'hierarchical' && (dragged.parent_item_id ?? null) !== (target.parent_item_id ?? null)) return;
+    moveItem(dragged.id, target.id);
   };
 
-  const handleMoveDown = (index: number) => {
-    if (!isEditable || index === filteredItems.length - 1) return;
-    const reorderedItems = [...filteredItems];
-    [reorderedItems[index], reorderedItems[index + 1]] = [reorderedItems[index + 1], reorderedItems[index]];
-    
-    const updates = reorderedItems.map((item, idx) => ({
-      id: item.id,
-      backlog_position: idx,
-    }));
-    onReorderItems(updates);
+  const neighbour = (item: LocalBacklogItem, step: -1 | 1) => {
+    const siblings = siblingsOf(item);
+    return siblings[siblings.findIndex((i) => i.id === item.id) + step];
   };
 
   const handleEdit = (item: LocalBacklogItem) => {
@@ -290,18 +279,20 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   // Render item with children recursively
   const renderItem = (item: LocalBacklogItem, index: number, indentLevel: number = 0) => {
     const childrenCount = getChildrenCount(item.id);
+    const above = neighbour(item, -1);
+    const below = neighbour(item, 1);
     const isExpanded = expandedItems.has(item.id);
     const children = isExpanded ? getChildren(item.id) : [];
 
     return (
       <React.Fragment key={item.id}>
         <div
-          draggable={isEditable && viewMode === 'flat'}
-          onDragStart={(e) => handleDragStart(e, index)}
+          draggable={isEditable}
+          onDragStart={(e) => handleDragStart(e, item.id)}
           onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, index)}
-          onDragEnd={() => setDraggedIndex(null)}
-          className={draggedIndex === index ? 'opacity-50' : ''}
+          onDrop={(e) => handleDrop(e, item)}
+          onDragEnd={() => setDraggedId(null)}
+          className={draggedId === item.id ? 'opacity-50' : ''}
         >
           <div className="flex items-start gap-2">
             {isEditable && (
@@ -319,9 +310,9 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
                 onUpdate={(updates) => onUpdateItem(item.id, updates)}
                 onDelete={() => onDeleteItem(item.id)}
                 onEdit={() => handleEdit(item)}
-                onMoveUp={isEditable && index > 0 ? () => handleMoveUp(index) : undefined}
-                onMoveDown={isEditable && index < filteredItems.length - 1 ? () => handleMoveDown(index) : undefined}
-                isDragging={draggedIndex === index}
+                onMoveUp={isEditable && above ? () => moveItem(item.id, above.id) : undefined}
+                onMoveDown={isEditable && below ? () => moveItem(item.id, below.id) : undefined}
+                isDragging={draggedId === item.id}
                 isEditable={isEditable}
                 childrenCount={childrenCount}
                 onAddChild={onAddItem && item.item_type !== 'story' ? () => setAddChildParent(item) : undefined}
