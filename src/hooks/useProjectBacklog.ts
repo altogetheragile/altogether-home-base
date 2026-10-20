@@ -42,7 +42,7 @@ const mapRow = (item: Record<string, unknown>, index: number): LocalBacklogItem 
 
 export function useProjectBacklog(projectId?: string, backlogId?: string) {
   const queryClient = useQueryClient();
-  const key = ['backlog-items', projectId, backlogId ?? 'all'];
+  const key = useMemo(() => ['backlog-items', projectId, backlogId ?? 'all'], [projectId, backlogId]);
 
   const { data, isLoading } = useQuery({
     queryKey: key,
@@ -61,7 +61,7 @@ export function useProjectBacklog(projectId?: string, backlogId?: string) {
   });
 
   const items = useMemo<LocalBacklogItem[]>(() => data || [], [data]);
-  const invalidate = useCallback(() => queryClient.invalidateQueries({ queryKey: key }), [queryClient, projectId]);
+  const invalidate = useCallback(() => queryClient.invalidateQueries({ queryKey: key }), [queryClient, key]);
 
   const addItem = useCallback(async (input: LocalBacklogItemInput) => {
     if (!projectId) return;
@@ -114,11 +114,20 @@ export function useProjectBacklog(projectId?: string, backlogId?: string) {
   }, [items, invalidate]);
 
   const reorderItems = useCallback(async (updates: { id: string; backlog_position: number }[]) => {
-    for (const u of updates) {
-      await supabase.from('backlog_items').update({ backlog_position: u.backlog_position }).eq('id', u.id);
-    }
+    // Show the new order at once: waiting on one update per item made a drop look like it did nothing
+    const at = new Map(updates.map((u) => [u.id, u.backlog_position]));
+    queryClient.setQueryData<LocalBacklogItem[]>(key, (prev) =>
+      prev
+        ?.map((i) => (at.has(i.id) ? { ...i, backlog_position: at.get(i.id)! } : i))
+        .sort((a, b) => a.backlog_position - b.backlog_position),
+    );
+    const changed = updates.filter((u) => items.find((i) => i.id === u.id)?.backlog_position !== u.backlog_position);
+    const results = await Promise.all(changed.map((u) =>
+      supabase.from('backlog_items').update({ backlog_position: u.backlog_position }).eq('id', u.id),
+    ));
+    if (results.some((r) => r.error)) toast.error('The new order did not save. Showing the saved order.');
     invalidate();
-  }, [invalidate]);
+  }, [queryClient, key, items, invalidate]);
 
   // No-ops in relational mode (data lives in the table, not local state).
   const clearItems = useCallback(() => {}, []);
