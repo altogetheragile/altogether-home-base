@@ -12,7 +12,7 @@ const StoryMapPage = () => {
     <div className="flex min-h-screen flex-col">
       <SEOHead
         title="User Story Map"
-        description="Build a Jeff Patton user story map: a backbone of activities, story cards beneath each, and release slices that right-size your backlog. Coached on each card, then push the whole map to your backlog. Export to PNG, PDF, JSON and Markdown."
+        description="Build a user story map in three tiers: the journey as a backbone, stories beneath each step, and smaller stories in priority order. Slice it into Now, Next and Later, each with its own Product Goal, then send the Now slice to your backlog. Export to PNG, PDF, JSON and Markdown."
         path="/story-map"
       />
       <Navigation />
@@ -25,9 +25,10 @@ const StoryMapPage = () => {
             </Link>
             <h1 className="text-3xl font-bold text-foreground md:text-4xl">User Story Map</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
-              Lay out the user's flow as a backbone of activities, stack the stories beneath each, and slice them
-              into releases so the first slice is the thinnest thing that still works end to end. Then push the map
-              to your backlog, right-sized.
+              Lay out the user's journey as a backbone, put the stories under each step and the smaller stories
+              under those, highest priority at the top. Slice across the smaller stories into Now, Next and Later,
+              give each slice a Product Goal, and make Now the thinnest thing that still works end to end. Then send
+              Now to your backlog.
             </p>
           </div>
         </section>

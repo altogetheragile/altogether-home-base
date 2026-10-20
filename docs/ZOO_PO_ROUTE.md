@@ -51,7 +51,9 @@ The app's Story Map (`src/types/storyMap.ts`) is Jeff Patton's: two tiers (activ
 3. **Slices are the roadmap.** Named Now, Next and Later by default, with Now, Near and Far as the alternative wording. Each slice has its own Product Goal in the hypothesis format, replacing the single field.
 4. **Send to backlog sends the Now slice only**, with its Product Goal at the top. When Now is met or abandoned, Next becomes Now.
 
-Existing story maps are saved as project artifacts, so the change has to read the old shape: activities become backbone stories, cards become stories, releases become slices, and the old single Product Goal goes on the first slice.
+Existing story maps are saved as project artifacts, so the change has to read the old shape. Decided with Al (20 October 2026), following common practice (Patton's walking skeleton): the slices cut across the smaller stories only, never the backbone or the stories row, so every step of the journey keeps something in Now. An old map loses nothing: each activity becomes a backbone step with one story left unnamed, for the team to name the missing middle tier; its cards become that story's smaller stories and keep their release as their slice; the old single Product Goal goes on the first slice.
+
+Built (PR "The Story Map in three tiers"): steps 1 to 4 above, with slices reordered by arrows so Next can move up to become Now. Sending Now creates an epic per backbone step, a feature per story and a story per smaller story, in walking-skeleton order, and links the slice to what it sent so the backlog can show its Product Goal next.
 
 ## The Hand-Over Into The Zoo
 
