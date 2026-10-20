@@ -4,6 +4,8 @@ import { SaveToProjectDialog } from './SaveToProjectDialog';
 
 // Dogfooding the PO route: a canvas opened from inside Build A Zoo still put the whole
 // initiative picker in front of the save, and its cards spilled past the dialog's right edge.
+// The spill was the dialog's grid column growing to the longest line; jsdom has no layout, so
+// the test can only hold the min-w-0 that stops it. Checked by eye in Chrome, 2026-10-20.
 
 const createArtifact = vi.hoisted(() => vi.fn());
 
@@ -69,7 +71,8 @@ describe('the save dialog knows its initiative', () => {
   it('keeps the initiative cards inside the dialog', () => {
     open();
     const card = screen.getByRole('button', { name: /Build A Zoo/ });
-    expect(card.className).toContain('w-full');
-    expect(card.closest('[data-radix-scroll-area-viewport]')).toBeNull();
+    const dialog = screen.getByRole('dialog');
+    const body = [...dialog.children].find((c) => c.contains(card))!;
+    expect(body.className.split(' ')).toContain('min-w-0');
   });
 });
