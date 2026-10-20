@@ -12,7 +12,7 @@ A regular Scrum course is unchanged. It starts as it does now, with the Backlog 
 
 | # | Step | Tool | Credit | In the app today |
 |---|---|---|---|---|
-| 1 | Vision | Press Release, then Product Vision Canvas | Amazon "working backwards"; Roman Pichler | Canvas yes (credited to Pichler); press release no |
+| 1 | Vision | Press Release (given), then Product Vision Canvas | Amazon "working backwards"; Roman Pichler | Canvas yes (credited to Pichler); press release is a handout, below |
 | 2 | Stakeholders | Power/Interest Grid | Mendelow | No |
 | 3 | Who it serves | Personas, then Value Proposition Canvas | Alan Cooper; Strategyzer | Persona Studio yes; canvas no |
 | 4 | Their experience | Customer Journey Map | Common practice | Yes |
@@ -20,6 +20,8 @@ A regular Scrum course is unchanged. It starts as it does now, with the Backlog 
 | 6 | What first | Now, Next, Later Roadmap, drawn as slices on the map | Janna Bastow; Cohn's release slices | Partly (release slices exist) |
 | 7 | The Product Backlog | The Now slice, Product Goal at the top, ordered by WSJF | Don Reinertsen | Yes, WSJF is supported |
 | 8 | The Sprint | Sprint Goal written as a hypothesis | Scrum Guide; Gothelf and Seiden, *Lean UX* | Only inside the games |
+
+The press release is given, not written. The facilitator hands it out at the start, and it fixes the product (the zoo) and its scope, so everything the learners invent is something the game can build. Learners start at the Vision Canvas. The text is under [The Press Release](#the-press-release).
 
 The roadmap comes after the story map, not before it. A story map shows the whole product and is too much for one Product Goal; the roadmap is how it is split into goals the team can take one at a time.
 
@@ -77,6 +79,40 @@ The payoff is consequence. A team that built for families and whose journey map 
 
 The route also gives the game a second act. When the Now goal is met or abandoned, the team brings Next forward as the new Product Goal. A Scrum course does not need that; a Product Owner course does.
 
+## The Press Release
+
+The handout. Everything in it is something the game models: the four areas and their animals, the kiosk, cafe, toilets and picnic area, the car park, entrance, paths and bridge, and the three visitor segments. It names all three segments without saying which matters most, and all four areas without saying which opens first. Those are the learners' calls.
+
+The scope line ("no rides, hotel or shop") is what lets the hand-over turn away a story the game cannot build without it feeling arbitrary. The last two answers carry the Scrum message lightly: the Product Owner says what, the team decides how; each area should earn its place, which sets up the Product Goal and its measure.
+
+Meadowbrook is made up. A quick search found no UK zoo by that name; check properly before it goes into printed material.
+
+> **Meadowbrook Zoo Opens Its Gates**
+>
+> *A new zoo on the edge of town for families, animal lovers and anyone who wants a gentle day out*
+>
+> *Meadowbrook, 1 June.* Meadowbrook Zoo opened today on what was farmland, with room for four areas: **Big Cats, Waterside, Savanna and Forest**. Visitors can see lions, tigers and leopards; penguins and a reef tank; elephants, giraffes, zebras and rhinos; and bears and monkeys in the woods.
+>
+> The town has not had a zoo for twenty years. Families have driven an hour each way for a day out, and local schools have stopped organising trips. Meadowbrook wants to be the zoo people choose because it is close, and come back to because it is good.
+>
+> **Built round the visitor's day.** Visitors arrive by car, park, and come in through one entrance. Paths link the areas, and a bridge crosses the brook that gives the zoo its name. Each area has somewhere to eat, use the toilets or rest: a kiosk, a cafe, toilets and a picnic area.
+>
+> **For three kinds of visitor.** Families with young children, who need food, toilets and space to stop often. Animal enthusiasts, who come for the animals and will stay all day. And visitors looking for a comfortable, unhurried day, who need somewhere to sit and rest.
+>
+> "We didn't want to build a zoo and then hope people liked it," said the zoo's director. "We want to find out what our visitors need and build that first. The rest can wait until we know it's wanted."
+>
+> "I'd bring the kids every month if there was somewhere to sit down and get a decent lunch," said a parent from Meadowbrook.
+>
+> The zoo will grow area by area through its first season.
+>
+> **Will every area open on the first day?** No. The zoo opens one area at a time, starting with whichever matters most to its visitors.
+>
+> **What won't the zoo have?** No rides, hotel or shop. It is animals, the paths between them, and the places to eat, rest and use the toilets.
+>
+> **Who decides what gets built next?** The Product Owner, guided by what visitors and stakeholders say. The team building the zoo decides how.
+>
+> **How will you know it's working?** Visitors who stay, come back and recommend it. Each area should earn its place.
+
 ## Taking Our Own Medicine
 
 The route is planned with the app's own tools, not only in this document. One project, "Build A Zoo", with its own product backlog, "PO Route". The vision, personas, journey and story map for the route are made in the tools that the route teaches, and the building work comes off that backlog in its order.
@@ -89,7 +125,6 @@ The first step is a test run, not building. A run is what tells us which gaps ma
 
 | Gap | Stand-in |
 |---|---|
-| Press Release | A blank canvas, or text |
 | Power/Interest Grid | The Impact Map's actors ("whose behaviour can help or hinder the goal"), or a whiteboard |
 | Value Proposition Canvas | Skip it, or paper |
 | Slices as goals | The existing release slices, with the goal written in the slice's name |
@@ -106,9 +141,8 @@ The by-hand hand-over is the test that matters. If it feels like a payoff, the i
 3. **Zoo presets for the discovery tools.** Personas name a segment; the journey map starts from the visit the game simulates (arrive, car park, entrance, paths, areas, food and rest, leave).
 4. **Power/Interest Grid**, feeding the Sprint Review's stakeholders.
 5. **Sprint Goal as a hypothesis** at the zoo's Sprint Planning, with a measure the simulation can check (families stay longer than four hours; food complaints halve).
-6. **Press Release.**
-7. **Value Proposition Canvas**, after its licence has been checked.
-8. **The route itself.** A page that strings the steps together for one team's project, with facilitator notes and timings.
+6. **Value Proposition Canvas**, after its licence has been checked.
+7. **The route itself.** A page that strings the steps together for one team's project, with facilitator notes and timings, and the press release as its opening handout.
 
 Steps 3 onwards are in this order on today's best guess. The test run reorders them.
 
