@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
@@ -22,11 +21,17 @@ import {
   Plus,
   Scissors,
   ChevronRight,
+  Check,
+  Layers,
+  Puzzle,
+  FileText,
 } from 'lucide-react';
 import { LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { cn } from '@/lib/utils';
-import { StoryTypeBadge } from './StoryTypeSelector';
-import { canHaveChildren, getChildItemTypes } from '@/types/story';
+import { canHaveChildren, getChildItemTypes, ITEM_TYPES } from '@/types/story';
+import { PbiCardShell, type PbiState } from '@/components/pbi/PbiCardShell';
+import { Chip } from '@/components/zooGame/ui/Chip';
+import { TONE } from '@/components/zooGame/ui/tokens';
 import { useActiveScheme } from './SchemeContext';
 import type { PrioritisationScheme } from '@/config/prioritisationSchemes';
 
@@ -60,30 +65,38 @@ const priorityBadge = (scheme: PrioritisationScheme, item: LocalBacklogItem) => 
   if (scheme.type === 'scored') {
     const score = scheme.score?.(item.priority_data || {}) ?? null;
     return score === null
-      ? { label: `${scheme.name} ?`, color: 'bg-amber-100 text-amber-900', title: `Not scored for ${scheme.name} yet` }
-      : { label: `${scheme.name} ${score.toFixed(1)}`, color: 'bg-muted text-foreground', title: `${scheme.name} score` };
+      ? { label: `${scheme.name} ?`, tone: 'attention' as const, title: `Not scored for ${scheme.name} yet` }
+      : { label: `${scheme.name} ${score.toFixed(1)}`, tone: 'quiet' as const, title: `${scheme.name} score` };
   }
   const options = scheme.options ?? [];
   const option = options.find((o) => o.value === (item.priority || '').toLowerCase())
     ?? options[Math.min(scheme.rank(item), options.length) - 1];
-  return option ? { label: option.label, color: option.color, title: scheme.name } : null;
+  // In the zoo's tones, not the scheme's solid colours: the accent belongs to the work in hand, so
+  // only a Must or a Should asks to be looked at
+  const tone = ({ 1: 'danger', 2: 'attention' } as const)[scheme.rank(item) as 1 | 2] ?? 'quiet';
+  return option ? { label: option.label, tone, title: scheme.name } : null;
 };
 
-/** Where the item is in its journey, drawn the way the zoo draws it: plain while it waits, the
- *  accent while it is in hand, green on white when Done, and a green edge once it is Ready. */
-const journeyShell: Record<string, string> = {
-  ready: 'border-l-4 border-l-emerald-500',
-  in_progress: 'border-primary bg-primary/5',
-  done: 'border-emerald-300/80',
+/** Where the item is in its journey, as the zoo draws it: plain while it waits, a green edge and
+ *  "Ready" once it meets the Definition of Ready, the accent while in hand, green on white when Done. */
+const JOURNEY: Record<string, { state: PbiState; className?: string; chip: React.ReactNode }> = {
+  idea: { state: 'backlog', chip: <Chip>Idea</Chip> },
+  refined: { state: 'backlog', chip: <Chip>Refined</Chip> },
+  ready: {
+    state: 'backlog',
+    className: 'border-2 border-emerald-400 bg-emerald-500/[0.04]',
+    chip: <span className={cn(TONE.done.text, 'flex shrink-0 items-center gap-1 text-[11px] font-medium')}><Check className="h-3.5 w-3.5" /> Ready</span>,
+  },
+  in_progress: { state: 'doing', chip: <Chip tone="action">In Progress</Chip> },
+  done: { state: 'live', chip: <Chip tone="done" icon={<Check className="h-2.5 w-2.5" />}>Done</Chip> },
 };
 
-const statusColors: Record<string, string> = {
-  idea: 'bg-purple-500/20 text-purple-700 dark:text-purple-300',
-  refined: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
-  ready: 'bg-green-500/20 text-green-700 dark:text-green-300',
-  in_progress: 'bg-amber-500/20 text-amber-700 dark:text-amber-300',
-  done: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  epic: Layers,
+  feature: Puzzle,
+  story: FileText,
 };
+
 
 const sourceLabels: Record<string, string> = {
   user_feedback: 'User Feedback',
@@ -119,199 +132,153 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
   const canSplit = (item.acceptance_criteria?.length || 0) >= 2;
   const priority = priorityBadge(useActiveScheme(), item);
 
+  const TypeIcon = TYPE_ICONS[item.item_type] ?? FileText;
+  const journey = JOURNEY[item.status] ?? JOURNEY.idea;
+  const typeLabel = ITEM_TYPES.find((t) => t.value === item.item_type)?.label ?? item.item_type;
+
   return (
-    <Card 
-      className={cn(
-        "transition-all hover:shadow-md cursor-pointer",
-        journeyShell[item.status],
-        isDragging && "shadow-lg ring-2 ring-primary",
-        indentLevel > 0 && "ml-6 border-l-2 border-l-primary/30"
-      )}
+    // The zoo's card, from the shared shell: icon, name, then its facts as chips and its size
+    <div
       onDoubleClick={onEdit}
       style={{ marginLeft: indentLevel * 24 }}
+      className={cn(indentLevel > 0 && 'border-l-2 border-l-primary/30 pl-2')}
     >
-      <CardContent className="p-3">
-        <div className="flex items-start gap-2">
+      <PbiCardShell
+        icon={TypeIcon}
+        name={item.title}
+        points={item.estimated_effort ?? null}
+        state={journey.state}
+        className={cn('cursor-pointer hover:shadow-md', journey.className, isDragging && 'shadow-lg ring-2 ring-primary')}
+        lead={<>
           {isEditable && (
-            <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
+            <span className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
               <GripVertical className="h-4 w-4" />
-            </div>
+            </span>
           )}
-          
-          {/* Expand/collapse for items with children */}
           {childrenCount > 0 && onToggleExpand && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-0"
+              className="h-5 w-5 p-0"
+              aria-label={isExpanded ? 'Hide children' : 'Show children'}
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleExpand();
               }}
             >
-              <ChevronRight className={cn(
-                "h-4 w-4 transition-transform",
-                isExpanded && "rotate-90"
-              )} />
+              <ChevronRight className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-90")} />
             </Button>
           )}
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="text-xs text-muted-foreground font-mono">
-                    #{index + 1}
-                  </span>
-                  <StoryTypeBadge type={item.item_type} />
-                  {priority && (
-                    <Badge variant="secondary" className={cn("text-xs", priority.color)} title={priority.title}>
-                      {priority.label}
-                    </Badge>
-                  )}
-                  <Badge 
-                    variant="outline" 
-                    className={cn("text-xs", statusColors[item.status])}
-                  >
-                    {item.status.replace('_', ' ')}
-                  </Badge>
-                  {item.estimated_effort != null ? (
-                    <Badge variant="secondary" className="text-xs" title="Size, in points">
-                      {item.estimated_effort} pts
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-900" title="Not sized yet - the Developers size it in refinement">
-                      ?
-                    </Badge>
-                  )}
-                  {item.target_release && (
-                    <Badge variant="outline" className="text-xs">
-                      {item.target_release}
-                    </Badge>
-                  )}
-                  {childrenCount > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      {childrenCount} children
-                    </Badge>
-                  )}
-                  {item.source && (
-                    <Badge variant="outline" className="text-xs max-w-[220px] truncate" title={item.source}>
-                      {sourceLabels[item.source] || item.source}
-                    </Badge>
-                  )}
-                </div>
-                
-                <h4 className="font-medium text-sm">{item.title}</h4>
-                
-                {item.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
-
-                {item.acceptance_criteria && item.acceptance_criteria.length > 0 && (
-                  <div className="mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      {item.acceptance_criteria.length} acceptance criteria
-                    </span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-                  {item.estimated_value != null && (
-                    <span>Value: {item.estimated_value}</span>
-                  )}
-                  {item.tags && item.tags.length > 0 && (
-                    <span className="flex gap-1 flex-wrap">
-                      {item.tags.map((tag, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs px-1 py-0">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {isEditable && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={onEdit}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    
-                    {/* Add Child - only for epics and features */}
-                    {canAddChildren && onAddChild && (
-                      <DropdownMenuItem onClick={onAddChild}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Child {childTypes.length === 1 ? childTypes[0] : ''}
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {/* Split by Criteria - for items with 2+ ACs */}
-                    {canSplit && onSplitByCriteria && (
-                      <DropdownMenuItem onClick={onSplitByCriteria}>
-                        <Scissors className="h-4 w-4 mr-2" />
-                        Split by Criteria
-                      </DropdownMenuItem>
-                    )}
-                    
-                    <DropdownMenuSeparator />
-                    
-                    {onMoveUp && (
-                      <DropdownMenuItem onClick={onMoveUp}>
-                        <ArrowUp className="h-4 w-4 mr-2" />
-                        Move Up
-                      </DropdownMenuItem>
-                    )}
-                    {onMoveDown && (
-                      <DropdownMenuItem onClick={onMoveDown}>
-                        <ArrowDown className="h-4 w-4 mr-2" />
-                        Move Down
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>Set Status</DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => handleStatusChange('idea')}>
-                          Idea
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange('refined')}>
-                          Refined
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange('ready')}>
-                          Ready
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
-                          In Progress
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange('done')}>
-                          Done
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={onDelete}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          <span className="font-mono text-xs text-muted-foreground">#{index + 1}</span>
+        </>}
+        badges={<>
+          <Chip tone={item.item_type === 'epic' ? 'teach' : 'quiet'}>{typeLabel}</Chip>
+          {priority && (
+            <Chip title={priority.title} tone={priority.tone}>{priority.label}</Chip>
+          )}
+          {journey.chip}
+          {item.target_release && <Chip>{item.target_release}</Chip>}
+          {childrenCount > 0 && <Chip>{childrenCount} children</Chip>}
+          {item.source && (
+            <Chip title={item.source} className="max-w-[220px] truncate">{sourceLabels[item.source] || item.source}</Chip>
+          )}
+        </>}
+        trailing={isEditable ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Item actions">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+            
+            {/* Add Child - only for epics and features */}
+            {canAddChildren && onAddChild && (
+              <DropdownMenuItem onClick={onAddChild}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Child {childTypes.length === 1 ? childTypes[0] : ''}
+              </DropdownMenuItem>
+            )}
+            
+            {/* Split by Criteria - for items with 2+ ACs */}
+            {canSplit && onSplitByCriteria && (
+              <DropdownMenuItem onClick={onSplitByCriteria}>
+                <Scissors className="h-4 w-4 mr-2" />
+                Split by Criteria
+              </DropdownMenuItem>
+            )}
+            
+            <DropdownMenuSeparator />
+            
+            {onMoveUp && (
+              <DropdownMenuItem onClick={onMoveUp}>
+                <ArrowUp className="h-4 w-4 mr-2" />
+                Move Up
+              </DropdownMenuItem>
+            )}
+            {onMoveDown && (
+              <DropdownMenuItem onClick={onMoveDown}>
+                <ArrowDown className="h-4 w-4 mr-2" />
+                Move Down
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Set Status</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={() => handleStatusChange('idea')}>
+                  Idea
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('refined')}>
+                  Refined
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('ready')}>
+                  Ready
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
+                  In Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('done')}>
+                  Done
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={onDelete}
+              className="text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        ) : undefined}
+        detail={(item.description || item.acceptance_criteria?.length || item.estimated_value != null || item.tags?.length) ? (
+          <div className="mt-1 pl-6">
+            {item.description && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+            )}
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {item.acceptance_criteria && item.acceptance_criteria.length > 0 && (
+                <span>{item.acceptance_criteria.length} acceptance criteria</span>
+              )}
+              {item.estimated_value != null && <span>Value: {item.estimated_value}</span>}
+              {item.tags && item.tags.length > 0 && (
+                <span className="flex flex-wrap gap-1">
+                  {item.tags.map((tag, i) => (
+                    <Badge key={i} variant="secondary" className="text-xs px-1 py-0">{tag}</Badge>
+                  ))}
+                </span>
               )}
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        ) : undefined}
+      />
+    </div>
   );
 };
