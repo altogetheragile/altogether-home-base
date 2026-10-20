@@ -84,10 +84,17 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   const [addChildParent, setAddChildParent] = useState<LocalBacklogItem | null>(null);
   const [splitItem, setSplitItem] = useState<LocalBacklogItem | null>(null);
 
+  // A Done item is part of the Increment, not work still to order, so it leaves the list
+  // unless asked for (as in the zoo game). It is hidden, never deleted: the Sprint Review and
+  // provenance still need it.
+  const [showDone, setShowDone] = useState(false);
+  const doneCount = useMemo(() => items.filter((i) => i.status === 'done').length, [items]);
+
   // Filter items
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+      if (statusFilter === 'all' && !showDone && item.status === 'done') return false;
       if (priorityFilter !== 'all' && item.priority !== priorityFilter) return false;
       if (typeFilter !== 'all' && item.item_type !== typeFilter) return false;
       if (searchQuery) {
@@ -99,7 +106,7 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
       }
       return true;
     });
-  }, [items, statusFilter, priorityFilter, typeFilter, searchQuery]);
+  }, [items, statusFilter, priorityFilter, typeFilter, searchQuery, showDone]);
 
   // Get children count for an item
   const getChildrenCount = useCallback((parentId: string) => {
@@ -114,7 +121,8 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   // Get root items (no parent or parent not in filtered items)
   const rootItems = useMemo(() => {
     if (viewMode === 'flat') return filteredItems;
-    return filteredItems.filter(item => !item.parent_item_id);
+    const shown = new Set(filteredItems.map((i) => i.id));
+    return filteredItems.filter(item => !item.parent_item_id || !shown.has(item.parent_item_id));
   }, [filteredItems, viewMode]);
 
   // Toggle expand/collapse
@@ -162,7 +170,9 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
   const handleDrop = (e: React.DragEvent, target: LocalBacklogItem) => {
     e.preventDefault();
     e.stopPropagation();
-    const dragged = items.find((i) => i.id === draggedId);
+    // Read the id off the drag itself; state set at dragstart may not have rendered yet
+    const fromId = e.dataTransfer?.getData('text/plain') || draggedId;
+    const dragged = items.find((i) => i.id === fromId);
     setDraggedId(null);
     if (!isEditable || !dragged || dragged.id === target.id) return;
     // In the grouped view an item moves among its own siblings; changing parent is an edit
@@ -427,9 +437,11 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
       {/* List */}
       {filteredItems.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          {items.length === 0 
+          {items.length === 0
             ? "No backlog items yet. Add your first item above!"
-            : "No items match your filters."}
+            : doneCount === items.length && !showDone && statusFilter === 'all'
+              ? "Everything on this backlog is Done."
+              : "No items match your filters."}
         </div>
       ) : (
         <div className="space-y-2">
@@ -437,6 +449,14 @@ export const LocalBacklogList: React.FC<LocalBacklogListProps> = ({
             ? filteredItems.map((item, index) => renderItem(item, index, 0))
             : rootItems.map((item, index) => renderItem(item, index, 0))
           }
+        </div>
+      )}
+
+      {doneCount > 0 && statusFilter === 'all' && (
+        <div className="text-center">
+          <Button variant="link" size="sm" className="text-muted-foreground" onClick={() => setShowDone((v) => !v)}>
+            {showDone ? 'Hide done' : `Show done (${doneCount})`}
+          </Button>
         </div>
       )}
 
