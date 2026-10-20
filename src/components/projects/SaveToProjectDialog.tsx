@@ -55,7 +55,7 @@ export const SaveToProjectDialog = ({
     try {
       let projectId = selectedProjectId;
 
-      // Create new project if needed
+      // Create new initiative if needed
       if (mode === "new") {
         if (!newProjectName.trim()) {
           toast.error("Please enter an initiative name");
@@ -119,7 +119,7 @@ export const SaveToProjectDialog = ({
       onSaveComplete?.(projectId, artifact.id);
       
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save to project");
+      toast.error(error instanceof Error ? error.message : "Failed to save to initiative");
     }
   };
 
@@ -132,7 +132,7 @@ export const SaveToProjectDialog = ({
         <DialogHeader>
           <DialogTitle>Save to Initiative</DialogTitle>
           <DialogDescription>
-            Choose an existing project or create a new one to save your {artifactType}.
+            Choose an existing initiative or create a new one to save your {artifactType}.
           </DialogDescription>
         </DialogHeader>
 
@@ -142,14 +142,14 @@ export const SaveToProjectDialog = ({
               <RadioGroupItem value="existing" id="existing" />
               <Label htmlFor="existing" className="flex items-center gap-2 cursor-pointer">
                 <FolderOpen className="h-4 w-4" />
-                Save to existing project
+                Save to existing initiative
               </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="new" id="new" />
               <Label htmlFor="new" className="flex items-center gap-2 cursor-pointer">
                 <Plus className="h-4 w-4" />
-                Create new project
+                Create new initiative
               </Label>
             </div>
           </RadioGroup>

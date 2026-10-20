@@ -239,7 +239,7 @@ const ProductBacklog: React.FC = () => {
           <Alert className="mb-6">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              This backlog is not linked to an initiative, so it will not capture your project's intent or item provenance.
+              This backlog is not linked to an initiative, so it will not capture your initiative's intent or item provenance.
               Open an initiative and choose <strong>Initiative Tools &gt; Product Backlog</strong>, or use <strong>Save to Initiative</strong> above to link it.
             </AlertDescription>
           </Alert>

@@ -141,7 +141,7 @@ export const ArtifactsList: React.FC<ArtifactsListProps> = ({ artifacts, project
           <FolderOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="font-medium mb-2">No artifacts yet</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Save outputs from AI tools like the BMC Generator or User Story Canvas to this project.
+            Save outputs from AI tools like the BMC Generator or User Story Canvas to this initiative.
           </p>
           <Button onClick={() => navigate('/ai-tools')}>
             <Sparkles className="h-4 w-4 mr-2" />
