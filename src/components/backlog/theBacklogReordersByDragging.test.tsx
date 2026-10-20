@@ -45,7 +45,7 @@ const show = () => {
 
 const row = (title: string) => screen.getByText(title).closest('[draggable]') as HTMLElement;
 const order = (fn: ReturnType<typeof vi.fn>) =>
-  [...fn.mock.calls.at(-1)![0]].sort((x, y) => x.backlog_position - y.backlog_position).map((u) => u.id);
+  [...fn.mock.calls[fn.mock.calls.length - 1][0]].sort((x, y) => x.backlog_position - y.backlog_position).map((u) => u.id);
 
 const dataTransfer = () => {
   const data: Record<string, string> = {};
