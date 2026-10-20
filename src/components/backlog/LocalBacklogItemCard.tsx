@@ -27,6 +27,8 @@ import { LocalBacklogItem } from '@/hooks/useLocalBacklogItems';
 import { cn } from '@/lib/utils';
 import { StoryTypeBadge } from './StoryTypeSelector';
 import { canHaveChildren, getChildItemTypes } from '@/types/story';
+import { useActiveScheme } from './SchemeContext';
+import type { PrioritisationScheme } from '@/config/prioritisationSchemes';
 
 interface LocalBacklogItemCardProps {
   item: LocalBacklogItem;
@@ -46,11 +48,31 @@ interface LocalBacklogItemCardProps {
   onToggleExpand?: () => void;
 }
 
-const priorityColors: Record<string, string> = {
-  critical: 'bg-destructive text-destructive-foreground',
-  high: 'bg-orange-500 text-white',
-  medium: 'bg-primary text-primary-foreground',
-  low: 'bg-muted text-muted-foreground',
+// The card follows the zoo game's PbiCard (docs/ZOO_PO_ROUTE.md, One Item, One Look): it shows
+// where the item is in its journey, "?" until it is sized, and its priority in this backlog's
+// own scheme.
+
+/** Priority as this backlog's scheme says it. An item stored under another scheme ('medium'
+ *  under MoSCoW) is shown at the same rank in this one, never in a word from the other. */
+const priorityBadge = (scheme: PrioritisationScheme, item: LocalBacklogItem) => {
+  if (scheme.type === 'scored') {
+    const score = scheme.score?.(item.priority_data || {}) ?? null;
+    return score === null
+      ? { label: `${scheme.name} ?`, color: 'bg-amber-100 text-amber-900', title: `Not scored for ${scheme.name} yet` }
+      : { label: `${scheme.name} ${score.toFixed(1)}`, color: 'bg-muted text-foreground', title: `${scheme.name} score` };
+  }
+  const options = scheme.options ?? [];
+  const option = options.find((o) => o.value === (item.priority || '').toLowerCase())
+    ?? options[Math.min(scheme.rank(item), options.length) - 1];
+  return option ? { label: option.label, color: option.color, title: scheme.name } : null;
+};
+
+/** Where the item is in its journey, drawn the way the zoo draws it: plain while it waits, the
+ *  accent while it is in hand, green on white when Done, and a green edge once it is Ready. */
+const journeyShell: Record<string, string> = {
+  ready: 'border-l-4 border-l-emerald-500',
+  in_progress: 'border-primary bg-primary/5',
+  done: 'border-emerald-300/80',
 };
 
 const statusColors: Record<string, string> = {
@@ -93,11 +115,13 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
   const canAddChildren = canHaveChildren(item.item_type);
   const childTypes = getChildItemTypes(item.item_type);
   const canSplit = (item.acceptance_criteria?.length || 0) >= 2;
+  const priority = priorityBadge(useActiveScheme(), item);
 
   return (
     <Card 
       className={cn(
         "transition-all hover:shadow-md cursor-pointer",
+        journeyShell[item.status],
         isDragging && "shadow-lg ring-2 ring-primary",
         indentLevel > 0 && "ml-6 border-l-2 border-l-primary/30"
       )}
@@ -138,21 +162,24 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                     #{index + 1}
                   </span>
                   <StoryTypeBadge type={item.item_type} />
-                  <Badge 
-                    variant="secondary" 
-                    className={cn("text-xs", priorityColors[item.priority])}
-                  >
-                    {item.priority}
-                  </Badge>
+                  {priority && (
+                    <Badge variant="secondary" className={cn("text-xs", priority.color)} title={priority.title}>
+                      {priority.label}
+                    </Badge>
+                  )}
                   <Badge 
                     variant="outline" 
                     className={cn("text-xs", statusColors[item.status])}
                   >
                     {item.status.replace('_', ' ')}
                   </Badge>
-                  {item.estimated_effort != null && (
-                    <Badge variant="secondary" className="text-xs">
+                  {item.estimated_effort != null ? (
+                    <Badge variant="secondary" className="text-xs" title="Size, in points">
                       {item.estimated_effort} pts
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-900" title="Not sized yet - the Developers size it in refinement">
+                      ?
                     </Badge>
                   )}
                   {item.target_release && (
@@ -189,9 +216,6 @@ export const LocalBacklogItemCard: React.FC<LocalBacklogItemCardProps> = ({
                 )}
                 
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-                  {item.source && (
-                    <span>{sourceLabels[item.source] || item.source}</span>
-                  )}
                   {item.estimated_value != null && (
                     <span>Value: {item.estimated_value}</span>
                   )}
