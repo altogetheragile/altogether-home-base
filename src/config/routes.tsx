@@ -431,6 +431,9 @@ export const ProtectedUserRoutes = () => (
     {/* Project Routes */}
     {featureFlags.protectedProjects && (
       <>
+        {/* The list of initiatives is a dashboard tab; these are the addresses people guess for it */}
+        <Route path="/projects" element={<SiteSettingsRouteGuard feature="protected_projects"><Navigate to="/dashboard?tab=projects" replace /></SiteSettingsRouteGuard>} />
+        <Route path="/initiatives" element={<SiteSettingsRouteGuard feature="protected_projects"><Navigate to="/dashboard?tab=projects" replace /></SiteSettingsRouteGuard>} />
         <Route path="/projects/:projectId" element={
           <SiteSettingsRouteGuard feature="protected_projects">
             <ProtectedRoute>
