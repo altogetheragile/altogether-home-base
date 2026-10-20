@@ -59,6 +59,18 @@ jobs:
             exit 1
           }
 
+          # Exact too. From 30 October 2026 Supabase stops granting the API roles access to a new
+          # table, so a migration that forgets its grant builds cleanly, passes every check above,
+          # and the app gets "permission denied" in production. RLS decides which rows; without a
+          # grant, nobody signed in reaches the table at all.
+          UNREACHABLE=$(q "select count(*) from pg_tables where schemaname='public' and not has_table_privilege('authenticated', format('%I.%I', schemaname, tablename), 'SELECT')")
+          echo "tables-authenticated-cannot-reach=$UNREACHABLE"
+          [ "$UNREACHABLE" -eq 0 ] || {
+            echo "::error::$UNREACHABLE public tables have no grant for authenticated; add one in the migration that creates them"
+            q "select tablename from pg_tables where schemaname='public' and not has_table_privilege('authenticated', format('%I.%I', schemaname, tablename), 'SELECT')"
+            exit 1
+          }
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup || true
