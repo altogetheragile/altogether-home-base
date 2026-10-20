@@ -133,6 +133,36 @@ The first step is a test run, not building. A run is what tells us which gaps ma
 
 The by-hand hand-over is the test that matters. If it feels like a payoff, the import is worth building. If the Wizard's three questions are too blunt to carry a day's discovery, which is likely, the import has to carry more than the Wizard asks for, and it is better to know that before writing it.
 
+## One Item, One Look
+
+A learner's Product Backlog becomes the zoo's Product Backlog. If the item changes appearance at that moment, the route says these are two different things. The zoo's card (`src/components/zooGame/PbiCard.tsx`) is already the better teacher: it shows where an item is in its journey, it shows "?" until the Developers have sized it, and it puts the Product Goal at the top. So the backlog tool comes to look like the zoo, and not the other way round.
+
+They share a look, never a store. The zoo keeps `BacklogItem`, the tool keeps `backlog_items`, and the export between them stays one-way.
+
+What the tool takes from the zoo:
+
+- **The journey on the card.** Idea and Refined are plain, Ready says so, In Progress wears the accent, Done is green on white (and now leaves the list, #915).
+- **"?" until sized.** No effort means nobody has sized it yet, which is different from a small item.
+- **Priority in the backlog's own scheme.** Under MoSCoW a card says Must, Should, Could or Won't; under WSJF it shows the score. It never shows a word from another scheme.
+- **The story and its criteria on the card**, not a count of criteria.
+- **The Product Goal at the top.** The Scrum Guide puts the Product Goal in the Product Backlog. Today the backlog shows the initiative's "why", which is close but not the same: an initiative can have several backlogs, and on this route each Product Goal comes from a slice of the roadmap.
+
+What the tool keeps that the zoo does not need: WSJF scores, business value, target release, tags and source.
+
+What the zoo does not take from the tool: a priority badge. In the zoo the order is the priority, and the Product Owner sets it by dragging.
+
+### Increments
+
+1. **The tool's card reads like the zoo's.** Journey treatment from status, "?" points, priority in the backlog's scheme, the duplicate source badge gone. Touches the tool only.
+2. **One card shell for both.** Pull the zoo's `PbiCard` layout into a shell that takes an icon, a name, a state and its chips; the zoo's card becomes a thin wrapper over it, looking exactly as it does now (checked by screenshot). The tool's card moves onto the same shell.
+3. **Story and criteria on the tool's card**, shown when the card is opened, as the zoo's refinement panel shows them.
+4. **The Product Goal.** Each product backlog gets a Product Goal of its own, shown at the top, with the initiative's "why" kept above it on the initiative.
+
+### To Decide
+
+- **Simple (Critical to Low) as a scheme.** Its four levels sit beside an ordered list. Keep it, or let Simple mean "the order is the priority" and show no badge.
+- **Where a Product Goal is written.** On the backlog itself, or on the roadmap slice that becomes it (Build Order step 1), with the backlog showing it.
+
 ## Build Order
 
 0. **Test run** with the stand-ins, planned in the "Build A Zoo" project. Friction goes on the PO Route backlog.
