@@ -5,8 +5,10 @@ import { useEffect, useRef } from 'react';
  * Coached editors used fixed-height, resize-none textareas, which hid any text
  * past the visible rows. Use this wherever a coached value can run long.
  */
-export function AutoTextarea({ value, onChange, className, placeholder, rows = 2 }: {
+export function AutoTextarea({ value, onChange, className, placeholder, rows = 2, 'aria-label': ariaLabel }: {
   value: string;
+  /** A box with no visible label still needs a name for a screen reader. */
+  'aria-label'?: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   className?: string;
   placeholder?: string;
@@ -25,6 +27,7 @@ export function AutoTextarea({ value, onChange, className, placeholder, rows = 2
       placeholder={placeholder}
       onChange={(e) => { onChange(e); grow(); }}
       rows={rows}
+      aria-label={ariaLabel}
       className={className}
     />
   );

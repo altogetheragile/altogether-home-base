@@ -27,16 +27,19 @@ export const journeyMapSchema = z.object({
   personaName: str, personaRef: z.string().optional(), stages: z.array(journeyStage).default([]),
 }).passthrough();
 
-// ── User Story Map (backbone activities -> story cards -> release slices) ──────
-const storyCard = z.object({
-  id: z.string(), title: str, releaseId: z.string().nullable().default(null),
+// ── User Story Map (backbone -> stories -> smaller stories, sliced Now / Next / Later) ──
+const smallStory = z.object({
+  id: z.string(), title: str, sliceId: z.string().nullable().default(null),
 }).passthrough();
-const storyActivity = z.object({
-  id: z.string(), name: str, cards: z.array(storyCard).default([]),
+const mapStory = z.object({
+  id: z.string(), title: str, smaller: z.array(smallStory).default([]),
 }).passthrough();
-const storyRelease = z.object({ id: z.string(), name: str }).passthrough();
+const backboneStep = z.object({
+  id: z.string(), name: str, stories: z.array(mapStory).default([]),
+}).passthrough();
+const storySlice = z.object({ id: z.string(), name: str, productGoal: str }).passthrough();
 export const storyMapSchema = z.object({
-  productGoal: str, activities: z.array(storyActivity).default([]), releases: z.array(storyRelease).default([]),
+  version: z.literal(2), backbone: z.array(backboneStep).default([]), slices: z.array(storySlice).default([]),
 }).passthrough();
 
 // ── Coaching Session ─────────────────────────────────────────────────────────

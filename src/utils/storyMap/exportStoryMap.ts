@@ -4,27 +4,29 @@ export const toJson = (m: StoryMap): string => JSON.stringify(m, null, 2);
 
 export const toMarkdown = (m: StoryMap): string => {
   const lines: string[] = ['# User Story Map', ''];
-  if (m.productGoal) lines.push(`**Product goal:** ${m.productGoal}`, '');
+  const sliceName = (id: string | null): string =>
+    id ? (m.slices.find((s) => s.id === id)?.name || 'Not sliced') : 'Not sliced';
 
-  const releaseName = (id: string | null): string =>
-    id ? (m.releases.find((r) => r.id === id)?.name || 'Unscheduled') : 'Unscheduled';
+  m.slices.forEach((s) => {
+    if (s.productGoal) lines.push(`**${s.name || 'Slice'} Product Goal:** ${s.productGoal}`);
+  });
+  if (m.slices.some((s) => s.productGoal)) lines.push('');
 
-  m.activities.forEach((a) => {
-    lines.push(`## ${a.name || '(unnamed activity)'}`, '');
-    if (a.cards.length === 0) {
-      lines.push('_No stories yet._', '');
-      return;
-    }
-    a.cards.forEach((c) => {
-      lines.push(`- ${c.title || '(untitled)'}  _(${releaseName(c.releaseId)})_`);
+  m.backbone.forEach((step) => {
+    lines.push(`## ${step.name || '(unnamed step)'}`, '');
+    step.stories.forEach((story) => {
+      lines.push(`### ${story.title || '(story not named yet)'}`, '');
+      if (story.smaller.length === 0) lines.push('_No smaller stories yet._');
+      story.smaller.forEach((c) => lines.push(`- ${c.title || '(untitled)'}  _(${sliceName(c.sliceId)})_`));
+      lines.push('');
     });
-    lines.push('');
   });
   return lines.join('\n');
 };
 
 export const fileStem = (m: StoryMap): string => {
-  const base = (m.productGoal ? `${m.productGoal}-story-map` : 'story-map')
+  const first = m.backbone.find((b) => b.name.trim())?.name;
+  const base = (first ? `${first}-story-map` : 'story-map')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
