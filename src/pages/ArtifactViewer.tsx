@@ -545,7 +545,7 @@ export default function ArtifactViewer() {
               }}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {returnTo === 'project-model' ? 'Back to Project Model' : 'Back to Project'}
+              {returnTo === 'project-model' ? 'Back to Project Model' : 'Back to Initiative'}
             </Button>
             <Separator orientation="vertical" className="h-5" />
             {(() => {

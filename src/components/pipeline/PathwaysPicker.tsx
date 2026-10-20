@@ -94,7 +94,7 @@ export function PathwaysPicker({ onStart, onSkip }: PathwaysPickerProps) {
         <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              New project setup
+              New initiative setup
             </div>
             <h1 className="text-[34px] font-bold leading-[1.1] tracking-tight">Choose your pathway</h1>
             <p className="mt-2.5 max-w-[560px] text-[15px] leading-relaxed text-muted-foreground">

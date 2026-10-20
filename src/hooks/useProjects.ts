@@ -128,13 +128,13 @@ export const useProjectMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
-        title: "Project created",
-        description: "Your new project has been created successfully.",
+        title: "Initiative created",
+        description: "Your new initiative has been created.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Failed to create project",
+        title: "Failed to create initiative",
         description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
@@ -158,13 +158,13 @@ export const useProjectMutations = () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['project', project.id] });
       toast({
-        title: "Project updated",
-        description: "Your project has been updated successfully.",
+        title: "Initiative updated",
+        description: "Your initiative has been updated.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Failed to update project",
+        title: "Failed to update initiative",
         description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
@@ -184,13 +184,13 @@ export const useProjectMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
-        title: "Project deleted",
-        description: "Your project has been deleted successfully.",
+        title: "Initiative deleted",
+        description: "Your initiative has been deleted.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Failed to delete project",
+        title: "Failed to delete initiative",
         description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });
@@ -212,13 +212,13 @@ export const useProjectMutations = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast({
-        title: "Project archived",
-        description: "Your project has been archived successfully.",
+        title: "Initiative archived",
+        description: "Your initiative has been archived.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Failed to archive project",
+        title: "Failed to archive initiative",
         description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       });

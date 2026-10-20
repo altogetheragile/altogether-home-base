@@ -78,8 +78,8 @@ export const ProjectDialog: React.FC<ProjectDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             {isEditing 
-              ? 'Update your project details below.'
-              : 'Create a new project to organize your user stories, epics, and business model canvases.'
+              ? 'Update your initiative details below.'
+              : 'Create an initiative to hold the work you shape with the tools: vision, personas, maps and backlog.'
             }
           </DialogDescription>
         </DialogHeader>

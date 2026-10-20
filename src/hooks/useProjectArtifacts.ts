@@ -116,10 +116,10 @@ export const useProjectArtifactMutations = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["project-artifacts", data.project_id] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast.success("Saved to project successfully");
+      toast.success("Saved to initiative");
     },
     onError: (error: Error) => {
-      toast.error("Failed to save to project: " + error.message);
+      toast.error("Failed to save to initiative: " + error.message);
     },
   });
 

@@ -262,7 +262,7 @@ const PatternBuilder = () => {
                 </button>
                 {!user && (
                   <span className="text-xs" style={{ color: p.muted }}>
-                    Export works without an account. Sign in to keep it on a project.
+                    Export works without an account. Sign in to keep it on an initiative.
                   </span>
                 )}
               </div>

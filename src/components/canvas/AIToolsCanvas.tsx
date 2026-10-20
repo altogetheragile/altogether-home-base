@@ -402,7 +402,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
   // traceable to the originating deliverable (spec 6.3).
   const handleImportDeliverables = useCallback(() => {
     if (!targetProjectId) {
-      toast({ title: 'No project', description: 'Save this canvas to an initiative, then import its Impact Map deliverables.', variant: 'destructive' });
+      toast({ title: 'No initiative', description: 'Save this canvas to an initiative, then import its Impact Map deliverables.', variant: 'destructive' });
       return;
     }
     const impactMaps = (projectArtifacts || []).filter((a) => a.artifact_type === 'impact-map');
@@ -1076,7 +1076,7 @@ const AIToolsCanvas: React.FC<AIToolsCanvasProps> = ({
               onClick={() => navigate(preselectedProjectId ? `/projects/${preselectedProjectId}` : '/ai-tools')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {preselectedProjectId ? 'Back to Project' : 'Back to AI Tools'}
+              {preselectedProjectId ? 'Back to Initiative' : 'Back to AI Tools'}
             </Button>
             <div className="min-w-0">
               <h1 className="truncate text-xl font-semibold">User Story Canvas</h1>
