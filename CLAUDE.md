@@ -52,6 +52,12 @@ build). Read it before building pipeline/coaching features.
 - **Canvas tools** share `src/hooks/canvas/` and `src/utils/canvas/canvasExporter.ts`.
   Tools persist into Projects as artifacts (`project_artifacts`, dispatched by
   `artifact_type` in `src/pages/ArtifactViewer.tsx`).
+- **A new table grants in its own migration.** Since 30 October 2026 Supabase no
+  longer grants the API roles access to new tables in `public`; without a
+  `grant ... to authenticated` (and `service_role`, and `anon` if the public reads
+  it) supabase-js gets "permission denied". The Schema CI job fails on a public
+  table `authenticated` cannot reach. See
+  `supabase/migrations/20261020100000_a_table_says_who_can_reach_it.sql`.
 - **Deploy edge functions:** `npx supabase functions deploy <name> --project-ref wqaplkypnetifpqrungv`.
 
 ## Content rules
