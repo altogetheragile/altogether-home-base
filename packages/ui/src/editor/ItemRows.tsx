@@ -69,6 +69,14 @@ export function ItemRows({
 
   return (
     <div className="space-y-2">
+      {/* An empty list showed only an Add button, so the boxes each row holds - a picture among
+          them - were nowhere to be seen until you had guessed to press it. Somebody looked for a
+          service's picture, found none, and reasonably concluded there was no such thing. */}
+      {rows.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          None yet. Each one you add has {readable(fields.map((f) => f.label.toLowerCase()))}.
+        </p>
+      )}
       {rows.map((row, i) => (
         <div key={i} className="rounded-md border border-border bg-muted/30 p-2.5">
           <div className="mb-1.5 flex items-center justify-between">

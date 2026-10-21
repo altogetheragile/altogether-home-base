@@ -301,6 +301,11 @@ export default async function HomePage() {
                 </Editable>
               </div>
             )}
+            {founder.shown && !founder.portrait && admin && (
+              <div className="aa-hide-mobile">
+                <AddAPicture k="site.brand.images.founderPortrait" label="the founder portrait" width={300} height={420} radius={30} />
+              </div>
+            )}
           </div>
         </div>
       </>

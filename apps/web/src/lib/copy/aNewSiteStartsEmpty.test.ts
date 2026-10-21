@@ -48,6 +48,9 @@ const BLANK_BY_DESIGN = [
   // The wave pattern is drawn in this site's colours. A second site gets a plain hero until it
   // chooses its own picture.
   'home.hero.background',
+  // Was written into the coaching page, so every site had this one's illustration and no way to
+  // change it. A site that has not chosen one gets the approach words at full width.
+  'coaching.approach.picture',
   // Empty means "the order the code has them in", which is the right starting point and the
   // thing a saved order is a departure from.
   'home.sections',

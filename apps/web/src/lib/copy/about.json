@@ -89,12 +89,32 @@
     "about.badges.heading": {
       "value": "Verified Badges",
       "label": "Badges heading",
-      "hint": "The pale card beside the story. The badge images themselves are set in code"
+      "hint": "The pale card beside the story, above the badge pictures"
     },
     "about.badges.list": {
       "value": "",
       "label": "Credential badges",
-      "hint": "One badge per line, as: name | image address | link to the verification page. Leave empty and the badges do not appear. These are somebody’s own credentials, so they start empty on a new site."
+      "hint": "One per badge: its name, its picture, and the page that verifies it. Leave the list empty and the badges do not appear. These are somebody’s own credentials, so they start empty on a new site.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "name",
+          "label": "Badge name",
+          "placeholder": "Associate Certified Coach (ACC)",
+          "required": true
+        },
+        {
+          "key": "image",
+          "label": "Badge picture",
+          "type": "image",
+          "required": true
+        },
+        {
+          "key": "link",
+          "label": "Link to the verification page",
+          "placeholder": "https://www.credly.com/badges/..."
+        }
+      ]
     },
     "about.feedback.label": {
       "value": "Feedback",
@@ -179,7 +199,7 @@
     "about.timeline.label": {
       "value": "Career",
       "label": "Timeline eyebrow",
-      "hint": "Above the career timeline. The entries themselves are still in code"
+      "hint": "Above the career timeline"
     },
     "about.timeline.heading": {
       "value": "How it unfolded.",
@@ -220,11 +240,6 @@
       "value": "Knowledge Base",
       "label": "Closing link, knowledge base",
       "hint": "The dark teal band at the foot of the page. Only shown when that module is on"
-    },
-    "about.founder.role": {
-      "value": "Agile Coach and Trainer",
-      "label": "Founder role",
-      "hint": "The job title given in structured data for the person who founded this business."
     }
   }
 }
