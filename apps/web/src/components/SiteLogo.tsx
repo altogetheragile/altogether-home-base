@@ -1,5 +1,6 @@
 import { logoOf, wordmarkOf, type BrandLogoOverrides } from '@altogether/ui/brand';
 import { colors as c, fonts } from '@/lib/brand';
+import { logoName } from '@/lib/ourSite';
 
 /** The mark in the header and the footer.
  *
@@ -14,14 +15,15 @@ export function SiteLogo({
   height: number;
   className?: string;
 }) {
-  const logo = logoOf(brand, companyName);
+  const name = logoName(companyName);
+  const logo = logoOf(brand, name);
 
   if (logo.mode === 'image') {
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={logo.src} alt={companyName ?? 'Home'} className={className} style={{ height, width: 'auto' }} />;
   }
 
-  const mark = wordmarkOf(brand, companyName);
+  const mark = wordmarkOf(brand, name);
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', height,
     fontFamily: fonts.sans,

@@ -249,10 +249,20 @@
       "label": "Years of experience badge",
       "hint": "The orange number on the photograph, for example 25. Leave empty and the badge does not appear."
     },
+    "home.founder.yearsLabel": {
+      "value": "years\nexperience",
+      "label": "Under the years number",
+      "hint": "The small words under the number in the orange badge. A line break splits them in two"
+    },
     "home.founder.credentials": {
       "value": "",
       "label": "Credentials beside the photograph",
       "hint": "One per line, kept short: these sit in a narrow column. Leave empty and the list does not appear."
+    },
+    "home.founder.credentialsLabel": {
+      "value": "Credentials",
+      "label": "Credentials label",
+      "hint": "The small line above the credentials beside the photograph"
     },
     "home.founder.heading": {
       "value": "Train with someone\nwho has been in the room.",

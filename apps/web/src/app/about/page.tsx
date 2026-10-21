@@ -3,6 +3,7 @@ import { Editable, AddAPicture } from '@/components/edit/Editable';
 import { EmptySection } from '@/components/edit/EmptySection';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { moduleIsOn } from '@altogether/ui/modules';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getAllApprovedFeedback } from '@/lib/testimonials';
@@ -136,13 +137,19 @@ export default async function AboutPage() {
             <Editable k="about.hero.eyebrow" label="this text" as="div" block>
               <div style={{ color: p.lightTeal, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>{t('about.hero.eyebrow')}</div>
             </Editable>
-            <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 48px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('about.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
+            <Editable k="about.hero.heading" label="this heading" as="div" block>
+              <h1 style={{ color: '#fff', fontSize: 'clamp(34px, 5vw, 48px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px' }}>{lines(t('about.hero.heading')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}</h1>
+            </Editable>
             <Prose k="about.hero.intro" text={t('about.hero.intro')} style={{ color: p.lightTeal, fontSize: 17, lineHeight: 1.75, margin: '0 0 28px', maxWidth: 480 }} />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {list(t('about.hero.tags')).map((tag) => (
-                <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
-              ))}
-            </div>
+            {list(t('about.hero.tags')).length > 0 && (
+              <Editable k="about.hero.tags" label="these tags" as="div" block>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {list(t('about.hero.tags')).map((tag) => (
+                    <span key={tag} style={{ background: 'rgba(255,255,255,0.1)', color: p.lightTeal, fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20 }}>{tag}</span>
+                  ))}
+                </div>
+              </Editable>
+            )}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             {founder.shown && founder.photo && (
@@ -166,6 +173,17 @@ export default async function AboutPage() {
     story: (
       <>
       {/* PERSONAL STORY */}
+      {/* With no story and no credentials or badges it was an empty white band, padded top and
+          bottom, between the hero and whatever came next. */}
+      {!storyTold && !has(t('about.credentials.list'), t('about.badges.list')) && (
+        <EmptySection
+          name="Story"
+          why="No story, credentials or badges yet, so visitors see nothing here."
+          fills={{ kind: 'field', k: 'about.story.p1', label: 'the story' }}
+          cards={2}
+        />
+      )}
+      {(storyTold || has(t('about.credentials.list'), t('about.badges.list'))) && (
       <div className="aa-section-pad" style={{ background: p.white }}>
         <div className={`aa-two-col-wide${storyTold ? '' : ' aa-two-col-wide--alone'}`}>
           {storyTold && (
@@ -188,6 +206,7 @@ export default async function AboutPage() {
                   <Editable k="about.credentials.heading" label="this text" as="div" block>
                     <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><GraduationCap />{t('about.credentials.heading')}</div>
                   </Editable>
+                  <Editable k="about.credentials.list" label="the credentials" as="div" block>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {list(t('about.credentials.list')).map((cred) => (
                       <div key={cred} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, color: p.body, fontSize: 13, lineHeight: 1.5 }}>
@@ -195,6 +214,7 @@ export default async function AboutPage() {
                       </div>
                     ))}
                   </div>
+                  </Editable>
                 </When>
                 {badgesFrom(t('about.badges.list')).length > 0 && (
                   <div style={{ marginTop: has(t('about.credentials.list')) ? 20 : 0, paddingTop: has(t('about.credentials.list')) ? 16 : 0, borderTop: has(t('about.credentials.list')) ? `1px solid ${p.paleTeal}` : undefined }}>
@@ -221,6 +241,7 @@ export default async function AboutPage() {
           </div>
         </div>
       </div>
+      )}
       </>
     ),
     testimonials: (
@@ -293,6 +314,7 @@ export default async function AboutPage() {
       <div className="aa-section-pad" style={{ background: p.skyTeal }}>
         <Heading labelKey="about.philosophy.label" titleKey="about.philosophy.heading" label={t('about.philosophy.label')} title={t('about.philosophy.heading')} />
         {/* A third card joins the row rather than dropping beneath the other two at half width. */}
+        <Editable k="about.philosophy.items" label="the philosophy cards" as="div" block>
         <div className="aa-cards" style={{ ['--aa-card-min' as string]: '320px' }}>
           {cards.map((entry, idx) => {
             // A card's own colour if it has one, otherwise one from the shipped set by position,
@@ -325,6 +347,7 @@ export default async function AboutPage() {
             );
           })}
         </div>
+        </Editable>
       </div>
         );
       })()}
@@ -346,12 +369,15 @@ export default async function AboutPage() {
         return (
           <div className="aa-section-pad" style={{ background: p.white }}>
             <Heading labelKey="about.timeline.label" titleKey="about.timeline.heading" label={t('about.timeline.label')} title={t('about.timeline.heading')} />
+            <Editable k="about.timeline.list" label="the timeline" as="div" block>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxWidth: 680 }}>
               {eras.map((item, i) => (
                 <div key={item.year} style={{ display: 'flex', gap: 24, position: 'relative' }}>
                   {i < eras.length - 1 && <div style={{ position: 'absolute', left: 19, top: 40, bottom: -8, width: 2, background: p.paleTeal }} />}
                   <div style={{ width: 40, height: 40, borderRadius: '50%', background: i === eras.length - 1 ? p.orange : p.deepTeal, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1, fontSize: 10, fontWeight: 700 }}>
-                    {i === eras.length - 1 ? 'Now' : <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff' }} />}
+                    {i === eras.length - 1 && t('about.timeline.now').trim()
+                      ? t('about.timeline.now')
+                      : <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff' }} />}
                   </div>
                   <div style={{ background: p.skyTeal, borderRadius: 12, padding: '16px 20px', marginBottom: 8, flex: 1 }}>
                     <div style={{ color: p.orange, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{item.year}</div>
@@ -361,6 +387,7 @@ export default async function AboutPage() {
                 </div>
               ))}
             </div>
+            </Editable>
           </div>
         );
       })()}
@@ -385,9 +412,22 @@ export default async function AboutPage() {
               <p style={{ color: p.lightTeal, fontSize: 15, lineHeight: 1.75, margin: '0 0 24px' }}>{t('about.cta.body')}</p>
             </Editable>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('about.cta.booking')}</a>
-              {settings.show_events !== false && <Link href="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.events')} <ArrowRight /></Link>}
-              {settings.show_knowledge && <Link href="/knowledge" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.knowledge')} <ArrowRight /></Link>}
+              <Editable k="about.cta.booking" label="this button" as="div" block outside>
+                <a href={bookingUrl} style={{ background: p.orange, color: '#fff', padding: '13px 24px', borderRadius: 10, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none' }}><Chat />{t('about.cta.booking')}</a>
+              </Editable>
+              {/* The same rule as the menu for whether a page is on, rather than one of its own: these
+                  read the columns directly and could disagree with it about a site with no row. The
+                  knowledge base lives at /knowledge-base; /knowledge was a redirect away from it. */}
+              {moduleIsOn('events', settings as Record<string, unknown>) && (
+                <Editable k="about.cta.events" label="this link" as="div" block outside>
+                  <Link href="/events" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.events')} <ArrowRight /></Link>
+                </Editable>
+              )}
+              {moduleIsOn('knowledge', settings as Record<string, unknown>) && (
+                <Editable k="about.cta.knowledge" label="this link" as="div" block outside>
+                  <Link href="/knowledge-base" style={{ color: p.lightTeal, fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>{t('about.cta.knowledge')} <ArrowRight /></Link>
+                </Editable>
+              )}
             </div>
           </div>
           {/* The column existed to hold the portrait. Without one it is half a banner of nothing. */}

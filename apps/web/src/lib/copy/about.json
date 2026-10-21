@@ -79,22 +79,26 @@
     "about.credentials.heading": {
       "value": "Credentials",
       "label": "Credentials heading",
-      "hint": "The pale card beside the story"
+      "hint": "The pale card beside the story",
+      "group": "Credentials and badges"
     },
     "about.credentials.list": {
       "value": "",
       "label": "Credentials list",
-      "hint": "One qualification per line."
+      "hint": "One qualification per line.",
+      "group": "Credentials and badges"
     },
     "about.badges.heading": {
       "value": "Verified Badges",
       "label": "Badges heading",
-      "hint": "The pale card beside the story, above the badge pictures"
+      "hint": "The pale card beside the story, above the badge pictures",
+      "group": "Credentials and badges"
     },
     "about.badges.list": {
       "value": "",
       "label": "Credential badges",
       "hint": "One per badge: its name, its picture, and the page that verifies it. Leave the list empty and the badges do not appear. These are somebody’s own credentials, so they start empty on a new site.",
+      "group": "Credentials and badges",
       "type": "items",
       "fields": [
         {
@@ -119,12 +123,14 @@
     "about.feedback.label": {
       "value": "Feedback",
       "label": "Testimonials eyebrow",
-      "hint": "Above the quotes, which come from the database"
+      "hint": "Above the quotes, which come from the database",
+      "group": "Testimonials"
     },
     "about.feedback.heading": {
       "value": "What people say.",
       "label": "Testimonials heading",
-      "hint": "Above the quotes"
+      "hint": "Above the quotes",
+      "group": "Testimonials"
     },
     "about.mission.label": {
       "value": "Why This Practice Exists",
@@ -209,7 +215,12 @@
     "about.timeline.list": {
       "value": "",
       "label": "Timeline entries",
-      "hint": "One entry per line, as: when | what it was called | what happened. For example \"2016 | Going independent | Left the corporate world to do this full time.\" The last entry is marked Now. Leave empty and the timeline does not appear."
+      "hint": "One entry per line, as: when | what it was called | what happened. For example \"2016 | Going independent | Left the corporate world to do this full time.\" The last entry is marked with the word below. Leave empty and the timeline does not appear."
+    },
+    "about.timeline.now": {
+      "value": "Now",
+      "label": "Word on the last entry",
+      "hint": "Inside the orange circle beside the most recent entry. Leave empty for a plain dot like the others"
     },
     "about.cta.label": {
       "value": "Start A Conversation",

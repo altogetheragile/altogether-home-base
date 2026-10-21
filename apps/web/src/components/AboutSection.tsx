@@ -88,15 +88,22 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
             <div style={{ marginTop: founder.photo ? 28 : 0, background: p.deepTeal, borderRadius: 20, padding: '28px 32px', position: 'relative', zIndex: 1 }}>
               <When any={[t('home.founder.years')]}>
                 <div style={{ position: 'absolute', top: 20, right: 20, background: p.orange, borderRadius: 12, padding: '10px 14px', textAlign: 'center', boxShadow: '0 4px 16px rgba(255,151,21,0.3)', minWidth: 72 }}>
-                  <div style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 26, fontWeight: 400, lineHeight: 1 }}>{t('home.founder.years')}</div>
-                  <div style={{ color: p.deepTeal, opacity: 0.85, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 3 }}>years<br />experience</div>
+                  <Editable k="home.founder.years" label="the years badge" as="div" block>
+                    <div style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 26, fontWeight: 400, lineHeight: 1 }}>{t('home.founder.years')}</div>
+                    <div style={{ color: p.deepTeal, opacity: 0.85, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 3 }}>
+                      {lines(t('home.founder.yearsLabel')).map((l, i) => (<Fragment key={l}>{i > 0 && <br />}{l}</Fragment>))}
+                    </div>
+                  </Editable>
                 </div>
               </When>
               <When any={[t('home.founder.credentials')]}>
+                <Editable k="home.founder.credentialsLabel" label="this label" as="div" block>
                 <div style={{ color: p.lightTeal, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 24, height: 2, background: p.orange }} />
-                  Credentials
+                  {t('home.founder.credentialsLabel')}
                 </div>
+                </Editable>
+                <Editable k="home.founder.credentials" label="the credentials" as="div" block>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {list(t('home.founder.credentials')).map((c) => (
                     <div key={c} className="aa-cred-item" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -105,6 +112,7 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
                     </div>
                   ))}
                 </div>
+                </Editable>
               </When>
             </div>
             </When>
@@ -131,11 +139,13 @@ export default function AboutSection({ bookingUrl, founder, t, canEdit = false }
             <div style={{ width: 48, height: 3, background: `var(--aa-band-accent, ${p.orange})`, borderRadius: 2, marginBottom: 32 }} />
             <Prose k="home.founder.body" text={t('home.founder.body')} style={{ color: `var(--aa-band-ink-soft, ${p.body})`, fontSize: 17, lineHeight: 1.8, margin: '0 0 40px', maxWidth: 460 }} />
             <When any={[t('home.founder.quote')]}>
+              <Editable k="home.founder.quote" label="the quote" as="div" block>
               <div style={{ borderLeft: `3px solid ${p.orange}`, paddingLeft: 20, marginBottom: 44 }}>
                 <p style={{ color: `var(--aa-band-ink-soft, ${p.midTeal})`, fontSize: 15, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>
                   &ldquo;{t('home.founder.quote')}&rdquo;
                 </p>
               </div>
+              </Editable>
             </When>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
               <Editable k="home.founder.bookCta" label="this button" outside>

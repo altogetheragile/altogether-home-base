@@ -8,6 +8,7 @@ import { ChevronDown, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SiteLogo } from '@/components/SiteLogo';
 import type { SiteSettings } from '@/lib/site-settings';
+import { Editable } from '@/components/edit/Editable';
 
 // The URL is fixed by the file that answers it; the label is not. A freelancer who sells
 // "Services" should not have to say "Coaching" because that is what the folder is called, so
@@ -39,6 +40,7 @@ const FALLBACK: Record<string, string> = {
   'nav.contact': 'Contact', 'nav.testimonials': 'Testimonials', 'nav.resources': 'Resources',
   'nav.knowledge': 'Knowledge Base', 'nav.blog': 'Blog', 'nav.exams': 'Practice Exams',
   'nav.ai_tools': 'AI Tools', 'nav.flow_game': 'Flow Game',
+  'nav.signIn': 'Sign In', 'nav.dashboard': 'Dashboard', 'nav.greeting': 'Hi',
 };
 
 export function Navigation({
@@ -63,7 +65,9 @@ export function Navigation({
 
   // Read from the real session on the server (lib/auth.ts), not from the presence cookie this
   // used to trust. /dashboard is still gated by the App; this only decides what the button says.
-  const authCta = signedIn ? { href: '/dashboard', label: 'Dashboard' } : { href: '/auth', label: 'Sign In' };
+  const authCta = signedIn
+    ? { href: '/dashboard', key: 'nav.dashboard', label: labels?.['nav.dashboard'] || FALLBACK['nav.dashboard'] }
+    : { href: '/auth', key: 'nav.signIn', label: labels?.['nav.signIn'] || FALLBACK['nav.signIn'] };
 
   // One list of defaults, shared with the module gate. They used to disagree, and a site with
   // no settings row showed links to pages that answered 404.
@@ -88,18 +92,21 @@ export function Navigation({
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-1 md:flex">
+          {/* Pens on the desktop menu only. Outside the link, so a click near one opens the drawer
+              rather than following the link; the phone menu is a list you tap, not hover. */}
           {topLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={cn(
-                'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary',
-                isActive(l.href) ? 'text-primary' : 'text-foreground',
-              )}
-            >
-              {label(l.key)}
-              {isHidden(l) && <HiddenDot />}
-            </Link>
+            <Editable key={l.href} k={l.key} label="this menu label" outside>
+              <Link
+                href={l.href}
+                className={cn(
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary',
+                  isActive(l.href) ? 'text-primary' : 'text-foreground',
+                )}
+              >
+                {label(l.key)}
+                {isHidden(l) && <HiddenDot />}
+              </Link>
+            </Editable>
           ))}
 
           {resourceLinks.length > 0 && (
@@ -130,18 +137,20 @@ export function Navigation({
 
           {name && (
             <span className="ml-2 hidden text-sm text-muted-foreground lg:inline" data-testid="nav-greeting">
-              Hi, {name}
+              {label('nav.greeting')}, {name}
             </span>
           )}
           {/* A plain anchor, not <Link>: /auth and /dashboard are App-owned URLs this app does
               not serve, so a client transition would prefetch a route that cannot answer and
               then fall back to a full load anyway. */}
-          <a
-            href={authCta.href}
-            className="ml-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {authCta.label}
-          </a>
+          <Editable k={authCta.key} label="this button" outside>
+            <a
+              href={authCta.href}
+              className="ml-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {authCta.label}
+            </a>
+          </Editable>
         </div>
 
         {/* Mobile toggle */}
@@ -171,7 +180,7 @@ export function Navigation({
             )}
             {name && (
               <span className="mt-2 px-3 text-sm text-muted-foreground" data-testid="nav-greeting-mobile">
-                Hi, {name}
+                {label('nav.greeting')}, {name}
               </span>
             )}
             <a href={authCta.href} className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>
