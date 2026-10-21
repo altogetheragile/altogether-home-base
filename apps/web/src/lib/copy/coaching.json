@@ -182,6 +182,11 @@
         }
       ]
     },
+    "coaching.testimonials.heading": {
+      "value": "What practitioners say",
+      "label": "Testimonials heading",
+      "hint": "Above the strip of quotes. The quotes themselves are the feedback people leave, once approved"
+    },
     "coaching.chemistry.label": {
       "value": "Free chemistry session",
       "label": "Chemistry eyebrow",

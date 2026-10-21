@@ -420,6 +420,45 @@ export const siteRegistry: CopyRegistry = {
       "store": "column",
       "path": "social_github",
       "group": "Social links"
+    },
+    // Small words that appear on more than one page. They live here rather than on any one page's
+    // tab because a pen opens the tab its key belongs to: kept on Home, the pen on the coaching
+    // page's quotes would have opened a tab that is not there.
+    "site.words.readMore": {
+      "value": "Read more",
+      "label": "Read more",
+      "hint": "After a long quote that has been shortened, wherever quotes appear outside the testimonials page.",
+      "group": "Words used across pages"
+    },
+    "site.words.readLess": {
+      "value": "Read less",
+      "label": "Read less",
+      "hint": "After a long quote once it has been opened up.",
+      "group": "Words used across pages"
+    },
+    "site.words.viaLinkedIn": {
+      "value": "via LinkedIn",
+      "label": "Quote from LinkedIn",
+      "hint": "Under a quote that was left on LinkedIn rather than through this site.",
+      "group": "Words used across pages"
+    },
+    "site.words.of": {
+      "value": "of",
+      "label": "Counting word",
+      "hint": "Under the strip of quotes, as in \"1-3 of 9\".",
+      "group": "Words used across pages"
+    },
+    "site.words.minRead": {
+      "value": "min read",
+      "label": "Reading time",
+      "hint": "After the number of minutes on a blog post and in the list of posts, as in \"4 min read\".",
+      "group": "Words used across pages"
+    },
+    "site.words.postNotFound": {
+      "value": "Post not found",
+      "label": "Missing blog post",
+      "hint": "The browser tab title when somebody follows a link to a blog post that is not there.",
+      "group": "Words used across pages"
     }
   }
 } as CopyRegistry;

@@ -12,6 +12,7 @@ import { colors as p , founderOf, fonts } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { isAdmin } from '@/lib/auth';
+import { credit, creditRules } from '@/lib/quoteCredit';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 import { Prose, When, has } from '@/lib/copy/Prose';
@@ -121,10 +122,9 @@ export default async function AboutPage() {
   // right were floating beside half a page of white space.
   const storyTold = has(t('about.story.p1'), t('about.story.p2'), t('about.story.p3'), t('about.story.p4'));
   const order = orderedSections(t('about.sections'), ABOUT_SECTIONS);
-  const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const quoteRules = creditRules(settings);
   const bookingUrl = bookingHref(settings.show_bookings);
   const quotes = [...feedback].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 3);
-  const name = (f: { first_name: string; last_name: string }) => (firstNameOnly ? f.first_name : `${f.first_name} ${f.last_name}`.trim());
 
   const SECTIONS: Record<string, React.ReactNode> = {
     hero: (
@@ -237,16 +237,19 @@ export default async function AboutPage() {
         <div className="aa-section-pad" style={{ background: p.skyTeal }}>
           <Heading labelKey="about.feedback.label" titleKey="about.feedback.heading" label={t('about.feedback.label')} title={t('about.feedback.heading')} />
           <div className="aa-three-col">
-            {quotes.map((q) => (
+            {quotes.map((q) => {
+              const { name, role } = credit(q, quoteRules);
+              return (
               <div key={q.id} style={{ background: p.white, borderRadius: 14, padding: '24px 26px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <Stars rating={q.rating} />
                 <div style={{ color: p.body, fontSize: 14, lineHeight: 1.7, fontStyle: 'italic', flex: 1 }}>&ldquo;{q.comment}&rdquo;</div>
                 <div>
-                  <div style={{ color: p.deepTeal, fontWeight: 700, fontSize: 13 }}>{name(q)}</div>
-                  <div style={{ color: p.muted, fontSize: 12 }}>{q.job_title}{q.job_title && q.company ? ' · ' : ''}{q.company}</div>
+                  {name && <div style={{ color: p.deepTeal, fontWeight: 700, fontSize: 13 }}>{name}</div>}
+                  {role && <div style={{ color: p.muted, fontSize: 12 }}>{role}</div>}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -29,6 +29,24 @@
       "value": "Practical writing on delivery, coaching and ways of working.",
       "label": "Hero introduction",
       "hint": "The teal hero above the post list"
+    },
+    "blog.list.all": {
+      "value": "All",
+      "label": "Every category",
+      "hint": "The first choice above the posts, which shows every post. Only shown when posts have categories",
+      "group": "The list of posts"
+    },
+    "blog.list.noneInCategory": {
+      "value": "No posts in this category yet.",
+      "label": "Empty category",
+      "hint": "Shown when the chosen category has no posts",
+      "group": "The list of posts"
+    },
+    "blog.list.empty": {
+      "value": "Nothing has been published yet.",
+      "label": "No posts yet",
+      "hint": "Shown in place of the posts until the first one is published",
+      "group": "The list of posts"
     }
   }
 }

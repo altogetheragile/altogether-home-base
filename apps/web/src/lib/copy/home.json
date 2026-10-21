@@ -278,6 +278,11 @@
       "value": "Book a Chemistry Session",
       "label": "Founder booking button",
       "hint": "The orange button beside the photograph. It goes to the booking page when bookings are switched on, and to the contact page when they are not."
+    },
+    "home.testimonials.heading": {
+      "value": "What practitioners say",
+      "label": "Testimonials heading",
+      "hint": "Above the strip of quotes. The quotes themselves are the feedback people leave, once approved"
     }
   }
 }
